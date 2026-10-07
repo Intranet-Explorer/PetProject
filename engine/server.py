@@ -35,7 +35,7 @@ def visitor_present():
 def snapshot():
     return {
         "size": [W, H], "tick_seconds": cfg["clock"]["tick_seconds"], "visitor_present": visitor_present(),
-        "placeable": actions.PLACEABLE,
+        "placeable": actions.PLACEABLE, "growth": cfg["growth"],
         "pets": {p.id: {"world": p.world, "beliefs": p.mem.beliefs, "journal": list(p.journal),
                         "accuracy": p.accuracy(), "series": p.series} for p in pets.values()},
     }

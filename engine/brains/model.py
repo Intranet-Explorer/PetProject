@@ -9,6 +9,8 @@ import urllib.request
 from pathlib import Path
 from urllib.parse import urlparse
 
+from ..actions import MOVABLE
+
 FORMAT = """
 Reply with one JSON object and nothing else:
 {"thought": "<short, why you are doing this>", "action": {"type": "<one allowed action>", <params>}, "expect": "<what you expect to happen>"}
@@ -26,26 +28,25 @@ action params:
 """
 
 
-def schema(allowed):
-    """Constrained output. Only the stage's own actions are offered, so gating cannot be violated by accident."""
-    return {
-        "type": "object",
-        "properties": {
-            "thought": {"type": "string"},
-            "action": {
-                "type": "object",
-                "properties": {
-                    "type": {"type": "string", "enum": allowed},
-                    "target": {"type": "string"}, "tile": {"type": "array", "items": {"type": "integer"}},
-                    "text": {"type": "string"}, "object": {"type": "string"},
-                    "statement": {"type": "string"}, "id": {"type": "string"},
-                },
-                "required": ["type"],
-            },
-            "expect": {"type": "string"},
-        },
-        "required": ["thought", "action", "expect"],
+def schema(allowed, objects, belief_ids):
+    """Constrained output with one variant per allowed action, built from what the packet shows.
+    A turn cannot name a locked action, leave out a parameter, or point at something that is not there."""
+    obj = lambda **props: {"type": "object", "properties": props, "required": list(props), "additionalProperties": False}
+    tile = {"type": "array", "items": {"type": "integer"}, "minItems": 2, "maxItems": 2}
+    text = {"type": "string", "minLength": 1}
+    variants = {
+        "observe": [obj(type={"const": "observe"})],
+        "rest": [obj(type={"const": "rest"})],
+        "look": [obj(type={"const": "look"}, target={"enum": objects + ["visitor"]})],
+        "move": [obj(type={"const": "move"}, target={"enum": objects}), obj(type={"const": "move"}, tile=tile)],
+        "speak": [obj(type={"const": "speak"}, text={"type": "string", "minLength": 1, "maxLength": 120})],
+        "use": [obj(type={"const": "use"}, target={"enum": objects})],
+        "arrange": [obj(type={"const": "arrange"}, object={"enum": list(MOVABLE)}, tile=tile)],
+        "write_belief": [obj(type={"const": "write_belief"}, statement=text)],
+        "revise_belief": [obj(type={"const": "revise_belief"}, id={"enum": belief_ids}, statement=text)] if belief_ids else [],
     }
+    return obj(thought={"type": "string"}, action={"anyOf": [v for a in allowed for v in variants[a]]},
+               expect={"type": "string"})
 
 
 CONSOLIDATE = """
@@ -107,10 +108,13 @@ class Model:
 
     async def act(self, packet):
         prompt = packet + FORMAT
-        allowed = packet.rsplit("allowed actions: ", 1)[1].strip().split(", ")
+        line = dict(l.split(": ", 1) for l in packet.splitlines() if ": " in l and not l.startswith(" "))
+        shape = schema(line["stage"].split("allowed actions: ")[1].split(", "),
+                       [o.split(" (")[0] for o in line["visible"].split(" · ")],
+                       re.findall(r"^  (b\d+):", packet, re.M))
         for _ in range(2):   # one retry, then the turn is a no-op
             try:
-                turn = parse(await asyncio.to_thread(self.chat, prompt, schema(allowed)))
+                turn = parse(await asyncio.to_thread(self.chat, prompt, shape))
             except Exception as e:
                 logging.warning("model call failed: %r", e)
                 why = "model unreachable"

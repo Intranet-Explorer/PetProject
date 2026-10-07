@@ -3,7 +3,7 @@ It reads the same perception packet as the model pet and nothing else."""
 import random
 import re
 
-from ..actions import MOVABLE, USABLE
+from ..actions import MOVABLE
 from ..world import H, NEEDS, W
 
 EVENT = re.compile(r"\[t(\d+)\] ((?:you |nothing happened)[^\[]*)")
@@ -18,7 +18,7 @@ def parse(packet):
     return {
         "phase": line["time"].split()[0],
         "tick": int(re.search(r"tick (\d+)", line["time"]).group(1)),
-        "needs": {n: int(v) for n, v in re.findall(r"(energy|comfort|curiosity) (\d+)", line["needs"])},
+        "needs": {n: int(v) for n, v in re.findall(r"(energy|comfort|curiosity) (\d+)", line["needs (100 is fully met)"])},
         "objects": [o.split(" (")[0] for o in line["visible"].split(" · ")],
         "allowed": line["stage"].split("allowed actions: ")[1].split(", "),
         "last": {"tick": int(own[-1][0]), "deltas": {n: float(d) for n, d in DELTA.findall(own[-1][1])}} if own else None,
@@ -77,8 +77,7 @@ class Twin:
         phase, allowed = f["phase"], f["allowed"]
         need = min(f["needs"], key=f["needs"].get)
         options = [{"type": "observe"}, {"type": "rest"}]
-        options += [{"type": t, "target": o} for t in ("look", "move") for o in f["objects"]]
-        options += [{"type": "use", "target": o} for o in USABLE]
+        options += [{"type": t, "target": o} for t in ("look", "move", "use") for o in f["objects"]]
         options += [{"type": "arrange", "object": o, "tile": [self.rng.randrange(W), self.rng.randrange(H)]}
                     for o in MOVABLE]
         options = [a for a in options if a["type"] in allowed]

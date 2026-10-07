@@ -53,7 +53,9 @@ with tempfile.TemporaryDirectory() as d:
     w = new_world(cfg)
     bad = lambda **a: actions.check(turn(**a), w, mem)
     assert bad(type="arrange", object="rock", tile=[1, 1]) == "not unlocked"
-    assert bad(type="use", target="rock") == "bad target" and bad(type="fly") == "unknown action"
+    assert bad(type="use", target="visitor") == "bad target" and bad(type="fly") == "unknown action"
+    assert "nothing happened" in step(w, cfg, turn(type="use", target="rock"), mem)["feedback"]
+    assert step(w, cfg, turn(type="use", target="ball"), mem)["deltas"]["curiosity"] > 3
     assert bad(type="move", tile=[12, 0]) == "bad target" and bad(type="speak", text="x" * 121) == "bad text"
     assert bad(type="revise_belief", id="b9", statement="discard") == "bad belief id"
     assert bad(type="use", target="blanket") is None and bad(type="look", target="visitor") is None

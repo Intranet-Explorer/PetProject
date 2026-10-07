@@ -36,7 +36,7 @@ def perceive(w, cfg, mem):
     return (
         "time: %s (tick %d)\n" % (clock(cfg, tick)["phase"], tick)
         + "you are at: (%d,%d)%s\n" % (*pet["pos"], ", near " + nearest if near(w, nearest) else "")
-        + "needs: %s\n" % needs
+        + "needs (100 is fully met): %s\n" % needs   # the scale is stated; M5's rehearsal showed it being read backwards
         + "visible: %s\n" % visible
         + "recent: %s\n" % recent
         + "visitor: %s\n" % ("; ".join(w["inbox"]) or "nothing new")

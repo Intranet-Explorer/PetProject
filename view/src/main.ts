@@ -16,10 +16,12 @@ export type World = {
   sleep: { since: number } | null;
   last_night: { day: number; dream: string; changes: string[]; body: string; reason: string } | null;
   objects: Record<string, { pos: [number, number]; state?: string }>;
+  exploits: Record<string, number>;
 };
 export type PetState = { world: World; beliefs: Belief[]; journal: Rec[]; accuracy: number | null; series: [number, number][] };
 export type Snapshot = {
   size: [number, number]; tick_seconds: number; visitor_present: boolean; placeable: string[];
+  growth: { accuracy: number; exploit_times: number };
   pets: Record<string, PetState>;
 };
 
@@ -72,8 +74,10 @@ function connect() {
     render();
   };
   sock.onclose = () => {
-    $("status").textContent = "engine not reachable, retrying…";
-    $("status").className = "down";
+    const chip = document.createElement("span");
+    chip.className = "chip down";
+    chip.textContent = "engine not reachable, retrying…";
+    $("status").replaceChildren(chip);
     setTimeout(connect, 2000);
   };
 }
@@ -93,6 +97,16 @@ $("poke").onclick = () => send({ type: "poke" });
 $("window").onclick = () => send({ type: "window" });
 $("placeBtn").onclick = () => setPlacing(!placing);
 $("ruleOnly").onchange = render;
+
+function showTab(name: string) {
+  for (const b of document.querySelectorAll<HTMLElement>("[data-tab]")) b.setAttribute("aria-selected", String(b.dataset.tab === name));
+  for (const p of document.querySelectorAll<HTMLElement>("[data-panel]")) p.hidden = p.dataset.panel !== name;
+  try { localStorage.setItem("tab", name); } catch { /* private window: the tab just isn't remembered */ }
+}
+for (const b of document.querySelectorAll<HTMLElement>("[data-tab]")) b.onclick = () => showTab(b.dataset.tab!);
+let remembered: string | null = null;
+try { remembered = localStorage.getItem("tab"); } catch { /* same */ }
+showTab(document.querySelector(`[data-tab="${remembered}"]`) ? remembered! : "journal");
 $("talkForm").onsubmit = (e) => {
   e.preventDefault();
   const input = $<HTMLInputElement>("talkText");

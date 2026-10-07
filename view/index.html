@@ -8,53 +8,62 @@
 </head>
 <body>
   <header>
-    <h1>Pet</h1>
-    <nav id="pets" aria-label="Which pet"></nav>
-    <p id="status">connecting…</p>
+    <div class="brand">
+      <h1 id="petName">Pet</h1>
+      <span id="petStage"></span>
+      <nav id="pets" aria-label="Which pet"></nav>
+    </div>
+    <div id="status" class="chips"><span class="chip">connecting…</span></div>
   </header>
   <main>
     <div class="col">
       <div id="room" aria-label="The room"></div>
       <section class="controls" aria-label="Visitor controls">
-        <button id="feed">Feed</button>
-        <button id="poke">Poke</button>
-        <button id="window">Open window</button>
-        <span class="place">
-          <label for="placeObject">Place</label>
+        <div class="row">
+          <button id="feed">Feed</button>
+          <button id="poke">Poke</button>
+          <button id="window">Open window</button>
+          <span class="gap"></span>
+          <label for="placeObject">Move the</label>
           <select id="placeObject"></select>
           <button id="placeBtn" aria-pressed="false">Pick a tile</button>
-        </span>
-        <form id="talkForm">
+        </div>
+        <form id="talkForm" class="row">
           <input id="talkText" maxlength="200" placeholder="Say something to it" aria-label="Talk">
           <button>Say</button>
         </form>
       </section>
-      <section>
-        <h2>Journal <label class="filter"><input type="checkbox" id="ruleOnly"> rule-tagged only</label></h2>
-        <ol id="journal"></ol>
-      </section>
     </div>
-    <div class="col side">
-      <section>
-        <h2>Mind</h2>
+    <div class="col">
+      <section class="card" aria-label="Mind">
         <div id="needs"></div>
+        <p id="thought"></p>
         <dl id="mind"></dl>
       </section>
-      <section>
-        <h2>Metrics</h2>
-        <p id="facts"></p>
-        <canvas id="chart" width="640" height="240" aria-label="Rule-tagged prediction accuracy over time"></canvas>
-        <p class="hint">Rolling accuracy over the last 50 predictions about a need a hidden rule just moved. The dashed line is the 60% needed for Child.</p>
-      </section>
-      <section>
-        <h2>Last night</h2>
-        <div id="lastNight"></div>
-      </section>
-      <section>
-        <h2>Beliefs</h2>
-        <ul id="beliefs"></ul>
-        <details><summary id="discardedLabel">Discarded</summary><ul id="discarded"></ul></details>
-      </section>
+      <div>
+        <div class="tabs" role="tablist">
+          <button role="tab" data-tab="journal">Journal</button>
+          <button role="tab" data-tab="beliefs">Beliefs</button>
+          <button role="tab" data-tab="night">Last night</button>
+          <button role="tab" data-tab="compare">Compare</button>
+        </div>
+        <section class="panel" data-panel="journal">
+          <label class="filter"><input type="checkbox" id="ruleOnly"> Only moments a hidden rule fired</label>
+          <ol id="journal"></ol>
+        </section>
+        <section class="panel" data-panel="beliefs" hidden>
+          <ul id="beliefs"></ul>
+          <details><summary id="discardedLabel">Discarded</summary><ul id="discarded"></ul></details>
+        </section>
+        <section class="panel" data-panel="night" hidden>
+          <div id="lastNight"></div>
+        </section>
+        <section class="panel" data-panel="compare" hidden>
+          <table id="compare"></table>
+          <canvas id="chart" width="640" height="230" aria-label="Rule-tagged prediction accuracy over time"></canvas>
+          <p class="hint">Share of the last 50 predictions that were right, counting only predictions about a need a hidden rule had just moved. The dashed line is what Child requires.</p>
+        </section>
+      </div>
     </div>
   </main>
   <script type="module" src="/src/main.ts"></script>

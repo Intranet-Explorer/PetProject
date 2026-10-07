@@ -12,7 +12,6 @@ STAGE_ACTIONS = {
     "child": HATCHLING[:6] + ["arrange"] + HATCHLING[6:],
 }
 ALL_ACTIONS = STAGE_ACTIONS["child"]
-USABLE = ("lamp", "music box", "bowl", "blanket", "bed")
 MOVABLE = ("plant", "ball", "blanket", "rock")              # what the pet may arrange
 PLACEABLE = MOVABLE + ("lamp", "bowl", "music box")         # what the visitor may place
 TOGGLE = {"on": "off", "off": "on", "playing": "silent", "silent": "playing",
@@ -50,7 +49,7 @@ def check(turn, w, mem):
         return "bad target"
     if t == "move" and target not in objs and not tile_ok(a.get("tile")):
         return "bad target"
-    if t == "use" and target not in USABLE:
+    if t == "use" and target not in objs:
         return "bad target"
     if t == "speak" and not (filled(a.get("text")) and len(a["text"]) <= 120):
         return "bad text"
@@ -112,6 +111,10 @@ def apply(w, a, mem):
             o["state"] = "half" if o["state"] == "full" else "empty"
             w["prev_eat"], w["last_eat"] = w["last_eat"], w["tick"]
             return "you ate from bowl", {"energy": 8.0}, "use bowl"
+        if target == "ball":
+            return "you played with the ball", {"energy": -0.5, "curiosity": 1.0}, "use ball"
+        if target not in ("lamp", "music box"):   # a fair try with no effect: the window is the visitor's, the rock is a rock
+            return "you tried to use the %s; nothing happened" % target, {}, None
         o["state"] = TOGGLE[o["state"]]
         return "you toggled %s (%s)" % (target, o["state"]), {}, "use " + target
     if t == "arrange":
