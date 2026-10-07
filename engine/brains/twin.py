@@ -62,7 +62,7 @@ class Twin:
                     return "%s at %s %s %s" % ((action + " " + target).strip(), phase, "raises" if ups else "lowers", n)
         return None
 
-    def act(self, packet):
+    async def act(self, packet):
         f = parse(packet)
         self.learn(f)
         phase, allowed = f["phase"], f["allowed"]

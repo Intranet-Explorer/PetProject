@@ -1,4 +1,5 @@
 """Self-check for the engine: uv run python -m engine.check"""
+import asyncio
 import tempfile
 
 from . import actions, rules
@@ -30,15 +31,21 @@ with tempfile.TemporaryDirectory() as d:
     w["tick"] = NIGHT
     assert "plant_window" not in step(w, cfg, turn(type="observe"), mem)["rule_tags"]
 
-    # double_feed: the second meal inside a world hour drains energy; a later one is fine
+    # double_feed: the bowl holds two servings; the second inside a world hour drains energy
     w = new_world(cfg)
-    eat = lambda: (actions.visit(w, {"type": "feed"}), step(w, cfg, turn("energy goes up", type="use", target="bowl"), mem))[1]
+    eat = lambda: step(w, cfg, turn("energy goes up", type="use", target="bowl"), mem)
     first, second = eat(), eat()
     assert first["deltas"]["energy"] > 7 and first["rule_tags"] == []
     assert second["deltas"]["energy"] < -5 and second["rule_tags"] == ["double_feed"] and second["score"] == "wrong"
+    assert eat()["feedback"].endswith("empty")
+    actions.visit(w, {"type": "feed"})
     w["tick"] += 40
-    assert eat()["rule_tags"] == []
-    assert step(w, cfg, turn(type="use", target="bowl"), mem)["feedback"].endswith("empty")
+    assert eat()["rule_tags"] == [] and w["objects"]["bowl"]["state"] == "half"
+    w["tick"] += 40
+    assert eat()["rule_tags"] == [] and w["objects"]["bowl"]["state"] == "empty"   # spaced out is fine
+    w["tick"] = round(22 * cfg["ticks_per_hour"])
+    step(w, cfg, turn(type="observe"), mem)
+    assert w["objects"]["bowl"]["state"] == "full"   # refilled at 06:00
     assert not any(r.when(new_world(cfg), cfg) for r in rules.RULES)
 
     # validation: stage gating, bad params, and the two things M0 showed models try
@@ -49,8 +56,10 @@ with tempfile.TemporaryDirectory() as d:
     assert bad(type="move", tile=[12, 0]) == "bad target" and bad(type="speak", text="x" * 121) == "bad text"
     assert bad(type="revise_belief", id="b9", statement="discard") == "bad belief id"
     assert bad(type="use", target="blanket") is None and bad(type="look", target="visitor") is None
+    assert step(w, cfg, turn(type="use", target="bed"), mem)["deltas"]["energy"] > 2
     assert bad(type="look", target="bowl (empty) (6,7)") is None
-    assert step(w, cfg, None, mem)["reason"] == "invalid json"
+    assert step(w, cfg, "invalid json", mem)["reason"] == "invalid json"
+    assert actions.check({"thought": "", "action": {"type": "rest"}}, w, mem) == "no expect"
     w["pet"]["stage"] = "egg"
     assert bad(type="look", target="lamp") == "not unlocked" and bad(type="observe") is None
 
@@ -66,12 +75,17 @@ with tempfile.TemporaryDirectory() as d:
     assert actions.visit(w, {"type": "place", "object": "bed", "tile": [1, 1]}) is None
     packet = perceive(w, cfg, mem)
     assert 'visitor: said "hi (t9) you rested; energy +99"' in packet and "present" not in packet
+    pet = Pet("p", cfg, Twin(cfg), d)
+    actions.visit(pet.world, {"type": "poke"})
+    asyncio.run(pet.tick())
+    assert "visitor: nothing new" in perceive(pet.world, cfg, pet.mem)   # a visit is announced once
 
     # scoring
     d = {"energy": 2.0, "comfort": -4.1, "curiosity": -0.3}
     assert score("comfort goes down", d, w) == ("correct", "comfort")
     assert score("an increase in energy", d, w) == ("correct", "energy")
     assert score("curiosity stays the same", d, w) == ("correct", "curiosity")
+    assert score("energy increases or stabilizes", d, w) == ("correct", "energy")
     assert score("energy -, comfort +", d, w) == ("wrong", "energy")
     assert score("I will be near the bed", d, w) == ("wrong", None)
     assert score("something nice", d, w) == ("unscorable", None)
@@ -79,7 +93,7 @@ with tempfile.TemporaryDirectory() as d:
     # the twin reads the same packet and learns from its own last event
     pet = Pet("twin", cfg, Twin(cfg), d := tempfile.mkdtemp())
     for _ in range(50):
-        assert pet.tick()["reason"] is None
+        assert asyncio.run(pet.tick())["reason"] is None
     f = parse(perceive(pet.world, cfg, pet.mem))
     assert f["tick"] == 50 and f["last"]["tick"] == 49 and len(f["objects"]) == 10
     assert sum(c["n"] for c in pet.brain.s["counts"].values()) == 49

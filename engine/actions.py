@@ -11,7 +11,7 @@ STAGE_ACTIONS = {
     "child": HATCHLING[:6] + ["arrange"] + HATCHLING[6:],
 }
 ALL_ACTIONS = STAGE_ACTIONS["child"]
-USABLE = ("lamp", "music box", "bowl", "blanket")
+USABLE = ("lamp", "music box", "bowl", "blanket", "bed")
 MOVABLE = ("plant", "ball", "blanket", "rock")              # what the pet may arrange
 PLACEABLE = MOVABLE + ("lamp", "bowl", "music box")         # what the visitor may place
 TOGGLE = {"on": "off", "off": "on", "playing": "silent", "silent": "playing",
@@ -37,6 +37,8 @@ def check(turn, w, mem):
     a = turn.get("action") if isinstance(turn, dict) else None
     if not isinstance(a, dict):
         return "no action object"
+    if not isinstance(turn.get("expect"), str):
+        return "no expect"
     t, objs = a.get("type"), w["objects"]
     if t not in ALL_ACTIONS:
         return "unknown action"
@@ -101,10 +103,12 @@ def apply(w, a, mem):
         o = objs[target]
         if target == "blanket":
             return "you used blanket", {"comfort": 2.0}, "use blanket"
+        if target == "bed":
+            return "you rested on the bed", {"energy": 3.0}, None
         if target == "bowl":
             if o["state"] == "empty":
                 return "you tried the bowl but it is empty", {}, None
-            o["state"] = "empty"
+            o["state"] = "half" if o["state"] == "full" else "empty"
             w["prev_eat"], w["last_eat"] = w["last_eat"], w["tick"]
             return "you ate from bowl", {"energy": 8.0}, "use bowl"
         o["state"] = TOGGLE[o["state"]]
@@ -142,5 +146,6 @@ def visit(w, msg):
     else:
         return None
     w["visitor_last"] = w["tick"]
+    w["inbox"].append(text[len("visitor "):])
     add_event(w, text)
     return text

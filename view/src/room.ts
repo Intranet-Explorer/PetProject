@@ -22,7 +22,8 @@ const DRAW: Record<string, Draw> = {
   },
   bowl(g, x, y, s) {
     g.ellipse(x, y + 6, 17, 9).fill(0x6f8fa8);
-    g.ellipse(x, y + 3, 13, 5).fill(s === "full" ? 0x9a6a3c : 0xdfe7ea);
+    g.ellipse(x, y + 3, 13, 5).fill(0xdfe7ea);
+    if (s !== "empty") g.ellipse(x, y + 3, s === "full" ? 13 : 7, s === "full" ? 5 : 3).fill(0x9a6a3c);
   },
   ball(g, x, y) {
     g.circle(x, y + 4, 11).fill(0xd9483b).circle(x - 4, y, 3).fill({ color: 0xffffff, alpha: 0.7 });

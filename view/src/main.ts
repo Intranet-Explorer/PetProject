@@ -47,7 +47,7 @@ function render() {
   renderPanels(snap, petId, $<HTMLInputElement>("ruleOnly").checked);
   $("window").textContent = pet.world.objects.window.state === "open" ? "Close window" : "Open window";
 
-  const ids = Object.keys(snap.pets); // the toggle appears once the model pet exists (M2)
+  const ids = Object.keys(snap.pets);
   $("pets").replaceChildren(...(ids.length < 2 ? [] : ids.map((id) => {
     const b = document.createElement("button");
     b.textContent = id;

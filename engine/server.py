@@ -13,6 +13,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
 
 from . import actions, log
+from .brains.model import Model
 from .brains.twin import Twin
 from .tick import Pet
 from .world import H, ROOT, W, load_config
@@ -20,7 +21,9 @@ from .world import H, ROOT, W, load_config
 cfg = load_config()
 DATA = ROOT / "data"
 DATA.mkdir(exist_ok=True)
-pets = {"twin": Pet("twin", cfg, Twin(cfg), DATA, log.open_db(DATA / "pet.db"))}   # the model pet joins in M2
+db = log.open_db(DATA / "pet.db")
+# Two pets, each with its own identical copy of the world (§3).
+pets = {"model": Pet("model", cfg, Model(cfg, DATA / "model"), DATA, db), "twin": Pet("twin", cfg, Twin(cfg), DATA, db)}
 clients = {}   # websocket -> when it last reported an attentive visitor (0 = not attentive)
 
 
@@ -52,8 +55,7 @@ async def loop():
         started = time.monotonic()
         try:
             present = visitor_present()
-            for p in pets.values():
-                p.tick(present)
+            await asyncio.gather(*(p.tick(present) for p in pets.values()))   # the tick waits for the slower brain
             await broadcast()
         except Exception:   # one bad tick must not end a two-week run
             logging.exception("tick failed")

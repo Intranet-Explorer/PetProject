@@ -11,10 +11,12 @@ start_stage = "hatchling"   # M1: skip the egg day until growth lands in M4
 explore = 0.15         # chance of a random action
 belief_min_obs = 10    # observations before it writes a templated belief
 
-[model]                # picked in M0 (m0/results/summary.json); used from M2
-endpoint = "http://localhost:11434/v1"
+[model]                # picked in M0 (m0/results/summary.json)
+endpoint = "http://localhost:11434/v1"   # must be localhost
 name = "qwen3.8:27b-mlx"
 temperature = 0.7
+max_tokens = 400       # caps a turn at roughly 12 s on the M3 Max
+timeout_seconds = 60
 
 [server]
 host = "127.0.0.1"

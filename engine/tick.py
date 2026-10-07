@@ -3,6 +3,7 @@
     uv run python -m engine.tick --ticks 3000    # headless run with the twin, prints a summary
 """
 import argparse
+import asyncio
 import json
 import re
 import tempfile
@@ -29,7 +30,6 @@ def perceive(w, cfg, mem):
     visible = " · ".join("%s%s (%d,%d)" % (n, " (%s)" % o["state"] if "state" in o else "", *o["pos"])
                          for n, o in objs.items())
     recent = "  ".join("[t%d] %s" % (t, e) for t, e in w["events"][-RECENT_SHOWN:]) or "nothing yet"
-    visitor = "; ".join(e[len("visitor "):] for t, e in w["events"] if t == tick and e.startswith("visitor "))
     beliefs = "".join("\n  %s: %s" % (b["id"], b["statement"]) for b in mem.top()) or " none yet"
     return (
         "time: %s (tick %d)\n" % (clock(cfg, tick)["phase"], tick)
@@ -37,7 +37,7 @@ def perceive(w, cfg, mem):
         + "needs: %s\n" % needs
         + "visible: %s\n" % visible
         + "recent: %s\n" % recent
-        + "visitor: %s\n" % (visitor or "nothing new")
+        + "visitor: %s\n" % ("; ".join(w["inbox"]) or "nothing new")
         + "your beliefs:%s\n" % beliefs
         + "stage: %s. allowed actions: %s\n" % (pet["stage"], ", ".join(actions.STAGE_ACTIONS[pet["stage"]]))
     )
@@ -45,22 +45,19 @@ def perceive(w, cfg, mem):
 
 UP = re.compile(r"\b(up|ris|rais|increas|higher|more|restor|improv|recover|boost|gain|replenish|better)|\+")
 DOWN = re.compile(r"\b(down|drop|fall|lower|decreas|less|drain|los|reduc|declin|worse)|(?<![a-z0-9])[-−]")
-SAME = re.compile(r"\b(stay|same|unchanged|stabl|steady|no change)")
+SAME = re.compile(r"\b(stay|same|unchanged|stabl|stabil|steady|no change)")
 STATE_WORDS = {
     "lamp": ("lamp|light", {"on": r"\bon\b", "off": r"\boff\b"}),
-    "bowl": ("bowl", {"full": r"full|filled", "empty": r"empty"}),
+    "bowl": ("bowl", {"full": r"full|filled", "half": r"half", "empty": r"empty"}),
     "music box": ("music", {"playing": r"play|start", "silent": r"silen|stop|quiet"}),
     "window": ("window", {"open": r"open", "closed": r"clos|shut"}),
 }
 
 
 def direction(s):
-    if SAME.search(s):
-        return 0
-    up, down = UP.search(s), DOWN.search(s)
-    if not (up or down):
-        return None
-    return 1 if up and (not down or up.start() < down.start()) else -1
+    """+1, -1 or 0 for whichever direction word comes first ("rises or holds steady" is a rise); None if none."""
+    found = [(m.start(), d) for d, m in ((1, UP.search(s)), (-1, DOWN.search(s)), (0, SAME.search(s))) if m]
+    return min(found)[1] if found else None
 
 
 def score(expect, deltas, w):
@@ -96,12 +93,15 @@ def drift(w):
 
 
 def step(w, cfg, turn, mem, visitor_present=False, pet_id=""):
-    """One tick for one pet. `turn` is the brain's reply (a dict, or None if it was not valid JSON).
-    Returns the journal record."""
+    """One tick for one pet. `turn` is the brain's reply: a dict, or a string saying why there is none
+    ("invalid json", "model unreachable"). Returns the journal record."""
     tick, pet = w["tick"], w["pet"]
     w["clock"] = clock(cfg, tick)
+    if tick % cfg["ticks_per_day"] == round(22 * cfg["ticks_per_hour"]):   # 06:00, so an unvisited pet still eats
+        w["objects"]["bowl"]["state"] = "full"
+        add_event(w, "morning came; the bowl is full")
     before = dict(pet["needs"])
-    reason = "invalid json" if turn is None else actions.check(turn, w, mem)
+    reason = turn if isinstance(turn, str) else actions.check(turn, w, mem)
     turn = turn if isinstance(turn, dict) else {}
     fx, text = {}, "nothing happened"
     if not reason:
@@ -154,9 +154,12 @@ class Pet:
     def accuracy(self):
         return round(100 * sum(self.window) / len(self.window)) if self.window else None
 
-    def tick(self, visitor_present=False):
-        turn = self.brain.act(perceive(self.world, self.cfg, self.mem))
+    async def tick(self, visitor_present=False):
+        packet = perceive(self.world, self.cfg, self.mem)
+        heard = len(self.world["inbox"])
+        turn = await self.brain.act(packet)
         rec = step(self.world, self.cfg, turn, self.mem, visitor_present, self.id)
+        del self.world["inbox"][:heard]   # visits that arrived while it was thinking wait for the next packet
         if rec["rule_scored"]:
             self.window.append(rec["score"] == "correct")
             self.series.append([rec["tick"], self.accuracy()])
@@ -175,7 +178,7 @@ class Pet:
         tmp.replace(self.state_path)
 
 
-def main():
+async def main():
     from .brains.twin import Twin
     ap = argparse.ArgumentParser()
     ap.add_argument("--ticks", type=int, default=3000)
@@ -190,7 +193,7 @@ def main():
                 actions.visit(pet.world, {"type": "feed"})
             if i == 150:
                 actions.visit(pet.world, {"type": "place", "object": "plant", "tile": [1, 4]})
-            rec = pet.tick()
+            rec = await pet.tick()
             tags.update(rec["rule_tags"])
             scores[rec["score"]] += 1
             reasons[rec["reason"]] += 1
@@ -207,4 +210,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

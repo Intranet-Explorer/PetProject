@@ -29,7 +29,7 @@ def new_world(cfg):
         "objects": {
             "lamp": {"pos": [2, 1], "state": "on"},
             "plant": {"pos": [8, 6]},
-            "bowl": {"pos": [6, 7], "state": "empty"},
+            "bowl": {"pos": [6, 7], "state": "full"},      # full, half, empty: two servings
             "ball": {"pos": [4, 5]},
             "blanket": {"pos": [9, 3]},
             "music box": {"pos": [7, 2], "state": "silent"},
@@ -39,6 +39,7 @@ def new_world(cfg):
             "mirror": {"pos": [5, 0]},
         },
         "events": [],                  # [tick, text], what the pet can recall as "recent"
+        "inbox": [],                   # what the visitor did since the pet last perceived
         "seen": {},                    # novelty: interaction -> tick it last happened
         "last_eat": LONG_AGO,
         "prev_eat": LONG_AGO,

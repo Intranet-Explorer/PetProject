@@ -1,6 +1,6 @@
 __pycache__/
 .DS_Store
 .venv/
-data/
+data*/
 node_modules/
 view/dist/
