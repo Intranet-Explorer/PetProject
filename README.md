@@ -9,7 +9,9 @@ life as a control. The design is in [SPEC.md](SPEC.md).
 uv run python -m engine.server        # engine + view at http://localhost:8000
 ```
 
-Needs Ollama running with the model named in `config.toml`. Everything tunable lives in `config.toml`.
+Needs Ollama running with the model named in `config.toml`. Create it once with
+`ollama create pet-brain -f Modelfile` (the M0 pick, `qwen3.8:27b-mlx`, with a smaller context so it holds
+18 GB instead of 28). Everything tunable lives in `config.toml`.
 A pet's life is in `data/`; delete that folder to start a new life.
 
 For a run that should survive a closed terminal, a crash or a reboot:

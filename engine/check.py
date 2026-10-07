@@ -24,6 +24,10 @@ with tempfile.TemporaryDirectory() as d:
     assert r["rule_tags"] == ["lamp_night"] and r["deltas"]["comfort"] <= -4 and r["score"] == "correct" and r["rule_scored"]
     r = step(w, cfg, turn("the lamp turns off", type="use", target="lamp"), mem)
     assert r["rule_tags"] == [] and r["score"] == "correct" and not r["rule_scored"]
+    step(w, cfg, turn(type="use", target="lamp"), mem)   # back on
+    w["pet"]["needs"]["comfort"] = 0.0
+    r = step(w, cfg, turn("comfort goes down", type="observe"), mem)
+    assert r["rule_tags"] == ["lamp_night"] and not r["rule_scored"]   # pinned at 0: not counted either way
 
     # plant_window: only near the window, only in the day
     w = new_world(cfg)

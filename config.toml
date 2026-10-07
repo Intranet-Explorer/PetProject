@@ -22,7 +22,7 @@ belief_min_obs = 10    # observations before it writes a templated belief
 
 [model]                # picked in M0 (m0/results/summary.json)
 endpoint = "http://localhost:11434/v1"   # must be localhost
-name = "qwen3.8:27b-mlx"
+name = "pet-brain"     # qwen3.8:27b-mlx with a 16k context, 18 GB instead of 28: ollama create pet-brain -f Modelfile
 temperature = 0.7
 max_tokens = 400       # caps a turn at roughly 12 s on the M3 Max
 timeout_seconds = 60

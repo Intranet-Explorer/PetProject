@@ -128,9 +128,12 @@ def step(w, cfg, turn, mem, visitor_present=False, pet_id=""):
     base, fired = drift(w), rules.fired(w, cfg)
     if pet["stage"] == "egg":   # an egg is dormant: it watches, but nothing in the room reaches its needs yet
         base, fired = dict.fromkeys(NEEDS, 0.0), []
+    pinned = set()   # needs already at 0 or 100 that could not show this tick's change
     for n in NEEDS:
         change = fx.get(n, 0) + base[n] + sum(r.delta for r in fired if r.need == n)
         pet["needs"][n] = min(100.0, max(0.0, before[n] + change))
+        if abs(change) >= 0.5 and abs(pet["needs"][n] - before[n]) < 0.5:
+            pinned.add(n)
     deltas = {n: round(pet["needs"][n] - before[n], 1) for n in NEEDS}
     pet["trend"] = deltas
     mark = genome.update_marks(w, cfg)
@@ -147,7 +150,8 @@ def step(w, cfg, turn, mem, visitor_present=False, pet_id=""):
         "score": result,
         "rule_tags": [r.id for r in fired],
         # Only predictions about a need a hidden rule just moved count toward growth (§10).
-        "rule_scored": result != "unscorable" and need in {r.need for r in fired},
+        # ... and only when the need had room to move: at 0 or 100 a correct prediction would look wrong.
+        "rule_scored": result != "unscorable" and need in {r.need for r in fired} - pinned,
         "exploit": used, "mark": mark,
         "visitor_present": visitor_present,
     }
