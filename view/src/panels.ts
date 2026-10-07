@@ -1,4 +1,4 @@
-// The DOM around the room: header, mind card, and the tabbed panels.
+// The DOM around the room: the header, and the drawer's tabs (SPEC-v2 §9).
 // Everything from the engine is set as text, never as HTML.
 import type { Rec, Snapshot } from "./main";
 
@@ -33,16 +33,10 @@ function deltas(r: Rec) {
 
 const tags = (r: Rec) => r.rule_tags.map((t) => el("span", "tag", t));
 
-function row(dl: HTMLElement, term: string, ...value: (Node | string)[]) {
-  const dd = el("dd");
-  dd.append(...value);
-  dl.append(el("dt", "", term), dd);
-}
-
 function chart(snap: Snapshot) {
   const c = $("chart") as HTMLCanvasElement, g = c.getContext("2d")!;
   const css = (v: string) => getComputedStyle(document.documentElement).getPropertyValue(v);
-  const [W, H, L, R, T, B] = [c.width, c.height, 44, 14, 16, 30];
+  const [W, H, L, R, T, B] = [c.width, c.height, 52, 14, 16, 30];
   const all = Object.values(snap.pets).flatMap((p) => p.series);
   g.clearRect(0, 0, W, H);
   g.font = "19px system-ui, sans-serif";
@@ -65,15 +59,11 @@ function chart(snap: Snapshot) {
   g.fillText(`tick ${t0}`, L, H - 6);
   g.textAlign = "right";
   g.fillText(`tick ${t1}`, W - R, H - 6);
-  g.setLineDash([8, 6]);
-  g.strokeStyle = css("--accent");
-  g.beginPath(); g.moveTo(L, y(snap.growth.accuracy)); g.lineTo(W - R, y(snap.growth.accuracy)); g.stroke();
-  g.setLineDash([]);
   g.lineWidth = 3;
   g.textAlign = "left";
   Object.entries(snap.pets).forEach(([id, p], i) => {
     g.strokeStyle = g.fillStyle = css(LINE[id] ?? "--ink");
-    g.fillText(id, L + 10 + i * 80, T + 16);
+    if (Object.keys(snap.pets).length > 1) g.fillText(id, L + 10 + i * 80, T + 16);
     g.beginPath();
     p.series.forEach(([t, v], k) => (k ? g.lineTo(x(t), y(v)) : g.moveTo(x(t), y(v))));
     g.stroke();
@@ -82,20 +72,21 @@ function chart(snap: Snapshot) {
 }
 
 function compare(snap: Snapshot) {
-  const ids = Object.keys(snap.pets), need = snap.growth;
+  const ids = Object.keys(snap.pets);
   const line = (label: string, cell: (id: string) => string) => {
     const tr = el("tr");
     tr.append(el("td", "", label), ...ids.map((id) => el("td", "", cell(id))));
     return tr;
   };
   const head = el("tr");
-  head.append(el("th"), ...ids.map((id) => el("th", "", id)));
+  head.append(el("th"), ...ids.map((id) => el("th", "", ids.length > 1 ? id : "")));
   const thead = el("thead"), body = el("tbody");
   thead.append(head);
   body.append(
     line("Stage", (id) => snap.pets[id].world.pet.stage),
-    line(`Hidden-rule predictions right (Child needs ${need.accuracy}%)`, (id) => snap.pets[id].accuracy == null ? "none yet" : `${snap.pets[id].accuracy}%`),
-    ...RULES.map(([rule, label]) => line(label, (id) => `${snap.pets[id].world.exploits[rule]} of ${need.exploit_times}`)),
+    line("Times it thought in the last hour", (id) => String(snap.pets[id].world.calls.length)),
+    line("Hidden-rule predictions right", (id) => snap.pets[id].accuracy == null ? "none yet" : `${snap.pets[id].accuracy}%`),
+    ...RULES.map(([rule, label]) => line(label, (id) => `${snap.pets[id].world.exploits[rule]} times`)),
     line("Beliefs held", (id) => String(snap.pets[id].beliefs.filter((b) => b.status === "active").length)),
     line("Marks", (id) => snap.pets[id].world.pet.genome.marks.join(", ") || "none"),
   );
@@ -103,17 +94,19 @@ function compare(snap: Snapshot) {
 }
 
 export function renderPanels(snap: Snapshot, petId: string, ruleOnly: boolean) {
-  const pet = snap.pets[petId], w = pet.world, last = pet.journal.at(-1);
+  const pet = snap.pets[petId], w = pet.world, plan = w.plan;
   const hh = Math.floor(w.clock.hour), mm = String(Math.floor((w.clock.hour % 1) * 60)).padStart(2, "0");
+  const state = w.pet.stage === "egg" ? "not hatched yet" : w.sleep ? "asleep" : w.thinking ? "thinking" : plan ? "busy" : "idle";
 
   $("petName").textContent = w.pet.name ?? "Pet";
   $("petStage").textContent = `${w.pet.stage}, day ${w.clock.day}`;
   $("status").replaceChildren(
     el("span", "chip", `${hh}:${mm} · ${w.clock.phase}`),
-    el("span", "chip", w.sleep ? "asleep" : "awake"),
+    el("span", "chip", state),
     el("span", snap.visitor_present ? "chip on" : "chip", snap.visitor_present ? "you are here" : "nobody watching"),
   );
 
+  // Mind: what it means to do, why, and where it is in doing it
   $("needs").replaceChildren(...NEEDS.map((n) => {
     const v = w.pet.needs[n], r = el("div", v < 20 ? "need low" : "need");
     const bar = el("div", "bar"), fill = el("b");
@@ -122,24 +115,29 @@ export function renderPanels(snap: Snapshot, petId: string, ruleOnly: boolean) {
     r.append(el("span", "", n), bar, el("span", "", String(Math.round(v))));
     return r;
   }));
-
-  const mind = $("mind");
-  mind.replaceChildren();
-  $("thought").textContent = w.sleep ? "Asleep." : last?.thought ?? "";
-  if (last && !w.sleep) {
-    row(mind, "Did", actionText(last.action), ...(last.reason ? [el("span", "delta down", `not possible: ${last.reason}`)] : []));
-    row(mind, "Expected", last.expect || "nothing", " ", el("span", last.score, MARK[last.score]));
-    row(mind, "Happened", last.feedback, ...deltas(last), ...tags(last));
-  }
-
-  const rows = pet.journal.filter((r) => !ruleOnly || r.rule_tags.length).reverse();
-  $("journal").replaceChildren(...(rows.length ? rows.map((r) => {
-    const li = el("li"), what = el("span", r.reason ? "what rejected" : "what", actionText(r.action));
-    li.title = `${r.feedback}\nexpected: ${r.expect}`;
-    what.append(...deltas(r), ...tags(r));
-    li.append(el("span", "t", `t${r.tick}`), what, el("span", r.reason ? "rejected" : r.score, r.reason ? "✗ not possible" : MARK[r.score][0] === "n" ? "" : MARK[r.score][0]));
+  $("doing").textContent = w.pet.stage === "egg" ? "Still an egg." : w.sleep ? "Asleep." : plan ? plan.intention
+    : w.thinking ? "Thinking about what to do…" : "Idle, between intentions.";
+  $("thought").textContent = plan && !w.sleep ? plan.thought : "";
+  $("steps").replaceChildren(...(plan && !w.sleep ? plan.steps.map((s, i) => {
+    const li = el("li", i < plan.i ? "done" : i === plan.i ? "now" : "");
+    li.append(el("span", "", i < plan.i ? "✓" : i === plan.i ? "▸" : "·"), el("span", "", actionText(s)));
     return li;
-  }) : [el("li", "empty", ruleOnly ? "No hidden rule fired in the last 30 turns." : "Nothing yet.")]));
+  }) : []));
+  $("expecting").textContent = plan && !w.sleep ? `It expects: ${plan.expect || "nothing in particular"}` : "";
+  const last = w.last_plan;
+  $("before").replaceChildren(...(last ? [`Before that: ${last.intention} `,
+    el("span", last.score, last.ended === "done" ? MARK[last.score] : `${last.ended}, ${MARK[last.score]}`)] : []));
+
+  // Diary: every night so far, newest first
+  $("diary").replaceChildren(...(w.diary.length ? [...w.diary].reverse().map((night) => {
+    const box = el("div", "night"), changes = el("ul");
+    changes.append(...night.changes.map((c) => el("li", "", c)));
+    const body = el("p", "", night.body ? `Its body changed: ${night.body}. ` : "Its body did not change. ");
+    if (night.reason) body.append(el("span", "hint", `“${night.reason}”`));
+    box.append(el("p", "hint", `Night of day ${night.day}`), el("p", "", night.dream || "No dream summary."), body,
+      ...(night.changes.length ? [el("p", "hint", "Beliefs changed while asleep"), changes] : []));
+    return box;
+  }) : [el("p", "empty", "It has not slept yet.")]));
 
   const active = pet.beliefs.filter((b) => b.status === "active").sort((a, b) => b.revised - a.revised);
   const gone = pet.beliefs.filter((b) => b.status !== "active");
@@ -153,17 +151,25 @@ export function renderPanels(snap: Snapshot, petId: string, ruleOnly: boolean) {
   $("discarded").replaceChildren(...gone.map(item));
   $("discardedLabel").textContent = `Discarded (${gone.length})`;
 
-  const night = w.last_night, box = $("lastNight");
-  if (!night) box.replaceChildren(el("p", "empty", "It has not slept yet."));
-  else {
-    const body = el("p", "", night.body ? `Its body changed: ${night.body}. ` : "Its body did not change. ");
-    if (night.reason) body.append(el("span", "hint", `“${night.reason}”`));
-    const changes = el("ul");
-    changes.append(...night.changes.map((c) => el("li", "", c)));
-    box.replaceChildren(el("p", "hint", `Night of day ${night.day}`), el("p", "", night.dream || "No dream summary."), body,
-      ...(night.changes.length ? [el("p", "hint", "Beliefs changed while asleep"), changes] : []));
-  }
-
+  // Lab: the measurements, and the journal of steps and intentions
   compare(snap);
   chart(snap);
+  const rows = (pet.journal.filter((r) => r.type === "step" || r.type === "intention") as Rec[])
+    .filter((r) => !ruleOnly || r.rule_tags.length > 0).reverse();
+  $("journal").replaceChildren(...(rows.length ? rows.map((r) => {
+    const li = el("li", r.type === "intention" ? "plan" : ""), what = el("span", "what");
+    if (r.type === "intention") {
+      li.title = `expected: ${r.expect}\nended: ${r.ended}`;
+      what.textContent = r.intention;
+      what.append(...deltas(r), ...tags(r));
+      li.append(el("span", "t", `t${r.tick}`), what, el("span", r.score, r.ended === "done" ? MARK[r.score] : r.ended.split(":")[0]));
+    } else {
+      li.title = r.feedback;
+      what.textContent = actionText(r.action);
+      what.className = r.reason ? "what rejected" : "what";
+      what.append(...deltas(r), ...tags(r));
+      li.append(el("span", "t", `t${r.tick}`), what, el("span", "rejected", r.reason ? "not possible" : ""));
+    }
+    return li;
+  }) : [el("li", "empty", ruleOnly ? "No hidden rule fired in what is shown." : "Nothing yet.")]));
 }

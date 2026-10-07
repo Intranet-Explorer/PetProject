@@ -1,6 +1,7 @@
-"""Growth (SPEC §10): stages are earned, and checked once per world day, when the pet wakes."""
+"""Growth (SPEC-v2 §6). Stages are earned by what the pet has lived through.
+`exploit` is the v1 measure of using a hidden rule on purpose, still counted for the Lab tab."""
 from .actions import norm
-from .world import dist
+from .world import dist, ticks
 
 NEED = {"lamp_night": "comfort", "double_feed": "energy", "plant_window": "comfort"}
 
@@ -23,18 +24,11 @@ def exploit(w, cfg, action, was):
         rule = "plant_window"     # brought the plant to the window
     else:
         return None
-    return rule if was["needs"][NEED[rule]] < cfg["growth"]["exploit_need_below"] else None
+    return rule if was["needs"][NEED[rule]] < cfg["lab"]["exploit_need_below"] else None
 
 
-def check(pet):
-    """The morning check. Returns the stage the pet has earned, or None."""
-    w, g = pet.world, pet.cfg["growth"]
-    stage = w["pet"]["stage"]
-    if stage == "egg" and w["clock"]["day"] > g["egg_days"]:
+def earned(w, cfg):
+    """The stage the pet has earned, or None. V2.1 knows only hatching; the rest arrive with V2.3."""
+    if w["pet"]["stage"] == "egg" and w["tick"] >= ticks(cfg, cfg["egg"]["egg_minutes"] * 60):
         return "hatchling"
-    if stage == "hatchling":
-        learned = len(pet.window) >= g["window"] and pet.accuracy() >= g["accuracy"]
-        used = sum(n >= g["exploit_times"] for n in w["exploits"].values())
-        if learned and used >= g["rules_exploited"]:
-            return "child"
     return None

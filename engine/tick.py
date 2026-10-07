@@ -1,27 +1,54 @@
-"""The tick (SPEC §7): perceive, act, apply, drift and hidden rules, score, log. And the pause for sleep (§9).
+"""The loop (SPEC-v2 §3). The engine ticks every couple of seconds and carries out the pet's current intention
+one step at a time; the model is asked for a new intention only when there is a reason to think.
+Sleep (v1 §9) pauses all of it.
 
-    uv run python -m engine.tick --ticks 3000    # headless run with the twin, prints a summary
+    uv run python -m engine.tick --minutes 240    # a headless life with the scripted twin, prints a summary
 """
 import argparse
 import asyncio
 import json
+import logging
 import re
 import tempfile
+import time
 from collections import Counter, deque
 from pathlib import Path
 
 from . import actions, genome, growth, log, rules, sleep
 from .memory import Memory
-from .world import NEEDS, add_event, clock, dist, load_config, near, new_world
+from .world import NEEDS, add_event, clock, dist, load_config, near, new_world, ticks
 
-RECENT, RECALLED, RECALL_RANGE = 6, 4, 2   # retrieval (§8): the latest events, plus older ones about things close by
-NOVELTY_MAX, NOVELTY_RECHARGE = 4.0, 15   # curiosity for doing something; ticks per point regained
+RECENT, RECALLED, RECALL_RANGE = 6, 4, 2    # retrieval (v1 §8): the latest events, plus older ones about things close by
+NOVELTY_MAX, NOVELTY_SECONDS = 4.0, 150     # curiosity for doing something; real seconds per point regained
+URGENT = {"visitor", "woke", "hatched"}     # news that does not wait for min_think_seconds
+DELTA = re.compile(r"(energy|comfort|curiosity) ([+-][\d.]+)")
+
+
+def changes(deltas):
+    return ", ".join("%s %+.1f" % nd for nd in deltas.items() if abs(nd[1]) >= 0.05)
+
+
+def compress(events):
+    """Runs of the same event become one entry: "[t440-449] you observed x10; curiosity -3.0"."""
+    groups = []
+    for t, text in events:
+        head, sums = text.split(";")[0], {n: float(d) for n, d in DELTA.findall(text)}
+        if groups and groups[-1]["head"] == head:
+            g = groups[-1]
+            g["t1"], g["n"] = t, g["n"] + 1
+            for n, d in sums.items():
+                g["sums"][n] = g["sums"].get(n, 0.0) + d
+        else:
+            groups.append({"t0": t, "t1": t, "head": head, "n": 1, "sums": sums})
+    return ["%s %s%s%s" % ("[t%d]" % g["t0"] if g["n"] == 1 else "[t%d-%d]" % (g["t0"], g["t1"]), g["head"],
+                           " x%d" % g["n"] if g["n"] > 1 else "", "; " + changes(g["sums"]) if changes(g["sums"]) else "")
+            for g in groups]
 
 
 def perceive(w, cfg, mem):
-    """The perception packet: compact plain text, identical in structure for every brain.
-    Visitor presence is never stated (§14); only what the visitor did since the last turn."""
-    pet, objs, tick = w["pet"], w["objects"], w["tick"]
+    """The perception packet: compact plain text, identical in structure for every brain. No line says what
+    the pet is, and visitor presence is never stated (v1 §14); only what the visitor did."""
+    pet, objs, tick, plan = w["pet"], w["objects"], w["tick"], w["plan"]
     nearest = min(objs, key=lambda o: dist(pet["pos"], objs[o]["pos"]))
     trend = pet["trend"]
     needs = ", ".join("%s %d%s" % (n, round(pet["needs"][n]),
@@ -29,16 +56,20 @@ def perceive(w, cfg, mem):
                       for n in NEEDS)
     visible = " · ".join("%s%s (%d,%d)" % (n, " (%s)" % o["state"] if "state" in o else "", *o["pos"])
                          for n, o in objs.items())
+    since = "".join("\n  " + e for t, e in w["events"] if t > w["seen"]) or " nothing"
+    older = compress([e for e in w["events"] if e[0] <= w["seen"]])
     close = [n for n, o in objs.items() if dist(pet["pos"], o["pos"]) <= RECALL_RANGE]
-    recalled = [e for e in w["events"][:-RECENT] if any(n in e[1] for n in close)][-RECALLED:]
-    recent = "  ".join("[t%d] %s" % (t, e) for t, e in recalled + w["events"][-RECENT:]) or "nothing yet"
+    recalled = [g for g in older[:-RECENT] if any(n in g for n in close)][-RECALLED:]
+    doing = "%s, step %d of %d" % (plan["intention"], plan["i"] + 1, len(plan["steps"])) if plan else "nothing"
     beliefs = "".join("\n  %s: %s" % (b["id"], b["statement"]) for b in mem.top()) or " none yet"
     return (
         "time: %s (tick %d)\n" % (clock(cfg, tick)["phase"], tick)
         + "you are at: (%d,%d)%s\n" % (*pet["pos"], ", near " + nearest if near(w, nearest) else "")
-        + "needs (100 is fully met): %s\n" % needs   # the scale is stated; M5's rehearsal showed it being read backwards
+        + "needs (100 is fully met): %s\n" % needs
         + "visible: %s\n" % visible
-        + "recent: %s\n" % recent
+        + "you are doing: %s\n" % doing
+        + "since you last thought:%s\n" % since
+        + "recent: %s\n" % ("  ".join(recalled + older[-RECENT:]) or "nothing yet")
         + "visitor: %s\n" % ("; ".join(w["inbox"]) or "nothing new")
         + "your beliefs:%s\n" % beliefs
         + "stage: %s. allowed actions: %s\n" % (pet["stage"], ", ".join(actions.STAGE_ACTIONS[pet["stage"]]))
@@ -102,61 +133,12 @@ def begin_tick(w, cfg):
         add_event(w, "morning came; the bowl is full")
 
 
-def step(w, cfg, turn, mem, visitor_present=False, pet_id=""):
-    """One tick for one pet. `turn` is the brain's reply: a dict, or a string saying why there is none
-    ("invalid json", "model unreachable"). Returns the journal record."""
-    tick, pet = w["tick"], w["pet"]
-    begin_tick(w, cfg)
-    before = dict(pet["needs"])
-    reason = turn if isinstance(turn, str) else actions.check(turn, w, mem)
-    turn = turn if isinstance(turn, dict) else {}
-    fx, text, used = {}, "nothing happened", None
-    if not reason:
-        was = {"needs": before, "bowl": w["objects"]["bowl"]["state"], "plant_by_window": growth.plant_by_window(w)}
-        text, fx, key = actions.apply(w, turn["action"], mem)
-        used = growth.exploit(w, cfg, turn["action"], was)
-        if used:
-            w["exploits"][used] += 1
-        if key:
-            gained = min(NOVELTY_MAX, (tick - w["seen"].get(key, -10**6)) / NOVELTY_RECHARGE)
-            fx["curiosity"] = fx.get("curiosity", 0) + gained
-            w["seen"][key] = tick
-    # What the room looked like when the outcome was decided; the day's journal is condensed from these.
-    nearest = min(w["objects"], key=lambda o: dist(pet["pos"], w["objects"][o]["pos"]))
-    context = ", ".join("%s %s" % (n, o["state"]) for n, o in w["objects"].items() if "state" in o) + \
+def describe(w):
+    """The room in a few words, as it was when an outcome was decided. The day's journal is condensed from these."""
+    pet, objs = w["pet"], w["objects"]
+    nearest = min(objs, key=lambda o: dist(pet["pos"], objs[o]["pos"]))
+    return ", ".join("%s %s" % (n, o["state"]) for n, o in objs.items() if "state" in o) + \
         "; at (%d,%d)%s" % (*pet["pos"], " near " + nearest if near(w, nearest) else "")
-    base, fired = drift(w), rules.fired(w, cfg)
-    if pet["stage"] == "egg":   # an egg is dormant: it watches, but nothing in the room reaches its needs yet
-        base, fired = dict.fromkeys(NEEDS, 0.0), []
-    pinned = set()   # needs already at 0 or 100 that could not show this tick's change
-    for n in NEEDS:
-        change = fx.get(n, 0) + base[n] + sum(r.delta for r in fired if r.need == n)
-        pet["needs"][n] = min(100.0, max(0.0, before[n] + change))
-        if abs(change) >= 0.5 and abs(pet["needs"][n] - before[n]) < 0.5:
-            pinned.add(n)
-    deltas = {n: round(pet["needs"][n] - before[n], 1) for n in NEEDS}
-    pet["trend"] = deltas
-    mark = genome.update_marks(w, cfg)
-    result, need = score(turn.get("expect"), deltas, w)
-    add_event(w, text + "".join("; " * (i == 0) + ", " * (i > 0) + "%s %+.1f" % nd
-                                for i, nd in enumerate((n, d) for n, d in deltas.items() if d)))
-    rec = {
-        "pet": pet_id, "tick": tick, "day": w["clock"]["day"], "phase": w["clock"]["phase"],
-        "stage": pet["stage"], "pos": list(pet["pos"]), "context": context,
-        "before": {n: round(v, 1) for n, v in before.items()},
-        "needs": {n: round(v, 1) for n, v in pet["needs"].items()},
-        "thought": str(turn.get("thought", ""))[:300], "action": turn.get("action"),
-        "expect": str(turn.get("expect", ""))[:200], "reason": reason, "feedback": text, "deltas": deltas,
-        "score": result,
-        "rule_tags": [r.id for r in fired],
-        # Only predictions about a need a hidden rule just moved count toward growth (§10).
-        # ... and only when the need had room to move: at 0 or 100 a correct prediction would look wrong.
-        "rule_scored": result != "unscorable" and need in {r.need for r in fired} - pinned,
-        "exploit": used, "mark": mark,
-        "visitor_present": visitor_present,
-    }
-    w["tick"] += 1
-    return rec
 
 
 class Pet:
@@ -169,13 +151,20 @@ class Pet:
         self.state_path = self.dir / "state.json"
         saved = json.loads(self.state_path.read_text()) if self.state_path.exists() else {}
         self.world = saved.get("world") or new_world(cfg)
+        self.world["thinking"] = None                                    # a thought in flight does not survive a restart
         self.brain.s = saved.get("brain") or self.brain.s
-        self.journal = deque(saved.get("journal", []), maxlen=30)        # what the view shows
-        self.window = deque(saved.get("window", []), maxlen=cfg["growth"]["window"])   # latest rule-scored results
+        self.journal = deque(saved.get("journal", []), maxlen=40)        # what the Lab tab shows: steps and intentions
+        self.window = deque(saved.get("window", []), maxlen=cfg["lab"]["window"])   # latest hidden-rule scores
         self.series = saved.get("series", [])                            # [tick, rolling accuracy]
         self.today = saved.get("today", [])                              # [tick, journal line, salience] since waking
-        self.night = None                                                # the running sleep task
+        self.thought = self.night = None                                 # the model call / night's work in flight
+        self.present = self.dirty = False
         self.remember_self()
+
+    # ---- records ----
+
+    def accuracy(self):
+        return round(100 * sum(self.window) / len(self.window)) if self.window else None
 
     def remember_self(self):
         me = self.world["pet"]
@@ -190,113 +179,292 @@ class Pet:
                             (self.id, w["tick"], w["clock"]["day"], json.dumps(w["pet"]["genome"]), cause, reason))
             self.db.commit()
 
-    def grow(self):
-        """The once-a-day stage check (§10), on waking."""
-        w, stage = self.world, growth.check(self)
-        if not stage:
-            return
-        old, w["pet"]["stage"] = w["pet"]["stage"], stage
-        add_event(w, "you hatched" if old == "egg" else "you have grown; you can do more now")
-        self.mem.journal({"pet": self.id, "tick": w["tick"], "type": "stage", "from": old, "to": stage})
-        self.remember_self()
-        if self.db:
-            self.db.execute("INSERT INTO stage_events VALUES (?,?,?,?,?,?,?)",
-                            (self.id, w["tick"], w["clock"]["day"], old, stage, self.accuracy(), json.dumps(w["exploits"])))
-            self.db.commit()
-
-    def accuracy(self):
-        return round(100 * sum(self.window) / len(self.window)) if self.window else None
-
-    async def tick(self, visitor_present=False):
-        w = self.world
-        if not w["sleep"] and sleep.should_sleep(w, self.cfg):
-            w["sleep"] = {"since": w["tick"], "day": w["clock"]["day"], "done": False}
-        if w["sleep"]:
-            return await self.sleep_tick()
-        packet = perceive(w, self.cfg, self.mem)
-        heard = w["inbox"][:]
-        turn = await self.brain.act(packet)
-        rec = step(w, self.cfg, turn, self.mem, visitor_present, self.id)
-        del w["inbox"][:len(heard)]   # visits that arrived while it was thinking wait for the next packet
-        if rec["rule_scored"]:
-            self.window.append(rec["score"] == "correct")
-            self.series.append([rec["tick"], self.accuracy()])
-            del self.series[:-600]
-        said = rec["action"].get("text", "") if not rec["reason"] and rec["action"]["type"] == "speak" else ""
-        name = re.search(r"\bmy name is ([A-Za-z][\w' -]{0,29})", said, re.I)
-        if name:
-            w["pet"]["name"] = name.group(1).strip()
-            self.mem.update_self(name=w["pet"]["name"], named_at=rec["tick"])
-        changes = ", ".join("%s %+.1f" % nd for nd in rec["deltas"].items() if nd[1])
-        self.today += [[rec["tick"], "[t%d] %s | visitor %s" % (rec["tick"], rec["phase"], v), 99] for v in heard]
-        if rec["mark"]:
-            self.log_body("mark: " + rec["mark"])
-        self.today.append([rec["tick"], "[t%d] %s | %s | %s | %s" % (rec["tick"], rec["phase"], rec["context"],
-                                                                 rec["feedback"], changes or "no change"),
-                           max(abs(d) for d in rec["deltas"].values())])
-        del self.today[:-800]
+    def note(self, rec):
         self.journal.append(rec)
         self.mem.journal(rec)
-        if self.db:
-            log.record(self.db, rec)
-        self.save()
-        return rec
-
-    async def sleep_tick(self):
-        """Asleep: the clock moves and energy returns, but the pet takes no turn."""
-        w = self.world
-        if not w["sleep"]["done"] and self.night is None:
-            self.night = asyncio.create_task(sleep.night(self))
-        await asyncio.sleep(0)   # let the night's work start, even in a headless loop
-        begin_tick(w, self.cfg)
-        w["pet"]["needs"]["energy"] = min(100.0, w["pet"]["needs"]["energy"] + self.cfg["sleep"]["restore_per_tick"])
-        w["tick"] += 1
-        if w["sleep"]["done"] and w["clock"]["phase"] != "night":
-            dream = w["last_night"]["dream"]
-            w["events"] = []   # the reset: only journal, beliefs and self carry into the new day
-            add_event(w, "you woke up" + ('. you remember thinking: "%s"' % dream if dream else ""))
-            w["sleep"], self.night, self.today = None, None, []
-            self.grow()
-        self.save()
+        self.dirty = True
 
     def save(self):
         tmp = self.state_path.with_suffix(".tmp")
         tmp.write_text(json.dumps({"world": self.world, "brain": self.brain.s, "journal": list(self.journal),
                                    "window": list(self.window), "series": self.series, "today": self.today}))
         tmp.replace(self.state_path)
+        self.dirty = False
+
+    # ---- growth ----
+
+    def grow(self):
+        w, stage = self.world, growth.earned(self.world, self.cfg)
+        if not stage:
+            return
+        old, w["pet"]["stage"] = w["pet"]["stage"], stage
+        add_event(w, "you hatched" if old == "egg" else "you feel bigger; you can do new things")
+        w["news"].append("hatched")
+        self.note({"pet": self.id, "tick": w["tick"], "type": "stage", "from": old, "to": stage})
+        self.remember_self()
+        if self.db:
+            self.db.execute("INSERT INTO stage_events VALUES (?,?,?,?,?,?,?)",
+                            (self.id, w["tick"], w["clock"]["day"], old, stage, self.accuracy(), json.dumps(w["exploits"])))
+            self.db.commit()
+
+    # ---- the mind: when to think, and what comes back ----
+
+    def wants_thought(self):
+        """Why the model should be asked now, or None (SPEC-v2 §3)."""
+        w, c = self.world, self.cfg["clock"]
+        quiet = (w["tick"] - w["last_call"]) * c["tick_seconds"]
+        if URGENT & set(w["news"]):
+            return "something happened"
+        if quiet < (0 if getattr(self.brain, "instant", False) else c["min_think_seconds"]):
+            return None
+        if not w["plan"]:
+            return "nothing to do"
+        if w["news"]:
+            return "something changed"
+        return "a long quiet" if quiet >= c["max_idle_seconds"] else None
+
+    def think(self, why):
+        w = self.world
+        packet = perceive(w, self.cfg, self.mem)
+        self.today += [[w["tick"], "[t%d] %s | visitor %s" % (w["tick"], w["clock"]["phase"], v), 99] for v in w["inbox"]]
+        w["inbox"], w["news"], w["seen"], w["last_call"], w["thinking"] = [], [], w["tick"], w["tick"], why
+        self.asked = time.monotonic()
+        self.thought = asyncio.create_task(self.brain.act(packet))
+
+    def adopt(self):
+        """Take the model's reply as the new intention. Until it arrives the pet stands idle."""
+        w = self.world
+        try:
+            turn = self.thought.result()
+        except Exception:
+            logging.exception("thought failed for %s", self.id)
+            turn = "model unreachable"
+        why, w["thinking"], self.thought = w["thinking"], None, None
+        failed = turn if isinstance(turn, str) else actions.check_plan(turn)
+        hour = ticks(self.cfg, 3600)
+        w["calls"] = [t for t in w["calls"] if t > w["tick"] - hour] + [w["tick"]]
+        if self.db:
+            self.db.execute("INSERT INTO calls VALUES (?,?,?,?,?)",
+                            (self.id, w["tick"], why, round(time.monotonic() - self.asked, 2), failed))
+            self.db.commit()
+        if failed:   # whatever it was doing carries on; it is asked again after min_think_seconds
+            self.note({"pet": self.id, "tick": w["tick"], "type": "no_intention", "reason": failed, "why": why})
+            return
+        if w["plan"]:
+            self.end_plan("interrupted")
+        w["plan"] = {
+            "thought": actions.clean(str(turn.get("thought", "")), 300), "intention": actions.clean(turn["intention"], 120),
+            "steps": turn["steps"], "expect": actions.clean(turn["expect"], 200), "why": why,
+            "i": 0, "left": None,                       # the step it is on; ticks left doing it (None while walking there)
+            "started": w["tick"], "needs0": dict(w["pet"]["needs"]), "tags": [],
+            "step_needs0": None, "step_tags": [],
+        }
+        self.dirty = True
+
+    def end_plan(self, ended):
+        """The intention is over: score what it expected against what happened across the whole of it."""
+        w = self.world
+        plan, needs = w["plan"], w["pet"]["needs"]
+        deltas = {n: round(needs[n] - plan["needs0"][n], 1) for n in NEEDS}
+        result, need = score(plan["expect"], deltas, w)
+        # Only predictions about a need a hidden rule moved count as hidden-rule predictions, and only when
+        # the need had room to move: at 0 or 100 a correct prediction would look wrong.
+        moved = {r.need for r in rules.RULES if r.id in plan["tags"]} - {n for n in NEEDS if not 0.0 < needs[n] < 100.0}
+        rec = {
+            "type": "intention", "pet": self.id, "tick": w["tick"], "started": plan["started"],
+            "day": w["clock"]["day"], "phase": w["clock"]["phase"], "why": plan["why"], "thought": plan["thought"],
+            "intention": plan["intention"], "steps": plan["steps"], "expect": plan["expect"], "ended": ended,
+            "deltas": deltas, "score": result, "rule_tags": plan["tags"],
+            "rule_scored": result != "unscorable" and need in moved, "visitor_present": self.present,
+        }
+        if rec["rule_scored"]:
+            self.window.append(result == "correct")
+            self.series.append([w["tick"], self.accuracy()])
+            del self.series[:-600]
+        w["plan"], w["last_plan"] = None, {"intention": plan["intention"], "ended": ended, "score": result}
+        self.note(rec)
+        if self.db:
+            log.record_intention(self.db, rec)
+
+    # ---- the body: carrying a step out ----
+
+    def advance(self):
+        """One tick of the current step: walk one tile toward where it happens, or spend a tick doing it."""
+        w = self.world
+        plan, pet = w["plan"], w["pet"]
+        a = plan["steps"][plan["i"]]
+        if plan["left"] is None:
+            if plan["step_needs0"] is None:   # the step begins
+                plan["step_needs0"], plan["step_tags"] = dict(pet["needs"]), []
+                if actions.check(a, w, self.mem):
+                    return self.finish_step(a)
+            goal = actions.destination(w, a)
+            if goal and pet["pos"] != goal:   # one tile a tick, so it is seen walking
+                pet["pos"] = [p + (g > p) - (g < p) for p, g in zip(pet["pos"], goal)]
+                return
+            plan["left"] = ticks(self.cfg, self.cfg["steps"][a["type"]])
+        plan["left"] -= 1
+        if plan["left"] <= 0:
+            self.finish_step(a)
+
+    def finish_step(self, a):
+        """The step happens now (or turns out not to be possible), and is written down."""
+        w = self.world
+        plan, pet = w["plan"], w["pet"]
+        reason = actions.check(a, w, self.mem)   # checked again: the room may have changed while it walked
+        text, used, fired = "nothing happened", None, []
+        if not reason:
+            was = {"needs": dict(pet["needs"]), "bowl": w["objects"]["bowl"]["state"],
+                   "plant_by_window": growth.plant_by_window(w)}
+            text, fx, key = actions.apply(w, a, self.mem)
+            if a["type"] == "rest":   # the action table says what 10 s of rest gives
+                fx = {n: v * self.cfg["steps"]["rest"] / 10 for n, v in fx.items()}
+            if key:
+                idle = (w["tick"] - w["seen_at"].get(key, -10**6)) * self.cfg["clock"]["tick_seconds"]
+                fx["curiosity"] = fx.get("curiosity", 0) + min(NOVELTY_MAX, idle / NOVELTY_SECONDS)
+                w["seen_at"][key] = w["tick"]
+            fired = rules.fired(w, self.cfg, standing=False)
+            for n in NEEDS:
+                change = fx.get(n, 0) + sum(r.delta for r in fired if r.need == n)
+                pet["needs"][n] = min(100.0, max(0.0, pet["needs"][n] + change))
+            used = growth.exploit(w, self.cfg, a, was)
+            if used:
+                w["exploits"][used] += 1
+            name = re.search(r"\bmy name is ([A-Za-z][\w' -]{0,29})", a.get("text", "") if a["type"] == "speak" else "", re.I)
+            if name:
+                pet["name"] = name.group(1).strip()
+                self.mem.update_self(name=pet["name"], named_at=w["tick"])
+        else:
+            text = "you could not %s (%s)" % (" ".join(str(v) for v in a.values()), reason)
+        tags = plan["step_tags"] + [r.id for r in fired]
+        plan["tags"] += [t for t in tags if t not in plan["tags"]]
+        deltas = {n: round(pet["needs"][n] - plan["step_needs0"][n], 1) for n in NEEDS}
+        add_event(w, text + ("; " + changes(deltas) if changes(deltas) else ""))
+        rec = {
+            "type": "step", "pet": self.id, "tick": w["tick"], "day": w["clock"]["day"], "phase": w["clock"]["phase"],
+            "stage": pet["stage"], "pos": list(pet["pos"]), "context": describe(w), "intention": plan["intention"],
+            "step": plan["i"] + 1, "of": len(plan["steps"]), "action": a, "reason": reason, "feedback": text,
+            "deltas": deltas, "needs": {n: round(v, 1) for n, v in pet["needs"].items()},
+            "rule_tags": tags, "exploit": used, "visitor_present": self.present,
+        }
+        self.today.append([w["tick"], "[t%d] %s | %s | %s | %s" % (w["tick"], rec["phase"], rec["context"], text,
+                                                                 changes(deltas) or "no change"),
+                           max(abs(d) for d in deltas.values())])
+        del self.today[:-800]
+        self.note(rec)
+        if self.db:
+            log.record(self.db, rec)
+        plan["i"], plan["left"], plan["step_needs0"] = plan["i"] + 1, None, None
+        if reason:
+            self.end_plan("not possible: " + reason)
+        elif plan["i"] == len(plan["steps"]):
+            self.end_plan("done")
+
+    # ---- one tick ----
+
+    def live(self):
+        """What a waking tick does to the needs: drift and the standing hidden rules, at their per-10 s rates."""
+        w, dt = self.world, self.cfg["dt"]
+        needs, base, fired = w["pet"]["needs"], drift(w), rules.fired(w, self.cfg, standing=True)
+        rate = {n: base[n] + sum(r.delta for r in fired if r.need == n) for n in NEEDS}
+        for n in NEEDS:
+            needs[n] = min(100.0, max(0.0, needs[n] + rate[n] * dt))
+        w["pet"]["trend"] = rate
+        if w["plan"] and w["plan"]["step_needs0"] is not None:
+            w["plan"]["step_tags"] += [r.id for r in fired if r.id not in w["plan"]["step_tags"]]
+        elif w["plan"]:
+            w["plan"]["tags"] += [r.id for r in fired if r.id not in w["plan"]["tags"]]
+
+    def notice(self, before):
+        """Things that are reasons to think again (SPEC-v2 §3): a need crossing 30 or 80, a change of phase."""
+        w = self.world
+        for n in NEEDS:
+            now = w["pet"]["needs"][n]
+            if before[n] >= 30 > now or before[n] < 80 <= now:
+                add_event(w, "%s %s" % (n, "fell below 30" if now < 30 else "rose above 80"))
+                w["news"].append("need")
+        if w["clock"]["phase"] != w["phase_seen"]:
+            w["phase_seen"] = w["clock"]["phase"]
+            add_event(w, "it became " + w["phase_seen"])
+            w["news"].append("phase")
+        mark = genome.update_marks(w, self.cfg)
+        if mark:
+            self.note({"pet": self.id, "tick": w["tick"], "type": "mark", "mark": mark})
+            self.log_body("mark: " + mark)
+
+    async def tick(self, visitor_present=False):
+        await asyncio.sleep(0)   # let a finished thought or night's work land
+        w, self.present = self.world, visitor_present
+        begin_tick(w, self.cfg)
+        if w["pet"]["stage"] == "egg":
+            self.grow()          # an egg is dormant: no model call, and nothing in the room reaches its needs
+        elif w["sleep"] or (not self.thought and sleep.should_sleep(w, self.cfg)):
+            self.sleep_tick()
+        else:
+            before = dict(w["pet"]["needs"])
+            self.live()
+            if self.thought:
+                if self.thought.done():
+                    self.adopt()
+            elif w["plan"]:
+                self.advance()
+            self.notice(before)
+            why = None if self.thought else self.wants_thought()
+            if why:
+                self.think(why)
+        w["tick"] += 1
+        if self.dirty or w["tick"] % 5 == 0:   # every tick would be a lot of disk for a two-second clock
+            self.save()
+
+    def sleep_tick(self):
+        """Asleep: the clock moves and energy returns, but the pet does nothing (v1 §9)."""
+        w = self.world
+        if not w["sleep"]:
+            if w["plan"]:
+                self.end_plan("interrupted")
+            w["sleep"] = {"since": w["tick"], "day": w["clock"]["day"], "done": False}
+            self.dirty = True
+        if not w["sleep"]["done"] and self.night is None:
+            self.night = asyncio.create_task(sleep.night(self))
+        needs = w["pet"]["needs"]
+        needs["energy"] = min(100.0, needs["energy"] + self.cfg["sleep"]["restore_per_10s"] * self.cfg["dt"])
+        if w["sleep"]["done"] and w["clock"]["phase"] != "night":
+            dream = w["last_night"]["dream"]
+            w["events"] = []   # the reset: only journal, beliefs and self carry into the new day
+            add_event(w, "you woke up" + ('. you remember thinking: "%s"' % dream if dream else ""))
+            w["news"].append("woke")
+            w["sleep"], w["phase_seen"], self.night, self.today, self.dirty = None, w["clock"]["phase"], None, [], True
 
 
 async def main():
     from .brains.twin import Twin
     ap = argparse.ArgumentParser()
-    ap.add_argument("--ticks", type=int, default=3000)
+    ap.add_argument("--minutes", type=int, default=240, help="real minutes of life to run through")
     args = ap.parse_args()
     cfg = load_config()
     with tempfile.TemporaryDirectory() as d:
         pet = Pet("twin", cfg, Twin(cfg), d, log.open_db(Path(d) / "pet.db"))
-        tags, scores, reasons, distress, asleep = Counter(), Counter(), Counter(), Counter(), 0
-        for i in range(args.ticks):
+        n, distress, asleep = ticks(cfg, args.minutes * 60), Counter(), 0
+        for i in range(n):
             # A scripted visitor so every rule gets exercised: two feeds close together, plant to the window.
-            if i % 240 in (0, 6):
+            if i % ticks(cfg, 2400) in (0, ticks(cfg, 60)):
                 actions.visit(pet.world, {"type": "feed"})
-            if i == 150:
+            if i == ticks(cfg, 1500):
                 actions.visit(pet.world, {"type": "place", "object": "plant", "tile": [1, 4]})
-            rec = await pet.tick()
-            if not rec:
-                asleep += 1
-                continue
-            tags.update(rec["rule_tags"])
-            scores[rec["score"]] += 1
-            reasons[rec["reason"]] += 1
-            distress.update(n for n, v in rec["needs"].items() if v < 20)
-        print("ticks %d = %.1f world days, %d asleep" % (args.ticks, args.ticks / cfg["ticks_per_day"], asleep))
-        print("rule fired on ticks:", dict(tags))
-        print("scores:", dict(scores), "| rejected:", {k: v for k, v in reasons.items() if k})
-        print("rule-tagged accuracy (rolling 50):", pet.accuracy(), "% over", len(pet.series), "scored")
-        print("share of ticks in distress:", {n: "%.0f%%" % (100 * distress[n] / args.ticks) for n in NEEDS})
-        print("beliefs:")
-        for b in pet.mem.active():
-            print("  %s [t%d] %s" % (b["id"], b["created"], b["statement"]))
+            await pet.tick()
+            asleep += bool(pet.world["sleep"])
+            distress.update(k for k, v in pet.world["pet"]["needs"].items() if v < 20)
+        db = pet.db
+        print("%d minutes = %.1f world days, %d%% asleep, stage %s" % (
+            args.minutes, n / cfg["ticks_per_day"], 100 * asleep / n, pet.world["pet"]["stage"]))
+        print("steps:", dict(db.execute("SELECT json_extract(action, '$.type'), count(*) FROM decisions GROUP BY 1").fetchall()),
+              "| not possible:", db.execute("SELECT count(*) FROM decisions WHERE reason IS NOT NULL").fetchone()[0])
+        print("intentions:", dict(db.execute("SELECT score, count(*) FROM intentions GROUP BY 1").fetchall()),
+              "| ended:", dict(db.execute("SELECT substr(ended, 1, 12), count(*) FROM intentions GROUP BY 1").fetchall()))
+        print("hidden rules met:", dict(Counter(t for (tags,) in db.execute("SELECT rule_tags FROM intentions") for t in tags.split(",") if t)))
+        print("hidden-rule accuracy (rolling %d):" % cfg["lab"]["window"], pet.accuracy(), "% over", len(pet.series), "scored")
+        print("share of ticks in distress:", {k: "%.0f%%" % (100 * distress[k] / n) for k in NEEDS})
+        print("beliefs:", [b["statement"] for b in pet.mem.active()][:6])
         print("last packet:\n" + perceive(pet.world, cfg, pet.mem))
 
 

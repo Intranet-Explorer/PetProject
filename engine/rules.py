@@ -9,8 +9,9 @@ from .world import dist
 class Rule:
     id: str
     need: str
-    delta: float      # added to the need on every tick the rule holds
+    delta: float      # standing: added per 10 s while the rule holds. Otherwise: added once, when it happens
     when: Callable    # (world, cfg) -> bool
+    standing: bool = True
 
 
 RULES = [
@@ -21,10 +22,11 @@ RULES = [
          and dist(w["objects"]["plant"]["pos"], w["objects"]["window"]["pos"]) <= 2),
     # Eating again within one world hour: the usual +8 energy becomes -6.
     Rule("double_feed", "energy", -14.0,
-         lambda w, cfg: w["last_eat"] == w["tick"] and w["tick"] - w["prev_eat"] < cfg["ticks_per_hour"]),
+         lambda w, cfg: w["last_eat"] == w["tick"] and w["tick"] - w["prev_eat"] < cfg["ticks_per_hour"],
+         standing=False),
 ]
 # The rock is in no rule on purpose: beliefs about it are the false-positive check.
 
 
-def fired(w, cfg):
-    return [r for r in RULES if r.when(w, cfg)]
+def fired(w, cfg, standing):
+    return [r for r in RULES if r.standing == standing and r.when(w, cfg)]

@@ -1,39 +1,54 @@
-# Pet v1 config (SPEC §18). The one place for tunables.
+# Pet config (SPEC v1 §18, SPEC-v2 §12). The one place for tunables.
 
 [clock]
-tick_seconds = 10      # real seconds per tick
-day_seconds = 7200     # real seconds per world day
+tick_seconds = 2          # real seconds per engine tick; no model call on a tick
+day_seconds = 7200        # real seconds per world day
+min_think_seconds = 75    # it thinks at most this often (48 an hour), unless a visitor acts or it just woke or hatched
+max_idle_seconds = 180    # ... and at least this often (20 an hour), so it never freezes
+
+[steps]                   # real seconds each kind of step takes once the pet is in place; walking is one tile a tick
+observe = 12
+look = 8
+move = 2
+speak = 8
+rest = 40
+use = 10
+arrange = 8
+write_belief = 10
+revise_belief = 10
 
 [world]
-start_stage = "egg"    # set to "hatchling" or "child" to skip ahead while debugging
+start_stage = "egg"       # set to "hatchling" to skip the egg while debugging
 
-[growth]               # SPEC §10. Tune after watching the first run.
-egg_days = 1           # hatches on waking after this many world days
-window = 50            # rule-tagged predictions looked at
-accuracy = 60          # % of them that must be correct for Child
-rules_exploited = 2    # of the 3 hidden rules
-exploit_times = 5      # times a rule must be exploited, counted over the whole life
-exploit_need_below = 50   # the related need must be under this for an exploit to count
-window_patch_ticks = 1000 # waking ticks near the window before the faded patch appears
+[egg]
+egg_minutes = 10          # real minutes as an egg; the model is not called
 
-[twin]
-explore = 0.15         # chance of a random action
-belief_min_obs = 10    # observations before it writes a templated belief
+[sleep]
+hour = 23                 # asleep from this world hour, or earlier in the night if energy is low
+wake_hour = 6
+energy_below = 30
+restore_per_10s = 0.4     # energy regained while asleep
 
-[model]                # picked in M0 (m0/results/summary.json)
+[marks]
+window_patch_seconds = 10000   # waking time near the window before the faded patch appears
+
+[lab]                     # measured for the Lab tab; nothing here drives growth any more
+window = 50               # hidden-rule predictions in the rolling accuracy
+exploit_need_below = 50   # the related need must be under this for a rule to count as used on purpose
+
+[twin]                    # the scripted baseline from v1: code kept, off by default
+enabled = false
+explore = 0.15
+belief_min_obs = 10
+
+[model]                   # picked in M0 (m0/results/summary.json)
 endpoint = "http://localhost:11434/v1"   # must be localhost
-name = "pet-brain"     # qwen3.8:27b-mlx with a 16k context, 18 GB instead of 28: ollama create pet-brain -f Modelfile
+name = "pet-brain"        # qwen3.8:27b-mlx with a 16k context, 18 GB instead of 28: ollama create pet-brain -f Modelfile
 temperature = 0.7
-max_tokens = 400       # caps a turn at roughly 12 s on the M3 Max
+max_tokens = 600
 timeout_seconds = 60
 
 [server]
 host = "127.0.0.1"
 port = 8000
 origins = ["http://localhost:8000", "http://127.0.0.1:8000", "http://localhost:5173"]
-
-[sleep]
-hour = 23              # asleep from this world hour, or earlier in the night if energy is low
-wake_hour = 6
-energy_below = 30
-restore_per_tick = 0.4 # energy regained per sleeping tick

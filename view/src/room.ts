@@ -63,7 +63,10 @@ export class Room {
   private wobble = 0;
   private pet = new Container();
   private bubble = new Container();
+  private dots = new Graphics();
   private goal = [0, 0];
+  private pace = 2;
+  private thinking = false;
   private placed = false;
   private distressed = false;
   private energy = 50;
@@ -78,7 +81,9 @@ export class Room {
     for (let j = 1; j < h; j++) floor.rect(PAD, PAD + j * T, w * T, 1).fill({ color: INK, alpha: 0.07 });
     floor.rect(width - PAD + 4, PAD + 4 * T + 4, 14, T - 8).fill(0x8a5a36).stroke({ width: 3, color: INK }); // the door
     this.shade.rect(0, 0, width, height).fill(0x0b1030);
-    this.pet.addChild(this.body);
+    this.body.scale.set(2);   // the creature is the focus: twice its v1 size
+    this.pet.addChild(this.body, this.dots);
+    for (const x of [-12, 0, 12]) this.dots.circle(x, -78, 4).fill(INK);
     this.app.stage.addChild(floor, this.things, this.shade, this.pet, this.bubble);
     this.app.stage.eventMode = "static";
     this.app.stage.hitArea = this.app.screen;
@@ -87,19 +92,24 @@ export class Room {
       if (x >= 0 && x < w && y >= 0 && y < h) this.onTile(x, y);
     });
     this.app.ticker.add((t) => {
-      // Display only: walk toward the goal, bob faster with more energy, tremble in distress.
-      const k = Math.min(1, t.deltaMS / 250), now = performance.now();
-      this.pet.x += (this.goal[0] - this.pet.x) * k;
-      this.pet.y += (this.goal[1] - this.pet.y) * k;
-      this.body.y = this.asleep ? 0 : Math.sin(now / (900 - this.energy * 5)) * 3;
+      // Display only: walk a tile per engine tick, bob faster with more energy, tremble in distress.
+      const now = performance.now(), [dx, dy] = [this.goal[0] - this.pet.x, this.goal[1] - this.pet.y];
+      const far = Math.hypot(dx, dy), stride = Math.min(far, (T * 1.3 * t.deltaMS) / (this.pace * 1000));
+      if (far > 0.5) this.pet.position.set(this.pet.x + (dx / far) * stride, this.pet.y + (dy / far) * stride);
+      const hop = far > 2 ? Math.abs(Math.sin(now / 130)) * 5 : 0;
+      this.body.y = this.asleep ? 0 : Math.sin(now / (900 - this.energy * 5)) * 3 - hop;
       this.body.x = this.distressed ? Math.sin(now / 35) * 1.5 : 0;
       const squash = this.asleep ? 0 : Math.sin(now / 260) * this.wobble * 0.07;
-      this.body.scale.set(1 + squash, 1 - squash);
-      this.bubble.position.set(this.pet.x, this.pet.y - 30);
+      this.body.scale.set(2 * (1 + squash), 2 * (1 - squash));
+      this.dots.visible = this.thinking;
+      this.dots.alpha = 0.35 + 0.35 * (1 + Math.sin(now / 250));
+      this.bubble.position.set(this.pet.x, this.pet.y - 58);
     });
   }
 
-  update(w: World) {
+  update(w: World, tickSeconds: number) {
+    this.pace = tickSeconds;
+    this.thinking = !!w.thinking && !w.sleep;
     for (const c of this.things.removeChildren()) c.destroy();
     const g = new Graphics();
     this.things.addChild(g);
@@ -123,7 +133,7 @@ export class Room {
     this.body.draw(w.pet.genome, w.pet.stage, w.pet.needs.comfort, !!w.sleep);
 
     for (const c of this.bubble.removeChildren()) c.destroy();
-    if (w.pet.said && w.tick - w.pet.said[0] <= 3) {
+    if (w.pet.said && (w.tick - w.pet.said[0]) * tickSeconds <= 12) {
       const text = new Text({ text: w.pet.said[1], style: { fontFamily: "system-ui, sans-serif", fontSize: 13, fill: INK, wordWrap: true, wordWrapWidth: 200 } });
       text.anchor.set(0.5, 1);
       const box = new Graphics().roundRect(-text.width / 2 - 8, -text.height - 6, text.width + 16, text.height + 12, 8).fill(0xffffff).stroke({ width: 2, color: INK });

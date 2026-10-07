@@ -1,6 +1,6 @@
-"""The model brain (SPEC §7): a local model behind an OpenAI-compatible endpoint.
+"""The model brain (v1 §7, SPEC-v2 §3): a local model behind an OpenAI-compatible endpoint.
 It is given its situation, its allowed actions and the output format. Nothing tells it what it is.
-The prompt and settings are the ones tested in M0 (m0/model_test.py)."""
+Settings are the ones tested in M0 (m0/model_test.py); since v2 a turn returns an intention of several steps."""
 import asyncio
 import json
 import logging
@@ -11,26 +11,30 @@ from urllib.parse import urlparse
 
 from ..actions import MOVABLE
 
+SHAPES = {   # how each action is written, shown only for the actions the stage allows
+    "observe": '{"type": "observe"}',
+    "look": '{"type": "look", "target": something visible}',
+    "move": '{"type": "move", "target": object} or {"type": "move", "tile": [x, y]}',
+    "speak": '{"type": "speak", "text": at most 120 chars}',
+    "rest": '{"type": "rest"}',
+    "use": '{"type": "use", "target": object}',
+    "arrange": '{"type": "arrange", "object": object, "tile": [x, y]}',
+    "write_belief": '{"type": "write_belief", "statement": text}',
+    "revise_belief": '{"type": "revise_belief", "id": belief id, "statement": new text or "discard"}',
+}
 FORMAT = """
 Reply with one JSON object and nothing else:
-{"thought": "<short, why you are doing this>", "action": {"type": "<one allowed action>", <params>}, "expect": "<what you expect to happen>"}
+{"thought": "<short, why>", "intention": "<what you mean to do, in a few words>", "steps": [<up to 5 actions, carried out in order; a few steps make a plan>], "expect": "<what you expect to have happened once the steps are done>"}
 "expect" must name a need (energy, comfort, curiosity) and which way it goes, or a visible change.
-action params:
-  observe: none
-  look: "target": something visible
-  move: "target": object, or "tile": [x, y]
-  speak: "text": at most 120 chars
-  rest: none
-  use: "target": object
-  arrange: "object": object, "tile": [x, y]
-  write_belief: "statement": text
-  revise_belief: "id": belief id, "statement": new text or "discard"
+each step is one action:
+%s
 """
 
 
 def schema(allowed, objects, belief_ids):
-    """Constrained output with one variant per allowed action, built from what the packet shows.
-    A turn cannot name a locked action, leave out a parameter, or point at something that is not there."""
+    """Constrained output (SPEC-v2 §3): an intention of 1 to 5 steps, each step one variant per allowed action,
+    built from what the packet shows. A step cannot name a locked action, leave out a parameter, or point at
+    something that is not there."""
     obj = lambda **props: {"type": "object", "properties": props, "required": list(props), "additionalProperties": False}
     tile = {"type": "array", "items": {"type": "integer"}, "minItems": 2, "maxItems": 2}
     text = {"type": "string", "minLength": 1}
@@ -45,12 +49,14 @@ def schema(allowed, objects, belief_ids):
         "write_belief": [obj(type={"const": "write_belief"}, statement=text)],
         "revise_belief": [obj(type={"const": "revise_belief"}, id={"enum": belief_ids}, statement=text)] if belief_ids else [],
     }
-    return obj(thought={"type": "string"}, action={"anyOf": [v for a in allowed for v in variants[a]]},
-               expect={"type": "string"})
+    step = {"anyOf": [v for a in allowed for v in variants[a]]}
+    return obj(thought={"type": "string"}, intention=text,
+               steps={"type": "array", "items": step, "minItems": 1, "maxItems": 5}, expect={"type": "string"})
 
 
 CONSOLIDATE = """
-Reply with one JSON object and nothing else, holding at most 3 belief changes. Keep each statement short:
+Reply with one JSON object and nothing else, holding at most 3 belief changes.
+Each is a short statement about how something in your world works, or about yourself; not a list of what happened:
 {"changes": [{"type": "write_belief", "statement": "<text>"}, {"type": "revise_belief", "id": "<belief id>", "statement": "<new text or discard>"}]}
 """
 CHANGES = {
@@ -107,12 +113,13 @@ class Model:
         return reply
 
     async def act(self, packet):
-        prompt = packet + FORMAT
+        """One model turn: the packet in, an intention out. Returns the turn, or a string saying why there is none."""
         line = dict(l.split(": ", 1) for l in packet.splitlines() if ": " in l and not l.startswith(" "))
-        shape = schema(line["stage"].split("allowed actions: ")[1].split(", "),
-                       [o.split(" (")[0] for o in line["visible"].split(" · ")],
+        allowed = line["stage"].split("allowed actions: ")[1].split(", ")
+        prompt = packet + FORMAT % "\n".join("  " + SHAPES[a] for a in allowed)
+        shape = schema(allowed, [o.split(" (")[0] for o in line["visible"].split(" · ")],
                        re.findall(r"^  (b\d+):", packet, re.M))
-        for _ in range(2):   # one retry, then the turn is a no-op
+        for _ in range(2):   # one retry, then there is no new intention this time
             try:
                 turn = parse(await asyncio.to_thread(self.chat, prompt, shape))
             except Exception as e:

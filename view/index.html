@@ -11,61 +11,59 @@
     <div class="brand">
       <h1 id="petName">Pet</h1>
       <span id="petStage"></span>
-      <nav id="pets" aria-label="Which pet"></nav>
     </div>
     <div id="status" class="chips"><span class="chip">connecting…</span></div>
+    <button id="drawerBtn" aria-expanded="false" aria-controls="drawer">Mind and lab</button>
   </header>
   <main>
-    <div class="col">
-      <div id="room" aria-label="The room"></div>
-      <section class="controls" aria-label="Visitor controls">
-        <div class="row">
-          <button id="feed">Feed</button>
-          <button id="poke">Poke</button>
-          <button id="window">Open window</button>
-          <span class="gap"></span>
-          <label for="placeObject">Move the</label>
-          <select id="placeObject"></select>
-          <button id="placeBtn" aria-pressed="false">Pick a tile</button>
-        </div>
-        <form id="talkForm" class="row">
-          <input id="talkText" maxlength="200" placeholder="Say something to it" aria-label="Talk">
-          <button>Say</button>
-        </form>
-      </section>
-    </div>
-    <div class="col">
-      <section class="card" aria-label="Mind">
-        <div id="needs"></div>
-        <p id="thought"></p>
-        <dl id="mind"></dl>
-      </section>
-      <div>
-        <div class="tabs" role="tablist">
-          <button role="tab" data-tab="journal">Journal</button>
-          <button role="tab" data-tab="beliefs">Beliefs</button>
-          <button role="tab" data-tab="night">Last night</button>
-          <button role="tab" data-tab="compare">Compare</button>
-        </div>
-        <section class="panel" data-panel="journal">
-          <label class="filter"><input type="checkbox" id="ruleOnly"> Only moments a hidden rule fired</label>
-          <ol id="journal"></ol>
-        </section>
-        <section class="panel" data-panel="beliefs" hidden>
-          <ul id="beliefs"></ul>
-          <details><summary id="discardedLabel">Discarded</summary><ul id="discarded"></ul></details>
-        </section>
-        <section class="panel" data-panel="night" hidden>
-          <div id="lastNight"></div>
-        </section>
-        <section class="panel" data-panel="compare" hidden>
-          <table id="compare"></table>
-          <canvas id="chart" width="640" height="230" aria-label="Rule-tagged prediction accuracy over time"></canvas>
-          <p class="hint">Share of the last 50 predictions that were right, counting only predictions about a need a hidden rule had just moved. The dashed line is what Child requires.</p>
-        </section>
-      </div>
-    </div>
+    <div id="room" aria-label="The room"></div>
+    <section class="controls" aria-label="Visitor controls">
+      <button id="feed">Feed</button>
+      <button id="poke">Poke</button>
+      <button id="window">Open window</button>
+      <span class="place">
+        <label for="placeObject">Move the</label>
+        <select id="placeObject"></select>
+        <button id="placeBtn" aria-pressed="false">Pick a tile</button>
+      </span>
+      <form id="talkForm">
+        <input id="talkText" maxlength="200" placeholder="Say something to it" aria-label="Talk">
+        <button>Say</button>
+      </form>
+    </section>
   </main>
+  <aside id="drawer" hidden aria-label="Mind and lab">
+    <div class="tabs" role="tablist">
+      <button role="tab" data-tab="mind">Mind</button>
+      <button role="tab" data-tab="diary">Diary</button>
+      <button role="tab" data-tab="beliefs">Beliefs</button>
+      <button role="tab" data-tab="lab">Lab</button>
+      <button id="drawerClose" aria-label="Close">×</button>
+    </div>
+    <section class="panel" data-panel="mind">
+      <div id="needs"></div>
+      <h2 id="doing"></h2>
+      <p id="thought"></p>
+      <ol id="steps"></ol>
+      <p id="expecting" class="hint"></p>
+      <p id="before" class="hint"></p>
+    </section>
+    <section class="panel" data-panel="diary" hidden>
+      <div id="diary"></div>
+    </section>
+    <section class="panel" data-panel="beliefs" hidden>
+      <ul id="beliefs"></ul>
+      <details><summary id="discardedLabel">Discarded</summary><ul id="discarded"></ul></details>
+    </section>
+    <section class="panel" data-panel="lab" hidden>
+      <table id="compare"></table>
+      <canvas id="chart" width="640" height="220" aria-label="Hidden-rule prediction accuracy over time"></canvas>
+      <p class="hint">Share of its last 50 predictions that were right, counting only predictions about a need a hidden rule had just moved.</p>
+      <h2>Journal</h2>
+      <label class="filter"><input type="checkbox" id="ruleOnly"> Only moments a hidden rule fired</label>
+      <ol id="journal"></ol>
+    </section>
+  </aside>
   <script type="module" src="/src/main.ts"></script>
 </body>
 </html>

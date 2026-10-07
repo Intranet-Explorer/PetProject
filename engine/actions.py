@@ -7,7 +7,7 @@ from .world import H, W, add_event, near, tile_ok
 
 HATCHLING = ["observe", "look", "move", "speak", "rest", "use", "write_belief", "revise_belief"]
 STAGE_ACTIONS = {
-    "egg": ["observe"],
+    "egg": [],   # the engine does not ask an egg anything
     "hatchling": HATCHLING,
     "child": HATCHLING[:6] + ["arrange"] + HATCHLING[6:],
 }
@@ -32,13 +32,22 @@ def filled(v):
     return isinstance(v, str) and bool(v.strip())
 
 
-def check(turn, w, mem):
-    """None if the engine accepts the turn, else the reason it is a no-op."""
-    a = turn.get("action") if isinstance(turn, dict) else None
-    if not isinstance(a, dict):
-        return "no action object"
+def check_plan(turn):
+    """None if a model turn has the shape of an intention (SPEC-v2 §3), else why not. Steps are checked as they run."""
+    if not isinstance(turn, dict):
+        return "invalid json"
+    steps = turn.get("steps")
+    if not (isinstance(steps, list) and 1 <= len(steps) <= 5 and all(isinstance(s, dict) for s in steps)):
+        return "no steps"
+    if not filled(turn.get("intention")):
+        return "no intention"
     if not isinstance(turn.get("expect"), str):
         return "no expect"
+    return None
+
+
+def check(a, w, mem):
+    """None if the engine accepts the action, else the reason it is not possible."""
     t, objs = a.get("type"), w["objects"]
     if t not in ALL_ACTIONS:
         return "unknown action"
@@ -62,12 +71,28 @@ def check(turn, w, mem):
     return None
 
 
-def approach(w, pos):
-    """Step next to pos, onto the neighbouring tile nearest to where the pet already is."""
+def beside(w, pos):
+    """The tile next to pos that is nearest to where the pet already is."""
     px, py = w["pet"]["pos"]
     tiles = [(pos[0] + dx, pos[1] + dy) for dx in (-1, 0, 1) for dy in (-1, 0, 1)
              if (dx or dy) and 0 <= pos[0] + dx < W and 0 <= pos[1] + dy < H]
-    w["pet"]["pos"] = list(min(tiles, key=lambda t: max(abs(t[0] - px), abs(t[1] - py))))
+    return list(min(tiles, key=lambda t: max(abs(t[0] - px), abs(t[1] - py))))
+
+
+def approach(w, pos):
+    w["pet"]["pos"] = beside(w, pos)
+
+
+def destination(w, a):
+    """Where the pet has to walk before a (checked) action can happen, or None if it can act from where it is."""
+    t, objs = a["type"], w["objects"]
+    if t == "move" and norm(a.get("target")) not in objs:
+        return list(a["tile"])
+    if t in ("move", "use"):
+        return beside(w, objs[norm(a["target"])]["pos"])
+    if t == "arrange":
+        return beside(w, objs[norm(a["object"])]["pos"])
+    return None
 
 
 def describe(w, target):

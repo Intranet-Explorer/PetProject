@@ -14,7 +14,12 @@ def load_config(path=ROOT / "config.toml"):
     cfg = tomllib.loads(Path(path).read_text())
     cfg["ticks_per_day"] = round(cfg["clock"]["day_seconds"] / cfg["clock"]["tick_seconds"])
     cfg["ticks_per_hour"] = cfg["ticks_per_day"] / 24
+    cfg["dt"] = cfg["clock"]["tick_seconds"] / 10   # standing rates are written per 10 s, as in v1
     return cfg
+
+
+def ticks(cfg, seconds):
+    return max(1, round(seconds / cfg["clock"]["tick_seconds"]))
 
 
 def new_world(cfg):
@@ -44,12 +49,21 @@ def new_world(cfg):
         },
         "events": [],                  # [tick, text], what the pet can recall as "recent"
         "inbox": [],                   # what the visitor did since the pet last perceived
-        "seen": {},                    # novelty: interaction -> tick it last happened
+        "seen_at": {},                 # novelty: interaction -> tick it last happened
         "last_eat": LONG_AGO,
         "prev_eat": LONG_AGO,
         "visitor_last": LONG_AGO,      # tick of the visitor's latest action
         "sleep": None,                 # {"since", "day", "done"} while asleep
         "last_night": None,            # {"day", "dream", "changes", "body", "reason"} from the latest sleep
+        "diary": [],                   # every night so far, same shape
+        "plan": None,                  # the intention being carried out (see tick.Pet.adopt)
+        "last_plan": None,             # {"intention", "ended", "score"} of the one before
+        "thinking": None,              # why the model is being asked, while it is
+        "news": [],                    # reasons to think again: visitor, woke, hatched, need, phase
+        "seen": -1,                    # events up to this tick were in a packet already
+        "last_call": LONG_AGO,         # tick of the latest model call
+        "calls": [],                   # ticks of the model calls in the last real hour
+        "phase_seen": "day",
         "exploits": {"lamp_night": 0, "plant_window": 0, "double_feed": 0},   # times each rule was used on purpose
         "near_window": 0,              # waking ticks spent near the window
     }

@@ -1,4 +1,4 @@
-"""The engine's front door (SPEC §3, §16): the tick loop plus a websocket for the view.
+"""The engine's front door (v1 §3, §16): the tick loop plus a websocket for the view.
 Binds to localhost and checks Origin on every connection.
 
     uv run python -m engine.server
@@ -22,8 +22,9 @@ cfg = load_config()
 DATA = ROOT / "data"
 DATA.mkdir(exist_ok=True)
 db = log.open_db(DATA / "pet.db")
-# Two pets, each with its own identical copy of the world (§3).
-pets = {"model": Pet("model", cfg, Model(cfg, DATA / "model"), DATA, db), "twin": Pet("twin", cfg, Twin(cfg), DATA, db)}
+pets = {"model": Pet("model", cfg, Model(cfg, DATA / "model"), DATA, db)}
+if cfg["twin"]["enabled"]:   # the v1 baseline, headless, in its own identical copy of the world (SPEC-v2 §10)
+    pets["twin"] = Pet("twin", cfg, Twin(cfg), DATA, db)
 clients = {}   # websocket -> when it last reported an attentive visitor (0 = not attentive)
 
 
@@ -35,7 +36,7 @@ def visitor_present():
 def snapshot():
     return {
         "size": [W, H], "tick_seconds": cfg["clock"]["tick_seconds"], "visitor_present": visitor_present(),
-        "placeable": actions.PLACEABLE, "growth": cfg["growth"],
+        "placeable": actions.PLACEABLE, "steps": cfg["steps"],
         "pets": {p.id: {"world": p.world, "beliefs": p.mem.beliefs, "journal": list(p.journal),
                         "accuracy": p.accuracy(), "series": p.series} for p in pets.values()},
     }
@@ -58,7 +59,8 @@ async def loop():
         started = time.monotonic()
         try:
             present = visitor_present()
-            await asyncio.gather(*(p.tick(present) for p in pets.values()))   # the tick waits for the slower brain
+            for p in pets.values():   # a tick never waits for the model; thoughts land when they are ready
+                await p.tick(present)
             await broadcast()
         except Exception:   # one bad tick must not end a two-week run
             logging.exception("tick failed")
@@ -92,6 +94,7 @@ async def ws(sock: WebSocket):
                 clients[sock] = time.time() if msg.get("active") is True else 0
             elif all([actions.visit(p.world, msg) for p in pets.values()]):   # every pet's world gets the same visit
                 for p in pets.values():
+                    p.world["news"].append("visitor")
                     p.save()
                 await broadcast()
     except (WebSocketDisconnect, ValueError):

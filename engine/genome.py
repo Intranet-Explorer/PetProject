@@ -71,9 +71,9 @@ def update_marks(w, cfg):
     """Permanent marks from what has happened to it. Never removed. Returns a new mark, if one appeared."""
     g = w["pet"]["genome"]
     (x, y), (wx, wy) = w["pet"]["pos"], w["objects"]["window"]["pos"]
-    w["near_window"] += max(abs(x - wx), abs(y - wy)) <= 2
+    w["near_window"] += cfg["dt"] * (max(abs(x - wx), abs(y - wy)) <= 2)
     for mark, earned in (("a small notch", w["pet"]["needs"]["comfort"] <= 0),          # comfort hit 0
-                         ("a faded patch", w["near_window"] >= cfg["growth"]["window_patch_ticks"])):
+                         ("a faded patch", w["near_window"] * 10 >= cfg["marks"]["window_patch_seconds"])):
         if earned and mark not in g["marks"]:
             g["marks"].append(mark)
             return mark

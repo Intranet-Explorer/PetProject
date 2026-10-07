@@ -3,6 +3,7 @@ and chooses how its body changes."""
 import json
 import logging
 import random
+import re
 
 from . import genome
 
@@ -32,6 +33,8 @@ def apply_changes(mem, changes, tick):
         if not isinstance(c, dict) or not filled(c.get("statement")):
             continue
         text = clean(c["statement"], 200)
+        if re.search(r"\bt\d+\b", text):   # "a visitor arrived at t137" is a log entry, not a belief (SPEC-v2 §8)
+            continue
         if c.get("type") == "revise_belief" and mem.is_active(c.get("id")):
             mem.revise(c["id"], text, tick)
             done.append("%s %s" % (c["id"], "discarded" if text.lower() == "discard" else "revised: " + text))
@@ -62,6 +65,7 @@ async def night(pet):
     except Exception:
         logging.exception("evolve failed for %s", pet.id)
     w["last_night"] = {"day": w["sleep"]["day"], "dream": dream, "changes": changes, "body": body, "reason": reason}
+    w["diary"] = (w["diary"] + [w["last_night"]])[-60:]
     pet.mem.journal({"pet": pet.id, "tick": w["tick"], "type": "sleep", **w["last_night"]})
     if pet.db:
         pet.db.execute("INSERT INTO sleeps VALUES (?,?,?,?,?)",

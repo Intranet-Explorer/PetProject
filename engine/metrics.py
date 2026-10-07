@@ -1,13 +1,16 @@
-"""Core metrics per pet (SPEC §15), read from the SQLite log and each pet's beliefs.
+"""Core metrics per pet (v1 §15), read from the SQLite log and each pet's beliefs. Since v2 a prediction
+belongs to an intention, and the rows in ticks, decisions and outcomes are steps.
 
-    uv run python -m engine.metrics
+    uv run python -m engine.metrics [data dir]
 """
 import json
 import re
 import sqlite3
+import sys
+from pathlib import Path
 
 from .rules import RULES
-from .world import NEEDS, ROOT
+from .world import NEEDS, ROOT, load_config
 
 # ponytail: keyword match per rule, as in M0. Read the beliefs themselves before trusting the count.
 RULE_WORDS = {
@@ -19,43 +22,50 @@ pct = lambda part, whole: "%.0f%%" % (100 * part / whole) if whole else "n/a"
 
 
 def main(data=ROOT / "data"):
+    data, cfg = Path(data), load_config()
     db = sqlite3.connect(data / "pet.db")
-    for (pet,) in db.execute("SELECT DISTINCT pet FROM ticks ORDER BY pet").fetchall():
+    for (pet,) in db.execute("SELECT DISTINCT pet FROM stage_events UNION SELECT DISTINCT pet FROM ticks ORDER BY 1").fetchall():
         q = lambda sql, *args: db.execute(sql, (pet, *args)).fetchall()
         one = lambda sql, *args: q(sql, *args)[0][0]
-        ticks = one("SELECT count(*) FROM ticks WHERE pet=?")
-        print("\n== %s: %d waking ticks, day %d, stage %s" % (
-            pet, ticks, one("SELECT max(day) FROM ticks WHERE pet=?"),
-            one("SELECT stage FROM ticks WHERE pet=? ORDER BY tick DESC LIMIT 1")))
-        for tick, day, a, b, acc, used in q("SELECT tick, day, stage_from, stage_to, accuracy, exploits FROM stage_events WHERE pet=?"):
-            print("   t%d (day %d): %s -> %s, accuracy %s, exploits %s" % (tick, day, a, b, acc, used))
+        w = json.loads((data / pet / "state.json").read_text())["world"]
+        steps, plans = one("SELECT count(*) FROM ticks WHERE pet=?"), one("SELECT count(*) FROM intentions WHERE pet=?")
+        hours = w["tick"] * cfg["clock"]["tick_seconds"] / 3600
+        print("\n== %s: %.1f real hours, day %d, stage %s, %d intentions, %d steps" % (
+            pet, hours, w["clock"]["day"], w["pet"]["stage"], plans, steps))
+        for tick, day, a, b in q("SELECT tick, day, stage_from, stage_to FROM stage_events WHERE pet=?"):
+            print("   t%d (day %d): %s -> %s" % (tick, day, a, b))
 
-        scored = [s for (s,) in q("SELECT score='correct' FROM outcomes WHERE pet=? AND rule_scored ORDER BY tick")]
-        print("rule-tagged accuracy: %s over all %d, %s over the last 50" % (
-            pct(sum(scored), len(scored)), len(scored), pct(sum(scored[-50:]), len(scored[-50:]))))
+        calls, failed = one("SELECT count(*) FROM calls WHERE pet=?"), one("SELECT count(*) FROM calls WHERE pet=? AND failed IS NOT NULL")
+        print("model calls: %d, %.0f per hour over the whole life, %d in the last hour, %d failed, median %.1f s | why: %s" % (
+            calls, calls / hours if hours else 0, len(w["calls"]), failed,
+            (sorted(s for (s,) in q("SELECT seconds FROM calls WHERE pet=?")) or [0])[calls // 2],
+            ", ".join("%s %d" % r for r in q("SELECT why, count(*) FROM calls WHERE pet=? GROUP BY 1 ORDER BY 2 DESC"))))
+        print("intentions ended: %s | %.1f steps each" % (
+            ", ".join("%s %d" % r for r in q("SELECT substr(ended, 1, 12), count(*) FROM intentions WHERE pet=? GROUP BY 1 ORDER BY 2 DESC")),
+            steps / plans if plans else 0))
+
+        judged = [s for (s,) in q("SELECT score FROM intentions WHERE pet=? AND score != 'unscorable'")]
+        scored = [s for (s,) in q("SELECT score='correct' FROM intentions WHERE pet=? AND rule_scored ORDER BY tick")]
+        print("predictions right: %s of %d scorable (%d not scorable) | about a hidden rule: %s of %d, %s of the last %d" % (
+            pct(judged.count("correct"), len(judged)), len(judged), plans - len(judged),
+            pct(sum(scored), len(scored)), len(scored), pct(sum(scored[-50:]), len(scored[-50:])), len(scored[-50:])))
         for r in RULES:
             like = "%" + r.id + "%"
-            print("   %-12s first seen t%s, first predicted t%s, first exploited t%s, exploited %d times" % (
-                r.id, one("SELECT min(tick) FROM outcomes WHERE pet=? AND rule_tags LIKE ?", like),
-                one("SELECT min(tick) FROM outcomes WHERE pet=? AND rule_tags LIKE ? AND rule_scored AND score='correct'", like),
+            print("   %-12s first met t%s, first predicted t%s, first used on purpose t%s, used %d times" % (
+                r.id, one("SELECT min(tick) FROM intentions WHERE pet=? AND rule_tags LIKE ?", like),
+                one("SELECT min(tick) FROM intentions WHERE pet=? AND rule_tags LIKE ? AND rule_scored AND score='correct'", like),
                 one("SELECT min(tick) FROM outcomes WHERE pet=? AND exploit=?", r.id),
                 one("SELECT count(*) FROM outcomes WHERE pet=? AND exploit=?", r.id)))
 
-        print("invalid-action rate: %s" % pct(one("SELECT count(*) FROM decisions WHERE pet=? AND reason IS NOT NULL"), ticks))
-        print("time in distress: " + ", ".join(
-            "%s %s" % (n, pct(one("SELECT count(*) FROM ticks WHERE pet=? AND %s < 20" % n), ticks)) for n in NEEDS))
-
+        print("steps not possible: %s | needs under 20 when a step ended: %s" % (
+            pct(one("SELECT count(*) FROM decisions WHERE pet=? AND reason IS NOT NULL"), steps),
+            ", ".join("%s %s" % (n, pct(one("SELECT count(*) FROM ticks WHERE pet=? AND %s < 20" % n), steps)) for n in NEEDS)))
         for label, seen in (("observed", 1), ("unobserved", 0)):
-            rows = q("""SELECT json_extract(d.action, '$.type'), o.score FROM ticks t
-                        JOIN decisions d USING (pet, tick) JOIN outcomes o USING (pet, tick)
-                        WHERE t.pet=? AND t.visitor_present=?""", seen)
-            mix = {}
-            for kind, _ in rows:
-                mix[kind] = mix.get(kind, 0) + 1
-            judged = [s for _, s in rows if s != "unscorable"]
-            top = ", ".join("%s %s" % (k, pct(v, len(rows))) for k, v in sorted(mix.items(), key=lambda kv: -kv[1])[:4])
-            print("%-10s %6d ticks | speaks %s | all-prediction accuracy %s | %s" % (
-                label, len(rows), pct(mix.get("speak", 0), len(rows)), pct(judged.count("correct"), len(judged)), top))
+            rows = [k for (k,) in q("""SELECT json_extract(d.action, '$.type') FROM ticks t JOIN decisions d USING (pet, tick)
+                                       WHERE t.pet=? AND t.visitor_present=?""", seen)]
+            top = sorted({k: rows.count(k) for k in set(rows)}.items(), key=lambda kv: -kv[1])[:5]
+            print("%-10s %5d steps | speaks %s | %s" % (label, len(rows), pct(rows.count("speak"), len(rows)),
+                                                       ", ".join("%s %s" % (k, pct(v, len(rows))) for k, v in top)))
 
         path = data / pet / "beliefs.json"
         active = [b["statement"].lower() for b in (json.loads(path.read_text()) if path.exists() else []) if b["status"] == "active"]
@@ -65,4 +75,4 @@ def main(data=ROOT / "data"):
 
 
 if __name__ == "__main__":
-    main()
+    main(*sys.argv[1:2])
