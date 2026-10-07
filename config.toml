@@ -1,0 +1,22 @@
+# Pet v1 config (SPEC §18). The one place for tunables.
+
+[clock]
+tick_seconds = 10      # real seconds per tick
+day_seconds = 7200     # real seconds per world day
+
+[world]
+start_stage = "hatchling"   # M1: skip the egg day until growth lands in M4
+
+[twin]
+explore = 0.15         # chance of a random action
+belief_min_obs = 10    # observations before it writes a templated belief
+
+[model]                # picked in M0 (m0/results/summary.json); used from M2
+endpoint = "http://localhost:11434/v1"
+name = "qwen3.8:27b-mlx"
+temperature = 0.7
+
+[server]
+host = "127.0.0.1"
+port = 8000
+origins = ["http://localhost:8000", "http://127.0.0.1:8000", "http://localhost:5173"]

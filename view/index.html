@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pet</title>
+  <link rel="stylesheet" href="/src/style.css">
+</head>
+<body>
+  <header>
+    <h1>Pet</h1>
+    <nav id="pets" aria-label="Which pet"></nav>
+    <p id="status">connecting…</p>
+  </header>
+  <main>
+    <div class="col">
+      <div id="room" aria-label="The room"></div>
+      <section class="controls" aria-label="Visitor controls">
+        <button id="feed">Feed</button>
+        <button id="poke">Poke</button>
+        <button id="window">Open window</button>
+        <span class="place">
+          <label for="placeObject">Place</label>
+          <select id="placeObject"></select>
+          <button id="placeBtn" aria-pressed="false">Pick a tile</button>
+        </span>
+        <form id="talkForm">
+          <input id="talkText" maxlength="200" placeholder="Say something to it" aria-label="Talk">
+          <button>Say</button>
+        </form>
+      </section>
+      <section>
+        <h2>Journal <label class="filter"><input type="checkbox" id="ruleOnly"> rule-tagged only</label></h2>
+        <ol id="journal"></ol>
+      </section>
+    </div>
+    <div class="col side">
+      <section>
+        <h2>Mind</h2>
+        <div id="needs"></div>
+        <dl id="mind"></dl>
+      </section>
+      <section>
+        <h2>Metrics</h2>
+        <p id="facts"></p>
+        <canvas id="chart" width="640" height="240" aria-label="Rule-tagged prediction accuracy over time"></canvas>
+        <p class="hint">Rolling accuracy over the last 50 predictions about a need a hidden rule just moved. The dashed line is the 60% needed for Child.</p>
+      </section>
+      <section>
+        <h2>Beliefs</h2>
+        <ul id="beliefs"></ul>
+        <details><summary id="discardedLabel">Discarded</summary><ul id="discarded"></ul></details>
+      </section>
+    </div>
+  </main>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
