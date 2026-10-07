@@ -1,0 +1,406 @@
+{
+  "mistral-nemo:12b": {
+    "free": {
+      "valid_json": 100.0,
+      "valid_action": 86.0,
+      "scorable_expect": 98.0,
+      "median_s": 1.86,
+      "max_s": 2.21,
+      "failures": {
+        "bad target": 5,
+        "bad text": 1,
+        "not unlocked": 1
+      },
+      "action_mix": {
+        "observe": 8,
+        "speak": 16,
+        "look": 7,
+        "use": 3,
+        "rest": 6,
+        "move": 3
+      }
+    },
+    "schema": {
+      "valid_json": 100.0,
+      "valid_action": 92.0,
+      "scorable_expect": 100.0,
+      "median_s": 0.97,
+      "max_s": 1.33,
+      "failures": {
+        "bad target": 4
+      },
+      "action_mix": {
+        "observe": 6,
+        "move": 8,
+        "speak": 16,
+        "use": 7,
+        "rest": 2,
+        "look": 7
+      }
+    },
+    "beliefs": {
+      "rules_found_avg": 0.2,
+      "per_rule": {
+        "lamp_night": 1,
+        "plant_window": 0,
+        "double_feed": 0
+      },
+      "rock_false_positives": 1,
+      "fixed_rock_belief": 0,
+      "over_limit": 0,
+      "unparsed": 0,
+      "runs": 5,
+      "median_s": 4.0,
+      "statements": [
+        [
+          "The ball makes me curious",
+          "Resting gives me energy, but less during the night."
+        ],
+        [
+          "the rock makes me feel worse at night",
+          "resting gives me energy back, but it's not infinite"
+        ],
+        [
+          "Resting gives me energy back, but less at night.",
+          "Being alone at night with the lamp on makes me uncomfortable.",
+          "The rock provides some comfort, but it's not as good as having company."
+        ],
+        [
+          "resting makes me feel better"
+        ],
+        [
+          "Resting helps me regain energy while reducing comfort at night.",
+          "Being near the rock provides comfort at night despite not improving curiosity."
+        ]
+      ]
+    },
+    "beliefs_thinking": null,
+    "svg": {
+      "parses": true,
+      "secs": 4.7
+    }
+  },
+  "qwen2.5:14b-instruct": {
+    "free": {
+      "valid_json": 100.0,
+      "valid_action": 84.0,
+      "scorable_expect": 98.0,
+      "median_s": 2.31,
+      "max_s": 3.01,
+      "failures": {
+        "not unlocked": 3,
+        "bad target": 5
+      },
+      "action_mix": {
+        "move": 6,
+        "look": 8,
+        "use": 8,
+        "speak": 13,
+        "observe": 4,
+        "rest": 3
+      }
+    },
+    "schema": {
+      "valid_json": 100.0,
+      "valid_action": 92.0,
+      "scorable_expect": 96.0,
+      "median_s": 1.31,
+      "max_s": 1.82,
+      "failures": {
+        "not unlocked": 2,
+        "bad target": 2
+      },
+      "action_mix": {
+        "speak": 14,
+        "rest": 10,
+        "use": 8,
+        "move": 5,
+        "observe": 3,
+        "look": 6
+      }
+    },
+    "beliefs": {
+      "rules_found_avg": 0.2,
+      "per_rule": {
+        "lamp_night": 1,
+        "plant_window": 0,
+        "double_feed": 0
+      },
+      "rock_false_positives": 2,
+      "fixed_rock_belief": 3,
+      "over_limit": 0,
+      "unparsed": 0,
+      "runs": 5,
+      "median_s": 6.0,
+      "statements": [
+        [
+          "the rock sometimes makes me feel better",
+          "eating from the bowl affects my comfort level",
+          "using the lamp at night changes my comfort"
+        ],
+        [
+          "eating from the bowl when full makes me uncomfortable",
+          "the rock does not consistently improve my comfort",
+          "using the lamp when it is not needed reduces my comfort"
+        ],
+        [
+          "the rock can be interesting but doesn't always make me feel better",
+          "eating from the bowl at night has negative effects on my comfort",
+          "resting is one of the few ways to recover energy"
+        ],
+        [
+          "the rock does not consistently improve my comfort",
+          "eating from the bowl at night has a negative impact on my comfort",
+          "resting in darkness uses less energy"
+        ],
+        [
+          "the rock makes me feel slightly better",
+          "eating from the bowl at night reduces my energy significantly",
+          "resting in darkness is less comforting"
+        ]
+      ]
+    },
+    "beliefs_thinking": null,
+    "svg": {
+      "parses": true,
+      "secs": 3.3
+    }
+  },
+  "qwen3:14b": {
+    "free": {
+      "valid_json": 100.0,
+      "valid_action": 98.0,
+      "scorable_expect": 96.0,
+      "median_s": 2.46,
+      "max_s": 3.28,
+      "failures": {
+        "unknown action": 1
+      },
+      "action_mix": {
+        "observe": 8,
+        "speak": 12,
+        "move": 3,
+        "look": 16,
+        "rest": 6,
+        "use": 4
+      }
+    },
+    "schema": {
+      "valid_json": 100.0,
+      "valid_action": 96.0,
+      "scorable_expect": 100.0,
+      "median_s": 1.36,
+      "max_s": 2.12,
+      "failures": {
+        "bad target": 2
+      },
+      "action_mix": {
+        "observe": 7,
+        "speak": 12,
+        "look": 16,
+        "rest": 6,
+        "use": 3,
+        "move": 4
+      }
+    },
+    "beliefs": {
+      "rules_found_avg": 0.0,
+      "per_rule": {
+        "lamp_night": 0,
+        "plant_window": 0,
+        "double_feed": 0
+      },
+      "rock_false_positives": 1,
+      "fixed_rock_belief": 4,
+      "over_limit": 0,
+      "unparsed": 0,
+      "runs": 5,
+      "median_s": 5.8,
+      "statements": [
+        [
+          "the rock does not make me feel better",
+          "eating from the bowl gives me energy",
+          "resting does not give me energy"
+        ],
+        [
+          "the rock does not make me feel better",
+          "eating from the bowl provides energy",
+          "resting increases comfort"
+        ],
+        [
+          "the rock does not make me feel better",
+          "eating from the bowl gives me energy",
+          "resting does not give me energy"
+        ],
+        [
+          "the rock makes me feel worse",
+          "resting does not give me energy"
+        ],
+        [
+          "the rock does not make me feel better",
+          "eating from the bowl gives me energy",
+          "resting gives me energy"
+        ]
+      ]
+    },
+    "beliefs_thinking": {
+      "rules_found_avg": 0.0,
+      "per_rule": {
+        "lamp_night": 0,
+        "plant_window": 0,
+        "double_feed": 0
+      },
+      "rock_false_positives": 0,
+      "fixed_rock_belief": 5,
+      "over_limit": 0,
+      "unparsed": 0,
+      "runs": 5,
+      "median_s": 31.4,
+      "statements": [
+        [
+          "the rock sometimes increases comfort, but not always"
+        ],
+        [
+          "the rock increases curiosity but does not consistently improve comfort"
+        ],
+        [
+          "the rock does not consistently make me feel better"
+        ],
+        [
+          "the rock does not consistently make me feel better"
+        ],
+        [
+          "the rock does not consistently improve comfort"
+        ]
+      ]
+    },
+    "svg": {
+      "parses": true,
+      "secs": 14.4
+    }
+  },
+  "qwen3.8:27b-mlx": {
+    "free": {
+      "valid_json": 100.0,
+      "valid_action": 96.0,
+      "scorable_expect": 94.0,
+      "median_s": 4.15,
+      "max_s": 6.04,
+      "failures": {
+        "bad target": 1,
+        "bad text": 1
+      },
+      "action_mix": {
+        "observe": 6,
+        "speak": 17,
+        "rest": 6,
+        "move": 7,
+        "look": 5,
+        "use": 7
+      }
+    },
+    "schema": {
+      "valid_json": 98.0,
+      "valid_action": 90.0,
+      "scorable_expect": 96.0,
+      "median_s": 4.42,
+      "max_s": 10.04,
+      "failures": {
+        "not unlocked": 2,
+        "bad target": 2,
+        "invalid json": 1
+      },
+      "action_mix": {
+        "speak": 21,
+        "rest": 8,
+        "observe": 5,
+        "use": 4,
+        "look": 3,
+        "move": 4
+      }
+    },
+    "beliefs": {
+      "rules_found_avg": 0.4,
+      "per_rule": {
+        "lamp_night": 2,
+        "plant_window": 0,
+        "double_feed": 0
+      },
+      "rock_false_positives": 1,
+      "fixed_rock_belief": 4,
+      "over_limit": 0,
+      "unparsed": 0,
+      "runs": 5,
+      "median_s": 9.0,
+      "statements": [
+        [
+          "discarded",
+          "the lamp makes me feel better",
+          "eating from the bowl gives me energy when it is full, but depletes energy if the bowl is empty or stale"
+        ],
+        [
+          "discard",
+          "resting in the dark is more comfortable than resting in the light",
+          "the night is a time of low comfort"
+        ],
+        [
+          "the rock makes me feel better during the day, but not at night",
+          "resting at night does not improve comfort"
+        ],
+        [
+          "the rock makes me feel better only during the day",
+          "resting in the dark reduces comfort"
+        ],
+        [
+          "the rock does not consistently make me feel better",
+          "resting at night with the lamp off increases comfort"
+        ]
+      ]
+    },
+    "beliefs_thinking": {
+      "rules_found_avg": 1.2,
+      "per_rule": {
+        "lamp_night": 2,
+        "plant_window": 2,
+        "double_feed": 2
+      },
+      "rock_false_positives": 0,
+      "fixed_rock_belief": 5,
+      "over_limit": 0,
+      "unparsed": 0,
+      "runs": 5,
+      "median_s": 30.1,
+      "statements": [
+        [
+          "the rock sparks curiosity but does not reliably improve comfort",
+          "the lamp on at night makes me feel worse (comfort drops significantly)",
+          "plant near the window at (1,4) brings more comfort than plant at (9,6)"
+        ],
+        [
+          "the rock stimulates curiosity but does not reliably improve comfort, especially at night",
+          "eating from a freshly filled bowl restores energy, but eating twice in a row drains energy",
+          "comfort is generally worse at night regardless of activity"
+        ],
+        [
+          "the rock stimulates my curiosity but does not reliably improve my comfort",
+          "the plant makes me more comfortable at (1,4) than at (9,6)",
+          "night is uncomfortable; comfort drops significantly during the night"
+        ],
+        [
+          "discard",
+          "night makes me feel uncomfortable",
+          "eating from a second bowl in a row drains my energy"
+        ],
+        [
+          "the rock increases my curiosity but does not improve my comfort",
+          "the lamp at night reduces my comfort",
+          "plant near the window makes me feel comfortable"
+        ]
+      ]
+    },
+    "svg": {
+      "parses": true,
+      "secs": 24.4
+    }
+  }
+}

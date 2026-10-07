@@ -1,0 +1,18 @@
+<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
+  <ellipse cx="100" cy="100" rx="70" ry="80" fill="orange" />
+  <ellipse cx="100" cy="100" rx="65" ry="75" fill="orange" />
+  <ellipse cx="100" cy="100" rx="60" ry="70" fill="orange" />
+  <ellipse cx="100" cy="100" rx="55" ry="65" fill="orange" />
+  <ellipse cx="100" cy="100" rx="50" ry="60" fill="orange" />
+  <ellipse cx="100" cy="100" rx="45" ry="55" fill="orange" />
+  <ellipse cx="100" cy="100" rx="40" ry="50" fill="orange" />
+  <ellipse cx="100" cy="100" rx="35" ry="45" fill="orange" />
+  <ellipse cx="100" cy="100" rx="30" ry="40" fill="orange" />
+  <ellipse cx="100" cy="100" rx="25" ry="35" fill="orange" />
+  <ellipse cx="100" cy="100" rx="20" ry="30" fill="orange" />
+  <ellipse cx="100" cy="100" rx="15" ry="25" fill="orange" />
+  <ellipse cx="100" cy="100" rx="10" ry="20" fill="orange" />
+  <ellipse cx="100" cy="100" rx="5" ry="15" fill="orange" />
+  <circle cx="90" cy="80" r="5" fill="black" />
+  <circle cx="110" cy="80" r="5" fill="black" />
+</svg>
