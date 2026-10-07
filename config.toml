@@ -5,7 +5,16 @@ tick_seconds = 10      # real seconds per tick
 day_seconds = 7200     # real seconds per world day
 
 [world]
-start_stage = "hatchling"   # M1: skip the egg day until growth lands in M4
+start_stage = "egg"    # set to "hatchling" or "child" to skip ahead while debugging
+
+[growth]               # SPEC §10. Tune after watching the first run.
+egg_days = 1           # hatches on waking after this many world days
+window = 50            # rule-tagged predictions looked at
+accuracy = 60          # % of them that must be correct for Child
+rules_exploited = 2    # of the 3 hidden rules
+exploit_times = 5      # times a rule must be exploited, counted over the whole life
+exploit_need_below = 50   # the related need must be under this for an exploit to count
+window_patch_ticks = 1000 # waking ticks near the window before the faded patch appears
 
 [twin]
 explore = 0.15         # chance of a random action

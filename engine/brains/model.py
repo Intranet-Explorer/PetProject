@@ -64,6 +64,13 @@ CHANGES = {
 }
 
 
+BODY = {
+    "type": "object",
+    "properties": {"choice": {"type": "integer", "enum": [1, 2, 3]}, "reason": {"type": "string"}},
+    "required": ["choice", "reason"],
+}
+
+
 def parse(text):
     try:
         d = json.loads(re.sub(r"^```(?:json)?\s*|\s*```$", "", text.strip()))
@@ -124,3 +131,13 @@ class Model:
         """§9.2: a short summary of the day in its own words."""
         prompt = "This is your journal for today:\n%s\n\nWrite two or three sentences about your day." % journal
         return await asyncio.to_thread(self.chat, prompt, None, False, 200)
+
+    async def choose_body(self, body, options):
+        """§9.3: pick one of three mutations from their descriptions, with a reason."""
+        prompt = ("This is your body: %s.\nWhile you sleep it can change in one of these ways:\n%s\n\n"
+                  'Reply with one JSON object and nothing else: {"choice": <1, 2 or 3>, "reason": "<short>"}'
+                  % (body, "\n".join("%d. %s" % (i + 1, o) for i, o in enumerate(options))))
+        reply = parse(await asyncio.to_thread(self.chat, prompt, BODY)) or {}
+        if reply.get("choice") not in (1, 2, 3):
+            raise ValueError("no usable body choice: %r" % reply)
+        return reply["choice"] - 1, reply.get("reason", "")

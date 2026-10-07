@@ -9,6 +9,7 @@ from .tick import Pet, perceive, score, step
 from .world import load_config, new_world
 
 cfg = load_config()
+cfg["world"]["start_stage"] = "hatchling"   # most checks need the full action set
 NIGHT = round(14 * cfg["ticks_per_hour"])   # 08:00 + 14h = 22:00
 turn = lambda expect="", **action: {"thought": "", "action": action, "expect": expect}
 
@@ -127,5 +128,62 @@ with tempfile.TemporaryDirectory() as d:
                                 {"type": "write_belief", "statement": "lamp at night is bad"},
                                 {"type": "revise_belief", "id": "b7", "statement": "x"}, {"type": "write_belief", "statement": "4th"}], 9)
     assert len(done) == 2 and [b["statement"] for b in mem2.active()] == ["lamp at night is bad"]
+
+    # body: three distinct mutations of 2-3 parameters, no limbs before Child, and the mirror describes it
+    import random
+    from . import genome, growth, log
+    g = genome.START
+    options = genome.mutations(g, random.Random(1), "hatchling")
+    assert len(options) == 3 and all(2 <= sum(o[k] != g[k] for k in g) <= 3 and o["limbs"] == 0 for o in options)
+    assert all(genome.describe_change(g, o) for o in options)
+    assert any(o["limbs"] for o in sum((genome.mutations(g, random.Random(i), "child") for i in range(20)), []))
+    w = new_world(cfg)
+    seen = step(w, cfg, turn(type="look", target="mirror"), mem)["feedback"]
+    assert "very round" in seen and "orange" in seen and "speckle" in seen and "no limbs" in seen
+
+    # marks are permanent and earned once: comfort hitting 0 leaves a notch
+    w["tick"], w["pet"]["needs"]["comfort"] = NIGHT, 2.0
+    assert step(w, cfg, turn(type="observe"), mem)["mark"] == "a small notch"
+    assert step(w, cfg, turn(type="observe"), mem)["mark"] is None and w["pet"]["genome"]["marks"] == ["a small notch"]
+    assert "notch" in genome.describe(w["pet"]["genome"])
+
+    # exploiting a rule counts only when the related need is low
+    w = new_world(cfg)
+    w["tick"], w["pet"]["needs"]["comfort"] = NIGHT, 30.0
+    assert step(w, cfg, turn(type="use", target="lamp"), mem)["exploit"] == "lamp_night" and w["exploits"]["lamp_night"] == 1
+    step(w, cfg, turn(type="use", target="lamp"), mem)   # back on
+    w["pet"]["needs"]["comfort"] = 90.0
+    assert step(w, cfg, turn(type="use", target="lamp"), mem)["exploit"] is None
+    w = new_world(cfg)
+    step(w, cfg, turn(type="use", target="bowl"), mem)
+    w["tick"] += 40
+    w["pet"]["needs"]["energy"] = 30.0
+    assert step(w, cfg, turn(type="use", target="bowl"), mem)["exploit"] == "double_feed"
+
+    # growth: an egg can only observe, hatches on its first morning, and its body changes each night
+    egg_cfg = dict(cfg, world={"start_stage": "egg"})
+    db = log.open_db(":memory:")
+    pet = Pet("egg", egg_cfg, Twin(egg_cfg), tempfile.mkdtemp(), db)
+    async def until_hatched():
+        for _ in range(800):
+            rec = await pet.tick()
+            assert rec is None or rec["action"] == {"type": "observe"} or pet.world["pet"]["stage"] != "egg"
+            if pet.world["pet"]["stage"] != "egg":
+                return
+    asyncio.run(until_hatched())
+    w = pet.world
+    assert w["pet"]["needs"]["comfort"] == 60.0 and w["pet"]["genome"]["marks"] == []   # dormant: a lit night cost it nothing
+    assert w["pet"]["stage"] == "hatchling" and w["clock"]["day"] == 2 and w["clock"]["hour"] < 6.2
+    assert w["last_night"]["body"] and w["pet"]["genome"] != genome.START and "you hatched" in w["events"][-1][1]
+    assert db.execute("SELECT stage_from, stage_to FROM stage_events").fetchall() == [("egg", "hatchling")]
+    assert db.execute("SELECT count(*) FROM genomes").fetchone() == (1,) and db.execute("SELECT count(*) FROM sleeps").fetchone() == (1,)
+
+    # ... and becomes a child only with both the accuracy and the exploited rules
+    pet.window.extend([True] * 40 + [False] * 10)
+    assert growth.check(pet) is None
+    w["exploits"].update(lamp_night=5, double_feed=5)
+    assert growth.check(pet) == "child"
+    pet.window.extend([False] * 30)
+    assert growth.check(pet) is None
 
 print("engine check ok")

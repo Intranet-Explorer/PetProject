@@ -1,7 +1,7 @@
 // The room canvas (SPEC §13). The world is data; this only draws it. No art assets: every shape is code.
 import { Application, Container, Graphics, Text } from "pixi.js";
 import type { World } from "./main";
-import { drawPet } from "./pet";
+import { PetBody } from "./pet";
 
 const T = 56, PAD = 30;
 const INK = 0x16241f, MUTED = 0x586a63, FLOOR = 0xe6dcc8, WALL = 0xcfc3ab;
@@ -59,7 +59,8 @@ export class Room {
   private app = new Application();
   private things = new Container();
   private shade = new Graphics();
-  private body = new Graphics();
+  private body = new PetBody();
+  private wobble = 0;
   private pet = new Container();
   private bubble = new Container();
   private goal = [0, 0];
@@ -92,6 +93,8 @@ export class Room {
       this.pet.y += (this.goal[1] - this.pet.y) * k;
       this.body.y = this.asleep ? 0 : Math.sin(now / (900 - this.energy * 5)) * 3;
       this.body.x = this.distressed ? Math.sin(now / 35) * 1.5 : 0;
+      const squash = this.asleep ? 0 : Math.sin(now / 260) * this.wobble * 0.07;
+      this.body.scale.set(1 + squash, 1 - squash);
       this.bubble.position.set(this.pet.x, this.pet.y - 30);
     });
   }
@@ -116,7 +119,8 @@ export class Room {
     this.energy = w.pet.needs.energy;
     this.asleep = !!w.sleep;
     this.distressed = Object.values(w.pet.needs).some((v) => v < 20);
-    drawPet(this.body, w.pet.stage, this.distressed, !!w.sleep);
+    this.wobble = w.pet.genome.wobble;
+    this.body.draw(w.pet.genome, w.pet.stage, w.pet.needs.comfort, !!w.sleep);
 
     for (const c of this.bubble.removeChildren()) c.destroy();
     if (w.pet.said && w.tick - w.pet.said[0] <= 3) {

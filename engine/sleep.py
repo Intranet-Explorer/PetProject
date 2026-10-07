@@ -1,7 +1,10 @@
-"""Sleep (SPEC §9): each world night the pet stops ticking, consolidates its day into beliefs, and dreams.
-Evolving the body is added in M4."""
+"""Sleep (SPEC §9): each world night the pet stops ticking, consolidates its day into beliefs, dreams,
+and chooses how its body changes."""
 import json
 import logging
+import random
+
+from . import genome
 
 from .actions import clean, filled
 from .world import clock
@@ -48,7 +51,17 @@ async def night(pet):
         dream = clean(await pet.brain.dream(lines), 500)
     except Exception:
         logging.exception("sleep failed for %s", pet.id)
-    w["last_night"] = {"day": w["sleep"]["day"], "dream": dream, "changes": changes}
+    body, reason = "", ""
+    try:   # §9.3: three mutations, described in words; the pet picks one
+        me = w["pet"]
+        options = genome.mutations(me["genome"], random.Random("%s-%d" % (pet.id, w["sleep"]["day"])), me["stage"])
+        described = [genome.describe_change(me["genome"], o) for o in options]
+        choice, reason = await pet.brain.choose_body(genome.describe(me["genome"]), described)
+        me["genome"], body, reason = options[choice], described[choice], clean(str(reason), 200)
+        pet.log_body("sleep: " + body, reason)
+    except Exception:
+        logging.exception("evolve failed for %s", pet.id)
+    w["last_night"] = {"day": w["sleep"]["day"], "dream": dream, "changes": changes, "body": body, "reason": reason}
     pet.mem.journal({"pet": pet.id, "tick": w["tick"], "type": "sleep", **w["last_night"]})
     if pet.db:
         pet.db.execute("INSERT INTO sleeps VALUES (?,?,?,?,?)",

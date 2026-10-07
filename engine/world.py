@@ -2,6 +2,8 @@
 import tomllib
 from pathlib import Path
 
+from .genome import START
+
 ROOT = Path(__file__).parent.parent
 W, H = 12, 8
 NEEDS = ("energy", "comfort", "curiosity")
@@ -26,6 +28,7 @@ def new_world(cfg):
             "trend": {},     # last tick's need deltas
             "said": None,    # [tick, text] of the latest speech bubble
             "name": None,    # set if it ever says "my name is ..."
+            "genome": dict(START, marks=[]),
         },
         "objects": {
             "lamp": {"pos": [2, 1], "state": "on"},
@@ -46,7 +49,9 @@ def new_world(cfg):
         "prev_eat": LONG_AGO,
         "visitor_last": LONG_AGO,      # tick of the visitor's latest action
         "sleep": None,                 # {"since", "day", "done"} while asleep
-        "last_night": None,            # {"day", "dream", "changes"} from the latest sleep
+        "last_night": None,            # {"day", "dream", "changes", "body", "reason"} from the latest sleep
+        "exploits": {"lamp_night": 0, "plant_window": 0, "double_feed": 0},   # times each rule was used on purpose
+        "near_window": 0,              # waking ticks spent near the window
     }
     w["clock"] = clock(cfg, 0)
     return w

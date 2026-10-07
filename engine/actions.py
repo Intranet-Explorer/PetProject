@@ -2,6 +2,7 @@
 Visitor actions live here too; they arrive as data and are validated the same way."""
 import re
 
+from . import genome
 from .world import H, W, add_event, near, tile_ok
 
 HATCHLING = ["observe", "look", "move", "speak", "rest", "use", "write_belief", "revise_belief"]
@@ -75,7 +76,7 @@ def describe(w, target):
         ago = w["tick"] - w["visitor_last"]
         return "someone was just here" if ago <= 3 else "someone was here a while ago" if ago <= 60 else "no one is there"
     if target == "mirror":
-        return "a small creature looks back at you"   # genome description arrives with M4
+        return "you see yourself: " + genome.describe(w["pet"]["genome"])
     return "it is " + w["objects"][target].get("state", "just sitting there")
 
 

@@ -10,7 +10,7 @@ import tempfile
 from collections import Counter, deque
 from pathlib import Path
 
-from . import actions, log, rules, sleep
+from . import actions, genome, growth, log, rules, sleep
 from .memory import Memory
 from .world import NEEDS, add_event, clock, dist, load_config, near, new_world
 
@@ -110,9 +110,13 @@ def step(w, cfg, turn, mem, visitor_present=False, pet_id=""):
     before = dict(pet["needs"])
     reason = turn if isinstance(turn, str) else actions.check(turn, w, mem)
     turn = turn if isinstance(turn, dict) else {}
-    fx, text = {}, "nothing happened"
+    fx, text, used = {}, "nothing happened", None
     if not reason:
+        was = {"needs": before, "bowl": w["objects"]["bowl"]["state"], "plant_by_window": growth.plant_by_window(w)}
         text, fx, key = actions.apply(w, turn["action"], mem)
+        used = growth.exploit(w, cfg, turn["action"], was)
+        if used:
+            w["exploits"][used] += 1
         if key:
             gained = min(NOVELTY_MAX, (tick - w["seen"].get(key, -10**6)) / NOVELTY_RECHARGE)
             fx["curiosity"] = fx.get("curiosity", 0) + gained
@@ -122,11 +126,14 @@ def step(w, cfg, turn, mem, visitor_present=False, pet_id=""):
     context = ", ".join("%s %s" % (n, o["state"]) for n, o in w["objects"].items() if "state" in o) + \
         "; at (%d,%d)%s" % (*pet["pos"], " near " + nearest if near(w, nearest) else "")
     base, fired = drift(w), rules.fired(w, cfg)
+    if pet["stage"] == "egg":   # an egg is dormant: it watches, but nothing in the room reaches its needs yet
+        base, fired = dict.fromkeys(NEEDS, 0.0), []
     for n in NEEDS:
         change = fx.get(n, 0) + base[n] + sum(r.delta for r in fired if r.need == n)
         pet["needs"][n] = min(100.0, max(0.0, before[n] + change))
     deltas = {n: round(pet["needs"][n] - before[n], 1) for n in NEEDS}
     pet["trend"] = deltas
+    mark = genome.update_marks(w, cfg)
     result, need = score(turn.get("expect"), deltas, w)
     add_event(w, text + "".join("; " * (i == 0) + ", " * (i > 0) + "%s %+.1f" % nd
                                 for i, nd in enumerate((n, d) for n, d in deltas.items() if d)))
@@ -141,6 +148,7 @@ def step(w, cfg, turn, mem, visitor_present=False, pet_id=""):
         "rule_tags": [r.id for r in fired],
         # Only predictions about a need a hidden rule just moved count toward growth (§10).
         "rule_scored": result != "unscorable" and need in {r.need for r in fired},
+        "exploit": used, "mark": mark,
         "visitor_present": visitor_present,
     }
     w["tick"] += 1
@@ -159,11 +167,38 @@ class Pet:
         self.world = saved.get("world") or new_world(cfg)
         self.brain.s = saved.get("brain") or self.brain.s
         self.journal = deque(saved.get("journal", []), maxlen=30)        # what the view shows
-        self.window = deque(saved.get("window", []), maxlen=50)          # last 50 rule-scored results
+        self.window = deque(saved.get("window", []), maxlen=cfg["growth"]["window"])   # latest rule-scored results
         self.series = saved.get("series", [])                            # [tick, rolling accuracy]
         self.today = saved.get("today", [])                              # [tick, journal line, salience] since waking
         self.night = None                                                # the running sleep task
-        self.mem.update_self(stage=self.world["pet"]["stage"], name=self.world["pet"]["name"])
+        self.remember_self()
+
+    def remember_self(self):
+        me = self.world["pet"]
+        self.mem.update_self(stage=me["stage"], name=me["name"], genome=me["genome"],
+                             description=genome.describe(me["genome"]))
+
+    def log_body(self, cause, reason=""):
+        self.remember_self()
+        if self.db:
+            w = self.world
+            self.db.execute("INSERT INTO genomes VALUES (?,?,?,?,?,?)",
+                            (self.id, w["tick"], w["clock"]["day"], json.dumps(w["pet"]["genome"]), cause, reason))
+            self.db.commit()
+
+    def grow(self):
+        """The once-a-day stage check (§10), on waking."""
+        w, stage = self.world, growth.check(self)
+        if not stage:
+            return
+        old, w["pet"]["stage"] = w["pet"]["stage"], stage
+        add_event(w, "you hatched" if old == "egg" else "you have grown; you can do more now")
+        self.mem.journal({"pet": self.id, "tick": w["tick"], "type": "stage", "from": old, "to": stage})
+        self.remember_self()
+        if self.db:
+            self.db.execute("INSERT INTO stage_events VALUES (?,?,?,?,?,?,?)",
+                            (self.id, w["tick"], w["clock"]["day"], old, stage, self.accuracy(), json.dumps(w["exploits"])))
+            self.db.commit()
 
     def accuracy(self):
         return round(100 * sum(self.window) / len(self.window)) if self.window else None
@@ -190,6 +225,8 @@ class Pet:
             self.mem.update_self(name=w["pet"]["name"], named_at=rec["tick"])
         changes = ", ".join("%s %+.1f" % nd for nd in rec["deltas"].items() if nd[1])
         self.today += [[rec["tick"], "[t%d] %s | visitor %s" % (rec["tick"], rec["phase"], v), 99] for v in heard]
+        if rec["mark"]:
+            self.log_body("mark: " + rec["mark"])
         self.today.append([rec["tick"], "[t%d] %s | %s | %s | %s" % (rec["tick"], rec["phase"], rec["context"],
                                                                  rec["feedback"], changes or "no change"),
                            max(abs(d) for d in rec["deltas"].values())])
@@ -215,6 +252,7 @@ class Pet:
             w["events"] = []   # the reset: only journal, beliefs and self carry into the new day
             add_event(w, "you woke up" + ('. you remember thinking: "%s"' % dream if dream else ""))
             w["sleep"], self.night, self.today = None, None, []
+            self.grow()
         self.save()
 
     def save(self):

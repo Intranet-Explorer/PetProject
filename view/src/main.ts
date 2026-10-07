@@ -1,5 +1,6 @@
 // Wiring: one websocket to the engine, snapshots in, visitor actions out (SPEC §13).
 import { renderPanels } from "./panels";
+import type { Genome } from "./pet";
 import { Room } from "./room";
 
 export type Needs = { energy: number; comfort: number; curiosity: number };
@@ -11,9 +12,9 @@ export type Rec = {
 export type World = {
   tick: number;
   clock: { phase: string; hour: number; day: number };
-  pet: { pos: [number, number]; stage: string; needs: Needs; said: [number, string] | null; name: string | null };
+  pet: { pos: [number, number]; stage: string; needs: Needs; said: [number, string] | null; name: string | null; genome: Genome };
   sleep: { since: number } | null;
-  last_night: { day: number; dream: string; changes: string[] } | null;
+  last_night: { day: number; dream: string; changes: string[]; body: string; reason: string } | null;
   objects: Record<string, { pos: [number, number]; state?: string }>;
 };
 export type PetState = { world: World; beliefs: Belief[]; journal: Rec[]; accuracy: number | null; series: [number, number][] };

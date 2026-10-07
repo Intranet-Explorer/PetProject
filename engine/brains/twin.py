@@ -68,6 +68,9 @@ class Twin:
     async def dream(self, journal):
         return ""
 
+    async def choose_body(self, body, options):
+        return self.rng.randrange(len(options)), "picked at random"
+
     async def act(self, packet):
         f = parse(packet)
         self.learn(f)

@@ -111,7 +111,9 @@ export function renderPanels(snap: Snapshot, petId: string, ruleOnly: boolean) {
   else {
     const changes = el("ul");
     changes.append(...night.changes.map((c) => el("li", "", c)));
-    box.replaceChildren(el("p", "hint", `Night of day ${night.day}`), el("p", "", night.dream || "No dream summary."),
+    const body = el("p", "", night.body ? `Its body changed: ${night.body}. ` : "Its body did not change.");
+    if (night.reason) body.append(el("span", "hint", `“${night.reason}”`));
+    box.replaceChildren(el("p", "hint", `Night of day ${night.day}`), el("p", "", night.dream || "No dream summary."), body,
       ...(night.changes.length ? [el("p", "hint", "Belief changes while asleep"), changes] : []));
   }
 
