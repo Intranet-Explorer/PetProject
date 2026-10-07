@@ -51,6 +51,9 @@ async def broadcast():
 
 
 async def loop():
+    # A crash can land between two pets' saves. Bring whichever is behind level, so they stay tick for tick.
+    while len({p.world["tick"] for p in pets.values()}) > 1:
+        await min(pets.values(), key=lambda p: p.world["tick"]).tick(False)
     while True:
         started = time.monotonic()
         try:
