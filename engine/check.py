@@ -100,4 +100,32 @@ with tempfile.TemporaryDirectory() as d:
     again = Pet("twin", cfg, Twin(cfg), d)   # restart resumes the same life
     assert again.world == pet.world and again.brain.s == pet.brain.s and len(again.journal) == 30
 
+    # sleep: at the configured hour the pet stops ticking, the night's work runs, and it wakes in the morning
+    from .sleep import apply_changes, condense
+    pet.world["tick"] = round(15 * cfg["ticks_per_hour"]) - 1   # 22:58
+    asyncio.run(pet.tick())
+    energy, n = pet.world["pet"]["needs"]["energy"], len(pet.journal)
+    async def sleep_through():
+        ticks = 0
+        while ticks == 0 or pet.world["sleep"]:
+            assert await pet.tick() is None
+            ticks += 1
+        return ticks
+    slept = asyncio.run(sleep_through())
+    w = pet.world
+    assert 200 < slept < 220 and w["clock"]["phase"] == "day" and w["pet"]["needs"]["energy"] > energy
+    assert w["last_night"]["day"] == 1 and w["events"][0][1] == "you woke up" and pet.today == []
+    assert w["objects"]["bowl"]["state"] == "full" and len(pet.journal) == n
+    assert asyncio.run(pet.tick())["tick"] == w["tick"] - 1   # awake again
+
+    lines = [[t, "line %d" % t, 5.0 if t % 50 == 0 else 0.3] for t in range(500)]
+    picked = condense(lines + [[250, "visit", 99]]).splitlines()
+    assert len(picked) == 40 and "visit" in picked and "line 450" in picked
+    mem2 = Memory(tempfile.mkdtemp())
+    mem2.write("the rock helps", 1)
+    done = apply_changes(mem2, [{"type": "revise_belief", "id": "b1", "statement": "discard"},
+                                {"type": "write_belief", "statement": "lamp at night is bad"},
+                                {"type": "revise_belief", "id": "b7", "statement": "x"}, {"type": "write_belief", "statement": "4th"}], 9)
+    assert len(done) == 2 and [b["statement"] for b in mem2.active()] == ["lamp at night is bad"]
+
 print("engine check ok")

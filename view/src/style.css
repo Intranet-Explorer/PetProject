@@ -52,6 +52,8 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
 #discarded li { color: var(--muted); text-decoration: line-through; }
 details { margin-top: 8px; color: var(--muted); font-size: 13px; }
 .empty { color: var(--muted); font-size: 13px; }
+#lastNight p { margin: 0 0 6px; }
+#lastNight li { padding: 3px 0; border-top: 1px solid var(--line); font-size: 13px; overflow-wrap: anywhere; }
 #journal { max-height: 420px; overflow-y: auto; border-top: 1px solid var(--line); }
 #journal li { padding: 4px 0; border-bottom: 1px solid var(--line); font-size: 13px; overflow-wrap: anywhere; }
 #journal .rejected { color: var(--bad); }

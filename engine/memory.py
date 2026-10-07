@@ -1,4 +1,4 @@
-"""A pet's persistent memory (SPEC §8): the append-only journal and its beliefs. Self arrives in M3."""
+"""A pet's persistent memory (SPEC §8): the append-only journal, its beliefs, and self."""
 import json
 from pathlib import Path
 
@@ -11,6 +11,11 @@ class Memory:
         self.dir.mkdir(parents=True, exist_ok=True)
         self.path = self.dir / "beliefs.json"
         self.beliefs = json.loads(self.path.read_text()) if self.path.exists() else []
+
+    def update_self(self, **facts):
+        path = self.dir / "self.json"
+        me = json.loads(path.read_text()) if path.exists() else {}
+        path.write_text(json.dumps({**me, **facts}, indent=1))
 
     def journal(self, rec):
         with (self.dir / "journal.jsonl").open("a") as f:

@@ -80,7 +80,7 @@ export function renderPanels(snap: Snapshot, petId: string, ruleOnly: boolean) {
   const hh = Math.floor(w.clock.hour), mm = String(Math.floor((w.clock.hour % 1) * 60)).padStart(2, "0");
   $("status").className = "";
   $("status").textContent =
-    `tick ${w.tick} · day ${w.clock.day}, ${hh}:${mm} (${w.clock.phase}) · visitor ${snap.visitor_present ? "present" : "away"}`;
+    `tick ${w.tick} · day ${w.clock.day}, ${hh}:${mm} (${w.clock.phase}) · ${w.sleep ? "asleep" : "awake"} · visitor ${snap.visitor_present ? "present" : "away"}`;
 
   $("needs").replaceChildren(...NEEDS.map((n) => {
     const v = w.pet.needs[n], r = el("div", v < 20 ? "need low" : "need");
@@ -101,9 +101,19 @@ export function renderPanels(snap: Snapshot, petId: string, ruleOnly: boolean) {
   }
 
   const facts = $("facts");
-  facts.replaceChildren("Stage ", el("b", "", w.pet.stage), ` · day ${w.clock.day} · rule-tagged accuracy `,
+  facts.replaceChildren(...(w.pet.name ? ["Name ", el("b", "", w.pet.name), " · "] : []),
+    "Stage ", el("b", "", w.pet.stage), ` · day ${w.clock.day} · rule-tagged accuracy `,
     el("b", "", pet.accuracy == null ? "n/a" : `${pet.accuracy}%`));
   chart(snap);
+
+  const night = w.last_night, box = $("lastNight");
+  if (!night) box.replaceChildren(el("p", "empty", "It has not slept yet."));
+  else {
+    const changes = el("ul");
+    changes.append(...night.changes.map((c) => el("li", "", c)));
+    box.replaceChildren(el("p", "hint", `Night of day ${night.day}`), el("p", "", night.dream || "No dream summary."),
+      ...(night.changes.length ? [el("p", "hint", "Belief changes while asleep"), changes] : []));
+  }
 
   const active = pet.beliefs.filter((b) => b.status === "active").sort((a, b) => b.revised - a.revised);
   const gone = pet.beliefs.filter((b) => b.status !== "active");

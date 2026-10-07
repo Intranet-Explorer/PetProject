@@ -62,6 +62,12 @@ class Twin:
                     return "%s at %s %s %s" % ((action + " " + target).strip(), phase, "raises" if ups else "lowers", n)
         return None
 
+    async def consolidate(self, journal, beliefs):
+        return []   # it writes its templated beliefs while awake
+
+    async def dream(self, journal):
+        return ""
+
     async def act(self, packet):
         f = parse(packet)
         self.learn(f)

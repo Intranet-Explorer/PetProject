@@ -1,4 +1,4 @@
-"""The tick (SPEC §7): perceive, act, apply, drift and hidden rules, score, log.
+"""The tick (SPEC §7): perceive, act, apply, drift and hidden rules, score, log. And the pause for sleep (§9).
 
     uv run python -m engine.tick --ticks 3000    # headless run with the twin, prints a summary
 """
@@ -10,11 +10,11 @@ import tempfile
 from collections import Counter, deque
 from pathlib import Path
 
-from . import actions, log, rules
+from . import actions, log, rules, sleep
 from .memory import Memory
 from .world import NEEDS, add_event, clock, dist, load_config, near, new_world
 
-RECENT_SHOWN = 4
+RECENT, RECALLED, RECALL_RANGE = 6, 4, 2   # retrieval (§8): the latest events, plus older ones about things close by
 NOVELTY_MAX, NOVELTY_RECHARGE = 4.0, 15   # curiosity for doing something; ticks per point regained
 
 
@@ -29,7 +29,9 @@ def perceive(w, cfg, mem):
                       for n in NEEDS)
     visible = " · ".join("%s%s (%d,%d)" % (n, " (%s)" % o["state"] if "state" in o else "", *o["pos"])
                          for n, o in objs.items())
-    recent = "  ".join("[t%d] %s" % (t, e) for t, e in w["events"][-RECENT_SHOWN:]) or "nothing yet"
+    close = [n for n, o in objs.items() if dist(pet["pos"], o["pos"]) <= RECALL_RANGE]
+    recalled = [e for e in w["events"][:-RECENT] if any(n in e[1] for n in close)][-RECALLED:]
+    recent = "  ".join("[t%d] %s" % (t, e) for t, e in recalled + w["events"][-RECENT:]) or "nothing yet"
     beliefs = "".join("\n  %s: %s" % (b["id"], b["statement"]) for b in mem.top()) or " none yet"
     return (
         "time: %s (tick %d)\n" % (clock(cfg, tick)["phase"], tick)
@@ -92,14 +94,19 @@ def drift(w):
     return {"energy": -0.2, "comfort": -0.1 + 0.3 * cozy - 0.5 * cold, "curiosity": -0.3}
 
 
+def begin_tick(w, cfg):
+    """Move the world's clock to the current tick. Runs whether the pet is awake or asleep."""
+    w["clock"] = clock(cfg, w["tick"])
+    if w["tick"] % cfg["ticks_per_day"] == round(22 * cfg["ticks_per_hour"]):   # 06:00, so an unvisited pet still eats
+        w["objects"]["bowl"]["state"] = "full"
+        add_event(w, "morning came; the bowl is full")
+
+
 def step(w, cfg, turn, mem, visitor_present=False, pet_id=""):
     """One tick for one pet. `turn` is the brain's reply: a dict, or a string saying why there is none
     ("invalid json", "model unreachable"). Returns the journal record."""
     tick, pet = w["tick"], w["pet"]
-    w["clock"] = clock(cfg, tick)
-    if tick % cfg["ticks_per_day"] == round(22 * cfg["ticks_per_hour"]):   # 06:00, so an unvisited pet still eats
-        w["objects"]["bowl"]["state"] = "full"
-        add_event(w, "morning came; the bowl is full")
+    begin_tick(w, cfg)
     before = dict(pet["needs"])
     reason = turn if isinstance(turn, str) else actions.check(turn, w, mem)
     turn = turn if isinstance(turn, dict) else {}
@@ -110,6 +117,10 @@ def step(w, cfg, turn, mem, visitor_present=False, pet_id=""):
             gained = min(NOVELTY_MAX, (tick - w["seen"].get(key, -10**6)) / NOVELTY_RECHARGE)
             fx["curiosity"] = fx.get("curiosity", 0) + gained
             w["seen"][key] = tick
+    # What the room looked like when the outcome was decided; the day's journal is condensed from these.
+    nearest = min(w["objects"], key=lambda o: dist(pet["pos"], w["objects"][o]["pos"]))
+    context = ", ".join("%s %s" % (n, o["state"]) for n, o in w["objects"].items() if "state" in o) + \
+        "; at (%d,%d)%s" % (*pet["pos"], " near " + nearest if near(w, nearest) else "")
     base, fired = drift(w), rules.fired(w, cfg)
     for n in NEEDS:
         change = fx.get(n, 0) + base[n] + sum(r.delta for r in fired if r.need == n)
@@ -121,7 +132,7 @@ def step(w, cfg, turn, mem, visitor_present=False, pet_id=""):
                                 for i, nd in enumerate((n, d) for n, d in deltas.items() if d)))
     rec = {
         "pet": pet_id, "tick": tick, "day": w["clock"]["day"], "phase": w["clock"]["phase"],
-        "stage": pet["stage"], "pos": list(pet["pos"]),
+        "stage": pet["stage"], "pos": list(pet["pos"]), "context": context,
         "before": {n: round(v, 1) for n, v in before.items()},
         "needs": {n: round(v, 1) for n, v in pet["needs"].items()},
         "thought": str(turn.get("thought", ""))[:300], "action": turn.get("action"),
@@ -150,20 +161,39 @@ class Pet:
         self.journal = deque(saved.get("journal", []), maxlen=30)        # what the view shows
         self.window = deque(saved.get("window", []), maxlen=50)          # last 50 rule-scored results
         self.series = saved.get("series", [])                            # [tick, rolling accuracy]
+        self.today = saved.get("today", [])                              # [tick, journal line, salience] since waking
+        self.night = None                                                # the running sleep task
+        self.mem.update_self(stage=self.world["pet"]["stage"], name=self.world["pet"]["name"])
 
     def accuracy(self):
         return round(100 * sum(self.window) / len(self.window)) if self.window else None
 
     async def tick(self, visitor_present=False):
-        packet = perceive(self.world, self.cfg, self.mem)
-        heard = len(self.world["inbox"])
+        w = self.world
+        if not w["sleep"] and sleep.should_sleep(w, self.cfg):
+            w["sleep"] = {"since": w["tick"], "day": w["clock"]["day"], "done": False}
+        if w["sleep"]:
+            return await self.sleep_tick()
+        packet = perceive(w, self.cfg, self.mem)
+        heard = w["inbox"][:]
         turn = await self.brain.act(packet)
-        rec = step(self.world, self.cfg, turn, self.mem, visitor_present, self.id)
-        del self.world["inbox"][:heard]   # visits that arrived while it was thinking wait for the next packet
+        rec = step(w, self.cfg, turn, self.mem, visitor_present, self.id)
+        del w["inbox"][:len(heard)]   # visits that arrived while it was thinking wait for the next packet
         if rec["rule_scored"]:
             self.window.append(rec["score"] == "correct")
             self.series.append([rec["tick"], self.accuracy()])
             del self.series[:-600]
+        said = rec["action"].get("text", "") if not rec["reason"] and rec["action"]["type"] == "speak" else ""
+        name = re.search(r"\bmy name is ([A-Za-z][\w' -]{0,29})", said, re.I)
+        if name:
+            w["pet"]["name"] = name.group(1).strip()
+            self.mem.update_self(name=w["pet"]["name"], named_at=rec["tick"])
+        changes = ", ".join("%s %+.1f" % nd for nd in rec["deltas"].items() if nd[1])
+        self.today += [[rec["tick"], "[t%d] %s | visitor %s" % (rec["tick"], rec["phase"], v), 99] for v in heard]
+        self.today.append([rec["tick"], "[t%d] %s | %s | %s | %s" % (rec["tick"], rec["phase"], rec["context"],
+                                                                 rec["feedback"], changes or "no change"),
+                           max(abs(d) for d in rec["deltas"].values())])
+        del self.today[:-800]
         self.journal.append(rec)
         self.mem.journal(rec)
         if self.db:
@@ -171,10 +201,26 @@ class Pet:
         self.save()
         return rec
 
+    async def sleep_tick(self):
+        """Asleep: the clock moves and energy returns, but the pet takes no turn."""
+        w = self.world
+        if not w["sleep"]["done"] and self.night is None:
+            self.night = asyncio.create_task(sleep.night(self))
+        await asyncio.sleep(0)   # let the night's work start, even in a headless loop
+        begin_tick(w, self.cfg)
+        w["pet"]["needs"]["energy"] = min(100.0, w["pet"]["needs"]["energy"] + self.cfg["sleep"]["restore_per_tick"])
+        w["tick"] += 1
+        if w["sleep"]["done"] and w["clock"]["phase"] != "night":
+            dream = w["last_night"]["dream"]
+            w["events"] = []   # the reset: only journal, beliefs and self carry into the new day
+            add_event(w, "you woke up" + ('. you remember thinking: "%s"' % dream if dream else ""))
+            w["sleep"], self.night, self.today = None, None, []
+        self.save()
+
     def save(self):
         tmp = self.state_path.with_suffix(".tmp")
         tmp.write_text(json.dumps({"world": self.world, "brain": self.brain.s, "journal": list(self.journal),
-                                   "window": list(self.window), "series": self.series}))
+                                   "window": list(self.window), "series": self.series, "today": self.today}))
         tmp.replace(self.state_path)
 
 
@@ -186,7 +232,7 @@ async def main():
     cfg = load_config()
     with tempfile.TemporaryDirectory() as d:
         pet = Pet("twin", cfg, Twin(cfg), d, log.open_db(Path(d) / "pet.db"))
-        tags, scores, reasons, distress = Counter(), Counter(), Counter(), Counter()
+        tags, scores, reasons, distress, asleep = Counter(), Counter(), Counter(), Counter(), 0
         for i in range(args.ticks):
             # A scripted visitor so every rule gets exercised: two feeds close together, plant to the window.
             if i % 240 in (0, 6):
@@ -194,11 +240,14 @@ async def main():
             if i == 150:
                 actions.visit(pet.world, {"type": "place", "object": "plant", "tile": [1, 4]})
             rec = await pet.tick()
+            if not rec:
+                asleep += 1
+                continue
             tags.update(rec["rule_tags"])
             scores[rec["score"]] += 1
             reasons[rec["reason"]] += 1
             distress.update(n for n, v in rec["needs"].items() if v < 20)
-        print("ticks %d = %.1f world days" % (args.ticks, args.ticks / cfg["ticks_per_day"]))
+        print("ticks %d = %.1f world days, %d asleep" % (args.ticks, args.ticks / cfg["ticks_per_day"], asleep))
         print("rule fired on ticks:", dict(tags))
         print("scores:", dict(scores), "| rejected:", {k: v for k, v in reasons.items() if k})
         print("rule-tagged accuracy (rolling 50):", pet.accuracy(), "% over", len(pet.series), "scored")

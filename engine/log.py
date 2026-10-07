@@ -1,5 +1,5 @@
-"""SQLite event log (SPEC §15). Append-only; one row per pet per tick in each table.
-sleeps, genomes and stage_events are created by the milestones that first write them."""
+"""SQLite event log (SPEC §15). Append-only; one row per pet per waking tick, one per sleep.
+genomes and stage_events are created by the milestone that first writes them."""
 import json
 import sqlite3
 
@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS decisions (pet TEXT, tick INT, thought TEXT, action T
 CREATE TABLE IF NOT EXISTS outcomes (pet TEXT, tick INT, feedback TEXT, d_energy REAL, d_comfort REAL,
     d_curiosity REAL, score TEXT, rule_tags TEXT, rule_scored INT);
 CREATE TABLE IF NOT EXISTS beliefs_history (pet TEXT, tick INT, belief TEXT, op TEXT, statement TEXT);
+CREATE TABLE IF NOT EXISTS sleeps (pet TEXT, tick INT, day INT, dream TEXT, changes TEXT);
 """
 
 

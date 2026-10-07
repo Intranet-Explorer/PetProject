@@ -25,6 +25,7 @@ def new_world(cfg):
             "needs": {"energy": 70.0, "comfort": 60.0, "curiosity": 60.0},
             "trend": {},     # last tick's need deltas
             "said": None,    # [tick, text] of the latest speech bubble
+            "name": None,    # set if it ever says "my name is ..."
         },
         "objects": {
             "lamp": {"pos": [2, 1], "state": "on"},
@@ -44,6 +45,8 @@ def new_world(cfg):
         "last_eat": LONG_AGO,
         "prev_eat": LONG_AGO,
         "visitor_last": LONG_AGO,      # tick of the visitor's latest action
+        "sleep": None,                 # {"since", "day", "done"} while asleep
+        "last_night": None,            # {"day", "dream", "changes"} from the latest sleep
     }
     w["clock"] = clock(cfg, 0)
     return w
@@ -71,4 +74,4 @@ def tile_ok(t):
 
 def add_event(w, text):
     w["events"].append([w["tick"], text])
-    del w["events"][:-12]
+    del w["events"][:-200]   # ponytail: retrieval looks back 200 events, not the whole journal

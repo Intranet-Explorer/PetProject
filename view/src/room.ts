@@ -66,6 +66,7 @@ export class Room {
   private placed = false;
   private distressed = false;
   private energy = 50;
+  private asleep = false;
 
   async init(el: HTMLElement, w: number, h: number) {
     const [width, height] = [w * T + 2 * PAD, h * T + 2 * PAD];
@@ -89,7 +90,7 @@ export class Room {
       const k = Math.min(1, t.deltaMS / 250), now = performance.now();
       this.pet.x += (this.goal[0] - this.pet.x) * k;
       this.pet.y += (this.goal[1] - this.pet.y) * k;
-      this.body.y = Math.sin(now / (900 - this.energy * 5)) * 3;
+      this.body.y = this.asleep ? 0 : Math.sin(now / (900 - this.energy * 5)) * 3;
       this.body.x = this.distressed ? Math.sin(now / 35) * 1.5 : 0;
       this.bubble.position.set(this.pet.x, this.pet.y - 30);
     });
@@ -113,8 +114,9 @@ export class Room {
     if (!this.placed) this.pet.position.set(this.goal[0], this.goal[1]);
     this.placed = true;
     this.energy = w.pet.needs.energy;
+    this.asleep = !!w.sleep;
     this.distressed = Object.values(w.pet.needs).some((v) => v < 20);
-    drawPet(this.body, w.pet.stage, this.distressed);
+    drawPet(this.body, w.pet.stage, this.distressed, !!w.sleep);
 
     for (const c of this.bubble.removeChildren()) c.destroy();
     if (w.pet.said && w.tick - w.pet.said[0] <= 3) {
