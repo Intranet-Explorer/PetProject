@@ -6,8 +6,7 @@ at the end of each milestone.
 
 Built so far: V2.0 to V2.4 (intentions, 2-second ticks, a 10-minute egg, the room-first view, making things,
 growth by useful things through to Adult, arrange, combine, paint, visitor gifts, taught behaviors, self-portraits).
-Not yet: the long real-clock run (V2.5).
-The config is currently on the fast clock (`day_seconds = 1800`) from the V2.3 check.
+V2.5, the long real-clock run, started on 8 Oct 2026; `NOTES.md` has what to look at.
 
 ## Run
 

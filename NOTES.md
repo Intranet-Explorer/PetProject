@@ -217,3 +217,34 @@ One thing from the real Child, seen the same afternoon: after its senses were sw
 every warm thing and then made three soft things in a row (soft pillow, soft nest, soft moon), all white,
 all one part. It has found what works and is repeating it, which is the V2.2 gate's worry. It has not touched
 a new material, a second part, or `arrange`.
+
+## V2.5: the long run, first hour (8 Oct 2026)
+
+The fast-clock V2.3 life was stopped as a Child on world day 9 and archived to `data.v2.3/`. Between V2.4 and
+this run one more change went in, from watching that Child make white soft thing after white soft thing:
+novelty now goes by kind (another thing of a known material wears like a repeat) and eases back two repeats
+a night. The clock is back to real time (`day_seconds = 7200`). Fresh life started 16:14 with `./run.sh start`;
+watched from the egg through its first hour as a hatchling and its first sleep (ticks 0 to 2295, to 17:31).
+No errors in the log; one model call of 57 failed and was retried at the next thought.
+
+- **It made four things in the hour:** a "warm nest" that is in fact soft (a pink circle, "a place to rest"),
+  then three bright things: light orb, glow dot, tiny star, "to add a point of light and interest". Two
+  materials, all one part. Novelty by kind did not stop it making three lights in a row.
+- **Its lights met the night, and this time it could feel it.** At nightfall the lamp and all three of its
+  lights were on. "Comfort is falling and I feel the light is harsh." It first went to the blanket and the nest
+  "away from the harsh light source". Four thoughts later: "the bright lights (lamp, orb, glow dot) are likely
+  contributing to the discomfort", and it switched the light orb and the glow dot off.
+- **It stopped one step short.** It never switched the lamp off, so the light stayed harsh, comfort reached 0
+  and it earned the notch. What it wrote down afterwards was wrong: "Light orb and glow dot are not permanent;
+  they can turn off on their own after some time, unlike the lamp." It had turned them off itself.
+- **It spoke once**, unprompted, about the music box.
+- **Numbers:** 53 model calls in the hour, median 8.0 s; 114 steps in 56 intentions, none impossible; 51 of
+  56 intentions had two steps; 51% of predictions right, none of the 6 about a need a hidden rule was moving.
+- **Toward Child:** 0 days lived, 0 useful things. The nest has been used once.
+
+What to look at as it runs, in the spec's order: what it makes and why; whether its things get more useful
+over time; which useful things it keeps; what it names itself and its things; how its self-portraits change.
+And two of my own: whether it ever puts out the lamp for the night, and whether it uses a second part or a
+material beyond soft, warm and bright once it is a Child.
+
+Review with `uv run python -m engine.metrics`, the Things and Self tabs, and `data/model/things.json`.

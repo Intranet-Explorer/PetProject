@@ -135,10 +135,11 @@ async def main():
     assert bad(type="look", target="bowl (empty) (6,7)") is None
     assert "nothing happened" in (await do(p, use("rock")))[1][0]["feedback"]
     assert (await do(p, use("ball")))[1][0]["deltas"]["curiosity"] > 3
-    p.world["tick"] += ticks(cfg, 900)                                           # long enough to be fully fresh again
+    rested = lambda: p.world["seen_at"].pop("use ball")                          # as if left alone long enough to be fresh
+    rested()
     assert 3.8 <= (await do(p, use("ball")))[1][0]["own"]["curiosity"] <= 4.1    # second time: 0.8 of the first (1 + 4)
     for _ in range(12):
-        p.world["tick"] += ticks(cfg, 900)
+        rested()
         worn = (await do(p, use("ball")))[1][0]["own"]["curiosity"]
     assert 0.4 <= worn <= 0.6                                                    # the same thing wears down to a tenth
     ok = {"thought": "", "intention": "x", "steps": [rest], "expect": ""}
@@ -238,7 +239,7 @@ async def main():
     w["pet"]["needs"]["energy"] = 50.0
     for name, material, novelty in (("second soft", "soft", 3.2), ("third soft", "soft", 2.6), ("first warm", "warm", 4.0)):
         w["pet"]["needs"]["curiosity"] = 50.0
-        w["tick"] += ticks(cfg, 900)                                             # long enough to be fully fresh
+        w["seen_at"].pop("make " + material, None)                               # as if long enough ago to be fresh
         made = (await do(p, make([1, 6], name, material)))[1][0]
         assert abs(made["own"]["curiosity"] - novelty) < 0.06, (name, made["own"])   # novelty goes by kind, not by name
     w["pet"]["needs"]["energy"] = 50.0
