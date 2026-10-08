@@ -233,9 +233,9 @@ No errors in the log; one model call of 57 failed and was retried at the next th
 - **Its lights met the night, and this time it could feel it.** At nightfall the lamp and all three of its
   lights were on. "Comfort is falling and I feel the light is harsh." It first went to the blanket and the nest
   "away from the harsh light source". Four thoughts later: "the bright lights (lamp, orb, glow dot) are likely
-  contributing to the discomfort", and it set out to switch its own lights off. The light orb was already
-  off from earlier in the day, so that first try switched it on; it put it out again about two minutes later.
-- **It stopped one step short.** It never switched the lamp off, so the light stayed harsh, comfort reached 0
+  contributing to the discomfort". By the record it had switched the light orb and the glow dot off a little
+  before that (ticks 2071 and 2077), switched the orb back on a minute later, and off again at tick 2177.
+- **It stopped short.** It never switched off the lamp or its tiny star, so the light stayed harsh, comfort reached 0
   and it earned the notch. What it wrote down afterwards was wrong: "Light orb and glow dot are not permanent;
   they can turn off on their own after some time, unlike the lamp." Every change of state had been its own doing.
 - **It spoke once**, unprompted, about the music box.
