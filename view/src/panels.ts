@@ -88,7 +88,13 @@ function compare(snap: Snapshot) {
     line("Times it thought in the last hour", (id) => String(snap.pets[id].world.calls.length)),
     line("Hidden-rule predictions right", (id) => snap.pets[id].accuracy == null ? "none yet" : `${snap.pets[id].accuracy}%`),
     ...RULES.map(([rule, label]) => line(label, (id) => `${snap.pets[id].world.exploits[rule]} times`)),
-    line("Things made", (id) => String(snap.pets[id].things.length)),
+    line("Things made", (id) => String(snap.pets[id].things.filter((t) => t.by === "pet").length)),
+    line("Useful things", (id) => String(snap.pets[id].progress.useful)),
+    line("Days lived", (id) => String(snap.pets[id].progress.days)),
+    line("Next stage", (id) => {
+      const p = snap.pets[id].progress;
+      return p.next && p.needs ? `${p.next}: ${p.needs.days} days and ${p.needs.useful} useful things` : "none yet";
+    }),
     line("Beliefs held", (id) => String(snap.pets[id].beliefs.filter((b) => b.status === "active").length)),
     line("Marks", (id) => snap.pets[id].world.pet.genome.marks.join(", ") || "none"),
   );
@@ -137,9 +143,10 @@ export function renderPanels(snap: Snapshot, petId: string, ruleOnly: boolean) {
     const seen = NEEDS.filter((n) => t.effects.length && Math.abs(sums[n]) >= 0.05 * t.effects.length)
       .map((n) => `${sums[n] > 0 ? "+" : ""}${(sums[n] / t.effects.length).toFixed(1)} ${n}`).join(", ");
     const title = el("div");
-    title.append(el("b", "", t.name), t.gone ? ` (${t.gone[1]})` : "");
+    title.append(el("b", "", t.name), t.gone ? ` (${t.gone[1]})` : "", ...(t.useful ? [el("span", "badge", "useful")] : []),
+      ...(t.by === "visitor" ? [el("span", "hint", " from you")] : []));
     li.append(thingPicture(t.recipe), title, el("div", "", `“${t.recipe.purpose}”`),
-      el("div", "truth", `${t.recipe.material}: ${snap.materials[t.recipe.material] ?? ""}. Used ${t.uses} time${t.uses === 1 ? "" : "s"}${seen ? `, on average ${seen}` : ""}.`));
+      el("div", "truth", `${t.recipe.material}: ${snap.materials[t.recipe.material] ?? ""}. Used or felt ${t.uses} time${t.uses === 1 ? "" : "s"}${seen ? `, on average ${seen}` : ""}.`));
     return li;
   }) : [el("li", "empty", "It has not made anything yet.")]));
   document.querySelector('[data-tab="things"]')!.textContent = `Things (${pet.things.filter((t) => !t.gone).length})`;

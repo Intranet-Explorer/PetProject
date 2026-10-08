@@ -3,7 +3,7 @@ it, and decides what the thing really does from its material, size and surroundi
 The purpose is the pet's own idea and changes nothing."""
 import re
 
-from .world import dist, moment, tile_ok
+from .world import H, W, dist, moment, tile_ok
 
 SHAPES = ["circle", "square", "triangle", "blob", "bar", "dot", "ring", "star"]
 COLORS = ["red", "orange", "yellow", "green", "teal", "blue", "purple", "pink", "brown", "white", "grey", "black"]
@@ -24,6 +24,12 @@ def allowed(stage):
 
 def own(w):
     return [n for n, o in w["objects"].items() if o.get("made", {}).get("by") == "pet"]
+
+
+def movable(w, cfg):
+    """What can be arranged: the loose starting objects and any made thing that is not heavy."""
+    return ["plant", "ball", "blanket", "rock"] + [n for n, o in w["objects"].items()
+                                                  if "made" in o and not material(w, cfg, n).get("fixed")]
 
 
 def material(w, cfg, name):
@@ -65,8 +71,6 @@ def check_make(a, w, cfg):
         return "there is already a " + name
     if not tile_ok(a.get("tile")):
         return "bad tile"
-    if any(o["pos"] == a["tile"] for o in w["objects"].values()):
-        return "that tile is taken"
     if len(own(w)) >= cfg["make"]["item_cap"]:
         return "there's no room for more"
     if w["pet"]["needs"]["energy"] < cost(r, cfg):
@@ -74,8 +78,15 @@ def check_make(a, w, cfg):
     return None
 
 
+def free_tile(w, tile):
+    """The tile asked for if nothing is on it, else the nearest one that is free. The V2.3 life lost two of
+    its first three makes to a taken tile; putting the thing down beside what is there loses nothing."""
+    taken = [o["pos"] for o in w["objects"].values()]
+    return min(([x, y] for x in range(W) for y in range(H) if [x, y] not in taken), key=lambda t: dist(t, tile))
+
+
 def make(w, a, cfg, mem, clean):
-    r = a["recipe"]
+    r, a = a["recipe"], dict(a, tile=free_tile(w, a["tile"]))
     name = clean_name(r["name"])
     recipe = {"name": name, "material": r["material"], "purpose": clean(r["purpose"], 80),
               "parts": [{"shape": p["shape"], "size": p["size"], "color": p["color"], "at": p.get("at", "center")}
@@ -85,7 +96,61 @@ def make(w, a, cfg, mem, clean):
         w["objects"][name]["state"] = "on"
     mem.thing_made(name, recipe, a["tile"], w["tick"])
     moment(w, "it made a " + name)
-    return "you made " + name, {"energy": -float(cost(r, cfg))}, "make " + name
+    return "you made %s at (%d,%d)" % (name, *a["tile"]), {"energy": -float(cost(r, cfg))}, "make " + name
+
+
+def check_combine(a, w, cfg, norm):
+    x, y, r = norm(a.get("a")), norm(a.get("b")), a.get("recipe")
+    if x not in own(w) or y not in own(w) or x == y:
+        return "you can only combine two different things of your own"
+    if not isinstance(r, dict) or not isinstance(r.get("purpose"), str):
+        return "no recipe"
+    if r.get("material") not in {w["objects"][n]["made"]["recipe"]["material"] for n in (x, y)}:
+        return "the material must be one of theirs"
+    name = clean_name(r.get("name"))
+    if not name:
+        return "no name"
+    if name not in (x, y) and (name in w["objects"] or name == "visitor"):
+        return "there is already a " + name
+    if w["pet"]["needs"]["energy"] < cfg["make"]["energy_base"]:
+        return "not enough energy"
+    return None
+
+
+def combine(w, a, cfg, mem, clean, norm):
+    """§6: two of its things become one, with the parts of both (up to 6) and the material of either."""
+    x, y, r = norm(a["a"]), norm(a["b"]), a["recipe"]
+    parts = [dict(p) for n in (x, y) for p in w["objects"][n]["made"]["recipe"]["parts"]][:6]
+    recipe = {"name": clean_name(r["name"]), "material": r["material"], "purpose": clean(r["purpose"], 80), "parts": parts}
+    pos = w["objects"][x]["pos"]
+    for n in (x, y):
+        del w["objects"][n]
+        mem.thing_gone(n, w["tick"], "combined")
+    w["objects"][recipe["name"]] = {"pos": pos, "made": {"recipe": recipe, "by": "pet", "tick": w["tick"], "from": [x, y]}}
+    if cfg["materials"][r["material"]].get("light"):
+        w["objects"][recipe["name"]]["state"] = "on"
+    mem.thing_made(recipe["name"], recipe, pos, w["tick"])
+    moment(w, "it combined the %s and the %s into a %s" % (x, y, recipe["name"]))
+    return "you combined %s and %s into %s" % (x, y, recipe["name"]), {"energy": -float(cfg["make"]["energy_base"])}, "make " + recipe["name"]
+
+
+def give(w, msg, cfg, mem):
+    """A thing dropped in by the visitor (§9): one shape, the visitor's choice of material. It is not the pet's."""
+    part = {"shape": msg.get("shape"), "size": 2, "color": msg.get("color"), "at": "center"}
+    if not (part["shape"] in SHAPES and part["color"] in COLORS and msg.get("material") in MATERIALS and tile_ok(msg.get("tile"))):
+        return None
+    if any(o["pos"] == msg["tile"] for o in w["objects"].values()):
+        return None
+    w["gifts"] += 1
+    name = "gift %d" % w["gifts"]
+    recipe = {"name": name, "material": msg["material"], "purpose": "a gift from the visitor", "parts": [part]}
+    w["objects"][name] = {"pos": list(msg["tile"]), "made": {"recipe": recipe, "by": "visitor", "tick": w["tick"]}}
+    if cfg["materials"][msg["material"]].get("light"):
+        w["objects"][name]["state"] = "on"
+    if mem:
+        mem.thing_made(name, recipe, msg["tile"], w["tick"], by="visitor")
+    moment(w, "you gave it a " + name)
+    return "visitor left %s at (%d,%d)" % (name, *msg["tile"])
 
 
 def unmake(w, a, cfg, mem, name):
@@ -115,10 +180,32 @@ def use(w, cfg, mem, name):
 
 
 def nearby(w, cfg):
-    """Standing effects of the things next to the pet: [(tag, need, rate per 10 s)]."""
+    """Standing effects of the things next to the pet: [(material, need, rate per 10 s, the thing's name)]."""
     phase = w["clock"]["phase"]
-    return [(material(w, cfg, n) and w["objects"][n]["made"]["recipe"]["material"], need, rate)
+    return [(w["objects"][n]["made"]["recipe"]["material"], need, rate, n)
             for n in close(w, cfg, "near") for need, rate in material(w, cfg, n)["near"].get(phase, {}).items()]
+
+
+def senses(w, cfg, fired):
+    """What the pet can feel at this moment, from the hidden rules holding now (`fired`) and the things beside it.
+    A sensation names its source and whether it is pleasant, never the rule: that warm things turn on it by
+    day, or that the harsh light is only harsh at night, it still has to work out by living through both."""
+    felt = []
+    if "lights_night" in fired:
+        felt.append("the light in the room is harsh on you")
+    if "plant_window" in fired:
+        felt.append("the air in the room feels fresh")
+    if w["clock"]["phase"] == "night" and light_on(w, cfg):
+        felt += ["the %s beside you keeps the light off you" % n for n in close(w, cfg, "shade")]
+    for _, need, rate, n in nearby(w, cfg):
+        felt.append("the %s beside you feels %s" % (n, "pleasant" if rate > 0 else "unpleasant"))
+    return "; ".join(dict.fromkeys(felt)) or "nothing in particular"
+
+
+def useful(t, cfg):
+    """§6: it made it, and on most of at least `useful_uses` occasions the thing raised the need it is for."""
+    need = cfg["materials"][t["recipe"]["material"]].get("need")
+    return bool(need) and t["by"] == "pet" and t["uses"] >= cfg["growth"]["useful_uses"] and t.get("ups", 0) * 2 > t["uses"]
 
 
 def light_on(w, cfg):
@@ -127,10 +214,11 @@ def light_on(w, cfg):
 
 
 def rest(w, cfg, energy):
-    """Resting next to a noisy or a quiet thing: (energy per 10 s, tags)."""
-    tags = []
+    """Resting next to a noisy or a quiet thing: (energy per 10 s, tags, {thing: what it added per 10 s})."""
+    tags, share = [], {}
     for n in close(w, cfg, "rest_near"):
-        energy, tags = energy * material(w, cfg, n)["rest_near"], tags + ["noisy"]
+        by = material(w, cfg, n)["rest_near"]
+        share[n], energy, tags = energy * (by - 1), energy * by, tags + ["noisy"]
     for n in close(w, cfg, "rest_bonus"):
-        energy, tags = energy + material(w, cfg, n)["rest_bonus"], tags + ["quiet"]
-    return energy, sorted(set(tags))
+        share[n], energy, tags = material(w, cfg, n)["rest_bonus"], energy + material(w, cfg, n)["rest_bonus"], tags + ["quiet"]
+    return energy, sorted(set(tags)), share

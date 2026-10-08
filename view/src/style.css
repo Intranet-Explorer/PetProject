@@ -44,6 +44,9 @@ button[aria-pressed="true"], button[aria-expanded="true"] { border-color: var(--
 .place { display: flex; gap: 6px; align-items: center; }
 .place label { color: var(--muted); font-size: 14px; }
 #talkForm { display: flex; gap: 6px; flex: 1 1 260px; }
+#give { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 6px 12px; }
+#give summary { cursor: pointer; }
+#give[open] { flex-basis: 100%; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
 #talkText { flex: 1; min-width: 0; }
 
 /* drawer: closed by default; pushes the room aside on a wide window, covers it on a narrow one */
@@ -83,6 +86,7 @@ h2 { margin: 14px 0 6px; font-size: 16px; font-weight: 650; overflow-wrap: anywh
 #shelf li { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 4px 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
 #shelf svg { width: 56px; height: 56px; grid-row: span 3; }
 #shelf b { font-weight: 650; }
+#shelf .badge { margin-left: 8px; font-size: 12px; color: var(--good); border: 1px solid var(--good); border-radius: 999px; padding: 0 7px; }
 #shelf li.gone { opacity: 0.5; }
 #shelf .truth { font-size: 13px; color: var(--muted); }
 .night { padding: 10px 0 14px; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 6px; }

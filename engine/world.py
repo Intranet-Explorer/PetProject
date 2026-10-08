@@ -51,6 +51,7 @@ def new_world(cfg):
         "events": [],                  # [tick, text], what the pet can recall as "recent"
         "inbox": [],                   # what the visitor did since the pet last perceived
         "seen_at": {},                 # novelty: interaction -> tick it last happened
+        "times": {},                   # ... and how many times it has happened in this life
         "last_eat": LONG_AGO,
         "prev_eat": LONG_AGO,
         "visitor_last": LONG_AGO,      # tick of the visitor's latest action
@@ -66,6 +67,8 @@ def new_world(cfg):
         "calls": [],                   # ticks of the model calls in the last real hour
         "phase_seen": "day",
         "moments": [],                 # [tick, text]: things worth seeing, for the view (SPEC-v2 §9)
+        "room": {"wall": None, "floor": None},   # palette names once it has painted (§6); None is the plain room
+        "gifts": 0,                    # how many things the visitor has given, for naming them
         "exploits": {"lights_night": 0, "plant_window": 0, "double_feed": 0},   # times each rule was used on purpose
         "near_window": 0,              # waking ticks spent near the window
     }

@@ -135,3 +135,55 @@ single blobs meant "to hold" for comfort, and the first two differ only in size.
 of its four materials, the sequence was a real search that ended in something that works, and the fourth
 thing is different in shape, material and purpose. It never used a second part. If the next life's shelf is
 mostly comfort blobs again, the novelty pressure needs work before V2.4.
+
+## V2.3: growing (8 Oct 2026)
+
+The V2.2 life was stopped and archived to `data.v2.2/`. This milestone's check is a fast-clock day
+(`day_seconds = 1800`), and it took two lives and two changes before the pet earned a stage.
+
+**The check: run a day at fast clock and confirm stage-ups fire from the right counts.** Passed, in the end.
+On the second life the pet became a Child at tick 6225, 06:00 on world day 8, 3.5 real hours in, on the first
+morning it held two useful things. It was told "you feel bigger; you can do new things: arrange, things of up
+to 4 parts, the cool material, the dark material, the noisy material, the quiet material, the bouncy material,
+the heavy material", and the view showed "it is now a Child". On every earlier morning it had the days and
+not the things, and was correctly left a hatchling. The counts are also covered by the self-check, including a
+simulated fast-clock life that is promoted on the morning of day 3 and not before.
+
+**The gate: does it ever reach Child at the fast clock?** It tripped twice before it passed.
+
+- **First life (`data.v2.3-first/`, 2.4 hours, to world day 6): two things made, one useful, never a Child.**
+  Two of its first three makes were rejected for aiming at a taken tile (once the bed's own tile, for a "soft
+  pillow"). Then it stopped making altogether for 78 minutes. Its curiosity had reached 100 after 37 minutes
+  and stayed there: revisiting the ten starting objects kept paying out fresh curiosity for ever, so it had
+  no reason to invent.
+  - Change: a thing aimed at a taken tile is put on the nearest free one.
+  - Change: novelty wears for good. Each repeat of the same interaction is worth 0.8 of the last, down to a
+    tenth. Making something new is always fully novel.
+- **Second life (`data/`, started 12:24): seven things in three hours, still one useful, still no Child.**
+  Novelty wear worked: it made more. But four of the seven were warm things, which it parked around the spot
+  where it spends its days. Warm things cost comfort by day, each one of them, and comfort sat at 0 until it
+  earned the notch. It worked out that "all made 'warm' objects are passive; 'use' does nothing", and blamed the
+  falling comfort on the blanket ("recent uses result in comfort loss").
+  - Change: senses. The packet gained "you feel:", naming what is acting on it right now and whether that is
+    pleasant, never why or when. This goes against §5's "the pet is told none of it" and has a config switch.
+- **Same life, after senses were switched on at tick 5466:** on its very next thought, "The warm nest and glow
+  feel unpleasant, so I must avoid them." Within four thoughts it had made a soft ball, gone to its soft cloud,
+  taken apart the warm nest (its first unmake in 3 hours) and made a soft star. That night it took apart the
+  bright ring too. The next morning it was a Child.
+
+**What this says about growth.**
+- At the fast clock the days requirement is always met early; what takes time is inventing, which runs at the
+  pet's thinking rate and does not speed up with the clock. One useful thing took about 1.5 to 2 real hours.
+  At the real clock that is roughly on schedule for Child at 2 days (4 hours), and tight for Youngling.
+- For a hatchling only soft things can realistically become useful: hard and bright are for no need, and a
+  warm thing helps only at night, when it is mostly asleep. Both useful things were soft blobs.
+- A "use" is counted as any occasion a thing acted on the pet, so the warm nest logged 88 occasions and 10
+  helpful ones. That is the engine saying, truthfully, that it was a bad thing to have made.
+
+**Still weak.**
+- Plans are almost always two steps (2.1 on average).
+- Model calls ran at 35 to 39 an hour: the fast clock spends 29% of the time asleep, and a turn now takes 10 s.
+- It never spoke, and no visitor has ever acted on any v2 life, so talk, gifts and the give control have only
+  been exercised by the self-check and one websocket message.
+- The made things are still narrow: blobs and rings, three materials, one part each, nearly all "for comfort".
+  Child unlocks six more materials and four-part things; whether it uses them is the thing to watch next.

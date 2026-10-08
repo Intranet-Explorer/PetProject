@@ -14,23 +14,28 @@ class Memory:
         self.things_path = self.dir / "things.json"   # the catalog: every thing it ever made (SPEC-v2 §4)
         self.things = json.loads(self.things_path.read_text()) if self.things_path.exists() else []
 
+    def save_things(self):
+        self.things_path.write_text(json.dumps(self.things, indent=1))
+
     def thing(self, name):
         return next(t for t in reversed(self.things) if t["name"] == name)
 
     def thing_made(self, name, recipe, tile, tick, by="pet"):
         self.things.append({"name": name, "recipe": recipe, "tile": list(tile), "made": tick, "by": by,
-                            "uses": 0, "effects": [], "gone": None})
-        self.things_path.write_text(json.dumps(self.things, indent=1))
+                            "uses": 0, "ups": 0, "effects": [], "gone": None})
+        self.save_things()
 
-    def thing_used(self, name, change):
-        """Engine truth about what a use did to the needs; never shown to the pet."""
+    def thing_used(self, name, change, need=None):
+        """Engine truth about what the thing did to the needs on one occasion; never shown to the pet.
+        `need` is the need its material is for: `ups` counts the occasions that need went up."""
         t = self.thing(name)
         t["uses"], t["effects"] = t["uses"] + 1, (t["effects"] + [change])[-50:]
-        self.things_path.write_text(json.dumps(self.things, indent=1))
+        t["ups"] = t.get("ups", 0) + (change.get(need, 0) > 0)
+        self.save_things()
 
     def thing_gone(self, name, tick, how):
         self.thing(name)["gone"] = [tick, how]
-        self.things_path.write_text(json.dumps(self.things, indent=1))
+        self.save_things()
 
     def update_self(self, **facts):
         path = self.dir / "self.json"

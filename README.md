@@ -4,8 +4,10 @@ A small creature that lives in a browser room, driven by a local language model.
 [SPEC-v2.md](SPEC-v2.md); [SPEC.md](SPEC.md) is v1, kept for history. [NOTES.md](NOTES.md) says what was seen
 at the end of each milestone.
 
-Built so far: V2.0 to V2.2 (intentions, 2-second ticks, a 10-minute egg, the room-first view, making things).
-Not yet: the later stages, combining, painting, behaviors (V2.3 onward).
+Built so far: V2.0 to V2.3 (intentions, 2-second ticks, a 10-minute egg, the room-first view, making things,
+growth by useful things through Child and Youngling, arrange, combine, paint, visitor gifts).
+Not yet: Adult, behaviors, self-portraits (V2.4), and the long real-clock run (V2.5).
+The config is currently on the fast clock (`day_seconds = 1800`) from the V2.3 check.
 
 ## Run
 
@@ -57,13 +59,29 @@ python3 m0/model_test.py --selftest         # the M0 model test harness
 - **An intention has 2 to 5 steps,** not 1 to 5: with one-step plans it stood idle most of the time.
 - **A step's result separates what it did from what was happening anyway** ("you rested; energy +8.0;
   in the 44 s that took, apart from it: comfort -4.4"), so a long step does not look like the cause of the room's effects.
+- **The pet has senses** (`[senses]` in the config, on by default). Its packet has a "you feel:" line naming what
+  is acting on it right now and whether that is pleasant: "the warm nest beside you feels unpleasant", "the
+  light in the room is harsh on you". The spec says the pet is told none of the physics. Two fast-clock lives
+  showed it cannot work out an effect that comes from standing near one thing among seventeen, and it built a
+  ring of warm things around itself that held its comfort at zero. A sensation says where, never why or when.
+- **Novelty wears for good, not just for a while.** Each repeat of the same interaction is worth 0.8 of the
+  last, down to a tenth. v1's novelty only recharged, which let the ten starting objects keep curiosity at 100
+  forever; the first V2.3 life then made two things in 2.4 hours. Making something new is always fully novel.
+- **A thing aimed at a taken tile is put on the nearest free one** and the pet is told where; the spec rejects
+  it. The V2.3 life lost two of its first three makes that way.
 - **A thing's size is its biggest part.** A new bright thing starts switched on. A sweet counts as a meal
   both ways for `double_feed`. A thing's name is lower-cased and must be unique in the room.
 - **While a thought is in flight the pet stands still.** The new intention replaces the old one, which is
   scored as interrupted.
 - **The twin, when enabled, lives in the same loop** with one-step intentions, not literally one action per tick.
-- **Stages:** egg and hatchling only until V2.3. The v1 Child gate is gone. All eleven materials already
-  work; a hatchling can only choose soft, hard, warm and bright.
+- **Stages:** egg, hatchling, child and youngling; adult comes with V2.4. Days lived are whole world days
+  completed, so the Child check can first pass on the morning of day 3.
+- **A "use" of a thing is any occasion it acted on the pet,** not only a `use` action: resting beside a quiet
+  or noisy thing, a step spent beside a warm or cool one, or a dark one keeping a light's harm off. Otherwise
+  a thing that works by being near could never count as useful.
+- **Combining costs the base making energy** and puts the new thing where the first one stood.
+- **A gift from the visitor is one shape of size 2,** named "gift N". The pet can use it but not take it apart,
+  and it never counts toward growth.
 - Carried over from v1: the pet is never told whether the visitor is present; `use` works on anything;
   the bowl holds two servings and refills at 06:00; the needs line says "100 is fully met"; retrieval
   recalls older events about objects within two tiles.

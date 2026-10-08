@@ -4,14 +4,14 @@ import random
 import tempfile
 import time
 
-from . import actions, genome, log, rules, things
+from . import actions, genome, growth, log, rules, things
 from .brains import model
 from .brains.twin import Twin
 from .brains.twin import parse as twin_parse
 from .memory import Memory
 from .sleep import apply_changes, condense
 from .tick import Pet, compress, perceive, score
-from .world import clock, load_config, new_world, ticks
+from .world import clock, dist, load_config, new_world, ticks
 
 cfg = load_config()
 cfg["world"]["start_stage"] = "hatchling"   # most checks need the full action set
@@ -132,6 +132,12 @@ async def main():
     assert bad(type="look", target="bowl (empty) (6,7)") is None
     assert "nothing happened" in (await do(p, use("rock")))[1][0]["feedback"]
     assert (await do(p, use("ball")))[1][0]["deltas"]["curiosity"] > 3
+    p.world["tick"] += ticks(cfg, 900)                                           # long enough to be fully fresh again
+    assert 3.8 <= (await do(p, use("ball")))[1][0]["own"]["curiosity"] <= 4.1    # second time: 0.8 of the first (1 + 4)
+    for _ in range(12):
+        p.world["tick"] += ticks(cfg, 900)
+        worn = (await do(p, use("ball")))[1][0]["own"]["curiosity"]
+    assert 0.4 <= worn <= 0.6                                                    # the same thing wears down to a tenth
     ok = {"thought": "", "intention": "x", "steps": [rest], "expect": ""}
     assert actions.check_plan(ok) is None and actions.check_plan(dict(ok, steps=[])) == "no steps"
     assert actions.check_plan(dict(ok, steps=[rest] * 6)) == "no steps" and actions.check_plan("nope") == "invalid json"
@@ -210,7 +216,7 @@ async def main():
     w = p.world
     bad = lambda a, world=w, c=cfg: actions.check(a, world, p.mem, c)
     plan, steps = await do(p, make([6, 3], "Dim Stone!", "soft", part(), part("dot", 1, "white", "top")), use("dim stone"))
-    assert plan["ended"] == "done" and w["objects"]["dim stone"]["pos"] == [6, 3] and steps[0]["feedback"] == "you made dim stone"
+    assert plan["ended"] == "done" and w["objects"]["dim stone"]["pos"] == [6, 3] and steps[0]["feedback"] == "you made dim stone at (6,3)"
     assert steps[0]["own"] == {"energy": -8.0, "comfort": 0.0, "curiosity": 4.0}      # 4 + 2 per part; a new thing is novel
     assert steps[1]["own"]["comfort"] == 2.0 and steps[1]["feedback"] == "you used dim stone"   # soft: 2 x size / 2
     catalog = p.mem.things[0]
@@ -219,7 +225,8 @@ async def main():
     packet = perceive(w, cfg, p.mem)
     assert "your things:\n  dim stone (6,3): to hold\n" in packet and "· dim stone (6,3)" in packet
     assert "making: up to 2 parts; materials: soft, hard, warm, bright; you have made 1 of the 12 the room holds" in packet
-    assert bad(make([1, 1], "dim stone", "soft")) == "there is already a dim stone" and bad(make([6, 3], "x", "soft")) == "that tile is taken"
+    assert bad(make([1, 1], "dim stone", "soft")) == "there is already a dim stone" and bad(make([12, 3], "x", "soft")) == "bad tile"
+    assert things.free_tile(w, [1, 1]) == [1, 1] and dist(things.free_tile(w, [10, 1]), [10, 1]) == 1   # on the bed: beside it
     assert bad(make([1, 1], "x", "soft", part(), part(), part())) == "too many parts" and bad(make([1, 1], "x", "sweet")) == "material not unlocked"
     assert bad(make([1, 1], "x", "soft", part("cube"))) == "bad part" and bad(make([1, 1], "()", "soft")) == "no name"
     assert bad(make([1, 1], "x", "soft"), c=dict(cfg, make=dict(cfg["make"], item_cap=1))) == "there's no room for more"
@@ -251,6 +258,20 @@ async def main():
         assert plan["rule_tags"] == [material] and plan["deltas"]["comfort"] > 0.3 and plan["rule_scored"]
         q.world["tick"] = poor
         assert (await do(q, observe))[0]["deltas"]["comfort"] < -0.5
+    # senses: it can feel what is acting on it right now and from where, but is never told why or when
+    q = fresh()
+    at_time = lambda t: q.world.update(tick=t, clock=clock(cfg, t))
+    await given(q, "ember", "warm")
+    at_time(NIGHT)
+    assert "you feel: the ember beside you feels pleasant\n" in perceive(q.world, cfg, q.mem)
+    at_time(0)
+    assert "you feel: the ember beside you feels unpleasant\n" in perceive(q.world, cfg, q.mem)
+    q.world["pet"]["pos"] = [1, 7]
+    assert "you feel: nothing in particular\n" in perceive(q.world, cfg, q.mem)
+    at_time(NIGHT)
+    q.world["objects"]["lamp"]["state"] = "on"
+    assert "you feel: the light in the room is harsh on you\n" in perceive(q.world, cfg, q.mem)
+    assert "you feel" not in perceive(q.world, dict(cfg, senses={"enabled": False}), q.mem)
     q = fresh(NIGHT)
     await given(q, "glow", "bright")
     assert q.world["objects"]["glow"]["state"] == "on" and (await do(q, observe))[0]["rule_tags"] == ["lights_night"]
@@ -281,6 +302,101 @@ async def main():
     assert steps[0]["own"]["energy"] == 5.0 and "candy" not in q.world["objects"] and q.mem.thing("candy")["gone"][1] == "eaten"
     assert steps[1]["own"]["energy"] == -6.0 and steps[1]["rule_tags"] == ["double_feed"]   # a sweet counts as a meal
     assert q.world["moments"][-1][1] == "it ate the candy"
+
+    # useful things (SPEC-v2 §6): engine truth about whether a thing helped the need its material is for
+    q = fresh()
+    await given(q, "pillow", "soft")
+    await given(q, "slab", "hard", tile=(4, 3))
+    for _ in range(4):
+        await do(q, use("pillow"), use("slab"))
+    assert not things.useful(q.mem.thing("pillow"), cfg)                       # four uses is one short
+    await do(q, use("pillow"), use("slab"))
+    assert things.useful(q.mem.thing("pillow"), cfg) and q.mem.thing("pillow")["ups"] == 5
+    assert not things.useful(q.mem.thing("slab"), cfg) and q.mem.thing("slab")["uses"] == 5   # hard is for no need
+    q = fresh(NIGHT)
+    await given(q, "ember", "warm")
+    await do(q, observe, observe, observe, observe, observe)                   # five steps beside it at night
+    assert q.mem.thing("ember")["ups"] == 5 and things.useful(q.mem.thing("ember"), cfg)
+    q.world["tick"] = 0
+    await do(q, observe, observe, observe, observe, observe, expect="")        # and five by day, when it hurts
+    for _ in range(2):
+        await do(q, observe)
+    assert q.mem.thing("ember")["uses"] == 12 and not things.useful(q.mem.thing("ember"), cfg)   # 5 of 12 is not most
+    q = fresh()
+    await given(q, "hush", "quiet")
+    await do(q, rest)
+    assert q.mem.thing("hush")["effects"] == [{"energy": 1.0 * cfg["steps"]["rest"] / 10}] and q.mem.thing("hush")["ups"] == 1
+    q = fresh(NIGHT)
+    q.world["objects"]["lamp"]["state"] = "on"
+    await given(q, "shade", "dark")
+    await do(q, observe)
+    assert q.mem.thing("shade")["ups"] == 1 and q.mem.thing("shade")["effects"][0]["comfort"] >= 0.9   # the harm it prevented
+
+    # stages come from days lived and useful things, checked in the morning (§6)
+    w = fresh().world
+    class Life:   # a stand-in memory holding so many useful things
+        def __init__(self, useful):
+            self.things = [{"recipe": {"material": "soft"}, "by": "pet", "uses": 6, "ups": 6}] * useful
+    day = lambda d: dict(w, tick=(d - 1) * cfg["ticks_per_day"], clock={"day": d})
+    at = lambda d, n, stage: growth.earned(dict(day(d), pet=dict(w["pet"], stage=stage)), cfg, Life(n), morning=True)
+    assert at(3, 1, "hatchling") is None and at(2, 2, "hatchling") is None and at(3, 2, "hatchling") == "child"
+    assert at(5, 4, "child") is None and at(4, 5, "child") is None and at(5, 5, "child") == "youngling"
+    assert at(9, 9, "youngling") is None                                        # adult arrives with V2.4
+    assert growth.earned(dict(day(3), pet=dict(w["pet"], stage="hatchling")), cfg, Life(2)) is None   # not outside the morning
+    gift = [{"recipe": {"material": "soft"}, "by": "visitor", "uses": 9, "ups": 9}]
+    assert not things.useful(gift[0], cfg)                                      # a gift is not its own work
+
+    # a whole fast day or two: it wakes on day 3 with two useful things and is a Child, and is told what is new
+    fast = dict(cfg, clock=dict(cfg["clock"], day_seconds=1800))
+    fast.update(ticks_per_day=900, ticks_per_hour=37.5)
+    brain = Quiet()
+    q = pet_at(brain=brain, stage_cfg=fast)
+    for name, tile in (("pillow", (6, 3)), ("cushion", (4, 3))):
+        things.make(q.world, make(list(tile), name, "soft"), fast, q.mem, actions.clean)
+        for _ in range(5):
+            q.mem.thing_used(name, {"comfort": 2.0}, "comfort")
+    stages = {}
+    while q.world["clock"]["day"] < 4:
+        await q.tick()
+        stages.setdefault(q.world["pet"]["stage"], (q.world["clock"]["day"], round(q.world["clock"]["hour"])))
+    assert stages == {"hatchling": (1, 8), "child": (3, 6)}, stages
+    assert "it is now a Child" in [m[1] for m in q.world["moments"]]
+    told = next(e for t, e in q.world["events"] if e.startswith("you feel bigger"))
+    assert "arrange" in told and "things of up to 4 parts" in told and "the cool material" in told and "sweet" not in told
+    assert "making: up to 4 parts; materials: soft, hard, warm, bright, cool, dark, noisy, quiet, bouncy, heavy;" in perceive(q.world, fast, q.mem)
+
+    # what the stages unlock: arrange (its own things too, unless heavy), then combine and paint
+    w = q.world
+    bad = lambda a, world=w: actions.check(a, world, q.mem, cfg)
+    plan, steps = await do(q, {"type": "arrange", "object": "pillow", "tile": [2, 6]})
+    assert w["objects"]["pillow"]["pos"] == [2, 6] and plan["ended"] == "done"
+    assert bad({"type": "arrange", "object": "cushion", "tile": [2, 6]}) == "that tile is taken"
+    assert bad({"type": "arrange", "object": "bed", "tile": [1, 1]}) == "the bed cannot be moved"
+    things.make(w, make([1, 6], "anvil", "heavy"), cfg, q.mem, actions.clean)
+    assert bad({"type": "arrange", "object": "anvil", "tile": [1, 1]}) == "the anvil cannot be moved"
+    merge = {"type": "combine", "a": "pillow", "b": "anvil", "recipe": {"name": "Nest", "material": "soft", "purpose": "to sleep in"}}
+    assert bad(merge) == "not unlocked" and bad({"type": "paint", "wall": "blue", "floor": "green"}) == "not unlocked"
+    w["pet"]["stage"] = "youngling"
+    assert bad(dict(merge, recipe=dict(merge["recipe"], material="warm"))) == "the material must be one of theirs"
+    assert bad(dict(merge, b="pillow")).startswith("you can only combine two different things")
+    plan, steps = await do(q, merge, {"type": "paint", "wall": "blue", "floor": "green"})
+    nest = w["objects"]["nest"]["made"]
+    assert plan["ended"] == "done" and "pillow" not in w["objects"] and "anvil" not in w["objects"] and nest["from"] == ["pillow", "anvil"]
+    assert len(nest["recipe"]["parts"]) == 2 and nest["recipe"]["material"] == "soft" and q.mem.thing("pillow")["gone"][1] == "combined"
+    assert w["room"] == {"wall": "blue", "floor": "green"} and "room: blue walls, green floor" in perceive(w, cfg, q.mem)
+    assert [m[1] for m in w["moments"]][-2:] == ["it combined the pillow and the anvil into a nest", "it painted the room: blue walls, green floor"]
+    assert "sweet" in perceive(w, cfg, q.mem).split("making:")[1].split("\n")[0]
+
+    # the visitor can give a thing (§9): it works like any other, but it is not the pet's
+    said = actions.visit(w, {"type": "give", "shape": "star", "color": "pink", "material": "bouncy", "tile": [3, 3]}, q.mem, cfg)
+    assert said == "visitor left gift 1 at (3,3)" and w["objects"]["gift 1"]["made"]["by"] == "visitor" and "gift 1" not in things.own(w)
+    assert not actions.visit(w, {"type": "give", "shape": "star", "color": "pink", "material": "bouncy", "tile": [3, 3]}, q.mem, cfg)   # taken
+    assert not actions.visit(w, {"type": "give", "shape": "cube", "color": "pink", "material": "bouncy", "tile": [3, 4]}, q.mem, cfg)
+    assert bad({"type": "unmake", "target": "gift 1"}) == "not yours to take apart" and "gift 1" not in perceive(w, cfg, q.mem).split("your things:")[1].split("making:")[0]
+    assert (await do(q, use("gift 1")))[1][0]["own"]["curiosity"] > 2 and q.mem.thing("gift 1")["by"] == "visitor"
+    shape = model.schema(actions.STAGE_ACTIONS["youngling"], ["lamp"], [], (6, things.MATERIALS), ["nest", "cushion"])
+    kinds = [v["properties"]["type"]["const"] for v in shape["properties"]["steps"]["items"]["anyOf"]]
+    assert {"arrange", "combine", "paint"} <= set(kinds) and "combine" not in str(model.schema(["combine"], [], [], (6, ["soft"]), ["nest"]))
 
     # the model's output shape: 1 to 5 steps, only what the stage allows, no revising without a belief to revise
     shape = model.schema(["observe", "use", "revise_belief"], ["lamp", "rock"], [])
@@ -327,7 +443,8 @@ async def main():
     await p.tick()
     await p.tick()
     await asyncio.sleep(0)
-    assert w["pet"]["stage"] == "hatchling" and brain.asked == 1 and "you hatched" in brain.packet
+    assert w["pet"]["stage"] == "hatchling" and brain.asked == 1 and "you hatched; you can do things now: observe, look, move" in brain.packet
+    assert "make" in brain.packet.split("you hatched")[1].split("\n")[0]
     assert db.execute("SELECT stage_from, stage_to FROM stage_events").fetchall() == [("egg", "hatchling")]
 
     # sleep: at the configured hour it stops, the night's work runs, and it wakes in the morning and thinks

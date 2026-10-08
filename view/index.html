@@ -29,6 +29,16 @@
         <select id="placeObject"></select>
         <button id="placeBtn" aria-pressed="false">Pick a tile</button>
       </span>
+      <details id="give">
+        <summary>Give it something</summary>
+        <span class="place">
+          <select id="giveColor" aria-label="Color"></select>
+          <select id="giveShape" aria-label="Shape"></select>
+          <label for="giveMaterial">made of</label>
+          <select id="giveMaterial"></select>
+          <button id="giveBtn" aria-pressed="false">Pick a tile</button>
+        </span>
+      </details>
       <form id="talkForm">
         <input id="talkText" maxlength="200" placeholder="Say something to it" aria-label="Talk">
         <button>Say</button>

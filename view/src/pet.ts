@@ -28,7 +28,7 @@ export class PetBody extends Container {
 
   draw(g: Genome, stage: string, comfort: number, asleep: boolean) {
     const egg = stage === "egg";
-    const size = stage === "child" ? 21 : 15;                      // hatchling is small, child larger
+    const size = { child: 18, youngling: 21, adult: 24 }[stage] ?? 15;   // it grows with each stage
     const [w, h] = egg ? [size * 0.85, size * 1.15] : [size, size * g.stretch];
     const corner = Math.min(w, h) * (egg ? 1 : g.roundness);
     const light = 36 + comfort * 0.24;                             // display only: brighter when comfortable

@@ -3,18 +3,19 @@ Visitor actions live here too; they arrive as data and are validated the same wa
 import re
 
 from . import genome, things
-from .world import H, W, add_event, near, tile_ok
+from .world import H, W, add_event, moment, near, tile_ok
 
 HATCHLING = ["observe", "look", "move", "speak", "rest", "use", "make", "unmake", "write_belief", "revise_belief"]
 STAGE_ACTIONS = {
     "egg": [],   # the engine does not ask an egg anything
     "hatchling": HATCHLING,
-    "child": HATCHLING[:6] + ["arrange"] + HATCHLING[6:],
+    "child": HATCHLING[:8] + ["arrange"] + HATCHLING[8:],
+    "youngling": HATCHLING[:8] + ["arrange", "combine", "paint"] + HATCHLING[8:],
 }
-STAGE_ACTIONS["youngling"] = STAGE_ACTIONS["adult"] = STAGE_ACTIONS["child"]   # combine, paint and teach arrive with V2.3 and V2.4
-ALL_ACTIONS = STAGE_ACTIONS["child"]
-MOVABLE = ("plant", "ball", "blanket", "rock")              # what the pet may arrange
-PLACEABLE = MOVABLE + ("lamp", "bowl", "music box")         # what the visitor may place
+STAGE_ACTIONS["adult"] = STAGE_ACTIONS["youngling"]   # teach arrives with V2.4
+ALL_ACTIONS = STAGE_ACTIONS["adult"]
+MOVABLE = ("plant", "ball", "blanket", "rock")              # the starting objects a pet may arrange
+PLACEABLE = MOVABLE + ("lamp", "bowl", "music box")         # the starting objects the visitor may place
 TOGGLE = {"on": "off", "off": "on", "playing": "silent", "silent": "playing",
           "open": "closed", "closed": "open"}
 
@@ -67,8 +68,18 @@ def check(a, w, mem, cfg):
         return "not yours to take apart" if target in objs else "bad target"
     if t == "speak" and not (filled(a.get("text")) and len(a["text"]) <= 120):
         return "bad text"
-    if t == "arrange" and not (norm(a.get("object")) in MOVABLE and tile_ok(a.get("tile"))):
-        return "bad arrange"
+    if t == "arrange":
+        name = norm(a.get("object"))
+        if name not in objs or not tile_ok(a.get("tile")):
+            return "bad arrange"
+        if name not in things.movable(w, cfg):
+            return "the %s cannot be moved" % name
+        if any(o["pos"] == a["tile"] for n, o in objs.items() if n != name):
+            return "that tile is taken"
+    if t == "combine":
+        return things.check_combine(a, w, cfg, norm)
+    if t == "paint" and not (a.get("wall") in things.COLORS and a.get("floor") in things.COLORS):
+        return "bad colors"
     if t in ("write_belief", "revise_belief") and not filled(a.get("statement")):
         return "no statement"
     if t == "revise_belief" and not mem.is_active(a.get("id")):
@@ -97,6 +108,8 @@ def destination(w, a):
         return beside(w, objs[norm(a["target"])]["pos"])
     if t == "make":
         return beside(w, a["tile"])
+    if t == "combine":
+        return beside(w, objs[norm(a["a"])]["pos"])
     if t == "arrange":
         return beside(w, objs[norm(a["object"])]["pos"])
     return None
@@ -135,6 +148,12 @@ def apply(w, a, mem, cfg):
         return "you moved to (%d,%d)" % tuple(a["tile"]), {"energy": -0.5}, "move tile"
     if t == "make":
         return things.make(w, a, cfg, mem, clean)
+    if t == "combine":
+        return things.combine(w, a, cfg, mem, clean, norm)
+    if t == "paint":
+        w["room"] = {"wall": a["wall"], "floor": a["floor"]}
+        moment(w, "it painted the room: %s walls, %s floor" % (a["wall"], a["floor"]))
+        return "you painted the room: %s walls, %s floor" % (a["wall"], a["floor"]), {}, "paint"
     if t == "unmake":
         return things.unmake(w, a, cfg, mem, target)
     if t == "use":
@@ -174,7 +193,7 @@ def words(a):
     """An action in a few words, for telling the pet what it could not do."""
     if a.get("type") == "make":
         return "make " + (things.clean_name((a.get("recipe") or {}).get("name")) or "something")
-    return " ".join(str(a[k]) for k in ("type", "target", "object", "tile", "id") if k in a)
+    return " ".join(str(a[k]) for k in ("type", "target", "object", "a", "b", "tile", "id", "wall", "floor") if k in a)
 
 
 def placeable(w):
@@ -183,7 +202,7 @@ def placeable(w):
                               if "made" in o and o["made"]["recipe"]["material"] != "heavy"]
 
 
-def visit(w, msg):
+def visit(w, msg, mem=None, cfg=None):
     """A visitor action from the view. Returns the event text, or None if the message is not valid."""
     kind, objs, needs = msg.get("type"), w["objects"], w["pet"]["needs"]
     if kind == "feed":
@@ -198,6 +217,10 @@ def visit(w, msg):
     elif kind == "window":
         objs["window"]["state"] = TOGGLE[objs["window"]["state"]]
         text = "visitor made the window " + objs["window"]["state"]
+    elif kind == "give" and cfg:
+        text = things.give(w, msg, cfg, mem)
+        if not text:
+            return None
     elif kind == "place" and msg.get("object") in placeable(w) and tile_ok(msg.get("tile")):
         objs[msg["object"]]["pos"] = list(msg["tile"])
         text = "visitor placed %s at (%d,%d)" % (msg["object"], *msg["tile"])

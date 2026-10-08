@@ -2,7 +2,7 @@
 
 [clock]
 tick_seconds = 2          # real seconds per engine tick; no model call on a tick
-day_seconds = 7200        # real seconds per world day
+day_seconds = 1800        # real seconds per world day. 1800 is the fast clock for the V2.3 check; 7200 is the real one
 min_think_seconds = 70    # it thinks at most this often (51 an hour) ...
 urgent_seconds = 20       # ... unless a visitor acts, a need falls under 30, or it just woke or hatched
 max_idle_seconds = 180    # ... and at least this often (20 an hour), so it never freezes
@@ -19,6 +19,8 @@ write_belief = 10
 revise_belief = 10
 make = 16
 unmake = 8
+combine = 16
+paint = 12
 
 [world]
 start_stage = "egg"       # set to "hatchling" to skip the egg while debugging
@@ -28,6 +30,14 @@ item_cap = 12             # made things in the room at once
 energy_base = 4           # making costs this ...
 energy_per_part = 2       # ... plus this per part
 unmake_refund = 3         # energy back for taking one apart
+
+[senses]
+enabled = true            # the packet says what the pet can feel right now, but never why (see README)
+
+[growth]                  # SPEC-v2 §6: stages are earned by what it has made and lived through, checked each morning
+useful_uses = 5           # a thing is useful once it has helped its need on most of at least this many occasions
+child = { days = 2, useful = 2 }
+youngling = { days = 4, useful = 5 }
 
 [egg]
 egg_minutes = 10          # real minutes as an egg; the model is not called

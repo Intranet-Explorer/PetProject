@@ -2,7 +2,15 @@
 import { Application, Container, Graphics, Text } from "pixi.js";
 import type { World } from "./main";
 import { PetBody } from "./pet";
-import { thingSvg } from "./things";
+import { PALETTE, thingSvg } from "./things";
+
+/** A paint colour laid over the room's plain colour, so a painted room stays a calm stage for the creature. */
+function tint(base: number, name: string | null) {
+  if (!name || !PALETTE[name]) return base;
+  const paint = parseInt(PALETTE[name].slice(1), 16), mix = (shift: number) =>
+    Math.round(((base >> shift) & 255) * 0.5 + ((paint >> shift) & 255) * 0.5) << shift;
+  return mix(16) | mix(8) | mix(0);
+}
 
 const T = 56, PAD = 30;
 const INK = 0x16241f, MUTED = 0x586a63, FLOOR = 0xe6dcc8, WALL = 0xcfc3ab;
@@ -59,6 +67,9 @@ export class Room {
   onTile: (x: number, y: number) => void = () => {};
   private app = new Application();
   private things = new Container();
+  private floor = new Graphics();
+  private size = [12, 8];
+  private painted = "";
   private shade = new Graphics();
   private body = new PetBody();
   private wobble = 0;
@@ -77,15 +88,13 @@ export class Room {
     const [width, height] = [w * T + 2 * PAD, h * T + 2 * PAD];
     await this.app.init({ width, height, background: WALL, antialias: true, resolution: devicePixelRatio, autoDensity: true });
     el.append(this.app.canvas);
-    const floor = new Graphics().rect(PAD, PAD, w * T, h * T).fill(FLOOR);
-    for (let i = 1; i < w; i++) floor.rect(PAD + i * T, PAD, 1, h * T).fill({ color: INK, alpha: 0.07 });
-    for (let j = 1; j < h; j++) floor.rect(PAD, PAD + j * T, w * T, 1).fill({ color: INK, alpha: 0.07 });
-    floor.rect(width - PAD + 4, PAD + 4 * T + 4, 14, T - 8).fill(0x8a5a36).stroke({ width: 3, color: INK }); // the door
+    this.size = [w, h];
+    this.paint({ wall: null, floor: null });
     this.shade.rect(0, 0, width, height).fill(0x0b1030);
     this.body.scale.set(2);   // the creature is the focus: twice its v1 size
     this.pet.addChild(this.body, this.dots);
     for (const x of [-12, 0, 12]) this.dots.circle(x, -78, 4).fill(INK);
-    this.app.stage.addChild(floor, this.things, this.shade, this.pet, this.bubble);
+    this.app.stage.addChild(this.floor, this.things, this.shade, this.pet, this.bubble);
     this.app.stage.eventMode = "static";
     this.app.stage.hitArea = this.app.screen;
     this.app.stage.on("pointerdown", (e) => {
@@ -108,7 +117,19 @@ export class Room {
     });
   }
 
+  /** The room's colours follow what the pet has painted (SPEC-v2 §6). */
+  private paint(room: { wall: string | null; floor: string | null }) {
+    const [w, h] = this.size, f = this.floor.clear();
+    this.app.renderer.background.color = tint(WALL, room.wall);
+    f.rect(PAD, PAD, w * T, h * T).fill(tint(FLOOR, room.floor));
+    for (let i = 1; i < w; i++) f.rect(PAD + i * T, PAD, 1, h * T).fill({ color: INK, alpha: 0.07 });
+    for (let j = 1; j < h; j++) f.rect(PAD, PAD + j * T, w * T, 1).fill({ color: INK, alpha: 0.07 });
+    f.rect(w * T + PAD + 4, PAD + 4 * T + 4, 14, T - 8).fill(0x8a5a36).stroke({ width: 3, color: INK }); // the door
+    this.painted = `${room.wall}/${room.floor}`;
+  }
+
   update(w: World, tickSeconds: number) {
+    if (this.painted !== `${w.room.wall}/${w.room.floor}`) this.paint(w.room);
     this.pace = tickSeconds;
     this.thinking = !!w.thinking && !w.sleep;
     for (const c of this.things.removeChildren()) c.destroy();

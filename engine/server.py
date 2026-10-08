@@ -12,7 +12,7 @@ import uvicorn
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
 
-from . import actions, log
+from . import actions, growth, log, things
 from .brains.model import Model
 from .brains.twin import Twin
 from .tick import Pet
@@ -35,10 +35,14 @@ def visitor_present():
 
 def snapshot():
     return {
-        "size": [W, H], "tick_seconds": cfg["clock"]["tick_seconds"], "visitor_present": visitor_present(),
+        "size": [W, H], "tick_seconds": cfg["clock"]["tick_seconds"], "day_seconds": cfg["clock"]["day_seconds"],
+        "visitor_present": visitor_present(),
         "placeable": actions.placeable(pets["model"].world),
         "materials": {m: v["says"] for m, v in cfg["materials"].items() if "says" in v},
-        "pets": {p.id: {"world": p.world, "beliefs": p.mem.beliefs, "things": p.mem.things, "journal": list(p.journal),
+        "give": {"shapes": things.SHAPES, "colors": things.COLORS, "materials": things.MATERIALS},
+        "pets": {p.id: {"world": p.world, "beliefs": p.mem.beliefs, "journal": list(p.journal),
+                        "things": [dict(t, useful=things.useful(t, cfg)) for t in p.mem.things],
+                        "progress": growth.progress(p.world, cfg, p.mem),
                         "accuracy": p.accuracy(), "series": p.series} for p in pets.values()},
     }
 
@@ -93,7 +97,7 @@ async def ws(sock: WebSocket):
                 continue
             if msg.get("type") == "presence":
                 clients[sock] = time.time() if msg.get("active") is True else 0
-            elif all([actions.visit(p.world, msg) for p in pets.values()]):   # every pet's world gets the same visit
+            elif all([actions.visit(p.world, msg, p.mem, cfg) for p in pets.values()]):   # every pet's world gets the same visit
                 for p in pets.values():
                     p.world["news"].append("visitor")
                     p.save()

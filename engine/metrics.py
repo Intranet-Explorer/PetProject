@@ -9,6 +9,7 @@ import sqlite3
 import sys
 from pathlib import Path
 
+from . import growth, things
 from .rules import RULES
 from .world import NEEDS, ROOT, load_config
 
@@ -76,13 +77,15 @@ def main(data=ROOT / "data"):
         path = data / pet / "things.json"
         made = json.loads(path.read_text()) if path.exists() else []
         kinds = sorted({t["recipe"]["material"] for t in made})
+        from .memory import Memory
+        print("toward the next stage: %s" % growth.progress(w, cfg, Memory(data / pet)))
         print("things: %d made, %d still in the room, %d used at least once | materials tried: %s" % (
             len(made), sum(not t["gone"] for t in made), sum(t["uses"] > 0 for t in made), ", ".join(kinds) or "none"))
         for t in made:
             r = t["recipe"]
             print("   t%-6d %-24s %-7s %-34s used %-3d %s| %s" % (
                 t["made"], r["name"], r["material"], " + ".join("%s %s %d" % (p["color"], p["shape"], p["size"]) for p in r["parts"]),
-                t["uses"], "(%s) " % t["gone"][1] if t["gone"] else "", r["purpose"]))
+                t["uses"], ("USEFUL " if things.useful(t, cfg) else "") + ("(%s) " % t["gone"][1] if t["gone"] else ""), r["purpose"]))
 
 
 if __name__ == "__main__":

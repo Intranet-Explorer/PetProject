@@ -24,7 +24,10 @@ WRITTEN = {   # how each action is written, shown only for the actions the stage
              '"color": %s, "at": %s}], "material": one of %%s, "purpose": what it is for, up to 80 chars}, '
              '"tile": [x, y] (an empty tile)}' % ("|".join(PART_SHAPES), "|".join(COLORS), "|".join(PLACES))),
     "unmake": '{"type": "unmake", "target": one of your things}',
-    "arrange": '{"type": "arrange", "object": object, "tile": [x, y]}',
+    "arrange": '{"type": "arrange", "object": something that can be moved, "tile": [x, y] (an empty tile)}',
+    "combine": ('{"type": "combine", "a": one of your things, "b": another of your things, "recipe": {"name": up to 24 chars, '
+                '"material": the material of either, "purpose": what it is for, up to 80 chars}}'),
+    "paint": '{"type": "paint", "wall": %s, "floor": one of the same}' % "|".join(COLORS),
     "write_belief": '{"type": "write_belief", "statement": text}',
     "revise_belief": '{"type": "revise_belief", "id": belief id, "statement": new text or "discard"}',
 }
@@ -59,7 +62,11 @@ def schema(allowed, objects, belief_ids, making=(0, []), mine=()):
         "use": [obj(type={"const": "use"}, target={"enum": objects})],
         "make": [obj(type={"const": "make"}, recipe=recipe, tile=tile)] if materials else [],
         "unmake": [obj(type={"const": "unmake"}, target={"enum": list(mine)})] if mine else [],
-        "arrange": [obj(type={"const": "arrange"}, object={"enum": list(MOVABLE)}, tile=tile)],
+        "arrange": [obj(type={"const": "arrange"}, object={"enum": list(MOVABLE) + list(mine)}, tile=tile)],
+        "combine": [obj(type={"const": "combine"}, a={"enum": list(mine)}, b={"enum": list(mine)},
+                        recipe=obj(name={"type": "string", "minLength": 1, "maxLength": 24}, material={"enum": materials},
+                                   purpose={"type": "string", "minLength": 1, "maxLength": 80}))] if len(mine) > 1 else [],
+        "paint": [obj(type={"const": "paint"}, wall={"enum": COLORS}, floor={"enum": COLORS})],
         "write_belief": [obj(type={"const": "write_belief"}, statement=belief)],
         "revise_belief": [obj(type={"const": "revise_belief"}, id={"enum": belief_ids}, statement=belief)] if belief_ids else [],
     }
@@ -170,3 +177,4 @@ class Model:
         if reply.get("choice") not in (1, 2, 3):
             raise ValueError("no usable body choice: %r" % reply)
         return reply["choice"] - 1, reply.get("reason", "")
+

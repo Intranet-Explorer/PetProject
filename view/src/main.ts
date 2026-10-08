@@ -17,6 +17,7 @@ export type World = {
   pet: { pos: [number, number]; stage: string; needs: Needs; said: [number, string] | null; name: string | null; genome: Genome };
   objects: Record<string, { pos: [number, number]; state?: string; made?: { recipe: Recipe } }>;
   moments: [number, string][];
+  room: { wall: string | null; floor: string | null };
   exploits: Record<string, number>;
   sleep: { since: number } | null;
   diary: Night[];
@@ -25,11 +26,16 @@ export type World = {
   thinking: string | null;
   calls: number[];
 };
-export type Thing = { name: string; recipe: Recipe; made: number; uses: number; effects: Partial<Needs>[]; gone: [number, string] | null };
-export type PetState = { world: World; beliefs: Belief[]; things: Thing[]; journal: (Rec | { type: string })[]; accuracy: number | null; series: [number, number][] };
+export type Thing = {
+  name: string; recipe: Recipe; made: number; by: string; uses: number; effects: Partial<Needs>[];
+  gone: [number, string] | null; useful: boolean;
+};
+export type Progress = { days: number; useful: number; next: string | null; needs: { days: number; useful: number } | null };
+export type PetState = { world: World; beliefs: Belief[]; things: Thing[]; progress: Progress; journal: (Rec | { type: string })[]; accuracy: number | null; series: [number, number][] };
 export type Snapshot = {
-  size: [number, number]; tick_seconds: number; visitor_present: boolean; placeable: string[];
+  size: [number, number]; tick_seconds: number; day_seconds: number; visitor_present: boolean; placeable: string[];
   materials: Record<string, string>;
+  give: { shapes: string[]; colors: string[]; materials: string[] };
   pets: Record<string, PetState>;
 };
 
@@ -38,6 +44,7 @@ const room = new Room();
 let snap: Snapshot | null = null;
 let ready: Promise<void> | null = null;
 let placing = false;
+let giving = false;
 let sock: WebSocket | null = null;
 let lastInput = 0; // presence needs real input, so a tab that was only opened does not count
 
@@ -51,6 +58,13 @@ function setPlacing(on: boolean) {
   $("placeBtn").setAttribute("aria-pressed", String(on));
   $("placeBtn").textContent = on ? "Click a tile…" : "Pick a tile";
   $("room").classList.toggle("placing", on);
+}
+
+function setGiving(on: boolean) {
+  giving = on;
+  $("giveBtn").setAttribute("aria-pressed", String(on));
+  $("giveBtn").textContent = on ? "Click an empty tile…" : "Pick a tile";
+  $("room").classList.toggle("placing", on || placing);
 }
 
 function render() {
@@ -73,7 +87,7 @@ function render() {
   } else if (!newest) bannerTick = Math.max(bannerTick, 0);
   $("moments").replaceChildren(...[...world.moments].reverse().map(([tick, text]) => {
     const li = document.createElement("li"), when = document.createElement("span");
-    const hour = 8 + (tick * snap!.tick_seconds) / 300, day = 1 + Math.floor(hour / 24);   // ponytail: assumes the 2-hour day
+    const hour = 8 + (tick * snap!.tick_seconds * 24) / snap!.day_seconds, day = 1 + Math.floor(hour / 24);
     when.textContent = `day ${day}, ${Math.floor(hour % 24)}:${String(Math.floor((hour % 1) * 60)).padStart(2, "0")}`;
     li.append(when, text);
     return li;
@@ -87,7 +101,11 @@ function connect() {
   sock.onopen = presence;
   sock.onmessage = async (e) => {
     snap = JSON.parse(e.data) as Snapshot;
-    ready ??= room.init($("room"), snap.size[0], snap.size[1]);
+    ready ??= room.init($("room"), snap.size[0], snap.size[1]).then(() => {
+      for (const [id, key] of [["giveColor", "colors"], ["giveShape", "shapes"], ["giveMaterial", "materials"]] as const) {
+        $(id).replaceChildren(...snap!.give[key].map((o) => new Option(o)));
+      }
+    });
     await ready;
     const pick = $<HTMLSelectElement>("placeObject");   // what can be moved grows as it makes things
     if (pick.options.length !== snap.placeable.length) {
@@ -108,7 +126,11 @@ function connect() {
 
 room.onTile = (x, y) => {
   if (!snap) return;
-  if (placing) {
+  if (giving) {
+    const pick = (id: string) => $<HTMLSelectElement>(id).value;
+    send({ type: "give", shape: pick("giveShape"), color: pick("giveColor"), material: pick("giveMaterial"), tile: [x, y] });
+    setGiving(false);
+  } else if (placing) {
     send({ type: "place", object: $<HTMLSelectElement>("placeObject").value, tile: [x, y] });
     setPlacing(false);
   } else {
@@ -119,7 +141,8 @@ room.onTile = (x, y) => {
 $("feed").onclick = () => send({ type: "feed" });
 $("poke").onclick = () => send({ type: "poke" });
 $("window").onclick = () => send({ type: "window" });
-$("placeBtn").onclick = () => setPlacing(!placing);
+$("placeBtn").onclick = () => { setGiving(false); setPlacing(!placing); };
+$("giveBtn").onclick = () => { setPlacing(false); setGiving(!giving); };
 $("ruleOnly").onchange = render;
 $("talkForm").onsubmit = (e) => {
   e.preventDefault();

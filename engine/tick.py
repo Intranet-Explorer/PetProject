@@ -21,6 +21,9 @@ from .world import NEEDS, add_event, clock, dist, load_config, moment, near, new
 RECENT, RECALLED, RECALL_RANGE = 6, 4, 2    # retrieval (v1 §8): the latest events, plus older ones about things close by
 NOVELTY_MAX, NOVELTY_SECONDS = 4.0, 150     # curiosity for doing something; real seconds per point regained
 FRESH_SECONDS = 600                         # a made thing gives its full curiosity only if left alone this long (§4)
+WEAR, WEAR_FLOOR = 0.8, 0.1                 # each repeat of the same thing is worth this much of the last, down to a floor.
+# Without wear the ten starting objects kept curiosity at 100 for good, and the V2.3 life made two things in 2.4 hours:
+# it had no reason to invent. With it, the lasting source of novelty is making something new (§4).
 URGENT = {"visitor", "woke", "hatched", "low"}   # news that does not wait for min_think_seconds
 DELTA = re.compile(r"(energy|comfort|curiosity) ([+-][\d.]+)")
 
@@ -64,12 +67,15 @@ def perceive(w, cfg, mem):
     doing = "%s, step %d of %d" % (plan["intention"], plan["i"] + 1, len(plan["steps"])) if plan else "nothing"
     beliefs = "".join("\n  %s: %s" % (b["id"], b["statement"]) for b in mem.top()) or " none yet"
     mine = "".join("\n  %s (%d,%d): %s" % (n, *objs[n]["pos"], objs[n]["made"]["recipe"]["purpose"]) for n in things.own(w))
+    room = "room: %s walls, %s floor\n" % (w["room"]["wall"], w["room"]["floor"]) if w["room"]["wall"] else ""
     most, materials = things.allowed(pet["stage"])
     return (
         "time: %s (tick %d)\n" % (clock(cfg, tick)["phase"], tick)
         + "you are at: (%d,%d)%s\n" % (*pet["pos"], ", near " + nearest if near(w, nearest) else "")
         + "needs (100 is fully met): %s\n" % needs
+        + ("you feel: %s\n" % things.senses(w, cfg, [r.id for r in rules.fired(w, cfg, standing=True)]) if cfg["senses"]["enabled"] else "")
         + "visible: %s\n" % visible
+        + room
         + "you are doing: %s\n" % doing
         + "since you last thought:%s\n" % since
         + "recent: %s\n" % ("  ".join(recalled + older[-RECENT:]) or "nothing yet")
@@ -199,13 +205,16 @@ class Pet:
 
     # ---- growth ----
 
-    def grow(self):
-        w, stage = self.world, growth.earned(self.world, self.cfg)
+    def grow(self, morning=False):
+        w, stage = self.world, growth.earned(self.world, self.cfg, self.mem, morning)
         if not stage:
             return
         old, w["pet"]["stage"] = w["pet"]["stage"], stage
-        add_event(w, "you hatched" if old == "egg" else "you feel bigger; you can do new things")
-        moment(w, "it hatched" if old == "egg" else "it is now a " + stage)
+        (most, mats), (had, old_mats) = things.allowed(stage), things.allowed(old)
+        new = [a for a in actions.STAGE_ACTIONS[stage] if a not in actions.STAGE_ACTIONS[old]] + \
+            (["things of up to %d parts" % most] if most > had else []) + ["the %s material" % m for m in mats if m not in old_mats]
+        add_event(w, ("you hatched; you can do things now: " if old == "egg" else "you feel bigger; you can do new things: ") + ", ".join(new))
+        moment(w, "it hatched" if old == "egg" else "it is now a " + stage.capitalize())
         w["news"].append("hatched")
         self.note({"pet": self.id, "tick": w["tick"], "type": "stage", "from": old, "to": stage})
         self.remember_self()
@@ -324,19 +333,23 @@ class Pet:
         arrived = dict(pet["needs"])   # before the step itself does anything
         thing = actions.norm(a.get("target")) if a["type"] == "use" else None
         thing = thing if thing and "made" in w["objects"].get(thing, {}) else None
+        for_need = lambda n: things.material(w, self.cfg, n).get("need")   # the need a thing's material is for
+        thing_need = for_need(thing) if thing else None
         if not reason:
             was = {"needs": dict(pet["needs"]), "bowl": w["objects"]["bowl"]["state"],
                    "plant_by_window": growth.plant_by_window(w)}
             text, fx, key = actions.apply(w, a, self.mem, self.cfg)
             if a["type"] == "rest":   # the action table says what 10 s of rest gives; what is next to it can change that
-                per_10s, quality = things.rest(w, self.cfg, fx["energy"])
+                per_10s, quality, share = things.rest(w, self.cfg, fx["energy"])
                 fx = {"energy": per_10s * self.cfg["steps"]["rest"] / 10}
+                for n, v in share.items():   # what resting beside it added or took away counts as an occasion of use
+                    self.mem.thing_used(n, {"energy": round(v * self.cfg["steps"]["rest"] / 10, 1)}, for_need(n))
             if key:
                 idle = (w["tick"] - w["seen_at"].get(key, -10**6)) * self.cfg["clock"]["tick_seconds"]
-                if thing:   # novelty wears off: a thing used again and again gives less of its curiosity
-                    fx["curiosity"] = fx.get("curiosity", 0) * min(1.0, idle / FRESH_SECONDS)
-                fx["curiosity"] = fx.get("curiosity", 0) + min(NOVELTY_MAX, idle / NOVELTY_SECONDS)
-                w["seen_at"][key] = w["tick"]
+                wear = max(WEAR_FLOOR, WEAR ** w["times"].get(key, 0))
+                fresh = min(1.0, idle / FRESH_SECONDS) if thing else 1.0   # a made thing also needs leaving alone a while
+                fx["curiosity"] = (fx.get("curiosity", 0) * fresh + min(NOVELTY_MAX, idle / NOVELTY_SECONDS)) * wear
+                w["seen_at"][key], w["times"][key] = w["tick"], w["times"].get(key, 0) + 1
             fired = rules.fired(w, self.cfg, standing=False)
             for r in fired:   # the rule decides what the action gives, in place of the usual
                 fx[r.need] = r.value(self.cfg)
@@ -352,14 +365,17 @@ class Pet:
                 moment(w, "it named itself " + pet["name"])
         else:
             text = "you could not %s (%s)" % (actions.words(a), reason)
-        tags = plan["step_tags"] + [r.id for r in fired] + quality
+        tags = list(dict.fromkeys(plan["step_tags"] + [r.id for r in fired] + quality))
         plan["tags"] += [t for t in tags if t not in plan["tags"]]
         # What the step did is told apart from what was happening anyway while it took place, so a long step
         # under a lit lamp does not read as "resting costs comfort".
         deltas = {n: round(pet["needs"][n] - plan["step_needs0"][n], 1) for n in NEEDS}
         own = {n: round(pet["needs"][n] - arrived[n], 1) for n in NEEDS}
         if thing and not reason:
-            self.mem.thing_used(thing, own)   # engine truth, for the Things tab and, later, for growth
+            self.mem.thing_used(thing, own, thing_need)   # engine truth, for the Things tab and for growth (§6)
+        for n, (need, total) in plan.pop("near", {}).items():   # things that worked on it just by being near
+            if abs(total) >= 0.2 and n in w["objects"]:
+                self.mem.thing_used(n, {need: round(total, 1)}, for_need(n))
         meanwhile = {n: d for n in NEEDS if abs(d := round(arrived[n] - plan["step_needs0"][n], 1)) >= 0.5}
         took = (w["tick"] - plan["step_began"] + 1) * self.cfg["clock"]["tick_seconds"]
         told = text + ("; " + changes(own) if changes(own) else "") + (
@@ -391,7 +407,14 @@ class Pet:
         """What a waking tick does to the needs: drift and the standing hidden rules, at their per-10 s rates."""
         w, dt = self.world, self.cfg["dt"]
         needs, base, fired = w["pet"]["needs"], drift(w), rules.fired(w, self.cfg, standing=True)
-        felt = [(r.id, r.need, r.value(self.cfg)) for r in fired] + things.nearby(w, self.cfg)   # rules, then materials
+        near_things = things.nearby(w, self.cfg)
+        felt = [(r.id, r.need, r.value(self.cfg)) for r in fired] + [t[:3] for t in near_things]   # rules, then materials
+        if w["clock"]["phase"] == "night" and things.light_on(w, self.cfg):   # a dark thing's work is the harm it prevents
+            near_things += [("dark", "comfort", -self.cfg["materials"]["rules"]["lights_night"], n) for n in things.close(w, self.cfg, "shade")]
+        if w["plan"] and w["plan"]["step_needs0"] is not None:
+            for _, need, per_10s, n in near_things:
+                got = w["plan"].setdefault("near", {}).setdefault(n, [need, 0.0])
+                got[1] += per_10s * dt
         rate = {n: base[n] + sum(v for _, need, v in felt if need == n) for n in NEEDS}
         for n in NEEDS:
             needs[n] = min(100.0, max(0.0, needs[n] + rate[n] * dt))
@@ -460,6 +483,7 @@ class Pet:
             add_event(w, "you woke up" + ('. you remember thinking: "%s"' % dream if dream else ""))
             w["news"].append("woke")
             w["sleep"], w["phase_seen"], self.night, self.today, self.dirty = None, w["clock"]["phase"], None, [], True
+            self.grow(morning=True)   # stages are earned, and checked each morning (§6)
 
 
 async def main():

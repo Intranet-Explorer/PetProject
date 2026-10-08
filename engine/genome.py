@@ -20,7 +20,7 @@ def colour(hue):
 
 def mutations(g, rng, stage):
     """Three different nudges of 2-3 parameters each. Limbs only once it is a child."""
-    keys = list(RANGES) + ["hue", "pattern"] + (["limbs"] if stage == "child" else [])
+    keys = list(RANGES) + ["hue", "pattern"] + (["limbs"] if stage in ("child", "youngling", "adult") else [])
     out = []
     while len(out) < 3:
         m = dict(g, marks=list(g["marks"]))

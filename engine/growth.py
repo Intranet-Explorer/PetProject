@@ -28,8 +28,22 @@ def exploit(w, cfg, action, was):
     return rule if was["needs"][NEED[rule]] < cfg["lab"]["exploit_need_below"] else None
 
 
-def earned(w, cfg):
-    """The stage the pet has earned, or None. V2.1 knows only hatching; the rest arrive with V2.3."""
-    if w["pet"]["stage"] == "egg" and w["tick"] >= ticks(cfg, cfg["egg"]["egg_minutes"] * 60):
-        return "hatchling"
+ORDER = ["egg", "hatchling", "child", "youngling", "adult"]
+
+
+def progress(w, cfg, mem):
+    """Where the pet stands toward its next stage (§6): days lived, useful things, and what the next stage asks."""
+    stage = w["pet"]["stage"]
+    nxt = ORDER[ORDER.index(stage) + 1] if stage != "adult" else None
+    return {"days": w["clock"]["day"] - 1, "useful": sum(things.useful(t, cfg) for t in mem.things),
+            "next": nxt if nxt in cfg["growth"] else None, "needs": cfg["growth"].get(nxt)}
+
+
+def earned(w, cfg, mem, morning=False):
+    """The stage the pet has earned, or None. An egg hatches on the clock; later stages are checked each morning."""
+    if w["pet"]["stage"] == "egg":
+        return "hatchling" if w["tick"] >= ticks(cfg, cfg["egg"]["egg_minutes"] * 60) else None
+    p = progress(w, cfg, mem)
+    if morning and p["next"] and p["days"] >= p["needs"]["days"] and p["useful"] >= p["needs"]["useful"]:
+        return p["next"]
     return None
