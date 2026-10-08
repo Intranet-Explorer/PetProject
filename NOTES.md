@@ -65,3 +65,28 @@ To decide before V2.2:
   be allowed to interrupt the 75-second floor. As it is, a lit night is over before the pet can work it out.
 - Whether to push for longer plans (for instance a minimum of two steps), or accept one-and-two-step
   intentions and shorten the floor so it idles less.
+
+### The same life after 15 hours (8 Oct, 08:20; archived to `data.v2.1/`)
+
+Left running overnight: 15.1 real hours, world day 8, seven sleeps, 516 intentions, 915 steps, one start,
+no errors, none of the 516 model calls failed.
+
+- **It never found the lamp rule.** It turned the lamp off on purpose once in seven nights. Comfort was under
+  20 at the end of 24% of its steps. Only 52% of its 23 predictions about a need the lamp was moving were right.
+- **It blamed the wrong things, and the reporting helped it do so.** "Night is universally comfort-hostile",
+  and "The catastrophic comfort drop (-14.4) at night occurs specifically during a rest action". A 40-second
+  rest under the lamp was reported as one change of -14.4, so resting looked like the cause.
+- **Plans stayed short:** 174 of one step, 293 of two, 38 of three, 11 of four or five.
+- **Beliefs:** seven, none ever discarded, no log entries. They grew long and full of numbers ("+11.2 during
+  day, dusk, and night when the entity has moved away and returned"). One is plainly wrong: the music box
+  "autonomously oscillates" (it toggles it itself).
+- **It spoke once:** "The melody loops endlessly. Do you hear it too?" Nobody was there; no visitor ever acted.
+- **Body:** pale green, taller, more angular, with the notch from night one.
+
+Decided from this, before V2.2:
+1. A need falling under 30 interrupts the thinking floor, and the standing hidden rules slow to a quarter
+   (a light at night costs 1 comfort per 10 s, not 4), so a bad night lasts about a dozen thoughts, not three.
+2. An intention has at least two steps, and the floor drops from 75 s to 65 s, so it idles less.
+3. A step's result separates what the step did from what was happening anyway ("you rested; energy +12.0;
+   meanwhile comfort -4.4"), so a long step stops looking like the cause of the room's effects.
+4. A belief is at most 140 characters.
