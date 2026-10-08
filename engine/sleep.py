@@ -32,7 +32,7 @@ def apply_changes(mem, changes, tick):
     for c in changes[:3] if isinstance(changes, list) else []:
         if not isinstance(c, dict) or not filled(c.get("statement")):
             continue
-        text = clean(c["statement"], 200)
+        text = clean(c["statement"], 140)
         if re.search(r"\bt\d+\b", text):   # "a visitor arrived at t137" is a log entry, not a belief (SPEC-v2 §8)
             continue
         if c.get("type") == "revise_belief" and mem.is_active(c.get("id")):

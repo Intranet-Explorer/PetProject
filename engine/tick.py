@@ -20,7 +20,7 @@ from .world import NEEDS, add_event, clock, dist, load_config, near, new_world, 
 
 RECENT, RECALLED, RECALL_RANGE = 6, 4, 2    # retrieval (v1 §8): the latest events, plus older ones about things close by
 NOVELTY_MAX, NOVELTY_SECONDS = 4.0, 150     # curiosity for doing something; real seconds per point regained
-URGENT = {"visitor", "woke", "hatched"}     # news that does not wait for min_think_seconds
+URGENT = {"visitor", "woke", "hatched", "low"}   # news that does not wait for min_think_seconds
 DELTA = re.compile(r"(energy|comfort|curiosity) ([+-][\d.]+)")
 
 
@@ -213,7 +213,7 @@ class Pet:
         """Why the model should be asked now, or None (SPEC-v2 §3)."""
         w, c = self.world, self.cfg["clock"]
         quiet = (w["tick"] - w["last_call"]) * c["tick_seconds"]
-        if URGENT & set(w["news"]):
+        if URGENT & set(w["news"]) and quiet >= c["urgent_seconds"]:
             return "something happened"
         if quiet < (0 if getattr(self.brain, "instant", False) else c["min_think_seconds"]):
             return None
@@ -313,6 +313,7 @@ class Pet:
         plan, pet = w["plan"], w["pet"]
         reason = actions.check(a, w, self.mem)   # checked again: the room may have changed while it walked
         text, used, fired = "nothing happened", None, []
+        arrived = dict(pet["needs"])   # before the step itself does anything
         if not reason:
             was = {"needs": dict(pet["needs"]), "bowl": w["objects"]["bowl"]["state"],
                    "plant_by_window": growth.plant_by_window(w)}
@@ -324,9 +325,10 @@ class Pet:
                 fx["curiosity"] = fx.get("curiosity", 0) + min(NOVELTY_MAX, idle / NOVELTY_SECONDS)
                 w["seen_at"][key] = w["tick"]
             fired = rules.fired(w, self.cfg, standing=False)
+            for r in fired:   # the rule decides what the action gives, in place of the usual
+                fx[r.need] = r.value(self.cfg)
             for n in NEEDS:
-                change = fx.get(n, 0) + sum(r.delta for r in fired if r.need == n)
-                pet["needs"][n] = min(100.0, max(0.0, pet["needs"][n] + change))
+                pet["needs"][n] = min(100.0, max(0.0, pet["needs"][n] + fx.get(n, 0)))
             used = growth.exploit(w, self.cfg, a, was)
             if used:
                 w["exploits"][used] += 1
@@ -338,17 +340,22 @@ class Pet:
             text = "you could not %s (%s)" % (" ".join(str(v) for v in a.values()), reason)
         tags = plan["step_tags"] + [r.id for r in fired]
         plan["tags"] += [t for t in tags if t not in plan["tags"]]
+        # What the step did is told apart from what was happening anyway while it took place, so a long step
+        # under a lit lamp does not read as "resting costs comfort".
         deltas = {n: round(pet["needs"][n] - plan["step_needs0"][n], 1) for n in NEEDS}
-        add_event(w, text + ("; " + changes(deltas) if changes(deltas) else ""))
+        own = {n: round(pet["needs"][n] - arrived[n], 1) for n in NEEDS}
+        meanwhile = {n: d for n in NEEDS if abs(d := round(arrived[n] - plan["step_needs0"][n], 1)) >= 0.5}
+        told = text + ("; " + changes(own) if changes(own) else "") + ("; meanwhile " + changes(meanwhile) if meanwhile else "")
+        add_event(w, told)
         rec = {
             "type": "step", "pet": self.id, "tick": w["tick"], "day": w["clock"]["day"], "phase": w["clock"]["phase"],
             "stage": pet["stage"], "pos": list(pet["pos"]), "context": describe(w), "intention": plan["intention"],
             "step": plan["i"] + 1, "of": len(plan["steps"]), "action": a, "reason": reason, "feedback": text,
-            "deltas": deltas, "needs": {n: round(v, 1) for n, v in pet["needs"].items()},
+            "deltas": deltas, "own": own, "meanwhile": meanwhile,
+            "needs": {n: round(v, 1) for n, v in pet["needs"].items()},
             "rule_tags": tags, "exploit": used, "visitor_present": self.present,
         }
-        self.today.append([w["tick"], "[t%d] %s | %s | %s | %s" % (w["tick"], rec["phase"], rec["context"], text,
-                                                                 changes(deltas) or "no change"),
+        self.today.append([w["tick"], "[t%d] %s | %s | %s" % (w["tick"], rec["phase"], rec["context"], told),
                            max(abs(d) for d in deltas.values())])
         del self.today[:-800]
         self.note(rec)
@@ -366,7 +373,7 @@ class Pet:
         """What a waking tick does to the needs: drift and the standing hidden rules, at their per-10 s rates."""
         w, dt = self.world, self.cfg["dt"]
         needs, base, fired = w["pet"]["needs"], drift(w), rules.fired(w, self.cfg, standing=True)
-        rate = {n: base[n] + sum(r.delta for r in fired if r.need == n) for n in NEEDS}
+        rate = {n: base[n] + sum(r.value(self.cfg) for r in fired if r.need == n) for n in NEEDS}
         for n in NEEDS:
             needs[n] = min(100.0, max(0.0, needs[n] + rate[n] * dt))
         w["pet"]["trend"] = rate
@@ -382,7 +389,7 @@ class Pet:
             now = w["pet"]["needs"][n]
             if before[n] >= 30 > now or before[n] < 80 <= now:
                 add_event(w, "%s %s" % (n, "fell below 30" if now < 30 else "rose above 80"))
-                w["news"].append("need")
+                w["news"].append("low" if now < 30 else "need")   # running low cannot wait; feeling full can
         if w["clock"]["phase"] != w["phase_seen"]:
             w["phase_seen"] = w["clock"]["phase"]
             add_event(w, "it became " + w["phase_seen"])

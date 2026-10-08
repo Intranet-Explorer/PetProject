@@ -15,6 +15,7 @@ def load_config(path=ROOT / "config.toml"):
     cfg["ticks_per_day"] = round(cfg["clock"]["day_seconds"] / cfg["clock"]["tick_seconds"])
     cfg["ticks_per_hour"] = cfg["ticks_per_day"] / 24
     cfg["dt"] = cfg["clock"]["tick_seconds"] / 10   # standing rates are written per 10 s, as in v1
+    cfg["materials"] = tomllib.loads((Path(path).parent / "materials.toml").read_text())
     return cfg
 
 

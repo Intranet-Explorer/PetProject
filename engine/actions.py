@@ -148,9 +148,9 @@ def apply(w, a, mem):
         objs[name]["pos"] = list(a["tile"])
         return "you arranged %s to (%d,%d)" % (name, *a["tile"]), {"energy": -0.5}, "arrange " + name
     if t == "write_belief":
-        bid = mem.write(clean(a["statement"], 200), w["tick"])
+        bid = mem.write(clean(a["statement"], 140), w["tick"])
         return ("you wrote belief " + bid if bid else "your beliefs are full; nothing happened"), {}, None
-    mem.revise(a["id"], clean(a["statement"], 200), w["tick"])
+    mem.revise(a["id"], clean(a["statement"], 140), w["tick"])
     return "you revised belief " + a["id"], {}, None
 
 

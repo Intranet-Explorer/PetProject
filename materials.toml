@@ -1,0 +1,7 @@
+# The physics of the room (SPEC-v2 §4, §5). The pet is told none of this; it finds out by living in it.
+# Rates are per 10 seconds, whatever the engine's tick. Tune here, not in code.
+
+[rules]
+lamp_night = -1.0     # comfort while any light is on at night. v1 used -4, when it thought seven times as often
+plant_window = 0.5    # comfort by day while the plant is within 2 tiles of the window (v1: +2)
+double_feed = -6.0    # what a meal gives instead of energy when it comes within a world hour of the last one

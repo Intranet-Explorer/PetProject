@@ -22,7 +22,7 @@ def parse(packet):
         "needs": {n: int(v) for n, v in re.findall(r"(energy|comfort|curiosity) (\d+)", line["needs (100 is fully met)"])},
         "objects": [o.split(" (")[0] for o in line["visible"].split(" · ")],
         "allowed": line["stage"].split("allowed actions: ")[1].split(", "),
-        "last": {n: float(d) for n, d in DELTA.findall(own[-1])} if own else None,
+        "last": {n: sum(float(d) for m, d in DELTA.findall(own[-1]) if m == n) for n in NEEDS} if own else None,
     }
 
 

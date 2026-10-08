@@ -24,7 +24,7 @@ SHAPES = {   # how each action is written, shown only for the actions the stage 
 }
 FORMAT = """
 Reply with one JSON object and nothing else:
-{"thought": "<short, why>", "intention": "<what you mean to do, in a few words>", "steps": [<up to 5 actions, carried out in order; a few steps make a plan>], "expect": "<what you expect to have happened once the steps are done>"}
+{"thought": "<short, why>", "intention": "<what you mean to do, in a few words>", "steps": [<2 to 5 actions, carried out in order>], "expect": "<what you expect to have happened once the steps are done>"}
 "expect" must name a need (energy, comfort, curiosity) and which way it goes, or a visible change.
 each step is one action:
 %s
@@ -38,6 +38,7 @@ def schema(allowed, objects, belief_ids):
     obj = lambda **props: {"type": "object", "properties": props, "required": list(props), "additionalProperties": False}
     tile = {"type": "array", "items": {"type": "integer"}, "minItems": 2, "maxItems": 2}
     text = {"type": "string", "minLength": 1}
+    belief = {"type": "string", "minLength": 1, "maxLength": 140}
     variants = {
         "observe": [obj(type={"const": "observe"})],
         "rest": [obj(type={"const": "rest"})],
@@ -46,17 +47,17 @@ def schema(allowed, objects, belief_ids):
         "speak": [obj(type={"const": "speak"}, text={"type": "string", "minLength": 1, "maxLength": 120})],
         "use": [obj(type={"const": "use"}, target={"enum": objects})],
         "arrange": [obj(type={"const": "arrange"}, object={"enum": list(MOVABLE)}, tile=tile)],
-        "write_belief": [obj(type={"const": "write_belief"}, statement=text)],
-        "revise_belief": [obj(type={"const": "revise_belief"}, id={"enum": belief_ids}, statement=text)] if belief_ids else [],
+        "write_belief": [obj(type={"const": "write_belief"}, statement=belief)],
+        "revise_belief": [obj(type={"const": "revise_belief"}, id={"enum": belief_ids}, statement=belief)] if belief_ids else [],
     }
     step = {"anyOf": [v for a in allowed for v in variants[a]]}
     return obj(thought={"type": "string"}, intention=text,
-               steps={"type": "array", "items": step, "minItems": 1, "maxItems": 5}, expect={"type": "string"})
+               steps={"type": "array", "items": step, "minItems": 2, "maxItems": 5}, expect={"type": "string"})
 
 
 CONSOLIDATE = """
 Reply with one JSON object and nothing else, holding at most 3 belief changes.
-Each is a short statement about how something in your world works, or about yourself; not a list of what happened:
+Each is a short statement (under 140 characters) about how something in your world works, or about yourself; not a list of what happened:
 {"changes": [{"type": "write_belief", "statement": "<text>"}, {"type": "revise_belief", "id": "<belief id>", "statement": "<new text or discard>"}]}
 """
 CHANGES = {
@@ -64,7 +65,7 @@ CHANGES = {
     "properties": {"changes": {"type": "array", "items": {
         "type": "object",
         "properties": {"type": {"type": "string", "enum": ["write_belief", "revise_belief"]},
-                       "id": {"type": "string"}, "statement": {"type": "string"}},
+                       "id": {"type": "string"}, "statement": {"type": "string", "maxLength": 140}},
         "required": ["type", "statement"],
     }}},
     "required": ["changes"],

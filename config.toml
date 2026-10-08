@@ -3,7 +3,8 @@
 [clock]
 tick_seconds = 2          # real seconds per engine tick; no model call on a tick
 day_seconds = 7200        # real seconds per world day
-min_think_seconds = 75    # it thinks at most this often (48 an hour), unless a visitor acts or it just woke or hatched
+min_think_seconds = 65    # it thinks at most this often (55 an hour) ...
+urgent_seconds = 20       # ... unless a visitor acts, a need falls under 30, or it just woke or hatched
 max_idle_seconds = 180    # ... and at least this often (20 an hour), so it never freezes
 
 [steps]                   # real seconds each kind of step takes once the pet is in place; walking is one tile a tick

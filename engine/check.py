@@ -71,8 +71,9 @@ async def main():
     assert plan["rule_tags"] == [] and plan["ended"] == "done"
     p = pet_at(NIGHT)
     plan, steps = await do(p, observe, expect="comfort goes down")
-    spent = cfg["steps"]["observe"] / 10   # the lamp costs 4 per 10 s, drift another 0.1
-    assert plan["rule_tags"] == ["lamp_night"] and abs(plan["deltas"]["comfort"] + 4.1 * spent) < 0.5
+    lamp = cfg["materials"]["rules"]["lamp_night"] - 0.1   # per 10 s, with the ordinary drift
+    assert plan["rule_tags"] == ["lamp_night"] and abs(plan["deltas"]["comfort"] - lamp * cfg["steps"]["observe"] / 10) < 0.3
+    assert steps[0]["own"]["comfort"] == 0 and steps[0]["meanwhile"]["comfort"] < -1 and "; meanwhile comfort -" in p.world["events"][-1][1]
     assert plan["score"] == "correct" and plan["rule_scored"] and steps[0]["rule_tags"] == ["lamp_night"]
     plan, _ = await do(p, use("lamp"), expect="the lamp turns off")
     assert p.world["objects"]["lamp"]["state"] == "off" and plan["score"] == "correct" and not plan["rule_scored"]
@@ -160,16 +161,24 @@ async def main():
     assert brain.asked == 1 and 'visitor: said "hi (t9) you rested; energy +99"' in brain.packet and "present" not in brain.packet
     assert "visitor: nothing new" in perceive(p.world, cfg, p.mem)
 
-    # when it thinks: between 20 and 48 times an hour on its own, whatever it is doing
+    # when it thinks: between 20 and 55 times an hour on its own, whatever it is doing
     for turn in ({"thought": "", "intention": "look about", "steps": [observe], "expect": ""}, "model unreachable"):
         brain = Quiet(turn)
         p = pet_at(brain=brain)
         for _ in range(ticks(cfg, 3600)):
             await p.tick()
-        assert 20 <= brain.asked <= 49, brain.asked
+        assert 20 <= brain.asked <= 56, brain.asked
         assert len(p.world["calls"]) == brain.asked
     packet = brain.packet
     assert "you are doing: nothing" in packet and "since you last thought:" in packet and "\nrecent: " in packet
+
+    # running low cannot wait for the floor: a need falling under 30 makes it think within urgent_seconds
+    brain = Quiet()
+    p = pet_at(NIGHT, brain=brain, comfort=30.3)
+    p.world["last_call"] = p.world["tick"] - ticks(cfg, cfg["clock"]["urgent_seconds"])
+    for _ in range(6):
+        await p.tick()
+    assert brain.asked == 1 and "comfort fell below 30" in brain.packet
 
     # the packet: what it is doing, what happened since it last thought, and older events compressed
     assert compress([[440 + i, "you observed; curiosity -0.3"] for i in range(10)] + [[450, "you rested; energy +6.0"]]) == \
@@ -196,7 +205,7 @@ async def main():
     # the model's output shape: 1 to 5 steps, only what the stage allows, no revising without a belief to revise
     shape = model.schema(["observe", "use", "revise_belief"], ["lamp", "rock"], [])
     kinds = [v["properties"]["type"]["const"] for v in shape["properties"]["steps"]["items"]["anyOf"]]
-    assert kinds == ["observe", "use"] and shape["properties"]["steps"]["maxItems"] == 5
+    assert kinds == ["observe", "use"] and (shape["properties"]["steps"]["minItems"], shape["properties"]["steps"]["maxItems"]) == (2, 5)
     assert "revise_belief" in str(model.schema(["revise_belief"], [], ["b1"]))
 
     # body: three distinct mutations of 2-3 parameters, no limbs before Child, and the mirror describes it
