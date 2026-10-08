@@ -21,7 +21,7 @@ from .world import NEEDS, add_event, clock, dist, load_config, moment, near, new
 RECENT, RECALLED, RECALL_RANGE = 6, 4, 2    # retrieval (v1 §8): the latest events, plus older ones about things close by
 NOVELTY_MAX, NOVELTY_SECONDS = 4.0, 150     # curiosity for doing something; real seconds per point regained
 FRESH_SECONDS = 600                         # a made thing gives its full curiosity only if left alone this long (§4)
-WEAR, WEAR_FLOOR = 0.8, 0.1                 # each repeat of the same thing is worth this much of the last, down to a floor.
+WEAR, WEAR_FLOOR, WEAR_EASES = 0.8, 0.1, 2   # each repeat is worth this much of the last, down to a floor; a night undoes two.
 # Without wear the ten starting objects kept curiosity at 100 for good, and the V2.3 life made two things in 2.4 hours:
 # it had no reason to invent. With it, the lasting source of novelty is making something new (§4).
 URGENT = {"visitor", "woke", "hatched", "low"}   # news that does not wait for min_think_seconds
@@ -484,6 +484,7 @@ class Pet:
             add_event(w, "you woke up" + ('. you remember thinking: "%s"' % dream if dream else ""))
             w["news"].append("woke")
             w["sleep"], w["phase_seen"], self.night, self.today, self.dirty = None, w["clock"]["phase"], None, [], True
+            w["times"] = {k: n - WEAR_EASES for k, n in w["times"].items() if n > WEAR_EASES}   # a little novelty comes back overnight
             self.grow(morning=True)   # stages are earned, and checked each morning (§6)
 
 

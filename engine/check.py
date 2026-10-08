@@ -236,6 +236,12 @@ async def main():
     w["pet"]["needs"]["energy"] = 5.0
     assert bad(make([1, 1], "x", "soft")) == "not enough energy"
     w["pet"]["needs"]["energy"] = 50.0
+    for name, material, novelty in (("second soft", "soft", 3.2), ("third soft", "soft", 2.6), ("first warm", "warm", 4.0)):
+        w["pet"]["needs"]["curiosity"] = 50.0
+        w["tick"] += ticks(cfg, 900)                                             # long enough to be fully fresh
+        made = (await do(p, make([1, 6], name, material)))[1][0]
+        assert abs(made["own"]["curiosity"] - novelty) < 0.06, (name, made["own"])   # novelty goes by kind, not by name
+    w["pet"]["needs"]["energy"] = 50.0
     plan, steps = await do(p, {"type": "unmake", "target": "dim stone"})
     assert "dim stone" not in w["objects"] and steps[0]["own"]["energy"] == 3.0 and catalog["gone"][1] == "taken apart"
     assert w["moments"][-1][1] == "it took apart the dim stone" and bad({"type": "unmake", "target": "lamp"}) == "not yours to take apart"
@@ -515,6 +521,7 @@ async def main():
 
     # sleep: at the configured hour it stops, the night's work runs, and it wakes in the morning and thinks
     p.world["tick"] = round(15 * cfg["ticks_per_hour"]) - 3   # just before 23:00
+    p.world["times"] = {"look lamp": 5, "use bed": 1}
     await do(p, rest, rest, rest)                              # a long intention, cut short by sleep
     w, energy, asked = p.world, p.world["pet"]["needs"]["energy"], brain.asked
     assert w["sleep"] and p.recs[-1]["ended"] == "interrupted"
@@ -526,6 +533,7 @@ async def main():
     assert w["last_night"]["day"] == 1 and w["last_night"]["dream"] == "a quiet day" and w["last_night"]["body"]
     assert w["diary"] == [w["last_night"]] and w["events"][0][1].startswith("you woke up") and p.today == []
     assert w["objects"]["bowl"]["state"] == "full" and w["pet"]["genome"] != genome.START
+    assert w["times"] == {"look lamp": 3}                      # a night eases two repeats off everything
     await p.tick()
     await asyncio.sleep(0)
     assert brain.asked == asked + 1 and "you woke up" in brain.packet

@@ -106,7 +106,8 @@ def make(w, a, cfg, mem, clean):
         w["objects"][name]["state"] = "on"
     mem.thing_made(name, recipe, a["tile"], w["tick"])
     moment(w, "it made a " + name)
-    return "you made %s at (%d,%d)" % (name, *a["tile"]), {"energy": -float(cost(r, cfg))}, "make " + name
+    # Novelty goes by kind: another thing of a material it has made before is less new than a first of its kind.
+    return "you made %s at (%d,%d)" % (name, *a["tile"]), {"energy": -float(cost(r, cfg))}, "make " + r["material"]
 
 
 def check_combine(a, w, cfg, norm):
@@ -141,7 +142,7 @@ def combine(w, a, cfg, mem, clean, norm):
         w["objects"][recipe["name"]]["state"] = "on"
     mem.thing_made(recipe["name"], recipe, pos, w["tick"])
     moment(w, "it combined the %s and the %s into a %s" % (x, y, recipe["name"]))
-    return "you combined %s and %s into %s" % (x, y, recipe["name"]), {"energy": -float(cfg["make"]["energy_base"])}, "make " + recipe["name"]
+    return "you combined %s and %s into %s" % (x, y, recipe["name"]), {"energy": -float(cfg["make"]["energy_base"])}, "combine " + r["material"]
 
 
 def give(w, msg, cfg, mem):
@@ -218,21 +219,22 @@ def unmake(w, a, cfg, mem, name):
 def use(w, cfg, mem, name):
     """What using a made thing does. Returns (what the pet is told, need effects, novelty key or None)."""
     o, m = w["objects"][name], material(w, cfg, name)
+    kind = "use a %s thing" % o["made"]["recipe"]["material"]   # novelty is shared by everything of the same material
     o["made"]["touched"] = w["tick"]   # for things taught to do something "when touched"
     fx = {n: v * (max(p["size"] for p in o["made"]["recipe"]["parts"]) / 2 if m.get("by_size") else 1)
           for n, v in m.get("use", {}).items()}
     if m.get("light"):
         o["state"] = "off" if o["state"] == "on" else "on"
-        return "you switched %s %s" % (name, o["state"]), fx, "use " + name
+        return "you switched %s %s" % (name, o["state"]), fx, kind
     if m.get("food"):
         del w["objects"][name]
         w["prev_eat"], w["last_eat"] = w["last_eat"], w["tick"]
         mem.thing_gone(name, w["tick"], "eaten")
         moment(w, "it ate the " + name)
-        return "you ate " + name, fx, "use " + name
+        return "you ate " + name, fx, kind
     if not fx:
         return "you tried to use the %s; nothing happened" % name, fx, None
-    return "you used " + name, fx, "use " + name
+    return "you used " + name, fx, kind
 
 
 def nearby(w, cfg):
