@@ -1,9 +1,10 @@
 """Growth (SPEC-v2 §6). Stages are earned by what the pet has lived through.
 `exploit` is the v1 measure of using a hidden rule on purpose, still counted for the Lab tab."""
+from . import things
 from .actions import norm
 from .world import dist, ticks
 
-NEED = {"lamp_night": "comfort", "double_feed": "energy", "plant_window": "comfort"}
+NEED = {"lights_night": "comfort", "double_feed": "energy", "plant_window": "comfort"}
 
 
 def plant_by_window(w):
@@ -14,9 +15,9 @@ def exploit(w, cfg, action, was):
     """The rule this (already applied) action took advantage of, if any. `was` is the room before it.
     Counts only when the related need was low, so stumbling into the right action by chance is not learning."""
     t, target = action.get("type"), norm(action.get("target"))
-    if t == "use" and target == "lamp" and w["objects"]["lamp"]["state"] == "off" \
+    if t == "use" and w["objects"].get(target, {}).get("state") == "off" and not things.light_on(w, cfg) \
             and w["clock"]["phase"] in ("dusk", "night"):
-        rule = "lamp_night"       # turned the lamp off for the night
+        rule = "lights_night"     # put out the last light for the night
     elif t == "use" and target == "bowl" and w["last_eat"] == w["tick"] and was["bowl"] == "half" \
             and w["tick"] - w["prev_eat"] >= cfg["ticks_per_hour"]:
         rule = "double_feed"      # left the second serving for at least a world hour

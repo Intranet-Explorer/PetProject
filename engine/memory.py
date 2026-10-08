@@ -11,6 +11,26 @@ class Memory:
         self.dir.mkdir(parents=True, exist_ok=True)
         self.path = self.dir / "beliefs.json"
         self.beliefs = json.loads(self.path.read_text()) if self.path.exists() else []
+        self.things_path = self.dir / "things.json"   # the catalog: every thing it ever made (SPEC-v2 §4)
+        self.things = json.loads(self.things_path.read_text()) if self.things_path.exists() else []
+
+    def thing(self, name):
+        return next(t for t in reversed(self.things) if t["name"] == name)
+
+    def thing_made(self, name, recipe, tile, tick, by="pet"):
+        self.things.append({"name": name, "recipe": recipe, "tile": list(tile), "made": tick, "by": by,
+                            "uses": 0, "effects": [], "gone": None})
+        self.things_path.write_text(json.dumps(self.things, indent=1))
+
+    def thing_used(self, name, change):
+        """Engine truth about what a use did to the needs; never shown to the pet."""
+        t = self.thing(name)
+        t["uses"], t["effects"] = t["uses"] + 1, (t["effects"] + [change])[-50:]
+        self.things_path.write_text(json.dumps(self.things, indent=1))
+
+    def thing_gone(self, name, tick, how):
+        self.thing(name)["gone"] = [tick, how]
+        self.things_path.write_text(json.dumps(self.things, indent=1))
 
     def update_self(self, **facts):
         path = self.dir / "self.json"

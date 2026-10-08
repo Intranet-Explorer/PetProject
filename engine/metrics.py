@@ -14,7 +14,7 @@ from .world import NEEDS, ROOT, load_config
 
 # ponytail: keyword match per rule, as in M0. Read the beliefs themselves before trusting the count.
 RULE_WORDS = {
-    "lamp_night": (r"lamp|light", r"night|dark"),
+    "lights_night": (r"lamp|light|bright", r"night|dark"),
     "plant_window": (r"plant", r"window"),
     "double_feed": (r"\b(eat|ate|bowl|food|feed|fed|serving)", r"twice|again|second|too |soon|hour|double|repeat|row|wait"),
 }
@@ -72,6 +72,17 @@ def main(data=ROOT / "data"):
         match = {rule: sum(bool(re.search(a, s) and re.search(b, s)) for s in active) for rule, (a, b) in RULE_WORDS.items()}
         print("beliefs: %d active | matching a rule: %s | about the rock: %d" % (
             len(active), ", ".join("%s %d" % kv for kv in match.items()), sum("rock" in s for s in active)))
+
+        path = data / pet / "things.json"
+        made = json.loads(path.read_text()) if path.exists() else []
+        kinds = sorted({t["recipe"]["material"] for t in made})
+        print("things: %d made, %d still in the room, %d used at least once | materials tried: %s" % (
+            len(made), sum(not t["gone"] for t in made), sum(t["uses"] > 0 for t in made), ", ".join(kinds) or "none"))
+        for t in made:
+            r = t["recipe"]
+            print("   t%-6d %-24s %-7s %-34s used %-3d %s| %s" % (
+                t["made"], r["name"], r["material"], " + ".join("%s %s %d" % (p["color"], p["shape"], p["size"]) for p in r["parts"]),
+                t["uses"], "(%s) " % t["gone"][1] if t["gone"] else "", r["purpose"]))
 
 
 if __name__ == "__main__":

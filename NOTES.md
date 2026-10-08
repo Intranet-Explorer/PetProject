@@ -90,3 +90,48 @@ Decided from this, before V2.2:
 3. A step's result separates what the step did from what was happening anyway ("you rested; energy +12.0;
    meanwhile comfort -4.4"), so a long step stops looking like the cause of the room's effects.
 4. A belief is at most 140 characters.
+
+## V2.2: making (8 Oct 2026)
+
+The V2.1 life was stopped and archived to `data.v2.1/` (see above). Fresh life started 08:35 with
+`./run.sh start`; watched from the egg through its first hour as a hatchling and its first sleep
+(ticks 0 to 2273, 08:35 to 09:51). No errors, no failed model calls, no step ever impossible.
+
+**The check: in its first hour as a hatchling it makes at least 2 things, and every made thing renders and
+has the effect the table says.** Passed.
+
+- **It made four things**, at ticks 710, 1239, 1305 and 1968:
+
+  | Name | Material | Shape | Its purpose | What happened |
+  |---|---|---|---|---|
+  | warm pebble | warm | brown blob, size 1 | "to hold for comfort" | used 8 times, nothing each time: warm works by being near it at night, not by using it |
+  | warm hug | warm | brown blob, size 2 | "to hold for comfort" | used 3 times, nothing |
+  | warm fuzz | soft | orange blob, size 2 | "to hold and feel warm" | used 13 times, +2.0 comfort each time, exactly what soft at size 2 gives |
+  | glow dot | bright | yellow dot, size 1 | "to see in the dark and feel curious" | never used; switched on from the moment it was made |
+
+- **All four are drawn** in the room and on the Things shelf, and the shelf's "what it really does" line
+  matched what the catalog recorded. One check per material covers the other seven materials, which a
+  hatchling cannot choose yet. The star shape has only been looked at on the shelf, not in the room.
+- **It found a useful thing by trying.** Two warm things did nothing when used, so the third was soft, and
+  that one it then used more than anything else in the room, by name, in its plans ("Using the warm fuzz again
+  is the most reliable way to boost comfort (+2.0)").
+- **Its invention ran into the physics, as §5 intends.** It had turned the lamp off in the morning. Just after
+  nightfall it made the glow dot beside the bed "to see in the dark". That put a light on at night: comfort
+  fell from 54 to 22 before it slept, twice crossing 30 and triggering an urgent thought each time. It
+  answered with the blanket and the warm fuzz and never suspected the glow dot.
+- **It still blamed resting.** After the first sleep: "At night, resting causes comfort -3.0 instead of the
+  +0.8 comfort seen during day/dusk". The split step result ("you rested; energy +12.0; meanwhile comfort
+  -3.0") was not enough to stop that reading. The wording now says "in the 44 s that took, apart from it:
+  comfort -3.0"; whether that helps is for the next life to show.
+- **Slower rules did what was wanted.** With a light on, comfort took about 5 minutes to fall 32 points, and
+  the pet had nine thoughts in that time. In V2.1 the whole fall to zero took under five minutes and four thoughts.
+- **Plans:** 53 of two steps, 2 of three, none longer. The two-step minimum is being met and not exceeded.
+- **Model calls:** 55 in the hour, median 8.0 s. Under 60, but close, so the floor between thoughts went from
+  65 s to 70 s (51 an hour, plus urgent ones).
+- **Predictions:** 65% right overall; 3 of 16 about a need a hidden rule was moving.
+
+**The gate: are most made things near-identical?** Not failed, but worth watching. Three of the four are
+single blobs meant "to hold" for comfort, and the first two differ only in size. Against that: it used three
+of its four materials, the sequence was a real search that ended in something that works, and the fourth
+thing is different in shape, material and purpose. It never used a second part. If the next life's shelf is
+mostly comfort blobs again, the novelty pressure needs work before V2.4.

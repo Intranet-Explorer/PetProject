@@ -2,6 +2,7 @@
 import { Application, Container, Graphics, Text } from "pixi.js";
 import type { World } from "./main";
 import { PetBody } from "./pet";
+import { thingSvg } from "./things";
 
 const T = 56, PAD = 30;
 const INK = 0x16241f, MUTED = 0x586a63, FLOOR = 0xe6dcc8, WALL = 0xcfc3ab;
@@ -115,10 +116,13 @@ export class Room {
     this.things.addChild(g);
     for (const [name, o] of Object.entries(w.objects)) {
       const [x, y] = mid(o.pos);
-      DRAW[name]?.(g, x, y, o.state, w.clock.phase);
+      if (o.made) {   // something it made: drawn from its recipe
+        if (o.state === "on") g.circle(x, y, 46).fill({ color: 0xffd76a, alpha: 0.28 });
+        this.things.addChild(new Graphics().svg(`<svg xmlns="http://www.w3.org/2000/svg">${thingSvg(o.made.recipe, x, y)}</svg>`));
+      } else DRAW[name]?.(g, x, y, o.state, w.clock.phase);
       const label = new Text({ text: name, style: { fontFamily: "ui-monospace, Menlo, monospace", fontSize: 10, fill: MUTED } });
       label.anchor.set(name === "window" ? 0 : 0.5, 0);
-      label.position.set(name === "window" ? 2 : x, y + (name === "window" ? T / 2 - 2 : 19));
+      label.position.set(name === "window" ? 2 : x, y + (name === "window" ? T / 2 - 2 : o.made ? 24 : 19));
       this.things.addChild(label);
     }
     this.shade.alpha = Math.max(0, DARK[w.clock.phase] - (w.objects.lamp.state === "on" ? 0.18 : 0));

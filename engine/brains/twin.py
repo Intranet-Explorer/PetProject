@@ -4,7 +4,8 @@ decides one action at a time: each of its intentions is a single step."""
 import random
 import re
 
-from ..actions import MOVABLE
+from .. import things
+from ..actions import MOVABLE, words
 from ..world import H, NEEDS, W
 
 DELTA = re.compile(r"(energy|comfort|curiosity) ([+-][\d.]+)")
@@ -22,6 +23,8 @@ def parse(packet):
         "needs": {n: int(v) for n, v in re.findall(r"(energy|comfort|curiosity) (\d+)", line["needs (100 is fully met)"])},
         "objects": [o.split(" (")[0] for o in line["visible"].split(" · ")],
         "allowed": line["stage"].split("allowed actions: ")[1].split(", "),
+        "materials": [m for m in re.match(r"up to \d+ parts; materials: ([^;]*);", line["making"]).group(1).split(", ") if m],
+        "taken": [[int(x), int(y)] for x, y in re.findall(r"\((\d+),(\d+)\)", line["visible"])],
         "last": {n: sum(float(d) for m, d in DELTA.findall(own[-1]) if m == n) for n in NEEDS} if own else None,
     }
 
@@ -83,8 +86,15 @@ class Twin:
         options += [{"type": t, "target": o} for t in ("look", "move", "use") for o in f["objects"]]
         options += [{"type": "arrange", "object": o, "tile": [self.rng.randrange(W), self.rng.randrange(H)]}
                     for o in MOVABLE]
+        if f["materials"]:   # one random recipe on offer each turn (SPEC-v2 §10)
+            free = [[x, y] for x in range(W) for y in range(H) if [x, y] not in f["taken"]]
+            self.s["made"] = self.s.get("made", 0) + 1
+            options.append({"type": "make", "tile": self.rng.choice(free), "recipe": {
+                "name": "thing %d" % self.s["made"], "material": self.rng.choice(f["materials"]), "purpose": "to see what it does",
+                "parts": [{"shape": self.rng.choice(things.SHAPES), "size": self.rng.randint(1, 3),
+                           "color": self.rng.choice(things.COLORS), "at": "center"}]}})
         options = [a for a in options if a["type"] in allowed]
-        key = lambda a: "%s|%s|%s" % (a["type"], a.get("target") or a.get("object") or "", phase)
+        key = lambda a: "%s|%s|%s" % (a["type"], a.get("target") or a.get("object") or a.get("recipe", {}).get("material", ""), phase)
         statement = self.due_belief() if "write_belief" in allowed else None
         if statement:
             action, thought = {"type": "write_belief", "statement": statement}, "seen this often enough to write it down"
@@ -96,5 +106,5 @@ class Twin:
             thought = "%s is lowest; this has done best for it at %s" % (need, phase)
         m = self.mean(key(action), need)
         self.s["last"] = {"tick": f["tick"], "key": key(action)}
-        return {"thought": thought, "intention": " ".join(str(v) for v in action.values())[:60], "steps": [action],
+        return {"thought": thought, "intention": words(action), "steps": [action],
                 "expect": "%s %s" % (need, "goes up" if m >= STEADY else "goes down" if m <= -STEADY else "stays the same")}

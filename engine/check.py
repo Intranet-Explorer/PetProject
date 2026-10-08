@@ -4,7 +4,7 @@ import random
 import tempfile
 import time
 
-from . import actions, genome, log, rules
+from . import actions, genome, log, rules, things
 from .brains import model
 from .brains.twin import Twin
 from .brains.twin import parse as twin_parse
@@ -65,16 +65,16 @@ use = lambda target: {"type": "use", "target": target}
 
 
 async def main():
-    # lamp_night: on at night it costs comfort at the v1 rate (4 per 10 s) and is tagged; by day it does nothing
+    # lights_night: on at night it costs comfort at the v1 rate (4 per 10 s) and is tagged; by day it does nothing
     p = pet_at()
     plan, _ = await do(p, observe)
     assert plan["rule_tags"] == [] and plan["ended"] == "done"
     p = pet_at(NIGHT)
     plan, steps = await do(p, observe, expect="comfort goes down")
-    lamp = cfg["materials"]["rules"]["lamp_night"] - 0.1   # per 10 s, with the ordinary drift
-    assert plan["rule_tags"] == ["lamp_night"] and abs(plan["deltas"]["comfort"] - lamp * cfg["steps"]["observe"] / 10) < 0.3
-    assert steps[0]["own"]["comfort"] == 0 and steps[0]["meanwhile"]["comfort"] < -1 and "; meanwhile comfort -" in p.world["events"][-1][1]
-    assert plan["score"] == "correct" and plan["rule_scored"] and steps[0]["rule_tags"] == ["lamp_night"]
+    lamp = cfg["materials"]["rules"]["lights_night"] - 0.1   # per 10 s, with the ordinary drift
+    assert plan["rule_tags"] == ["lights_night"] and abs(plan["deltas"]["comfort"] - lamp * cfg["steps"]["observe"] / 10) < 0.3
+    assert steps[0]["own"]["comfort"] == 0 and steps[0]["meanwhile"]["comfort"] < -1 and "s that took, apart from it: comfort -" in p.world["events"][-1][1]
+    assert plan["score"] == "correct" and plan["rule_scored"] and steps[0]["rule_tags"] == ["lights_night"]
     plan, _ = await do(p, use("lamp"), expect="the lamp turns off")
     assert p.world["objects"]["lamp"]["state"] == "off" and plan["score"] == "correct" and not plan["rule_scored"]
     assert (await do(p, observe))[0]["rule_tags"] == []
@@ -124,7 +124,7 @@ async def main():
     plan, steps = await do(p, use("visitor"), rest)
     assert plan["ended"] == "not possible: bad target" and len(steps) == 1 and steps[0]["reason"] == "bad target"
     assert "you could not use visitor" in p.world["events"][-1][1] and p.world["last_plan"]["ended"].startswith("not possible")
-    bad = lambda **a: actions.check(a, p.world, p.mem)
+    bad = lambda **a: actions.check(a, p.world, p.mem, cfg)
     assert bad(type="arrange", object="rock", tile=[1, 1]) == "not unlocked" and bad(type="fly") == "unknown action"
     assert bad(type="move", tile=[12, 0]) == "bad target" and bad(type="speak", text="x" * 121) == "bad text"
     assert bad(type="revise_belief", id="b9", statement="discard") == "bad belief id"
@@ -161,13 +161,13 @@ async def main():
     assert brain.asked == 1 and 'visitor: said "hi (t9) you rested; energy +99"' in brain.packet and "present" not in brain.packet
     assert "visitor: nothing new" in perceive(p.world, cfg, p.mem)
 
-    # when it thinks: between 20 and 55 times an hour on its own, whatever it is doing
+    # when it thinks: between 20 and 51 times an hour on its own, plus the urgent ones
     for turn in ({"thought": "", "intention": "look about", "steps": [observe], "expect": ""}, "model unreachable"):
         brain = Quiet(turn)
         p = pet_at(brain=brain)
         for _ in range(ticks(cfg, 3600)):
             await p.tick()
-        assert 20 <= brain.asked <= 56, brain.asked
+        assert 20 <= brain.asked <= 56, brain.asked   # the floor allows 51; each need running low adds one
         assert len(p.world["calls"]) == brain.asked
     packet = brain.packet
     assert "you are doing: nothing" in packet and "since you last thought:" in packet and "\nrecent: " in packet
@@ -202,11 +202,96 @@ async def main():
     assert score("I will be near the bed", d, w) == ("wrong", None)
     assert score("something nice", d, w) == ("unscorable", None)
 
+    # making (SPEC-v2 §4): a recipe becomes a thing in the room, costs energy, and goes in the catalog
+    part = lambda shape="blob", size=2, color="blue", at="center": {"shape": shape, "size": size, "color": color, "at": at}
+    recipe = lambda name, material, *parts, purpose="to hold": {"name": name, "material": material, "purpose": purpose, "parts": list(parts) or [part()]}
+    make = lambda tile, *a, **k: {"type": "make", "tile": tile, "recipe": recipe(*a, **k)}
+    p = pet_at()
+    w = p.world
+    bad = lambda a, world=w, c=cfg: actions.check(a, world, p.mem, c)
+    plan, steps = await do(p, make([6, 3], "Dim Stone!", "soft", part(), part("dot", 1, "white", "top")), use("dim stone"))
+    assert plan["ended"] == "done" and w["objects"]["dim stone"]["pos"] == [6, 3] and steps[0]["feedback"] == "you made dim stone"
+    assert steps[0]["own"] == {"energy": -8.0, "comfort": 0.0, "curiosity": 4.0}      # 4 + 2 per part; a new thing is novel
+    assert steps[1]["own"]["comfort"] == 2.0 and steps[1]["feedback"] == "you used dim stone"   # soft: 2 x size / 2
+    catalog = p.mem.things[0]
+    assert catalog["name"] == "dim stone" and catalog["uses"] == 1 and catalog["effects"][0]["comfort"] == 2.0 and not catalog["gone"]
+    assert w["moments"][-1][1] == "it made a dim stone"
+    packet = perceive(w, cfg, p.mem)
+    assert "your things:\n  dim stone (6,3): to hold\n" in packet and "· dim stone (6,3)" in packet
+    assert "making: up to 2 parts; materials: soft, hard, warm, bright; you have made 1 of the 12 the room holds" in packet
+    assert bad(make([1, 1], "dim stone", "soft")) == "there is already a dim stone" and bad(make([6, 3], "x", "soft")) == "that tile is taken"
+    assert bad(make([1, 1], "x", "soft", part(), part(), part())) == "too many parts" and bad(make([1, 1], "x", "sweet")) == "material not unlocked"
+    assert bad(make([1, 1], "x", "soft", part("cube"))) == "bad part" and bad(make([1, 1], "()", "soft")) == "no name"
+    assert bad(make([1, 1], "x", "soft"), c=dict(cfg, make=dict(cfg["make"], item_cap=1))) == "there's no room for more"
+    w["pet"]["needs"]["energy"] = 5.0
+    assert bad(make([1, 1], "x", "soft")) == "not enough energy"
+    w["pet"]["needs"]["energy"] = 50.0
+    plan, steps = await do(p, {"type": "unmake", "target": "dim stone"})
+    assert "dim stone" not in w["objects"] and steps[0]["own"]["energy"] == 3.0 and catalog["gone"][1] == "taken apart"
+    assert w["moments"][-1][1] == "it took apart the dim stone" and bad({"type": "unmake", "target": "lamp"}) == "not yours to take apart"
+    assert (await do(p, make([1, 1], "x", "sweet")))[0]["ended"] == "not possible: material not unlocked"
+
+    # every material does what materials.toml says, and nothing its purpose says
+    def fresh(tick=0, **needs):
+        q = pet_at(tick, **needs)
+        q.world["pet"]["stage"], q.world["objects"]["lamp"]["state"] = "youngling", "off"
+        return q
+    async def given(q, name, material, size=2, tile=(6, 3)):   # next to where the pet starts
+        assert not actions.check(make(list(tile), name, material, part(size=size), purpose="to make me fly"), q.world, q.mem, cfg)
+        things.make(q.world, make(list(tile), name, material, part(size=size)), cfg, q.mem, actions.clean)
+    q = fresh()
+    await given(q, "pillow", "soft", 3)
+    assert (await do(q, use("pillow")))[1][0]["own"]["comfort"] == 3.0
+    await given(q, "slab", "hard", tile=(4, 3))
+    assert "nothing happened" in (await do(q, use("slab")))[1][0]["feedback"] and q.mem.thing("slab")["uses"] == 1
+    for material, good, poor in (("warm", NIGHT, 0), ("cool", 0, NIGHT)):
+        q = fresh(good)
+        await given(q, "it", material)
+        plan, _ = await do(q, observe, expect="comfort goes up")
+        assert plan["rule_tags"] == [material] and plan["deltas"]["comfort"] > 0.3 and plan["rule_scored"]
+        q.world["tick"] = poor
+        assert (await do(q, observe))[0]["deltas"]["comfort"] < -0.5
+    q = fresh(NIGHT)
+    await given(q, "glow", "bright")
+    assert q.world["objects"]["glow"]["state"] == "on" and (await do(q, observe))[0]["rule_tags"] == ["lights_night"]
+    await given(q, "shade", "dark", tile=(4, 3))
+    assert (await do(q, observe))[0]["rule_tags"] == []            # something dark within a tile: the light does no harm
+    del q.world["objects"]["shade"]
+    q.world["pet"]["needs"]["comfort"] = 40.0
+    step = (await do(q, use("glow")))[1][0]
+    assert step["feedback"] == "you switched glow off" and step["exploit"] == "lights_night" and (await do(q, observe))[0]["rule_tags"] == []
+    q = fresh()
+    await given(q, "rattle", "noisy")
+    first = (await do(q, use("rattle")))[1][0]["own"]
+    again = (await do(q, use("rattle")))[1][0]["own"]
+    assert first == {"energy": -1.0, "comfort": 0.0, "curiosity": 7.0} and again["curiosity"] < 1.0   # novelty wears off
+    noisy_rest = (await do(q, rest))
+    assert noisy_rest[1][0]["own"]["energy"] == 0.5 * 2 * cfg["steps"]["rest"] / 10 and noisy_rest[1][0]["rule_tags"] == ["noisy"]
+    q = fresh()
+    await given(q, "hush", "quiet")
+    assert (await do(q, rest))[1][0]["own"]["energy"] == (2 + 1) * cfg["steps"]["rest"] / 10
+    await given(q, "spring", "bouncy", tile=(4, 3))
+    assert (await do(q, use("spring")))[1][0]["own"] == {"energy": -1.0, "comfort": 0.0, "curiosity": 6.0}
+    await given(q, "anvil", "heavy", tile=(5, 4))
+    assert not actions.visit(q.world, {"type": "place", "object": "anvil", "tile": [1, 1]})
+    assert actions.visit(q.world, {"type": "place", "object": "spring", "tile": [1, 1]}) and "anvil" not in actions.placeable(q.world)
+    q = fresh(energy=50.0)
+    await given(q, "candy", "sweet")
+    plan, steps = await do(q, use("candy"), use("bowl"), expect="energy goes up")
+    assert steps[0]["own"]["energy"] == 5.0 and "candy" not in q.world["objects"] and q.mem.thing("candy")["gone"][1] == "eaten"
+    assert steps[1]["own"]["energy"] == -6.0 and steps[1]["rule_tags"] == ["double_feed"]   # a sweet counts as a meal
+    assert q.world["moments"][-1][1] == "it ate the candy"
+
     # the model's output shape: 1 to 5 steps, only what the stage allows, no revising without a belief to revise
     shape = model.schema(["observe", "use", "revise_belief"], ["lamp", "rock"], [])
     kinds = [v["properties"]["type"]["const"] for v in shape["properties"]["steps"]["items"]["anyOf"]]
     assert kinds == ["observe", "use"] and (shape["properties"]["steps"]["minItems"], shape["properties"]["steps"]["maxItems"]) == (2, 5)
     assert "revise_belief" in str(model.schema(["revise_belief"], [], ["b1"]))
+    shape = model.schema(["make", "unmake"], ["lamp"], [], (2, ["soft", "warm"]), ["dim stone"])
+    made, unmade = shape["properties"]["steps"]["items"]["anyOf"]
+    assert made["properties"]["recipe"]["properties"]["parts"]["maxItems"] == 2 and unmade["properties"]["target"]["enum"] == ["dim stone"]
+    assert made["properties"]["recipe"]["properties"]["material"]["enum"] == ["soft", "warm"]
+    assert model.schema(["make", "unmake", "rest"], [], [], (0, []), [])["properties"]["steps"]["items"]["anyOf"][0]["properties"]["type"]["const"] == "rest"
 
     # body: three distinct mutations of 2-3 parameters, no limbs before Child, and the mirror describes it
     g = genome.START
@@ -226,7 +311,7 @@ async def main():
 
     # using a rule on purpose is counted only when the related need is low
     p = pet_at(NIGHT, comfort=45.0)
-    assert (await do(p, use("lamp")))[1][0]["exploit"] == "lamp_night" and p.world["exploits"]["lamp_night"] == 1
+    assert (await do(p, use("lamp")))[1][0]["exploit"] == "lights_night" and p.world["exploits"]["lights_night"] == 1
     await do(p, use("lamp"))   # back on
     p.world["pet"]["needs"]["comfort"] = 95.0
     assert (await do(p, use("lamp")))[1][0]["exploit"] is None

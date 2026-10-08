@@ -1,7 +1,9 @@
-"""Hidden rules (SPEC §5). The pet is never told these exist; the engine tags every outcome they cause."""
+"""Hidden rules (v1 §5, generalized in SPEC-v2 §5 to what the pet makes). The pet is never told these exist;
+the engine tags every outcome they cause. The standing effects of materials are in things.py."""
 from dataclasses import dataclass
 from typing import Callable
 
+from . import things
 from .world import dist
 
 
@@ -17,8 +19,9 @@ class Rule:
 
 
 RULES = [
-    Rule("lamp_night", "comfort",
-         lambda w, cfg: w["objects"]["lamp"]["state"] == "on" and w["clock"]["phase"] == "night"),
+    # Any light on at night, the lamp or a bright thing it made, unless something dark is next to it (SPEC-v2 §5).
+    Rule("lights_night", "comfort",
+         lambda w, cfg: w["clock"]["phase"] == "night" and things.light_on(w, cfg) and not things.close(w, cfg, "shade")),
     Rule("plant_window", "comfort",
          lambda w, cfg: w["clock"]["phase"] == "day"
          and dist(w["objects"]["plant"]["pos"], w["objects"]["window"]["pos"]) <= 2),

@@ -16,7 +16,10 @@
     <button id="drawerBtn" aria-expanded="false" aria-controls="drawer">Mind and lab</button>
   </header>
   <main>
-    <div id="room" aria-label="The room"></div>
+    <div id="stage">
+      <div id="room" aria-label="The room"></div>
+      <p id="banner" role="status" hidden></p>
+    </div>
     <section class="controls" aria-label="Visitor controls">
       <button id="feed">Feed</button>
       <button id="poke">Poke</button>
@@ -31,10 +34,12 @@
         <button>Say</button>
       </form>
     </section>
+    <ol id="moments" aria-label="Moments"></ol>
   </main>
   <aside id="drawer" hidden aria-label="Mind and lab">
     <div class="tabs" role="tablist">
       <button role="tab" data-tab="mind">Mind</button>
+      <button role="tab" data-tab="things">Things</button>
       <button role="tab" data-tab="diary">Diary</button>
       <button role="tab" data-tab="beliefs">Beliefs</button>
       <button role="tab" data-tab="lab">Lab</button>
@@ -47,6 +52,10 @@
       <ol id="steps"></ol>
       <p id="expecting" class="hint"></p>
       <p id="before" class="hint"></p>
+    </section>
+    <section class="panel" data-panel="things" hidden>
+      <p class="hint">Everything it has made, with the name and purpose it gave. The line under each is for you, not the pet: what the thing really does.</p>
+      <ul id="shelf"></ul>
     </section>
     <section class="panel" data-panel="diary" hidden>
       <div id="diary"></div>

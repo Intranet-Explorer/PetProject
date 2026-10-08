@@ -65,7 +65,8 @@ def new_world(cfg):
         "last_call": LONG_AGO,         # tick of the latest model call
         "calls": [],                   # ticks of the model calls in the last real hour
         "phase_seen": "day",
-        "exploits": {"lamp_night": 0, "plant_window": 0, "double_feed": 0},   # times each rule was used on purpose
+        "moments": [],                 # [tick, text]: things worth seeing, for the view (SPEC-v2 §9)
+        "exploits": {"lights_night": 0, "plant_window": 0, "double_feed": 0},   # times each rule was used on purpose
         "near_window": 0,              # waking ticks spent near the window
     }
     w["clock"] = clock(cfg, 0)
@@ -90,6 +91,10 @@ def near(w, name, r=1):
 def tile_ok(t):
     return (isinstance(t, list) and len(t) == 2 and all(type(v) is int for v in t)
             and 0 <= t[0] < W and 0 <= t[1] < H)
+
+
+def moment(w, text):
+    w["moments"] = (w["moments"] + [[w["tick"], text]])[-200:]
 
 
 def add_event(w, text):

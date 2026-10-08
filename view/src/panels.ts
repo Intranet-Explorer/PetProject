@@ -1,10 +1,11 @@
 // The DOM around the room: the header, and the drawer's tabs (SPEC-v2 §9).
 // Everything from the engine is set as text, never as HTML.
 import type { Rec, Snapshot } from "./main";
+import { thingPicture } from "./things";
 
 const NEEDS = ["energy", "comfort", "curiosity"] as const;
 const MARK = { correct: "✓ right", wrong: "✗ wrong", unscorable: "not scorable" };
-const RULES: [string, string][] = [["lamp_night", "Lamp off for the night"], ["double_feed", "Spaced out its meals"], ["plant_window", "Plant to the window"]];
+const RULES: [string, string][] = [["lights_night", "Put out the lights for the night"], ["double_feed", "Spaced out its meals"], ["plant_window", "Plant to the window"]];
 const LINE: Record<string, string> = { model: "--accent", twin: "--muted" };
 const $ = (id: string) => document.getElementById(id)!;
 
@@ -87,6 +88,7 @@ function compare(snap: Snapshot) {
     line("Times it thought in the last hour", (id) => String(snap.pets[id].world.calls.length)),
     line("Hidden-rule predictions right", (id) => snap.pets[id].accuracy == null ? "none yet" : `${snap.pets[id].accuracy}%`),
     ...RULES.map(([rule, label]) => line(label, (id) => `${snap.pets[id].world.exploits[rule]} times`)),
+    line("Things made", (id) => String(snap.pets[id].things.length)),
     line("Beliefs held", (id) => String(snap.pets[id].beliefs.filter((b) => b.status === "active").length)),
     line("Marks", (id) => snap.pets[id].world.pet.genome.marks.join(", ") || "none"),
   );
@@ -127,6 +129,20 @@ export function renderPanels(snap: Snapshot, petId: string, ruleOnly: boolean) {
   const last = w.last_plan;
   $("before").replaceChildren(...(last ? [`Before that: ${last.intention} `,
     el("span", last.score, last.ended === "done" ? MARK[last.score] : `${last.ended}, ${MARK[last.score]}`)] : []));
+
+  // Things: the shelf of everything it ever made. The pet's own words first; the truth underneath is for the visitor.
+  $("shelf").replaceChildren(...(pet.things.length ? [...pet.things].reverse().map((t) => {
+    const li = el("li", t.gone ? "gone" : ""), sums: Record<string, number> = {};
+    for (const e of t.effects) for (const n of NEEDS) sums[n] = (sums[n] ?? 0) + (e[n] ?? 0);
+    const seen = NEEDS.filter((n) => t.effects.length && Math.abs(sums[n]) >= 0.05 * t.effects.length)
+      .map((n) => `${sums[n] > 0 ? "+" : ""}${(sums[n] / t.effects.length).toFixed(1)} ${n}`).join(", ");
+    const title = el("div");
+    title.append(el("b", "", t.name), t.gone ? ` (${t.gone[1]})` : "");
+    li.append(thingPicture(t.recipe), title, el("div", "", `“${t.recipe.purpose}”`),
+      el("div", "truth", `${t.recipe.material}: ${snap.materials[t.recipe.material] ?? ""}. Used ${t.uses} time${t.uses === 1 ? "" : "s"}${seen ? `, on average ${seen}` : ""}.`));
+    return li;
+  }) : [el("li", "empty", "It has not made anything yet.")]));
+  document.querySelector('[data-tab="things"]')!.textContent = `Things (${pet.things.filter((t) => !t.gone).length})`;
 
   // Diary: every night so far, newest first
   $("diary").replaceChildren(...(w.diary.length ? [...w.diary].reverse().map((night) => {

@@ -1,6 +1,7 @@
 // Wiring: one websocket to the engine, snapshots in, visitor actions out (SPEC-v2 §9).
 import { renderPanels } from "./panels";
 import type { Genome } from "./pet";
+import type { Recipe } from "./things";
 import { Room } from "./room";
 
 export type Needs = { energy: number; comfort: number; curiosity: number };
@@ -14,7 +15,8 @@ export type World = {
   tick: number;
   clock: { phase: string; hour: number; day: number };
   pet: { pos: [number, number]; stage: string; needs: Needs; said: [number, string] | null; name: string | null; genome: Genome };
-  objects: Record<string, { pos: [number, number]; state?: string }>;
+  objects: Record<string, { pos: [number, number]; state?: string; made?: { recipe: Recipe } }>;
+  moments: [number, string][];
   exploits: Record<string, number>;
   sleep: { since: number } | null;
   diary: Night[];
@@ -23,9 +25,11 @@ export type World = {
   thinking: string | null;
   calls: number[];
 };
-export type PetState = { world: World; beliefs: Belief[]; journal: (Rec | { type: string })[]; accuracy: number | null; series: [number, number][] };
+export type Thing = { name: string; recipe: Recipe; made: number; uses: number; effects: Partial<Needs>[]; gone: [number, string] | null };
+export type PetState = { world: World; beliefs: Belief[]; things: Thing[]; journal: (Rec | { type: string })[]; accuracy: number | null; series: [number, number][] };
 export type Snapshot = {
   size: [number, number]; tick_seconds: number; visitor_present: boolean; placeable: string[];
+  materials: Record<string, string>;
   pets: Record<string, PetState>;
 };
 
@@ -55,17 +59,42 @@ function render() {
   room.update(world, snap.tick_seconds);
   renderPanels(snap, "model", $<HTMLInputElement>("ruleOnly").checked);
   $("window").textContent = world.objects.window.state === "open" ? "Close window" : "Open window";
+
+  // Moments (§9): a banner when something worth seeing happens, and the list of them under the room.
+  const newest = world.moments.at(-1);
+  if (newest && newest[0] > bannerTick) {
+    if (bannerTick >= 0) {   // not on first load: that would announce old news
+      $("banner").textContent = newest[1];
+      $("banner").hidden = false;
+      clearTimeout(bannerTimer);
+      bannerTimer = setTimeout(() => ($("banner").hidden = true), 9000);
+    }
+    bannerTick = newest[0];
+  } else if (!newest) bannerTick = Math.max(bannerTick, 0);
+  $("moments").replaceChildren(...[...world.moments].reverse().map(([tick, text]) => {
+    const li = document.createElement("li"), when = document.createElement("span");
+    const hour = 8 + (tick * snap!.tick_seconds) / 300, day = 1 + Math.floor(hour / 24);   // ponytail: assumes the 2-hour day
+    when.textContent = `day ${day}, ${Math.floor(hour % 24)}:${String(Math.floor((hour % 1) * 60)).padStart(2, "0")}`;
+    li.append(when, text);
+    return li;
+  }));
 }
+let bannerTick = -1;
+let bannerTimer: ReturnType<typeof setTimeout> | undefined;
 
 function connect() {
   sock = new WebSocket(`${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws`);
   sock.onopen = presence;
   sock.onmessage = async (e) => {
     snap = JSON.parse(e.data) as Snapshot;
-    ready ??= room.init($("room"), snap.size[0], snap.size[1]).then(() => {
-      $("placeObject").replaceChildren(...snap!.placeable.map((o) => new Option(o)));
-    });
+    ready ??= room.init($("room"), snap.size[0], snap.size[1]);
     await ready;
+    const pick = $<HTMLSelectElement>("placeObject");   // what can be moved grows as it makes things
+    if (pick.options.length !== snap.placeable.length) {
+      const chosen = pick.value;
+      pick.replaceChildren(...snap.placeable.map((o) => new Option(o)));
+      if (snap.placeable.includes(chosen)) pick.value = chosen;
+    }
     render();
   };
   sock.onclose = () => {

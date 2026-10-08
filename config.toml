@@ -3,7 +3,7 @@
 [clock]
 tick_seconds = 2          # real seconds per engine tick; no model call on a tick
 day_seconds = 7200        # real seconds per world day
-min_think_seconds = 65    # it thinks at most this often (55 an hour) ...
+min_think_seconds = 70    # it thinks at most this often (51 an hour) ...
 urgent_seconds = 20       # ... unless a visitor acts, a need falls under 30, or it just woke or hatched
 max_idle_seconds = 180    # ... and at least this often (20 an hour), so it never freezes
 
@@ -17,9 +17,17 @@ use = 10
 arrange = 8
 write_belief = 10
 revise_belief = 10
+make = 16
+unmake = 8
 
 [world]
 start_stage = "egg"       # set to "hatchling" to skip the egg while debugging
+
+[make]
+item_cap = 12             # made things in the room at once
+energy_base = 4           # making costs this ...
+energy_per_part = 2       # ... plus this per part
+unmake_refund = 3         # energy back for taking one apart
 
 [egg]
 egg_minutes = 10          # real minutes as an egg; the model is not called

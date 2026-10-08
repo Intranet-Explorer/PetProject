@@ -10,14 +10,20 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 from ..actions import MOVABLE
+from ..things import COLORS, PLACES
+from ..things import SHAPES as PART_SHAPES
 
-SHAPES = {   # how each action is written, shown only for the actions the stage allows
+WRITTEN = {   # how each action is written, shown only for the actions the stage allows
     "observe": '{"type": "observe"}',
     "look": '{"type": "look", "target": something visible}',
     "move": '{"type": "move", "target": object} or {"type": "move", "tile": [x, y]}',
     "speak": '{"type": "speak", "text": at most 120 chars}',
     "rest": '{"type": "rest"}',
     "use": '{"type": "use", "target": object}',
+    "make": ('{"type": "make", "recipe": {"name": up to 24 chars, "parts": [1 to %%d of {"shape": %s, "size": 1 to 3, '
+             '"color": %s, "at": %s}], "material": one of %%s, "purpose": what it is for, up to 80 chars}, '
+             '"tile": [x, y] (an empty tile)}' % ("|".join(PART_SHAPES), "|".join(COLORS), "|".join(PLACES))),
+    "unmake": '{"type": "unmake", "target": one of your things}',
     "arrange": '{"type": "arrange", "object": object, "tile": [x, y]}',
     "write_belief": '{"type": "write_belief", "statement": text}',
     "revise_belief": '{"type": "revise_belief", "id": belief id, "statement": new text or "discard"}',
@@ -31,7 +37,7 @@ each step is one action:
 """
 
 
-def schema(allowed, objects, belief_ids):
+def schema(allowed, objects, belief_ids, making=(0, []), mine=()):
     """Constrained output (SPEC-v2 §3): an intention of 1 to 5 steps, each step one variant per allowed action,
     built from what the packet shows. A step cannot name a locked action, leave out a parameter, or point at
     something that is not there."""
@@ -39,6 +45,11 @@ def schema(allowed, objects, belief_ids):
     tile = {"type": "array", "items": {"type": "integer"}, "minItems": 2, "maxItems": 2}
     text = {"type": "string", "minLength": 1}
     belief = {"type": "string", "minLength": 1, "maxLength": 140}
+    most, materials = making
+    part = obj(shape={"enum": PART_SHAPES}, size={"enum": [1, 2, 3]}, color={"enum": COLORS}, at={"enum": PLACES})
+    recipe = obj(name={"type": "string", "minLength": 1, "maxLength": 24},
+                 parts={"type": "array", "items": part, "minItems": 1, "maxItems": max(most, 1)},
+                 material={"enum": materials}, purpose={"type": "string", "minLength": 1, "maxLength": 80})
     variants = {
         "observe": [obj(type={"const": "observe"})],
         "rest": [obj(type={"const": "rest"})],
@@ -46,6 +57,8 @@ def schema(allowed, objects, belief_ids):
         "move": [obj(type={"const": "move"}, target={"enum": objects}), obj(type={"const": "move"}, tile=tile)],
         "speak": [obj(type={"const": "speak"}, text={"type": "string", "minLength": 1, "maxLength": 120})],
         "use": [obj(type={"const": "use"}, target={"enum": objects})],
+        "make": [obj(type={"const": "make"}, recipe=recipe, tile=tile)] if materials else [],
+        "unmake": [obj(type={"const": "unmake"}, target={"enum": list(mine)})] if mine else [],
         "arrange": [obj(type={"const": "arrange"}, object={"enum": list(MOVABLE)}, tile=tile)],
         "write_belief": [obj(type={"const": "write_belief"}, statement=belief)],
         "revise_belief": [obj(type={"const": "revise_belief"}, id={"enum": belief_ids}, statement=belief)] if belief_ids else [],
@@ -117,9 +130,13 @@ class Model:
         """One model turn: the packet in, an intention out. Returns the turn, or a string saying why there is none."""
         line = dict(l.split(": ", 1) for l in packet.splitlines() if ": " in l and not l.startswith(" "))
         allowed = line["stage"].split("allowed actions: ")[1].split(", ")
-        prompt = packet + FORMAT % "\n".join("  " + SHAPES[a] for a in allowed)
+        can = re.match(r"up to (\d+) parts; materials: ([^;]*);", line["making"])
+        making = (int(can.group(1)), [m for m in can.group(2).split(", ") if m])
+        mine = re.findall(r"^  ([^\n(]+) \(\d+,\d+\): ", packet.split("your things:")[1].split("\nmaking:")[0], re.M)
+        written = dict(WRITTEN, make=WRITTEN["make"] % (making[0], "|".join(making[1])))
+        prompt = packet + FORMAT % "\n".join("  " + written[a] for a in allowed)
         shape = schema(allowed, [o.split(" (")[0] for o in line["visible"].split(" · ")],
-                       re.findall(r"^  (b\d+):", packet, re.M))
+                       re.findall(r"^  (b\d+):", packet, re.M), making, mine)
         for _ in range(2):   # one retry, then there is no new intention this time
             try:
                 turn = parse(await asyncio.to_thread(self.chat, prompt, shape))

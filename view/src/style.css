@@ -23,7 +23,13 @@ h1 { margin: 0; font-size: 22px; font-weight: 650; letter-spacing: -0.01em; }
 
 main { flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 0 20px 14px; }
 /* as big as the window allows while keeping the room's shape (732 x 508) */
-#room { width: min(100%, calc((100dvh - 150px) * 732 / 508)); }
+#stage { position: relative; width: min(100%, calc((100dvh - 215px) * 732 / 508)); }
+#banner { position: absolute; top: 14px; left: 50%; transform: translateX(-50%); margin: 0; padding: 6px 16px; max-width: 90%;
+          background: var(--ink); color: var(--surface); border-radius: 999px; font-weight: 600; text-align: center; pointer-events: none; }
+#moments { width: 100%; max-width: 980px; max-height: 66px; overflow-y: auto; font-size: 13px; color: var(--muted); }
+#moments li { display: flex; gap: 10px; padding: 1px 0; }
+#moments li span { font: 12px var(--mono); white-space: nowrap; }
+#moments li:first-child { color: var(--ink); }
 #room canvas { display: block; width: 100% !important; height: auto !important; border-radius: 12px; cursor: pointer; }
 #room.placing canvas { cursor: crosshair; }
 
@@ -74,6 +80,11 @@ h2 { margin: 14px 0 6px; font-size: 16px; font-weight: 650; overflow-wrap: anywh
 .delta.down { color: var(--bad); }
 .tag { font: 11px var(--mono); border: 1px solid var(--accent); color: var(--accent); border-radius: 999px; padding: 0 7px; margin-left: 8px; white-space: nowrap; }
 
+#shelf li { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 4px 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+#shelf svg { width: 56px; height: 56px; grid-row: span 3; }
+#shelf b { font-weight: 650; }
+#shelf li.gone { opacity: 0.5; }
+#shelf .truth { font-size: 13px; color: var(--muted); }
 .night { padding: 10px 0 14px; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 6px; }
 .night li { font-size: 14px; padding: 2px 0; overflow-wrap: anywhere; }
 #beliefs li, #discarded li { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }

@@ -2,6 +2,55 @@
 # Rates are per 10 seconds, whatever the engine's tick. Tune here, not in code.
 
 [rules]
-lamp_night = -1.0     # comfort while any light is on at night. v1 used -4, when it thought seven times as often
+lights_night = -1.0   # comfort while any light is on at night. v1 used -4, when it thought seven times as often
 plant_window = 0.5    # comfort by day while the plant is within 2 tiles of the window (v1: +2)
 double_feed = -6.0    # what a meal gives instead of energy when it comes within a world hour of the last one
+
+# What a made thing really does comes from its material, its size and where it is (§4). The purpose the pet
+# writes has no effect at all. "near" means within one tile of the pet; a thing's size is its biggest part.
+
+[soft]
+says = "comfort when used; a bigger one gives more"
+use = { comfort = 2.0 }
+by_size = true            # times size / 2
+
+[hard]
+says = "nothing; it just sits there"
+
+[warm]
+says = "comfort near it at night, discomfort near it by day"
+near = { night = { comfort = 0.5 }, day = { comfort = -0.5 } }
+
+[bright]
+says = "a light: using it switches it on or off, and a light on at night costs comfort"
+light = true
+
+[cool]
+says = "comfort near it by day, discomfort near it at night"
+near = { day = { comfort = 0.5 }, night = { comfort = -0.5 } }
+
+[dark]
+says = "near it, lights at night do no harm"
+shade = true
+
+[noisy]
+says = "curiosity when used, for a little energy; resting near it restores half as much"
+use = { curiosity = 3.0, energy = -1.0 }
+rest_near = 0.5
+
+[quiet]
+says = "resting near it restores more energy"
+rest_bonus = 1.0          # extra energy per 10 s of rest
+
+[bouncy]
+says = "curiosity when used, for a little energy"
+use = { curiosity = 2.0, energy = -1.0 }
+
+[heavy]
+says = "nothing, and once placed it cannot be moved"
+fixed = true
+
+[sweet]
+says = "energy when eaten, once; it counts as a meal"
+use = { energy = 5.0 }
+food = true
