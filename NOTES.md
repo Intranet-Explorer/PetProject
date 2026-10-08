@@ -187,3 +187,33 @@ simulated fast-clock life that is promoted on the morning of day 3 and not befor
   been exercised by the self-check and one websocket message.
 - The made things are still narrow: blobs and rings, three materials, one part each, nearly all "for comfort".
   Child unlocks six more materials and four-part things; whether it uses them is the thing to watch next.
+
+## V2.4: adult (8 Oct 2026)
+
+Built while the V2.3 lives ran, and kept out of the V2.3 commit. A pet cannot become an Adult inside an
+hour's watch (8 days lived and 8 useful things), so this milestone was watched on a throwaway life started
+as an Adult (`start_stage = "adult"`), on its own port and data beside the real Child, for about 20 minutes
+at the fast clock: one whole day and its night. The real Child was left running.
+
+- **It taught on its own, five times in one day**, all to one thing, a soft ring it found already in the room
+  called "drone": hum when it rests, then hum when alone, then hum when touched, then dim at night, then
+  move toward it when alone. No step was impossible in 32. It noticed the returns: "Teaching the drone yields
+  diminishing curiosity returns as repeated sessions progress (4.0→0.2)".
+- **The behaviors run and show.** A lantern taught to glow by day had a halo by day and none at night, a
+  humming thing drew rings, a thing taught to change colour was red by day and its own blue at night, and
+  the drone had moved across the room to sit beside the sleeping pet. Bounce cannot be judged from a still.
+- **Their effects are physics.** The self-check covers each: a thing glowing at night is a light and costs
+  comfort, a dimming one shelters from the lamp, a hum spoils rest beside it, and four taught things is the limit.
+- **It drew itself at its first sleep.** Its body was "very round and about as tall as wide, soft green, a
+  sparse stripe pattern, with medium eyes set close together, and 4 limbs". The portrait was a green blob, a
+  green bar, two black dots at the top, and green dots around the sides. An earlier single call for a
+  three-limbed body returned a green circle, two white bars, two black dots and three green triangles.
+- **The Self tab** shows each night's real body beside the portrait. The body pictures are taken from the
+  room's own renderer, so they match what was on screen.
+- **Not seen live:** the stage-up into Adult itself. Its counts (8 days, 8 useful things, 3 beliefs held for 2
+  days) are checked only by the self-check. `visitor`-conditioned behaviors have not been triggered by a visitor.
+
+One thing from the real Child, seen the same afternoon: after its senses were switched on it took apart
+every warm thing and then made three soft things in a row (soft pillow, soft nest, soft moon), all white,
+all one part. It has found what works and is repeating it, which is the V2.2 gate's worry. It has not touched
+a new material, a second part, or `arrange`.

@@ -4,9 +4,9 @@ A small creature that lives in a browser room, driven by a local language model.
 [SPEC-v2.md](SPEC-v2.md); [SPEC.md](SPEC.md) is v1, kept for history. [NOTES.md](NOTES.md) says what was seen
 at the end of each milestone.
 
-Built so far: V2.0 to V2.3 (intentions, 2-second ticks, a 10-minute egg, the room-first view, making things,
-growth by useful things through Child and Youngling, arrange, combine, paint, visitor gifts).
-Not yet: Adult, behaviors, self-portraits (V2.4), and the long real-clock run (V2.5).
+Built so far: V2.0 to V2.4 (intentions, 2-second ticks, a 10-minute egg, the room-first view, making things,
+growth by useful things through to Adult, arrange, combine, paint, visitor gifts, taught behaviors, self-portraits).
+Not yet: the long real-clock run (V2.5).
 The config is currently on the fast clock (`day_seconds = 1800`) from the V2.3 check.
 
 ## Run
@@ -74,8 +74,15 @@ python3 m0/model_test.py --selftest         # the M0 model test harness
 - **While a thought is in flight the pet stands still.** The new intention replaces the old one, which is
   scored as interrupted.
 - **The twin, when enabled, lives in the same loop** with one-step intentions, not literally one action per tick.
-- **Stages:** egg, hatchling, child and youngling; adult comes with V2.4. Days lived are whole world days
-  completed, so the Child check can first pass on the morning of day 3.
+- **Stages:** egg, hatchling, child, youngling, adult. Days lived are whole world days completed, so the Child
+  check can first pass on the morning of day 3. A belief counts as kept for 2 days if it is still held and was
+  first written at least 2 world days ago, revised since or not.
+- **Behaviors, where the spec leaves them open** (`[behaviors]` in `materials.toml`): `visitor` means the visitor
+  did something in the last minute (not that they are watching, which the pet is never told); `touched` lasts
+  20 s after a use; `alone` is more than 3 tiles from the pet; `pet_resting` covers sleep. Glow makes a thing a
+  light, dim makes it shelter from lights, hum is interesting to be near and bad to rest beside, bounce is
+  mildly interesting, the two moves go one tile every other tick, and a colour change is only seen.
+- **A self-portrait is parts only,** up to 8, with no name or material, drawn after that night's body change.
 - **A "use" of a thing is any occasion it acted on the pet,** not only a `use` action: resting beside a quiet
   or noisy thing, a step spent beside a warm or cool one, or a dark one keeping a light's harm off. Otherwise
   a thing that works by being near could never count as useful.

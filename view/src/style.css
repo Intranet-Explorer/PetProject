@@ -54,7 +54,8 @@ button[aria-pressed="true"], button[aria-expanded="true"] { border-color: var(--
           border-left: 1px solid var(--line); box-shadow: -8px 0 24px rgb(23 35 31 / 8%); display: flex; flex-direction: column; }
 @media (min-width: 1100px) { body.open header, body.open main { margin-right: var(--drawer); } }
 .tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line); padding: 8px 12px 0; }
-.tabs button { border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: none; padding: 8px 12px; color: var(--muted); }
+.tabs button { border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: none; padding: 8px 8px; color: var(--muted);
+                white-space: nowrap; font-size: 14px; }
 .tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); font-weight: 600; }
 #drawerClose { margin-left: auto; font-size: 20px; line-height: 1; padding: 4px 10px; }
 .panel { padding: 14px 18px 24px; overflow-y: auto; flex: 1; min-height: 0; }
@@ -84,11 +85,14 @@ h2 { margin: 14px 0 6px; font-size: 16px; font-weight: 650; overflow-wrap: anywh
 .tag { font: 11px var(--mono); border: 1px solid var(--accent); color: var(--accent); border-radius: 999px; padding: 0 7px; margin-left: 8px; white-space: nowrap; }
 
 #shelf li { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 4px 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
-#shelf svg { width: 56px; height: 56px; grid-row: span 3; }
+#shelf svg { width: 56px; height: 56px; grid-row: 1 / span 5; }
+#shelf li > :not(svg) { grid-column: 2; }
 #shelf b { font-weight: 650; }
 #shelf .badge { margin-left: 8px; font-size: 12px; color: var(--good); border: 1px solid var(--good); border-radius: 999px; padding: 0 7px; }
 #shelf li.gone { opacity: 0.5; }
 #shelf .truth { font-size: 13px; color: var(--muted); }
+#portraits li { display: grid; grid-template-columns: 84px 84px minmax(0, 1fr); gap: 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); }
+#portraits img, #portraits svg { width: 84px; height: 84px; object-fit: contain; background: var(--bg); border-radius: 10px; }
 .night { padding: 10px 0 14px; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 6px; }
 .night li { font-size: 14px; padding: 2px 0; overflow-wrap: anywhere; }
 #beliefs li, #discarded li { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }

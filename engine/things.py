@@ -15,7 +15,10 @@ STAGE = {   # stage -> (parts allowed, materials unlocked), §4 and §6
     "youngling": (6, MATERIALS),
     "adult": (6, MATERIALS),
 }
-TAG_NEED = {"warm": "comfort", "cool": "comfort", "quiet": "energy", "noisy": "energy"}   # hidden effects that get tagged
+TAG_NEED = {"warm": "comfort", "cool": "comfort", "quiet": "energy", "noisy": "energy",   # hidden effects that get tagged
+            "hum": "curiosity", "bounce": "curiosity"}
+WHEN = ["day", "night", "dusk", "visitor", "touched", "alone", "pet_resting"]
+DO = ["glow", "dim", "hum", "bounce", "move_toward_pet", "move_away"] + ["change_color:" + c for c in COLORS]
 
 
 def allowed(stage):
@@ -36,10 +39,17 @@ def material(w, cfg, name):
     return cfg["materials"][w["objects"][name]["made"]["recipe"]["material"]]
 
 
+def doing(w, cfg, name):
+    """What a taught thing is doing right now (§7): the properties of its behavior while its "when" holds, else {}."""
+    o = w["objects"][name]
+    return cfg["materials"]["behaviors"][o["made"]["behavior"]["do"].split(":")[0]] if o.get("active") else {}
+
+
 def close(w, cfg, key):
-    """The made things within one tile of the pet whose material has the given property."""
-    return [n for n, o in w["objects"].items()
-            if "made" in o and dist(w["pet"]["pos"], o["pos"]) <= 1 and key in material(w, cfg, n)]
+    """The made things within one tile of the pet that have the given property, from their material or from
+    what they have been taught to do."""
+    return [n for n, o in w["objects"].items() if "made" in o and dist(w["pet"]["pos"], o["pos"]) <= 1
+            and (key in material(w, cfg, n) or key in doing(w, cfg, n))]
 
 
 def clean_name(text):
@@ -153,6 +163,51 @@ def give(w, msg, cfg, mem):
     return "visitor left %s at (%d,%d)" % (name, *msg["tile"])
 
 
+def check_teach(a, w, cfg, norm):
+    name, b = norm(a.get("target")), a.get("behavior")
+    if name not in own(w):
+        return "you can only teach your own things"
+    if not isinstance(b, dict) or b.get("when") not in WHEN or b.get("do") not in DO:
+        return "unknown behavior"
+    taught = [n for n in own(w) if "behavior" in w["objects"][n]["made"]]
+    if name not in taught and len(taught) >= cfg["growth"]["taught_max"]:
+        return "you can only teach %d things" % cfg["growth"]["taught_max"]
+    return None
+
+
+def teach(w, a, mem, name):
+    b = {"when": a["behavior"]["when"], "do": a["behavior"]["do"]}
+    w["objects"][name]["made"]["behavior"] = b
+    mem.thing(name)["behavior"] = b
+    mem.save_things()
+    moment(w, "it taught the %s to %s when %s" % (name, b["do"].replace("_", " ").replace(":", " to "), b["when"].replace("_", " ")))
+    return "you taught %s: when %s, %s" % (name, b["when"], b["do"]), {}, "teach " + name
+
+
+def behave(w, cfg, tick_seconds):
+    """Run every taught thing for one tick (§7): decide whether its "when" holds, and move the ones that move."""
+    pet, plan = w["pet"], w["plan"]
+    resting = bool(w["sleep"]) or bool(plan and plan["left"] is not None and plan["steps"][plan["i"]].get("type") == "rest")
+    for n, o in w["objects"].items():
+        b = o.get("made", {}).get("behavior")
+        if not b:
+            continue
+        o["active"] = {
+            "day": w["clock"]["phase"] == "day", "night": w["clock"]["phase"] == "night", "dusk": w["clock"]["phase"] == "dusk",
+            "visitor": (w["tick"] - w["visitor_last"]) * tick_seconds <= 60,
+            "touched": (w["tick"] - o["made"].get("touched", -10**6)) * tick_seconds <= 20,
+            "alone": dist(pet["pos"], o["pos"]) > 3, "pet_resting": resting,
+        }[b["when"]]
+        step = doing(w, cfg, n).get("step")
+        if step and w["tick"] % 2 == 0 and (dist(pet["pos"], o["pos"]) > 1 if step > 0 else True):
+            taken = [x["pos"] for x in w["objects"].values()] + [pet["pos"]]
+            options = [[o["pos"][0] + dx, o["pos"][1] + dy] for dx in (-1, 0, 1) for dy in (-1, 0, 1) if dx or dy]
+            options = [t for t in options if tile_ok(t) and t not in taken]
+            best = (min if step > 0 else max)(options, key=lambda t: dist(t, pet["pos"]), default=None)
+            if best and (dist(best, pet["pos"]) - dist(o["pos"], pet["pos"])) * step < 0:
+                o["pos"] = best
+
+
 def unmake(w, a, cfg, mem, name):
     del w["objects"][name]
     mem.thing_gone(name, w["tick"], "taken apart")
@@ -163,6 +218,7 @@ def unmake(w, a, cfg, mem, name):
 def use(w, cfg, mem, name):
     """What using a made thing does. Returns (what the pet is told, need effects, novelty key or None)."""
     o, m = w["objects"][name], material(w, cfg, name)
+    o["made"]["touched"] = w["tick"]   # for things taught to do something "when touched"
     fx = {n: v * (max(p["size"] for p in o["made"]["recipe"]["parts"]) / 2 if m.get("by_size") else 1)
           for n, v in m.get("use", {}).items()}
     if m.get("light"):
@@ -181,9 +237,12 @@ def use(w, cfg, mem, name):
 
 def nearby(w, cfg):
     """Standing effects of the things next to the pet: [(material, need, rate per 10 s, the thing's name)]."""
-    phase = w["clock"]["phase"]
-    return [(w["objects"][n]["made"]["recipe"]["material"], need, rate, n)
-            for n in close(w, cfg, "near") for need, rate in material(w, cfg, n)["near"].get(phase, {}).items()]
+    phase, felt = w["clock"]["phase"], []
+    for n in close(w, cfg, "near"):
+        o = w["objects"][n]
+        felt += [(o["made"]["recipe"]["material"], need, rate, n) for need, rate in material(w, cfg, n).get("near", {}).get(phase, {}).items()]
+        felt += [(o["made"]["behavior"]["do"], need, rate, n) for need, rate in doing(w, cfg, n).get("near", {}).items()]
+    return felt
 
 
 def senses(w, cfg, fired):
@@ -209,16 +268,16 @@ def useful(t, cfg):
 
 
 def light_on(w, cfg):
-    return any(o.get("state") == "on" and (n == "lamp" or ("made" in o and material(w, cfg, n).get("light")))
-               for n, o in w["objects"].items())
+    return any((o.get("state") == "on" and (n == "lamp" or ("made" in o and material(w, cfg, n).get("light"))))
+               or ("made" in o and doing(w, cfg, n).get("light")) for n, o in w["objects"].items())
 
 
 def rest(w, cfg, energy):
     """Resting next to a noisy or a quiet thing: (energy per 10 s, tags, {thing: what it added per 10 s})."""
     tags, share = [], {}
     for n in close(w, cfg, "rest_near"):
-        by = material(w, cfg, n)["rest_near"]
-        share[n], energy, tags = energy * (by - 1), energy * by, tags + ["noisy"]
+        by = material(w, cfg, n).get("rest_near") or doing(w, cfg, n)["rest_near"]
+        share[n], energy, tags = energy * (by - 1), energy * by, tags + ["noisy" if "rest_near" in material(w, cfg, n) else "hum"]
     for n in close(w, cfg, "rest_bonus"):
         share[n], energy, tags = material(w, cfg, n)["rest_bonus"], energy + material(w, cfg, n)["rest_bonus"], tags + ["quiet"]
     return energy, sorted(set(tags)), share

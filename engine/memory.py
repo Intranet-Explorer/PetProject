@@ -17,6 +17,10 @@ class Memory:
     def save_things(self):
         self.things_path.write_text(json.dumps(self.things, indent=1))
 
+    def kept(self, since):
+        """Beliefs still held that were first written at or before the given tick (SPEC-v2 §6, Adult)."""
+        return [b for b in self.active() if b["created"] <= since]
+
     def thing(self, name):
         return next(t for t in reversed(self.things) if t["name"] == name)
 

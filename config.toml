@@ -21,6 +21,7 @@ make = 16
 unmake = 8
 combine = 16
 paint = 12
+teach = 12
 
 [world]
 start_stage = "egg"       # set to "hatchling" to skip the egg while debugging
@@ -38,6 +39,8 @@ enabled = true            # the packet says what the pet can feel right now, but
 useful_uses = 5           # a thing is useful once it has helped its need on most of at least this many occasions
 child = { days = 2, useful = 2 }
 youngling = { days = 4, useful = 5 }
+adult = { days = 8, useful = 8, kept_beliefs = 3, kept_days = 2 }   # ... and 3 beliefs it has held for 2 days or more
+taught_max = 4            # things that can have a behavior at once (§7)
 
 [egg]
 egg_minutes = 10          # real minutes as an egg; the model is not called

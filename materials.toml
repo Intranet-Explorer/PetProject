@@ -64,3 +64,14 @@ need = "energy"
 says = "energy when eaten, once; it counts as a meal"
 use = { energy = 5.0 }
 food = true
+
+# Behaviors an Adult can teach a thing (§7). While a taught thing's "when" holds it does its "do", and what that
+# does to the pet follows the same physics as everything else. Rates per 10 s, within one tile of the pet.
+[behaviors]
+glow = { light = true }                                   # a glowing thing is a light, so at night it costs comfort
+dim = { shade = true }                                    # a dimming thing shelters from lights, like a dark one
+hum = { near = { curiosity = 0.5 }, rest_near = 0.5 }     # interesting to be near, bad to rest beside
+bounce = { near = { curiosity = 0.3 } }
+move_toward_pet = { step = 1 }                            # one tile every other tick, until it is beside the pet
+move_away = { step = -1 }
+change_color = {}                                         # seen, not felt

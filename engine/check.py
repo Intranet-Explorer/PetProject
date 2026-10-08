@@ -38,6 +38,9 @@ class Quiet:
     async def choose_body(self, body, options):
         return 0, "the first one"
 
+    async def portrait(self, body):
+        return []
+
 
 def pet_at(tick=0, brain=None, stage_cfg=cfg, db=None, **needs):
     p = Pet("p", stage_cfg, brain or Quiet(), tempfile.mkdtemp(), db)
@@ -334,15 +337,23 @@ async def main():
 
     # stages come from days lived and useful things, checked in the morning (§6)
     w = fresh().world
-    class Life:   # a stand-in memory holding so many useful things
-        def __init__(self, useful):
+    class Life:   # a stand-in memory: so many useful things, so many beliefs written on day 1
+        def __init__(self, useful, beliefs=0):
             self.things = [{"recipe": {"material": "soft"}, "by": "pet", "uses": 6, "ups": 6}] * useful
+            self.kept = lambda since: [b for b in [{"created": 5}] * beliefs if b["created"] <= since]
     day = lambda d: dict(w, tick=(d - 1) * cfg["ticks_per_day"], clock={"day": d})
-    at = lambda d, n, stage: growth.earned(dict(day(d), pet=dict(w["pet"], stage=stage)), cfg, Life(n), morning=True)
+    at = lambda d, n, stage, beliefs=0: growth.earned(dict(day(d), pet=dict(w["pet"], stage=stage)), cfg, Life(n, beliefs), morning=True)
     assert at(3, 1, "hatchling") is None and at(2, 2, "hatchling") is None and at(3, 2, "hatchling") == "child"
     assert at(5, 4, "child") is None and at(4, 5, "child") is None and at(5, 5, "child") == "youngling"
-    assert at(9, 9, "youngling") is None                                        # adult arrives with V2.4
+    assert at(9, 8, "youngling", beliefs=2) is None and at(8, 8, "youngling", beliefs=3) is None and at(9, 7, "youngling", beliefs=3) is None
+    assert at(9, 8, "youngling", beliefs=3) == "adult" and at(20, 20, "adult", beliefs=9) is None   # 8 days, 8 useful, 3 beliefs kept 2 days
     assert growth.earned(dict(day(3), pet=dict(w["pet"], stage="hatchling")), cfg, Life(2)) is None   # not outside the morning
+    mem = Memory(tempfile.mkdtemp())
+    mem.write("held a long time", 10)
+    mem.write("written today", 3 * cfg["ticks_per_day"])
+    mem.write("dropped", 10)
+    mem.revise("b3", "discard", 20)
+    assert [b["id"] for b in mem.kept(3 * cfg["ticks_per_day"] - 2 * cfg["ticks_per_day"])] == ["b1"]
     gift = [{"recipe": {"material": "soft"}, "by": "visitor", "uses": 9, "ups": 9}]
     assert not things.useful(gift[0], cfg)                                      # a gift is not its own work
 
@@ -397,6 +408,61 @@ async def main():
     shape = model.schema(actions.STAGE_ACTIONS["youngling"], ["lamp"], [], (6, things.MATERIALS), ["nest", "cushion"])
     kinds = [v["properties"]["type"]["const"] for v in shape["properties"]["steps"]["items"]["anyOf"]]
     assert {"arrange", "combine", "paint"} <= set(kinds) and "combine" not in str(model.schema(["combine"], [], [], (6, ["soft"]), ["nest"]))
+
+    # behaviors (SPEC-v2 §7): an Adult teaches a thing what to do and when, and what it then does is physics too
+    teach = lambda target, when, do: {"type": "teach", "target": target, "behavior": {"when": when, "do": do}}
+    q = fresh(NIGHT)
+    w = q.world
+    bad = lambda a: actions.check(a, w, q.mem, cfg)
+    await given(q, "lantern", "hard")
+    assert bad(teach("lantern", "night", "glow")) == "not unlocked"
+    w["pet"]["stage"] = "adult"
+    assert bad(teach("lamp", "night", "glow")) == "you can only teach your own things" and bad(teach("lantern", "noon", "glow")) == "unknown behavior"
+    assert (await do(q, observe))[0]["rule_tags"] == []                          # dark room, nothing glowing
+    plan, steps = await do(q, teach("lantern", "night", "glow"), observe)
+    assert w["objects"]["lantern"]["active"] and plan["rule_tags"] == ["lights_night"]   # a glowing thing is a light at night
+    assert q.mem.thing("lantern")["behavior"] == {"when": "night", "do": "glow"} and "it taught the lantern to glow when night" in w["moments"][-1][1]
+    await do(q, teach("lantern", "day", "glow"), observe)                         # taught again: one behavior per thing
+    assert not w["objects"]["lantern"]["active"] and (await do(q, observe))[0]["rule_tags"] == []
+    w["objects"]["lamp"]["state"] = "on"
+    await do(q, teach("lantern", "night", "dim"))
+    assert (await do(q, observe))[0]["rule_tags"] == []                          # dimming shelters from the lamp
+    await do(q, teach("lantern", "pet_resting", "hum"))
+    w["objects"]["lamp"]["state"] = "off"
+    plan, steps = await do(q, rest)
+    assert steps[0]["rule_tags"] == ["hum"] and steps[0]["own"]["energy"] == 0.5 * 2 * cfg["steps"]["rest"] / 10   # a hum spoils rest
+    await do(q, teach("lantern", "touched", "bounce"), use("lantern"), observe)
+    assert w["objects"]["lantern"]["active"] and "bounce" in q.recs[-1]["rule_tags"]
+    await given(q, "follower", "soft", tile=(1, 6))
+    await do(q, teach("follower", "alone", "move_toward_pet"), {"type": "move", "tile": [10, 6]}, observe, observe)
+    assert dist(w["objects"]["follower"]["pos"], w["pet"]["pos"]) <= 3           # it came after the pet until no longer alone
+    await do(q, teach("follower", "day", "change_color:pink"))
+    for name in ("c", "d"):
+        things.make(w, make([1, 1], name, "hard"), cfg, q.mem, actions.clean)
+        await do(q, teach(name, "day", "glow"))
+    things.make(w, make([1, 1], "e", "hard"), cfg, q.mem, actions.clean)
+    assert bad(teach("e", "day", "glow")) == "you can only teach 4 things" and bad(teach("c", "night", "dim")) is None
+    shape = model.schema(actions.STAGE_ACTIONS["adult"], ["lamp"], [], (6, things.MATERIALS), ["lantern"])
+    taught = next(v for v in shape["properties"]["steps"]["items"]["anyOf"] if v["properties"]["type"]["const"] == "teach")
+    assert "change_color:pink" in taught["properties"]["behavior"]["properties"]["do"]["enum"] and len(things.DO) == 18
+
+    # self-portrait (§8): an Adult draws itself at each sleep; a younger pet does not; its body is not changed by it
+    class Painter(Quiet):
+        async def portrait(self, body):
+            self.saw = body
+            return [{"shape": "circle", "size": 3, "color": "orange", "at": "center"}, {"shape": "dot", "size": 1, "color": "black", "at": "top"},
+                    {"shape": "cube", "size": 9, "color": "mud"}]   # the last is not a part and is dropped
+    for stage, drawn in (("youngling", 0), ("adult", 1)):
+        brain = Painter()
+        q = pet_at(round(15 * cfg["ticks_per_hour"]) - 2, brain=brain)
+        q.world["pet"]["stage"] = stage
+        while not (q.world["sleep"] and q.world["sleep"]["done"]):
+            await q.tick()
+        assert len(q.world["portraits"]) == drawn
+    assert q.world["portraits"][0]["parts"] == [{"shape": "circle", "size": 3, "color": "orange", "at": "center"},
+                                                {"shape": "dot", "size": 1, "color": "black", "at": "top"}]
+    assert q.world["portraits"][0]["day"] == 1 and brain.saw == genome.describe(q.world["pet"]["genome"])
+    assert q.world["portraits"][0]["genome"] == q.world["pet"]["genome"]   # kept beside the body it had, which the portrait does not change
 
     # the model's output shape: 1 to 5 steps, only what the stage allows, no revising without a belief to revise
     shape = model.schema(["observe", "use", "revise_belief"], ["lamp", "rock"], [])

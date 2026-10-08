@@ -67,6 +67,7 @@ def new_world(cfg):
         "calls": [],                   # ticks of the model calls in the last real hour
         "phase_seen": "day",
         "moments": [],                 # [tick, text]: things worth seeing, for the view (SPEC-v2 §9)
+        "portraits": [],               # [{"day", "recipe", "genome", "stage"}]: how it drew itself at each sleep (§8, Adult)
         "room": {"wall": None, "floor": None},   # palette names once it has painted (§6); None is the plain room
         "gifts": 0,                    # how many things the visitor has given, for naming them
         "exploits": {"lights_night": 0, "plant_window": 0, "double_feed": 0},   # times each rule was used on purpose

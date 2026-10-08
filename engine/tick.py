@@ -445,6 +445,7 @@ class Pet:
         await asyncio.sleep(0)   # let a finished thought or night's work land
         w, self.present = self.world, visitor_present
         begin_tick(w, self.cfg)
+        things.behave(w, self.cfg, self.cfg["clock"]["tick_seconds"])   # taught things act every tick, awake or asleep (§7)
         if w["pet"]["stage"] == "egg":
             self.grow()          # an egg is dormant: no model call, and nothing in the room reaches its needs
         elif w["sleep"] or (not self.thought and sleep.should_sleep(w, self.cfg)):

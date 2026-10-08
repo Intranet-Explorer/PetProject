@@ -2,6 +2,7 @@
 import { Application, Container, Graphics, Text } from "pixi.js";
 import type { World } from "./main";
 import { PetBody } from "./pet";
+import type { Genome } from "./pet";
 import { PALETTE, thingSvg } from "./things";
 
 /** A paint colour laid over the room's plain colour, so a painted room stays a calm stage for the creature. */
@@ -70,6 +71,7 @@ export class Room {
   private floor = new Graphics();
   private size = [12, 8];
   private painted = "";
+  private bouncing: Graphics[] = [];
   private shade = new Graphics();
   private body = new PetBody();
   private wobble = 0;
@@ -111,10 +113,21 @@ export class Room {
       this.body.x = this.distressed ? Math.sin(now / 35) * 1.5 : 0;
       const squash = this.asleep ? 0 : Math.sin(now / 260) * this.wobble * 0.07;
       this.body.scale.set(2 * (1 + squash), 2 * (1 - squash));
+      for (const b of this.bouncing) b.pivot.y = Math.abs(Math.sin(now / 180)) * 9;
       this.dots.visible = this.thinking;
       this.dots.alpha = 0.35 + 0.35 * (1 + Math.sin(now / 250));
       this.bubble.position.set(this.pet.x, this.pet.y - 58);
     });
+  }
+
+  /** A still picture of a body, for the portraits gallery (§8). */
+  picture(genome: Genome, stage: string): string {
+    const body = new PetBody();
+    body.draw(genome, stage, 80, false);
+    body.scale.set(2);
+    const url = (this.app.renderer.extract.canvas(body) as HTMLCanvasElement).toDataURL();
+    body.destroy({ children: true });
+    return url;
   }
 
   /** The room's colours follow what the pet has painted (SPEC-v2 §6). */
@@ -133,13 +146,21 @@ export class Room {
     this.pace = tickSeconds;
     this.thinking = !!w.thinking && !w.sleep;
     for (const c of this.things.removeChildren()) c.destroy();
+    this.bouncing = [];
     const g = new Graphics();
     this.things.addChild(g);
     for (const [name, o] of Object.entries(w.objects)) {
       const [x, y] = mid(o.pos);
-      if (o.made) {   // something it made: drawn from its recipe
-        if (o.state === "on") g.circle(x, y, 46).fill({ color: 0xffd76a, alpha: 0.28 });
-        this.things.addChild(new Graphics().svg(`<svg xmlns="http://www.w3.org/2000/svg">${thingSvg(o.made.recipe, x, y)}</svg>`));
+      if (o.made) {   // something it made: drawn from its recipe, and showing what it has been taught to do (§7)
+        const doing = o.active ? o.made.behavior?.do ?? "" : "";
+        if (o.state === "on" || doing === "glow") g.circle(x, y, 46).fill({ color: 0xffd76a, alpha: 0.28 });
+        if (doing === "dim") g.circle(x, y, 46).fill({ color: 0x0b1030, alpha: 0.22 });
+        if (doing === "hum") for (const r of [30, 38, 46]) g.circle(x, y, r).stroke({ width: 1.5, color: INK, alpha: 0.25 });
+        const recolor = doing.startsWith("change_color:") ? doing.split(":")[1] : undefined;
+        const drawn = new Graphics().svg(`<svg xmlns="http://www.w3.org/2000/svg">${thingSvg(o.made.recipe, 0, 0, recolor)}</svg>`);
+        drawn.position.set(x, y);
+        if (doing === "bounce") this.bouncing.push(drawn);
+        this.things.addChild(drawn);
       } else DRAW[name]?.(g, x, y, o.state, w.clock.phase);
       const label = new Text({ text: name, style: { fontFamily: "ui-monospace, Menlo, monospace", fontSize: 10, fill: MUTED } });
       label.anchor.set(name === "window" ? 0 : 0.5, 0);

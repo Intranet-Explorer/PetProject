@@ -1,7 +1,7 @@
 // Wiring: one websocket to the engine, snapshots in, visitor actions out (SPEC-v2 §9).
 import { renderPanels } from "./panels";
 import type { Genome } from "./pet";
-import type { Recipe } from "./things";
+import type { Part, Recipe } from "./things";
 import { Room } from "./room";
 
 export type Needs = { energy: number; comfort: number; curiosity: number };
@@ -15,7 +15,9 @@ export type World = {
   tick: number;
   clock: { phase: string; hour: number; day: number };
   pet: { pos: [number, number]; stage: string; needs: Needs; said: [number, string] | null; name: string | null; genome: Genome };
-  objects: Record<string, { pos: [number, number]; state?: string; made?: { recipe: Recipe } }>;
+  objects: Record<string, { pos: [number, number]; state?: string; active?: boolean;
+                            made?: { recipe: Recipe; behavior?: { when: string; do: string } } }>;
+  portraits?: { day: number; parts: Part[]; genome: Genome; stage: string }[];
   moments: [number, string][];
   room: { wall: string | null; floor: string | null };
   exploits: Record<string, number>;
@@ -28,9 +30,12 @@ export type World = {
 };
 export type Thing = {
   name: string; recipe: Recipe; made: number; by: string; uses: number; effects: Partial<Needs>[];
-  gone: [number, string] | null; useful: boolean;
+  gone: [number, string] | null; useful: boolean; behavior?: { when: string; do: string };
 };
-export type Progress = { days: number; useful: number; next: string | null; needs: { days: number; useful: number } | null };
+export type Progress = {
+  days: number; useful: number; kept?: number; next: string | null;
+  needs: { days: number; useful: number; kept_beliefs?: number } | null;
+};
 export type PetState = { world: World; beliefs: Belief[]; things: Thing[]; progress: Progress; journal: (Rec | { type: string })[]; accuracy: number | null; series: [number, number][] };
 export type Snapshot = {
   size: [number, number]; tick_seconds: number; day_seconds: number; visitor_present: boolean; placeable: string[];
@@ -71,7 +76,7 @@ function render() {
   if (!snap) return;
   const world = snap.pets.model.world; // the room shows the pet; a twin, if enabled, only appears in the Lab tab
   room.update(world, snap.tick_seconds);
-  renderPanels(snap, "model", $<HTMLInputElement>("ruleOnly").checked);
+  renderPanels(snap, "model", $<HTMLInputElement>("ruleOnly").checked, (genome, stage) => room.picture(genome, stage));
   $("window").textContent = world.objects.window.state === "open" ? "Close window" : "Open window";
 
   // Moments (§9): a banner when something worth seeing happens, and the list of them under the room.

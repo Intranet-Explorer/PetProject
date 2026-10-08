@@ -32,11 +32,14 @@ ORDER = ["egg", "hatchling", "child", "youngling", "adult"]
 
 
 def progress(w, cfg, mem):
-    """Where the pet stands toward its next stage (§6): days lived, useful things, and what the next stage asks."""
+    """Where the pet stands toward its next stage (§6): days lived, useful things, beliefs it has kept, and
+    what the next stage asks."""
     stage = w["pet"]["stage"]
     nxt = ORDER[ORDER.index(stage) + 1] if stage != "adult" else None
+    needs = cfg["growth"].get(nxt)
+    since = w["tick"] - (needs or {}).get("kept_days", cfg["growth"]["adult"]["kept_days"]) * cfg["ticks_per_day"]
     return {"days": w["clock"]["day"] - 1, "useful": sum(things.useful(t, cfg) for t in mem.things),
-            "next": nxt if nxt in cfg["growth"] else None, "needs": cfg["growth"].get(nxt)}
+            "kept": len(mem.kept(since)), "next": nxt, "needs": needs}
 
 
 def earned(w, cfg, mem, morning=False):
@@ -44,6 +47,7 @@ def earned(w, cfg, mem, morning=False):
     if w["pet"]["stage"] == "egg":
         return "hatchling" if w["tick"] >= ticks(cfg, cfg["egg"]["egg_minutes"] * 60) else None
     p = progress(w, cfg, mem)
-    if morning and p["next"] and p["days"] >= p["needs"]["days"] and p["useful"] >= p["needs"]["useful"]:
+    if morning and p["next"] and p["days"] >= p["needs"]["days"] and p["useful"] >= p["needs"]["useful"] \
+            and p["kept"] >= p["needs"].get("kept_beliefs", 0):
         return p["next"]
     return None

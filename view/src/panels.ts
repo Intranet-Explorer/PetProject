@@ -1,6 +1,7 @@
 // The DOM around the room: the header, and the drawer's tabs (SPEC-v2 §9).
 // Everything from the engine is set as text, never as HTML.
 import type { Rec, Snapshot } from "./main";
+import type { Genome } from "./pet";
 import { thingPicture } from "./things";
 
 const NEEDS = ["energy", "comfort", "curiosity"] as const;
@@ -93,7 +94,9 @@ function compare(snap: Snapshot) {
     line("Days lived", (id) => String(snap.pets[id].progress.days)),
     line("Next stage", (id) => {
       const p = snap.pets[id].progress;
-      return p.next && p.needs ? `${p.next}: ${p.needs.days} days and ${p.needs.useful} useful things` : "none yet";
+      if (!p.next || !p.needs) return "fully grown";
+      const beliefs = p.needs.kept_beliefs ? `, ${p.needs.kept_beliefs} beliefs kept (${p.kept ?? 0})` : "";
+      return `${p.next}: ${p.needs.days} days, ${p.needs.useful} useful things${beliefs}`;
     }),
     line("Beliefs held", (id) => String(snap.pets[id].beliefs.filter((b) => b.status === "active").length)),
     line("Marks", (id) => snap.pets[id].world.pet.genome.marks.join(", ") || "none"),
@@ -101,7 +104,9 @@ function compare(snap: Snapshot) {
   $("compare").replaceChildren(thead, body);
 }
 
-export function renderPanels(snap: Snapshot, petId: string, ruleOnly: boolean) {
+const pictures = new Map<string, string>();   // body pictures already taken, by night
+
+export function renderPanels(snap: Snapshot, petId: string, ruleOnly: boolean, picture: (g: Genome, stage: string) => string) {
   const pet = snap.pets[petId], w = pet.world, plan = w.plan;
   const hh = Math.floor(w.clock.hour), mm = String(Math.floor((w.clock.hour % 1) * 60)).padStart(2, "0");
   const state = w.pet.stage === "egg" ? "not hatched yet" : w.sleep ? "asleep" : w.thinking ? "thinking" : plan ? "busy" : "idle";
@@ -146,10 +151,22 @@ export function renderPanels(snap: Snapshot, petId: string, ruleOnly: boolean) {
     title.append(el("b", "", t.name), t.gone ? ` (${t.gone[1]})` : "", ...(t.useful ? [el("span", "badge", "useful")] : []),
       ...(t.by === "visitor" ? [el("span", "hint", " from you")] : []));
     li.append(thingPicture(t.recipe), title, el("div", "", `“${t.recipe.purpose}”`),
+      ...(t.behavior ? [el("div", "", `Taught: when ${t.behavior.when.replace("_", " ")}, ${t.behavior.do.replace(/_/g, " ").replace(":", " to ")}`)] : []),
       el("div", "truth", `${t.recipe.material}: ${snap.materials[t.recipe.material] ?? ""}. Used or felt ${t.uses} time${t.uses === 1 ? "" : "s"}${seen ? `, on average ${seen}` : ""}.`));
     return li;
   }) : [el("li", "empty", "It has not made anything yet.")]));
   document.querySelector('[data-tab="things"]')!.textContent = `Things (${pet.things.filter((t) => !t.gone).length})`;
+
+  // Self: its body as it was each night, beside how it drew itself (§8)
+  const portraits = w.portraits ?? [];
+  $("portraits").replaceChildren(...(portraits.length ? [...portraits].reverse().map((p) => {
+    const li = el("li"), img = document.createElement("img"), key = `${p.day}:${JSON.stringify(p.genome)}`;
+    if (!pictures.has(key)) pictures.set(key, picture(p.genome, p.stage));
+    img.src = pictures.get(key)!;
+    img.alt = "its body that night";
+    li.append(img, thingPicture(p), el("div", "hint", `Night of day ${p.day}`));
+    return li;
+  }) : [el("li", "empty", w.pet.stage === "adult" ? "It has not drawn itself yet." : "It will draw itself once it is an Adult.")]));
 
   // Diary: every night so far, newest first
   $("diary").replaceChildren(...(w.diary.length ? [...w.diary].reverse().map((night) => {

@@ -10,7 +10,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 from ..actions import MOVABLE
-from ..things import COLORS, PLACES
+from ..things import COLORS, DO, PLACES, WHEN
 from ..things import SHAPES as PART_SHAPES
 
 WRITTEN = {   # how each action is written, shown only for the actions the stage allows
@@ -28,6 +28,8 @@ WRITTEN = {   # how each action is written, shown only for the actions the stage
     "combine": ('{"type": "combine", "a": one of your things, "b": another of your things, "recipe": {"name": up to 24 chars, '
                 '"material": the material of either, "purpose": what it is for, up to 80 chars}}'),
     "paint": '{"type": "paint", "wall": %s, "floor": one of the same}' % "|".join(COLORS),
+    "teach": ('{"type": "teach", "target": one of your things, "behavior": {"when": %s, "do": %s|change_color:<a color>}}'
+              % ("|".join(WHEN), "|".join(d for d in DO if ":" not in d))),
     "write_belief": '{"type": "write_belief", "statement": text}',
     "revise_belief": '{"type": "revise_belief", "id": belief id, "statement": new text or "discard"}',
 }
@@ -67,6 +69,8 @@ def schema(allowed, objects, belief_ids, making=(0, []), mine=()):
                         recipe=obj(name={"type": "string", "minLength": 1, "maxLength": 24}, material={"enum": materials},
                                    purpose={"type": "string", "minLength": 1, "maxLength": 80}))] if len(mine) > 1 else [],
         "paint": [obj(type={"const": "paint"}, wall={"enum": COLORS}, floor={"enum": COLORS})],
+        "teach": [obj(type={"const": "teach"}, target={"enum": list(mine)},
+                      behavior=obj(when={"enum": WHEN}, do={"enum": DO}))] if mine else [],
         "write_belief": [obj(type={"const": "write_belief"}, statement=belief)],
         "revise_belief": [obj(type={"const": "revise_belief"}, id={"enum": belief_ids}, statement=belief)] if belief_ids else [],
     }
@@ -178,3 +182,13 @@ class Model:
             raise ValueError("no usable body choice: %r" % reply)
         return reply["choice"] - 1, reply.get("reason", "")
 
+    async def portrait(self, body):
+        """§8, Adult: a picture of itself, as parts in the make format. Its own image, whatever its body is."""
+        part = {"type": "object", "additionalProperties": False, "required": ["shape", "size", "color", "at"],
+                "properties": {"shape": {"enum": PART_SHAPES}, "size": {"enum": [1, 2, 3]}, "color": {"enum": COLORS}, "at": {"enum": PLACES}}}
+        shape = {"type": "object", "additionalProperties": False, "required": ["parts"],
+                 "properties": {"parts": {"type": "array", "items": part, "minItems": 1, "maxItems": 8}}}
+        prompt = ("This is your body: %s.\nMake a picture of yourself from up to 8 parts.\n"
+                  'Reply with one JSON object and nothing else: {"parts": [{"shape": %s, "size": 1 to 3, "color": %s, "at": %s}]}'
+                  % (body, "|".join(PART_SHAPES), "|".join(COLORS), "|".join(PLACES)))
+        return (parse(await asyncio.to_thread(self.chat, prompt, shape)) or {}).get("parts", [])

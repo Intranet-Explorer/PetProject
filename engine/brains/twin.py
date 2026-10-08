@@ -74,6 +74,9 @@ class Twin:
     async def dream(self, journal):
         return ""
 
+    async def portrait(self, body):
+        return [{"shape": self.rng.choice(things.SHAPES), "size": 2, "color": self.rng.choice(things.COLORS), "at": "center"}]
+
     async def choose_body(self, body, options):
         return self.rng.randrange(len(options)), "picked at random"
 

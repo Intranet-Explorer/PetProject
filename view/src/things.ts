@@ -10,9 +10,10 @@ export const PALETTE: Record<string, string> = {
 const OFFSET: Record<string, [number, number]> = { center: [0, 0], top: [0, -11], bottom: [0, 11], left: [-11, 0], right: [11, 0] };
 const n = (v: number) => v.toFixed(1);
 
-/** The recipe's parts as SVG elements, centred on (cx, cy), fitting a box of about 60. */
-export function thingSvg(recipe: Recipe, cx = 0, cy = 0): string {
-  return recipe.parts.map((p) => {
+/** The parts as SVG elements, centred on (cx, cy), fitting a box of about 60. `recolor` paints every part one colour. */
+export function thingSvg(recipe: { parts: Part[] }, cx = 0, cy = 0, recolor?: string): string {
+  return recipe.parts.map((part) => {
+    const p = recolor ? { ...part, color: recolor } : part;
     const r = 6 + Math.min(3, Math.max(1, p.size)) * 4.5, [dx, dy] = OFFSET[p.at] ?? [0, 0], [x, y] = [cx + dx, cy + dy];
     const fill = PALETTE[p.color] ?? PALETTE.grey, ink = `fill="${fill}" stroke="#16241f" stroke-width="1.5"`;
     // a path, not a polygon: PixiJS reads path data reliably
@@ -35,7 +36,7 @@ export function thingSvg(recipe: Recipe, cx = 0, cy = 0): string {
 }
 
 /** A small standalone picture of a thing, for the shelf. */
-export function thingPicture(recipe: Recipe): SVGSVGElement {
+export function thingPicture(recipe: { parts: Part[] }): SVGSVGElement {
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   svg.setAttribute("viewBox", "-32 -32 64 64");
   svg.setAttribute("aria-hidden", "true");

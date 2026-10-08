@@ -12,7 +12,7 @@ STAGE_ACTIONS = {
     "child": HATCHLING[:8] + ["arrange"] + HATCHLING[8:],
     "youngling": HATCHLING[:8] + ["arrange", "combine", "paint"] + HATCHLING[8:],
 }
-STAGE_ACTIONS["adult"] = STAGE_ACTIONS["youngling"]   # teach arrives with V2.4
+STAGE_ACTIONS["adult"] = STAGE_ACTIONS["youngling"][:11] + ["teach"] + STAGE_ACTIONS["youngling"][11:]
 ALL_ACTIONS = STAGE_ACTIONS["adult"]
 MOVABLE = ("plant", "ball", "blanket", "rock")              # the starting objects a pet may arrange
 PLACEABLE = MOVABLE + ("lamp", "bowl", "music box")         # the starting objects the visitor may place
@@ -80,6 +80,8 @@ def check(a, w, mem, cfg):
         return things.check_combine(a, w, cfg, norm)
     if t == "paint" and not (a.get("wall") in things.COLORS and a.get("floor") in things.COLORS):
         return "bad colors"
+    if t == "teach":
+        return things.check_teach(a, w, cfg, norm)
     if t in ("write_belief", "revise_belief") and not filled(a.get("statement")):
         return "no statement"
     if t == "revise_belief" and not mem.is_active(a.get("id")):
@@ -104,7 +106,7 @@ def destination(w, a):
     t, objs = a["type"], w["objects"]
     if t == "move" and norm(a.get("target")) not in objs:
         return list(a["tile"])
-    if t in ("move", "use", "unmake"):
+    if t in ("move", "use", "unmake", "teach"):
         return beside(w, objs[norm(a["target"])]["pos"])
     if t == "make":
         return beside(w, a["tile"])
@@ -150,6 +152,8 @@ def apply(w, a, mem, cfg):
         return things.make(w, a, cfg, mem, clean)
     if t == "combine":
         return things.combine(w, a, cfg, mem, clean, norm)
+    if t == "teach":
+        return things.teach(w, a, mem, target)
     if t == "paint":
         w["room"] = {"wall": a["wall"], "floor": a["floor"]}
         moment(w, "it painted the room: %s walls, %s floor" % (a["wall"], a["floor"]))

@@ -5,7 +5,7 @@ import logging
 import random
 import re
 
-from . import genome
+from . import genome, things
 
 from .actions import clean, filled
 from .world import clock
@@ -64,6 +64,18 @@ async def night(pet):
         pet.log_body("sleep: " + body, reason)
     except Exception:
         logging.exception("evolve failed for %s", pet.id)
+    if w["pet"]["stage"] == "adult":   # §8: how it sees itself, as a recipe. Nothing about its real body changes.
+        try:
+            parts = [{"shape": p["shape"], "size": p["size"], "color": p["color"], "at": p.get("at", "center")}
+                     for p in (await pet.brain.portrait(genome.describe(w["pet"]["genome"])))[:8]
+                     if p.get("shape") in things.SHAPES and p.get("size") in (1, 2, 3) and p.get("color") in things.COLORS
+                     and p.get("at", "center") in things.PLACES]
+            if parts:
+                w["portraits"] = (w["portraits"] + [{"day": w["sleep"]["day"], "parts": parts, "stage": "adult",
+                                                    "genome": dict(w["pet"]["genome"])}])[-60:]
+                pet.mem.update_self(portrait=parts)
+        except Exception:
+            logging.exception("portrait failed for %s", pet.id)
     w["last_night"] = {"day": w["sleep"]["day"], "dream": dream, "changes": changes, "body": body, "reason": reason}
     w["diary"] = (w["diary"] + [w["last_night"]])[-60:]
     pet.mem.journal({"pet": pet.id, "tick": w["tick"], "type": "sleep", **w["last_night"]})
