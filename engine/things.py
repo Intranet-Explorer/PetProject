@@ -260,6 +260,8 @@ def senses(w, cfg, fired):
         felt += ["the %s beside you keeps the light off you" % n for n in close(w, cfg, "shade")]
     for _, need, rate, n in nearby(w, cfg):
         felt.append("the %s beside you feels %s" % (n, "pleasant" if rate > 0 else "unpleasant"))
+    if w["pet"]["needs"]["curiosity"] < 30:
+        felt.append("you are restless for something new")
     return "; ".join(dict.fromkeys(felt)) or "nothing in particular"
 
 

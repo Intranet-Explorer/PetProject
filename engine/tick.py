@@ -22,6 +22,7 @@ RECENT, RECALLED, RECALL_RANGE = 6, 4, 2    # retrieval (v1 §8): the latest eve
 NOVELTY_MAX, NOVELTY_SECONDS = 4.0, 150     # curiosity for doing something; real seconds per point regained
 FRESH_SECONDS = 600                         # a made thing gives its full curiosity only if left alone this long (§4)
 WEAR, WEAR_FLOOR, WEAR_EASES = 0.8, 0.1, 2   # each repeat is worth this much of the last, down to a floor; a night undoes two.
+WEAR_CAP, FAMILIAR = 10, 4                   # repeats stop counting here, so neglect can bring novelty back; from the 4th it is told
 # Without wear the ten starting objects kept curiosity at 100 for good, and the V2.3 life made two things in 2.4 hours:
 # it had no reason to invent. With it, the lasting source of novelty is making something new (§4).
 URGENT = {"visitor", "woke", "hatched", "low"}   # news that does not wait for min_think_seconds
@@ -346,10 +347,13 @@ class Pet:
                     self.mem.thing_used(n, {"energy": round(v * self.cfg["steps"]["rest"] / 10, 1)}, for_need(n))
             if key:
                 idle = (w["tick"] - w["seen_at"].get(key, -10**6)) * self.cfg["clock"]["tick_seconds"]
-                wear = max(WEAR_FLOOR, WEAR ** w["times"].get(key, 0))
+                done = min(w["times"].get(key, 0), WEAR_CAP)
+                wear = max(WEAR_FLOOR, WEAR ** done)
+                if done >= FAMILIAR:   # it can tell when something has stopped being new, as it can tell what is pleasant
+                    text += " (this has grown familiar)"
                 fresh = min(1.0, idle / FRESH_SECONDS) if thing else 1.0   # a made thing also needs leaving alone a while
                 fx["curiosity"] = (fx.get("curiosity", 0) * fresh + min(NOVELTY_MAX, idle / NOVELTY_SECONDS)) * wear
-                w["seen_at"][key], w["times"][key] = w["tick"], w["times"].get(key, 0) + 1
+                w["seen_at"][key], w["times"][key] = w["tick"], min(WEAR_CAP, done + 1)
             fired = rules.fired(w, self.cfg, standing=False)
             for r in fired:   # the rule decides what the action gives, in place of the usual
                 fx[r.need] = r.value(self.cfg)
@@ -484,7 +488,7 @@ class Pet:
             add_event(w, "you woke up" + ('. you remember thinking: "%s"' % dream if dream else ""))
             w["news"].append("woke")
             w["sleep"], w["phase_seen"], self.night, self.today, self.dirty = None, w["clock"]["phase"], None, [], True
-            w["times"] = {k: n - WEAR_EASES for k, n in w["times"].items() if n > WEAR_EASES}   # a little novelty comes back overnight
+            w["times"] = {k: min(n, WEAR_CAP) - WEAR_EASES for k, n in w["times"].items() if n > WEAR_EASES}   # a little novelty comes back overnight
             self.grow(morning=True)   # stages are earned, and checked each morning (§6)
 
 

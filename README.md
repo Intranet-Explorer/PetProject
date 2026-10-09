@@ -67,7 +67,8 @@ python3 m0/model_test.py --selftest         # the M0 model test harness
   last, down to a tenth. v1's novelty only recharged, which let the ten starting objects keep curiosity at 100
   forever; the first V2.3 life then made two things in 2.4 hours. Novelty goes by kind: making or using another
   thing of a material it already knows wears like a repeat, and a first of its kind is fully novel. Each night
-  undoes two repeats of everything.
+  undoes two repeats of everything, and repeats stop counting at ten. From the fourth repeat the result says
+  "(this has grown familiar)", and when curiosity is under 30 it feels "restless for something new".
 - **A thing aimed at a taken tile is put on the nearest free one** and the pet is told where; the spec rejects
   it. The V2.3 life lost two of its first three makes that way.
 - **A thing's size is its biggest part.** A new bright thing starts switched on. A sweet counts as a meal

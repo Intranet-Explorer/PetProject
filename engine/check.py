@@ -141,7 +141,8 @@ async def main():
     for _ in range(12):
         rested()
         worn = (await do(p, use("ball")))[1][0]["own"]["curiosity"]
-    assert 0.4 <= worn <= 0.6                                                    # the same thing wears down to a tenth
+    assert 0.4 <= worn <= 0.6 and p.world["times"]["use ball"] == 10             # the same thing wears down to a tenth, and stops counting
+    assert p.world["events"][-1][1].startswith("you played with the ball (this has grown familiar)")
     ok = {"thought": "", "intention": "x", "steps": [rest], "expect": ""}
     assert actions.check_plan(ok) is None and actions.check_plan(dict(ok, steps=[])) == "no steps"
     assert actions.check_plan(dict(ok, steps=[rest] * 6)) == "no steps" and actions.check_plan("nope") == "invalid json"
@@ -282,6 +283,8 @@ async def main():
     q.world["objects"]["lamp"]["state"] = "on"
     assert "you feel: the light in the room is harsh on you\n" in perceive(q.world, cfg, q.mem)
     assert "you feel" not in perceive(q.world, dict(cfg, senses={"enabled": False}), q.mem)
+    q.world["pet"]["needs"]["curiosity"] = 12.0
+    assert "; you are restless for something new\n" in perceive(q.world, cfg, q.mem)
     q = fresh(NIGHT)
     await given(q, "glow", "bright")
     assert q.world["objects"]["glow"]["state"] == "on" and (await do(q, observe))[0]["rule_tags"] == ["lights_night"]

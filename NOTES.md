@@ -249,3 +249,28 @@ And two of my own: whether it ever puts out the lamp for the night, and whether 
 material beyond soft, warm and bright once it is a Child.
 
 Review with `uv run python -m engine.metrics`, the Things and Self tabs, and `data/model/things.json`.
+
+### The long run at 6.8 hours (8 Oct, 23:00)
+
+World day 4, 17:08. One start, no errors, 1 failed model call in 232. It became a Child on the morning of
+day 3 (tick 6900), the first morning it could, with two useful things.
+
+- **19 things made, 8 in the room.** Nearly all are lights or "glows": light orb, glow dot, tiny star, soft glow
+  dot, gentle pulse, soft warm glow, cozy glow ring, shimmer dot, flickering glow, pulsing warm dot. Four
+  materials tried (bright, soft, warm, and quiet once), every one a single part. As a Child it has six new
+  materials and four-part things and has used neither, apart from that one quiet thing.
+- **Both useful things are warm, and it arranged them.** "soft warm glow" and "cozy glow ring" were moved
+  to the wall by the window (it used `arrange` four times) and have helped on most of 17 and 15 occasions.
+  Earlier lives never made a warm thing useful.
+- **It has settled into making a thing and taking it apart.** Eleven unmakes, most within a minute of the make.
+- **Its curiosity has been at 0 for about three hours.** Novelty wore out on what it keeps doing ("move
+  blanket" 41 times, "look music box" 27, "move warm nest" 24, five warm things), and it did not connect that
+  with trying something of a new kind. It rests instead: 193 of 498 steps, at full energy, because resting by
+  the blanket gives a little comfort.
+- **It still has the lamp backwards:** "The lamp provides comfort; toggling it off causes a comfort loss of
+  about 0.9." It has toggled it off twice and back on twice.
+
+Changed at tick 12170 and applied to this same life (the engine restarted onto it; the life carried on):
+- From the fourth repeat, a result says "(this has grown familiar)".
+- With curiosity under 30 it feels "restless for something new".
+- Repeats stop counting at ten, so a night's easing can bring some novelty back to what it has worn out.
