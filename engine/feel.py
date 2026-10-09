@@ -62,7 +62,8 @@ def changed(deltas):
 
 def result(text, own, meanwhile):
     """A step's result: what happened, how it left the pet, and apart from that what the time itself did."""
-    felt, drift = changed(own), changed(meanwhile)
+    # a need the step itself moved is not reported twice: "a lot more rested ... apart from that, more tired" reads as nonsense
+    felt, drift = changed(own), changed({n: d for n, d in meanwhile.items() if abs(own.get(n, 0)) < 0.5})
     return text + ("; you feel " + felt if felt else "") + ("; apart from that, while it lasted you grew " + drift if drift else "")
 
 

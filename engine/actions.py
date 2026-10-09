@@ -277,7 +277,8 @@ def describe_thing(house, cfg, pet, name):
             else "soft to lie on" if "soft" in fix else "something to play with" if "toy" in fix
             else "something growing" if fix.get("plant") else "you could see yourself in it" if fix.get("mirror")
             else "you can see outside through it" if fix.get("window") else "water; things put in it drift off" if "water" in fix
-            else "a warm patch of light on the floor" if fix.get("sun") else "it is just there")
+            else "a warm patch of light on the floor" if fix.get("sun")
+            else "it can be set " + " or ".join(fix["states"]) if "states" in fix else "a bench to work at" if fix.get("bench") else "it is just there")
     if fix.get("plant"):
         state = "ripe" if o["state"] == "ripe" else "nearly ripe" if o["grow"] > 0.7 else "growing"
     return "%s%s: %s" % (name, " (%s)" % state if state else "", hint)

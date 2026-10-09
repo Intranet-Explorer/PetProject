@@ -120,7 +120,7 @@ class Mind:
         if URGENT & set(pet["news"]) and quiet >= c["urgent_seconds"]:
             return "something happened"
         floor = c["min_think_seconds"] * (0.8 + 0.4 * pet["temper"]["patient"]) * (1.25 if pet["stage"] == "elder" else 1.0)
-        if quiet < (0 if self.brain.instant else floor):
+        if quiet < (0 if self.brain.instant and not self.cfg["stub"].get("paced") else floor):
             return None
         if not self.brain.instant and self.eng.over_budget():
             return None
@@ -441,7 +441,7 @@ class Mind:
                 add_event(h, other, "%s has fallen asleep" % actions.handle(h, other, pet))
         if not pet["sleep"]["done"] and self.night is None:
             self.night = self.eng.spawn(sleep.night(self))
-        pet["needs"]["energy"] = min(100.0, pet["needs"]["energy"] + cfg["sleep"]["restore_per_10s"] * cfg["dt"])
+        pet["needs"]["energy"] = min(100.0, pet["needs"]["energy"] + cfg["sleep"]["restore_per_hour"] / cfg["ticks_per_hour"])
         if pet["sleep"]["done"] and h["clock"]["phase"] != "night":
             dream = pet["last_night"]["dream"]
             pet["events"] = []   # the reset: only journal, beliefs and self carry into the new day

@@ -21,3 +21,9 @@ adult = 5
 [house.events]            # merged over house.toml: a short life should still meet a few events
 every_hours = 7
 drift_after_days = 6
+
+[sleep]
+think = "low"             # the night's thinking, capped (amendment): a short night must not cost minutes of model time
+
+[model]
+night_tokens = 3000

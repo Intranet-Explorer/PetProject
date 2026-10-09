@@ -197,7 +197,7 @@ class Model:
     async def night(self, text, asks, belief_ids, tellers):
         """The night's thinking (§9, SPEC-v3 §3.3, §5.2, §8.2), in one call with thinking on."""
         ask = text + NIGHT % ", ".join(NIGHT_PARTS[k] for k in asks)
-        return parse(await asyncio.to_thread(self.chat, ask, night_schema(asks, belief_ids, tellers), True, 8000, 0.7, "night")) or {}
+        return parse(await asyncio.to_thread(self.chat, ask, night_schema(asks, belief_ids, tellers), True, self.cfg["night_tokens"], 0.7, "night")) or {}
 
     async def body(self, body, options, portrait):
         """§9.3: pick one of three ways its body can change; once grown, also a picture of itself."""

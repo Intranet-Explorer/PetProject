@@ -1,0 +1,27 @@
+# A profile for working on the view (PET_PROFILE=viewdev): stub brains on a quick clock, so every stage, an
+# egg, a death, a storm and every room type turn up within minutes. Never used for a real lineage.
+
+[stub]
+enabled = true
+paced = true              # think at a pet's pace, not every tick
+
+[clock]
+day_seconds = 480
+min_think_seconds = 12    # the stub is instant; this only paces how busy the house looks
+
+[life]
+egg_minutes = 1
+lifespan_days = 9
+adult_days = 3
+egg_pull_days = 0.5
+fade_minutes = 1
+auto_lineage = true
+
+[growth]
+child = 1
+youngling = 2
+adult = 3
+
+[house.events]
+every_hours = 5
+drift_after_days = 3

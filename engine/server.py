@@ -305,4 +305,4 @@ if (ROOT / "view" / "dist").exists():
     app.mount("/", StaticFiles(directory=ROOT / "view" / "dist", html=True))
 
 if __name__ == "__main__":
-    uvicorn.run(app, host=cfg["server"]["host"], port=cfg["server"]["port"])
+    uvicorn.run(app, host=cfg["server"]["host"], port=int(os.environ.get("PET_PORT", cfg["server"]["port"])))
