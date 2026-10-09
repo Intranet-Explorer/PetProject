@@ -1,8 +1,10 @@
 # Pet
 
-A small creature that lives in a browser room, driven by a local language model. The working spec is
-[SPEC-v2.md](SPEC-v2.md); [SPEC.md](SPEC.md) is v1, kept for history. [NOTES.md](NOTES.md) says what was seen
-at the end of each milestone.
+A small creature that lives in a browser room, driven by a local language model.
+
+**[FINDINGS.md](FINDINGS.md) is the write-up of what has been learned so far.** The working spec is
+[SPEC-v2.md](SPEC-v2.md); [SPEC.md](SPEC.md) is v1, kept for history. [NOTES.md](NOTES.md) is the account of
+each life as it happened.
 
 Built so far: V2.0 to V2.4 (intentions, 2-second ticks, a 10-minute egg, the room-first view, making things,
 growth by useful things through to Adult, arrange, combine, paint, visitor gifts, taught behaviors, self-portraits).
