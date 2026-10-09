@@ -134,6 +134,9 @@ def perceive(house, cfg, pet, mem):
         senses.append("something here looks like it wants to be played with")
     if others and T["sociable"] > 0.6 and feel.level(pet, "company") >= 1:
         senses.append("you want to be near " + actions.handle(house, pet, others[0]))
+    unseen = [d for d, rid in room["doors"].items() if rid not in pet["rooms"]]
+    if unseen and feel.level(pet, "curiosity") >= (3 if T["bold"] < 0.4 else 2):   # boredom points at the one thing here not yet tried
+        senses.append("you wonder what is through the %s door" % unseen[0])
     if pet.get("called") and not pet["name"]:
         senses.append("the visitor calls you " + pet["called"])
 
