@@ -106,7 +106,7 @@ fixtures = [
   { name = "plant", pos = [8, 6], movable = true },
   { name = "bowl", pos = [5, 7], meal = 2 },
   { name = "ball", pos = [4, 5], movable = true, toy = 1.0 },
-  { name = "blanket", pos = [9, 3], movable = true, soft = 2.0, cozy = true },
+  { name = "blanket", pos = [9, 3], movable = true, soft = 5.0, cozy = true },
   { name = "music box", pos = [7, 2], states = ["silent", "playing"] },
   { name = "rock", pos = [3, 6], movable = true },
   { name = "window", pos = [0, 3], window = true },
@@ -141,7 +141,7 @@ fixtures = [
   { name = "barrel", pos = [2, 2] },
   { name = "shelf", pos = [9, 1] },
   { name = "lantern", pos = [5, 1], light = "off" },
-  { name = "old rug", pos = [8, 5], movable = true, soft = 1.0 },
+  { name = "old rug", pos = [8, 5], movable = true, soft = 3.0 },
 ]
 
 [rooms.attic]
@@ -199,7 +199,7 @@ rule = "music"
 fixtures = [
   { name = "drum", pos = [3, 3], toy = 2.0, loud = true },
   { name = "chimes", pos = [8, 2], toy = 2.0, loud = true },
-  { name = "rug", pos = [6, 5], soft = 1.5, cozy = true },
+  { name = "rug", pos = [6, 5], soft = 4.0, cozy = true },
   { name = "window", pos = [0, 2], window = true },
 ]
 

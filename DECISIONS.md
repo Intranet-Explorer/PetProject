@@ -249,3 +249,10 @@ README.md's history and NOTES.md.)
   hint: "from under it comes a smell of wet soil and green things", "cold, damp air", "a faint ringing now and
   then". A bold pet "wants to know what is there"; a timid one "is not sure about it". Boredom points at an
   untried door from "a bit bored" for a timid pet and sooner for the rest.
+- **Soft things are worth using.** v2's soft gave 2 comfort a use. Against a drift of 0.6 a minute and a pet
+  that acts about once a minute, that could never win comfort back, and the smoke pet proved it: it rested
+  "sunk into" its soft things again and again and stayed miserable. Soft is now 5 a use (2.5 to 7.5 by size),
+  the blanket and rugs to match, resting beside something soft counts as using it, and a snug place gives
+  0.5 per 10 s. Comfort can now be restored at about the rate energy can.
+- **`give` picks up what is lying there.** The pet tried to give the beetle moss that was on the floor beside
+  it. Refusing that taught nothing; it now picks the bit up on the way if it has room to carry it.

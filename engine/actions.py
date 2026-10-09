@@ -189,6 +189,8 @@ def check(a, house, cfg, pet, mem):
             return None
         if tk == "pet" and what in things.mine(house, pet, room):
             return None
+        if find(house, pet, what)[0] == "bit" and len(pet["carrying"]) < cfg["make"]["carry"]:
+            return None   # something lying here: it picks it up to give
         return "you can only give what you carry or a thing of yours that is here"
     if t == "show":
         tk, tr = find(house, pet, a.get("to"))
@@ -575,6 +577,14 @@ def offer(house, cfg, pet, other, what):
 
 def give(house, cfg, pet, a):
     what, (kind, other) = norm(a["what"]), find(house, pet, a["to"])
+    room = house["rooms"][pet["room"]]
+    if what not in pet["carrying"] and what not in things.mine(house, pet, room):   # a bit lying here is picked up on the way
+        spot = find(house, pet, what)[1]
+        pet["carrying"].append(spot["bit"])
+        if spot["loose"]:
+            room["spots"].remove(spot)
+        else:
+            spot["ready"], spot["back"] = False, house["tick"] + round(cfg["house"]["rooms"][room["type"]]["regrow_hours"] * cfg["ticks_per_hour"])
     if kind == "creature":
         from . import director
         pet["carrying"].remove(what)
