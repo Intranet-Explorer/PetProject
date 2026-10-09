@@ -395,3 +395,23 @@ Meanwhile the pet became an Adult on waking at tick 28500, the morning of day 9:
 into Adult. Within 16 ticks it had taught its calm glow "to glow when pet resting". The stage-up figure will
 have played for anyone with sound on at 08:05. Its moment reads "it is now a Adult"; the article is the
 engine's, so it waits for the next life.
+
+### Voice on the live pet, 07:35 to 08:31
+
+A muted headless page listened to the live run for 55 minutes without acting on it. What it logged as played:
+
+| Sound | Times | When |
+|---|---|---|
+| Breathing | 1 start | from 07:35 until it woke |
+| Three rising notes | 1 | 08:05:26, as it became an Adult |
+| Content trill | 21 | roughly once a minute while awake; it uses its soft things and the blanket constantly |
+| Whimper | 4 | 08:08, 08:13, 08:18, 08:29: comfort stayed under 20 for most of the half hour |
+| Falling blip | 2 | 08:17, 08:24 |
+| Chirp | 1 | 08:18 |
+
+No speech, no "hm?" (nobody spoke to it or poked it in that time) and no hum (the one thing it has taught
+glows, it does not hum). As an Adult its voice dropped to a base of about 313 Hz. With comfort back above
+20 the shake went out of it; syllables were about 90 ms.
+
+So with sound on, an awake pet is heard about once a minute, nearly always as a trill. That may be too much
+of one sound; it is what the table in VOICE.md asks for, and it is easy to thin out if it grates.
