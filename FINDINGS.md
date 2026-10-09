@@ -1,6 +1,6 @@
 # Findings so far
 
-Written 8 October 2026, two days into the project. This is the summary; [NOTES.md](NOTES.md) has the
+Written 8 October 2026, two days into the project, and updated the next morning with the long run's first night. This is the summary; [NOTES.md](NOTES.md) has the
 account of each life as it happened, and [README.md](README.md) says how to run it and where the build reads
 the specs its own way.
 
@@ -23,9 +23,10 @@ and grows by what it has made. Both are built. A long run on the real clock is i
 4. **Left alone, it settles.** With nothing pushing it, curiosity sat at 100 and it made two things in 2.4
    hours. With novelty wearing out but no way to perceive that, curiosity sat at 0 for three hours and it
    rested at full energy. It needs both the pressure and a way to feel it.
-5. **It invents within a narrow band.** In the long run so far it has made 22 things: every one a single part,
-   17 of them warm or bright, most of them called some kind of glow. It has the option of four parts and ten
-   materials.
+5. **It invents within a narrow band until it can feel that the band has gone stale.** Its first 22 things in
+   the long run were all single parts, 17 of them warm or bright, most called some kind of glow. Once a result
+   could say "this has grown familiar", it went on to eight materials, two- and three-part things, and combining.
+   It also began to churn: 55 of its 71 things have been taken apart, many within a minute of being made.
 6. **Its beliefs are confident, numeric, and often wrong about cause.** It has never discarded one.
 7. **Thinking every 70 seconds instead of every 10 changed the pet more than any other design choice.** It
    cut model calls from 360 an hour to about 50 and made it look purposeful, and it also meant the room's
@@ -45,7 +46,7 @@ All times are real time. "Fast clock" is a world day every 30 minutes; the real 
 | `data.v2.3-first` | V2.3 | fast | 2.4 h | 2 things, 1 useful, never a Child |
 | `data.v2.3` | V2.3 | fast | 3.8 h | became a Child at 3.5 h, after senses were added |
 | throwaway Adult | V2.4 | fast | 20 min | started as an Adult to see teaching and a self-portrait |
-| `data` | V2.5 | real | 6.9 h and running | Child since the morning of day 3 |
+| `data` | V2.5 | real | 14.6 h and running | Child on day 3, Youngling on day 8 |
 
 The `data*` folders are not in the repository; they are large and local.
 
@@ -138,6 +139,11 @@ This is a real departure from the spec and it has a switch (`[senses] enabled` i
 
 The pattern is the same as with senses: pressure it cannot perceive produces a stuck pet, not a clever one.
 
+- **The cure has a cost.** Feeling restless, it now chases novelty ahead of comfort. Comfort was under 20 at the
+  end of every step on world days 5 and 6, with nothing harming it for most of that time; it just was not
+  using the soft things it had. Over the whole run it has been short of comfort at about half of all steps and
+  short of curiosity at a third.
+
 ## Growing
 
 - **A thing is useful** when, on most of at least five occasions, it raised the need its material is for. That is
@@ -149,7 +155,11 @@ The pattern is the same as with senses: pressure it cannot perceive produces a s
 - **The long run became a Child on the morning of day 3,** the first morning it could. Its two useful things
   are both warm ones that it moved to the wall by the window with `arrange`. No earlier life made a warm
   thing useful.
-- **As a Child it has not used what Child unlocks,** beyond `arrange` and three things in two new materials.
+- **It became a Youngling on the morning of day 8,** 14 real hours in, with six useful things. All but one of
+  them are soft.
+- **It used what each stage unlocked only after it could feel familiarity.** Before that, as a Child, it had
+  used `arrange` and little else. After: six more materials, nine multi-part things, two combines, one sweet.
+  It has not painted the room.
 
 ## Adult: teaching and self-portraits
 
@@ -169,15 +179,17 @@ Seen only on a throwaway life started as an Adult, since a pet needs 8 days and 
 - **Several are wrong about cause and have stayed for days:** the music box "toggles between playing and silent
   on its own" (it toggles it itself; this reappears in nearly every life); its lights "can turn off on their own";
   "the lamp provides comfort; toggling it off causes a comfort loss".
-- **It revises beliefs but has never discarded one** in any v2 life.
+- **It revises beliefs but has never discarded one** in any v2 life. The long run holds 13.
 
 ## What it has not done
 
 - It has never named itself.
-- It has spoken twice in about 30 hours of v2 life, both times to no one: "The melody loops endlessly. Do you
-  hear it too?" and "The music box tinkles softly in the dusk. It makes the shadows dance."
-- It has never made a thing with more than one part.
-- It has never put out the lamp for the night as a habit.
+- It has spoken four times in about 38 hours of v2 life. Twice to no one about the music box. Once in answer
+  to a visitor's "hello!": "Look at this! It changes!" And once to an empty room: "Hello? I am ready for
+  something new. Please come and change the room."
+- It made nothing with more than one part until its 24th thing in the long run.
+- It has never put out the lamp for the night as a habit, and still believes the lamp gives comfort.
+- It has never painted the room, or used the hard, dark or heavy materials.
 - In v2 it has never eaten twice within the hour, so the third hidden rule has never fired for it.
 
 ## What has not been verified
@@ -186,7 +198,7 @@ Seen only on a throwaway life started as an Adult, since a pet needs 8 days and 
   looked at in a headless browser. Nobody had clicked them until the first feed and poke on the long run.
 - The promotion into Adult has not happened on a live pet; only the self-check covers its counts.
 - Behaviors conditioned on the visitor have not been triggered by a visitor.
-- Combining and painting have been checked but no pet has reached Youngling to use them.
+- Combining has now been used by a live pet, twice. Painting has only been exercised by the self-check.
 - The twin is off in v2 and has only been run by the self-check since.
 - Every number here comes from one life each. Nothing has been repeated enough to put error bars on.
 

@@ -274,3 +274,42 @@ Changed at tick 12170 and applied to this same life (the engine restarted onto i
 - From the fourth repeat, a result says "(this has grown familiar)".
 - With curiosity under 30 it feels "restless for something new".
 - Repeats stop counting at ten, so a night's easing can bring some novelty back to what it has worn out.
+
+### The long run at 14.6 hours (9 Oct, 06:49)
+
+World day 8, 14:43. No errors, 1 failed model call in 533. The engine has started twice: once at the
+beginning and once when I restarted it onto the familiarity change. It has not crashed.
+
+- **It is a Youngling,** since the morning of day 8 (tick 24900), with six useful things. Adult needs 8 days
+  lived (it has 7), 8 useful things, and 3 beliefs kept for 2 days (it has 11). The next check is the morning
+  of day 9.
+- **The band of what it makes has widened a great deal since it could feel familiarity.** 71 things made, in
+  eight materials: soft 19, bright 17, warm 14, bouncy 11, quiet 4, noisy 4, cool 1, sweet 1. Nine have more
+  than one part (eight of two, one of three), for instance "gliding comet", a white star over a blue ring,
+  in the cool material. Six shapes used. The names moved on from glows: breathing moon, whispering mist,
+  twirling vortex, floating jelly light.
+- **It has combined twice** ("it combined the shifting light orb and the bouncy bubble into a wobbling light")
+  and made and eaten one sweet. It has not painted, and has never used hard, dark or heavy.
+- **It churns.** 55 of the 71 have been taken apart, many within a minute of being made: make a thing for the
+  novelty, take it apart for the room and the energy. Twelve makes were refused because the room was full; it
+  believes the limit is "about 6 light objects".
+- **Its useful things are nearly all soft:** warm nest, warm cushion (26 helpful uses of 26), soothing wave,
+  soft cloud, calm glow, and one warm one, the cozy glow ring.
+- **It has been uncomfortable for most of its life.** Comfort was under 20 at the end of 52% of all steps, and
+  of every single step on days 5 and 6. Nothing was hurting it for most of that time (it felt something
+  unpleasant in 21 of 114 daytime packets). It was simply not tending to comfort: since it could feel
+  "restless for something new", it chases novelty first. Curiosity is under 20 at the end of a third of steps
+  too, so it is short of both.
+- **It has spoken three times.** After "hello!" from the visitor: "Look at this! It changes!" Two and a half
+  hours later, to an empty room: "Hello? I am ready for something new. Please come and change the room."
+  It did not answer "what changes?".
+- **About visitors it wrote:** "Visitors can place objects in the room, fill the bowl, and speak to you; their
+  words appear as quoted text."
+- **The lamp:** still believed to give comfort. It toggles it off and on again about once a day. On 17 of 17
+  night packets on days 5 and 6 it felt the light as harsh.
+- **13 beliefs, none ever discarded.** One new and wrong: things it made "can appear in the room without the
+  character creating them".
+- **Body:** tall, very round, pale, plain, no limbs, with the notch.
+- **A model call now takes 12 s at the median,** up from 8, as the packet has grown with its things and beliefs.
+
+Nothing was changed at this check.
