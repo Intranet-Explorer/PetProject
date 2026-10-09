@@ -15,6 +15,13 @@ SPEC-v2.md and SPEC.md stay as history. NEXT-LIFE.md is folded in here (§3) and
 
 ---
 
+## Amendments
+
+- **9 Oct, 13:30: growth is paced by days, not by useful things.** v2 found one useful thing takes 1.5–2 real hours whatever the clock, because it's bound by the think rate. With v2's thresholds a generation needs 12–16 real hours to reach Adult and lay an egg, so the §12 showcase could never reach 4 generations in 12 hours. §4.1 and §12.1 are changed below. Log how you applied this in DECISIONS.md.
+- **9 Oct, 13:35: the showcase runs in turbo time.** The wall-clock cost of a life is mostly waiting: pets think at most every ~70 s, but a model call takes ~10 s. Add a turbo mode (§11.3) where world time doesn't follow the wall clock: while any pet's call is in flight the world waits, and between calls it jumps straight to the next moment something is due (a thought, a step ending, an event). Each pet still gets the same number of thoughts per world day as on the real clock, so its life is the same life, just without the idle seconds. Also run two model calls at once if Ollama on this Mac gives more throughput that way (measure; `OLLAMA_NUM_PARALLEL`), and cap thinking tokens on sleep calls. Before the full showcase, do a smoke run of one generation in turbo to catch obvious failures. The view replays a turbo run afterwards; it doesn't need to be watchable live.
+
+---
+
 ## 0. How to build this (read first)
 
 This spec is a direction, not a script. It's written by someone who can't run the code. You can, so you will find places where it's wrong.
@@ -104,7 +111,9 @@ Count, per pet, the share of thoughts and beliefs that talk mechanics: numbers w
 
 ### 4.1 Stages
 Egg → Hatchling → Child → Youngling → Adult → **Elder** → death.
-- Growth through Adult keeps v2's rule (days lived plus useful things), with the v2 thresholds as defaults.
+- **Stages are paced by days lived.** Each stage has a day count (defaults: Hatchling after the egg, Child at day 2, Youngling at day 4, Adult at day 7; config). Useful things no longer gate a stage. *(Amended 9 Oct.)*
+- **Useful things still matter, just not as a gate:** each one raises wellbeing (so lifespan, §4.1) a little, a pet with none by Adult feels "you haven't made anything that's really yours" and can't `bequeath` until it has one, and its count goes in the life record. Tune so a pet that makes useful things lives noticeably longer and better than one that churns.
+- **Why:** growth gated by useful things is bound by how often the pet thinks (1.5–2 real hours per useful thing in v2), not by the clock, so no clock setting could make generations turn over.
 - **Elder** begins after `adult_days` as an Adult (default 6). Elders move slower, think a little less often, tire faster, and unlock **bequeath** (§5.3) and **tell** (§7.2).
 - **Lifespan:** a base (default 24 world days) adjusted by how well it lived: average wellbeing across its life shortens or lengthens it by up to 30%. Wellbeing is the engine's mean of all needs. The pet never sees its lifespan, but it feels aging: "your body feels slower than it used to".
 - **Neglect:** if comfort and energy stay at the bottom for a long stretch (default 1 world day), the pet weakens: it feels "weak", and each further day costs 2 days of lifespan. A pet can die young. This is a Tamagotchi; that's the deal.
@@ -357,7 +366,8 @@ The chronicle, today's moments, then earlier days. The life records of the dead,
 
 ### 11.3 Simulation modes
 - **Stub brain:** a scripted brain that uses every action (including the social ones) in plausible ways, for headless runs. It is how you verify the engine at speed.
-- **Fast clock** with real model, for the showcase (§12).
+- **Fast clock** with real model.
+- **Turbo** with real model, for the showcase (§12): world time advances by events, not the wall clock (see Amendments).
 - Headless runs with stub brains over many simulated generations must not grow memory or db without bound.
 
 ### 11.4 Lab
@@ -374,7 +384,9 @@ Everything new is tunable in `config.toml`, `materials.toml`, and a new `house.t
 
 ### 12.1 The run
 - Archive the v2.5 life first (§13 part 0).
-- Fast clock and short lives (e.g. world day = 15 real minutes, lifespan 16 days), real model, until at least **4 generations** have lived, or 12 real hours, whichever comes first. Use `./run.sh` so it survives.
+- A **short-life profile** (`config.showcase.toml` or a `[profile.showcase]` section, your choice): world day, stage days, lifespan and think rate tuned together so a generation reaches Adult and lays its egg in about **2 real hours**, and a whole life lasts about 4. Keep the model call budget (§11.1). Check from a stub-brain run that the profile's timings work before spending model time. *(Amended 9 Oct.)*
+- Real model, until at least **4 generations** have lived, or 12 real hours, whichever comes first. Use `./run.sh` so it survives.
+- If the pets think too rarely in that profile for anything to happen in a day (fewer than ~15 thoughts per world day), the profile is wrong: lengthen the day rather than starving the pets of thoughts.
 
 ### 12.2 The interestingness bar
 All of these must be true, from the logs, not impressions:
