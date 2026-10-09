@@ -281,6 +281,14 @@ class Mind:
                 per_10s, quality, share = things.rest(h, cfg, pet, per_10s)
                 fx, tags = {"energy": per_10s * cfg["steps"]["rest"] / 10}, tags + quality
                 text = "you rested on the %s" % on if on else "you rested"
+                soft = [(o["fix"]["soft"], n) for n, o in room["objects"].items() if "soft" in o.get("fix", {}) and dist(pet["pos"], o["pos"]) <= 1]
+                soft += [(things.prop(cfg, o)["use"]["comfort"] * things.size(o) / 2, n) for n, o in things.made(room).items()
+                         if things.prop(cfg, o).get("use", {}).get("comfort") and dist(pet["pos"], o["pos"]) <= 1 and not o["made"].get("damp")]
+                if soft:   # resting sunk into something soft is using it
+                    ease, into = max(soft)
+                    fx["comfort"], text = ease, text + ", sunk into the %s" % into
+                    if "made" in room["objects"][into]:
+                        things.occasion(h, cfg, room["objects"][into], into, {"comfort": ease})
                 for n, v in share.items():   # what resting beside it added or took away counts as an occasion of use
                     things.occasion(h, cfg, room["objects"][n], n, {"energy": v * cfg["steps"]["rest"] / 10})
             if key and self.novelty(fx, key, bool(thing), scale):

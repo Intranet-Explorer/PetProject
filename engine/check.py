@@ -172,6 +172,10 @@ async def main():
         r = await do(eng, pet, {"type": "use", "target": "bowl"}, {"type": "use", "target": "bowl"})
         assert r[0]["own"]["energy"] > 5 and r[1]["own"]["comfort"] < -3 and "double_feed" in r[1]["rule_tags"], "a second meal on top of the first sits badly"
         assert "a lot more rested" in r[0]["feedback"], r[0]["feedback"]
+        blanket = room_of(eng, pet)["objects"]["blanket"]
+        pet["pos"], pet["needs"]["comfort"] = list(blanket["pos"]), 30
+        r = await do(eng, pet, {"type": "rest"}, {"type": "observe"})
+        assert "sunk into the blanket" in r[0]["feedback"] and r[0]["own"]["comfort"] >= 2, "resting on something soft eases it"
         r = await do(eng, pet, {"type": "rest"}, {"type": "look", "target": "mirror"})
         assert "apart from that" in r[0]["feedback"] or "rested" in r[0]["feedback"]
         assert "you see yourself" in r[1]["feedback"]
