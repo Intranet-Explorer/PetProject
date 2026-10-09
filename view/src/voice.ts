@@ -67,11 +67,11 @@ function lungs(ctx: BaseAudioContext, dest: AudioNode, base: number) {
   return { noise, air };
 }
 
-function breath(air: GainNode, at: number) {   // in for a second and a half, out for two and a half, very quiet
+function breath(air: GainNode, at: number) {   // in for a second and a half, out for two and a half; quiet, but meant to be heard
   air.gain.setValueAtTime(0, at);
-  air.gain.linearRampToValueAtTime(0.05, at + 1.5);
-  air.gain.linearRampToValueAtTime(0.004, at + 2.1);
-  air.gain.linearRampToValueAtTime(0.034, at + 2.8);
+  air.gain.linearRampToValueAtTime(0.2, at + 1.5);
+  air.gain.linearRampToValueAtTime(0.015, at + 2.1);
+  air.gain.linearRampToValueAtTime(0.14, at + 2.8);
   air.gain.linearRampToValueAtTime(0, at + 4.6);
   return at + 5.4;
 }
@@ -89,7 +89,7 @@ function drone(ctx: BaseAudioContext, dest: AudioNode, name: string) {
 
 export class Voice {
   on = false;
-  volume = 0.6;
+  volume = 0.8;
   heard: { at: number; what: string }[] = [];   // what has played lately, for the voice lab
   onchange: () => void = () => {};
   private ctx: AudioContext | null = null;
@@ -104,6 +104,7 @@ export class Voice {
   private seen: Seen | null = null;
   private lowSince = 0;
   private whimpered = 0;
+  private last: VoiceInput | null = null;        // the pet's voice as of the latest snapshot
 
   constructor() {
     try {
@@ -112,7 +113,7 @@ export class Voice {
       if (typeof saved.volume === "number") this.volume = Math.min(1, Math.max(0, saved.volume));
     } catch { /* private window: it just starts off */ }
     // A browser plays nothing until the page has been clicked. If sound was left on, the first click starts it.
-    if (this.on) for (const type of ["pointerdown", "keydown"]) addEventListener(type, () => this.on && this.start(), { once: true, capture: true });
+    if (this.on) for (const type of ["pointerdown", "keydown"]) addEventListener(type, () => this.on && void this.start(), { once: true, capture: true });
   }
 
   get live() { return this.on && this.ctx?.state === "running"; }
@@ -131,13 +132,16 @@ export class Voice {
       this.sfx.connect(this.master);
       this.ctx.onstatechange = () => this.onchange();
     }
-    void this.ctx.resume();
+    return this.ctx.resume();
   }
 
   setOn(on: boolean) {   // called from a click, which is what lets the browser start the audio
     this.on = on;
-    if (on) this.start();
-    else if (this.ctx) {
+    if (on) {   // answer at once in its own voice, so it is plain that sound works even when nothing is happening
+      void this.start().then(() => {
+        if (this.last && this.sample("hm", this.last)) this.note("sound is on: this is its voice");
+      });
+    } else if (this.ctx) {
       this.quiet();
       void this.ctx.suspend();
     }
@@ -214,6 +218,7 @@ export class Voice {
     const v: VoiceInput = { stage: world.pet.stage, genome: world.pet.genome, needs: world.pet.needs, trend: world.pet.trend };
     const t = triggers(this.seen, world, journal, things), ctx = this.ctx;
     this.seen = t.seen;
+    this.last = v;
     const low = v.needs.comfort < 20 && !t.ambient.asleep && !t.ambient.egg;
     this.lowSince = low ? this.lowSince || Date.now() : 0;
     if (!this.live || !ctx) return;

@@ -18,6 +18,7 @@ h1 { margin: 0; font-size: 22px; font-weight: 650; letter-spacing: -0.01em; }
 #petStage { color: var(--muted); font-size: 14px; }
 .chips { display: flex; gap: 6px; flex-wrap: wrap; font-size: 13px; color: var(--muted); margin-right: auto; }
 .sound { display: flex; align-items: center; gap: 8px; }
+#playing { font-size: 13px; color: var(--accent); max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sound input { width: 90px; accent-color: var(--accent); }
 .lab { display: flex; flex-direction: column; gap: 8px; }
 .lab .row { display: flex; flex-wrap: wrap; gap: 6px; }

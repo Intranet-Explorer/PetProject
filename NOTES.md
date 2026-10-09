@@ -376,3 +376,22 @@ The voice lab in the drawer's Lab tab plays a sentence and each sound with the p
 sliders for stage, roundness, wobble, energy and comfort, and lists what has played lately.
 
 Phases 2 and 3, and the brain changes held back for the next life, are in [NEXT-LIFE.md](NEXT-LIFE.md).
+
+### Voice, an hour later: "I've not heard any sounds yet" (9 Oct, 08:20)
+
+The sound path was working: measured in real time on the live page, every sound reached the output with
+peaks between 0.2 and 0.45 of full scale. What was wrong was the design around it.
+
+- The pet was asleep for the first 35 minutes, and breathing had been set so quiet (about 0.02 of full scale)
+  that it could not be heard. It is now about three times louder (0.06).
+- Awake, sounds come only on events, minutes apart, and nothing showed that sound was on or what had played.
+  Turning sound on now answers at once with a "hm?" in the pet's own voice, and a readout beside the button
+  names each sound for a few seconds as it plays.
+- The default volume is 0.8, up from 0.6. A volume already saved in the browser is kept.
+
+Still view-only, and the engine was not restarted.
+
+Meanwhile the pet became an Adult on waking at tick 28500, the morning of day 9: the first live promotion
+into Adult. Within 16 ticks it had taught its calm glow "to glow when pet resting". The stage-up figure will
+have played for anyone with sound on at 08:05. Its moment reads "it is now a Adult"; the article is the
+engine's, so it waits for the next life.

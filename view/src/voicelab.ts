@@ -41,10 +41,15 @@ export function initVoice(pet: () => VoiceInput | null) {
   $<HTMLInputElement>("volume").oninput = () => voice.setVolume(num("volume") / 100);
   $<HTMLInputElement>("volume").value = String(Math.round(voice.volume * 100));
 
+  let fade: ReturnType<typeof setTimeout> | undefined;
   const show = () => {
     const waiting = voice.on && !voice.live;   // left on from last time; the browser wants a click first
     $("soundBtn").textContent = !voice.on ? "Sound off" : waiting ? "Sound on (click anywhere)" : "Sound on";
     $("soundBtn").setAttribute("aria-pressed", String(voice.on));
+    const latest = voice.heard[0];   // say what just played, so silence and "nothing happening" can be told apart
+    $("playing").textContent = voice.on && latest && Date.now() - latest.at < 8000 ? `♪ ${latest.what}` : "";
+    clearTimeout(fade);
+    if (latest) fade = setTimeout(show, 8500);
     $("heard").replaceChildren(...(voice.heard.length ? voice.heard.map((h) => {
       const li = document.createElement("li"), when = document.createElement("span");
       when.textContent = new Date(h.at).toLocaleTimeString();
