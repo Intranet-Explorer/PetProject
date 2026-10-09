@@ -234,3 +234,11 @@ README.md's history and NOTES.md.)
   slot costs memory. `model.parallel` stays 1 and Ollama was put back to its default.
 - **Night calls are capped for the showcase** at 3,000 tokens with reasoning effort "low": 42 s for the first
   night's thinking, against several minutes uncapped in v2.
+- **A lack draws the eye to what would answer it.** The smoke pet sat at zero comfort for a day beside a soft
+  thing of its own that it never thought to use, saying "I feel content": it had read the company word
+  ("content with the company you have") as its mood, and "miserable" named no remedy the way "tired" and
+  "lonely" do. Three changes. Company's second word is "not lonely" (the spec has "content"). The feelings
+  are listed worst first, and a need at its very bottom reads "(it is hard to think of anything else)",
+  whichever need it is. And `physics.drawn` adds one line per need running short, pointing at the nearest
+  thing that would help: something soft "looks soft enough to sink into", the bowl can be smelled, the bed
+  "looks like a good place to rest", a kin's stone "draws you". It names where to look, not what will happen.

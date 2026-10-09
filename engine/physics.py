@@ -116,8 +116,39 @@ def senses(house, cfg, pet, acting=None):
         felt.append("this room is crowded with made things")
     if pet["spring"]:
         felt.append("there is a spring in your step")
-    if feel_level(pet, "comfort") >= 2 and not any("snug" in f for f in felt):   # unease points at what would ease it
-        cozy = [n for n, o in room["objects"].items() if o.get("fix", {}).get("cozy")]
-        if cozy:
-            felt.append("the %s looks like somewhere you could settle" % cozy[0])
+    felt += drawn(house, cfg, pet, room, felt)
     return list(dict.fromkeys(felt))
+
+
+def drawn(house, cfg, pet, room, felt):
+    """What a lack draws its eye to (§3: "drawn to something"). One thing per need that is running short, the
+    nearest that would answer it. It is a pull, not an instruction: the pet still has to find out what it does."""
+    objs, out = room["objects"], []
+    near = lambda names: min(names, key=lambda n: dist(pet["pos"], objs[n]["pos"]), default=None)
+    fix = lambda key: [n for n, o in objs.items() if key in o.get("fix", {})]
+    made = lambda key: [n for n, o in things.made(room).items() if key in things.prop(cfg, o)]
+    if feel_level(pet, "comfort") >= 2 and not any("snug" in f for f in felt):
+        soft = near([n for n in made("use") if things.prop(cfg, objs[n]).get("need") == "comfort"] + fix("soft"))
+        cozy = near(fix("cozy"))
+        if soft:
+            out.append("the %s looks soft enough to sink into" % soft)
+        elif cozy:
+            out.append("the %s looks like somewhere you could settle" % cozy)
+    if feel_level(pet, "energy") >= 2:
+        food = near([n for n in fix("meal") if objs[n]["servings"]] + [n for n in fix("plant") if objs[n]["state"] == "ripe"] + made("food"))
+        bed = near(fix("rest"))
+        if food:
+            out.append("you can smell something to eat: the %s" % food)
+        if bed:
+            out.append("the %s looks like a good place to rest" % bed)
+    if feel_level(pet, "company") >= 2:
+        others = here(house, pet)
+        stones = [n for n, o in objs.items() if "memorial" in o]
+        if others:
+            from .actions import handle
+            out.append("you want to be near " + handle(house, pet, others[0]))
+        elif stones:
+            out.append("the %s draws you" % near(stones))
+        elif any(c["room"] == room["id"] for c in house["creatures"]):
+            out.append("the %s is company of a kind" % next(c["kind"] for c in house["creatures"] if c["room"] == room["id"]))
+    return out

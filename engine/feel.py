@@ -12,7 +12,7 @@ WORDS = {
     "energy": ["full of energy", "awake", "a bit tired", "tired", "exhausted"],
     "comfort": ["at ease", "fine", "uneasy", "uncomfortable", "miserable"],
     "curiosity": ["fascinated", "interested", "a bit bored", "bored", "restless for something new"],
-    "company": ["close to someone", "content with the company you have", "a bit lonely", "lonely", "aching for company"],
+    "company": ["close to someone", "not lonely", "a bit lonely", "lonely", "aching for company"],
 }
 STEPS = [80, 60, 40, 20]          # the levels at which a need moves down a word
 GENE = {"comfort": "sensitive", "curiosity": "curious", "company": "sociable"}   # the gene that moves a need's thresholds
@@ -35,11 +35,14 @@ def level(pet, need):
 
 
 def feelings(pet):
-    """Every need as a feeling, every time (§3.1), with which way it is going when it is going fast."""
+    """Every need as a feeling, every time (§3.1), the worst first, with which way it is going when it is going
+    fast. Whatever is at its worst is hard to think past, whichever need it is: no need is louder than another,
+    but the bottom of any of them is loud."""
     out = []
-    for n in NEEDS:
-        rate = pet["trend"].get(n, 0)
-        out.append(WORDS[n][level(pet, n)] + (" and getting worse" if rate <= -0.8 else " and getting better" if rate >= 0.8 else ""))
+    for n in sorted(NEEDS, key=lambda n: -level(pet, n)):
+        rate, lvl = pet["trend"].get(n, 0), level(pet, n)
+        out.append(WORDS[n][lvl] + (" (it is hard to think of anything else)" if lvl == 4 else "")
+                   + (" and getting worse" if rate <= -0.8 and lvl < 4 else " and getting better" if rate >= 0.8 else ""))
     return "; ".join(out)
 
 
