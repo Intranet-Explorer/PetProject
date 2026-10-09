@@ -1,6 +1,5 @@
-"""The model brain (v1 §7, SPEC-v2 §3): a local model behind an OpenAI-compatible endpoint.
-It is given its situation, its allowed actions and the output format. Nothing tells it what it is.
-Settings are the ones tested in M0 (m0/model_test.py); since v2 a turn returns an intention of several steps."""
+"""The model brain (SPEC §7, SPEC-v3 §3): a local model behind an OpenAI-compatible endpoint on this machine.
+It is given its situation in words, what it can do, and the shape of a reply. Nothing tells it what it is."""
 import asyncio
 import json
 import logging
@@ -9,122 +8,165 @@ import urllib.request
 from pathlib import Path
 from urllib.parse import urlparse
 
-from ..actions import MOVABLE
-from ..things import COLORS, DO, PLACES, WHEN
-from ..things import SHAPES as PART_SHAPES
+from ..actions import PLACES as SPOTS
+from ..things import COLORS, DO, PLACES, SHAPES, WHEN
 
-WRITTEN = {   # how each action is written, shown only for the actions the stage allows
+PART = '{"shape": %s, "size": 1 to 3, "color": %s, "at": %s}' % ("|".join(SHAPES), "|".join(COLORS), "|".join(PLACES))
+WRITTEN = {   # how each action is written, shown only for the actions it can do right now
     "observe": '{"type": "observe"}',
-    "look": '{"type": "look", "target": something visible}',
-    "move": '{"type": "move", "target": object} or {"type": "move", "tile": [x, y]}',
-    "speak": '{"type": "speak", "text": at most 120 chars}',
+    "look": '{"type": "look", "target": anything or anyone here, or a door}',
+    "move": '{"type": "move", "to": anything or anyone here, or %s}' % " | ".join(SPOTS),
+    "go": '{"type": "go", "door": one of the doors}',
+    "speak": '{"type": "speak", "text": at most 120 chars, "to": someone here or "visitor" (leave out to speak to nobody in particular)}',
     "rest": '{"type": "rest"}',
-    "use": '{"type": "use", "target": object}',
-    "make": ('{"type": "make", "recipe": {"name": up to 24 chars, "parts": [1 to %%d of {"shape": %s, "size": 1 to 3, '
-             '"color": %s, "at": %s}], "material": one of %%s, "purpose": what it is for, up to 80 chars}, '
-             '"tile": [x, y] (an empty tile)}' % ("|".join(PART_SHAPES), "|".join(COLORS), "|".join(PLACES))),
-    "unmake": '{"type": "unmake", "target": one of your things}',
-    "arrange": '{"type": "arrange", "object": something that can be moved, "tile": [x, y] (an empty tile)}',
-    "combine": ('{"type": "combine", "a": one of your things, "b": another of your things, "recipe": {"name": up to 24 chars, '
-                '"material": the material of either, "purpose": what it is for, up to 80 chars}}'),
+    "use": '{"type": "use", "target": a thing here}',
+    "gather": '{"type": "gather", "what": something lying about}',
+    "drop": '{"type": "drop", "what": something you carry}',
+    "make": ('{"type": "make", "recipe": {"name": up to 24 chars, "parts": [1 to %%d of %s] (each part uses up one bit you carry), '
+             '"material": what it will be like, one of %%s, "purpose": what it is for, up to 80 chars}, "near": a thing here, or "here"}' % PART),
+    "unmake": '{"type": "unmake", "target": a made thing that is yours to take apart}',
+    "arrange": '{"type": "arrange", "object": something that can be moved, "near": a thing here, or "here"}',
+    "combine": ('{"type": "combine", "a": a made thing, "b": another, "recipe": {"name": up to 24 chars, '
+                '"material": what either of them is like, "purpose": what it is for, up to 80 chars}}'),
     "paint": '{"type": "paint", "wall": %s, "floor": one of the same}' % "|".join(COLORS),
     "teach": ('{"type": "teach", "target": one of your things, "behavior": {"when": %s, "do": %s|change_color:<a color>}}'
               % ("|".join(WHEN), "|".join(d for d in DO if ":" not in d))),
-    "write_belief": '{"type": "write_belief", "statement": text}',
+    "give": '{"type": "give", "what": something you carry or a thing of yours, "to": someone here}',
+    "show": '{"type": "show", "what": a thing here, "to": someone here}',
+    "follow": '{"type": "follow", "who": someone here}',
+    "nuzzle": '{"type": "nuzzle", "who": someone beside you}',
+    "accept": '{"type": "accept", "from": whoever is offering}',
+    "take": '{"type": "take", "what": a thing here that is someone else\'s}',
+    "chase": '{"type": "chase", "who": a small creature here}',
+    "tell": '{"type": "tell", "to": someone here, "text": something for them to keep, up to 400 chars}',
+    "lay_egg": ('{"type": "lay_egg", "name": a name for your child, up to 16 chars (or "" to leave it to them), '
+                '"message": what you want your child to know, in your own words, up to 600 chars}'),
+    "bequeath": '{"type": "bequeath", "what": a thing of yours here, "to": a child\'s name, or "my children"}',
+    "write_belief": '{"type": "write_belief", "statement": text, "source": how you know it: lived | seen | told by <who>}',
     "revise_belief": '{"type": "revise_belief", "id": belief id, "statement": new text or "discard"}',
 }
 FORMAT = """
 Reply with one JSON object and nothing else:
-{"thought": "<short, why>", "intention": "<what you mean to do, in a few words>", "steps": [<2 to 5 actions, carried out in order>], "expect": "<what you expect to have happened once the steps are done>"}
-"expect" must name a need (energy, comfort, curiosity) and which way it goes, or a visible change.
-each step is one action:
+{"thought": "<short, why>", "intention": "<what you mean to do, in a few words>", "steps": [<2 to 5 of the things you can do, carried out in order>], "expect": "<how you expect to feel once the steps are done, or what you expect to see>"}
+each step is one of:
 %s
 """
+NIGHT = """
+Reply with one JSON object and nothing else:
+{%s}
+"""
+NIGHT_PARTS = {
+    "dream": '"dream": "<two or three sentences about your day, in your own words>"',
+    "changes": ('"changes": [<at most 3 of {"type": "write_belief", "statement": "<under 140 characters, about how something works or about yourself or someone; '
+                'not a list of what happened>", "source": "lived | seen | told by <who>"} or {"type": "revise_belief", "id": "<belief id>", "statement": "<new text or discard>"}>]'),
+    "review": '"review": {"decision": "keep | revise | discard", "statement": "<the new text, if you revise it>"}',
+    "project": '"project": {"decision": "keep | set | finish | abandon", "text": "<the project in your own words, if you set one: something for the coming days>"}',
+    "people": '"people": [<for anyone you want to remember something about: {"who": "<who>", "line": "<one line, in your own words>"}>]',
+    "message": '"message": "<your message for your children as you would have it now, up to 600 characters; the same words again if nothing has changed>"',
+    "my_life": '"my_life": "<the story of your life, in your own words, up to 800 characters>"',
+}
 
 
-def schema(allowed, objects, belief_ids, making=(0, []), mine=()):
-    """Constrained output (SPEC-v2 §3): an intention of 1 to 5 steps, each step one variant per allowed action,
-    built from what the packet shows. A step cannot name a locked action, leave out a parameter, or point at
-    something that is not there."""
-    obj = lambda **props: {"type": "object", "properties": props, "required": list(props), "additionalProperties": False}
-    tile = {"type": "array", "items": {"type": "integer"}, "minItems": 2, "maxItems": 2}
-    text = {"type": "string", "minLength": 1}
-    belief = {"type": "string", "minLength": 1, "maxLength": 140}
-    most, materials = making
-    part = obj(shape={"enum": PART_SHAPES}, size={"enum": [1, 2, 3]}, color={"enum": COLORS}, at={"enum": PLACES})
-    recipe = obj(name={"type": "string", "minLength": 1, "maxLength": 24},
-                 parts={"type": "array", "items": part, "minItems": 1, "maxItems": max(most, 1)},
-                 material={"enum": materials}, purpose={"type": "string", "minLength": 1, "maxLength": 80})
-    variants = {
-        "observe": [obj(type={"const": "observe"})],
-        "rest": [obj(type={"const": "rest"})],
-        "look": [obj(type={"const": "look"}, target={"enum": objects + ["visitor"]})],
-        "move": [obj(type={"const": "move"}, target={"enum": objects}), obj(type={"const": "move"}, tile=tile)],
-        "speak": [obj(type={"const": "speak"}, text={"type": "string", "minLength": 1, "maxLength": 120})],
-        "use": [obj(type={"const": "use"}, target={"enum": objects})],
-        "make": [obj(type={"const": "make"}, recipe=recipe, tile=tile)] if materials else [],
-        "unmake": [obj(type={"const": "unmake"}, target={"enum": list(mine)})] if mine else [],
-        "arrange": [obj(type={"const": "arrange"}, object={"enum": list(MOVABLE) + list(mine)}, tile=tile)],
-        "combine": [obj(type={"const": "combine"}, a={"enum": list(mine)}, b={"enum": list(mine)},
-                        recipe=obj(name={"type": "string", "minLength": 1, "maxLength": 24}, material={"enum": materials},
-                                   purpose={"type": "string", "minLength": 1, "maxLength": 80}))] if len(mine) > 1 else [],
-        "paint": [obj(type={"const": "paint"}, wall={"enum": COLORS}, floor={"enum": COLORS})],
-        "teach": [obj(type={"const": "teach"}, target={"enum": list(mine)},
-                      behavior=obj(when={"enum": WHEN}, do={"enum": DO}))] if mine else [],
-        "write_belief": [obj(type={"const": "write_belief"}, statement=belief)],
-        "revise_belief": [obj(type={"const": "revise_belief"}, id={"enum": belief_ids}, statement=belief)] if belief_ids else [],
+def obj(**props):
+    return {"type": "object", "properties": props, "required": list(props), "additionalProperties": False}
+
+
+def text(most, least=1):
+    return {"type": "string", "minLength": least, "maxLength": most}
+
+
+def schema(ctx):
+    """Constrained output (SPEC-v2 §3): an intention of 2 to 5 steps, each step one variant per thing it can do
+    now, built from what the packet shows. A step cannot name something that is not there."""
+    c = ctx
+    anyone, awake = c["pets"] + c["creatures"], c["awake"]
+    visible = c["things"] + c["pets"] + c["creatures"] + c["bits"] + [d + " door" for d in c["doors"]] + (["egg"] if c["eggs"] else [])
+    most, reach = c["make"]
+    part = obj(shape={"enum": SHAPES}, size={"enum": [1, 2, 3]}, color={"enum": COLORS}, at={"enum": PLACES})
+    recipe = obj(name=text(24), parts={"type": "array", "items": part, "minItems": 1, "maxItems": max(most, 1)},
+                 material={"enum": reach}, purpose=text(80))
+    near = {"enum": c["things"] + ["here"]}
+    one = lambda t, **p: obj(type={"const": t}, **p)
+    v = {
+        "observe": [one("observe")], "rest": [one("rest")],
+        "look": [one("look", target={"enum": visible + ["visitor"]})],
+        "move": [one("move", to={"enum": c["things"] + anyone + list(SPOTS)})],
+        "go": [one("go", door={"enum": c["doors"]})],
+        "speak": [one("speak", text=text(120))] + ([one("speak", text=text(120), to={"enum": awake + ["visitor"]})] if awake else []),
+        "use": [one("use", target={"enum": c["things"]})],
+        "gather": [one("gather", what={"enum": c["bits"]})] if c["bits"] else [],
+        "drop": [one("drop", what={"enum": c["carrying"]})] if c["carrying"] else [],
+        "make": [one("make", recipe=recipe, near=near)] if reach and most else [],
+        "unmake": [one("unmake", target={"enum": c["free"]})] if c["free"] else [],
+        "arrange": [one("arrange", object={"enum": c["movable"]}, near=near)] if c["movable"] else [],
+        "combine": [one("combine", a={"enum": c["free"]}, b={"enum": c["free"]},
+                        recipe=obj(name=text(24), material={"enum": c["materials"]}, purpose=text(80)))] if len(c["free"]) > 1 else [],
+        "paint": [one("paint", wall={"enum": COLORS}, floor={"enum": COLORS})],
+        "teach": [one("teach", target={"enum": c["mine"]}, behavior=obj(when={"enum": WHEN}, do={"enum": DO}))] if c["mine"] else [],
+        "give": [one("give", what={"enum": list(dict.fromkeys(c["carrying"] + c["bits"] + c["mine"]))}, to={"enum": awake + c["creatures"]})]
+        if (awake or c["creatures"]) and (c["carrying"] or c["bits"] or c["mine"]) else [],
+        "show": [one("show", what={"enum": c["things"]}, to={"enum": awake})] if awake and c["things"] else [],
+        "follow": [one("follow", who={"enum": anyone})] if anyone else [],
+        "nuzzle": [one("nuzzle", who={"enum": awake + (["egg"] if c["eggs"] else [])})] if awake or c["eggs"] else [],
+        "accept": [one("accept", **{"from": {"enum": c["offers"]}})] if c["offers"] else [],
+        "take": [one("take", what={"enum": c["theirs"]})] if c["theirs"] else [],
+        "chase": [one("chase", who={"enum": c["creatures"]})] if c["creatures"] else [],
+        "tell": [one("tell", to={"enum": awake}, text=text(400))] if awake else [],
+        "lay_egg": [one("lay_egg", name=text(16, 0), message=text(640))],
+        "bequeath": [one("bequeath", what={"enum": c["mine"]}, to={"enum": c["kids"] + ["my children"]})] if c["mine"] else [],
+        "write_belief": [one("write_belief", statement=text(140), source={"enum": ["lived", "seen"] + ["told by " + t for t in c["tellers"]]})],
+        "revise_belief": [one("revise_belief", id={"enum": c["beliefs"]}, statement=text(140))] if c["beliefs"] else [],
     }
-    step = {"anyOf": [v for a in allowed for v in variants[a]]}
-    return obj(thought={"type": "string"}, intention=text,
+    step = {"anyOf": [x for a in c["allowed"] for x in v[a]]}
+    return obj(thought={"type": "string"}, intention=text(120),
                steps={"type": "array", "items": step, "minItems": 2, "maxItems": 5}, expect={"type": "string"})
 
 
-CONSOLIDATE = """
-Reply with one JSON object and nothing else, holding at most 3 belief changes.
-Each is a short statement (under 140 characters) about how something in your world works, or about yourself; not a list of what happened:
-{"changes": [{"type": "write_belief", "statement": "<text>"}, {"type": "revise_belief", "id": "<belief id>", "statement": "<new text or discard>"}]}
-"""
-CHANGES = {
-    "type": "object",
-    "properties": {"changes": {"type": "array", "items": {
-        "type": "object",
-        "properties": {"type": {"type": "string", "enum": ["write_belief", "revise_belief"]},
-                       "id": {"type": "string"}, "statement": {"type": "string", "maxLength": 140}},
-        "required": ["type", "statement"],
-    }}},
-    "required": ["changes"],
-}
+def prompt(packet, ctx):
+    most, reach = ctx["make"]
+    written = dict(WRITTEN, make=WRITTEN["make"] % (max(most, 1), "|".join(reach)))
+    usable = [a for a in ctx["allowed"] if a != "make" or (reach and most)]
+    return packet + FORMAT % "\n".join("  " + written[a] for a in usable)
 
 
-BODY = {
-    "type": "object",
-    "properties": {"choice": {"type": "integer", "enum": [1, 2, 3]}, "reason": {"type": "string"}},
-    "required": ["choice", "reason"],
-}
+def night_schema(asks, belief_ids, tellers):
+    change = {"type": "object", "properties": {
+        "type": {"enum": ["write_belief", "revise_belief"]}, "id": {"type": "string"}, "statement": text(140),
+        "source": {"enum": ["lived", "seen"] + ["told by " + t for t in tellers]}}, "required": ["type", "statement"]}
+    parts = {
+        "dream": text(500), "changes": {"type": "array", "items": change, "maxItems": 3},
+        "review": {"type": "object", "properties": {"decision": {"enum": ["keep", "revise", "discard"]}, "statement": text(140, 0)}, "required": ["decision"]},
+        "project": {"type": "object", "properties": {"decision": {"enum": ["keep", "set", "finish", "abandon"]}, "text": text(120, 0)}, "required": ["decision"]},
+        "people": {"type": "array", "maxItems": 3, "items": obj(who={"type": "string"}, line=text(120))},
+        "message": text(640), "my_life": text(860),
+    }
+    return obj(**{k: parts[k] for k in asks})
 
 
-def parse(text):
+def parse(reply):
     try:
-        d = json.loads(re.sub(r"^```(?:json)?\s*|\s*```$", "", text.strip()))
+        d = json.loads(re.sub(r"^```(?:json)?\s*|\s*```$", "", reply.strip()))
     except ValueError:
         return None
     return d if isinstance(d, dict) else None
 
 
 class Model:
-    def __init__(self, cfg, directory):
-        self.cfg = cfg["model"]
+    instant = False
+
+    def __init__(self, cfg, directory, tag=None):
+        self.cfg, self.think = cfg["model"], cfg["sleep"].get("think", "medium")
         if urlparse(self.cfg["endpoint"]).hostname not in ("localhost", "127.0.0.1", "::1"):
             raise ValueError("model endpoint must be on localhost (SPEC §16)")
-        self.training = Path(directory) / "training.jsonl"
+        Path(directory).mkdir(parents=True, exist_ok=True)
+        self.training, self.tag = Path(directory) / "training.jsonl", tag or {}
         self.s = {}   # no state of its own: each turn sees only its packet
 
-    def chat(self, prompt, schema=None, think=False, max_tokens=None):
+    def chat(self, prompt, schema=None, think=False, max_tokens=None, temperature=0.7, kind="act"):
         body = {
-            "model": self.cfg["name"], "temperature": self.cfg["temperature"],
-            "max_tokens": max_tokens or self.cfg["max_tokens"],
-            # No thinking on a tick (M0: about 4 s a turn). Sleep is not bound by the tick, so it thinks there.
-            "reasoning_effort": "medium" if think else "none",
+            "model": self.cfg["name"], "temperature": temperature, "max_tokens": max_tokens or self.cfg["max_tokens"],
+            # No thinking on a waking turn (M0: a few seconds a turn). Sleep is not bound by the tick, so it thinks there.
+            "reasoning_effort": self.think if think else "none",
             "messages": [{"role": "user", "content": prompt}],
         }
         if schema:
@@ -133,24 +175,16 @@ class Model:
                                      {"Content-Type": "application/json"})
         with urllib.request.urlopen(req, timeout=600 if think else self.cfg["timeout_seconds"]) as r:
             reply = json.load(r)["choices"][0]["message"]["content"] or ""
-        with self.training.open("a") as f:   # every prompt and response pair, for v2 LoRA
-            f.write(json.dumps({"prompt": prompt, "response": reply}) + "\n")
+        with self.training.open("a") as f:   # every prompt and reply, tagged with whose it is, for a later LoRA (§14)
+            f.write(json.dumps({**self.tag, "kind": kind, "prompt": prompt, "response": reply}) + "\n")
         return reply
 
-    async def act(self, packet):
-        """One model turn: the packet in, an intention out. Returns the turn, or a string saying why there is none."""
-        line = dict(l.split(": ", 1) for l in packet.splitlines() if ": " in l and not l.startswith(" "))
-        allowed = line["stage"].split("allowed actions: ")[1].split(", ")
-        can = re.match(r"up to (\d+) parts; materials: ([^;]*);", line["making"])
-        making = (int(can.group(1)), [m for m in can.group(2).split(", ") if m])
-        mine = re.findall(r"^  ([^\n(]+) \(\d+,\d+\): ", packet.split("your things:")[1].split("\nmaking:")[0], re.M)
-        written = dict(WRITTEN, make=WRITTEN["make"] % (making[0], "|".join(making[1])))
-        prompt = packet + FORMAT % "\n".join("  " + written[a] for a in allowed)
-        shape = schema(allowed, [o.split(" (")[0] for o in line["visible"].split(" · ")],
-                       re.findall(r"^  (b\d+):", packet, re.M), making, mine)
+    async def act(self, packet, ctx):
+        """One waking turn: the packet in, an intention out. Returns the turn, or a string saying why there is none."""
+        ask, shape, why = prompt(packet, ctx), schema(ctx), "model unreachable"
         for _ in range(2):   # one retry, then there is no new intention this time
             try:
-                turn = parse(await asyncio.to_thread(self.chat, prompt, shape))
+                turn = parse(await asyncio.to_thread(self.chat, ask, shape, False, None, ctx["temperature"]))
             except Exception as e:
                 logging.warning("model call failed: %r", e)
                 why = "model unreachable"
@@ -160,35 +194,29 @@ class Model:
             why = "invalid json"
         return why
 
-    async def consolidate(self, journal, beliefs):
-        """§9.1: read the day and return up to 3 belief changes. Thinking on, as M0 found it needs."""
-        held = "".join("\n  %s: %s" % (b["id"], b["statement"]) for b in beliefs) or " none yet"
-        prompt = "This is your journal for today:\n%s\n\nyour beliefs:%s\n%s" % (journal, held, CONSOLIDATE)
-        reply = parse(await asyncio.to_thread(self.chat, prompt, CHANGES, True, 8000))
-        return (reply or {}).get("changes", [])
+    async def night(self, text, asks, belief_ids, tellers):
+        """The night's thinking (§9, SPEC-v3 §3.3, §5.2, §8.2), in one call with thinking on."""
+        ask = text + NIGHT % ", ".join(NIGHT_PARTS[k] for k in asks)
+        return parse(await asyncio.to_thread(self.chat, ask, night_schema(asks, belief_ids, tellers), True, 8000, 0.7, "night")) or {}
 
-    async def dream(self, journal):
-        """§9.2: a short summary of the day in its own words."""
-        prompt = "This is your journal for today:\n%s\n\nWrite two or three sentences about your day." % journal
-        return await asyncio.to_thread(self.chat, prompt, None, False, 200)
-
-    async def choose_body(self, body, options):
-        """§9.3: pick one of three mutations from their descriptions, with a reason."""
-        prompt = ("This is your body: %s.\nWhile you sleep it can change in one of these ways:\n%s\n\n"
-                  'Reply with one JSON object and nothing else: {"choice": <1, 2 or 3>, "reason": "<short>"}'
-                  % (body, "\n".join("%d. %s" % (i + 1, o) for i, o in enumerate(options))))
-        reply = parse(await asyncio.to_thread(self.chat, prompt, BODY)) or {}
+    async def body(self, body, options, portrait):
+        """§9.3: pick one of three ways its body can change; once grown, also a picture of itself."""
+        part = obj(shape={"enum": SHAPES}, size={"enum": [1, 2, 3]}, color={"enum": COLORS}, at={"enum": PLACES})
+        shape = obj(choice={"enum": [1, 2, 3]}, reason=text(200))
+        ask = ("This is your body: %s.\nWhile you sleep it can change in one of these ways:\n%s\n\n"
+               'Reply with one JSON object and nothing else: {"choice": <1, 2 or 3>, "reason": "<short>"'
+               % (body, "\n".join("%d. %s" % (i + 1, o) for i, o in enumerate(options))))
+        if portrait:
+            shape["properties"]["portrait"] = {"type": "array", "items": part, "minItems": 1, "maxItems": 8}
+            shape["required"].append("portrait")
+            ask += ', "portrait": [<a picture of yourself as you see yourself, from up to 8 parts, each %s>]' % PART
+        reply = parse(await asyncio.to_thread(self.chat, ask + "}", shape, False, None, 0.7, "body")) or {}
         if reply.get("choice") not in (1, 2, 3):
             raise ValueError("no usable body choice: %r" % reply)
-        return reply["choice"] - 1, reply.get("reason", "")
+        return reply
 
-    async def portrait(self, body):
-        """§8, Adult: a picture of itself, as parts in the make format. Its own image, whatever its body is."""
-        part = {"type": "object", "additionalProperties": False, "required": ["shape", "size", "color", "at"],
-                "properties": {"shape": {"enum": PART_SHAPES}, "size": {"enum": [1, 2, 3]}, "color": {"enum": COLORS}, "at": {"enum": PLACES}}}
-        shape = {"type": "object", "additionalProperties": False, "required": ["parts"],
-                 "properties": {"parts": {"type": "array", "items": part, "minItems": 1, "maxItems": 8}}}
-        prompt = ("This is your body: %s.\nMake a picture of yourself from up to 8 parts.\n"
-                  'Reply with one JSON object and nothing else: {"parts": [{"shape": %s, "size": 1 to 3, "color": %s, "at": %s}]}'
-                  % (body, "|".join(PART_SHAPES), "|".join(COLORS), "|".join(PLACES)))
-        return (parse(await asyncio.to_thread(self.chat, prompt, shape)) or {}).get("parts", [])
+    async def chronicle(self, day, lines):
+        """§9.4: the house's day told as one paragraph. Not a pet's voice; nothing here reaches a pet."""
+        ask = ("These things happened in a house of small creatures on day %d:\n%s\n\n"
+               "Tell the day in one short paragraph, plainly, as someone who watched it. Use only what is listed." % (day, lines))
+        return (await asyncio.to_thread(self.chat, ask, None, True, 4000, 0.7, "chronicle")).strip()

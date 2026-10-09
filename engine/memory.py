@@ -1,45 +1,15 @@
-"""A pet's persistent memory (SPEC §8): the append-only journal, its beliefs, and self."""
+"""A pet's own memory (SPEC §8, SPEC-v3 §8.3): its append-only journal, its beliefs with where each came
+from, and what it knows of itself. One folder per pet, under its lineage."""
 import json
 from pathlib import Path
 
-MAX_ACTIVE = 20
-
 
 class Memory:
-    def __init__(self, directory, db=None, pet_id=""):
-        self.dir, self.db, self.pet_id = Path(directory), db, pet_id
+    def __init__(self, directory, cfg, db=None, pet_id=""):
+        self.dir, self.db, self.pet_id, self.max = Path(directory), db, pet_id, cfg["beliefs"]["max_active"]
         self.dir.mkdir(parents=True, exist_ok=True)
         self.path = self.dir / "beliefs.json"
         self.beliefs = json.loads(self.path.read_text()) if self.path.exists() else []
-        self.things_path = self.dir / "things.json"   # the catalog: every thing it ever made (SPEC-v2 §4)
-        self.things = json.loads(self.things_path.read_text()) if self.things_path.exists() else []
-
-    def save_things(self):
-        self.things_path.write_text(json.dumps(self.things, indent=1))
-
-    def kept(self, since):
-        """Beliefs still held that were first written at or before the given tick (SPEC-v2 §6, Adult)."""
-        return [b for b in self.active() if b["created"] <= since]
-
-    def thing(self, name):
-        return next(t for t in reversed(self.things) if t["name"] == name)
-
-    def thing_made(self, name, recipe, tile, tick, by="pet"):
-        self.things.append({"name": name, "recipe": recipe, "tile": list(tile), "made": tick, "by": by,
-                            "uses": 0, "ups": 0, "effects": [], "gone": None})
-        self.save_things()
-
-    def thing_used(self, name, change, need=None):
-        """Engine truth about what the thing did to the needs on one occasion; never shown to the pet.
-        `need` is the need its material is for: `ups` counts the occasions that need went up."""
-        t = self.thing(name)
-        t["uses"], t["effects"] = t["uses"] + 1, (t["effects"] + [change])[-50:]
-        t["ups"] = t.get("ups", 0) + (change.get(need, 0) > 0)
-        self.save_things()
-
-    def thing_gone(self, name, tick, how):
-        self.thing(name)["gone"] = [tick, how]
-        self.save_things()
 
     def update_self(self, **facts):
         path = self.dir / "self.json"
@@ -56,31 +26,39 @@ class Memory:
     def is_active(self, bid):
         return any(b["id"] == bid for b in self.active())
 
-    def top(self, n=8):
-        """What goes into the perception packet, most recently touched first."""
-        return sorted(self.active(), key=lambda b: -b["revised"])[:n]
+    def kept(self, since):
+        """Beliefs still held that were first written at or before the given tick (SPEC-v2 §6, Adult)."""
+        return [b for b in self.active() if b["created"] <= since]
 
-    def write(self, statement, tick):
-        if len(self.active()) >= MAX_ACTIVE:
+    def to_review(self):
+        """The one belief looked at again tonight (§3.3): the one longest unexamined."""
+        held = self.active()
+        return min(held, key=lambda b: (b.get("reviewed", b["created"]), b["created"])) if held else None
+
+    def write(self, statement, tick, source="lived"):
+        if len(self.active()) >= self.max:
             return None
-        b = {"id": "b%d" % (len(self.beliefs) + 1), "statement": statement,
+        b = {"id": "b%d" % (len(self.beliefs) + 1), "statement": statement, "source": source,
              "created": tick, "revised": tick, "status": "active"}
         self.beliefs.append(b)
         self._save(b, "write", tick)
         return b["id"]
 
-    def revise(self, bid, statement, tick):
+    def revise(self, bid, statement, tick, reviewed=False):
         b = next(b for b in self.beliefs if b["id"] == bid)
         b["revised"] = tick
-        if statement.lower() == "discard":
-            b["status"] = "discarded"   # stays in the file; history is never deleted
+        if reviewed:
+            b["reviewed"] = tick
+        if statement is None:
+            op = "keep"
+        elif statement.lower() == "discard":
+            b["status"], op = "discarded", "discard"   # stays in the file; history is never deleted
         else:
-            b["statement"] = statement
-        self._save(b, "discard" if b["status"] == "discarded" else "revise", tick)
+            b["statement"], op = statement, "revise"
+        self._save(b, op, tick)
 
     def _save(self, b, op, tick):
         self.path.write_text(json.dumps(self.beliefs, indent=1))
         if self.db:
-            self.db.execute("INSERT INTO beliefs_history VALUES (?,?,?,?,?)",
-                            (self.pet_id, tick, b["id"], op, b["statement"]))
-            self.db.commit()
+            from .log import put
+            put(self.db, "beliefs", pet=self.pet_id, tick=tick, belief=b["id"], op=op, statement=b["statement"], source=b.get("source", "lived"))
