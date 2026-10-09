@@ -4,7 +4,7 @@ A small creature that lives in a browser room, driven by a local language model.
 
 **[FINDINGS.md](FINDINGS.md) is the write-up of what has been learned so far.** The working spec is
 [SPEC-v2.md](SPEC-v2.md); [SPEC.md](SPEC.md) is v1, kept for history. [NOTES.md](NOTES.md) is the account of
-each life as it happened.
+each life as it happened. [NEXT-LIFE.md](NEXT-LIFE.md) lists the changes held back until this life ends.
 
 Built so far: V2.0 to V2.4 (intentions, 2-second ticks, a 10-minute egg, the room-first view, making things,
 growth by useful things through to Adult, arrange, combine, paint, visitor gifts, taught behaviors, self-portraits).
@@ -34,6 +34,8 @@ For a run that should survive a closed terminal, a crash or a reboot:
 - **The view:** http://localhost:8000. The room is the screen; "Mind and lab" opens a drawer with what it
   means to do, the things it has made (and what each really does), its diary, its beliefs, and the
   measurements. Feed, poke, talk, move objects, open the window.
+- **Sound:** off until you click "Sound off" in the header. The pet's voice is made in the browser from its
+  body and state ([VOICE.md](VOICE.md)); the pet never hears it. The Lab tab has a voice lab.
 - **Metrics:** `uv run python -m engine.metrics [data dir]` prints the core numbers, including model calls an hour.
 - **Raw record:** `data/pet.db` (SQLite), `data/model/journal.jsonl`, `beliefs.json`, `self.json`, and
   `things.json` (everything it ever made), and `training.jsonl` (every prompt and reply).
@@ -44,7 +46,8 @@ For a run that should survive a closed terminal, a crash or a reboot:
 ```sh
 uv run python -m engine.check               # engine self-check
 uv run python -m engine.tick --minutes 240  # a headless life with the scripted twin
-cd view && npm install && npm run build     # rebuild the view after changing it
+cd view && npm install && npm run build     # rebuild the view after changing it; the running engine serves it as is
+node view/check-voice.ts                    # the voice's self-check (no browser, no sound)
 python3 m0/model_test.py --selftest         # the M0 model test harness
 ```
 

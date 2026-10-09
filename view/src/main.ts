@@ -3,6 +3,7 @@ import { renderPanels } from "./panels";
 import type { Genome } from "./pet";
 import type { Part, Recipe } from "./things";
 import { Room } from "./room";
+import { initVoice } from "./voicelab";
 
 export type Needs = { energy: number; comfort: number; curiosity: number };
 export type Belief = { id: string; statement: string; created: number; revised: number; status: string };
@@ -14,7 +15,8 @@ export type Night = { day: number; dream: string; changes: string[]; body: strin
 export type World = {
   tick: number;
   clock: { phase: string; hour: number; day: number };
-  pet: { pos: [number, number]; stage: string; needs: Needs; said: [number, string] | null; name: string | null; genome: Genome };
+  pet: { pos: [number, number]; stage: string; needs: Needs; trend: Partial<Needs>; said: [number, string] | null; name: string | null; genome: Genome };
+  events: [number, string][];
   objects: Record<string, { pos: [number, number]; state?: string; active?: boolean;
                             made?: { recipe: Recipe; behavior?: { when: string; do: string } } }>;
   portraits?: { day: number; parts: Part[]; genome: Genome; stage: string }[];
@@ -52,6 +54,7 @@ let placing = false;
 let giving = false;
 let sock: WebSocket | null = null;
 let lastInput = 0; // presence needs real input, so a tab that was only opened does not count
+const sound = initVoice(() => snap && { ...snap.pets.model.world.pet });
 
 const send = (msg: object) => sock?.readyState === WebSocket.OPEN && sock.send(JSON.stringify(msg));
 const presence = () => send({ type: "presence", active: document.hasFocus() && Date.now() - lastInput < 5 * 60_000 });
@@ -75,6 +78,8 @@ function setGiving(on: boolean) {
 function render() {
   if (!snap) return;
   const world = snap.pets.model.world; // the room shows the pet; a twin, if enabled, only appears in the Lab tab
+  sound.voice.update(world, snap.pets.model.journal as Parameters<typeof sound.voice.update>[1], snap.pets.model.things, snap.visitor_present);
+  sound.follow();
   room.update(world, snap.tick_seconds);
   renderPanels(snap, "model", $<HTMLInputElement>("ruleOnly").checked, (genome, stage) => room.picture(genome, stage));
   $("window").textContent = world.objects.window.state === "open" ? "Close window" : "Open window";

@@ -13,6 +13,10 @@
       <span id="petStage"></span>
     </div>
     <div id="status" class="chips"><span class="chip">connecting…</span></div>
+    <span class="sound">
+      <button id="soundBtn" aria-pressed="false">Sound off</button>
+      <input id="volume" type="range" min="0" max="100" value="60" aria-label="Volume">
+    </span>
     <button id="drawerBtn" aria-expanded="false" aria-controls="drawer">Mind and lab</button>
   </header>
   <main>
@@ -83,6 +87,23 @@
       <table id="compare"></table>
       <canvas id="chart" width="640" height="220" aria-label="Hidden-rule prediction accuracy over time"></canvas>
       <p class="hint">Share of its last 50 predictions that were right, counting only predictions about a need a hidden rule had just moved.</p>
+      <h2>Voice lab</h2>
+      <p class="hint">Its voice is made in your browser from its body and how it is. The pet never hears it, and nothing here reaches the pet or the engine.</p>
+      <div class="lab">
+        <span class="row"><input id="labText" maxlength="120" value="Hello? I am ready for something new!" aria-label="A sentence to say"><button id="labSay">Say it</button></span>
+        <div id="labSounds" class="row"></div>
+        <label class="filter"><input type="checkbox" id="labOwn"> Try a different voice (otherwise it is the pet's own, as it is now)</label>
+        <div class="sliders">
+          <label for="labStage">Stage</label><select id="labStage"><option>hatchling</option><option>child</option><option>youngling</option><option>adult</option></select>
+          <label for="labRound">Roundness</label><input id="labRound" type="range" min="20" max="100">
+          <label for="labWobble">Wobble</label><input id="labWobble" type="range" min="0" max="100">
+          <label for="labEnergy">Energy</label><input id="labEnergy" type="range" min="0" max="100">
+          <label for="labComfort">Comfort</label><input id="labComfort" type="range" min="0" max="100">
+        </div>
+        <p id="labHint" class="hint"></p>
+        <p class="hint">Heard lately</p>
+        <ol id="heard"></ol>
+      </div>
       <h2>Journal</h2>
       <label class="filter"><input type="checkbox" id="ruleOnly"> Only moments a hidden rule fired</label>
       <ol id="journal"></ol>

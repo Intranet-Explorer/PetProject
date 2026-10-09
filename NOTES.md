@@ -313,3 +313,66 @@ beginning and once when I restarted it onto the familiarity change. It has not c
 - **A model call now takes 12 s at the median,** up from 8, as the packet has grown with its things and beliefs.
 
 Nothing was changed at this check.
+
+## Voice, phase 1 (9 Oct 2026)
+
+Built from [VOICE.md](VOICE.md) and added to the running long run without touching it. It is view-only:
+`view/src/voice-plan.ts` (text and genome to notes), `view/src/voice.ts` (notes to sound, Web Audio only) and
+`view/src/voicelab.ts` (the header controls and the Lab tab's voice lab). The engine, the brain and the
+perception packet were not changed, and no engine restart was needed: every trigger could be read from what
+the view already received, so nothing was added to the snapshot either. The engine kept the same process
+(pid 36116) throughout and served the rebuilt view from disk.
+
+**I have not heard any of this.** What follows is what was scheduled and what was measured. Whether it sounds
+like a creature is for a person to judge.
+
+What each sound is for:
+
+| Sound | When | What it is |
+|---|---|---|
+| Speech | `said` changes | one short note per syllable, at most 24; the same syllable always has the same pitch and length |
+| Heartbeat | while it is an egg | two soft low thumps every 1.4 s, every 0.9 s while a visitor is present |
+| First cry | "it hatched" | a squeak rising to more than twice its pitch |
+| Chirp | "it made a ..." or "it combined ..." | two quick notes, the second higher |
+| Falling blip | "it took apart ..." | one short note sliding down |
+| Content trill | a `use` that raised comfort or energy, or that the engine counted as a help | six fast notes alternating between two pitches |
+| Three rising notes | "it is now a ..." | a new stage |
+| "Hm?" | the visitor speaks to it or pokes it | a short note that dips, then rises |
+| Whimper | comfort under 20 for 3 minutes while awake, then at most one every 5 minutes | two wavering notes that sink |
+| Breathing | while asleep | filtered noise, in and out every 5.4 s, very quiet |
+| Hum | a thing it taught to `hum`, while that thing is humming | a low filtered sawtooth, pitched by the thing's name; no pet's voice is ever a sawtooth |
+
+Sounds without words are spaced at least 2 seconds apart and queue on the audio clock; speech cuts off any
+still waiting. Everything is scheduled on the AudioContext clock and topped up from each snapshot, not from
+timers, so it keeps going in a background tab.
+
+How it was checked:
+- `node view/check-voice.ts` covers the plans: syllables, the same word giving the same notes, the 24-syllable
+  limit, each row of the genome table, each punctuation contour, the need-driven intonation, and every trigger.
+- In a headless browser, notes were rendered offline and measured. Planned and measured pitch agreed within
+  2 Hz for all four stages and all three waveforms, the same sentence rendered identically twice, and every
+  wordless sound was audible (not silent).
+- On a throwaway engine with a scripted pet, on its own port and data, every trigger fired in order: heartbeat,
+  first cry, chirp, trill, speech, falling blip, "hm?" (from a poke), three rising notes, a taught thing's hum,
+  breathing. A second run kept a pet awake and uncomfortable; the whimper came at the 3-minute mark.
+- Sound starts off, turns on with a click, and after a reload comes back as "Sound on (click anywhere)" with
+  the volume it was left at.
+- Those headless runs were not muted, so for about 12 minutes around 07:21 to 07:35 this Mac may have played
+  the test sounds out loud. Later runs are muted.
+
+On the live pet, at the time it was added (world day 8, 22:50, a Youngling):
+- **Its voice by the numbers:** base pitch about 399 Hz (Youngling 420, lowered 5% because it is tall). A sine
+  wave, because it is very round. Muffled, with the filter at about 1.4 kHz, because it has gone pale. No
+  vibrato to speak of, because its wobble has mutated down to 0.03. Shaky and pitched lower, because comfort
+  was at 0. Syllables about 100 ms. "Hello? I am ready for something new!" would take 1.5 seconds and run
+  between about 270 and 570 Hz.
+- **What actually played in the first five minutes:** breathing only. It fell asleep at 23:00, half a minute
+  after the view was rebuilt.
+- **Not possible on this life:** the heartbeat and the first cry, since it hatched yesterday. They need a new egg.
+- **Not yet seen on this life:** speech (it has spoken three times in 15 hours), the stage-up figure (its next
+  chance is waking on day 9, if it has 8 useful things), and a taught hum (it cannot teach until it is an Adult).
+
+The voice lab in the drawer's Lab tab plays a sentence and each sound with the pet's current voice, or with
+sliders for stage, roundness, wobble, energy and comfort, and lists what has played lately.
+
+Phases 2 and 3, and the brain changes held back for the next life, are in [NEXT-LIFE.md](NEXT-LIFE.md).
