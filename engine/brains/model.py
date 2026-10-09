@@ -57,10 +57,10 @@ Reply with one JSON object and nothing else:
 """
 NIGHT_PARTS = {
     "dream": '"dream": "<two or three sentences about your day, in your own words>"',
-    "changes": ('"changes": [<at most 3 of {"type": "write_belief", "statement": "<under 140 characters, about how something works or about yourself or someone; '
+    "changes": ('"changes": [<at most 3 of {"type": "write_belief", "statement": "<one short sentence, about how something works or about yourself or someone; '
                 'not a list of what happened>", "source": "lived | seen | told by <who>"} or {"type": "revise_belief", "id": "<belief id>", "statement": "<new text or discard>"}>]'),
     "review": '"review": {"decision": "keep | revise | discard", "statement": "<the new text, if you revise it>"}',
-    "project": '"project": {"decision": "keep | set | finish | abandon", "text": "<the project in your own words, if you set one: something for the coming days>"}',
+    "project": '"project": {"decision": "keep | set | finish | abandon", "text": "<the project in a few of your own words, if you set one: something for the coming days>"}',
     "people": '"people": [<for anyone you want to remember something about: {"who": "<who>", "line": "<one line, in your own words>"}>]',
     "message": '"message": "<your message for your children as you would have it now, up to 600 characters; the same words again if nothing has changed>"',
     "my_life": '"my_life": "<the story of your life, in your own words, up to 800 characters>"',
@@ -114,8 +114,8 @@ def schema(ctx):
         "tell": [one("tell", to={"enum": awake}, text=text(400))] if awake else [],
         "lay_egg": [one("lay_egg", name=text(16, 0), message=text(640))],
         "bequeath": [one("bequeath", what={"enum": c["mine"]}, to={"enum": c["kids"] + ["my children"]})] if c["mine"] else [],
-        "write_belief": [one("write_belief", statement=text(140), source={"enum": ["lived", "seen"] + ["told by " + t for t in c["tellers"]]})],
-        "revise_belief": [one("revise_belief", id={"enum": c["beliefs"]}, statement=text(140))] if c["beliefs"] else [],
+        "write_belief": [one("write_belief", statement=text(200), source={"enum": ["lived", "seen"] + ["told by " + t for t in c["tellers"]]})],
+        "revise_belief": [one("revise_belief", id={"enum": c["beliefs"]}, statement=text(200))] if c["beliefs"] else [],
     }
     step = {"anyOf": [x for a in c["allowed"] for x in v[a]]}
     return obj(thought={"type": "string"}, intention=text(120),
@@ -131,13 +131,13 @@ def prompt(packet, ctx):
 
 def night_schema(asks, belief_ids, tellers):
     change = {"type": "object", "properties": {
-        "type": {"enum": ["write_belief", "revise_belief"]}, "id": {"type": "string"}, "statement": text(140),
+        "type": {"enum": ["write_belief", "revise_belief"]}, "id": {"type": "string"}, "statement": text(200),
         "source": {"enum": ["lived", "seen"] + ["told by " + t for t in tellers]}}, "required": ["type", "statement"]}
     parts = {
         "dream": text(500), "changes": {"type": "array", "items": change, "maxItems": 3},
-        "review": {"type": "object", "properties": {"decision": {"enum": ["keep", "revise", "discard"]}, "statement": text(140, 0)}, "required": ["decision"]},
-        "project": {"type": "object", "properties": {"decision": {"enum": ["keep", "set", "finish", "abandon"]}, "text": text(120, 0)}, "required": ["decision"]},
-        "people": {"type": "array", "maxItems": 3, "items": obj(who={"type": "string"}, line=text(120))},
+        "review": {"type": "object", "properties": {"decision": {"enum": ["keep", "revise", "discard"]}, "statement": text(200, 0)}, "required": ["decision"]},
+        "project": {"type": "object", "properties": {"decision": {"enum": ["keep", "set", "finish", "abandon"]}, "text": text(180, 0)}, "required": ["decision"]},
+        "people": {"type": "array", "maxItems": 3, "items": obj(who={"type": "string"}, line=text(150))},
         "message": text(640), "my_life": text(860),
     }
     return obj(**{k: parts[k] for k in asks})

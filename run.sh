@@ -1,6 +1,6 @@
 #!/bin/sh
 # Run the engine as a per-user launchd agent, so a two-week run survives a closed terminal, a crash or a reboot.
-#   ./run.sh start | stop | status
+#   ./run.sh start [profile] | stop | status      (profile: showcase, for the short-life turbo run of SPEC-v3 §12)
 set -e
 cd "$(dirname "$0")"
 LABEL=com.pet.engine
@@ -19,6 +19,7 @@ start)
     <string>/usr/bin/caffeinate</string><string>-i</string>
     <string>$(command -v uv)</string><string>run</string><string>python</string><string>-m</string><string>engine.server</string>
   </array>
+  <key>EnvironmentVariables</key><dict><key>PET_PROFILE</key><string>$2</string></dict>
   <key>RunAtLoad</key><true/>
   <key>KeepAlive</key><true/>
   <key>ThrottleInterval</key><integer>20</integer>
@@ -35,5 +36,5 @@ stop)
   echo "stopped and removed" ;;
 status)
   launchctl print "gui/$(id -u)/$LABEL" 2>/dev/null | grep -E "state =|pid =|last exit" || echo "not running under launchd" ;;
-*) echo "usage: $0 start|stop|status"; exit 1 ;;
+*) echo "usage: $0 start [profile]|stop|status"; exit 1 ;;
 esac

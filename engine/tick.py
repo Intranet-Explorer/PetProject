@@ -348,10 +348,10 @@ class Mind:
             story.claims(eng, pet, "message", pet["message"][-1]["text"])
         elif t == "tell":
             other = actions.find(h, pet, a["to"])[1]
-            log.put(eng.db, "messages", pet=pet["id"], tick=h["tick"], kind="tell", to_pet=other["id"], text=actions.clean(a["text"], 400))
-            story.claims(eng, pet, "tell", actions.clean(a["text"], 400))
-        elif t in ("write_belief", "revise_belief") and actions.clean(a["statement"], 140).lower() != "discard":
-            story.claims(eng, pet, "belief", actions.clean(a["statement"], 140))
+            log.put(eng.db, "messages", pet=pet["id"], tick=h["tick"], kind="tell", to_pet=other["id"], text=next((m["text"] for m in other["told"] if m["kind"] == "tell" and m["by"] == pet["id"]), ""))
+            story.claims(eng, pet, "tell", actions.clean(a["text"], 440))
+        elif t in ("write_belief", "revise_belief") and actions.belief(a["statement"]).lower() != "discard":
+            story.claims(eng, pet, "belief", actions.belief(a["statement"]))
         elif t == "speak" and pet["name"] and self.mem and not getattr(self, "named", False):
             self.named = True
             log.pet_row(eng.db, pet)

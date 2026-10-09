@@ -53,6 +53,8 @@ def pet_view(p):
     out.update(label=label(p), buried=bool(p.get("buried")), made=p.get("made", 0), useful=len(p.get("useful", [])))
     if p["stage"] == "dead":
         out["days"] = (p.get("life") or {}).get("days")
+        # view only: how far it has faded towards its stone, 0 to 1
+        out["fade"] = min(1.0, (h["tick"] - p["died"]) * cfg["clock"]["tick_seconds"] / (cfg["life"]["fade_minutes"] * 60))
         return out
     if p["stage"] == "egg":
         out["hatches_in"] = max(0, cfg["life"]["egg_minutes"] * 60 - (h["tick"] - p["laid"]) * cfg["clock"]["tick_seconds"])

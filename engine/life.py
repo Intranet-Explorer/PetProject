@@ -115,11 +115,12 @@ def lay_egg(house, cfg, pet, a, clean):
 
 
 def last_sentence(text, limit):
-    """Words cut at the limit end on the last whole sentence inside it, so nothing is handed down half said."""
+    """Words cut at a limit end on the last whole sentence inside it, or failing that the last whole word,
+    so nothing is kept or handed down half said."""
     if len(text) <= limit:
         return text
     cut = max(text[:limit].rfind(c) for c in ".!?") + 1
-    return text[:cut] if cut > limit * 0.4 else text[:limit]
+    return text[:cut] if cut > limit * 0.4 else text[:limit].rsplit(" ", 1)[0].rstrip(",;:—- ") + "…"
 
 
 def hatch(house, cfg, pet):

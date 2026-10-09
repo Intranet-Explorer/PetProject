@@ -4,7 +4,7 @@ decides about its project, may rewrite the message for its children, and dreams.
 import logging
 
 from . import genome, life, story, things
-from .actions import clean, filled
+from .actions import belief, clean, filled
 from .feel import ago
 from .log import put
 from .world import label, moment, rnd
@@ -39,7 +39,7 @@ def apply_changes(mind, changes):
     for c in changes[:3] if isinstance(changes, list) else []:
         if not isinstance(c, dict) or not filled(c.get("statement")):
             continue
-        text = clean(c["statement"], 140)
+        text = belief(c["statement"])
         if c.get("type") == "revise_belief" and mem.is_active(c.get("id")):
             mem.revise(c["id"], text, tick)
             done.append("%s %s" % (c["id"], "discarded" if text.lower() == "discard" else "revised: " + text))
@@ -84,7 +84,7 @@ async def night(mind):
         out["dream"] = clean(reply.get("dream", ""), 500)
         r = reply.get("review")
         if review and isinstance(r, dict) and mem.is_active(review["id"]):
-            d, new = r.get("decision"), clean(r.get("statement", ""), 140)
+            d, new = r.get("decision"), belief(r.get("statement", ""))
             if d == "discard":
                 mem.revise(review["id"], "discard", house["tick"], reviewed=True)
                 moment(house, "discarded", "%s gave up a belief: %s" % (label(pet), review["statement"]), pet["id"], pet["room"])
@@ -97,7 +97,7 @@ async def night(mind):
             out["review"] = {"id": review["id"], "was": review["statement"], "decision": d, "now": new if d == "revise" else None}
         p = reply.get("project")
         if isinstance(p, dict):
-            d, new = p.get("decision"), clean(p.get("text", ""), 120)
+            d, new = p.get("decision"), life.last_sentence(clean(p.get("text", ""), 200), 140)
             if d in ("finish", "abandon") and proj:
                 pet["projects"].append({"text": proj["text"], "since": proj["since"], "ended": house["tick"], "how": "finished" if d == "finish" else "abandoned"})
                 pet["project"] = None
@@ -114,7 +114,7 @@ async def night(mind):
             for other in house["pets"].values():
                 names = {(other["name"] or "").lower(), "your " + (eng.relation(pet, other) or "?")}
                 if other["id"] != pet["id"] and name and (name in names or name.replace("my ", "your ") in names):
-                    pet["known"][other["id"]] = clean(who.get("line", ""), 120)
+                    pet["known"][other["id"]] = life.last_sentence(clean(who.get("line", ""), 160), 120)
         msg = life.last_sentence(clean(reply.get("message", ""), 640), 600)
         if pet["message"] and msg and msg != pet["message"][-1]["text"]:
             pet["message"].append({"tick": house["tick"], "text": msg})
@@ -125,7 +125,7 @@ async def night(mind):
             story.claims(eng, pet, "message", msg)
             moment(house, "message", "%s rewrote the message for its children" % label(pet), pet["id"], pet["room"])
         if "my_life" in asks and filled(reply.get("my_life")):
-            pet["my_life"] = clean(reply["my_life"], 800)
+            pet["my_life"] = life.last_sentence(clean(reply["my_life"], 860), 800)
     except Exception:
         logging.exception("sleep failed for %s", pet["id"])
     try:   # §9.3: three ways its body can change, described in words; the pet picks one

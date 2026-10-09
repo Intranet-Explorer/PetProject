@@ -20,6 +20,11 @@ def clean(text, limit):
     return re.sub(r"\s+", " ", str(text)).strip()[:limit]
 
 
+def belief(text):
+    """A belief as it is kept: at most 160 characters, ending on a whole sentence or word."""
+    return life.last_sentence(clean(text, 220), 160)
+
+
 def filled(v):
     return isinstance(v, str) and bool(v.strip())
 
@@ -376,7 +381,7 @@ def apply(house, cfg, pet, a, mem):
         text = director.chased(house, cfg, c, pet)
         return text, dict(E["chase"]), "chase " + c["kind"]
     if t == "tell":
-        other, text = find(house, pet, a["to"])[1], clean(a["text"], 400)
+        other, text = find(house, pet, a["to"])[1], life.last_sentence(clean(a["text"], 440), 400)
         other["told"].insert(0, {"by": pet["id"], "who": handle(house, other, pet), "kind": "tell", "text": text, "tick": house["tick"]})
         del other["told"][6:]
         keep_parent_word(other)
@@ -392,10 +397,10 @@ def apply(house, cfg, pet, a, mem):
         return life.bequeath(house, cfg, pet, a, norm)
     if t == "write_belief":
         source = a.get("source") if a.get("source") in SOURCES or str(a.get("source", "")).startswith("told by ") else "lived"
-        bid = mem.write(clean(a["statement"], 140), house["tick"], source)
+        bid = mem.write(belief(a["statement"]), house["tick"], source)
         return "you wrote belief " + bid, {}, None
     if t == "revise_belief":
-        text = clean(a["statement"], 140)
+        text = belief(a["statement"])
         if text.lower() == "discard":
             moment(house, "discarded", "%s gave up a belief: %s" % (name, next(b["statement"] for b in mem.beliefs if b["id"] == a["id"])), pet["id"], room["id"])
         mem.revise(a["id"], text, house["tick"])
