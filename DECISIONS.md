@@ -256,3 +256,8 @@ README.md's history and NOTES.md.)
   0.5 per 10 s. Comfort can now be restored at about the rate energy can.
 - **`give` picks up what is lying there.** The pet tried to give the beetle moss that was on the floor beside
   it. Refusing that taught nothing; it now picks the bit up on the way if it has room to carry it.
+- **A parent and its young pull at each other.** The smoke parent laid its egg, wandered off through four
+  rooms, and was two rooms away when the child hatched; the child spent its first day alone. Company alone did
+  not bring them together (the parent was "not lonely"). While a child is an egg, a hatchling or a Child, a
+  parent elsewhere notices "you think of Sol, in the nursery without you" and the child notices "you want your
+  mother; they are not here". Nothing makes either of them go.

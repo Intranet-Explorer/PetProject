@@ -141,11 +141,21 @@ def drawn(house, cfg, pet, room, felt):
             out.append("you can smell something to eat: the %s" % food)
         if bed:
             out.append("the %s looks like a good place to rest" % bed)
+    # the pull between a parent and its young, while they are young: the one thing that brings kin back together
+    from .actions import handle
+    small = ("egg", "hatchling", "child")
+    for kid in (house["pets"].get(c) for c in pet["children"]):
+        if kid and kid["stage"] in small and kid["room"] != pet["room"]:
+            where = house["rooms"][kid["room"]]["name"] if kid["room"] in pet["rooms"] else "somewhere else"
+            out.append("you think of %s, in %s without you" % ("your egg" if kid["stage"] == "egg" else handle(house, pet, kid), where))
+            break
+    parent = house["pets"].get(pet["parent"])
+    if pet["stage"] in small and parent and parent["stage"] != "dead" and parent["room"] != pet["room"]:
+        out.append("you want %s; they are not here" % handle(house, pet, parent))
     if feel_level(pet, "company") >= 2:
         others = here(house, pet)
         stones = [n for n, o in objs.items() if "memorial" in o]
         if others:
-            from .actions import handle
             out.append("you want to be near " + handle(house, pet, others[0]))
         elif stones:
             out.append("the %s draws you" % near(stones))

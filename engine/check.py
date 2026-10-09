@@ -254,6 +254,10 @@ async def main():
         kp = mind.perceive(h, cfg, egg, kid_mind.mem)[0]
         word = pet["word"]
         assert 'what your %s told you: "The lamp is harsh at night.' % word in kp and "your %s (" % word in kp, kp
+        home, egg["room"] = egg["room"], next(r for r in h["rooms"] if r != pet["room"])
+        assert "you think of Sol" in " ".join(physics.senses(h, cfg, pet)) and "you want your %s; they are not here" % word in physics.senses(h, cfg, egg), \
+            "a parent and its young feel the pull when they are apart"
+        egg["room"] = home
         cfg["life"]["population"] = 2
         assert life.can_lay(h, cfg, pet) == "the house is full" and "the house is full" not in physics.senses(h, cfg, pet)
         cfg["life"]["population"] = 4
