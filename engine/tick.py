@@ -443,6 +443,7 @@ class Mind:
             self.night = self.eng.spawn(sleep.night(self))
         pet["needs"]["energy"] = min(100.0, pet["needs"]["energy"] + cfg["sleep"]["restore_per_10s"] * cfg["dt"])
         room = h["rooms"][pet["room"]]
+        pet["sleep"]["ticks"] = pet["sleep"].get("ticks", 0) + 1
         if things.light_on(h, cfg, room) and room["type"] not in physics.NO_HARSH_LIGHT:
             pet["sleep"]["lit"] = pet["sleep"].get("lit", 0) + 1
         else:   # sleep in the dark eases it; by a bed or blanket, more (the v2 lights rule, felt over a whole night)
@@ -454,8 +455,7 @@ class Mind:
         if pet["sleep"]["done"] and h["clock"]["phase"] != "night":
             dream = pet["last_night"]["dream"]
             pet["events"] = []   # the reset: only journal, beliefs and self carry into the new day
-            slept = h["tick"] - pet["sleep"]["since"]
-            how = "you slept badly: there was a light on you all night" if pet["sleep"].get("lit", 0) > slept / 2 \
+            how = "you slept badly: there was a light on you all night" if pet["sleep"].get("lit", 0) > pet["sleep"]["ticks"] / 2 \
                 else "you slept well, snug" if pet["sleep"].get("snug") else "you slept well in the dark"
             add_event(h, pet, "you woke up; %s" % how + ('. you remember thinking: "%s"' % dream if dream else ""))
             pet["news"].append("woke")
