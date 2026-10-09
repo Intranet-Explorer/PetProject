@@ -190,6 +190,9 @@ async def main():
         again = new_house(cfg)
         from .world import generate_room
         assert generate_room(again, cfg, first)["type"] == h["rooms"][first]["type"], "a house can be rebuilt from its seed"
+        other = next(rid for rid in room_of(eng, pet)["doors"].values() if not h["rooms"][rid]["type"])
+        from .world import room_type
+        assert cfg["house"]["rooms"][room_type(h, other)]["hint"] in mind.perceive(h, cfg, pet, m.mem)[0], "an untried door smells of what is behind it"
         assert h["rooms"][first]["name"] in mind.perceive(h, cfg, pet, m.mem)[0].split("rooms you know:")[1]
         from .world import door_plan
         for seed in range(8):
@@ -216,8 +219,9 @@ async def main():
                                    ("pond", lambda: at(eng, 12), "water")):
             rid = next(r["id"] for r in h["rooms"].values() if r["id"] != h["start"] and (r["type"] in (None, kind)))
             if not h["rooms"][rid]["type"]:
-                h["unused_types"].remove(kind)
-                generate_room(h, cfg, rid, kind)
+                swap = next(r for r, t in h["plan"].items() if t == kind)
+                h["plan"][swap], h["plan"][rid] = h["plan"][rid], kind
+                generate_room(h, cfg, rid)
             if h["rooms"][rid]["type"] == kind:
                 home, pet["room"] = pet["room"], rid
                 setup()
@@ -337,7 +341,7 @@ async def main():
         pet["temper"]["sensitive"] = 0.1
         assert hard > feel.level(pet, "comfort"), "a sensitive pet feels uncomfortable sooner"
         pet["temper"]["bold"] = 0.9
-        assert "want to know what is there" in mind.perceive(h, cfg, pet, m.mem)[0]
+        assert "you want to know what is there" in mind.perceive(h, cfg, pet, m.mem)[0]
         pet["temper"]["patient"] = 1.0
         for i in range(400):
             add = "something happened %d that takes a good many words to tell, and then some more words after that" % i
@@ -416,7 +420,7 @@ async def main():
             if i > 2000 and want(one.house) and one.house["tick"] % 5 == 0:
                 break
         assert want(one.house), "the run reached a state worth restarting from"
-        one.save()
+        one.close()   # as a kill would: whatever was in flight is gone
         state = json.dumps(one.house, sort_keys=True)
         two = Engine(cfg2, d + "/c", stub_brains)
         for p in two.house["pets"].values():

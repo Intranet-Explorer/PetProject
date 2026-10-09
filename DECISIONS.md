@@ -242,3 +242,10 @@ README.md's history and NOTES.md.)
   whichever need it is. And `physics.drawn` adds one line per need running short, pointing at the nearest
   thing that would help: something soft "looks soft enough to sink into", the bowl can be smelled, the bed
   "looks like a good place to rest", a kin's stone "draws you". It names where to look, not what will happen.
+- **An untried door smells of what is behind it.** The spec decides a room's type when someone first walks
+  in. The smoke pet stayed in the nursery for days: three identical doors gave it nothing to be curious
+  about. Which type lies where is now fixed by the house's seed from the start (the room's contents are still
+  made on first entry, and the house is still reproducible from its seed), and each untried door carries a
+  hint: "from under it comes a smell of wet soil and green things", "cold, damp air", "a faint ringing now and
+  then". A bold pet "wants to know what is there"; a timid one "is not sure about it". Boredom points at an
+  untried door from "a bit bored" for a timid pet and sooner for the rest.

@@ -96,6 +96,7 @@ looks = { shape = "ring", color = "green" }
 [rooms.nursery]
 name = "the nursery"
 feel = "a small bright room with a window and a bed"
+hint = "the smell of the room you hatched in"   # what comes under the door before anyone has been through it
 window = true
 regrow_hours = 6
 bits = { fluff = 3, pebble = 2, wax = 2 }
@@ -116,6 +117,7 @@ fixtures = [
 [rooms.garden]
 name = "the garden"
 feel = "open sky, dark soil and green things growing"
+hint = "a smell of wet soil and green things"   # what comes under the door before anyone has been through it
 outdoors = true
 regrow_hours = 8
 bits = { seed = 3, leaf = 3, petal = 2 }
@@ -131,6 +133,7 @@ fixtures = [
 [rooms.cellar]
 name = "the cellar"
 feel = "stone walls, damp air, hardly any light"
+hint = "cold, damp air"   # what comes under the door before anyone has been through it
 regrow_hours = 10
 bits = { clay = 3, moss = 3, soot = 2 }
 rule = "cellar"
@@ -144,6 +147,7 @@ fixtures = [
 [rooms.attic]
 name = "the attic"
 feel = "beams overhead, dust in the air, a skylight"
+hint = "dust, and a creak of beams"   # what comes under the door before anyone has been through it
 window = true
 regrow_hours = 12
 bits = { feather = 3, cloth = 2, wood = 2 }
@@ -158,6 +162,7 @@ fixtures = [
 [rooms.pond]
 name = "the pond room"
 feel = "still water under a glass roof, reeds at the edge"
+hint = "the sound of still water"   # what comes under the door before anyone has been through it
 window = true
 regrow_hours = 10
 bits = { shell = 3, bead = 2, reed = 3 }
@@ -171,6 +176,7 @@ fixtures = [
 [rooms.workshop]
 name = "the workshop"
 feel = "benches, tools on hooks, shavings on the floor"
+hint = "a smell of wood shavings"   # what comes under the door before anyone has been through it
 window = true
 regrow_hours = 12
 bits = { wire = 3, wood = 2, metal = 2 }
@@ -185,6 +191,7 @@ fixtures = [
 [rooms.music]
 name = "the music room"
 feel = "rugs on the floor and instruments left where someone put them down"
+hint = "a faint ringing now and then"   # what comes under the door before anyone has been through it
 window = true
 regrow_hours = 12
 bits = { string = 2, bell = 3, felt = 2 }
@@ -199,6 +206,7 @@ fixtures = [
 [rooms.greenhouse]
 name = "the greenhouse"
 feel = "glass all round, warm air, vines up the frames"
+hint = "warm, wet air"   # what comes under the door before anyone has been through it
 outdoors = true
 glass = true
 regrow_hours = 8
@@ -213,6 +221,7 @@ fixtures = [
 [rooms.storeroom]
 name = "the storeroom"
 feel = "shelves and crates, no window, the dark of a place nobody goes"
+hint = "a smell of old boxes"   # what comes under the door before anyone has been through it
 regrow_hours = 24
 bits = "any"              # a little of everything: four kinds, picked when the room is first found
 rule = "storeroom"

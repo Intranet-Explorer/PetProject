@@ -184,12 +184,27 @@ async def loop():
         await asyncio.sleep(0 if turbo else max(0.0, cfg["clock"]["tick_seconds"] - (time.monotonic() - started)))
 
 
+async def sky():
+    """§6.6: once an hour the engine (never a pet) asks one fixed host what the weather is over the Twin Cities.
+    Only when `weather.real` is on. Any failure leaves the house's own weather alone."""
+    import urllib.request
+    from . import director
+    while cfg["weather"]["real"]:
+        try:
+            raw = await asyncio.to_thread(lambda: urllib.request.urlopen(cfg["weather"]["real_url"], timeout=20).read())
+            director.real_weather(eng.house, director.real_kind(json.loads(raw)["current"]))
+        except Exception as e:
+            logging.warning("real weather not available: %r", e)
+        await asyncio.sleep(3600)
+
+
 @asynccontextmanager
 async def lifespan(app):
-    task = asyncio.create_task(loop())
+    task, window = asyncio.create_task(loop()), asyncio.create_task(sky())
     yield
     task.cancel()
-    eng.save()
+    window.cancel()
+    eng.close()
 
 
 app = FastAPI(lifespan=lifespan)
@@ -300,7 +315,29 @@ async def api_replay_day(lineage: int, day: int):
     path = DATA / "replay" / ("lineage-%d" % lineage) / ("day-%04d.jsonl.gz" % day)
     if not path.exists():
         raise HTTPException(404)
-    return Response(path.read_bytes(), media_type="application/x-ndjson", headers={"Content-Encoding": "gzip"})
+    return Response(gzip.compress(replay_lines(path.read_bytes()), 1), media_type="application/x-ndjson", headers={"Content-Encoding": "gzip"})
+
+
+def replay_lines(raw):
+    """A day's snapshots out of its file, whatever state the file is in: still being written (no end marker yet),
+    or cut short when the engine was stopped and carried on as a second gzip stream after the restart. A browser
+    refuses the first and drops the rest of the second, so the file is read here and sent as one clean stream.
+    Whole lines only."""
+    import zlib
+    out, at = [], 0
+    while 0 <= at < len(raw):
+        d, got, i, broken = zlib.decompressobj(31), b"", at, False
+        for i in range(at, len(raw), 1024):   # in small pieces, so a broken join costs a frame or two, not the stream
+            try:
+                got += d.decompress(raw[i:i + 1024])
+            except zlib.error:
+                broken = True
+                break
+            if d.eof:
+                break
+        out += got.split(b"\n")[:-1]          # what follows the last newline is a line cut short, or nothing
+        at = min(len(raw), i + 1024) - len(d.unused_data) if d.eof else raw.find(b"\x1f\x8b\x08", max(at + 1, i)) if broken else -1
+    return b"\n".join(out) + b"\n" if out else b""
 
 
 if (ROOT / "view" / "dist").exists():

@@ -198,13 +198,26 @@ def new_house(cfg, seed=None):
     return house
 
 
+def room_type(house, rid):
+    """What kind of room lies at this place in the house. Which type goes where is fixed by the house's seed
+    from the start (so a door can smell of what is behind it); the room itself is not made until someone
+    walks in (§6.1)."""
+    room = house["rooms"][rid]
+    if room["type"]:
+        return room["type"]
+    if "plan" not in house:
+        blank = sorted(r for r, x in house["rooms"].items() if not x["type"])
+        house["plan"] = dict(zip(blank, house["unused_types"] + ["storeroom"] * len(blank)))
+    return house["plan"][rid]
+
+
 def generate_room(house, cfg, rid, kind=None, by=None):
-    """Decide what a room is, the first time it is needed. Seeded, so the same house grows the same way."""
+    """Make a room, the first time it is needed. Seeded, so the same house grows the same way."""
     room = house["rooms"][rid]
     if room["type"]:
         return room
-    if kind is None:
-        kind = house["unused_types"].pop(0) if house["unused_types"] else "storeroom"
+    kind = kind or room_type(house, rid)
+    house.get("plan", {}).pop(rid, None)
     spec, rng = cfg["house"]["rooms"][kind], rnd(house, "room", rid)
     room.update(type=kind, name=spec["name"], found=house["tick"], by=by, objects={}, spots=[],
                 paint={"wall": None, "floor": None}, wet_until=LONG_AGO, cold_until=LONG_AGO, drift=None)

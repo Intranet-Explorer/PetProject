@@ -638,6 +638,16 @@ class Engine:
         if h["tick"] % 5 == 0:   # every tick would be a lot of disk for a two-second clock
             self.save()
 
+    def close(self):
+        """Stop: drop work in flight (a thought does not survive a restart), save, and let go of the log."""
+        for task in list(self.tasks):
+            task.cancel()
+        self.sched.queue.clear()
+        self.save()
+        if self.db:
+            self.db.close()
+            self.db = None
+
     def save(self):
         tmp = self.path.with_suffix(".tmp")
         tmp.write_text(json.dumps(self.house))

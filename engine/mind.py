@@ -3,7 +3,7 @@ No numbers, no coordinates, no counts of anything, and no sentence telling the p
 like. Its temperament shows only in what is mentioned and how (§8.1). Alongside the text comes `ctx`: the
 names the packet shows, so a brain's reply can be held to things that are really there."""
 from . import actions, feel, life, physics, things
-from .world import LONG_AGO, dist, here, neighbours
+from .world import LONG_AGO, dist, here, neighbours, room_type
 
 BUSY = {"observe": "watching the room", "look": "looking at something", "move": "walking", "go": "heading for a door",
         "speak": "speaking", "rest": "resting", "use": "using something", "gather": "picking something up",
@@ -119,10 +119,12 @@ def perceive(house, cfg, pet, mem):
 
     def door_line(d, rid):
         shut = house["shut"].get("%s|%s" % (room["id"], d), LONG_AGO) > tick
-        known = rid in pet["rooms"]
-        text = "to " + house["rooms"][rid]["name"] if known else (
-            "you have not been through it, and you want to know what is there" if T["bold"] > 0.6 else
-            "you have not been through it" if T["bold"] > 0.4 else "you have not been through it; you do not know what is there")
+        if rid in pet["rooms"]:
+            text = "to " + house["rooms"][rid]["name"]
+        else:   # what comes under an untried door, and how a bold or a timid pet takes it (§8.1)
+            hint = cfg["house"]["rooms"][room_type(house, rid)]["hint"]
+            text = "you have not been through it; from under it comes %s%s" % (
+                hint, ", and you want to know what is there" if T["bold"] > 0.6 else "" if T["bold"] > 0.4 else "; you are not sure about it")
         return "%s (%s%s)" % (d, text, "; it is stuck shut" if shut else "")
 
     doors = " · ".join(door_line(d, rid) for d, rid in room["doors"].items())
@@ -135,7 +137,7 @@ def perceive(house, cfg, pet, mem):
     if others and T["sociable"] > 0.6 and feel.level(pet, "company") == 1:   # a sociable pet feels the pull before it is lonely
         senses.append("you want to be near " + actions.handle(house, pet, others[0]))
     unseen = [d for d, rid in room["doors"].items() if rid not in pet["rooms"]]
-    if unseen and feel.level(pet, "curiosity") >= (3 if T["bold"] < 0.4 else 2):   # boredom points at the one thing here not yet tried
+    if unseen and feel.level(pet, "curiosity") >= (2 if T["bold"] < 0.4 else 1):   # boredom points at the one thing here not yet tried
         senses.append("you wonder what is through the %s door" % unseen[0])
     if pet.get("called") and not pet["name"]:
         senses.append("the visitor calls you " + pet["called"])
