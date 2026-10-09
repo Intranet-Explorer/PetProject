@@ -1,28 +1,27 @@
-# The physics of the room (SPEC-v2 §4, §5). The pet is told none of this; it finds out by living in it.
+# The physics of things (SPEC-v2 §4, SPEC-v3 §6.3). The pets are told none of it; they feel it and work it out.
 # Rates are per 10 seconds, whatever the engine's tick. Tune here, not in code.
 
 [rules]
-lights_night = -1.0   # comfort while any light is on at night. v1 used -4, when it thought seven times as often
-plant_window = 0.5    # comfort by day while the plant is within 2 tiles of the window (v1: +2)
-double_feed = -6.0    # what a meal gives instead of energy when it comes within a world hour of the last one
+lights_night = -1.0   # comfort while any light is on in the room at night
+plant_window = 0.5    # comfort by day in the nursery while the plant is near the window
+double_feed = -6.0    # what a meal gives in place of energy when it comes within a world hour of the last one
 
-# What a made thing really does comes from its material, its size and where it is (§4). The purpose the pet
-# writes has no effect at all. "near" means within one tile of the pet; a thing's size is its biggest part.
-# "need" is the need a thing of that material is for: a thing is useful once it has raised that need on most
-# of at least `useful_uses` occasions (§6). Bright, hard and heavy things are for no need and are never useful.
+# ---- properties: what a made thing is like, chosen from what its bits allow ----
+# "need" is the need a thing with that property is for; it is useful once it has raised that need on most of
+# at least `useful_uses` occasions. "near" means within one tile of the pet unless `room = true`.
 
 [soft]
 need = "comfort"
 says = "comfort when used; a bigger one gives more"
 use = { comfort = 2.0 }
-by_size = true            # times size / 2
+by_size = true
 
 [hard]
 says = "nothing; it just sits there"
 
 [warm]
 need = "comfort"
-says = "comfort near it at night, discomfort near it by day"
+says = "comfort near it at night and in the cold, discomfort near it on a warm day"
 near = { night = { comfort = 0.5 }, day = { comfort = -0.5 } }
 
 [bright]
@@ -44,11 +43,12 @@ need = "curiosity"
 says = "curiosity when used, for a little energy; resting near it restores half as much"
 use = { curiosity = 3.0, energy = -1.0 }
 rest_near = 0.5
+loud = true
 
 [quiet]
 need = "energy"
 says = "resting near it restores more energy"
-rest_bonus = 1.0          # extra energy per 10 s of rest
+rest_bonus = 1.0
 
 [bouncy]
 need = "curiosity"
@@ -65,13 +65,31 @@ says = "energy when eaten, once; it counts as a meal"
 use = { energy = 5.0 }
 food = true
 
-# Behaviors an Adult can teach a thing (§7). While a taught thing's "when" holds it does its "do", and what that
-# does to the pet follows the same physics as everything else. Rates per 10 s, within one tile of the pet.
+# ---- the three found only in far rooms (§6.3) ----
+
+[fragrant]
+need = "comfort"
+says = "comfort for everyone in the room; it fades as you get used to it and comes back overnight"
+room = true
+scent = 0.4               # comfort per 10 s, times how fresh the smell still is to that pet
+
+[glassy]
+need = "curiosity"
+says = "scatters sunlight: curiosity and a little comfort near it by day when the sun is out; never a light at night"
+sun = { curiosity = 0.4, comfort = 0.2 }
+
+[springy]
+need = "energy"
+says = "using it puts a spring in its step: for a while it walks twice as far and moving costs nothing"
+use = { curiosity = 1.0 }
+spring_steps = 6
+
+# ---- behaviors an Adult can teach a thing (SPEC-v2 §7) ----
 [behaviors]
-glow = { light = true }                                   # a glowing thing is a light, so at night it costs comfort
-dim = { shade = true }                                    # a dimming thing shelters from lights, like a dark one
-hum = { near = { curiosity = 0.5 }, rest_near = 0.5 }     # interesting to be near, bad to rest beside
+glow = { light = true }
+dim = { shade = true }
+hum = { near = { curiosity = 0.5 }, rest_near = 0.5, loud = true }
 bounce = { near = { curiosity = 0.3 } }
-move_toward_pet = { step = 1 }                            # one tile every other tick, until it is beside the pet
+move_toward_pet = { step = 1 }
 move_away = { step = -1 }
-change_color = {}                                         # seen, not felt
+change_color = {}

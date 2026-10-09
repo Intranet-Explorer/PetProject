@@ -1,74 +1,147 @@
-# Pet config (SPEC v1 §18, SPEC-v2 §12). The one place for tunables.
+# Pet v3 config (SPEC-v3 §11.5). Tunables for the engine; the house is in house.toml, the physics in materials.toml.
 
 [clock]
 tick_seconds = 2          # real seconds per engine tick; no model call on a tick
-day_seconds = 7200        # real seconds per world day. 7200 is the real clock; 1800 is the fast one used for the V2.3 check
-min_think_seconds = 70    # it thinks at most this often (51 an hour) ...
-urgent_seconds = 20       # ... unless a visitor acts, a need falls under 30, or it just woke or hatched
-max_idle_seconds = 180    # ... and at least this often (20 an hour), so it never freezes
+day_seconds = 7200        # real seconds per world day (the showcase used 900)
+min_think_seconds = 70    # a pet thinks at most this often, scaled by how patient it is ...
+urgent_seconds = 20       # ... unless something urgent happened: a low need, being spoken to, an event
+max_idle_seconds = 180    # ... and at least this often
+turbo = false             # SPEC-v3 amendment: world time does not follow the wall clock. While a model call is in
+                          # flight the world waits; otherwise it runs straight on to the next thing due.
 
 [steps]                   # real seconds each kind of step takes once the pet is in place; walking is one tile a tick
-observe = 12
+observe = 10
 look = 8
 move = 2
+go = 4
 speak = 8
 rest = 40
 use = 10
-arrange = 8
-write_belief = 10
-revise_belief = 10
+gather = 8
+drop = 4
 make = 16
 unmake = 8
+arrange = 8
 combine = 16
 paint = 12
 teach = 12
+give = 6
+show = 8
+follow = 12
+nuzzle = 8
+accept = 4
+take = 6
+tell = 14
+chase = 8
+lay_egg = 20
+bequeath = 12
+write_belief = 10
+revise_belief = 10
 
-[world]
-start_stage = "egg"       # set to "hatchling" to skip the egg while debugging
+[model]
+endpoint = "http://localhost:11434/v1"   # must be localhost
+name = "pet-brain"        # qwen3.8:27b-mlx with a 16k context: ollama create pet-brain -f Modelfile
+max_tokens = 700
+timeout_seconds = 90
+parallel = 1              # model calls in flight at once; 2 only if Ollama runs with OLLAMA_NUM_PARALLEL=2 and it measures faster
+night_tokens = 8000       # cap on a sleep call, thinking included
+calls_per_hour = 150      # across all pets; routine thoughts slow down to stay under it, urgent ones never wait for it
+
+[effects]                 # what the plain actions do; a pet is told none of the numbers
+rest_per_10s = 2.0        # energy while resting; a bed or bench has its own figure in house.toml
+observe = { curiosity = 0.5 }
+look = { curiosity = 1.0 }
+speak = { energy = -0.5 }
+gather = { energy = -0.5 }
+eat = { energy = 12.0, comfort = 1.0 }
+ripe = { energy = 9.0, comfort = 3.0 }    # a ripe plant from the garden or greenhouse
+double_feed_seconds = 300 # a second meal this soon after the last gives discomfort in place of energy
+new_room = 8.0            # curiosity the first time it walks into a room
+show = { curiosity = 2.0 }
+nuzzle = { company = 8.0, comfort = 2.0 }
+spoken_to = 3.0           # company from being spoken to by another pet
+visitor_talk = 4.0        # company from the visitor talking
+feed_creature = { company = 2.0, curiosity = 1.5 }
+chase = { energy = -2.0, curiosity = 2.0 }
+# company per 10 s (§7.4): near another pet, in a room with one, with a creature about, with a creature it has fed,
+# alone (times how sociable it is), and while the visitor is looking in
+company = { near = 0.6, room = 0.25, creature = 0.1, friend = 0.3, alone = -0.03, visitor = 0.05 }
+stone = { company = 3.0, comfort = 1.0 }   # touching the stone of one of its own
+offer_seconds = 300       # an offer nobody takes lapses after this
+reply_seconds = 600       # speech answered within this counts as a reply (Lab)
+
+[novelty]                 # familiarity (SPEC-v2 §4): doing a thing again is worth less each time
+max = 4.0                 # curiosity for doing something not done for a while
+seconds = 150             # real seconds per point regained
+fresh_seconds = 600       # a made thing gives its full curiosity only if left alone this long
+wear = 0.8                # each repeat is worth this much of the last (a curious pet tires of things faster) ...
+floor = 0.1               # ... down to this
+cap = 10                  # repeats stop counting here
+eases = 2                 # repeats forgotten each night
+familiar = 4              # from this many repeats it is told the thing has grown familiar
+
+[packet]
+max_chars = 9000          # about 2,500 tokens; what is cut first is in mind.py and DECISIONS.md
+
+[life]                    # SPEC-v3 §4. Days are world days.
+egg_minutes = 10          # real minutes as an egg
+lifespan_days = 24        # before wellbeing and hardiness adjust it by up to 30%
+adult_days = 6            # days as an Adult before Elder
+neglect_days = 1          # comfort and energy both at the bottom this long: it weakens
+neglect_cost_days = 2     # lifespan lost per further day of it
+fade_minutes = 3          # real minutes a dead pet lies still before its stone is all that is left
+population = 4            # pets and eggs alive at once
+auto_lineage = false      # start a new lineage by itself when the last pet dies (headless runs); the view offers it otherwise
+egg_pull_days = 3         # an Adult with no egg feels the pull to lay one after this many Adult days
+
+[growth]                  # SPEC-v3 §4.1 as amended: stages are paced by days lived, nothing else
+child = 2                 # the day of its life on which it becomes each stage
+youngling = 4
+adult = 7
+useful_uses = 5           # a made thing is "useful" once used this often, most times raising the need it is for
+useful_wellbeing = 3.0    # each useful thing it made counts as this many points of lifelong wellbeing ...
+useful_max = 5            # ... for up to this many things: about half the 30% a good life can add to a lifespan
+taught_max = 4
 
 [make]
-item_cap = 12             # made things in the room at once
-energy_base = 4           # making costs this ...
-energy_per_part = 2       # ... plus this per part
-unmake_refund = 3         # energy back for taking one apart
-
-[senses]
-enabled = true            # the packet says what the pet can feel right now, but never why (see README)
-
-[growth]                  # SPEC-v2 §6: stages are earned by what it has made and lived through, checked each morning
-useful_uses = 5           # a thing is useful once it has helped its need on most of at least this many occasions
-child = { days = 2, useful = 2 }
-youngling = { days = 4, useful = 5 }
-adult = { days = 8, useful = 8, kept_beliefs = 3, kept_days = 2 }   # ... and 3 beliefs it has held for 2 days or more
-taught_max = 4            # things that can have a behavior at once (§7)
-
-[egg]
-egg_minutes = 10          # real minutes as an egg; the model is not called
+carry = 3                 # bits a pet can carry
+loose_bits = 12           # dropped bits a room's floor holds before the oldest is swept away
+crowded = 10              # made things in one room before it is too crowded to make more
+parts = { hatchling = 2, child = 3, youngling = 3, adult = 3, elder = 3 }   # a made thing's parts; combining goes to 6
 
 [sleep]
-hour = 23                 # asleep from this world hour, or earlier in the night if energy is low
+hour = 23
 wake_hour = 6
 energy_below = 30
-restore_per_10s = 0.4     # energy regained while asleep
+restore_per_10s = 0.4
+think = "medium"          # reasoning effort for the night's work; the showcase used "low" to fit a short night
+
+[beliefs]
+max_active = 16           # at the cap it has to revise or discard
 
 [marks]
-window_patch_seconds = 10000   # waking time near the window before the faded patch appears
+window_patch_seconds = 10000
 
-[lab]                     # measured for the Lab tab; nothing here drives growth any more
-window = 50               # hidden-rule predictions in the rolling accuracy
-exploit_need_below = 50   # the related need must be under this for a rule to count as used on purpose
+[senses]
+enabled = true
 
-[twin]                    # the scripted baseline from v1: code kept, off by default
+[lab]
+window = 50
+exploit_need_below = 50
+
+[stub]                    # the scripted brain used for headless runs (§11.3); never used with the real lineage
 enabled = false
-explore = 0.15
-belief_min_obs = 10
 
-[model]                   # picked in M0 (m0/results/summary.json)
-endpoint = "http://localhost:11434/v1"   # must be localhost
-name = "pet-brain"        # qwen3.8:27b-mlx with a 16k context, 18 GB instead of 28: ollama create pet-brain -f Modelfile
-temperature = 0.7
-max_tokens = 600
-timeout_seconds = 60
+[visitor]
+surprises = false         # let the director drop a gift in the visitor's name now and then (§6.5)
+
+[weather]
+real = false              # §6.6: fetch the Twin Cities' current weather once an hour from one fixed host
+real_url = "https://api.open-meteo.com/v1/forecast?latitude=44.98&longitude=-93.27&current=temperature_2m,precipitation,weather_code,cloud_cover"
+
+[replay]                  # what the view was shown, kept so a run can be played back (a turbo run is replayed, not watched)
+every_ticks = 5
+keep_days = 60
 
 [server]
 host = "127.0.0.1"

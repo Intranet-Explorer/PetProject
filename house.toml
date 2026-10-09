@@ -1,0 +1,311 @@
+# The house (SPEC-v3 §6): rooms, the bits found in them, the seasons and weather, what happens on its own,
+# and the small creatures. Tune here, not in code. Rates are per 10 seconds; days and hours are world time.
+
+[house]
+grid = [3, 3]             # rooms across and down; the nursery is in the middle
+room_size = [12, 8]       # tiles
+max_doors = 3
+seed = 1                  # the door plan and the order rooms are found in come from this, so a house can be rebuilt
+season_days = 6
+creatures = 2             # small creatures in the house at once
+
+# Where a pet stands to go through each door, and where it arrives from the other side.
+[house.doors]
+north = [7, 0]
+south = [7, 7]
+west = [0, 5]
+east = [11, 4]
+
+# ---- bits: what can be gathered, and what a part made of each can be (§6.2, §6.3) ----
+# `can` lists the properties (materials.toml) a thing can take from this bit. `looks` is how the view draws it.
+
+[bits.fluff]
+can = ["soft"]
+looks = { shape = "blob", color = "white" }
+[bits.pebble]
+can = ["hard", "heavy"]
+looks = { shape = "circle", color = "grey" }
+[bits.wax]
+can = ["warm", "bright"]
+looks = { shape = "square", color = "yellow" }
+[bits.seed]
+can = ["sweet"]
+looks = { shape = "dot", color = "brown" }
+[bits.leaf]
+can = ["cool", "soft"]
+looks = { shape = "triangle", color = "green" }
+[bits.petal]
+can = ["fragrant"]
+looks = { shape = "blob", color = "pink" }
+[bits.clay]
+can = ["hard", "cool"]
+looks = { shape = "square", color = "brown" }
+[bits.moss]
+can = ["soft", "quiet"]
+looks = { shape = "blob", color = "green" }
+[bits.soot]
+can = ["dark"]
+looks = { shape = "dot", color = "black" }
+[bits.feather]
+can = ["soft", "bouncy"]
+looks = { shape = "bar", color = "white" }
+[bits.cloth]
+can = ["soft", "warm"]
+looks = { shape = "square", color = "purple" }
+[bits.wood]
+can = ["hard", "warm"]
+looks = { shape = "bar", color = "brown" }
+[bits.shell]
+can = ["quiet", "hard"]
+looks = { shape = "ring", color = "pink" }
+[bits.bead]
+can = ["glassy", "bright"]
+looks = { shape = "circle", color = "teal" }
+[bits.reed]
+can = ["springy", "noisy"]
+looks = { shape = "bar", color = "green" }
+[bits.wire]
+can = ["springy", "noisy"]
+looks = { shape = "ring", color = "grey" }
+[bits.metal]
+can = ["heavy", "noisy"]
+looks = { shape = "triangle", color = "grey" }
+[bits.string]
+can = ["noisy", "springy"]
+looks = { shape = "bar", color = "red" }
+[bits.bell]
+can = ["noisy"]
+looks = { shape = "circle", color = "yellow" }
+[bits.felt]
+can = ["quiet", "soft"]
+looks = { shape = "square", color = "blue" }
+[bits.resin]
+can = ["warm", "bright"]
+looks = { shape = "blob", color = "orange" }
+[bits.vine]
+can = ["springy", "soft"]
+looks = { shape = "ring", color = "green" }
+
+# ---- rooms ----
+# `bits` = how many of each lie about at once; they come back `regrow_hours` after being picked up.
+# A fixture is something that was always there. What it does is in its keys:
+#   light (on/off, a light), states (a switch with no effect), meal (servings, refilled at dawn), soft (comfort when
+#   used), rest (energy when used), toy (curiosity when used), loud, cozy (comfort near it), movable, window,
+#   mirror, plant (grows; a meal when ripe), water (the tiles it covers), bench, sun (moves with the hour).
+
+[rooms.nursery]
+name = "the nursery"
+feel = "a small bright room with a window and a bed"
+window = true
+regrow_hours = 6
+bits = { fluff = 3, pebble = 2, wax = 2 }
+rule = "nursery"
+fixtures = [
+  { name = "lamp", pos = [2, 1], light = "on" },
+  { name = "plant", pos = [8, 6], movable = true },
+  { name = "bowl", pos = [5, 7], meal = 2 },
+  { name = "ball", pos = [4, 5], movable = true, toy = 1.0 },
+  { name = "blanket", pos = [9, 3], movable = true, soft = 2.0, cozy = true },
+  { name = "music box", pos = [7, 2], states = ["silent", "playing"] },
+  { name = "rock", pos = [3, 6], movable = true },
+  { name = "window", pos = [0, 3], window = true },
+  { name = "bed", pos = [10, 1], rest = 3.0, cozy = true },
+  { name = "mirror", pos = [5, 0], mirror = true },
+]
+
+[rooms.garden]
+name = "the garden"
+feel = "open sky, dark soil and green things growing"
+outdoors = true
+regrow_hours = 8
+bits = { seed = 3, leaf = 3, petal = 2 }
+rule = "garden"
+fixtures = [
+  { name = "bean row", pos = [3, 2], plant = true },
+  { name = "berry bush", pos = [9, 5], plant = true },
+  { name = "herb patch", pos = [5, 6], plant = true },
+  { name = "old bench", pos = [9, 2], rest = 2.5, cozy = true },
+  { name = "bird bath", pos = [2, 5] },
+]
+
+[rooms.cellar]
+name = "the cellar"
+feel = "stone walls, damp air, hardly any light"
+regrow_hours = 10
+bits = { clay = 3, moss = 3, soot = 2 }
+rule = "cellar"
+fixtures = [
+  { name = "barrel", pos = [2, 2] },
+  { name = "shelf", pos = [9, 1] },
+  { name = "lantern", pos = [5, 1], light = "off" },
+  { name = "old rug", pos = [8, 5], movable = true, soft = 1.0 },
+]
+
+[rooms.attic]
+name = "the attic"
+feel = "beams overhead, dust in the air, a skylight"
+window = true
+regrow_hours = 12
+bits = { feather = 3, cloth = 2, wood = 2 }
+rule = "attic"
+fixtures = [
+  { name = "skylight", pos = [5, 0], window = true },
+  { name = "trunk", pos = [2, 2], states = ["closed", "open"] },
+  { name = "rocking chair", pos = [9, 5], rest = 2.5, cozy = true },
+  { name = "sun shaft", pos = [5, 3], sun = true },
+]
+
+[rooms.pond]
+name = "the pond room"
+feel = "still water under a glass roof, reeds at the edge"
+window = true
+regrow_hours = 10
+bits = { shell = 3, bead = 2, reed = 3 }
+rule = "pond"
+fixtures = [
+  { name = "pond", pos = [5, 4], water = [[4, 3], [5, 3], [6, 3], [4, 4], [5, 4], [6, 4], [5, 5], [6, 5]] },
+  { name = "reeds", pos = [8, 3] },
+  { name = "flat stone", pos = [2, 5], rest = 2.5 },
+]
+
+[rooms.workshop]
+name = "the workshop"
+feel = "benches, tools on hooks, shavings on the floor"
+window = true
+regrow_hours = 12
+bits = { wire = 3, wood = 2, metal = 2 }
+rule = "workshop"
+fixtures = [
+  { name = "workbench", pos = [5, 2], bench = true },
+  { name = "work lamp", pos = [2, 1], light = "off" },
+  { name = "stool", pos = [8, 5], movable = true },
+  { name = "window", pos = [0, 2], window = true },
+]
+
+[rooms.music]
+name = "the music room"
+feel = "rugs on the floor and instruments left where someone put them down"
+window = true
+regrow_hours = 12
+bits = { string = 2, bell = 3, felt = 2 }
+rule = "music"
+fixtures = [
+  { name = "drum", pos = [3, 3], toy = 2.0, loud = true },
+  { name = "chimes", pos = [8, 2], toy = 2.0, loud = true },
+  { name = "rug", pos = [6, 5], soft = 1.5, cozy = true },
+  { name = "window", pos = [0, 2], window = true },
+]
+
+[rooms.greenhouse]
+name = "the greenhouse"
+feel = "glass all round, warm air, vines up the frames"
+outdoors = true
+glass = true
+regrow_hours = 8
+bits = { resin = 2, vine = 3, petal = 3 }
+rule = "greenhouse"
+fixtures = [
+  { name = "tomato vine", pos = [3, 2], plant = true },
+  { name = "melon bed", pos = [8, 5], plant = true },
+  { name = "hot pipe", pos = [10, 1] },
+]
+
+[rooms.storeroom]
+name = "the storeroom"
+feel = "shelves and crates, no window, the dark of a place nobody goes"
+regrow_hours = 24
+bits = "any"              # a little of everything: four kinds, picked when the room is first found
+rule = "storeroom"
+fixtures = [
+  { name = "crates", pos = [3, 2] },
+  { name = "shelves", pos = [9, 2] },
+  { name = "old lantern", pos = [6, 1], light = "off" },
+]
+
+# ---- each room's own rule (§6.1): hidden, felt through senses ----
+
+[rules.nursery]           # the v2 rules live here: the plant by the window
+[rules.garden]
+ripe_days = 2.0           # a plant takes this long to be worth eating; rain and the season change it
+rain_growth = 2.0
+fresh = 0.3               # comfort in the garden while it rains
+[rules.cellar]
+cold_night = -0.5         # comfort at night down here
+damp_hours = 16           # a soft thing left this long on the cellar floor goes damp and gives half
+[rules.attic]
+sun = 0.6                 # comfort while standing in the sun shaft
+dust_days = 2             # a made thing nobody has used this long is dusty: its first use gives half and a sneeze
+[rules.pond]
+rest = 1.5                # resting here restores this many times as much
+[rules.workshop]
+combine = 0.5             # combining here takes this much of the usual effort
+loud = 2.0                # noisy things are this many times as loud
+[rules.music]
+linger = 0.3              # curiosity per 10 s in neighbouring rooms while something here sounds
+[rules.greenhouse]
+warm_day = 0.3            # comfort by day, in any season
+growth = 2.0
+[rules.storeroom]
+dark = 0.5                # looking at things here gives this much of the usual interest unless a light is on
+
+# ---- seasons and weather (§6.4) ----
+
+[seasons.spring]
+sunrise = 6.0
+sunset = 18.5
+growth = 1.2
+cold = 0.0
+weather = { clear = 4, cloudy = 3, rain = 3, storm = 1 }
+[seasons.summer]
+sunrise = 5.0
+sunset = 20.0
+growth = 1.5
+cold = 0.0
+weather = { clear = 5, cloudy = 2, rain = 1, storm = 1, heat = 2 }
+[seasons.autumn]
+sunrise = 6.5
+sunset = 18.0
+growth = 0.7
+cold = -0.1
+weather = { clear = 3, cloudy = 3, rain = 4, storm = 1 }
+[seasons.winter]
+sunrise = 7.5
+sunset = 16.5
+growth = 0.2
+cold = -0.3               # comfort at night, away from anything warm
+weather = { clear = 3, cloudy = 3, snow = 4, storm = 1 }
+
+[weather]
+storm_power_cut = 0.5     # chance a storm takes the power for part of the day
+storm = -0.2              # comfort while the storm is overhead, unless someone is near
+heat = -0.15              # energy by day in the heat, except in the cellar and by the pond
+snow_cold = -0.2          # extra cold on a day of snow
+
+# ---- things that happen on their own (§6.5) ----
+
+[events]
+every_hours = 9           # about one event this often; sooner when the house has gone quiet, later in a crisis
+quiet_hours = 6           # "quiet": no moment worth the name for this long
+power_cut_hours = [1, 3]
+leak_hours = [2, 5]
+draught_hours = [1, 3]
+delivery_bits = 4
+drift_after_days = 5      # the one rule change of a lineage comes some time after this
+kinds = { power_cut = 2, leak = 2, draught = 2, delivery = 3, lost_thing = 2 }
+
+# ---- small creatures (§6.5): scripted, never a model ----
+
+[creatures.moth]
+when = "night"            # comes to a lit light, circles it, leaves when the light goes or the day comes
+eats_hours = 2            # a soft thing left this long beside its light gets moth-eaten and gives half
+[creatures.beetle]
+when = "day"
+carry_chance = 0.4        # it picks up a loose bit it passes and puts it down somewhere else
+[creatures.mouse]
+when = "any"
+home = "cellar"           # or the darkest room found so far
+shy = 3                   # keeps this many tiles from a pet that is moving
+trust_to_wait = 3         # fed this many times by one pet, it starts waiting for that pet in the morning
+[creatures.bird]
+when = "morning"
+home = "garden"

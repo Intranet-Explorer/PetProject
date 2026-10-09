@@ -20,7 +20,7 @@ def colour(hue):
 
 def mutations(g, rng, stage):
     """Three different nudges of 2-3 parameters each. Limbs only once it is a child."""
-    keys = list(RANGES) + ["hue", "pattern"] + (["limbs"] if stage in ("child", "youngling", "adult") else [])
+    keys = list(RANGES) + ["hue", "pattern"] + (["limbs"] if stage in ("child", "youngling", "adult", "elder") else [])
     out = []
     while len(out) < 3:
         m = dict(g, marks=list(g["marks"]))
@@ -67,14 +67,30 @@ def describe(g):
     return text + "".join("; it has %s" % m for m in g["marks"])
 
 
-def update_marks(w, cfg):
+def update_marks(house, cfg, pet):
     """Permanent marks from what has happened to it. Never removed. Returns a new mark, if one appeared."""
-    g = w["pet"]["genome"]
-    (x, y), (wx, wy) = w["pet"]["pos"], w["objects"]["window"]["pos"]
-    w["near_window"] += cfg["dt"] * (max(abs(x - wx), abs(y - wy)) <= 2)
-    for mark, earned in (("a small notch", w["pet"]["needs"]["comfort"] <= 0),          # comfort hit 0
-                         ("a faded patch", w["near_window"] * 10 >= cfg["marks"]["window_patch_seconds"])):
+    g, room = pet["genome"], house["rooms"][pet["room"]]
+    window = next((o for o in room["objects"].values() if o.get("fix", {}).get("window")), None)
+    if window:
+        pet["near_window"] += cfg["dt"] * (max(abs(pet["pos"][0] - window["pos"][0]), abs(pet["pos"][1] - window["pos"][1])) <= 2)
+    for mark, earned in (("a small notch", pet["needs"]["comfort"] <= 0),                # comfort hit 0
+                         ("a faded patch", pet["near_window"] * 10 >= cfg["marks"]["window_patch_seconds"])):
         if earned and mark not in g["marks"]:
             g["marks"].append(mark)
             return mark
     return None
+
+
+def child_of(g, rng, jump=0.4):
+    """A child's body (SPEC-v3 §5.4): the parent's with one round of the nightly mutation, and now and then one
+    bigger jump: a new pattern, a limb, or a hue more than 45 degrees away. Marks are earned, not inherited."""
+    child = mutations(dict(g, marks=[]), rng, "child")[0]
+    if rng.random() < jump:
+        kind = rng.choice(["pattern", "limbs", "hue"])
+        if kind == "pattern":
+            child["pattern"] = rng.choice([p for p in PATTERNS if p != child["pattern"]])
+        elif kind == "limbs":
+            child["limbs"] = max(0, min(4, child["limbs"] + rng.choice([-1, 1, 1])))
+        else:
+            child["hue"] = round(child["hue"] + rng.choice([-1, 1]) * rng.uniform(50, 120)) % 360
+    return child
