@@ -48,6 +48,10 @@ night_tokens = 8000       # cap on a sleep call, thinking included
 calls_per_hour = 150      # across all pets; routine thoughts slow down to stay under it, urgent ones never wait for it
 
 [effects]                 # what the plain actions do; a pet is told none of the numbers
+drift = { energy = -0.2, comfort = -0.1, curiosity = -0.3 }   # per 10 s, just from being awake
+cozy = 0.3                # comfort per 10 s beside a bed, a blanket, a rug
+open_window = -0.5        # comfort per 10 s at night in a room with the window open
+yours = 0.2               # comfort per 10 s beside a thing of its own that it has kept a world day (§3.3)
 rest_per_10s = 2.0        # energy while resting; a bed or bench has its own figure in house.toml
 observe = { curiosity = 0.5 }
 look = { curiosity = 1.0 }
@@ -113,7 +117,10 @@ parts = { hatchling = 2, child = 3, youngling = 3, adult = 3, elder = 3 }   # a 
 hour = 23
 wake_hour = 6
 energy_below = 30
-restore_per_hour = 12.0   # energy per world hour asleep, so a night is worth the same on any clock
+restore_per_10s = 0.4     # energy while asleep. In real seconds like every other rate: a short day drains less and restores less
+comfort_per_10s = 0.15    # comfort while asleep in the dark, up to ...
+comfort_cap = 60          # ... this, or
+cozy_cap = 75             # ... this when it sleeps by a bed or a blanket. With a light on it gains nothing and wakes saying so.
 think = "medium"          # reasoning effort for the night's work; the showcase used "low" to fit a short night
 
 [beliefs]

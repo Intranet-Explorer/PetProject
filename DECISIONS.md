@@ -196,3 +196,29 @@ README.md's history and NOTES.md.)
   and company, the plant by the window, and the one known falsehood in the first mother's message: that the
   lamp keeps the dark from hurting).
 - **The chronicle's paragraph is asked at each midnight** for the day just ended, at the lowest priority.
+
+## Found by the turbo smoke run (one real-model life, before the showcase)
+
+- **Comfort could not be won.** By the second day the smoke pet's comfort was at zero and had only ever
+  fallen: the same chronic low comfort v2.5 ended with. Nothing it did raised it, the things that would
+  (the bed, the blanket) gave no sign of it, three warm "glows" made after its mother's advice each cost
+  comfort by day and added up, and a leak, a draught and a lit lamp did the rest. Changed, all in the
+  direction FINDINGS points (a pressure has to be felt, and so does its remedy):
+  - standing beside a bed, blanket or rug is noticed ("it is snug here by the bed"), and an uneasy pet
+    notices that the bed "looks like somewhere you could settle";
+  - like things no longer add up: beside five warm things it feels the warmest one, not five;
+  - sleep in the dark eases comfort (up to 60, or 75 by a bed or blanket), sleep under a light does not, and
+    it wakes knowing which it had ("you slept badly: there was a light on you all night"). This gives the v2
+    lights rule a second, slower way to be felt, and it is the direct test of the first mother's one false
+    claim, that the lamp keeps the dark from hurting;
+  - a leak and a draught cost a little less (they last hours on the real clock).
+- **Rates stay in real seconds on every clock.** I briefly made sleep restore energy by the world hour so a
+  short showcase night would be "worth a night". That was wrong: every waking rate is per real second, because
+  what a pet can do about a need is bound by how often it thinks, so a short day drains a quarter as much and
+  should restore a quarter as much. Reverted.
+- **Boredom points at the untried door.** A day and a half in, the pet had not left the nursery (its mother
+  told it to stay near the lamp). A bored pet now notices "you wonder what is through the east door"; a timid
+  one only when properly bored.
+- **Inherited meter-talk.** The check flagged the hatchling's thoughts for the word "costs": it was quoting
+  its v2 mother ("it costs less than either alone"). Counted as the spec says; noted because it shows the
+  way a parent's vocabulary comes down with the message.

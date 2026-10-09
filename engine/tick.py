@@ -441,11 +441,23 @@ class Mind:
                 add_event(h, other, "%s has fallen asleep" % actions.handle(h, other, pet))
         if not pet["sleep"]["done"] and self.night is None:
             self.night = self.eng.spawn(sleep.night(self))
-        pet["needs"]["energy"] = min(100.0, pet["needs"]["energy"] + cfg["sleep"]["restore_per_hour"] / cfg["ticks_per_hour"])
+        pet["needs"]["energy"] = min(100.0, pet["needs"]["energy"] + cfg["sleep"]["restore_per_10s"] * cfg["dt"])
+        room = h["rooms"][pet["room"]]
+        if things.light_on(h, cfg, room) and room["type"] not in physics.NO_HARSH_LIGHT:
+            pet["sleep"]["lit"] = pet["sleep"].get("lit", 0) + 1
+        else:   # sleep in the dark eases it; by a bed or blanket, more (the v2 lights rule, felt over a whole night)
+            snug = any(o.get("fix", {}).get("cozy") and dist(pet["pos"], o["pos"]) <= 1 for o in room["objects"].values())
+            cap = cfg["sleep"]["cozy_cap" if snug else "comfort_cap"]
+            pet["sleep"]["snug"] = snug
+            if pet["needs"]["comfort"] < cap:
+                pet["needs"]["comfort"] = min(cap, pet["needs"]["comfort"] + cfg["sleep"]["comfort_per_10s"] * cfg["dt"])
         if pet["sleep"]["done"] and h["clock"]["phase"] != "night":
             dream = pet["last_night"]["dream"]
             pet["events"] = []   # the reset: only journal, beliefs and self carry into the new day
-            add_event(h, pet, "you woke up" + ('. you remember thinking: "%s"' % dream if dream else ""))
+            slept = h["tick"] - pet["sleep"]["since"]
+            how = "you slept badly: there was a light on you all night" if pet["sleep"].get("lit", 0) > slept / 2 \
+                else "you slept well, snug" if pet["sleep"].get("snug") else "you slept well in the dark"
+            add_event(h, pet, "you woke up; %s" % how + ('. you remember thinking: "%s"' % dream if dream else ""))
             pet["news"].append("woke")
             pet["sleep"], pet["phase_seen"], self.night, self.today = None, h["clock"]["phase"], None, []
             N = cfg["novelty"]

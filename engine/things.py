@@ -312,7 +312,7 @@ def standing(house, cfg, pet):
                 out.append(("glassy", need, rate, n, "the %s scatters the sunlight" % n))
         kept = house["tick"] - o["made"]["tick"] >= cfg["ticks_per_day"]
         if close and kept and o["made"]["owner"] == pet["id"] and not any(t[0] == "yours" for t in out):
-            out.append(("yours", "comfort", 0.2, n, "the %s feels like yours" % n))   # kept things pay (§3.3)
+            out.append(("yours", "comfort", cfg["effects"]["yours"], n, "the %s feels like yours" % n))   # kept things pay (§3.3)
     return out
 
 

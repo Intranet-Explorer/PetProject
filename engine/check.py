@@ -356,6 +356,7 @@ async def main():
         assert pet["sleep"] and pet["sleep"]["done"] and pet["diary"][-1]["dream"].startswith("I rested")
         at(eng, 7, day=h["clock"]["day"] + 1)
         await eng.tick()
+        assert "slept badly: there was a light on" in " ".join(e for _, e in pet["events"]), "a night under a light is felt on waking"
         assert not pet["sleep"] and "woke" in " ".join(e for _, e in pet["events"]) and "your project: make the nursery soft" in mind.perceive(h, cfg, pet, m.mem)[0]
 
         # the queue: urgent before routine, and a budget that slows only routine thoughts
