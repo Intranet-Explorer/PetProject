@@ -228,3 +228,9 @@ README.md's history and NOTES.md.)
   take much interest in it"). Needs that can be traded off one for one let a pet live at zero in one of them.
 - **Beliefs can be 220 characters.** At 140 and then 160 the model's beliefs kept being cut ("…only a different
   B"). They end on a whole sentence or, failing that, a whole word and an ellipsis.
+- **One model call at a time.** Measured on this Mac with the real packet and schema, six calls each way,
+  Ollama restarted between settings: with `OLLAMA_NUM_PARALLEL=2`, one at a time took 20.7 s (7.4 ms per
+  character of reply) and two at a time 23.3 s (7.3 ms per character). No throughput to be had, and the second
+  slot costs memory. `model.parallel` stays 1 and Ollama was put back to its default.
+- **Night calls are capped for the showcase** at 3,000 tokens with reasoning effort "low": 42 s for the first
+  night's thinking, against several minutes uncapped in v2.
