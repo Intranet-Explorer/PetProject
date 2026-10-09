@@ -46,7 +46,7 @@ All times are real time. "Fast clock" is a world day every 30 minutes; the real 
 | `data.v2.3-first` | V2.3 | fast | 2.4 h | 2 things, 1 useful, never a Child |
 | `data.v2.3` | V2.3 | fast | 3.8 h | became a Child at 3.5 h, after senses were added |
 | throwaway Adult | V2.4 | fast | 20 min | started as an Adult to see teaching and a self-portrait |
-| `data` | V2.5 | real | 14.6 h and running | Child on day 3, Youngling on day 8 |
+| `data` | V2.5 | real | 18.4 h and running | Child on day 3, Youngling on day 8, Adult on day 9 |
 
 The `data*` folders are not in the repository; they are large and local.
 
@@ -163,7 +163,10 @@ The pattern is the same as with senses: pressure it cannot perceive produces a s
 
 ## Adult: teaching and self-portraits
 
-Seen only on a throwaway life started as an Adult, since a pet needs 8 days and 8 useful things to get there.
+First seen on a throwaway life started as an Adult. The long run then got there on its own, on the morning of
+world day 9, 16.5 real hours in: it taught a thing within half a minute, and drew itself that night as an
+orange circle with two black circles at the top and one orange triangle below, when its body was round,
+orange and one-limbed. As an Adult it combines in chains, each result feeding the next, up to six parts.
 
 - **It taught on its own, five times in a day,** all to one thing: hum when it rests, hum when alone, hum when
   touched, dim at night, follow when alone. It noticed the curiosity from teaching falling off.
@@ -179,7 +182,7 @@ Seen only on a throwaway life started as an Adult, since a pet needs 8 days and 
 - **Several are wrong about cause and have stayed for days:** the music box "toggles between playing and silent
   on its own" (it toggles it itself; this reappears in nearly every life); its lights "can turn off on their own";
   "the lamp provides comfort; toggling it off causes a comfort loss".
-- **It revises beliefs but has never discarded one** in any v2 life. The long run holds 13.
+- **It revises beliefs but has never discarded one** in any v2 life. The long run holds 17.
 
 ## What it has not done
 
@@ -188,7 +191,8 @@ Seen only on a throwaway life started as an Adult, since a pet needs 8 days and 
   to a visitor's "hello!": "Look at this! It changes!" And once to an empty room: "Hello? I am ready for
   something new. Please come and change the room."
 - It made nothing with more than one part until its 24th thing in the long run.
-- It has never put out the lamp for the night as a habit, and still believes the lamp gives comfort.
+- It has put out the last light for the night on purpose once, 14 hours in. It is not a habit, and it still
+  holds the belief that the lamp gives comfort.
 - It has never painted the room, or used the hard, dark or heavy materials.
 - In v2 it has never eaten twice within the hour, so the third hidden rule has never fired for it.
 
@@ -196,7 +200,7 @@ Seen only on a throwaway life started as an Adult, since a pet needs 8 days and 
 
 - The view's controls have been driven by the self-check and by direct messages, and the page has been
   looked at in a headless browser. Nobody had clicked them until the first feed and poke on the long run.
-- The promotion into Adult has not happened on a live pet; only the self-check covers its counts.
+- The promotion into Adult has now happened on a live pet, once.
 - Behaviors conditioned on the visitor have not been triggered by a visitor.
 - Combining has now been used by a live pet, twice. Painting has only been exercised by the self-check.
 - The twin is off in v2 and has only been run by the self-check since.
@@ -207,6 +211,7 @@ Seen only on a throwaway life started as an Adult, since a pet needs 8 days and 
 - Whether senses stay. They made the pet able to act on its world and they contradict the spec's premise.
 - Whether the narrow band of inventions is the model, the prompt, or the reward. A hatchling can only make a
   useful thing out of one material, which teaches it early that one kind of thing works.
-- Whether Youngling (5 useful things) and Adult (8) are reachable at the rate it invents, on the real clock.
+- Whether a pet without senses could reach Youngling (5 useful things) and Adult (8) at all. With them, the
+  long run reached Adult in 16.5 hours, as early as the 8-day requirement allows.
 - The spec's own: the pet's name, whether made things survive across lives, and whether the visitor should
   see an intention before it is carried out.

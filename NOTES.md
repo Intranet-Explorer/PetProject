@@ -415,3 +415,27 @@ glows, it does not hum). As an Adult its voice dropped to a base of about 313 Hz
 
 So with sound on, an awake pet is heard about once a minute, nearly always as a trill. That may be too much
 of one sound; it is what the table in VOICE.md asks for, and it is easy to thin out if it grates.
+
+### The long run at 18.4 hours (9 Oct, 10:39)
+
+World day 10, 12:45. One failed model call in 681. The engine has not been restarted since the familiarity
+change (the voice was view-only), and has not crashed.
+
+- **It is an Adult,** promoted on waking on day 9 (tick 28500, 08:05) with 8 days lived, 8 useful things and 11
+  kept beliefs: every stage the spec defines, in 16.5 real hours. It now has 10 useful things.
+- **It taught once,** 16 ticks after the promotion: the calm glow "to glow when pet resting". Nothing since.
+- **Its first self-portrait** (night of day 9): an orange circle, two black circles at the top, and one orange
+  triangle at the bottom. Its body that night was very round, orange, with one limb.
+- **It combines now, in chains.** Six combines since becoming an Adult, each one feeding the next: twirling
+  vortex + shifting prism = prismatic vortex; + another shifting prism = twirling kaleidoscope; + pulsing orb
+  = living light sphere; + luminous bloom = pulsing star. Three of its things now have the full six parts.
+- **90 things made, 8 in the room.** Bright 29, soft 22, warm 15, bouncy 12, quiet 5, noisy 4, cool 1, sweet 1.
+  Still never hard, dark or heavy, and it has still not painted.
+- **It put out the last light on purpose for the first time,** at tick 27407 on the night of day 8, with comfort
+  low. Its hidden-rule predictions are right 62% of the time over the last 50, up from 18% at seven hours.
+  Its belief about it has moved closer without arriving: "Night-time resting causes a comfort drain of about
+  -4.2 in the passive 'apart from it' effects; this does not occur during day rests."
+- **It is still short of both comfort and curiosity:** 12 and 14 at this check; comfort under 20 at the end of
+  49% of all steps.
+- **The visitor gave it a warm gift,** which it has used five times.
+- **Still:** no name, 17 beliefs and none discarded, three utterances in all, the lamp toggled off and on.
