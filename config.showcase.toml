@@ -1,0 +1,23 @@
+# The short-life profile for the showcase (SPEC-v3 §12.1 as amended): laid over config.toml when the engine is
+# started with PET_PROFILE=showcase (./run.sh start showcase). Tuned together so that in turbo time a generation
+# reaches Adult and lays its egg in about two real hours and a whole life lasts about four.
+
+[clock]
+day_seconds = 1800        # about 18 thoughts per pet per world day at the usual think rate
+turbo = true
+
+[life]
+egg_minutes = 5
+lifespan_days = 13
+adult_days = 4
+egg_pull_days = 1
+neglect_days = 0.5
+
+[growth]
+child = 1.5
+youngling = 3
+adult = 5
+
+[house.events]            # merged over house.toml: a short life should still meet a few events
+every_hours = 7
+drift_after_days = 6

@@ -1,54 +1,154 @@
-"""The engine's front door (v1 §3, §16): the tick loop plus a websocket for the view.
-Binds to localhost and checks Origin on every connection.
+"""The engine's front door (SPEC §3, §16): the tick loop, a websocket for the view, and a few read-only pages
+of JSON for the drawer. Binds to localhost and checks Origin on every websocket.
 
-    uv run python -m engine.server
+    uv run python -m engine.server                    # the real clock
+    PET_PROFILE=showcase uv run python -m engine.server   # the short-life profile, in turbo time
 """
 import asyncio
+import gzip
+import json
 import logging
+import os
 import time
 from contextlib import asynccontextmanager
 
 import uvicorn
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, Response, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
 
-from . import actions, growth, log, things
-from .brains.model import Model
-from .brains.twin import Twin
-from .tick import Pet
-from .world import H, ROOT, W, load_config
+from . import actions, feel, life, metrics, mind, physics, story, things
+from .tick import Engine, model_brains, stub_brains
+from .world import ROOT, alive, label, load_config, power_on, relation
 
-cfg = load_config()
-DATA = ROOT / "data"
-DATA.mkdir(exist_ok=True)
-db = log.open_db(DATA / "pet.db")
-pets = {"model": Pet("model", cfg, Model(cfg, DATA / "model"), DATA, db)}
-if cfg["twin"]["enabled"]:   # the v1 baseline, headless, in its own identical copy of the world (SPEC-v2 §10)
-    pets["twin"] = Pet("twin", cfg, Twin(cfg), DATA, db)
-clients = {}   # websocket -> when it last reported an attentive visitor (0 = not attentive)
+cfg = load_config(profile=os.environ.get("PET_PROFILE") or None)
+DATA = ROOT / os.environ.get("PET_DATA", "data")
+eng = Engine(cfg, DATA, stub_brains if cfg["stub"]["enabled"] else model_brains)
+clients = {}   # websocket -> {"seen": when it last reported an attentive visitor, "room": the room it is showing}
 
 
-def visitor_present():
-    """§4: a view tab is focused and has had input in the last 5 minutes. The tab reports that itself."""
-    return any(time.time() - seen < 45 for seen in clients.values())
+def first_egg():
+    """What the first egg of a new house is given (§13 part 0): the last v2 pet's words and body."""
+    path = ROOT / "first-egg.json"
+    if not path.exists():
+        return None, None
+    d = json.loads(path.read_text())
+    return [{"by": None, "who": d["who"], "kind": "message", "text": d["message"], "tick": 0}], d["genome"]
+
+
+if not eng.house["lineage"]:
+    eng.new_lineage(*first_egg())
+
+
+def present():
+    """The room a visitor is attending to: a view tab is focused and has had input lately (SPEC §4)."""
+    live = [c for c in clients.values() if time.time() - c["seen"] < 45]
+    return live[0]["room"] if live else None
+
+
+def pet_view(p):
+    """One pet as the view needs it. Numbers are for the view and the Lab; no pet ever sees them."""
+    h = eng.house
+    out = {k: p.get(k) for k in ("id", "name", "stage", "room", "pos", "gen", "parent", "children", "word", "genome", "temper", "eggs",
+                                 "laid", "born", "died", "cause", "lineage", "stage_before")}
+    out.update(label=label(p), buried=bool(p.get("buried")), made=p.get("made", 0), useful=len(p.get("useful", [])))
+    if p["stage"] == "dead":
+        out["days"] = (p.get("life") or {}).get("days")
+        return out
+    if p["stage"] == "egg":
+        out["hatches_in"] = max(0, cfg["life"]["egg_minutes"] * 60 - (h["tick"] - p["laid"]) * cfg["clock"]["tick_seconds"])
+        return out
+    plan = p["plan"]
+    said = p["said"] if p["said"] and (h["tick"] - p["said"]["tick"]) * cfg["clock"]["tick_seconds"] <= 30 else None
+    if said:
+        to = h["pets"].get(said["to"])
+        said = dict(said, to_name="the visitor" if said["to"] == "visitor" else label(to) if to else None)
+    step = plan["steps"][min(plan["i"], len(plan["steps"]) - 1)] if plan else None
+    out.update(
+        needs={n: round(v, 1) for n, v in p["needs"].items()}, levels={n: feel.level(p, n) for n in p["needs"]},
+        feelings=feel.feelings(p), seems=feel.seems(p), doing=mind.doing(h, p), asleep=bool(p["sleep"]), thinking=p["thinking"],
+        carrying=p["carrying"], following=p["following"], weak=p["weak"], said=said, days=round(life.days(h, cfg, p), 1),
+        project=p["project"], offers=[{"from": o["from"], "kind": o["kind"]} for o in p["offers"]],
+        plan={"intention": plan["intention"], "thought": plan["thought"], "expect": plan["expect"], "i": plan["i"], "why": plan["why"],
+              "steps": [actions.words(s) for s in plan["steps"]], "acting": plan["left"] is not None} if plan else None,
+        step=step and step.get("type"), last_plan=p["last_plan"], calls_hour=len(p["calls"]), spring=p["spring"] > 0,
+        portrait=p["portraits"][-1] if p["portraits"] else None, old=life.span(cfg, p) - life.days(h, cfg, p) <= 1,
+    )
+    return out
+
+
+def room_view(r):
+    h = eng.house
+    if not r["type"]:
+        return {"id": r["id"], "cell": r["cell"], "type": None, "doors": r["doors"]}
+    objs = {}
+    for n, o in r["objects"].items():
+        v = {"pos": o["pos"], "state": o.get("state")}
+        if "made" in o:
+            m = o["made"]
+            owner = h["pets"].get(m["owner"])
+            v["made"] = {"id": m["id"], "recipe": m["recipe"], "owner": m["owner"], "owner_name": label(owner) if owner else None, "by": m["by"],
+                         "heirloom": m.get("heirloom"), "behavior": m.get("behavior"), "active": bool(o.get("active")), "uses": m["uses"],
+                         "ups": m["ups"], "useful": things.useful(m, cfg), "called": m.get("called"), "tick": m["tick"],
+                         "worn": [k for k in ("damp", "dusty", "eaten") if m.get(k)]}
+        elif "memorial" in o:
+            v["memorial"] = o["memorial"]
+        else:
+            v["fix"] = {k: (True if k == "water" else x) for k, x in o["fix"].items() if k != "states"}
+            if "water" in o["fix"]:
+                v["water"] = o["fix"]["water"]
+            if o["fix"].get("plant"):
+                v["grow"] = o["grow"]
+            if "meal" in o["fix"]:
+                v["servings"] = o["servings"]
+        objs[n] = v
+    return {"id": r["id"], "cell": r["cell"], "type": r["type"], "name": r["name"], "doors": r["doors"], "paint": r["paint"],
+            "shut": [k.split("|")[1] for k, t in h["shut"].items() if k.startswith(r["id"] + "|") and t > h["tick"]],
+            "wet": r["wet_until"] > h["tick"], "cold": r["cold_until"] > h["tick"], "lit": things.light_on(h, cfg, r),
+            "sounding": r.get("sounding_until", 0) > h["tick"], "objects": objs, "found": r["found"], "by": r["by"],
+            "spots": [{"bit": s["bit"], "pos": s["pos"]} for s in r["spots"] if s["ready"]]}
 
 
 def snapshot():
+    h = eng.house
     return {
-        "size": [W, H], "tick_seconds": cfg["clock"]["tick_seconds"], "day_seconds": cfg["clock"]["day_seconds"],
-        "visitor_present": visitor_present(),
-        "placeable": actions.placeable(pets["model"].world),
-        "materials": {m: v["says"] for m, v in cfg["materials"].items() if "says" in v},
-        "give": {"shapes": things.SHAPES, "colors": things.COLORS, "materials": things.MATERIALS},
-        "pets": {p.id: {"world": p.world, "beliefs": p.mem.beliefs, "journal": list(p.journal),
-                        "things": [dict(t, useful=things.useful(t, cfg)) for t in p.mem.things],
-                        "progress": growth.progress(p.world, cfg, p.mem),
-                        "accuracy": p.accuracy(), "series": p.series} for p in pets.values()},
+        "tick": h["tick"], "clock": h["clock"], "weather": h["weather"], "power": power_on(h), "size": [cfg["W"], cfg["H"]],
+        "tick_seconds": cfg["clock"]["tick_seconds"], "day_seconds": cfg["clock"]["day_seconds"], "turbo": cfg["clock"]["turbo"],
+        "profile": cfg["profile"], "start": h["start"], "door_tiles": h["door_tiles"], "lineage": h["lineage"],
+        "rooms": [room_view(r) for r in h["rooms"].values()], "pets": [pet_view(p) for p in h["pets"].values()],
+        "creatures": h["creatures"], "moments": h["moments"][-60:], "events": h["events"][-8:],
+        "chronicle": h["chronicle"][-1:], "visitor": present(), "population": cfg["life"]["population"],
+        "sayings": [{"text": c["text"], "gens": len(c["gens"]), "truth": c["truth"]} for c in story.sayings(h, 3)],
     }
 
 
-async def broadcast():
-    state = snapshot()
+class Recorder:
+    """Keeps what the view was sent, a few times a world minute, so a run can be played back afterwards
+    (SPEC-v3 amendment: a turbo run is replayed, not watched live). One gzipped file of lines per world day."""
+
+    def __init__(self):
+        self.dir, self.day, self.file = DATA / "replay", None, None
+
+    def write(self, snap):
+        if snap["tick"] % cfg["replay"]["every_ticks"] or not snap["lineage"]:
+            return
+        key = (snap["lineage"]["id"], snap["clock"]["day"])
+        if key != self.day:
+            if self.file:
+                self.file.close()
+            d = self.dir / ("lineage-%d" % key[0])
+            d.mkdir(parents=True, exist_ok=True)
+            self.day, self.file = key, gzip.open(d / ("day-%04d.jsonl.gz" % key[1]), "at")
+            for old in sorted(d.glob("day-*.jsonl.gz"))[:-cfg["replay"]["keep_days"]]:
+                old.unlink()
+        self.file.write(json.dumps(snap) + "\n")
+        self.file.flush()
+
+
+recorder = Recorder()
+
+
+async def broadcast(state=None):
+    state = state or snapshot()
     for sock in list(clients):
         try:
             await sock.send_json(state)
@@ -57,19 +157,29 @@ async def broadcast():
 
 
 async def loop():
-    # A crash can land between two pets' saves. Bring whichever is behind level, so they stay tick for tick.
-    while len({p.world["tick"] for p in pets.values()}) > 1:
-        await min(pets.values(), key=lambda p: p.world["tick"]).tick(False)
+    turbo, sent = cfg["clock"]["turbo"], 0.0
     while True:
         started = time.monotonic()
         try:
-            present = visitor_present()
-            for p in pets.values():   # a tick never waits for the model; thoughts land when they are ready
-                await p.tick(present)
-            await broadcast()
-        except Exception:   # one bad tick must not end a two-week run
+            ended = eng.house["lineage"]["ended"] is not None
+            if ended and cfg["life"]["auto_lineage"]:
+                eng.new_lineage()
+            elif ended or (turbo and eng.busy()):   # an empty house waits to be started again; in turbo the world waits for a thought
+                await asyncio.sleep(1.0 if ended else 0.02)
+                if ended and time.monotonic() - sent > 2:
+                    sent = time.monotonic()
+                    await broadcast()
+                continue
+            await eng.tick(present())
+            state = snapshot()
+            recorder.write(state)
+            if not turbo or time.monotonic() - sent > 0.2:
+                sent = time.monotonic()
+                await broadcast(state)
+        except Exception:   # one bad tick must not end a long run
             logging.exception("tick failed")
-        await asyncio.sleep(max(0.0, cfg["clock"]["tick_seconds"] - (time.monotonic() - started)))
+            await asyncio.sleep(0.5)
+        await asyncio.sleep(0 if turbo else max(0.0, cfg["clock"]["tick_seconds"] - (time.monotonic() - started)))
 
 
 @asynccontextmanager
@@ -77,6 +187,7 @@ async def lifespan(app):
     task = asyncio.create_task(loop())
     yield
     task.cancel()
+    eng.save()
 
 
 app = FastAPI(lifespan=lifespan)
@@ -88,24 +199,106 @@ async def ws(sock: WebSocket):
         await sock.close(code=1008)
         return
     await sock.accept()
-    clients[sock] = 0
+    clients[sock] = {"seen": 0, "room": None}
     try:
-        await sock.send_json(snapshot())
+        await sock.send_json(dict(snapshot(), hello={
+            "bits": cfg["house"]["bits"], "properties": {m: v["says"] for m, v in cfg["materials"].items() if isinstance(v, dict) and "says" in v},
+            "rooms": {t: {"name": r["name"], "feel": r["feel"]} for t, r in cfg["house"]["rooms"].items()}}))
         while True:
             msg = await sock.receive_json()
             if not isinstance(msg, dict):
                 continue
             if msg.get("type") == "presence":
-                clients[sock] = time.time() if msg.get("active") is True else 0
-            elif all([actions.visit(p.world, msg, p.mem, cfg) for p in pets.values()]):   # every pet's world gets the same visit
-                for p in pets.values():
-                    p.world["news"].append("visitor")
-                    p.save()
-                await broadcast()
+                clients[sock] = {"seen": time.time() if msg.get("active") is True else 0, "room": msg.get("room")}
+            elif msg.get("type") == "new_lineage":
+                if eng.house["lineage"]["ended"] is not None:   # only once the house is empty; the old family's things stay (§4.2)
+                    eng.new_lineage()
+            else:
+                error = actions.visit(eng.house, cfg, msg)
+                if error:
+                    await sock.send_json({"error": error})
+                else:
+                    eng.save()
+                    await broadcast()
     except (WebSocketDisconnect, ValueError):
         pass
     finally:
         clients.pop(sock, None)
+
+
+def beliefs_of(p):
+    if p["id"] in eng.minds:
+        return eng.minds[p["id"]].mem.beliefs
+    path = eng.lineage_dir(p["lineage"]) / p["id"] / "beliefs.json"
+    return json.loads(path.read_text()) if path.exists() else []
+
+
+@app.get("/api/pet/{pid}")
+async def api_pet(pid: str):
+    """Everything about one pet for the Mind tab: what it believes, what it was told, what it has just done."""
+    h, p = eng.house, eng.house["pets"].get(pid)
+    if not p:
+        raise HTTPException(404)
+    m = eng.minds.get(pid)
+    out = {"pet": pet_view(p), "beliefs": beliefs_of(p), "told": p.get("told", []), "message": p.get("message", []), "life": p.get("life")}
+    if m:
+        kin = lambda q: {"id": q["id"], "name": label(q), "relation": relation(h, p, q)}
+        out.update(
+            journal=list(m.journal), diary=p["diary"], projects=p["projects"], accuracy=m.accuracy(), series=m.series[-200:],
+            senses=physics.senses(h, cfg, p), packet=getattr(m, "last_packet", None), exploits=p["exploits"], met=p["met"], trust=p["trust"],
+            rooms=[h["rooms"][r]["name"] for r in p["rooms"]], known=[dict(kin(h["pets"][k]), line=v) for k, v in p["known"].items() if k in h["pets"]],
+            kin=[kin(q) for q in h["pets"].values() if q["id"] != pid and relation(h, p, q)], portraits=p["portraits"][-6:],
+            bodies=p["bodies"], meter=p["meter"], wellbeing=round(life.wellbeing(p)), cuts=p.get("cuts", 0),
+            things=story.made_by(h, p)[:30])
+    return out
+
+
+@app.get("/api/family")
+async def api_family():
+    h = eng.house
+    heir = [{"name": n, "room": r["name"], "recipe": o["made"]["recipe"], "line": [label(h["pets"][x]) if x in h["pets"] else x for x in o["made"]["heirloom"]["line"]],
+             "to": [label(h["pets"][x]) for x in o["made"]["heirloom"]["to"] if x in h["pets"]]}
+            for r in h["rooms"].values() if r["type"] for n, o in things.made(r).items() if o["made"].get("heirloom")]
+    says = [{"text": c["text"], "gens": c["gens"], "truth": c["truth"], "first": c["first"], "forms": c["forms"],
+             "pets": [{"id": x, "name": label(h["pets"][x]) if x in h["pets"] else x} for x in c["pets"]]} for c in story.sayings(h, 8)]
+    return {"pets": [pet_view(p) for p in h["pets"].values()], "sayings": says, "heirlooms": heir, "lineage": h["lineage"],
+            "records": {p["id"]: p["life"] for p in h["pets"].values() if p.get("life")}}
+
+
+@app.get("/api/story")
+async def api_story():
+    h = eng.house
+    rows = eng.db.execute("SELECT n, tick, day, hour, kind, text, pet, room FROM moments ORDER BY n DESC LIMIT 600").fetchall()
+    keys = ("n", "tick", "day", "hour", "kind", "text", "pet", "room")
+    dead = sorted((p for p in h["pets"].values() if p.get("life")), key=lambda p: -p["died"])
+    return {"chronicle": h["chronicle"][::-1], "moments": [dict(zip(keys, r)) for r in rows], "day": h["clock"]["day"],
+            "records": [p["life"] for p in dead][:20], "lineage": h["lineage"], "nobody": not alive(h)}
+
+
+@app.get("/api/lab")
+async def api_lab():
+    return metrics.lab(eng.db, eng.house, cfg, beliefs_of)
+
+
+@app.get("/api/things")
+async def api_things():
+    h = eng.house
+    return {"gone": h["gone_things"][-60:][::-1]}
+
+
+@app.get("/api/replay")
+async def api_replay():
+    """Which days of which lineages can be played back."""
+    root = DATA / "replay"
+    return {d.name: sorted(int(f.name[4:8]) for f in d.glob("day-*.jsonl.gz")) for d in sorted(root.glob("lineage-*"))} if root.exists() else {}
+
+
+@app.get("/api/replay/{lineage}/{day}")
+async def api_replay_day(lineage: int, day: int):
+    path = DATA / "replay" / ("lineage-%d" % lineage) / ("day-%04d.jsonl.gz" % day)
+    if not path.exists():
+        raise HTTPException(404)
+    return Response(path.read_bytes(), media_type="application/x-ndjson", headers={"Content-Encoding": "gzip"})
 
 
 if (ROOT / "view" / "dist").exists():

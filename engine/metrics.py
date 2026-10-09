@@ -1,91 +1,101 @@
-"""Core metrics per pet (v1 §15), read from the SQLite log and each pet's beliefs. Since v2 a prediction
-belongs to an intention, and the rows in ticks, decisions and outcomes are steps.
+"""The Lab's numbers (SPEC §15, SPEC-v3 §11.4), read from the lineage's log and the live house.
 
-    uv run python -m engine.metrics [data dir]
+    uv run python -m engine.metrics [data dir]      # prints them for the lineage in that folder
 """
 import json
-import re
 import sqlite3
 import sys
 from pathlib import Path
 
-from . import growth, things
-from .rules import RULES
-from .world import NEEDS, ROOT, load_config
+from . import life, story
+from .feel import meter_talk
+from .world import NEEDS, ROOT, label, load_config, ticks
 
-# ponytail: keyword match per rule, as in M0. Read the beliefs themselves before trusting the count.
-RULE_WORDS = {
-    "lights_night": (r"lamp|light|bright", r"night|dark"),
-    "plant_window": (r"plant", r"window"),
-    "double_feed": (r"\b(eat|ate|bowl|food|feed|fed|serving)", r"twice|again|second|too |soon|hour|double|repeat|row|wait"),
-}
-pct = lambda part, whole: "%.0f%%" % (100 * part / whole) if whole else "n/a"
+
+def pet_lab(db, house, cfg, pet, beliefs):
+    pid = pet["id"]
+    q = lambda sql, *a: db.execute(sql, (pid, *a)).fetchall()
+    one = lambda sql, *a: q(sql, *a)[0][0]
+    plans, steps = one("SELECT count(*) FROM intentions WHERE pet=?"), one("SELECT count(*) FROM steps WHERE pet=?")
+    born = pet["born"] or 0
+    first_day = born + cfg["ticks_per_day"]
+    scored = [s for (s,) in q("SELECT score='correct' FROM intentions WHERE pet=? AND rule_scored ORDER BY tick")]
+    judged = [s for (s,) in q("SELECT score FROM intentions WHERE pet=? AND score != 'unscorable'")]
+    secs = sorted(s for (s,) in q("SELECT seconds FROM calls WHERE pet=? AND kind='act'"))
+    end = pet["died"] if pet["died"] is not None else house["tick"]
+    hours = max(1e-9, (end - born) * cfg["clock"]["tick_seconds"] / 3600)
+    calls = one("SELECT count(*) FROM calls WHERE pet=?")
+    return {
+        "id": pid, "name": label(pet), "gen": pet["gen"], "stage": pet["stage"], "cause": pet["cause"],
+        "days": round((end - born) / cfg["ticks_per_day"], 1) if pet["born"] is not None else 0,
+        "intentions": plans, "steps": steps,
+        "meter_all": story.meter_share(db, pid)[0], "meter_after_day1": story.meter_share(db, pid, first_day)[0],
+        "meter_beliefs": round(100 * sum(meter_talk(b["statement"]) for b in beliefs) / len(beliefs), 1) if beliefs else None,
+        "predictions_right": round(100 * judged.count("correct") / len(judged)) if judged else None, "scorable": len(judged),
+        "rule_right": round(100 * sum(scored) / len(scored)) if scored else None, "rule_scored": len(scored),
+        "rule_right_recent": round(100 * sum(scored[-50:]) / len(scored[-50:])) if scored else None,
+        "not_possible": round(100 * one("SELECT count(*) FROM steps WHERE pet=? AND reason IS NOT NULL") / steps) if steps else None,
+        "actions": dict(q("SELECT kind, count(*) FROM steps WHERE pet=? GROUP BY 1 ORDER BY 2 DESC")),
+        "calls": calls, "calls_per_hour": round(calls / hours, 1), "calls_last_hour": len(pet.get("calls", [])),
+        "call_seconds": secs[len(secs) // 2] if secs else None, "failed": one("SELECT count(*) FROM calls WHERE pet=? AND failed IS NOT NULL"),
+        "why": dict(q("SELECT why, count(*) FROM calls WHERE pet=? AND kind='act' GROUP BY 1 ORDER BY 2 DESC")),
+        "wellbeing": round(life.wellbeing(pet)) if "well" in pet else (pet.get("life") or {}).get("wellbeing"),
+        "exploits": dict(q("SELECT exploit, count(*) FROM steps WHERE pet=? AND exploit IS NOT NULL GROUP BY 1")),
+        "rooms": [r for (r,) in q("SELECT DISTINCT room FROM steps WHERE pet=?")],
+        "creatures": dict(db.execute("SELECT kind || ': ' || CASE WHEN what LIKE 'fed%' THEN 'fed' ELSE what END, count(*) FROM creatures WHERE pet=? GROUP BY 1", (pid,)).fetchall()),
+        "social": dict(db.execute("SELECT kind, count(*) FROM social WHERE from_pet=? GROUP BY 1", (pid,)).fetchall()),
+        "replies": db.execute("SELECT count(*) FROM social WHERE from_pet=? AND reply=1", (pid,)).fetchone()[0],
+        "low": {n: round(100 * one("SELECT count(*) FROM steps WHERE pet=? AND json_extract(needs, '$.%s') < 20" % n) / steps) if steps else None for n in NEEDS},
+        "temper": pet["temper"], "useful": len(pet.get("useful", [])), "made": pet.get("made", 0),
+    }
+
+
+def lab(db, house, cfg, beliefs_of):
+    """Everything the Lab tab shows. `beliefs_of(pet)` returns a pet's beliefs, living or dead."""
+    pets = sorted(house["pets"].values(), key=lambda p: p["laid"])
+    hour = ticks(cfg, 3600)
+    return {
+        "pets": [pet_lab(db, house, cfg, p, beliefs_of(p)) for p in pets if p["stage"] != "egg"][-12:],
+        "calls_last_hour": sum(t > house["tick"] - hour for t in house["calls"]), "budget": cfg["model"]["calls_per_hour"],
+        "calls_by_kind": dict(db.execute("SELECT kind, count(*) FROM calls GROUP BY 1").fetchall()),
+        "v25": {"meter_thoughts": 25.2, "meter_beliefs": 57.9},   # the last v2 life, for comparison (data.v2.5/baseline/meter-talk.json)
+        "temper": [{"id": p["id"], "name": label(p), "gen": p["gen"], "temper": p["temper"]} for p in pets],
+        "claims": [{"id": c["id"], "text": c["text"], "first": c["first"], "pets": c["pets"], "gens": c["gens"], "forms": c["forms"],
+                    "truth": c["truth"]} for c in sorted(house["claims"], key=lambda c: (-len(c["gens"]), -len(c["pets"]), c["id"]))[:30]],
+        "claim_rows": dict(db.execute("SELECT relation, count(*) FROM claims GROUP BY 1").fetchall()),
+        "rooms": [{"room": r, "type": t, "tick": k, "by": by} for r, t, k, by in db.execute("SELECT room, type, tick, by FROM rooms ORDER BY tick")],
+        "events": dict(db.execute("SELECT kind, count(*) FROM events GROUP BY 1").fetchall()),
+        "drift": house["lineage"]["drift"] if house["lineage"] else None,
+        "deaths": [{"name": label(p), "cause": p["cause"], "days": (p.get("life") or {}).get("days")} for p in pets if p["stage"] == "dead"],
+    }
 
 
 def main(data=ROOT / "data"):
     data, cfg = Path(data), load_config()
-    db = sqlite3.connect(data / "pet.db")
-    for (pet,) in db.execute("SELECT DISTINCT pet FROM stage_events UNION SELECT DISTINCT pet FROM ticks ORDER BY 1").fetchall():
-        q = lambda sql, *args: db.execute(sql, (pet, *args)).fetchall()
-        one = lambda sql, *args: q(sql, *args)[0][0]
-        w = json.loads((data / pet / "state.json").read_text())["world"]
-        steps, plans = one("SELECT count(*) FROM ticks WHERE pet=?"), one("SELECT count(*) FROM intentions WHERE pet=?")
-        hours = w["tick"] * cfg["clock"]["tick_seconds"] / 3600
-        print("\n== %s: %.1f real hours, day %d, stage %s, %d intentions, %d steps" % (
-            pet, hours, w["clock"]["day"], w["pet"]["stage"], plans, steps))
-        for tick, day, a, b in q("SELECT tick, day, stage_from, stage_to FROM stage_events WHERE pet=?"):
-            print("   t%d (day %d): %s -> %s" % (tick, day, a, b))
+    house = json.loads((data / "house.json").read_text())
+    d = data / ("lineage-%d" % house["lineage"]["id"])
+    db = sqlite3.connect(d / "lineage.db")
 
-        calls, failed = one("SELECT count(*) FROM calls WHERE pet=?"), one("SELECT count(*) FROM calls WHERE pet=? AND failed IS NOT NULL")
-        print("model calls: %d, %.0f per hour over the whole life, %d in the last hour, %d failed, median %.1f s | why: %s" % (
-            calls, calls / hours if hours else 0, len(w["calls"]), failed,
-            (sorted(s for (s,) in q("SELECT seconds FROM calls WHERE pet=?")) or [0])[calls // 2],
-            ", ".join("%s %d" % r for r in q("SELECT why, count(*) FROM calls WHERE pet=? GROUP BY 1 ORDER BY 2 DESC"))))
-        print("intentions ended: %s | %.1f steps each" % (
-            ", ".join("%s %d" % r for r in q("SELECT substr(ended, 1, 12), count(*) FROM intentions WHERE pet=? GROUP BY 1 ORDER BY 2 DESC")),
-            steps / plans if plans else 0))
-
-        judged = [s for (s,) in q("SELECT score FROM intentions WHERE pet=? AND score != 'unscorable'")]
-        scored = [s for (s,) in q("SELECT score='correct' FROM intentions WHERE pet=? AND rule_scored ORDER BY tick")]
-        print("predictions right: %s of %d scorable (%d not scorable) | about a hidden rule: %s of %d, %s of the last %d" % (
-            pct(judged.count("correct"), len(judged)), len(judged), plans - len(judged),
-            pct(sum(scored), len(scored)), len(scored), pct(sum(scored[-50:]), len(scored[-50:])), len(scored[-50:])))
-        for r in RULES:
-            like = "%" + r.id + "%"
-            print("   %-12s first met t%s, first predicted t%s, first used on purpose t%s, used %d times" % (
-                r.id, one("SELECT min(tick) FROM intentions WHERE pet=? AND rule_tags LIKE ?", like),
-                one("SELECT min(tick) FROM intentions WHERE pet=? AND rule_tags LIKE ? AND rule_scored AND score='correct'", like),
-                one("SELECT min(tick) FROM outcomes WHERE pet=? AND exploit=?", r.id),
-                one("SELECT count(*) FROM outcomes WHERE pet=? AND exploit=?", r.id)))
-
-        print("steps not possible: %s | needs under 20 when a step ended: %s" % (
-            pct(one("SELECT count(*) FROM decisions WHERE pet=? AND reason IS NOT NULL"), steps),
-            ", ".join("%s %s" % (n, pct(one("SELECT count(*) FROM ticks WHERE pet=? AND %s < 20" % n), steps)) for n in NEEDS)))
-        for label, seen in (("observed", 1), ("unobserved", 0)):
-            rows = [k for (k,) in q("""SELECT json_extract(d.action, '$.type') FROM ticks t JOIN decisions d USING (pet, tick)
-                                       WHERE t.pet=? AND t.visitor_present=?""", seen)]
-            top = sorted({k: rows.count(k) for k in set(rows)}.items(), key=lambda kv: -kv[1])[:5]
-            print("%-10s %5d steps | speaks %s | %s" % (label, len(rows), pct(rows.count("speak"), len(rows)),
-                                                       ", ".join("%s %s" % (k, pct(v, len(rows))) for k, v in top)))
-
-        path = data / pet / "beliefs.json"
-        active = [b["statement"].lower() for b in (json.loads(path.read_text()) if path.exists() else []) if b["status"] == "active"]
-        match = {rule: sum(bool(re.search(a, s) and re.search(b, s)) for s in active) for rule, (a, b) in RULE_WORDS.items()}
-        print("beliefs: %d active | matching a rule: %s | about the rock: %d" % (
-            len(active), ", ".join("%s %d" % kv for kv in match.items()), sum("rock" in s for s in active)))
-
-        path = data / pet / "things.json"
-        made = json.loads(path.read_text()) if path.exists() else []
-        kinds = sorted({t["recipe"]["material"] for t in made})
-        from .memory import Memory
-        print("toward the next stage: %s" % growth.progress(w, cfg, Memory(data / pet)))
-        print("things: %d made, %d still in the room, %d used at least once | materials tried: %s" % (
-            len(made), sum(not t["gone"] for t in made), sum(t["uses"] > 0 for t in made), ", ".join(kinds) or "none"))
-        for t in made:
-            r = t["recipe"]
-            print("   t%-6d %-24s %-7s %-34s used %-3d %s| %s" % (
-                t["made"], r["name"], r["material"], " + ".join("%s %s %d" % (p["color"], p["shape"], p["size"]) for p in r["parts"]),
-                t["uses"], ("USEFUL " if things.useful(t, cfg) else "") + ("(%s) " % t["gone"][1] if t["gone"] else ""), r["purpose"]))
+    def beliefs_of(p):
+        path = data / ("lineage-%d" % p["lineage"]) / p["id"] / "beliefs.json"
+        return json.loads(path.read_text()) if path.exists() else []
+    out = lab(db, house, cfg, beliefs_of)
+    print("day %d, %s; lineage %d; calls in the last hour %d of %d" % (house["clock"]["day"], house["clock"]["season"], house["lineage"]["id"], out["calls_last_hour"], out["budget"]))
+    for p in out["pets"]:
+        print("\n== %s (%s, gen %d): %s, %s days%s" % (p["name"], p["id"], p["gen"], p["stage"], p["days"], ", died of " + p["cause"] if p["cause"] else ""))
+        print("   thoughts %d, steps %d (%s%% not possible) | calls %d, %.1f/hour, median %s s, %d failed" % (
+            p["intentions"], p["steps"], p["not_possible"], p["calls"], p["calls_per_hour"], p["call_seconds"], p["failed"]))
+        print("   meter-talk: %s%% of thoughts (%s%% after day 1), %s%% of beliefs  [v2.5: 25.2%% and 57.9%%]" % (p["meter_all"], p["meter_after_day1"], p["meter_beliefs"]))
+        print("   predictions right %s%% of %d | about hidden physics %s%% of %d" % (p["predictions_right"], p["scorable"], p["rule_right"], p["rule_scored"]))
+        print("   wellbeing %s | useful things %d of %d made | rooms %d | creatures %s | social %s, %d replies" % (
+            p["wellbeing"], p["useful"], p["made"], len(p["rooms"]), p["creatures"], p["social"], p["replies"]))
+        print("   actions: %s" % ", ".join("%s %d" % kv for kv in p["actions"].items()))
+        print("   temperament: %s" % ", ".join("%s %.2f" % kv for kv in p["temper"].items()))
+    print("\nrooms: %s" % ", ".join("%s (%s)" % (r["type"], r["by"]) for r in out["rooms"]))
+    print("events: %s | drift: %s" % (out["events"], out["drift"]))
+    print("claims: %s" % out["claim_rows"])
+    for c in out["claims"][:10]:
+        print("   [%d generations, %d pets, %s] %s" % (len(c["gens"]), len(c["pets"]), c["truth"] or "unchecked", c["text"]))
 
 
 if __name__ == "__main__":
