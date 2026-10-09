@@ -114,8 +114,8 @@ def schema(ctx):
         "tell": [one("tell", to={"enum": awake}, text=text(400))] if awake else [],
         "lay_egg": [one("lay_egg", name=text(16, 0), message=text(640))],
         "bequeath": [one("bequeath", what={"enum": c["mine"]}, to={"enum": c["kids"] + ["my children"]})] if c["mine"] else [],
-        "write_belief": [one("write_belief", statement=text(200), source={"enum": ["lived", "seen"] + ["told by " + t for t in c["tellers"]]})],
-        "revise_belief": [one("revise_belief", id={"enum": c["beliefs"]}, statement=text(200))] if c["beliefs"] else [],
+        "write_belief": [one("write_belief", statement=text(240), source={"enum": ["lived", "seen"] + ["told by " + t for t in c["tellers"]]})],
+        "revise_belief": [one("revise_belief", id={"enum": c["beliefs"]}, statement=text(240))] if c["beliefs"] else [],
     }
     step = {"anyOf": [x for a in c["allowed"] for x in v[a]]}
     return obj(thought={"type": "string"}, intention=text(120),
@@ -131,11 +131,11 @@ def prompt(packet, ctx):
 
 def night_schema(asks, belief_ids, tellers):
     change = {"type": "object", "properties": {
-        "type": {"enum": ["write_belief", "revise_belief"]}, "id": {"type": "string"}, "statement": text(200),
+        "type": {"enum": ["write_belief", "revise_belief"]}, "id": {"type": "string"}, "statement": text(240),
         "source": {"enum": ["lived", "seen"] + ["told by " + t for t in tellers]}}, "required": ["type", "statement"]}
     parts = {
         "dream": text(500), "changes": {"type": "array", "items": change, "maxItems": 3},
-        "review": {"type": "object", "properties": {"decision": {"enum": ["keep", "revise", "discard"]}, "statement": text(200, 0)}, "required": ["decision"]},
+        "review": {"type": "object", "properties": {"decision": {"enum": ["keep", "revise", "discard"]}, "statement": text(240, 0)}, "required": ["decision"]},
         "project": {"type": "object", "properties": {"decision": {"enum": ["keep", "set", "finish", "abandon"]}, "text": text(180, 0)}, "required": ["decision"]},
         "people": {"type": "array", "maxItems": 3, "items": obj(who={"type": "string"}, line=text(150))},
         "message": text(640), "my_life": text(860),

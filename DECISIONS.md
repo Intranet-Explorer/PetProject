@@ -222,3 +222,9 @@ README.md's history and NOTES.md.)
 - **Inherited meter-talk.** The check flagged the hatchling's thoughts for the word "costs": it was quoting
   its v2 mother ("it costs less than either alone"). Counted as the spec says; noted because it shows the
   way a parent's vocabulary comes down with the message.
+- **Misery dulls interest.** With comfort made winnable and its remedy pointed out, the smoke pet still chose
+  its fascination (a private theory about the music box) over its misery, and nothing made that a bad trade.
+  A miserable pet now gets 40% of the interest a thing would give, and is told why ("you are too miserable to
+  take much interest in it"). Needs that can be traded off one for one let a pet live at zero in one of them.
+- **Beliefs can be 220 characters.** At 140 and then 160 the model's beliefs kept being cut ("…only a different
+  B"). They end on a whole sentence or, failing that, a whole word and an ellipsis.

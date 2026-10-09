@@ -285,6 +285,9 @@ class Mind:
                     things.occasion(h, cfg, room["objects"][n], n, {"energy": v * cfg["steps"]["rest"] / 10})
             if key and self.novelty(fx, key, bool(thing), scale):
                 text += " (this has grown familiar)"   # it can tell when something has stopped being new
+            if fx.get("curiosity", 0) >= 1 and feel.level(pet, "comfort") == 4:   # a miserable creature does not play
+                fx["curiosity"] *= cfg["effects"]["miserable"]
+                text += "; you are too miserable to take much interest in it"
             for n in NEEDS:
                 pet["needs"][n] = min(100.0, max(0.0, pet["needs"][n] + fx.get(n, 0)))
             used = self.exploit(a, was)

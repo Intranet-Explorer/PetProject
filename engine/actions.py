@@ -21,8 +21,8 @@ def clean(text, limit):
 
 
 def belief(text):
-    """A belief as it is kept: at most 160 characters, ending on a whole sentence or word."""
-    return life.last_sentence(clean(text, 220), 160)
+    """A belief as it is kept: at most 220 characters, ending on a whole sentence or word."""
+    return life.last_sentence(clean(text, 260), 220)
 
 
 def filled(v):
