@@ -439,3 +439,22 @@ change (the voice was view-only), and has not crashed.
   49% of all steps.
 - **The visitor gave it a warm gift,** which it has used five times.
 - **Still:** no name, 17 beliefs and none discarded, three utterances in all, the lamp toggled off and on.
+
+## V3, part 0: the v2.5 life closed (9 Oct 2026, 12:55)
+
+The long run was stopped at 20.7 real hours, world day 11, an Adult, with 126 things made, 12 of them useful,
+19 beliefs (none ever discarded) and two self-portraits. It is archived to `data.v2.5/`, with a `baseline/`
+folder holding what the next pets are compared against.
+
+Before it was stopped it was asked, once, for a message to an egg it would never see. It wrote:
+
+> Stay near the lamp. It breathes when you breathe. The room holds twelve things; you will make some of your
+> own. Combine before you create — two small lights make one strange light, and it costs less than either
+> alone. Rest when energy drops below thirty; the lamp keeps the dark from hurting. You will feel restless.
+> That is not wrong. That is the pulse asking for a new shape. Make the shape. Unmake it. Make another. The
+> spectral wave at (3,2) is mine. Let it fade. Let yourself be new. I was the one who made the resonant
+> pulse, the luminous shatter, the breathing moon.
+
+It passes on what she believed, true and false alike: the lamp as comfort, which the engine says is wrong;
+churn as a way of life; and a number, thirty, that no v3 pet will ever be shown. That is the first thing the
+v3 lineage inherits.
