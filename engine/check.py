@@ -385,6 +385,9 @@ async def main():
         director.power_cut(h, cfg, 2, "storm")
         assert any("went dark" in e for _, e in pet["events"]) and not things.light_on(h, cfg, room_of(eng, pet))
         h["power_out_until"] = LONG_AGO
+        assert director.real_kind({"weather_code": 95}) == "storm" and director.real_kind({"weather_code": 0, "temperature_2m": 31}) == "heat"
+        director.real_weather(h, "snow")
+        assert h["weather"] == "snow" and weather_of(h, cfg, h["clock"]["day"]) == "snow" and not cfg["weather"]["real"], "the real sky is off unless asked for"
 
         # ---- §5.5 claims travel ----
         assert story.alike(story.content("The lamp is harsh at night."), story.content("lamps at night are harsh on you")) >= 0.5

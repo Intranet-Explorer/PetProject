@@ -398,3 +398,30 @@ def startle(house, cfg, room, pet):
             leave(house, cr, "took fright at the noise and flew off")
         elif cr["kind"] == "mouse":
             cr["pos"], cr["doing"] = [cfg["W"] - 1, 0], "hiding from the noise"
+
+
+# ---- the window to the real world (§6.6): optional, off by default, and never a pet's doing ----
+
+def real_kind(current):
+    """Open-Meteo's current weather as one of the house's kinds (WMO weather codes)."""
+    code, temp = current.get("weather_code", 0), current.get("temperature_2m", 15)
+    if code >= 95:
+        return "storm"
+    if code in (71, 73, 75, 77, 85, 86):
+        return "snow"
+    if 51 <= code <= 82:
+        return "rain"
+    if code in (2, 3, 45, 48):
+        return "cloudy"
+    return "heat" if temp >= 30 else "clear"
+
+
+def real_weather(house, kind):
+    """Use the sky outside for today. If the fetch failed there is nothing to call this with, and the
+    house's own weather carries on."""
+    house["real_weather"] = {"day": house["clock"]["day"], "kind": kind}
+    if kind != house["weather"]:
+        house["weather"] = kind
+        tell_all(house, SKY[kind], "phase")
+        if kind == "storm":
+            moment(house, "storm", "a storm came over the house")

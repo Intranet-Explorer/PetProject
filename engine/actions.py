@@ -492,6 +492,9 @@ def speak(house, cfg, pet, a, mem):
         else:
             add_event(house, p, '%s said%s: "%s"' % (handle(house, p, pet), " to " + handle(house, p, other) if kind == "pet" else "", text))
     house.setdefault("said", []).append(rec)
+    if not pet.get("spoke"):
+        pet["spoke"] = True
+        moment(house, "words", '%s spoke for the first time: "%s"' % (label(pet), text), pet["id"], room["id"])
     name = re.search(r"\bmy name is ([A-Za-z][\w'-]{0,15})", text, re.I)
     if name and (not pet["name"] or name.group(1).strip().lower() == pet.get("called", "").lower()):
         pet["name"] = name.group(1).strip()
