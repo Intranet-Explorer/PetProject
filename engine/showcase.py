@@ -172,6 +172,110 @@ def main(data=ROOT / "data", profile=None):
 
     print("\n## 8. It looks finished: judged from the screenshots, not from here")
     print("\nfrom the logs: " + ", ".join("%d %s" % (k, "passes" if v else "has evidence to be read" if v is None else "FAILS") for k, v in ok.items()))
+    culture(db, pets, hatched, day)
+
+
+def words(text):
+    """A text's words for counting a family's vocabulary. ponytail: plurals folded by dropping one "s", nothing cleverer."""
+    return {w[:-1] if w.endswith("s") and not w.endswith(("ss", "us", "is", "ies")) and len(w) > 4 else w
+            for w in re.findall(r"[a-z]+", (text or "").lower()) if len(w) > 3 and w not in story.STOP}
+
+
+def engine_words():
+    """Every word the engine itself can say to a pet: the strings in its code and its three tables. A word a pet
+    uses that is not here came from a pet (or from the v2.5 mother's message), not from the house."""
+    import ast
+    out = set()
+    for path in [*(ROOT / "engine").glob("*.py"), ROOT / "engine" / "brains" / "model.py"]:
+        if path.name not in ("check.py", "showcase.py", "metrics.py"):
+            out |= {w for n in ast.walk(ast.parse(path.read_text())) if isinstance(n, ast.Constant) and isinstance(n.value, str) for w in words(n.value)}
+    for name in ("house.toml", "materials.toml", "config.toml"):
+        out |= words((ROOT / name).read_text())
+    return out
+
+
+def ordinary_words(other):
+    """Words another family used on the same engine: the model's everyday vocabulary, not this family's own.
+    ponytail: one other run is the whole baseline; a word that family happened to coin too is set aside with it."""
+    n = {}
+    for path in Path(other).glob("lineage-*/lineage.db"):
+        for (t,) in sqlite3.connect(path).execute("SELECT thought FROM intentions"):
+            for w in words(t):
+                n[w] = n.get(w, 0) + 1
+    return {w for w, k in n.items() if k >= 3}
+
+
+def culture(db, pets, hatched, day):
+    """Not one of the eight. The family's own words: which a pet took from those before it, which it coined, which
+    of those its descendants went on using; and what became of two things the v2.5 mother left in her message."""
+    print("\n## The family's words (not a criterion: the vocabulary is the lineage's culture, so it is measured)")
+    before = words(next(db.execute("SELECT text FROM messages WHERE pet='before'"), [""])[0])
+    plain = ordinary_words(ROOT / "data.smoke") - before
+    house_words = engine_words() | plain
+    print("   (set aside as everyday words: %d that another family on this engine, in data.smoke, also used)" % len(plain))
+    said = {}   # pet -> [(tick, kind, text)] of everything it thought, said or wrote
+    for sql, kind in (("SELECT pet, started tick, thought || ' ' || intention text FROM intentions", "thought"),
+                      ("SELECT from_pet pet, tick, text FROM social WHERE kind IN ('speak','tell')", "said"),
+                      ("SELECT pet, tick, text FROM messages WHERE kind IN ('message','last words')", "message"),
+                      ("SELECT pet, tick, statement text FROM beliefs WHERE op IN ('write','revise')", "belief"),
+                      ("SELECT pet, tick, json_extract(action,'$.recipe.name') text FROM steps WHERE kind IN ('make','combine') AND reason IS NULL", "name")):
+        for r in db.execute(sql):
+            said.setdefault(r["pet"], []).append((r["tick"], kind, r["text"] or ""))
+    first, uses = {}, {}   # word -> (tick, pet) of its first use in the family; pet -> word -> number of texts using it
+    for pet, rows in said.items():
+        for tick, kind, text in rows:
+            for w in words(text) - house_words:
+                first[w] = min(first.get(w, (tick, pet)), (tick, pet))
+                uses.setdefault(pet, {})[w] = uses.setdefault(pet, {}).get(w, 0) + 1
+    line = lambda p: [p["parent"] or "before"] + (line(pets[p["parent"]]) if p["parent"] in pets else [])
+    below = lambda p: [q for q in hatched if p["pet"] in line(q)]
+    start = {}   # (pet, word) -> the tick the pet first used it
+    for pet, rows in said.items():
+        for tick, kind, text in sorted(rows):
+            for w in words(text) - house_words:
+                start.setdefault((pet, w), tick)
+    print("   words neither the engine nor the other family says, used in at least three of a pet's thoughts, sayings, messages, beliefs or names:")
+    for p in hatched:
+        mine = {w: n for w, n in uses.get(p["pet"], {}).items() if n >= 3}
+        took = {w for w in mine if any(start.get((a, w), 1e12) < start[(p["pet"], w)] for a in line(p))}
+        coined = {w for w in mine if first[w][1] == p["pet"]}
+        heard = set(mine) - took - coined   # first used by a child, sibling or grandchild
+        total = sum(mine.values()) or 1
+        kept = {w for w in coined if any(uses.get(q["pet"], {}).get(w, 0) >= 3 for q in below(p))}
+        top = lambda ws: ", ".join(sorted(ws, key=lambda w: -mine[w])[:8]) or "none"
+        print("   %-15s gen %d: %3d words; of their uses %2d%% inherited, %2d%% coined, %2d%% picked up from the living" % (
+            p["label"], p["gen"], len(mine), 100 * sum(mine[w] for w in took) / total, 100 * sum(mine[w] for w in coined) / total, 100 * sum(mine[w] for w in heard) / total))
+        print("      inherited: %s\n      coined: %s\n      coined and used by a descendant: %d of %d (%s)" % (top(took), top(coined), len(kept), len(coined), top(kept)))
+    thoughts = {p["pet"]: [words(r["thought"]) for r in db.execute("SELECT thought FROM intentions WHERE pet=?", (p["pet"],))] for p in hatched}
+    common = sorted({w for u in uses.values() for w in u}, key=lambda w: -sum(u.get(w, 0) for u in uses.values()))[:10]
+    print("\n   share of each pet's thoughts using the family's ten commonest words:\n   %-15s %s" % ("", " ".join("%9s" % w[:9] for w in common)))
+    for p in hatched:
+        t = thoughts[p["pet"]] or [set()]
+        print("   %-15s %s" % (p["label"], " ".join("%8d%%" % (100 * sum(w in x for x in t) / len(t)) for w in common)))
+
+    print('\n   "below thirty" (a v2 number; nothing in v3 shows a pet a number):')
+    thirty = re.compile(r"\bthirty\b|\b30\b", re.I)
+    for p in hatched:
+        rows = said.get(p["pet"], [])
+        n = {k: sum(bool(thirty.search(t)) for _, kind, t in rows if kind == k) for k in ("thought", "said", "belief")}
+        t = [x for x in rows if x[1] == "thought"]
+        # what it was given: the message it hatched with, anything told to it, and a parent's last words if it was alive to get them
+        got = [r["text"] for r in db.execute("SELECT text FROM messages WHERE to_pet=? OR (kind='last words' AND pet=? AND tick>?)", (p["pet"], p["parent"], p["born"]))]
+        wrote = [bool(thirty.search(t)) for _, kind, t in sorted(rows) if kind == "message"]
+        print("   %-15s gen %d: was given it: %-3s | thoughts %d of %d, said %d, beliefs %d | its own message: %s" % (
+            p["label"], p["gen"], "yes" if any(thirty.search(x) for x in got) else "no", n["thought"], len(t), n["said"], n["belief"],
+            "none written" if not wrote else "in %d of %d versions, %s the last" % (sum(wrote), len(wrote), "in" if wrote[-1] else "not in")))
+
+    print('\n   "Make the shape. Unmake it. Make another.":')
+    for p in hatched:
+        made = db.execute("SELECT count(*) FROM steps WHERE pet=? AND kind IN ('make','combine') AND reason IS NULL", (p["pet"],)).fetchone()[0]
+        undone = db.execute("SELECT count(*) FROM steps WHERE pet=? AND kind='unmake' AND reason IS NULL", (p["pet"],)).fetchone()[0]
+        rows = sorted(said.get(p["pet"], []))
+        t = [bool(re.search(r"unma[kd]", x, re.I)) for _, kind, x in rows if kind == "thought"]
+        wrote = [bool(re.search(r"unmake", x, re.I)) for _, kind, x in rows if kind == "message"]
+        print("   %-15s gen %d: made %d, took apart %d; \"unmake\" in %d of %d thoughts; in its message: %s" % (
+            p["label"], p["gen"], made, undone, sum(t), len(t),
+            "none written" if not wrote else "%d of %d versions, %s the last" % (sum(wrote), len(wrote), "in" if wrote[-1] else "not in")))
 
 
 if __name__ == "__main__":
