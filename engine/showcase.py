@@ -98,7 +98,7 @@ def main(data=ROOT / "data", profile=None):
     msgs = {}   # pet -> every version of the message it wrote, oldest first
     for r in db.execute("SELECT pet, text FROM messages WHERE kind IN ('message', 'last words') ORDER BY tick"):
         msgs.setdefault(r["pet"], []).append(r["text"])
-    held = corrected = 0
+    held, corrected, lines = 0, 0, []
     state = lambda sentence, texts: max((story.alike(story.content(sentence), story.content(x)) for t in texts for x in story.split(t)), default=0.0)
     for c in hatched:
         b = pets.get(c["parent"])
@@ -114,9 +114,10 @@ def main(data=ROOT / "data", profile=None):
             kind = "held" if in_c >= 0.8 else "changed" if in_c >= 0.5 else "dropped"
             held += kind == "held"
             corrected += kind != "held"
-            if held + corrected <= 14:
-                print('   %s -> %s -> %s [%s by the third; %s]: "%s"' % (
-                    "the one before" if a == "before" else pets[a]["label"], b["label"], c["label"], kind, story.truth(sentence) or "unchecked", sentence[:150]))
+            lines.append((("held", "changed", "dropped").index(kind), '   %s -> %s -> %s [%s by the third; %s]: "%s"' % (
+                "the one before" if a == "before" else pets[a]["label"], b["label"], c["label"], kind, story.truth(sentence) or "unchecked", sentence[:150])))
+    for _, text in sorted(lines, key=lambda x: x[0]):   # held first, then changed, then dropped, each in the order found
+        print(text)
     print("   over every line of three generations: %d sentences held, %d changed or dropped by the third" % (held, corrected))
     ok[4] = True if held else None if corrected else False
 
@@ -124,7 +125,9 @@ def main(data=ROOT / "data", profile=None):
     rows = dict(db.execute("SELECT kind, count(*) FROM social WHERE to_pet IS NOT NULL AND to_pet != 'visitor' GROUP BY 1").fetchall())
     replies = db.execute("SELECT count(*) FROM social WHERE reply=1").fetchone()[0]
     print("   %s; replies: %d" % (rows, replies))
-    for r in db.execute("SELECT tick, from_pet, to_pet, kind, text FROM social WHERE reply=1 ORDER BY tick LIMIT 3"):
+    there, n = db.execute("SELECT coalesce(sum(visitor_present), 0), count(*) FROM intentions").fetchone()
+    print("   the visitor was in the room for %d of %d thoughts" % (there, n))
+    for r in db.execute("SELECT tick, from_pet, to_pet, kind, text FROM social WHERE reply=1 AND kind='speak' ORDER BY tick LIMIT 3"):
         before = db.execute("SELECT from_pet, text FROM social WHERE to_pet=? AND from_pet=? AND tick<? ORDER BY tick DESC LIMIT 1", (r["from_pet"], r["to_pet"], r["tick"])).fetchone()
         if before:
             print('   %s: "%s"' % (pets[before["from_pet"]]["label"], before["text"]))
