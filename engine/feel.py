@@ -156,8 +156,8 @@ def score(text, deltas, house, pet):
 METER = re.compile(r"[+-]\s?\d|\d\s?%|\befficien|\boptimal|\boptimi[sz]|\bmaximi[sz]|\bcosts?\b|\brefund|\bactions?\b|bad target"
                    r"|\bt\d{2,}\b|\bticks?\b|\(\d+,\s?\d+\)|\bstat(s|us)?\b|\bmetric|\d\s?points?\b|\bcooldown|\bspike\b"
                    r"|\b(below|under|above|over|at|to) (ten|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|a hundred)\b", re.I)
-# "points" counts only after a number ("6 points"). On its own it flagged the showcase family's "the pulse points
-# south" 62 times and no meter-talk at all; v2.5's figure moves from 43.3% to 43.0% without it (DECISIONS, part 11).
+# "points" counts only after a number ("6 points"). On its own it flagged the first showcase family's "the pulse
+# points south" and "bright pulse point" (72 of 92 flags after the first day) and no meter-talk at all; v2.5's figure moves from 43.3% to 43.0% without it (DECISIONS, part 11).
 
 
 def meter_talk(text):
