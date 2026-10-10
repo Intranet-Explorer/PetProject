@@ -454,4 +454,11 @@ The first run is kept as `data.showcase-1`. Diagnosis from its log, and the chan
   could be seen to change. The pond's sense line also follows its drifted number now. (The earlier note that
   every room rule's line does was too broad: the workshop's rule has no line, and the self-check covers the
   cellar's.)
+- **A second run was stopped after 25 minutes and started again** (`data.showcase-2a`). Its founder walked
+  into the garden on day 2, which in that house has one door, and stayed three days with curiosity at nothing,
+  making and unmaking sweet rings "to test if a novel shape reduces boredom". Two things were mine. Curiosity
+  at 0.45 drained faster than anything a maker does could refill (it gained 0.79 a step and lost 1.22), so
+  it is back at 0.3 with the smaller gains kept. And the pull toward an untried door only looked at the room
+  the pet was in; a bored pet in a room with none now thinks of the nearest room it knows that has one, and
+  which way that is.
 

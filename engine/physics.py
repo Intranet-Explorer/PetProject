@@ -147,6 +147,18 @@ def drawn(house, cfg, pet, room, felt):
         new = [d for d, rid in room["doors"].items() if rid not in pet["rooms"] and house["shut"].get("%s|%s" % (room["id"], d), 0) <= house["tick"]]
         if new:
             out.append("the %s door is one you have never been through" % new[0])
+        else:   # none here: the nearest room it knows that still has one, and which way that is
+            seen, queue = {room["id"]}, [(rid, d) for d, rid in room["doors"].items() if rid in pet["rooms"]]
+            while queue:
+                rid, way = queue.pop(0)
+                if rid in seen:
+                    continue
+                seen.add(rid)
+                there = house["rooms"][rid]
+                if any(x not in pet["rooms"] for x in there["doors"].values()):
+                    out.append("you keep thinking of %s, through the %s door: there is a door there you have never tried" % (there["name"], way))
+                    break
+                queue += [(x, way) for x in there["doors"].values() if x in pet["rooms"]]
     # the pull between a parent and its young, while they are young: the one thing that brings kin back together
     from .actions import handle
     small = ("egg", "hatchling", "child")

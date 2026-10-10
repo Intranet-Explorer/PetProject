@@ -290,6 +290,10 @@ async def main():
         assert rate() == C["near"]
         egg["needs"]["curiosity"] = 10
         assert any("door is one you have never been through" in s for s in physics.senses(h, cfg, egg)), physics.senses(h, cfg, egg)
+        here_doors, been = h["rooms"][egg["room"]]["doors"], egg["rooms"]
+        egg["rooms"] = list(dict.fromkeys(list(been) + list(here_doors.values())))   # every door of this room tried: it thinks of the next room's
+        assert any("there is a door there you have never tried" in s for s in physics.senses(h, cfg, egg)), physics.senses(h, cfg, egg)
+        egg["rooms"] = been
         egg["needs"], egg["stage"] = was, "youngling"
         assert "what your %s told you" % word not in mind.perceive(h, cfg, egg, kid_mind.mem)[0]
         egg["stage"] = "hatchling"
