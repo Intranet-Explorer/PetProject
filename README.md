@@ -36,6 +36,7 @@ When a family dies out the view offers to start another in the same house. To st
 |---|---|
 | `./run.sh start showcase` | `config.showcase.toml`: short lives in turbo time (the world waits while the model thinks and otherwise runs straight on). About eight real hours for four generations. Watch it afterwards with Replay. |
 | `PET_PROFILE=viewdev PET_DATA=data.viewdev PET_PORT=8002 uv run python -m engine.server` | scripted brains on a quick clock, for working on the view |
+| `PET_PROFILE=showcase PET_DATA=data.showcase PET_PAUSED=1 PET_PORT=8001 uv run python -m engine.server` | open an archived run to look at and replay (http://localhost:8001/?replay=1); nothing in it moves |
 
 ## Look at it
 

@@ -3,6 +3,7 @@ of JSON for the drawer. Binds to localhost and checks Origin on every websocket.
 
     uv run python -m engine.server                    # the real clock
     PET_PROFILE=showcase uv run python -m engine.server   # the short-life profile, in turbo time
+    PET_DATA=data.showcase PET_PAUSED=1 PET_PORT=8001 uv run python -m engine.server   # look at an archived run; nothing moves
 """
 import asyncio
 import gzip
@@ -23,6 +24,7 @@ from .world import ROOT, alive, label, load_config, power_on, relation
 cfg = load_config(profile=os.environ.get("PET_PROFILE") or None)
 DATA = ROOT / os.environ.get("PET_DATA", "data")
 eng = Engine(cfg, DATA, stub_brains if cfg["stub"]["enabled"] else model_brains)
+PAUSED = bool(os.environ.get("PET_PAUSED"))   # open a finished run to look at and replay, without living it any further
 clients = {}   # websocket -> {"seen": when it last reported an attentive visitor, "room": the room it is showing}
 
 
@@ -125,7 +127,8 @@ def snapshot():
 
 class Recorder:
     """Keeps what the view was sent, a few times a world minute, so a run can be played back afterwards
-    (SPEC-v3 amendment: a turbo run is replayed, not watched live). One gzipped file of lines per world day."""
+    (SPEC-v3 amendment: a turbo run is replayed, not watched live). One file per world day; each snapshot is a
+    whole gzip stream of its own appended to it, so a kill or a power cut can cost one snapshot and no more."""
 
     def __init__(self):
         self.dir, self.day, self.file = DATA / "replay", None, None
@@ -135,15 +138,19 @@ class Recorder:
             return
         key = (snap["lineage"]["id"], snap["clock"]["day"])
         if key != self.day:
-            if self.file:
-                self.file.close()
+            self.close()
             d = self.dir / ("lineage-%d" % key[0])
             d.mkdir(parents=True, exist_ok=True)
-            self.day, self.file = key, gzip.open(d / ("day-%04d.jsonl.gz" % key[1]), "at")
+            self.day, self.file = key, open(d / ("day-%04d.jsonl.gz" % key[1]), "ab")
             for old in sorted(d.glob("day-*.jsonl.gz"))[:-cfg["replay"]["keep_days"]]:
                 old.unlink()
-        self.file.write(json.dumps(snap) + "\n")
+        self.file.write(gzip.compress((json.dumps(snap) + "\n").encode(), 6))
         self.file.flush()
+
+    def close(self):
+        if self.file:
+            self.file.close()
+            self.file = None
 
 
 recorder = Recorder()
@@ -163,8 +170,8 @@ async def loop():
     while True:
         started = time.monotonic()
         try:
-            ended = eng.house["lineage"]["ended"] is not None
-            if ended and cfg["life"]["auto_lineage"]:
+            ended = eng.house["lineage"]["ended"] is not None or PAUSED
+            if ended and cfg["life"]["auto_lineage"] and not PAUSED:
                 eng.new_lineage()
             elif ended or (turbo and eng.busy()):   # an empty house waits to be started again; in turbo the world waits for a thought
                 await asyncio.sleep(1.0 if ended else 0.02)
@@ -205,6 +212,7 @@ async def lifespan(app):
     task.cancel()
     window.cancel()
     eng.close()
+    recorder.close()
 
 
 app = FastAPI(lifespan=lifespan)

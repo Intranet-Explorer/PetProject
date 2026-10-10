@@ -7,8 +7,8 @@ import type { Snap } from "./types";
 const SPEEDS = [1, 2, 5, 10, 30, 60];
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 
-/** `seek(day, at)`: a world day and how far through it, 0 to 1. */
-export type Replay = { state: () => object; seek: (day: number, at?: number) => Promise<void>; play: (on: boolean) => void };
+/** `seek(day, at)`: a world day and how far through it, 0 to 1. `goto(day, tick)`: the first frame of that day at or after a tick. */
+export type Replay = { state: () => object; seek: (day: number, at?: number) => Promise<void>; goto: (day: number, tick: number) => Promise<void>; play: (on: boolean) => void };
 
 export async function startReplay(lineage: string, show: (s: Snap) => Promise<void> | void): Promise<Replay> {
   const q = new URLSearchParams(location.search);
@@ -85,5 +85,6 @@ export async function startReplay(lineage: string, show: (s: Snap) => Promise<vo
   if (days.length) await frame();
   else when.textContent = "nothing was recorded for this family";
   play.toggleAttribute("disabled", !days.length);
-  return { state: () => ({ lineage, day: days[d], days: days.length, frame: f, playing, speed }), seek: async (day, at = 0) => seek(days.indexOf(day), Math.floor(clamp(at, 0, 1) * ((await load(day)).length - 1))), play: setPlaying };
+  return { state: () => ({ lineage, day: days[d], days: days.length, frame: f, playing, speed }), seek: async (day, at = 0) => seek(days.indexOf(day), Math.floor(clamp(at, 0, 1) * ((await load(day)).length - 1))),
+           goto: async (day, tick) => seek(days.indexOf(day), Math.max(0, (await load(day)).findIndex((l) => (JSON.parse(l) as Snap).tick >= tick))), play: setPlaying };
 }
