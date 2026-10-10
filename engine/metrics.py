@@ -59,7 +59,7 @@ def lab(db, house, cfg, beliefs_of):
         "pets": [pet_lab(db, house, cfg, p, beliefs_of(p)) for p in pets if p["stage"] != "egg"][-12:],
         "calls_last_hour": sum(t > house["tick"] - hour for t in house["calls"]), "budget": cfg["model"]["calls_per_hour"],
         "calls_by_kind": dict(db.execute("SELECT kind, count(*) FROM calls GROUP BY 1").fetchall()),
-        "v25": {"meter_thoughts": 25.2, "meter_beliefs": 57.9},   # the last v2 life, for comparison (data.v2.5/baseline/meter-talk.json)
+        "v25": {"meter_thoughts": 43.0, "meter_beliefs": 57.9},   # the last v2 life by today's pattern (25.2 by the one of its day, data.v2.5/baseline/meter-talk.json)
         "temper": [{"id": p["id"], "name": label(p), "gen": p["gen"], "temper": p["temper"]} for p in pets],
         "claims": [{"id": c["id"], "text": c["text"], "first": c["first"], "pets": c["pets"], "gens": c["gens"], "forms": c["forms"],
                     "truth": c["truth"]} for c in sorted(house["claims"], key=lambda c: (-len(c["gens"]), -len(c["pets"]), c["id"]))[:30]],
@@ -87,7 +87,7 @@ def main(data=ROOT / "data", profile=None):
         print("\n== %s (%s, gen %d): %s, %s days%s" % (p["name"], p["id"], p["gen"], p["stage"], p["days"], ", died of " + p["cause"] if p["cause"] else ""))
         print("   thoughts %d, steps %d (%s%% not possible) | calls %d, %.1f/hour, median %s s, %d failed" % (
             p["intentions"], p["steps"], p["not_possible"], p["calls"], p["calls_per_hour"], p["call_seconds"], p["failed"]))
-        print("   meter-talk: %s%% of thoughts (%s%% after day 1), %s%% of beliefs  [v2.5: 25.2%% and 57.9%%]" % (p["meter_all"], p["meter_after_day1"], p["meter_beliefs"]))
+        print("   meter-talk: %s%% of thoughts (%s%% after day 1), %s%% of beliefs  [v2.5: 43.0%% and 57.9%%]" % (p["meter_all"], p["meter_after_day1"], p["meter_beliefs"]))
         print("   predictions right %s%% of %d | about hidden physics %s%% of %d" % (p["predictions_right"], p["scorable"], p["rule_right"], p["rule_scored"]))
         print("   wellbeing %s | useful things %d of %d made | rooms %d | creatures %s | social %s, %d replies" % (
             p["wellbeing"], p["useful"], p["made"], len(p["rooms"]), p["creatures"], p["social"], p["replies"]))

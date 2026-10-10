@@ -34,7 +34,8 @@ def main(data=ROOT / "data", profile=None):
     print("# The bar: lineage %d, day %d, %d pets hatched over %d generations\n" % (lin, house["clock"]["day"], len(hatched), gens))
     ok = {}
 
-    print("## 1. It reads like a creature (meter-talk under 10% for every pet after its first day; v2.5: 25.2% of thoughts, 57.9% of beliefs)")
+    print("## 1. It reads like a creature (meter-talk under 10% for every pet after its first day; v2.5: 43.0% of thoughts and 57.9% of beliefs"
+          "\n   by today's pattern; its thoughts were 25.2% by the narrower one they were first measured with)")
     worst = 0
     for p in hatched:
         share, n = story.meter_share(db, p["pet"], p["born"] + day)
@@ -46,8 +47,10 @@ def main(data=ROOT / "data", profile=None):
         print("   %-14s gen %d: %s%% of %d thoughts after day 1 (%s%% of all %d); %s%% of %d beliefs" % (p["label"], p["gen"], share, n, every, total, b, len(beliefs)))
         worst = max(worst, share or 0) if n >= 10 else worst
     ok[1] = worst < 10
-    for r in db.execute("SELECT pet, thought FROM intentions WHERE meter=1 ORDER BY tick DESC LIMIT 5"):
-        print("      flagged: %s: %s" % (pets[r["pet"]]["label"], r["thought"][:160]))
+    from .feel import METER
+    flagged = [(r["pet"], r["thought"]) for r in db.execute("SELECT pet, thought FROM intentions ORDER BY tick DESC") if METER.search(r["thought"])]
+    for pet, thought in flagged[:5]:
+        print('      flagged for "%s": %s: %s' % (METER.search(thought).group(0), pets[pet]["label"], thought[:160]))
 
     print("\n## 2. The lineage changed")
     drift = []

@@ -189,8 +189,8 @@ def daily(eng):
 
 def meter_share(db, pet_id, after_tick=0):
     """Share of a pet's thoughts that talk mechanics (§3.4), from the log: (percent, how many thoughts)."""
-    rows = db.execute("SELECT meter FROM intentions WHERE pet=? AND started>=?", (pet_id, after_tick)).fetchall()
-    return (round(100 * sum(r[0] for r in rows) / len(rows), 1) if rows else None), len(rows)
+    rows = db.execute("SELECT thought FROM intentions WHERE pet=? AND started>=?", (pet_id, after_tick)).fetchall()
+    return (round(100 * sum(meter_talk(r[0]) for r in rows) / len(rows), 1) if rows else None), len(rows)   # from the words, so an old log is read by today's pattern
 
 
 def meter_beliefs(mem):
