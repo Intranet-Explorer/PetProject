@@ -53,7 +53,7 @@ def alike(a, b):
     if not a or not b:
         return 0.0
     both = len(a & b)
-    return max(both / len(a | b), 0.9 * both / min(len(a), len(b)) if min(len(a), len(b)) >= 3 else 0.0)
+    return max(both / len(a | b), 0.85 * both / min(len(a), len(b)) if min(len(a), len(b)) >= 4 else 0.0)
 
 
 def truth(text):
