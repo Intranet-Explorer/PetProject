@@ -261,3 +261,28 @@ README.md's history and NOTES.md.)
   not bring them together (the parent was "not lonely"). While a child is an egg, a hatchling or a Child, a
   parent elsewhere notices "you think of Sol, in the nursery without you" and the child notices "you want your
   mother; they are not here". Nothing makes either of them go.
+
+## Part 9: the view and the voice
+
+- **The view was written by a helper agent against a fixed snapshot contract** (`engine/server.py`), then
+  checked by eye after the power cut: all nine room types by day and night, rain, storm, snow, heat, a power
+  cut, every drawer tab, the family tree over seven stub generations, replay, both themes, 1280×800.
+- **Replay** is `?replay=<family>` or the header's Replay button: a scrubber over the recorded days, play and
+  pause, 1× to 60×, the same drawing code as live. The visitor's controls are hidden while replaying.
+- **Voice phase 2, as built.** An egg has only its heartbeat. A hatchling chirps, one beep a word. A child
+  babbles every syllable. From youngling on, a word it really knows is left out of the babble and said aloud by
+  the browser's own speech voice, pitched to its body: "hello", its own name, the names of its useful things,
+  and for an adult or elder the names of the others in the house. VOICE.md gives adults "its described voice
+  (phase 3)", which SPEC-v3 §14 leaves out, so adults and elders keep the youngling's way of talking with more
+  words. Elders are lower (290 Hz base), a third slower, with a slight tremble.
+- **Families sound alike because voices are only ever made from genomes**, and a child's genome is its
+  parent's plus one round of mutation. The voice check asserts it.
+- **Turn-taking**: speech is queued on the audio clock, each utterance starting a third of a second after the
+  one before ends; anything that would start more than eight seconds late (a replay at speed) is dropped.
+- **Rooms**: the room being looked at is at full volume, rooms through one door are at about a fifth and
+  low-passed, the rest are silent. Rain is loud under open sky (garden, greenhouse, attic, pond), faint in
+  rooms with a window, absent in the cellar and storeroom.
+- **New sounds**: a death (two long falling notes in the pet's own voice), moth, beetle, mouse, bird, rain,
+  thunder, the power's hum running down and coming back, a leak's drips, a draught and its door, a delivery's
+  thud. The v2 "content trill" for a use that helped now marks a nuzzle or a gift taken: the view no longer
+  receives each pet's step journal with every snapshot.

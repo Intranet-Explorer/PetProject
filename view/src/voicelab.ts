@@ -1,45 +1,52 @@
-// The header's sound controls and the Lab tab's voice lab (VOICE.md). Nothing here touches the pet or the engine.
-import { schedule, Voice } from "./voice";
+// The header's sound controls and the Lab tab's voice lab (VOICE.md). Nothing here touches a pet or the engine.
+import { $, el } from "./dom";
+import { effect, schedule, Voice, voiceInput } from "./voice";
 import { planSound, planSpeech } from "./voice-plan";
-import type { SoundKind, VoiceInput } from "./voice-plan";
+import type { VoiceInput } from "./voice-plan";
+import type { PetV, Snap } from "./types";
 
-const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
-const SOUNDS: [SoundKind | "heartbeat" | "breath" | "hum", string][] = [
-  ["heartbeat", "Heartbeat (egg)"], ["cry", "First cry"], ["chirp", "Made a thing"], ["blip", "Took one apart"],
-  ["trill", "Used one that helped"], ["stageup", "New stage"], ["hm", "“Hm?”"], ["whimper", "Whimper"],
-  ["breath", "A breath (asleep)"], ["hum", "A taught thing's hum"],
+const STAGES = ["as it is", "hatchling", "child", "youngling", "adult", "elder"];
+const SOUNDS: [Parameters<Voice["sample"]>[0], string][] = [
+  ["heartbeat", "Heartbeat (egg)"], ["cry", "First cry"], ["chirp", "Made a thing"], ["blip", "Took one apart"], ["trill", "A nuzzle taken"],
+  ["stageup", "New stage"], ["hm", "“Hm?”"], ["whimper", "Whimper"], ["last", "A death"], ["breath", "A breath (asleep)"], ["hum", "A taught thing's hum"],
+  ["moth", "Moth"], ["beetle", "Beetle"], ["mouse", "Mouse"], ["bird", "Bird"], ["rain", "Rain"], ["thunder", "Thunder"],
+  ["powerdown", "Power cut"], ["drip", "Leak"], ["whoosh", "Draught"], ["thud", "Delivery"],
 ];
 
-export function initVoice(pet: () => VoiceInput | null) {
-  const voice = new Voice(), num = (id: string) => Number($<HTMLInputElement>(id).value);
-  const own = () => !$<HTMLInputElement>("labOwn").checked;
+/** `who` gives the pet whose voice the lab plays with (the selected one) and the snapshot it is in. */
+export function initVoice(who: () => { pet: PetV; snap: Snap } | null) {
+  const voice = new Voice();
+  const stage = el("select", "") as HTMLSelectElement, text = el("input", "") as HTMLInputElement, hint = el("p", "hint"), heard = el("ol", "heard");
+  stage.append(...STAGES.map((s) => new Option(s)));
+  stage.setAttribute("aria-label", "Stage to hear");
+  text.value = "hello, what is this? I made it!";
+  text.setAttribute("aria-label", "Something to say");
 
-  /** The voice the lab plays with: the pet's own, or the sliders'. */
+  /** The voice the lab plays with: the selected pet's, at its own stage or one chosen to hear how a voice grows. */
   const input = (): VoiceInput | null => {
-    const p = pet();
-    if (!p || own()) return p;
-    return {
-      stage: $<HTMLSelectElement>("labStage").value,
-      genome: { ...p.genome, roundness: num("labRound") / 100, wobble: num("labWobble") / 100 },
-      needs: { ...p.needs, energy: num("labEnergy"), comfort: num("labComfort") },
-    };
+    const w = who();
+    if (!w) return null;
+    const v = voiceInput(w.pet, w.snap);
+    return stage.selectedIndex ? { ...v, stage: stage.value } : v;
   };
   const play = (what: Parameters<Voice["sample"]>[0]) => {
     const v = input();
-    const played = v && voice.sample(what, v, $<HTMLInputElement>("labText").value);
-    $("labHint").textContent = played ? "" : "Turn sound on in the header to hear this.";
+    hint.textContent = v && voice.sample(what, v, text.value) ? "" : "Turn sound on in the header to hear this.";
   };
+  const button = (label: string, go: () => void) => Object.assign(el("button", "", label), { onclick: go });
+  /** One node, built once and handed to the Lab tab each time it draws, so what is typed and chosen stays. */
+  const lab = el("section", "voicelab",
+    el("h3", "", "Voice"),
+    el("p", "hint", "Every voice comes from a body: taller is lower, rounder is purer, paler is more muffled, so a child sounds like its parent. "
+      + "A hatchling chirps, a child babbles, and from youngling on real words come through."),
+    el("div", "row", stage, text, button("Say it", () => play("say"))),
+    el("div", "sounds", ...SOUNDS.map(([what, label]) => button(label, () => play(what)))),
+    hint, el("h4", "", "Heard lately"), heard);
 
-  $("labSounds").replaceChildren(...SOUNDS.map(([what, label]) => {
-    const b = document.createElement("button");
-    b.textContent = label;
-    b.onclick = () => play(what);
-    return b;
-  }));
-  $("labSay").onclick = () => play("say");
   $("soundBtn").onclick = () => voice.setOn(!voice.on);
-  $<HTMLInputElement>("volume").oninput = () => voice.setVolume(num("volume") / 100);
-  $<HTMLInputElement>("volume").value = String(Math.round(voice.volume * 100));
+  const volume = $<HTMLInputElement>("volume");
+  volume.oninput = () => voice.setVolume(Number(volume.value) / 100);
+  volume.value = String(Math.round(voice.volume * 100));
 
   let fade: ReturnType<typeof setTimeout> | undefined;
   const show = () => {
@@ -50,30 +57,13 @@ export function initVoice(pet: () => VoiceInput | null) {
     $("playing").textContent = voice.on && latest && Date.now() - latest.at < 8000 ? `♪ ${latest.what}` : "";
     clearTimeout(fade);
     if (latest) fade = setTimeout(show, 8500);
-    $("heard").replaceChildren(...(voice.heard.length ? voice.heard.map((h) => {
-      const li = document.createElement("li"), when = document.createElement("span");
-      when.textContent = new Date(h.at).toLocaleTimeString();
-      li.append(when, h.what);
-      return li;
-    }) : [Object.assign(document.createElement("li"), { className: "empty", textContent: voice.on ? "Nothing yet." : "Sound is off." })]));
+    heard.replaceChildren(...(voice.heard.length ? voice.heard.map((h) => el("li", "", el("span", "", new Date(h.at).toLocaleTimeString()), " " + h.what))
+      : [el("li", "empty", voice.on ? "Nothing yet." : "Sound is off.")]));
   };
   voice.onchange = show;
   show();
 
-  /** While the sliders are not in use they follow the pet, so switching them on starts from its own voice. */
-  const follow = () => {
-    const p = pet();
-    for (const id of ["labStage", "labRound", "labWobble", "labEnergy", "labComfort"]) $<HTMLInputElement>(id).disabled = own();
-    if (!p || !own()) return;
-    $<HTMLSelectElement>("labStage").value = p.stage === "egg" ? "hatchling" : p.stage;
-    $<HTMLInputElement>("labRound").value = String(Math.round(p.genome.roundness * 100));
-    $<HTMLInputElement>("labWobble").value = String(Math.round(p.genome.wobble * 100));
-    $<HTMLInputElement>("labEnergy").value = String(Math.round(p.needs.energy));
-    $<HTMLInputElement>("labComfort").value = String(Math.round(p.needs.comfort));
-  };
-  $("labOwn").onchange = follow;
-
   // For checking from the console or a headless browser: render a plan without playing it.
-  Object.assign(window, { petVoice: { voice, schedule, planSpeech, planSound, input } });
-  return { voice, follow };
+  Object.assign(window, { petVoice: { voice, schedule, effect, planSpeech, planSound, input } });
+  return { voice, lab };
 }

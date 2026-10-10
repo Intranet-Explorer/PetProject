@@ -26,6 +26,7 @@ export function link(text: string, go: () => void, cls = "link") {
 export type Ctx = {
   snap: Snap; hello: Hello | null; sel: string | null; room: string; replay: boolean;
   api: Record<string, any>;
+  voiceLab: Node;   // the voice lab, one node kept across redraws of the Lab tab
   picture: (g: Genome, stage: string, look?: Look) => string;
   jump: (to: { pet?: string | null; room?: string | null }) => void;
   show: (tab: string, pet?: string) => void;   // open a tab of the drawer, on a pet if one is given

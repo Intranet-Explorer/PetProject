@@ -1,15 +1,20 @@
-// The pet's voice, as plans (VOICE.md, Phase 1). Everything here is plain arithmetic: text and genome in,
-// notes out. voice.ts turns the notes into sound. Nothing in the voice reaches the pet or the engine.
+// The pets' voices, as plans (VOICE.md phases 1 and 2, SPEC-v3 §10.6). Everything here is plain arithmetic: text
+// and genome in, notes out. voice.ts turns the notes into sound. Nothing in the voice reaches a pet or the engine.
+// Phase 2: talking grows with the stage (an egg only has a heartbeat, a hatchling chirps a beep a word, a child
+// babbles, and from youngling on a few real words come through), elders are lower and slower with a tremble, and
+// since every voice comes from a genome a child sounds like its parent.
 import type { Genome } from "./pet";
 
-export type Needs3 = { energy: number; comfort: number; curiosity: number };
-export type VoiceInput = { stage: string; genome: Genome; needs: Needs3; trend?: Partial<Needs3> };
+export type Needs3 = { energy: number; comfort: number; curiosity: number; company?: number };
+/** `words` are the real words it knows how to say (its name, its useful things, the others' names); see planSpeech. */
+export type VoiceInput = { stage: string; genome: Genome; needs: Needs3; trend?: Partial<Needs3>; words?: string[] };
 export type Tone = { at: number; dur: number; f0: number; f1: number; gain: number };   // seconds, Hz, 0..1
 export type Timbre = { wave: "sine" | "triangle" | "square"; cutoff: number; vibratoCents: number; vibratoHz: number; tremolo: number };
-export type Plan = { tones: Tone[]; timbre: Timbre; length: number };
-export type SoundKind = "cry" | "chirp" | "blip" | "trill" | "stageup" | "hm" | "whimper";
+export type Plan = { tones: Tone[]; timbre: Timbre; length: number; words?: { at: number; word: string }[] };
+export type SoundKind = "cry" | "chirp" | "blip" | "trill" | "stageup" | "hm" | "whimper" | "last";
 
-const BASE: Record<string, number> = { egg: 700, hatchling: 700, child: 520, youngling: 420, adult: 330 };
+const BASE: Record<string, number> = { egg: 700, hatchling: 700, child: 520, youngling: 420, adult: 330, elder: 290 };
+const TALKS = ["youngling", "adult", "elder"];   // the stages at which real words come through the babble
 const SCALE = [-7, -5, -2, 0, 2, 5, 7];   // semitones a syllable can sit at, either side of the base pitch, so babble is tuneful
 const MAX_SYLLABLES = 24;
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
@@ -24,19 +29,19 @@ export function hash(letters: string) {
 
 /** Genome and state to voice (the table in VOICE.md). */
 export function voiceOf(v: VoiceInput) {
-  const g = v.genome, low = Math.min(v.needs.energy, v.needs.comfort, v.needs.curiosity);
+  const g = v.genome, low = Math.min(v.needs.energy, v.needs.comfort, v.needs.curiosity, v.needs.company ?? 100), old = v.stage === "elder";
   const base = (BASE[v.stage] ?? 700) * (1 - 0.1 * clamp((g.stretch - 1.075) / 0.325, -1, 1));   // taller is lower
   const wave: Timbre["wave"] = g.roundness > 0.7 ? "sine" : g.roundness >= 0.4 ? "triangle" : "square";
   const open = base * (2 + 8 * g.saturation);                                    // pale is muffled, vivid is clear
   return {
     base,
-    syllable: (140 - 0.8 * clamp(v.needs.energy, 0, 100)) / 1000,              // 60 ms lively, 140 ms worn out
+    syllable: (140 - 0.8 * clamp(v.needs.energy, 0, 100)) / 1000 * (old ? 1.35 : 1),   // 60 ms lively, 140 ms worn out; an elder is slower
     sad: v.needs.comfort < 30,                                                  // phrases drift down and sit lower
     eager: v.needs.curiosity >= 70 || (v.trend?.curiosity ?? 0) > 0.5,          // phrases end up
     timbre: {
       wave, cutoff: wave === "square" ? Math.min(open, base * 3.5) : open,       // a square buzzes; keep it from being harsh
       vibratoCents: 40 * clamp(g.wobble, 0, 1), vibratoHz: 5 + 2 * clamp(g.wobble, 0, 1),
-      tremolo: low < 20 ? 0.4 : 0,                                              // any need under 20: shaky
+      tremolo: low < 20 ? 0.4 : old ? 0.2 : 0,                                  // any need under 20: shaky; an elder always trembles a little
     } as Timbre,
   };
 }
@@ -47,9 +52,26 @@ export function syllables(word: string): string[] {
   return letters ? letters.match(/[^aeiouy]*[aeiouy]+(?:[^aeiouy]*$)?/g) ?? [letters] : [];
 }
 
-/** Speech: one short note per syllable, shaped by punctuation and by how the pet is. */
-export function planSpeech(text: string, v: VoiceInput): Plan {
+/** A hatchling does not babble yet: one chirp a word, high and short, the last one bent by how the sentence ends. */
+function planChirps(text: string, v: VoiceInput): Plan {
   const voice = voiceOf(v), tones: Tone[] = [];
+  let t = 0;
+  for (const word of text.split(/\s+/).filter((w) => /[a-z]/i.test(w)).slice(0, 8)) {
+    const h = hash(word.toLowerCase().replace(/[^a-z]/g, "")), f = voice.base * 1.5 * semis(SCALE[h % SCALE.length]);
+    const bend = /\?$/.test(word) ? semis(5) : /[.…]$/.test(word) ? semis(-4) : semis(1);
+    tones.push({ at: t, dur: 0.07 + (h % 4) / 100, f0: f, f1: f * bend, gain: /!$/.test(word) ? 0.65 : 0.45 });
+    t += 0.17 + ((h >>> 4) % 6) / 100 + (/[,.!?…]$/.test(word) ? 0.16 : 0);
+  }
+  return { tones, timbre: voice.timbre, length: tones.length ? tones.at(-1)!.at + tones.at(-1)!.dur : 0 };
+}
+
+/** Speech: one short note per syllable, shaped by punctuation and by how the pet is. From youngling on, a word it
+ *  really knows is left out of the babble and given back in `words`, to be said aloud as a word. */
+export function planSpeech(text: string, v: VoiceInput): Plan {
+  if (v.stage === "egg") return { tones: [], timbre: voiceOf(v).timbre, length: 0 };
+  if (v.stage === "hatchling") return planChirps(text, v);
+  const voice = voiceOf(v), tones: Tone[] = [], words: { at: number; word: string }[] = [];
+  const known = new Set(TALKS.includes(v.stage) ? ["hello", ...(v.words ?? [])].flatMap((w) => w.toLowerCase().split(/\s+/)) : []);
   let t = 0, count = 0;
   for (const sentence of text.match(/[^.!?…]+(?:\.\.\.|…|[.!?])?/g) ?? []) {
     const end = /(\.\.\.|…)$/.test(sentence) ? "..." : /[.!?]$/.test(sentence) ? sentence.slice(-1) : "";
@@ -57,8 +79,14 @@ export function planSpeech(text: string, v: VoiceInput): Plan {
     sentence.split(",").forEach((clause, c) => {
       if (c) t += voice.syllable * 2;                                           // a comma is a longer gap
       for (const word of clause.split(/\s+/)) {
-        const parts = syllables(word).slice(0, MAX_SYLLABLES - count);
+        const parts = syllables(word).slice(0, MAX_SYLLABLES - count), plain = word.toLowerCase().replace(/[^a-z']/g, "");
         if (!parts.length) continue;
+        if (known.has(plain) && plain.length > 2) {                             // a real word: a gap in the babble the size of the word
+          words.push({ at: t, word: plain });
+          t += Math.max(0.3, 0.075 * plain.length) + voice.syllable * 0.5;
+          count += parts.length;
+          continue;
+        }
         for (const s of parts) {
           const h = hash(s), f = voice.base * semis(SCALE[h % SCALE.length]) * (voice.sad ? 0.92 : 1);
           const dur = voice.syllable * (0.75 + ((h >>> 8) % 61) / 100);         // 0.75 to 1.35 of a syllable
@@ -92,7 +120,7 @@ export function planSpeech(text: string, v: VoiceInput): Plan {
     t += voice.syllable * 3;
     if (count >= MAX_SYLLABLES) break;
   }
-  return { tones, timbre: voice.timbre, length: Math.max(0, t - voice.syllable * 3) };
+  return { tones, timbre: voice.timbre, length: Math.max(0, t - voice.syllable * 3), words };
 }
 
 /** The sounds without words, made from the same voice so they are the same creature. */
@@ -112,57 +140,36 @@ export function planSound(kind: SoundKind, v: VoiceInput): Plan {
     case "whimper":
       timbre.tremolo = 0.5;
       return seq([[0, 0.35, 1.3, 1.05], [0.45, 0.4, 1.15, 0.88]], 0.28);
+    case "last": return seq([[0, 0.5, 1, 0.8], [0.6, 0.9, 0.8, 0.5]], 0.3);                          // a death: two long notes going down and out
   }
 }
 
 // ---- which changes in what the view receives call for which sound ----
 
-type Made = { made?: { behavior?: { do: string } }; active?: boolean };
-export type Heard = {
-  pet: { said: [number, string] | null; stage: string };
-  moments: [number, string][];
-  events: [number, string][];
-  objects: Record<string, Made>;
-  sleep: unknown;
+/** The little of a snapshot the voice listens to (types.ts has the whole of it). */
+export type Ears = {
+  tick: number;
+  pets: { id: string; room: string; said?: { text: string; tick: number } | null }[];
+  moments: { n: number; kind: string; pet: string | null; room: string | null }[];
 };
-export type Step = { type: string; tick: number; action?: unknown; reason?: string | null; own?: Partial<Needs3> };
-export type Catalog = { name: string; ups?: number }[];
-export type Seen = { said: number; moments: Set<string>; events: Set<string>; step: number; ups: Record<string, number> };
+export type Seen = { said: Record<string, number>; moment: number };
+export type HouseSound = "powerdown" | "powerup" | "thunder" | "drip" | "whoosh" | "thud";
+const BY_PET: Record<string, SoundKind> = { hatched: "cry", stage: "stageup", made: "chirp", unmade: "blip", nuzzle: "trill", gift: "trill",
+                                            named: "hm", death: "last", befriended: "trill" };
+const BY_HOUSE: Record<string, HouseSound> = { power: "powerdown", storm: "thunder", leak: "drip", draught: "whoosh", delivery: "thud" };
 
-const MOMENT: [RegExp, SoundKind][] = [
-  [/^it hatched/, "cry"], [/^it is now a/, "stageup"], [/^it (made a|combined)/, "chirp"], [/^it took apart/, "blip"],
-];
-
-/** Compare what was seen before with what is here now. On the first look nothing plays: old news is not announced. */
-export function triggers(seen: Seen | null, w: Heard, journal: Step[], things: Catalog) {
-  const key = ([tick, text]: [number, string]) => `${tick}|${text}`;
-  const steps = journal.filter((r) => r.type === "step");
-  const now: Seen = {
-    said: w.pet.said ? w.pet.said[0] : -1, moments: new Set(w.moments.map(key)), events: new Set(w.events.map(key)),
-    step: Math.max(-1, ...steps.map((r) => r.tick)), ups: Object.fromEntries(things.map((t) => [t.name, t.ups ?? 0])),
-  };
-  const sounds: SoundKind[] = [];
-  let speak: string | null = null;
+/** Compare what was heard before with what is here now. On the first look nothing plays: old news is not announced. */
+export function news(seen: Seen | null, s: Ears) {
+  const now: Seen = { said: Object.fromEntries(s.pets.filter((p) => p.said).map((p) => [p.id, p.said!.tick])), moment: Math.max(0, ...s.moments.map((m) => m.n)) };
+  const speak: { pet: string; text: string }[] = [], sounds: { kind: SoundKind; pet: string; room: string | null }[] = [], house: { kind: HouseSound; room: string | null }[] = [];
   if (seen) {
-    if (w.pet.said && now.said !== seen.said) speak = w.pet.said[1];
-    for (const m of w.moments) {
-      const kind = seen.moments.has(key(m)) ? undefined : MOMENT.find(([pattern]) => pattern.test(m[1]))?.[1];
-      if (kind) sounds.push(kind);
+    for (const p of s.pets) if (p.said && p.said.tick !== seen.said[p.id]) speak.push({ pet: p.id, text: p.said.text });
+    for (const m of s.moments.filter((m) => m.n > seen.moment)) {
+      if (BY_PET[m.kind] && m.pet) sounds.push({ kind: BY_PET[m.kind], pet: m.pet, room: m.room });
+      if (BY_HOUSE[m.kind]) house.push({ kind: BY_HOUSE[m.kind], room: m.room });
     }
-    for (const r of steps) {   // used a thing that helped: energy or comfort went up from the use itself, or the engine counted it as a help
-      const a = r.action as { type?: string; target?: string } | undefined;
-      if (r.tick <= seen.step || r.reason || a?.type !== "use" || !a.target) continue;
-      const helped = (r.own?.comfort ?? 0) >= 0.5 || (r.own?.energy ?? 0) >= 0.5 || (now.ups[a.target] ?? 0) > (seen.ups[a.target] ?? 0);
-      if (helped) sounds.push("trill");
-    }
-    if (w.events.some((e) => !seen.events.has(key(e)) && /^visitor (said|poked)/.test(e[1]))) sounds.push("hm");
   }
-  const order: SoundKind[] = ["cry", "stageup", "chirp", "blip", "trill", "hm"];
-  return {
-    seen: now, speak, sounds: [...new Set(sounds)].sort((a, b) => order.indexOf(a) - order.indexOf(b)),
-    ambient: {
-      egg: w.pet.stage === "egg", asleep: !!w.sleep,
-      hums: Object.entries(w.objects).filter(([, o]) => o.active && o.made?.behavior?.do === "hum").map(([name]) => name),
-    },
-  };
+  return { seen: now, speak, sounds, house };
 }
+
+

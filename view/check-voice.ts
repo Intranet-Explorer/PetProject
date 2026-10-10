@@ -1,6 +1,6 @@
 // Self-check for the voice's plans: node check-voice.ts   (no browser, no sound)
 import assert from "node:assert/strict";
-import { hash, planSound, planSpeech, syllables, triggers, voiceOf } from "./src/voice-plan.ts";
+import { hash, news, planSound, planSpeech, syllables, voiceOf } from "./src/voice-plan.ts";
 import type { Seen, VoiceInput } from "./src/voice-plan.ts";
 
 const genome = { roundness: 0.72, stretch: 1.075, wobble: 0.2, hue: 31, saturation: 0.6, pattern: "speckle",
@@ -68,37 +68,34 @@ assert.ok(planSound("blip", pet()).tones[0].f1 < planSound("blip", pet()).tones[
 const up = planSound("stageup", pet()).tones;
 assert.ok(up.length === 3 && up[0].f0 < up[1].f0 && up[1].f0 < up[2].f0);                           // three rising notes
 
-// triggers: what in a snapshot calls for a sound. Nothing on the first look.
-const world = (over = {}) => ({ pet: { said: null as [number, string] | null, stage: "child" }, moments: [] as [number, string][],
-  events: [] as [number, string][], objects: {}, sleep: null as unknown, ...over });
-const first = triggers(null, world({ moments: [[5, "it made a soft cloud"]], pet: { said: [4, "hi"], stage: "child" } }), [], []);
-assert.ok(first.speak === null && first.sounds.length === 0);
-const after = (w: ReturnType<typeof world>, journal: Parameters<typeof triggers>[2] = [], things: Parameters<typeof triggers>[3] = [], seen: Seen = first.seen) =>
-  triggers(seen, w, journal, things);
-const kept = { moments: [[5, "it made a soft cloud"]] as [number, string][], pet: { said: [4, "hi"] as [number, string], stage: "child" } };
-assert.deepEqual(after(world(kept)).sounds, []);                                                      // nothing new, nothing played
-assert.equal(after(world({ ...kept, pet: { said: [9, "Look at this!"], stage: "child" } })).speak, "Look at this!");
-const says = (text: string) => after(world({ ...kept, moments: [...kept.moments, [9, text]] })).sounds;
-assert.deepEqual(says("it hatched"), ["cry"]);
-assert.deepEqual(says("it made a dim stone"), ["chirp"]);
-assert.deepEqual(says("it combined the a and the b into a c"), ["chirp"]);
-assert.deepEqual(says("it took apart the dim stone"), ["blip"]);
-assert.deepEqual(says("it is now a Youngling"), ["stageup"]);
-assert.deepEqual(says("it now has a small notch"), []);
-const visit = (text: string) => after(world({ ...kept, events: [[9, text]] })).sounds;
-assert.deepEqual(visit('visitor said "hello!"'), ["hm"]);
-assert.deepEqual(visit("visitor poked you"), ["hm"]);
-assert.deepEqual(visit("visitor filled the bowl"), []);
-assert.deepEqual(visit("you rested; energy +8.0"), []);
-const use = (target: string, own: object, extra = {}) => [{ type: "step", tick: 9, action: { type: "use", target }, reason: null, own, ...extra }];
-assert.deepEqual(after(world(kept), use("blanket", { comfort: 2 })).sounds, ["trill"]);              // a use that helped
-assert.deepEqual(after(world(kept), use("rock", { curiosity: 0.4 })).sounds, []);                    // one that did nothing
-assert.deepEqual(after(world(kept), use("rattle", { curiosity: 3 }), [{ name: "rattle", ups: 1 }]).sounds, ["trill"]);   // the engine counted it as a help
-assert.deepEqual(after(world(kept), use("bed", { energy: 3 }, { reason: "bad target" })).sounds, []);
-const many = after(world({ ...kept, moments: [...kept.moments, [9, "it took apart the x"], [9, "it is now a Child"]], events: [[9, "visitor poked you"]] }));
-assert.deepEqual(many.sounds, ["stageup", "blip", "hm"]);                                             // the bigger news first
-const amb = after(world({ ...kept, sleep: { since: 3 }, pet: { said: null, stage: "egg" },
-  objects: { drone: { active: true, made: { behavior: { do: "hum" } } }, lantern: { active: true, made: { behavior: { do: "glow" } } }, still: { active: false, made: { behavior: { do: "hum" } } } } })).ambient;
-assert.deepEqual(amb, { egg: true, asleep: true, hums: ["drone"] });
+// phase 2: talking grows with the stage, and elders are lower, slower and tremble
+assert.equal(planSpeech("hello there", pet({ stage: "egg" })).tones.length, 0);                    // an egg only has a heartbeat
+const peep = planSpeech("what is this thing?", pet({ stage: "hatchling" })).tones;
+assert.equal(peep.length, 4);                                                                         // a hatchling: one chirp a word, no babble
+assert.ok(peep.every((n) => n.f0 > 700) && peep.at(-1)!.f1 > peep.at(-1)!.f0 * 1.2);                  // high, and a question still rises
+assert.ok(planSpeech("something wonderful happened", pet({ stage: "child" })).tones.length > 3);              // a child babbles every syllable
+assert.equal(Math.round(base("elder")), 290);
+assert.ok(voiceOf(pet({ stage: "elder" })).syllable > voiceOf(pet({ stage: "adult" })).syllable * 1.3 && voiceOf(pet({ stage: "elder" })).timbre.tremolo > 0);
+const talk = planSpeech("hello Moss, the soft nest is warm", pet({ stage: "youngling", words: ["Moss", "soft nest"] }));
+assert.deepEqual(talk.words!.map((w) => w.word), ["hello", "moss", "soft", "nest"]);                 // real words come through the babble
+assert.ok(talk.tones.length === 3 && talk.words!.every((w, i, all) => i === 0 || w.at > all[i - 1].at));   // "the", "is", "warm" stay babble
+assert.equal(planSpeech("hello Moss", pet({ stage: "child", words: ["Moss"] })).words!.length, 0);    // not before youngling
+const parent = voiceOf(pet({ stage: "adult" }, { stretch: 1.3, roundness: 0.9 })), child = voiceOf(pet({ stage: "adult" }, { stretch: 1.27, roundness: 0.86 }));
+const stranger = voiceOf(pet({ stage: "adult" }, { stretch: 0.8, roundness: 0.3 }));
+assert.ok(Math.abs(parent.base - child.base) < 5 && parent.timbre.wave === child.timbre.wave && stranger.timbre.wave !== parent.timbre.wave);   // a family sounds alike
+assert.ok(planSound("last", pet()).tones.at(-1)!.f1 < planSound("last", pet()).tones[0].f0);         // a death goes down and out
+
+// news: what in a snapshot calls for a sound, and whose. Nothing on the first look.
+const snap = (over = {}) => ({ tick: 10, pets: [{ id: "p1", room: "r11", said: { text: "hi", tick: 4 } }, { id: "p2", room: "r10", said: null }],
+  moments: [{ n: 1, kind: "made", pet: "p1", room: "r11" }], ...over });
+const first = news(null, snap());
+assert.ok(first.speak.length === 0 && first.sounds.length === 0 && first.house.length === 0);
+assert.deepEqual(news(first.seen, snap()).speak, []);                                                 // nothing new, nothing played
+const spoke = news(first.seen, snap({ pets: [{ id: "p1", room: "r11", said: { text: "hi", tick: 4 } }, { id: "p2", room: "r10", said: { text: "hello mother", tick: 9 } }] }));
+assert.deepEqual(spoke.speak, [{ pet: "p2", text: "hello mother" }]);                                 // each pet's speech is its own
+const more = news(first.seen, snap({ moments: [{ n: 1, kind: "made", pet: "p1", room: "r11" }, { n: 2, kind: "hatched", pet: "p2", room: "r10" },
+  { n: 3, kind: "power", pet: null, room: null }, { n: 4, kind: "death", pet: "p1", room: "r11" }, { n: 5, kind: "season", pet: null, room: null }] }));
+assert.deepEqual(more.sounds.map((x) => [x.kind, x.pet, x.room]), [["cry", "p2", "r10"], ["last", "p1", "r11"]]);
+assert.deepEqual(more.house, [{ kind: "powerdown", room: null }]);
 
 console.log("voice check ok");

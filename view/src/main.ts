@@ -13,6 +13,7 @@ import { Room } from "./room";
 import type { Target } from "./room";
 import { momentRow } from "./story";
 import { bodyStage, hhmm } from "./types";
+import { initVoice } from "./voicelab";
 import type { Hello, Moment, PetV, RoomV, Snap } from "./types";
 
 const remember = (key: string, value: string) => { try { localStorage.setItem(key, value); } catch { /* private window */ } };
@@ -47,11 +48,12 @@ function picture(g: Genome, stage: string, look: Look = {}) {
   return pictures.get(key)!;
 }
 
-const ctx = (): Ctx => ({ snap: snap!, hello, sel: view.sel, room: view.room, replay: !!replayId, api, picture, jump, show: openTab });
+const ctx = (): Ctx => ({ snap: snap!, hello, sel: view.sel, room: view.room, replay: !!replayId, api, picture, jump, show: openTab, voiceLab });
 
-/** VOICE (§10.6, phase 2) plugs in here. Every snapshot that reaches the screen passes through, live or replayed,
- *  with the id of the room being looked at. Nothing is wired yet; the header's sound controls wait in index.html. */
-function onSnapshot(_snap: Snap, _room: string) {}
+/** Sound (§10.6): every snapshot that reaches the screen passes through, live or replayed, with the room being
+ *  looked at. View-only, like everything in this file: nothing about sound goes back to the engine. */
+const { voice, lab: voiceLab } = initVoice(() => { const p = pet(view.sel) ?? snap?.pets.find((q) => q.needs); return p && snap ? { pet: p, snap } : null; });
+function onSnapshot(s: Snap, here: string) { voice.update(s, here, view.sel); }
 
 // ---- which room to show ----
 

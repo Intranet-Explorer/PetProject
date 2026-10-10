@@ -1,15 +1,24 @@
-// The pet's voice, as sound (VOICE.md, Phase 1). Web Audio only: no libraries, no audio files.
+// The house's sound (VOICE.md, SPEC-v3 §10.6). Web Audio only: no libraries, no audio files; from youngling on, a
+// word a pet really knows is said with the browser's own speech voice, pitched to its body.
 // View-only: it listens to what the view already receives and nothing here goes back to the engine.
-import { hash, planSound, planSpeech, triggers, voiceOf } from "./voice-plan";
-import type { Catalog, Heard, Plan, Seen, SoundKind, Step, VoiceInput } from "./voice-plan";
+import { hash, news, planSound, planSpeech, voiceOf } from "./voice-plan";
+import type { HouseSound, Plan, Seen, SoundKind, VoiceInput } from "./voice-plan";
+import { bodyStage } from "./types";
+import type { PetV, Snap } from "./types";
 
 const STORE = "sound";
 const AHEAD = 6;   // seconds of heartbeat or breathing kept scheduled on the audio clock; a snapshot tops it up every 2 s
 const LABEL: Record<SoundKind, string> = {
-  cry: "first cry (it hatched)", chirp: "chirp (it made a thing)", blip: "falling blip (it took a thing apart)",
-  trill: "content trill (it used a thing that helped)", stageup: "three rising notes (a new stage)",
-  hm: "“hm?” (you spoke to it or poked it)", whimper: "whimper (comfort has been low a long while)",
+  cry: "first cry (hatched)", chirp: "chirp (made a thing)", blip: "falling blip (took a thing apart)",
+  trill: "content trill (a nuzzle or a gift taken)", stageup: "three rising notes (a new stage)",
+  hm: "“hm?”", whimper: "whimper (miserable a long while)", last: "two falling notes (a death)",
 };
+const HOUSE: Record<HouseSound | Creature, string> = {
+  powerdown: "the power's hum dying", powerup: "the power coming back", thunder: "thunder", drip: "water dripping", whoosh: "a draught, and a door",
+  thud: "a crate set down", moth: "a moth's flutter", beetle: "a beetle's clicks", mouse: "a mouse's squeak", bird: "birdsong",
+};
+export type Creature = "moth" | "beetle" | "mouse" | "bird";
+const WET = ["rain", "storm"], OPEN = ["garden", "greenhouse", "attic", "pond"], SHUT_IN = ["cellar", "storeroom"];
 
 /** Put a plan's notes on an audio clock. Works on a live context and on an offline one, which is how it is checked. */
 export function schedule(ctx: BaseAudioContext, dest: AudioNode, plan: Plan, at: number) {
@@ -87,6 +96,63 @@ function drone(ctx: BaseAudioContext, dest: AudioNode, name: string) {
   return { osc, sway, gain };
 }
 
+
+function hiss(ctx: BaseAudioContext, seconds = 2) {   // white noise, the stuff of rain, wind, wings and thunder
+  const buffer = new AudioBuffer({ length: Math.ceil(ctx.sampleRate * seconds), sampleRate: ctx.sampleRate }), data = buffer.getChannelData(0);
+  for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+  return buffer;
+}
+
+/** A sound of the house or of a small creature: none of them is anyone's voice. Returns when it ends. */
+export function effect(ctx: BaseAudioContext, dest: AudioNode, kind: HouseSound | Creature, at: number) {
+  const tone = (type: OscillatorType, f0: number, f1: number, t: number, dur: number, gain: number, cutoff = 6000) => {
+    const osc = new OscillatorNode(ctx, { type, frequency: f0 }), env = new GainNode(ctx, { gain: 0 });
+    osc.frequency.setValueAtTime(f0, at + t);
+    osc.frequency.exponentialRampToValueAtTime(f1, at + t + dur);
+    env.gain.setValueAtTime(0, at + t);
+    env.gain.linearRampToValueAtTime(gain, at + t + Math.min(0.02, dur / 3));
+    env.gain.exponentialRampToValueAtTime(0.001, at + t + dur);
+    osc.connect(new BiquadFilterNode(ctx, { type: "lowpass", frequency: cutoff })).connect(env).connect(dest);
+    osc.start(at + t);
+    osc.stop(at + t + dur + 0.05);
+    return t + dur;
+  };
+  const burst = (type: BiquadFilterType, f0: number, f1: number, t: number, dur: number, gain: number, attack = 0.02) => {
+    const src = new AudioBufferSourceNode(ctx, { buffer: hiss(ctx, dur + 0.1) }), env = new GainNode(ctx, { gain: 0 });
+    const filter = new BiquadFilterNode(ctx, { type, frequency: f0, Q: 0.9 });
+    filter.frequency.setValueAtTime(f0, at + t);
+    filter.frequency.exponentialRampToValueAtTime(f1, at + t + dur);
+    env.gain.setValueAtTime(0, at + t);
+    env.gain.linearRampToValueAtTime(gain, at + t + attack);
+    env.gain.exponentialRampToValueAtTime(0.001, at + t + dur);
+    src.connect(filter).connect(env).connect(dest);
+    src.start(at + t);
+    src.stop(at + t + dur + 0.05);
+    return t + dur;
+  };
+  switch (kind) {
+    case "powerdown": return at + tone("sawtooth", 120, 28, 0, 1.8, 0.16, 420);                    // every light at once: the hum runs down
+    case "powerup": return at + tone("sawtooth", 40, 120, 0, 0.9, 0.12, 420);
+    case "thunder": burst("lowpass", 260, 70, 0, 0.5, 2.2, 0.03); return at + burst("lowpass", 160, 50, 0.3, 2.6, 2.0, 0.25);
+    case "drip": return at + Math.max(...[0, 0.42, 0.7].map((t, i) => tone("sine", 1500 - 200 * i, 700, t, 0.09, 0.16)));
+    case "whoosh": burst("bandpass", 300, 1300, 0, 0.9, 0.3, 0.4); return at + tone("sine", 90, 45, 0.85, 0.22, 0.4);   // and the door thuds shut
+    case "thud": return at + tone("sine", 85, 40, 0, 0.28, 0.5);
+    case "moth": return at + Math.max(...[0, 1, 2, 3, 4, 5, 6, 7].map((i) => burst("bandpass", 3200, 2600, i * 0.045, 0.03, 0.3, 0.005)));
+    case "beetle": return at + Math.max(...[0, 0.11, 0.2].map((t) => tone("square", 190, 150, t, 0.018, 0.1, 900)));
+    case "mouse": return at + Math.max(tone("sine", 2600, 3400, 0, 0.07, 0.1), tone("sine", 2900, 3600, 0.12, 0.06, 0.08));
+    case "bird": return at + Math.max(...[[0, 2400, 3100], [0.13, 3100, 2500], [0.26, 2600, 3300], [0.42, 3300, 3300], [0.5, 3300, 2700]].map(([t, a, b]) => tone("sine", a, b, t, 0.1, 0.11)));
+  }
+}
+
+/** A pet as the voice needs it. The real words it can say: its name, the things of its own that proved useful,
+ *  and once grown the names of the others in the house (VOICE.md phase 2; phase 3's described voice is not in v3). */
+export function voiceInput(p: PetV, s?: Snap): VoiceInput {
+  const stage = bodyStage(p), grown = stage === "adult" || stage === "elder";
+  const useful = s ? s.rooms.flatMap((r) => Object.entries(r.objects ?? {})).filter(([, o]) => o.made?.by === p.id && o.made.useful).map(([name]) => name) : [];
+  const others = s && grown ? s.pets.filter((q) => q.id !== p.id && q.name && q.stage !== "dead").map((q) => q.name!) : [];
+  return { stage, genome: p.genome, needs: p.needs ?? { energy: 60, comfort: 60, curiosity: 60, company: 60 }, words: [p.name ?? "", ...useful, ...others].filter(Boolean) };
+}
+
 export class Voice {
   on = false;
   volume = 0.8;
@@ -94,17 +160,22 @@ export class Voice {
   onchange: () => void = () => {};
   private ctx: AudioContext | null = null;
   private master!: GainNode;
-  private sfx!: GainNode;                        // sounds without words, so speech can cut off the ones still queued
-  private speechEnd = 0;
+  private near!: GainNode;                       // the room being looked at: full volume
+  private far!: GainNode;                        // the rooms next door: quiet and muffled (§10.6); further off is silent
+  private talkFree = 0;                          // when the last speech ends: pets take turns, with a short gap
   private sfxFree = 0;
   private beatAt = 0;
   private breathAt = 0;
   private air: ReturnType<typeof lungs> | null = null;
+  private rain: { src: AudioBufferSourceNode; gain: GainNode } | null = null;
   private hums = new Map<string, ReturnType<typeof drone>>();
   private seen: Seen | null = null;
-  private lowSince = 0;
+  private power = true;
+  private nextCall: Record<string, number> = {};
+  private thunderAt = 0;
+  private low = new Map<string, number>();       // pet -> since when it has been miserable
   private whimpered = 0;
-  private last: VoiceInput | null = null;        // the pet's voice as of the latest snapshot
+  private last: VoiceInput | null = null;        // the voice of whoever is selected, for answering when sound is turned on
 
   constructor() {
     try {
@@ -125,19 +196,21 @@ export class Voice {
 
   private start() {
     if (!this.ctx) {
-      this.ctx = new AudioContext();
-      this.master = new GainNode(this.ctx, { gain: this.volume });
-      this.master.connect(this.ctx.destination);
-      this.sfx = new GainNode(this.ctx);
-      this.sfx.connect(this.master);
-      this.ctx.onstatechange = () => this.onchange();
+      const ctx = this.ctx = new AudioContext();
+      this.master = new GainNode(ctx, { gain: this.volume });
+      this.master.connect(ctx.destination);
+      this.near = new GainNode(ctx);
+      this.near.connect(this.master);
+      this.far = new GainNode(ctx, { gain: 0.22 });
+      this.far.connect(new BiquadFilterNode(ctx, { type: "lowpass", frequency: 700 })).connect(this.master);
+      ctx.onstatechange = () => this.onchange();
     }
     return this.ctx.resume();
   }
 
   setOn(on: boolean) {   // called from a click, which is what lets the browser start the audio
     this.on = on;
-    if (on) {   // answer at once in its own voice, so it is plain that sound works even when nothing is happening
+    if (on) {   // answer at once in a pet's own voice, so it is plain that sound works even when nothing is happening
       void this.start().then(() => {
         if (this.last && this.sample("hm", this.last)) this.note("sound is on: this is its voice");
       });
@@ -159,33 +232,49 @@ export class Voice {
     this.onchange();
   }
 
-  /** Speech always plays, and cuts off any wordless sounds still waiting their turn. */
-  say(text: string, v: VoiceInput) {
-    if (!this.live || !this.ctx) return;
-    const now = this.ctx.currentTime;
-    this.sfx.gain.setTargetAtTime(0, now, 0.01);
-    this.sfx = new GainNode(this.ctx);
-    this.sfx.connect(this.master);
-    this.speechEnd = schedule(this.ctx, this.master, planSpeech(text, v), now + 0.03);
-    this.sfxFree = this.speechEnd + 0.15;
-    this.note(`speech: “${text}”`);
+  /** Where a sound from this room should go: here, next door, or nowhere. */
+  private bus(room: string | null, s: Snap, here: string) {
+    if (room === null || room === here) return this.near;
+    return Object.values(s.rooms.find((r) => r.id === here)?.doors ?? {}).includes(room) ? this.far : null;
   }
 
-  /** A sound without words: at most one every 2 seconds, queued on the audio clock behind whatever is playing. */
-  sound(kind: SoundKind, v: VoiceInput) {
-    if (!this.live || !this.ctx) return;
-    const now = this.ctx.currentTime, at = Math.max(now + 0.03, this.sfxFree);
-    if (at - now > 12) return;   // too far behind to still mean anything
-    schedule(this.ctx, this.sfx, planSound(kind, v), at);
-    this.sfxFree = at + 2;
-    this.note(LABEL[kind]);
+  /** Babble on the audio clock, and the real words in it through the browser's speech at the right moments. */
+  private utter(plan: Plan, v: VoiceInput, dest: AudioNode, at: number, quiet: boolean) {
+    const ctx = this.ctx!, end = schedule(ctx, dest, plan, at);
+    if (typeof speechSynthesis === "undefined") return end;
+    for (const w of plan.words ?? []) {
+      const u = new SpeechSynthesisUtterance(w.word), base = voiceOf(v).base;
+      u.pitch = Math.min(2, Math.max(0.3, base / 300));
+      u.rate = v.stage === "elder" ? 0.8 : 1.15;
+      u.volume = this.volume * (quiet ? 0.2 : 0.9);
+      setTimeout(() => this.live && speechSynthesis.speak(u), Math.max(0, (at + w.at - ctx.currentTime) * 1000));
+    }
+    return end;
+  }
+
+  /** Speech takes turns: each waits for the one before, with a breath between, as two pets talking would. */
+  private say(name: string, text: string, v: VoiceInput, dest: GainNode) {
+    const ctx = this.ctx!, now = ctx.currentTime, at = Math.max(now + 0.03, this.talkFree + 0.35);
+    if (at - now > 8) return;   // too far behind to still mean anything (a replay at speed)
+    this.talkFree = this.utter(planSpeech(text, v), v, dest, at, dest === this.far);
+    this.sfxFree = Math.max(this.sfxFree, this.talkFree + 0.15);
+    this.note(`${name}${dest === this.far ? ", next door" : ""}: “${text}”`);
+  }
+
+  /** A sound without words: queued on the audio clock behind whatever is playing, at most one a second. */
+  private sound(name: string, kind: SoundKind, v: VoiceInput, dest: GainNode) {
+    const ctx = this.ctx!, now = ctx.currentTime, at = Math.max(now + 0.03, this.sfxFree);
+    if (at - now > 10) return;
+    schedule(ctx, dest, planSound(kind, v), at);
+    this.sfxFree = at + 1;
+    this.note(`${name}: ${LABEL[kind]}`);
   }
 
   /** For the voice lab: play one thing now, outside the queue. */
-  sample(what: SoundKind | "say" | "heartbeat" | "breath" | "hum", v: VoiceInput, text = "") {
+  sample(what: SoundKind | HouseSound | Creature | "say" | "heartbeat" | "breath" | "hum" | "rain", v: VoiceInput, text = "") {
     if (!this.live || !this.ctx) return false;
     const ctx = this.ctx, at = ctx.currentTime + 0.03;
-    if (what === "say") schedule(ctx, this.master, planSpeech(text, v), at);
+    if (what === "say") this.utter(planSpeech(text, v), v, this.master, at, false);
     else if (what === "heartbeat") [0, 0.26, 1.4, 1.66, 2.8, 3.06].forEach((t, i) => thump(ctx, this.master, at + t, i % 2 ? 0.6 : 1));
     else if (what === "breath") {
       const { noise, air } = lungs(ctx, this.master, voiceOf(v).base);
@@ -196,8 +285,23 @@ export class Voice {
       gain.gain.setTargetAtTime(0, at + 2.2, 0.3);
       osc.stop(at + 3.5);
       sway.stop(at + 3.5);
-    } else schedule(ctx, this.master, planSound(what, v), at);
+    } else if (what === "rain") {
+      const r = this.rainNode(ctx);
+      r.gain.gain.setTargetAtTime(0.06, at, 0.3);
+      r.gain.gain.setTargetAtTime(0, at + 3, 0.4);
+    } else if (what in HOUSE) effect(ctx, this.master, what as HouseSound, at);
+    else schedule(ctx, this.master, planSound(what as SoundKind, v), at);
     return true;
+  }
+
+  private rainNode(ctx: AudioContext) {
+    if (!this.rain) {
+      const src = new AudioBufferSourceNode(ctx, { buffer: hiss(ctx, 3), loop: true }), gain = new GainNode(ctx, { gain: 0 });
+      src.connect(new BiquadFilterNode(ctx, { type: "highpass", frequency: 1800 })).connect(gain).connect(this.master);
+      src.start();
+      this.rain = { src, gain };
+    }
+    return this.rain;
   }
 
   private quiet() {   // stop everything that keeps going by itself
@@ -205,6 +309,8 @@ export class Voice {
     this.beatAt = this.breathAt = 0;
     this.air?.air.gain.cancelScheduledValues(now);
     this.air?.air.gain.setTargetAtTime(0, now, 0.1);
+    this.rain?.gain.gain.setTargetAtTime(0, now, 0.1);
+    if (typeof speechSynthesis !== "undefined") speechSynthesis.cancel();
     for (const [name, h] of this.hums) {
       h.gain.gain.setTargetAtTime(0, now, 0.2);
       h.osc.stop(now + 1.5);
@@ -213,51 +319,86 @@ export class Voice {
     }
   }
 
-  /** Called with every snapshot, sound on or off, so that turning sound on later does not replay old news. */
-  update(world: Heard & { pet: Heard["pet"] & VoiceInput }, journal: Step[], things: Catalog, visitor: boolean) {
-    const v: VoiceInput = { stage: world.pet.stage, genome: world.pet.genome, needs: world.pet.needs, trend: world.pet.trend };
-    const t = triggers(this.seen, world, journal, things), ctx = this.ctx;
+  /** Called with every snapshot that reaches the screen, live or replayed, sound on or off (so that turning sound
+   *  on later does not replay old news). `here` is the room being looked at; `sel` the pet the drawer is on. */
+  update(s: Snap, here: string, sel: string | null) {
+    const t = news(this.seen, s), ctx = this.ctx, was = this.power;
     this.seen = t.seen;
-    this.last = v;
-    const low = v.needs.comfort < 20 && !t.ambient.asleep && !t.ambient.egg;
-    this.lowSince = low ? this.lowSince || Date.now() : 0;
+    this.power = s.power;
+    const pets = new Map(s.pets.map((p) => [p.id, p]));
+    const chosen = pets.get(sel ?? "") ?? s.pets.find((p) => p.room === here && p.stage !== "dead" && p.stage !== "egg");
+    this.last = chosen ? voiceInput(chosen, s) : this.last;
+    const inRoom = s.pets.filter((p) => p.room === here), awake = inRoom.filter((p) => p.needs && !p.asleep);
+    for (const p of awake) (p.levels?.comfort === 4) ? this.low.set(p.id, this.low.get(p.id) ?? Date.now()) : this.low.delete(p.id);
     if (!this.live || !ctx) return;
+    const now = ctx.currentTime, room = s.rooms.find((r) => r.id === here);
 
-    if (t.speak) this.say(t.speak, v);
-    for (const kind of t.sounds) this.sound(kind, v);
-    if (low && Date.now() - this.lowSince >= 180_000 && Date.now() - this.whimpered >= 300_000) {   // at most one every 5 minutes
-      this.whimpered = Date.now();
-      this.sound("whimper", v);
+    for (const say of t.speak) {
+      const p = pets.get(say.pet), dest = p && this.bus(p.room, s, here);
+      if (p && dest) this.say(p.label, say.text, voiceInput(p, s), dest);
+    }
+    for (const m of t.sounds) {
+      const p = pets.get(m.pet), dest = p && this.bus(m.room ?? p.room, s, here);
+      if (p && dest) this.sound(p.label, m.kind, voiceInput(p, s), dest);
+    }
+    for (const h of t.house.filter((h) => h.kind !== "powerdown")) {   // weather and events have sounds of their own
+      const dest = h.kind === "thunder" ? this.near : this.bus(h.room, s, here);
+      if (dest) { effect(ctx, dest, h.kind, now + 0.05); this.note(HOUSE[h.kind]); }
+    }
+    if (was !== s.power) { effect(ctx, this.near, s.power ? "powerup" : "powerdown", now + 0.05); this.note(HOUSE[s.power ? "powerup" : "powerdown"]); }
+    for (const [id, since] of this.low) {   // at most one whimper every 5 minutes, after 3 minutes of misery
+      if (Date.now() - since >= 180_000 && Date.now() - this.whimpered >= 300_000 && pets.has(id)) {
+        this.whimpered = Date.now();
+        this.sound(pets.get(id)!.label, "whimper", voiceInput(pets.get(id)!, s), this.near);
+      }
     }
 
-    const now = ctx.currentTime;
-    if (t.ambient.egg) {   // a faint slow heartbeat, a little faster while a visitor is there
-      if (!this.beatAt) this.note("heartbeat (it is an egg)");
-      for (this.beatAt = Math.max(this.beatAt, now + 0.1); this.beatAt < now + AHEAD; this.beatAt += visitor ? 0.9 : 1.4) {
-        thump(ctx, this.master, this.beatAt, 0.7);
-        thump(ctx, this.master, this.beatAt + 0.26, 0.42);
+    // ---- what keeps going by itself in the room being looked at ----
+    if (inRoom.some((p) => p.stage === "egg")) {   // an egg: a faint slow heartbeat, a little faster while someone is watching
+      if (!this.beatAt) this.note("heartbeat (an egg)");
+      for (this.beatAt = Math.max(this.beatAt, now + 0.1); this.beatAt < now + AHEAD; this.beatAt += s.visitor === here ? 0.9 : 1.4) {
+        thump(ctx, this.near, this.beatAt, 0.7);
+        thump(ctx, this.near, this.beatAt + 0.26, 0.42);
       }
     } else this.beatAt = 0;
 
-    if (t.ambient.asleep) {   // slow, very quiet breathing
-      this.air ??= lungs(ctx, this.master, voiceOf(v).base);
-      if (!this.breathAt) this.note("breathing (it is asleep)");
+    const sleeper = inRoom.find((p) => p.asleep);
+    if (sleeper) {   // slow, quiet breathing, at the sleeper's own pitch
+      this.air ??= lungs(ctx, this.master, voiceOf(voiceInput(sleeper)).base);
+      if (!this.breathAt) this.note(`${sleeper.label} breathing, asleep`);
       for (this.breathAt = Math.max(this.breathAt, now + 0.1); this.breathAt < now + AHEAD;) this.breathAt = breath(this.air.air, this.breathAt);
     } else if (this.breathAt) {
       this.air!.air.gain.cancelScheduledValues(now);
       this.air!.air.gain.setTargetAtTime(0, now, 0.2);
       this.breathAt = 0;
+      this.air!.noise.stop(now + 1);
+      this.air = null;
     }
 
-    for (const name of t.ambient.hums) {   // a thing it taught to hum has its own sound, not the pet's
+    const wet = WET.includes(s.weather) ? (OPEN.includes(room?.type ?? "") ? 0.07 : SHUT_IN.includes(room?.type ?? "") ? 0 : 0.03) : 0;
+    if (wet || this.rain) this.rainNode(ctx).gain.gain.setTargetAtTime(wet, now, 0.8);   // rain on the glass, loud under open sky, absent underground
+    if (s.weather === "storm" && now >= this.thunderAt) {
+      if (this.thunderAt) { effect(ctx, this.near, "thunder", now + 0.1); this.note(HOUSE.thunder); }
+      this.thunderAt = now + 14 + (hash(String(s.tick)) % 16);
+    } else if (s.weather !== "storm") this.thunderAt = 0;
+
+    for (const c of s.creatures.filter((c) => c.room === here)) {   // small creatures make small sounds now and then
+      const kind = c.kind as Creature, singing = c.doing.startsWith("singing");
+      if (now < (this.nextCall[kind] ?? 0) || /asleep/.test(c.doing)) continue;
+      if (this.nextCall[kind] !== undefined) { effect(ctx, this.near, kind, now + 0.05); this.note(HOUSE[kind]); }
+      this.nextCall[kind] = now + (singing ? 4 : 9) + (hash(c.id + s.tick) % 6);
+    }
+
+    const humming = Object.entries(room?.objects ?? {}).filter(([, o]) => o.made?.active && o.made.behavior?.do === "hum").map(([name]) => name);
+    for (const name of humming) {   // a thing taught to hum has its own sound, not a pet's
       if (this.hums.has(name)) continue;
-      const h = drone(ctx, this.master, name);
+      const h = drone(ctx, this.near, name);
       h.gain.gain.setTargetAtTime(0.03, now, 0.5);
       this.hums.set(name, h);
-      this.note(`a hum from the ${name} (it taught it to)`);
+      this.note(`a hum from the ${name} (it was taught to)`);
     }
     for (const [name, h] of this.hums) {
-      if (t.ambient.hums.includes(name)) continue;
+      if (humming.includes(name)) continue;
       h.gain.gain.setTargetAtTime(0, now, 0.3);
       h.osc.stop(now + 2);
       h.sway.stop(now + 2);

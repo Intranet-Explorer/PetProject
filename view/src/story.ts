@@ -123,5 +123,6 @@ export function lab(c: Ctx): Kid[] {
     d.drift ? el("p", "hint", `One rule has drifted: ${d.drift.type}, ${JSON.stringify(d.drift.rule).replace(/[{}"]/g, "")}. The pets were not told.`) : el("p", "hint", "No rule has drifted yet in this family."),
     (d.deaths as { name: string; cause: string; days: number | null }[]).length
       ? el("p", "hint", `Deaths: ${(d.deaths as { name: string; cause: string; days: number | null }[]).map((x) => `${x.name} (${x.cause}${x.days != null ? `, ${x.days} days` : ""})`).join("; ")}.`) : null,
+    c.voiceLab,
   ];
 }

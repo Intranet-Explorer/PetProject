@@ -229,3 +229,13 @@ blockquote.thought { border-left-color: var(--accent); }
                            font-variant-numeric: tabular-nums; min-width: 92px; max-width: 170px; }
 .compare th:first-child, .compare td:first-child { color: var(--muted); position: sticky; left: 0; background: var(--surface); min-width: 150px; }
 .compare thead th { font-weight: 650; }
+
+/* the voice lab, at the foot of the Lab tab */
+.voicelab { margin-top: 20px; padding-top: 12px; border-top: 1px solid var(--line, rgba(128,128,128,.25)); }
+.voicelab .row { display: flex; gap: 6px; margin: 8px 0; }
+.voicelab .row input { flex: 1; min-width: 0; }
+.voicelab .sounds { display: flex; flex-wrap: wrap; gap: 6px; }
+.voicelab .sounds button { font-size: 12px; padding: 3px 8px; }
+.voicelab .heard { list-style: none; padding: 0; margin: 6px 0 0; font-size: 12px; max-height: 180px; overflow: auto; }
+.voicelab .heard span { opacity: .6; font-variant-numeric: tabular-nums; }
+#playing { font-size: 12px; opacity: .8; max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

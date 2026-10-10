@@ -17,11 +17,10 @@
     <label class="follow">Follow <select id="follow" aria-label="Follow"></select></label>
     <button id="replayBtn">Replay</button>
     <button id="themeBtn" aria-label="Switch between light and dark">Dark</button>
-    <!-- Voice (§10.6) is ported after the view; its controls wait here, out of sight, until it is. -->
-    <span class="sound" hidden>
+    <span class="sound">
       <span id="playing" role="status"></span>
       <button id="soundBtn" aria-pressed="false">Sound off</button>
-      <input id="volume" type="range" min="0" max="100" value="60" aria-label="Volume">
+      <input id="volume" type="range" min="0" max="100" value="80" aria-label="Volume">
     </span>
     <button id="drawerBtn" aria-expanded="false" aria-controls="drawer">Mind and lab</button>
   </header>
