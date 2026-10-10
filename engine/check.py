@@ -438,6 +438,8 @@ async def main():
         # ---- §5.5 claims travel ----
         assert story.alike(story.content("The lamp is harsh at night."), story.content("lamps at night are harsh on you")) >= 0.5
         assert story.alike(story.content("The lamp is harsh at night."), story.content("the garden feeds you when plants are ripe")) < 0.3
+        denial = story.alike(story.content("The cold is the rest in the cellar.", True), story.content("The cold is not the rest in the cellar.", True))
+        assert 0.5 <= denial < 0.8, "a claim and its denial are the same subject, never the same claim"
         assert story.truth("lights at night make you uneasy") == "true" and story.truth("the pond is blue") is None
         for gen in (1, 2, 3):
             story.claims(eng, dict(pet, gen=gen, id="x%d" % gen), "message", "The lamp is harsh at night.")

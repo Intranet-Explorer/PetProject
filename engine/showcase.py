@@ -14,7 +14,7 @@ from . import story
 from .world import GENES, ROOT, load_config
 
 EVENT_WORDS = {"power cut": r"went dark|gone dark|power|every light|lights? (went|are|is) (out|dark)|no light", "leak": r"water (is|was)? ?coming|wet floor|floor is wet|leak|shifted",
-               "draught": r"draught|blew|stuck shut|door (is )?(stuck|shut)", "delivery": r"crate|set down|deliver", "lost thing": r"not where|is gone|went missing|has gone|missing"}
+               "draught": r"draught|blew|stuck shut|door (is )?(stuck|shut)", "delivery": r"crate|set down|deliver", "lost thing": r"not where|is gone|went missing|has gone from|gone from"}
 
 
 def main(data=ROOT / "data", profile=None):
@@ -68,13 +68,22 @@ def main(data=ROOT / "data", profile=None):
     for p in hatched:
         g = p["genome"]
         print("   %-14s gen %d: hue %d, %s, %d limbs, roundness %.2f, stretch %.2f" % (p["label"], p["gen"], g["hue"], g["pattern"], g["limbs"], g["roundness"], g["stretch"]))
-    ok[2] = bool(drift) and max(drift)[0] >= 0.2
+    # Did the temperament show in how they lived? Beside each gene, the behaviour it is meant to lean (for a reader).
+    for p in hatched:
+        n = db.execute("SELECT count(*) FROM steps WHERE pet=?", (p["pet"],)).fetchone()[0] or 1
+        share = lambda kinds: 100 * db.execute("SELECT count(*) FROM steps WHERE pet=? AND kind IN (%s)" % ",".join("?" * len(kinds)), (p["pet"], *kinds)).fetchone()[0] / n
+        rooms = db.execute("SELECT count(DISTINCT room) FROM steps WHERE pet=?", (p["pet"],)).fetchone()[0]
+        t = p["temper"]
+        print("   %-15s sociable %.2f: %2d%% of steps with another (speak, tell, give, nuzzle, show, accept, follow) | curious %.2f, bold %.2f: %d rooms, %2d%% look/observe | playful %.2f: %2d%% make/combine/arrange/teach/paint" % (
+            p["label"], t["sociable"], share(("speak", "tell", "give", "nuzzle", "show", "accept", "follow")), t["curious"], t["bold"], rooms, share(("look", "observe")),
+            t["playful"], share(("make", "combine", "arrange", "teach", "paint"))))
+    ok[2] = None if drift and max(drift)[0] >= 0.2 else False
 
     print("\n## 3. Something was passed down and mattered (a child's first-day thoughts that use a particular thing its parent told it)")
     # A candidate is a first-day thought that shares at least two words of content with ONE sentence of the message it
     # hatched with, not counting the words every such thought has ("mother", "told", "said"). The engine's own
     # sense line "you want your mother" cannot make one. Whether the thought changed what it did is for a reader.
-    common, found = {"mother", "father", "parent", "told", "tell", "said", "say"}, 0
+    common, found = {"mother", "father", "parent", "told", "tell", "said", "say", "not"}, 0
     for p in hatched:
         told = [r["text"] for r in db.execute("SELECT text FROM messages WHERE to_pet=? AND kind='message'", (p["pet"],))]
         if not told or p["gen"] < 2:
@@ -92,14 +101,16 @@ def main(data=ROOT / "data", profile=None):
 
     print("\n## 4. A myth or a correction (a claim followed through three generations of messages)")
     # For every line of three generations A -> B -> C (the last v2 pet counts as the founder's parent): each
-    # sentence A told B, whether B kept it in its own message to C, and whether C kept it in its own message.
+    # sentence A gave B (the message B hatched with, and A's last words if B was alive to hear them; not what A
+    # wrote later, which may be B's own words coming back), whether B kept it, and whether C kept it.
     # "Held" needs all three. A "correction" needs B to have kept it and C to have changed or dropped it; whether
     # C's own experience contradicted it is for a reader.
     msgs = {}   # pet -> every version of the message it wrote, oldest first
     for r in db.execute("SELECT pet, text FROM messages WHERE kind IN ('message', 'last words') ORDER BY tick"):
         msgs.setdefault(r["pet"], []).append(r["text"])
     held, corrected, lines = 0, 0, []
-    state = lambda sentence, texts: max((story.alike(story.content(sentence), story.content(x)) for t in texts for x in story.split(t)), default=0.0)
+    state = lambda sentence, texts: max((story.alike(story.content(sentence, True), story.content(x, True)) for t in texts for x in story.split(t)), default=0.0)
+    gave = lambda a, b: [r["text"] for r in db.execute("SELECT text FROM messages WHERE pet=? AND ((kind='message' AND to_pet=?) OR (kind='last words' AND tick>?)) ORDER BY tick", (a, b["pet"], b["born"]))]
     for c in hatched:
         b = pets.get(c["parent"])
         if not b or c["pet"] not in msgs:
@@ -107,7 +118,7 @@ def main(data=ROOT / "data", profile=None):
         a = pets[b["parent"]]["pet"] if b["parent"] in pets else "before" if b["gen"] == 1 else None
         if a not in msgs or b["pet"] not in msgs:
             continue
-        for sentence in dict.fromkeys(x for t in msgs[a] for x in story.split(t)):   # anything A ever put in its message
+        for sentence in dict.fromkeys(x for t in gave(a, b) for x in story.split(t)):
             in_b, in_c = state(sentence, msgs[b["pet"]]), state(sentence, msgs[c["pet"]])
             if in_b < 0.5:
                 continue
@@ -123,8 +134,9 @@ def main(data=ROOT / "data", profile=None):
 
     print("\n## 5. They dealt with each other without the visitor")
     rows = dict(db.execute("SELECT kind, count(*) FROM social WHERE to_pet IS NOT NULL AND to_pet != 'visitor' GROUP BY 1").fetchall())
-    replies = db.execute("SELECT count(*) FROM social WHERE reply=1").fetchone()[0]
-    print("   %s; replies: %d" % (rows, replies))
+    replies = db.execute("SELECT count(*) FROM social WHERE reply=1 AND kind='speak'").fetchone()[0]
+    taken = db.execute("SELECT count(*) FROM social WHERE reply=1 AND kind!='speak'").fetchone()[0]
+    print("   %s; things said in answer: %d; gifts and nuzzles taken: %d" % (rows, replies, taken))
     there, n = db.execute("SELECT coalesce(sum(visitor_present), 0), count(*) FROM intentions").fetchone()
     print("   the visitor was in the room for %d of %d thoughts" % (there, n))
     for r in db.execute("SELECT tick, from_pet, to_pet, kind, text FROM social WHERE reply=1 AND kind='speak' ORDER BY tick LIMIT 3"):
@@ -142,7 +154,7 @@ def main(data=ROOT / "data", profile=None):
         n = db.execute("SELECT count(DISTINCT room) FROM steps WHERE pet=?", (p["pet"],)).fetchone()[0]
         by_gen.setdefault(p["gen"], []).append(n)
         print("   %-14s gen %d was in %d rooms" % (p["label"], p["gen"], n))
-    # An event changed what a pet did: the first thought, within about fifteen thoughts' time, of a pet that was in the
+    # An event changed what a pet did: the first of the next eight thoughts, within 90 ticks, of a pet that was in the
     # event's room (any pet, for a power cut), that names what happened in words no other thought would use.
     changed = 0
     for e in db.execute("SELECT tick, kind, room, detail FROM events WHERE kind IN ('power cut','leak','draught','delivery','lost thing') ORDER BY tick"):
@@ -158,11 +170,9 @@ def main(data=ROOT / "data", profile=None):
     watched = db.execute("""SELECT pet, coalesce(json_extract(action,'$.target'), json_extract(action,'$.who')) t, count(*) n FROM steps
                             WHERE kind IN ('look','follow') AND reason IS NULL AND coalesce(json_extract(action,'$.target'), json_extract(action,'$.who')) IN ('moth','beetle','mouse','bird')
                             GROUP BY 1, 2""").fetchall()
-    both = {(r["pet"], r["kind"]): r["n"] for r in twice}
-    for r in watched:
-        both[(r["pet"], r["t"])] = both.get((r["pet"], r["t"]), 0) + r["n"]
-    often = [(pets[k[0]]["label"], k[1], n) for k, n in both.items() if n > 1]
-    print("   the same pet and the same creature more than once (fed, chased, watched or followed): %s" % often)
+    often = [(pets[r["pet"]]["label"], r["kind"], r["n"]) for r in twice]
+    print("   the same pet and the same creature more than once (fed or chased): %s" % often)
+    print("   and looked at or followed: %s" % [(pets[r["pet"]]["label"], r["t"], r["n"]) for r in watched if r["n"] > 1])
     ok[6] = False if not (len(types) >= 5 and all(max(v) > 1 for v in by_gen.values()) and changed and often) else None
 
     print("\n## 7. No two lives were the same life")
@@ -181,10 +191,20 @@ def main(data=ROOT / "data", profile=None):
     culture(db, pets, hatched, day)
 
 
+def stem(w):
+    """ponytail: four endings folded and nothing cleverer; "breathe" and "breathing" still count apart."""
+    if w.endswith("ies") and len(w) > 5:
+        return w[:-3] + "y"
+    for end in ("ness", "ing", "ed", "s"):
+        if w.endswith(end) and (end == "ness" or not w.endswith(("ss", "us", "is"))) and len(w) - len(end) >= 4:
+            w = w[:-len(end)]
+            break
+    return w[:-1] + "y" if w.endswith("i") else w
+
+
 def words(text):
-    """A text's words for counting a family's vocabulary. ponytail: plurals folded by dropping one "s", nothing cleverer."""
-    return {w[:-1] if w.endswith("s") and not w.endswith(("ss", "us", "is", "ies")) and len(w) > 4 else w
-            for w in re.findall(r"[a-z]+", (text or "").lower()) if len(w) > 3 and w not in story.STOP}
+    """A text's words for counting a family's vocabulary."""
+    return {stem(w) for w in re.findall(r"[a-z]+", re.sub(r"n't\b", "", (text or "").lower())) if len(w) > 3 and w not in story.STOP}
 
 
 def engine_words():
@@ -212,13 +232,14 @@ def ordinary_words(other):
 
 
 def culture(db, pets, hatched, day):
-    """Not one of the eight. The family's own words: which a pet took from those before it, which it coined, which
-    of those its descendants went on using; and what became of two things the v2.5 mother left in her message."""
+    """Not one of the eight. The family's own words: which a pet had from those before it, which it coined, which it
+    picked up from the living; and what became of two things the v2.5 mother left in her message."""
     print("\n## The family's words (not a criterion: the vocabulary is the lineage's culture, so it is measured)")
     before = words(next(db.execute("SELECT text FROM messages WHERE pet='before'"), [""])[0])
-    plain = ordinary_words(ROOT / "data.smoke") - before
+    other = ROOT / "data.smoke"
+    plain = ordinary_words(other) - before
     house_words = engine_words() | plain
-    print("   (set aside as everyday words: %d that another family on this engine, in data.smoke, also used)" % len(plain))
+    print("   (set aside as everyday words: %d that another family on this engine, in %s, also used%s)" % (len(plain), other.name, "" if plain else "; THAT RUN IS MISSING, so everyday words are counted as the family's"))
     said = {}   # pet -> [(tick, kind, text)] of everything it thought, said or wrote
     for sql, kind in (("SELECT pet, started tick, thought || ' ' || intention text FROM intentions", "thought"),
                       ("SELECT from_pet pet, tick, text FROM social WHERE kind IN ('speak','tell')", "said"),
@@ -227,31 +248,35 @@ def culture(db, pets, hatched, day):
                       ("SELECT pet, tick, json_extract(action,'$.recipe.name') text FROM steps WHERE kind IN ('make','combine') AND reason IS NULL", "name")):
         for r in db.execute(sql):
             said.setdefault(r["pet"], []).append((r["tick"], kind, r["text"] or ""))
-    first, uses = {}, {}   # word -> (tick, pet) of its first use in the family; pet -> word -> number of texts using it
-    for pet, rows in said.items():
-        for tick, kind, text in rows:
-            for w in words(text) - house_words:
-                first[w] = min(first.get(w, (tick, pet)), (tick, pet))
-                uses.setdefault(pet, {})[w] = uses.setdefault(pet, {}).get(w, 0) + 1
-    line = lambda p: [p["parent"] or "before"] + (line(pets[p["parent"]]) if p["parent"] in pets else [])
-    below = lambda p: [q for q in hatched if p["pet"] in line(q)]
-    start = {}   # (pet, word) -> the tick the pet first used it
+    # A word is a pet's when it is in three of its thoughts, sayings or names (a message saved again night after night,
+    # or a belief written twice, is not three uses). When it first appeared anywhere counts every kind of text.
+    uses, start = {}, {}   # pet -> word -> uses; (pet, word) -> the tick it first used it
     for pet, rows in said.items():
         for tick, kind, text in sorted(rows):
             for w in words(text) - house_words:
                 start.setdefault((pet, w), tick)
-    print("   words neither the engine nor the other family says, used in at least three of a pet's thoughts, sayings, messages, beliefs or names:")
+                if kind in ("thought", "said", "name"):
+                    uses.setdefault(pet, {})[w] = uses.setdefault(pet, {}).get(w, 0) + 1
+    for w in before - house_words:
+        start[("before", w)] = -1
+    line = lambda p: [p["parent"] or "before"] + (line(pets[p["parent"]]) if p["parent"] in pets else [])
+    below = lambda p: [q for q in hatched if p["pet"] in line(q)]
+    print("   words neither the engine nor the other family says, in at least three of a pet's thoughts, sayings or names.")
+    print("   inherited: in what it hatched with, or used by one of its line before it hatched. coined: nobody used it before.")
+    print("   picked up: first used by someone else while it was alive (its parent included).")
     for p in hatched:
         mine = {w: n for w, n in uses.get(p["pet"], {}).items() if n >= 3}
-        took = {w for w in mine if any(start.get((a, w), 1e12) < start[(p["pet"], w)] for a in line(p))}
-        coined = {w for w in mine if first[w][1] == p["pet"]}
-        heard = set(mine) - took - coined   # first used by a child, sibling or grandchild
-        total = sum(mine.values()) or 1
+        egg = words(" ".join(r["text"] for r in db.execute("SELECT text FROM messages WHERE to_pet=? AND kind='message'", (p["pet"],))))
+        took = {w for w in mine if w in egg or any(start.get((a, w), 1e12) < p["born"] for a in line(p))}
+        coined = {w for w in mine if w not in took and not any(t < start[(p["pet"], w)] for (q, x), t in start.items() if x == w and q != p["pet"])}
+        heard = set(mine) - took - coined
+        total, n = sum(mine.values()) or 1, len(mine) or 1
         kept = {w for w in coined if any(uses.get(q["pet"], {}).get(w, 0) >= 3 for q in below(p))}
         top = lambda ws: ", ".join(sorted(ws, key=lambda w: -mine[w])[:8]) or "none"
-        print("   %-15s gen %d: %3d words; of their uses %2d%% inherited, %2d%% coined, %2d%% picked up from the living" % (
-            p["label"], p["gen"], len(mine), 100 * sum(mine[w] for w in took) / total, 100 * sum(mine[w] for w in coined) / total, 100 * sum(mine[w] for w in heard) / total))
-        print("      inherited: %s\n      coined: %s\n      coined and used by a descendant: %d of %d (%s)" % (top(took), top(coined), len(kept), len(coined), top(kept)))
+        print("   %-15s gen %d: %3d words: %2d%% inherited, %2d%% coined, %2d%% picked up (by uses: %2d%%, %2d%%, %2d%%)" % (
+            p["label"], p["gen"], len(mine), 100 * len(took) / n, 100 * len(coined) / n, 100 * len(heard) / n,
+            100 * sum(mine[w] for w in took) / total, 100 * sum(mine[w] for w in coined) / total, 100 * sum(mine[w] for w in heard) / total))
+        print("      inherited: %s\n      coined: %s\n      picked up: %s\n      coined and used by a descendant: %d of %d (%s)" % (top(took), top(coined), top(heard), len(kept), len(coined), top(kept)))
     thoughts = {p["pet"]: [words(r["thought"]) for r in db.execute("SELECT thought FROM intentions WHERE pet=?", (p["pet"],))] for p in hatched}
     common = sorted({w for u in uses.values() for w in u}, key=lambda w: -sum(u.get(w, 0) for u in uses.values()))[:10]
     print("\n   share of each pet's thoughts using the family's ten commonest words:\n   %-15s %s" % ("", " ".join("%9s" % w[:9] for w in common)))

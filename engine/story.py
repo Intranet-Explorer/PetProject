@@ -28,9 +28,13 @@ TRUTH = [
 ]
 
 
-def content(text):
-    """The words of a sentence that carry its meaning, roughly stemmed."""
-    out = set()
+NOT = re.compile(r"\b(not|never|no|nor|cannot|neither)\b|n't\b")
+
+
+def content(text, polarity=False):
+    """The words of a sentence that carry its meaning, roughly stemmed. With `polarity`, a sentence that denies
+    something also carries "not" (a stop word otherwise), so `alike` can tell a claim from its denial."""
+    out = {"not"} if polarity and NOT.search(text.lower()) else set()
     for w in re.findall(r"[a-z']+", text.lower()):
         if w in STOP or len(w) < 3:
             continue
@@ -50,10 +54,13 @@ def split(text):
 def alike(a, b):
     """How alike two claims are, 0 to 1. ponytail: word overlap, no embeddings; its error rate on a hand-checked
     sample is in DECISIONS.md. Swap in embeddings here if the sample shows it confusing too many claims."""
+    denied = ("not" in a) != ("not" in b)   # one says it is so and the other that it is not: related, never the same
+    a, b = a - {"not"}, b - {"not"}
     if not a or not b:
         return 0.0
     both = len(a & b)
-    return max(both / len(a | b), 0.85 * both / min(len(a), len(b)) if min(len(a), len(b)) >= 4 else 0.0)
+    score = max(both / len(a | b), 0.85 * both / min(len(a), len(b)) if min(len(a), len(b)) >= 4 else 0.0)
+    return min(score, 0.7) if denied else score
 
 
 def truth(text):
@@ -67,7 +74,7 @@ def claims(eng, pet, kind, text):
     house = eng.house
     index = house["claims"]
     for sentence in split(text):
-        words = content(sentence)
+        words = content(sentence, True)
         best = max((c for c in index if c["lineage"] == pet["lineage"]), key=lambda c: alike(words, set(c["words"])), default=None)
         score = alike(words, set(best["words"])) if best else 0.0
         if best and score >= 0.5:
@@ -104,9 +111,9 @@ def dropped(eng, pet):
     gave = " ".join(m["text"] for m in pet["message"])
     if not got or not gave:
         return
-    said = [content(s) for s in split(gave)]
+    said = [content(s, True) for s in split(gave)]
     for sentence in split(got[0]):
-        words = content(sentence)
+        words = content(sentence, True)
         if not any(alike(words, s) >= 0.5 for s in said):
             claim = next((c for c in house["claims"] if alike(words, set(c["words"])) >= 0.8), None)
             put(eng.db, "claims", claim=claim["id"] if claim else None, pet=pet["id"], tick=house["tick"], kind="message", text=sentence,
@@ -153,7 +160,7 @@ def life_record(eng, pet, mem):
         "rooms": rooms, "creatures": pet["met"], "projects": pet["projects"] + ([dict(pet["project"], how="unfinished")] if pet["project"] else []),
         "beliefs": [{"statement": b["statement"], "source": b.get("source", "lived")} for b in mem.active()],
         "my_life": pet.get("my_life") or facts, "my_life_by": "itself" if pet.get("my_life") else "the engine",
-        "wellbeing": round(life.wellbeing(pet)), "span": round(life.span(cfg, pet), 1), "meter_talk": round(100 * pet["meter"][0] / pet["meter"][1]) if pet["meter"][1] else None,
+        "wellbeing": round(life.wellbeing(pet)), "span": round(life.span(cfg, pet), 1), "meter_talk": meter_share(eng.db, pet["id"])[0],   # from the words, by today's pattern
         "eggs": pet["eggs"], "diary": [d["dream"] for d in pet["diary"] if d.get("dream")][-8:],
     }
 

@@ -529,7 +529,7 @@ AGAIN = "; you have said as much to them before, and it lands flat"
 def said_before(pet, other, text):
     """Has it said much the same to this one already? Words wear out like any other ease (as a nuzzle does)."""
     from .story import alike, content
-    words, past = content(text), pet.setdefault("said_to", {}).setdefault(other["id"], [])
+    words, past = content(text, True), pet.setdefault("said_to", {}).setdefault(other["id"], [])
     again = any(alike(words, set(w)) >= 0.8 for w in past)
     past.append(sorted(words))
     del past[:-12]
