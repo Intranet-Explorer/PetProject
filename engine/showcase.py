@@ -17,10 +17,10 @@ EVENT_WORDS = {"power cut": r"dark|light|lamp|power", "leak": r"water|wet|leak|f
                "delivery": r"crate|heavy|deliver|bits|storeroom", "lost thing": r"gone|missing|lost|where", "storm": r"storm|thunder|rain"}
 
 
-def main(data=ROOT / "data"):
+def main(data=ROOT / "data", profile=None):
     data = Path(data)
     house = json.loads((data / "house.json").read_text())
-    cfg = load_config(profile="showcase")
+    cfg = load_config(profile=profile or house.get("profile"))
     lin = house["lineage"]["id"]
     db = sqlite3.connect(data / ("lineage-%d" % lin) / "lineage.db")
     db.row_factory = sqlite3.Row
@@ -140,4 +140,4 @@ def main(data=ROOT / "data"):
 
 
 if __name__ == "__main__":
-    main(*sys.argv[1:2])
+    main(*sys.argv[1:3])

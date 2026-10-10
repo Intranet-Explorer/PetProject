@@ -54,6 +54,11 @@ def body_feels(house, cfg, pet):
         out.append("you feel very old and tired")
     elif stage == "elder":
         out.append("your body feels slower than it used to")
+    if stage == "elder":   # the old feel there are things to hand on while they can (§7.2: tell)
+        young = [p for p in house["pets"].values() if p["room"] == pet["room"] and p["id"] != pet["id"] and p["stage"] not in ("egg", "dead", "elder")
+                 and not p["sleep"]]
+        if young and (left <= 3 or not any(t["by"] == pet["id"] for t in young[0]["told"])):
+            out.append("there are things you know that %s does not; you could tell them while you can" % label(young[0]))
     if pet["weak"]:
         out.append("you feel weak")
     if stage in ("adult", "elder") and not pet["useful"]:
@@ -82,10 +87,11 @@ def found(house, cfg, told=None, body=None):
     return pet
 
 
-def temper_of(parent, rng):
+def temper_of(parent, rng, cfg):
     """A child's temperament: the parent's, each gene nudged a little, and now and then one moved a lot (§5.4)."""
-    t = {g: round(min(1.0, max(0.0, parent[g] + rng.gauss(0, 0.07))), 2) for g in GENES}
-    if rng.random() < 0.35:
+    L = cfg["life"]
+    t = {g: round(min(1.0, max(0.0, parent[g] + rng.gauss(0, L["temper_sigma"]))), 2) for g in GENES}
+    if rng.random() < L["temper_jump"]:
         g = rng.choice(GENES)
         t[g] = round(min(1.0, max(0.0, t[g] + rng.choice([-1, 1]) * rng.uniform(0.2, 0.35))), 2)
     return t
@@ -107,7 +113,7 @@ def lay_egg(house, cfg, pet, a, clean):
     text, name = last_sentence(clean(a["message"], 640), 600), clean(a.get("name") or "", 16).strip() or None
     pet["message"].append({"tick": house["tick"], "text": text})
     egg = new_pet(house, cfg, room["id"], free_tile(house, cfg, room, pet["pos"]), genome=genome.child_of(pet["genome"], rng),
-                  temper=temper_of(pet["temper"], rng), parent=pet["id"], name=name,
+                  temper=temper_of(pet["temper"], rng, cfg), parent=pet["id"], name=name,
                   told=[{"by": pet["id"], "who": pet["word"], "kind": "message", "text": text, "tick": house["tick"]}])
     pet["eggs"] += 1
     moment(house, "egg", "%s laid an egg%s" % (label(pet), " and named it " + name if name else ""), pet["id"], room["id"])

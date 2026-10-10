@@ -52,7 +52,8 @@ def pet_lab(db, house, cfg, pet, beliefs):
 
 def lab(db, house, cfg, beliefs_of):
     """Everything the Lab tab shows. `beliefs_of(pet)` returns a pet's beliefs, living or dead."""
-    pets = sorted(house["pets"].values(), key=lambda p: p["laid"])
+    lin = house["lineage"]["id"] if house["lineage"] else None
+    pets = sorted((p for p in house["pets"].values() if p["lineage"] == lin), key=lambda p: p["laid"])
     hour = ticks(cfg, 3600)
     return {
         "pets": [pet_lab(db, house, cfg, p, beliefs_of(p)) for p in pets if p["stage"] != "egg"][-12:],
@@ -70,9 +71,10 @@ def lab(db, house, cfg, beliefs_of):
     }
 
 
-def main(data=ROOT / "data"):
-    data, cfg = Path(data), load_config()
+def main(data=ROOT / "data", profile=None):
+    data = Path(data)
     house = json.loads((data / "house.json").read_text())
+    cfg = load_config(profile=profile or house.get("profile"))
     d = data / ("lineage-%d" % house["lineage"]["id"])
     db = sqlite3.connect(d / "lineage.db")
 
@@ -99,4 +101,4 @@ def main(data=ROOT / "data"):
 
 
 if __name__ == "__main__":
-    main(*sys.argv[1:2])
+    main(*sys.argv[1:3])

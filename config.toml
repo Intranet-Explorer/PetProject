@@ -73,7 +73,8 @@ chase = { energy = -2.0, curiosity = 2.0 }
 company = { near = 0.6, room = 0.25, creature = 0.1, friend = 0.3, alone = -0.03, visitor = 0.05 }
 stone = { company = 3.0, comfort = 1.0 }   # touching the stone of one of its own
 offer_seconds = 300       # an offer nobody takes lapses after this
-reply_seconds = 600       # speech answered within this counts as a reply (Lab)
+reply_seconds = 1500      # speech answered within this counts as a reply (Lab): about twenty thoughts
+nuzzle_wear = 0.7         # each nuzzle with the same one is worth this much of the last, until a night eases it
 
 [novelty]                 # familiarity (SPEC-v2 §4): doing a thing again is worth less each time
 max = 4.0                 # curiosity for doing something not done for a while
@@ -97,6 +98,8 @@ neglect_cost_days = 2     # lifespan lost per further day of it
 fade_minutes = 3          # real minutes a dead pet lies still before its stone is all that is left
 population = 4            # pets and eggs alive at once
 auto_lineage = false      # start a new lineage by itself when the last pet dies (headless runs); the view offers it otherwise
+temper_sigma = 0.09       # how far each gene of temperament moves from parent to child (standard deviation) ...
+temper_jump = 0.45        # ... and the chance that one gene moves a good deal further (§5.4)
 egg_pull_days = 3         # an Adult with no egg feels the pull to lay one after this many Adult days
 
 [growth]                  # SPEC-v3 §4.1 as amended: stages are paced by days lived, nothing else

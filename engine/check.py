@@ -246,7 +246,7 @@ async def main():
         assert egg["stage"] == "egg" and egg["name"] == "Sol" and egg["told"][0]["text"].startswith("The lamp is harsh") and egg["gen"] == 2
         assert egg["genome"] != pet["genome"] and egg["temper"] != pet["temper"], "a child's body and temperament are its parent's, changed a little"
         assert r[1]["own"]["company"] > 0 or pet["needs"]["company"] == 100
-        assert eng.db.execute("SELECT count(*) FROM claims WHERE kind='message'").fetchone()[0] == 2, "a message is split into claims"
+        assert eng.db.execute("SELECT count(*) FROM claims WHERE kind='message' AND pet != 'before'").fetchone()[0] == 2, "a message is split into claims"
         for _ in range(ticks(cfg, 130)):
             await eng.tick()
         assert egg["stage"] == "hatchling" and egg["id"] in eng.minds, "the egg hatched beside its parent"
@@ -279,6 +279,15 @@ async def main():
         await do(eng, egg, {"type": "nuzzle", "who": "your " + word}, {"type": "observe"})
         await do(eng, pet, {"type": "accept", "from": "Sol"}, {"type": "observe"})
         assert pet["needs"]["company"] > 45 and egg["needs"]["company"] > 45, "a nuzzle taken raises company for both"
+        first = pet["needs"]["company"] - 40
+        for _ in range(3):
+            pet["needs"]["company"] = egg["needs"]["company"] = 40
+            await do(eng, egg, {"type": "nuzzle", "who": "your " + word}, {"type": "observe"})
+            r = await do(eng, pet, {"type": "accept", "from": "Sol"}, {"type": "observe"})
+        assert r[0]["own"]["company"] < first * 0.6, "the same closeness eases less each time"
+        pet["needs"]["company"] = 95
+        assert "nuzzle" not in actions.allowed(h, cfg, pet, m.mem), "one already close to someone does not reach for more"
+        pet["needs"]["company"] = 40
         await do(eng, egg, {"type": "take", "what": "nest"}, {"type": "observe"})
         assert room_of(eng, pet)["objects"]["nest"]["made"]["owner"] == egg["id"] and any("took your nest" in e for _, e in pet["events"])
         r = await do(eng, pet, {"type": "unmake", "target": "nest"}, {"type": "observe"})

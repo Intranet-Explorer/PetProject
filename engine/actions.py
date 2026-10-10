@@ -109,7 +109,8 @@ def allowed(house, cfg, pet, mem):
         "make": (bool(pet["carrying"]) or bits) and len(things.made(room)) < cfg["make"]["crowded"],
         "unmake": bool(free), "combine": len(free) > 1, "teach": bool(mine),
         "give": bool(others or crs) and bool(pet["carrying"] or mine or bits),
-        "show": bool(others) and bool(room["objects"]), "follow": bool(others or crs), "nuzzle": bool(others) or eggs,
+        "show": bool(others) and bool(room["objects"]), "follow": bool(others or crs),
+        "nuzzle": (bool(others) and feel.level(pet, "company") >= 1) or eggs,   # one already close to someone feels no need to
         "accept": bool(pet["offers"]), "take": bool(others_things(house, pet, room)), "chase": bool(crs),
         "tell": bool(others), "lay_egg": life.can_lay(house, cfg, pet) is None,
         "bequeath": bool(kids) and bool(mine), "revise_belief": bool(mem.active()),
@@ -572,7 +573,7 @@ def use(house, cfg, pet, name):
 def offer(house, cfg, pet, other, what):
     other["offers"] = [o for o in other["offers"] if not (o["from"] == pet["id"] and o["kind"] == what["kind"])]
     other["offers"].append(dict(what, **{"from": pet["id"], "tick": house["tick"]}))
-    other["news"].append("spoken")
+    other["news"].append("offer")   # a reason to think again, not an alarm: answering offers at once made nuzzling a loop
 
 
 def give(house, cfg, pet, a):
@@ -598,12 +599,19 @@ def accept(house, cfg, pet, off):
     pet["offers"].remove(off)
     rec = {"tick": house["tick"], "from": giver["id"], "to": pet["id"], "kind": off["kind"], "text": off.get("what", ""), "reply": True}
     if off["kind"] == "nuzzle":
-        bump(giver, cfg, E["nuzzle"])
+        gain = {}
+        for a, b in ((pet, giver), (giver, pet)):   # closeness with the same one eases less each time, until a night has passed
+            key = "nuzzle " + b["id"]
+            n = a["times"].get(key, 0)
+            gain[a["id"]] = {k: v * max(0.1, E["nuzzle_wear"] ** n) for k, v in E["nuzzle"].items()}
+            a["times"][key], a["seen_at"][key] = min(cfg["novelty"]["cap"], n + 1), house["tick"]
+        bump(giver, cfg, gain[giver["id"]])
         add_event(house, giver, "%s leaned back against you" % handle(house, giver, pet))
         giver["news"].append("event")
         house.setdefault("said", []).append(rec)
         moment(house, "nuzzle", "%s and %s nuzzled" % (label(giver), label(pet)), pet["id"], room["id"])
-        return "you leaned against %s" % handle(house, pet, giver), dict(E["nuzzle"]), "nuzzle"
+        worn = pet["times"]["nuzzle " + giver["id"]] > cfg["novelty"]["familiar"]
+        return "you leaned against %s%s" % (handle(house, pet, giver), "; it is familiar now, and eases you less" if worn else ""), gain[pet["id"]], None
     what = off["what"]
     if off["bit"]:
         if what not in giver["carrying"]:

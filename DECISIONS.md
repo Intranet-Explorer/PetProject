@@ -286,3 +286,23 @@ README.md's history and NOTES.md.)
   thunder, the power's hum running down and coming back, a leak's drips, a draught and its door, a delivery's
   thud. The v2 "content trill" for a use that helped now marks a nuzzle or a gift taken: the view no longer
   receives each pet's step journal with every snapshot.
+
+## Found by the smoke run's later generations (it reached a fourth before the power cut)
+
+- **Nuzzling had become a loop.** 359 nuzzles against 8 things said in 26 days: a nuzzle arrived as an urgent
+  offer, the other accepted at once, felt close, and offered one back. Three changes: an offer is a reason to
+  think again but no longer an alarm; closeness with the same one is worth 0.7 of the last time, until a night
+  eases it ("it is familiar now, and eases you less"); and a pet that is already "close to someone" is not
+  offered `nuzzle` at all. One of the pets had already written the rule into its message ("ease thins with
+  repetition, as all ease does"); now it is true.
+- **A reply can come later.** The pets did answer each other in words, but twenty thoughts later, not ten
+  minutes. The window for "a reply" is 1,500 s.
+- **Temperament moves a little more between generations** (σ 0.09, and a 45% chance of one gene jumping
+  0.2 to 0.35): the largest drift along a line after three generations was 0.18, visible in the numbers but
+  not in how the pets lived.
+- **The founder's inherited words count as generation 0** in the claim index, so a saying that began with the
+  last v2 pet can be followed into the family and seen to be kept, changed or dropped.
+- **An elder is reminded it can tell.** One `tell` in 26 days. An elder with someone younger in the room now
+  notices "there are things you know that Drift does not; you could tell them while you can".
+- **The Lab and the showcase script read the logs on the clock they were written on**: the engine notes its
+  profile in house.json.

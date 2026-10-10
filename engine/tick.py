@@ -490,6 +490,7 @@ class Engine:
         self.dir.mkdir(parents=True, exist_ok=True)
         self.path = self.dir / "house.json"
         self.house = json.loads(self.path.read_text()) if self.path.exists() else new_house(cfg)
+        self.house["profile"] = cfg.get("profile")   # so the Lab and the showcase script read the logs on the same clock
         self.sched, self.minds, self.db, self.narrator, self.present, self.tasks = Scheduler(), {}, None, None, None, set()
         self.sched.most = cfg["model"]["parallel"]
         if self.house["lineage"]:
@@ -516,6 +517,7 @@ class Engine:
         log.pet_row(self.db, pet)
         for m in told or []:
             log.put(self.db, "messages", pet=m.get("by") or "before", tick=self.house["tick"], kind="message", to_pet=pet["id"], text=m["text"])
+            story.claims(self, {"id": "before", "gen": 0, "lineage": pet["lineage"], "room": pet["room"]}, "message", m["text"])
         self.save()
         return pet
 
