@@ -213,9 +213,21 @@ export class Room {
       a.bubble?.destroy({ children: true });
       this.pets.delete(id);
     }
+    // The engine lets two pets share a tile; here they stand side by side. ponytail: a sideways nudge for a shared
+    // tile or one directly above another, not a packing of the whole room.
+    const aside = new Map<string, number>();
+    const standing = here.filter((p) => p.stage !== "egg");
+    for (const [i, p] of standing.entries()) for (const q of standing.slice(i + 1)) {
+      const dx = q.pos[0] - p.pos[0], dy = Math.abs(q.pos[1] - p.pos[1]);
+      if (Math.abs(dx) > 1 || dy > 1) continue;
+      const d = (dx ? 0.15 : dy ? 0.22 : 0.3) * (dx < 0 ? -1 : 1);   // further apart the way they already are; same column: p left, q right
+      aside.set(p.id, (aside.get(p.id) ?? 0) - d);
+      aside.set(q.id, (aside.get(q.id) ?? 0) + d);
+    }
     for (const p of here) {
       let a = this.pets.get(p.id);
       const goal = mid(p.pos);
+      goal[0] += clamp(aside.get(p.id) ?? 0, -0.45, 0.45) * T;
       if (!a) {
         a = new Actor();
         a.c.position.set(goal[0], goal[1]);
@@ -528,6 +540,14 @@ export class Room {
    *  out of the way; a made thing's small plate gives way and hides. */
   private layout() {
     const [W, H] = this.px, placed: (Rect & { kind: string })[] = [];
+    // the page's own plates over the room (its name, the moment banner) take their space first
+    const view = this.app.canvas.getBoundingClientRect(), s = view.width ? W / view.width : 1;
+    for (const id of ["roomName", "banner"]) {
+      const e = document.getElementById(id);
+      if (!e || e.hidden) continue;
+      const b = e.getBoundingClientRect();
+      placed.push({ x: (b.left - view.left) * s, y: (b.top - view.top) * s, w: b.width * s, h: b.height * s, kind: "page" });
+    }
     const actors = [...this.pets.values()].sort((a, b) => a.c.y - b.c.y || a.c.x - b.c.x);
     const bodies = actors.map((a) => ({ x: a.c.x - a.half[0], y: a.c.y + a.body.y - a.half[1], w: 2 * a.half[0], h: 2 * a.half[1], a }));
     const free = (r: Rect, me?: Actor) => !placed.some((q) => hit(q, r)) && !bodies.some((q) => q.a !== me && hit(q, r));

@@ -134,7 +134,8 @@ function render() {
   // Moments (§9.1): a banner when something worth seeing happens. Not on first load: that would announce old news.
   const newest = s.moments.at(-1);
   if (newest && newest.n !== bannerN) {
-    if (bannerN >= 0 && newest.n > bannerN) flash(newest.text, false, () => jump(newest));
+    // a project's own words are long and are in the list beside the room; the banner says whose it is
+    if (bannerN >= 0 && newest.n > bannerN) flash(newest.kind === "project" ? newest.text.split(":")[0] : newest.text, false, () => jump(newest));
     bannerN = newest.n;
   } else if (!newest) bannerN = 0;
 }
@@ -215,8 +216,8 @@ function cards(s: Snap) {
     img.src = picture(p.genome, stage, { grey: stage === "elder" ? 0.55 : 0 });
     img.alt = "";
     const b = el("button", `card${p.id === view.sel ? " chosen" : ""}`, img,
-      el("div", "", el("b", "", p.stage === "egg" ? p.name ?? "An egg" : p.label, el("small", "", ` ${p.stage} · ${s.rooms.find((r) => r.id === p.room)?.name?.replace(/^the /, "") ?? ""}`)),
-        el("span", "seems", state(p)),
+      el("div", "", el("b", "", p.stage === "egg" ? p.name ?? "An egg" : p.label, el("small", "", ` ${p.stage}`)),
+        el("span", "seems", `${state(p)} · ${s.rooms.find((r) => r.id === p.room)?.name?.replace(/^the /, "") ?? ""}`),
         el("span", "", p.stage === "egg" ? `generation ${p.gen}` : p.project ? `“${p.project.text}”` : "no project")),
       radial(p.temper, 46, false)) as HTMLButtonElement;
     b.title = p.project?.text ?? "";

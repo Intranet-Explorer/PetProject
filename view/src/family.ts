@@ -18,7 +18,7 @@ export function showRecord(id: string | null) {
 }
 
 const TRUTH: Record<string, [string, string]> = { true: ["✓ true of this house", "correct"], false: ["✗ not so", "wrong"] };
-const [CW, CH] = [96, 132];
+const [CW, CH] = [96, 148];
 
 function tree(c: Ctx, pets: PetV[], redraw: () => void) {
   const kids = (id: string) => pets.filter((p) => p.parent === id).sort((a, b) => a.laid - b.laid);
