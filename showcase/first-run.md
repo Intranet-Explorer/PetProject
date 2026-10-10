@@ -95,8 +95,11 @@ the one before (the last v2 pet; her message is first-egg.json)
 | Soot Spring | 131 | plain | 4 | 0.75 | 0.76 | 0.76 | 0.37 | 1.00 | 0.32 | 0.66 |
 
 Bodies are as hatched; each changed a little most nights. The voice is made in the browser from the body:
-taller is lower, paler is more muffled, wobblier has more vibrato. So the founder is low, muffled and steady
-and its great-great-grandchildren are high, clear and warbling. I have not listened to this run.
+taller is lower, paler is more muffled, wobblier has more vibrato. Computed for each body as an adult (the
+view's own `voiceOf`), the founder speaks at 313 Hz, muffled (nothing above 1.1 kHz) and nearly steady (8
+cents of vibrato); Pulse Shard a little lower at 301 Hz; Cold Spring at 338 Hz with 28 cents; and the two
+fifth-generation pets at about 360 Hz, clear to 3 kHz, warbling at 30 cents. Three semitones and a plain
+change of colour across the line. Nobody has listened to this run.
 
 ## Screens
 
