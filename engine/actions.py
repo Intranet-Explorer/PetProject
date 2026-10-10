@@ -609,7 +609,10 @@ def accept(house, cfg, pet, off):
         add_event(house, giver, "%s leaned back against you" % handle(house, giver, pet))
         giver["news"].append("event")
         house.setdefault("said", []).append(rec)
-        moment(house, "nuzzle", "%s and %s nuzzled" % (label(giver), label(pet)), pet["id"], room["id"])
+        pair, today = "|".join(sorted((giver["id"], pet["id"]))), house["clock"]["day"]
+        if house.setdefault("nuzzled", {}).get(pair) != today:   # a moment the first time in a day, not every time
+            house["nuzzled"] = {k: d for k, d in house["nuzzled"].items() if d == today} | {pair: today}
+            moment(house, "nuzzle", "%s and %s nuzzled" % (label(giver), label(pet)), pet["id"], room["id"])
         worn = pet["times"]["nuzzle " + giver["id"]] > cfg["novelty"]["familiar"]
         return "you leaned against %s%s" % (handle(house, pet, giver), "; it is familiar now, and eases you less" if worn else ""), gain[pet["id"]], None
     what = off["what"]
