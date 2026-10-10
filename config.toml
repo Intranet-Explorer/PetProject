@@ -51,14 +51,14 @@ night_tokens = 8000       # cap on a sleep call, thinking included
 calls_per_hour = 150      # across all pets; routine thoughts slow down to stay under it, urgent ones never wait for it
 
 [effects]                 # what the plain actions do; a pet is told none of the numbers
-drift = { energy = -0.2, comfort = -0.1, curiosity = -0.3 }   # per 10 s, just from being awake
+drift = { energy = -0.2, comfort = -0.1, curiosity = -0.45 }   # per 10 s, just from being awake
 miserable = 0.4           # how much of the interest in a thing is left to a pet that is miserable
 cozy = 0.35                # comfort per 10 s beside a bed, a blanket, a rug
 open_window = -0.5        # comfort per 10 s at night in a room with the window open
 yours = 0.1               # comfort per 10 s beside a thing of its own that it has kept a world day (§3.3)
 rest_per_10s = 2.0        # energy while resting; a bed or bench has its own figure in house.toml
-observe = { curiosity = 0.3 }
-look = { curiosity = 0.7 }
+observe = { curiosity = 0.2 }
+look = { curiosity = 0.4 }
 speak = { energy = -0.5 }
 gather = { energy = -0.5 }
 eat = { energy = 12.0, comfort = 1.0 }
@@ -77,15 +77,17 @@ feed_creature = { company = 2.0, curiosity = 1.5 }
 chase = { energy = -2.0, curiosity = 2.0 }
 # company per 10 s (§7.4): near another pet, in a room with one, with a creature about, with a creature it has fed,
 # alone (times how sociable it is), and while the visitor is looking in
-company = { near = 0.15, room = 0.05, creature = 0.03, friend = 0.1, alone = -0.05, visitor = 0.05 }
+# Being in a room with someone lifts company only as far as `presence_to`; past that it slips by `together` unless
+# something passes between them (a word, a gift, a lean).
+company = { near = 0.15, room = 0.05, creature = 0.03, friend = 0.1, alone = -0.05, visitor = 0.05, presence_to = 65, together = -0.03 }
 stone = { company = 3.0, comfort = 1.0 }   # touching the stone of one of its own
 offer_seconds = 300       # an offer nobody takes lapses after this
 reply_seconds = 1500      # speech answered within this counts as a reply (Lab): about twenty thoughts
 nuzzle_wear = 0.7         # each nuzzle with the same one is worth this much of the last, until a night eases it
 
 [novelty]                 # familiarity (SPEC-v2 §4): doing a thing again is worth less each time
-max = 3.0                 # curiosity for doing something not done for a while
-seconds = 150             # real seconds per point regained
+max = 2.0                 # curiosity for doing something not done for a while
+seconds = 300             # real seconds per point regained
 fresh_seconds = 600       # a made thing gives its full curiosity only if left alone this long
 wear = 0.75               # each repeat is worth this much of the last (a curious pet tires of things faster) ...
 floor = 0.1               # ... down to this

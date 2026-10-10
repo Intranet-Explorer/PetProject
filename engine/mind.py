@@ -155,7 +155,10 @@ def perceive(house, cfg, pet, mem):
             offers.append("%s is leaning toward you" % h if off["kind"] == "nuzzle" else "%s is holding out %s to you" % (h, off["what"]))
 
     # ---- what it carries in its head ----
-    parent_words = [m for m in pet["told"] if m["kind"] in ("message", "last words")]
+    # Word for word while it is small, and for a day after last words are said; a grown pet meets them again only at
+    # night (sleep.py). Awake it has what it made of them: its beliefs. (§5 Why: "what gets lost or distorted".)
+    fresh = house["tick"] - cfg["ticks_per_day"]
+    parent_words = [m for m in pet["told"] if m["kind"] in ("message", "last words") and (pet["stage"] in ("hatchling", "child") or (m["kind"] == "last words" and m["tick"] >= fresh))]
     tells = [m for m in pet["told"] if m["kind"] == "tell"][:3]
     beliefs = sorted(mem.active(), key=lambda b: -b["revised"])
     proj = pet["project"]

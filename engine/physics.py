@@ -32,9 +32,9 @@ def effects(house, cfg, pet):
     others, C = here(house, pet), cfg["effects"]["company"]
     about = [cr for cr in house["creatures"] if cr["room"] == pet["room"]]
     visited = house.get("visitor_room") == pet["room"] and (house["tick"] - house["visitor_last"]) * cfg["clock"]["tick_seconds"] <= 30
-    if others:
+    if others:   # presence alone only goes so far; the rest has to pass between them
         close = any(dist(pet["pos"], o["pos"]) <= 3 for o in others)
-        out.append(effect("company", "company", C["near"] if close else C["room"], None, False))
+        out.append(effect("company", "company", C["together"] if pet["needs"]["company"] >= C["presence_to"] else C["near"] if close else C["room"], None, False))
     elif about:
         fed = any(pet["trust"].get(cr["kind"], 0) >= 1 for cr in about)
         out.append(effect("company", "company", C["friend"] if fed else C["creature"], None, False))
@@ -79,7 +79,7 @@ def effects(house, cfg, pet):
     if kind == "garden" and house["weather"] == "rain":
         out.append(effect("garden", "comfort", rule("fresh"), "the smell of rain on the soil eases you" if rule("fresh") >= 0 else "the wet soil smells sour and wears on you"))
     if kind == "pond":
-        out.append(effect("pond", "energy", 0.0, "the water makes a slow sound that slows you down with it"))
+        out.append(effect("pond", "energy", 0.0, "the water makes a slow sound that slows you down with it" if rule("rest", 1.0) >= 1 else "the water's sound keeps you from settling"))
     if kind == "storeroom" and not things.light_on(house, cfg, room):
         out.append(effect("storeroom", "curiosity", 0.0, "it is too dark in here to see things well" if rule("dark", 0.5) < 1 else "your eyes have got used to the dark in here"))
     for d, rid in neighbours(house, pet["room"]).items():   # the music room's sounds reach next door
@@ -143,6 +143,10 @@ def drawn(house, cfg, pet, room, felt):
             out.append("you can smell something to eat: the %s" % food)
         if bed:
             out.append("the %s looks like a good place to rest" % bed)
+    if feel_level(pet, "curiosity") >= 2:   # bored: the door it has never been through, if this room has one
+        new = [d for d, rid in room["doors"].items() if rid not in pet["rooms"] and house["shut"].get("%s|%s" % (room["id"], d), 0) <= house["tick"]]
+        if new:
+            out.append("the %s door is one you have never been through" % new[0])
     # the pull between a parent and its young, while they are young: the one thing that brings kin back together
     from .actions import handle
     small = ("egg", "hatchling", "child")

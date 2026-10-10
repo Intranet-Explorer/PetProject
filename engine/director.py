@@ -188,7 +188,8 @@ def events(house, cfg):
 
 
 def drift(house, cfg):
-    rooms = [x for x in found(house) if x["type"] in cfg["house"]["drifts"] and not x.get("drift")]
+    known = cfg["house"]["events"]["drift_known_days"] * cfg["ticks_per_day"]   # long enough for someone to have learned the old rule
+    rooms = [x for x in found(house) if x["type"] in cfg["house"]["drifts"] and not x.get("drift") and house["tick"] - x["found"] >= known]
     if not rooms:
         return
     room = rnd(house, "drift", house["lineage"]["id"]).choice(rooms)

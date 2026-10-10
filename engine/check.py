@@ -278,6 +278,21 @@ async def main():
         r = await do(eng, egg, {"type": "speak", "text": "I am well", "to": "your " + word}, {"type": "observe"})
         eng.flush()
         assert eng.db.execute("SELECT count(*) FROM social WHERE reply=1 AND kind='speak'").fetchone()[0] == 1, "an answer counts as a reply"
+        # the same words again land flat; presence alone lifts company only so far; a grown pet has its parent's words
+        # in front of it only at night; boredom draws the eye to a door never tried
+        r = await do(eng, pet, {"type": "speak", "text": "are you well?", "to": "Sol"}, {"type": "observe"})
+        assert "lands flat" in r[0]["feedback"], r[0]["feedback"]
+        C, was = cfg["effects"]["company"], dict(egg["needs"])
+        rate = lambda: next(e["rate"] for e in physics.effects(h, cfg, egg) if e["tag"] == "company")
+        egg["needs"]["company"] = C["presence_to"] + 5
+        assert rate() == C["together"]
+        egg["needs"]["company"] = C["presence_to"] - 5
+        assert rate() == C["near"]
+        egg["needs"]["curiosity"] = 10
+        assert any("door is one you have never been through" in s for s in physics.senses(h, cfg, egg)), physics.senses(h, cfg, egg)
+        egg["needs"], egg["stage"] = was, "youngling"
+        assert "what your %s told you" % word not in mind.perceive(h, cfg, egg, kid_mind.mem)[0]
+        egg["stage"] = "hatchling"
         pet["carrying"] = ["fluff"]
         await do(eng, pet, {"type": "give", "what": "fluff", "to": "Sol"}, {"type": "observe"})
         assert egg["offers"] and pet["carrying"] == ["fluff"], "a gift is an offer until it is taken"

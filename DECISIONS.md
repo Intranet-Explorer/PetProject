@@ -418,3 +418,40 @@ fixes went in, is `data.showcase-0`.
   things doing nothing. "The lamp keeps the dark from hurting", the one inherited claim the engine can score,
   was dropped from the message while still held as a belief, so it is not counted as a correction.
 
+### The first run did not pass, and what was changed before the second
+
+A second fresh reader graded the run from its logs before reading SHOWCASE.md. It agreed on criteria 1, 3, 4,
+5 and 6, and disagreed on two. **Criterion 7**: the fourth generation's life was its parent's again (the same
+room for 85% of its steps, one project for nine days, the message copied word for word), and "different
+words for the same things" is contradicted by the run's own vocabulary table, where each generation coins
+less. **Criterion 8**: names clipped in the family tree and on the cards, labels overlapping, pets drawn on
+top of each other. It also showed that temperament's drift left no trace in behaviour, that the correction
+and "the cold is the rest" were told more firmly than the log supports, and about a dozen wrong details.
+The first run is kept as `data.showcase-1`. Diagnosis from its log, and the changes:
+
+- **Two needs could not fall, so temperament and boredom had nothing to act on.** A step gave +0.86
+  curiosity on average against 0.3 lost (638 looks alone gave 889), and sharing a room gave company faster
+  than it drained, so company was at 95 or more for 80 to 96% of every later pet's steps. A sociable pet and
+  an unsociable one lived the same day, and nobody had a reason to leave the cellar. Now: looking and watching
+  give less (0.4 and 0.2), novelty is worth less and comes back half as fast, curiosity drains at 0.45; and
+  presence lifts company only as far as 65, past which it slips unless something passes between two pets (a
+  word, a gift, a lean). At 65 a sociable pet is "a little lonely" in company and an unsociable one is not.
+- **A bored pet is drawn to a door it has never been through** ("the west door is one you have never been
+  through"), as a lack of comfort already draws it to something soft. Rooms entered fell 7, 8, 4, 4, 3 down
+  the line, with the attic visited once and the garden never.
+- **A grown pet no longer has its parent's message in front of it while awake.** §5.2 says the message
+  "stays in the child's packet for life". In the first run that put the same five sentences into every one of
+  a pet's thoughts for sixteen days: 91 to 98% of the later pets' own words were inherited, and one copied its
+  message unchanged through six versions. §5's Why asks for "what gets lost or distorted along the way", and
+  nothing can be while the words are always there. The message is now in the packet word for word while the
+  pet is a hatchling or a child, and for a day after a parent's last words; after that, awake, it has what it
+  made of them (its beliefs, each marked "told by"), and it meets the words again each night when it reviews
+  its beliefs and its own message. This is a departure from the letter of §5.2.
+- **Saying the same thing to the same one again lands flat**, as a second nuzzle already eased less: no
+  company for either, and the speaker is told so. One pet said "The cold is the rest" eleven times.
+- **The one rule drift of a lineage waits for a room that has been known three days.** In the first run it
+  fell on the cellar fifteen ticks after the cellar was found, so nobody ever knew the old rule and nothing
+  could be seen to change. The pond's sense line also follows its drifted number now. (The earlier note that
+  every room rule's line does was too broad: the workshop's rule has no line, and the self-check covers the
+  cellar's.)
+

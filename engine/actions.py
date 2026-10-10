@@ -402,10 +402,11 @@ def apply(house, cfg, pet, a, mem):
         keep_parent_word(other)
         add_event(house, other, '%s told you something to keep: "%s"' % (handle(house, other, pet), text))
         other["news"].append("spoken")
-        bump(other, cfg, {"company": E["spoken_to"]})
+        again = said_before(pet, other, text)
+        bump(other, cfg, {"company": 0.0 if again else E["spoken_to"]})
         house.setdefault("said", []).append({"tick": house["tick"], "from": pet["id"], "to": other["id"], "kind": "tell", "text": text})
         moment(house, "told", "%s told %s something to keep" % (name, label(other)), pet["id"], room["id"])
-        return "you told %s what you wanted them to keep" % handle(house, pet, other), {"company": E["said_to"]}, "tell"
+        return "you told %s what you wanted them to keep%s" % (handle(house, pet, other), AGAIN if again else ""), {} if again else {"company": E["said_to"]}, "tell"
     if t == "lay_egg":
         return life.lay_egg(house, cfg, pet, a, clean)
     if t == "bequeath":
@@ -495,11 +496,12 @@ def speak(house, cfg, pet, a, mem):
     kind, other = find(house, pet, a.get("to")) if filled(a.get("to")) else (None, None)
     pet["said"] = {"text": text, "tick": house["tick"], "to": other["id"] if kind == "pet" else "visitor" if kind == "visitor" else None}
     rec = {"tick": house["tick"], "from": pet["id"], "to": pet["said"]["to"], "kind": "speak", "text": text}
+    again = kind == "pet" and said_before(pet, other, text)
     for p in here(house, pet, awake=True):
         if kind == "pet" and p is other:
             p["inbox"].append('%s said to you: "%s"' % (handle(house, p, pet), text))
             p["news"].append("spoken")
-            bump(p, cfg, {"company": cfg["effects"]["spoken_to"]})
+            bump(p, cfg, {"company": 0.0 if again else cfg["effects"]["spoken_to"]})
             if (house["tick"] - pet["heard"].get(p["id"], LONG_AGO)) * cfg["clock"]["tick_seconds"] <= cfg["effects"]["reply_seconds"]:
                 rec["reply"] = True               # it is answering something they said to it not long ago
                 del pet["heard"][p["id"]]
@@ -516,9 +518,22 @@ def speak(house, cfg, pet, a, mem):
         mem.update_self(name=pet["name"], named_at=house["tick"])
         moment(house, "named", "the little one named itself " + pet["name"], pet["id"], room["id"])
     fx = dict(cfg["effects"]["speak"])
-    if kind == "pet":
+    if kind == "pet" and not again:
         fx["company"] = cfg["effects"]["said_to"]
-    return 'you said%s: "%s"' % (" to " + handle(house, pet, other) if kind == "pet" else "", text), fx, "speak"
+    return 'you said%s: "%s"%s' % (" to " + handle(house, pet, other) if kind == "pet" else "", text, AGAIN if again else ""), fx, "speak"
+
+
+AGAIN = "; you have said as much to them before, and it lands flat"
+
+
+def said_before(pet, other, text):
+    """Has it said much the same to this one already? Words wear out like any other ease (as a nuzzle does)."""
+    from .story import alike, content
+    words, past = content(text), pet.setdefault("said_to", {}).setdefault(other["id"], [])
+    again = any(alike(words, set(w)) >= 0.8 for w in past)
+    past.append(sorted(words))
+    del past[:-12]
+    return again
 
 
 def use(house, cfg, pet, name):
