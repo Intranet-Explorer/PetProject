@@ -231,6 +231,10 @@ async def main():
                 home, pet["room"] = pet["room"], rid
                 setup()
                 assert feels in " ".join(physics.senses(h, cfg, pet)), (kind, physics.senses(h, cfg, pet))
+                if kind == "cellar":   # a drifted rule is felt as what it now does, not as what the room is called
+                    h["rooms"][rid]["drift"] = dict(cfg["house"]["drifts"]["cellar"])
+                    assert "cellar's still air is easy" in " ".join(physics.senses(h, cfg, pet)) and "cellar's cold" not in " ".join(physics.senses(h, cfg, pet))
+                    h["rooms"][rid]["drift"] = {}
                 pet["room"] = home
         at(eng, 10)
 

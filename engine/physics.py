@@ -68,23 +68,25 @@ def effects(house, cfg, pet):
         out.append(dict(effect(tag, need, rate, feel), thing=name))
 
     # each room's own rule (§6.1)
+    # A rule can drift and change sign (§6.5), so what it feels like follows the number, not the room's name.
     rule = lambda key, default=0.0: things.room_rule(cfg, room, key, default)
     if kind == "cellar" and night:
-        out.append(effect("cellar", "comfort", rule("cold_night"), "the cellar's cold gets into you"))
+        out.append(effect("cellar", "comfort", rule("cold_night"), "the cellar's cold gets into you" if rule("cold_night") < 0 else "the cellar's still air is easy on you tonight"))
     if kind == "attic" and sunny(house) and "sun shaft" in objs and dist(pet["pos"], objs["sun shaft"]["pos"]) <= 1:
-        out.append(effect("attic", "comfort", rule("sun"), "the sun shaft is warm on you"))
+        out.append(effect("attic", "comfort", rule("sun"), "the sun shaft is warm on you" if rule("sun") >= 0 else "the sun shaft is harsh on you"))
     if kind == "greenhouse" and c["phase"] == "day":
-        out.append(effect("greenhouse", "comfort", rule("warm_day"), "the warm air under the glass settles on you"))
+        out.append(effect("greenhouse", "comfort", rule("warm_day"), "the warm air under the glass settles on you" if rule("warm_day") >= 0 else "the air under the glass is close and stuffy"))
     if kind == "garden" and house["weather"] == "rain":
-        out.append(effect("garden", "comfort", rule("fresh"), "the smell of rain on the soil eases you"))
+        out.append(effect("garden", "comfort", rule("fresh"), "the smell of rain on the soil eases you" if rule("fresh") >= 0 else "the wet soil smells sour and wears on you"))
     if kind == "pond":
         out.append(effect("pond", "energy", 0.0, "the water makes a slow sound that slows you down with it"))
     if kind == "storeroom" and not things.light_on(house, cfg, room):
-        out.append(effect("storeroom", "curiosity", 0.0, "it is too dark in here to see things well"))
+        out.append(effect("storeroom", "curiosity", 0.0, "it is too dark in here to see things well" if rule("dark", 0.5) < 1 else "your eyes have got used to the dark in here"))
     for d, rid in neighbours(house, pet["room"]).items():   # the music room's sounds reach next door
         other = house["rooms"][rid]
         if other["type"] == "music" and other.get("sounding_until", 0) > house["tick"]:
-            out.append(effect("music", "curiosity", things.room_rule(cfg, other, "linger", 0.3), "sounds drift in from the music room"))
+            linger = things.room_rule(cfg, other, "linger", 0.3)
+            out.append(effect("music", "curiosity", linger, "sounds drift in from the music room" if linger >= 0 else "sounds from the music room grate on you"))
 
     # weather and season (§6.4)
     W = R["weather"]
