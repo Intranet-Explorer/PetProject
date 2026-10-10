@@ -4,7 +4,7 @@ A family of small creatures living in a house in the browser, each driven by a l
 hatch, grow, grow old and die; they lay eggs and leave their children a body, a temperament, a message and a
 thing or two. The house has nine rooms behind doors, weather, seasons, power cuts and a few small animals.
 
-- **[SHOWCASE.md](SHOWCASE.md)**: one family's story over four generations, with screenshots and the evidence
+- **[SHOWCASE.md](SHOWCASE.md)**: one family's story over five generations, with screenshots and the evidence
   for each thing it was built to show.
 - **[FINDINGS.md](FINDINGS.md)**: what has been learned, from the first model test to v3.
 - **[SPEC-v3.md](SPEC-v3.md)** is the working spec; [SPEC-v2.md](SPEC-v2.md) and [SPEC.md](SPEC.md) are kept for
@@ -34,7 +34,7 @@ When a family dies out the view offers to start another in the same house. To st
 
 | | |
 |---|---|
-| `./run.sh start showcase` | `config.showcase.toml`: short lives in turbo time (the world waits while the model thinks and otherwise runs straight on). About eight real hours for four generations. Watch it afterwards with Replay. |
+| `./run.sh start showcase` | `config.showcase.toml`: short lives in turbo time (the world waits while the model thinks and otherwise runs straight on). About seven real hours for five generations. Watch it afterwards with Replay. |
 | `PET_PROFILE=viewdev PET_DATA=data.viewdev PET_PORT=8002 uv run python -m engine.server` | scripted brains on a quick clock, for working on the view |
 | `PET_PROFILE=showcase PET_DATA=data.showcase PET_PAUSED=1 PET_PORT=8001 uv run python -m engine.server` | open an archived run to look at and replay (http://localhost:8001/?replay=1); nothing in it moves |
 

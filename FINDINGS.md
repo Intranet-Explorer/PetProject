@@ -1,13 +1,94 @@
-# Findings so far
+# Findings
 
-Written 8 October 2026, two days into the project, and updated the next morning with the long run's first night. This is the summary; [NOTES.md](NOTES.md) has the
-account of each life as it happened, and [README.md](README.md) says how to run it and where the build reads
-the specs its own way.
+What has been learned, newest first. v3 (a family in a house) is at the top and was written on 10 October 2026
+after the showcase run; the v1 and v2 findings below it were written on 8 and 9 October and are left as they
+were. [SHOWCASE.md](SHOWCASE.md) tells the v3 run as a story with its evidence, [NOTES.md](NOTES.md) has the
+account of each v1 and v2 life as it happened, and [DECISIONS.md](DECISIONS.md) lists every place the build
+reads a spec its own way.
 
-The project is a small creature that lives in a browser room and is driven by a local language model
-(`qwen3.8:27b-mlx` through Ollama, on one Mac). v1 ([SPEC.md](SPEC.md)) was a rule-discovery experiment with a
-scripted twin as a control. v2 ([SPEC-v2.md](SPEC-v2.md)) turned it into a creature that makes its own things
-and grows by what it has made. Both are built. A long run on the real clock is in progress.
+The project is small creatures in a browser house, each driven by a local language model (`qwen3.8:27b-mlx`
+through Ollama, on one Mac). v1 ([SPEC.md](SPEC.md)) was a rule-discovery experiment with a scripted twin as a
+control. v2 ([SPEC-v2.md](SPEC-v2.md)) made one creature that makes its own things and grows by them. v3
+([SPEC-v3.md](SPEC-v3.md)) made it a family: pets are born, grow old and die, and leave their children a
+body, a temperament, a message and a few things, in a house of nine rooms.
+
+## v3: the short version
+
+From two real-model runs in turbo time: a smoke run of 26 world days and four generations on 9 October, and
+the showcase of 30 world days and five generations on 10 October (7 pets, 1,259 thoughts, 1,429 model calls,
+none failed). Each finding is from one family; nothing here has been repeated.
+
+1. **Telling a pet how it feels, and never a number, ended the meter-talk.** The last v2 pet talked mechanics
+   in 43.0% of its thoughts (25.2% by the narrower pattern of the time). Every showcase pet is under 5% by
+   the same pattern. What replaced it is a different register, not a creature's: "my project requires" is in
+   38% of thoughts.
+2. **A message from a parent is taken as a job.** Every pet acted on its message on its first day (25
+   first-day thoughts cite a particular sentence of it). The founder was told "Make the shape. Unmake it. Make
+   another" and made 71 things in 16 days.
+3. **A family makes its own language in two generations and then stops.** Counting only words the engine
+   never says and another family did not use: the founder coined 37% of what it used and its child 44%; the
+   three after them 22%, 8% and 5%. "Pulse", from the v2 pet's message, is in 64 to 85% of every pet's
+   thoughts; "southward", coined in generation 2, is in 85% of a generation-5 pet's.
+4. **A told belief was corrected when the pet's own doing contradicted it, and not otherwise.** Pulse Shard
+   spent two days making things as told, got "nothing came of it" from each, and rewrote "the pulse asking
+   for a new shape" as "the direction, not a new shape"; things made per life then fell from 71 to 33, 24 and 12. But
+   "the lamp keeps the dark from hurting" is false, every pet who held it was told on many nights that the
+   light was harsh, and none connected the two. It left the message by accident and stayed a belief. This is
+   v2's finding again: the blocker is attribution.
+5. **Doctrine explains experience away.** One pet noticed a thing "leaves me less at ease at night" and
+   later revised that to "the less ease is the pulse asking for movement". Predictions were 54% right for the
+   founder and 30 to 37% for every pet after it.
+6. **A family arrived at a true saying against the words it was given.** A bug left the cellar's sense line
+   saying its cold "gets into you" after that room's rule had drifted to mild. The family that lived there
+   held that "the cold is the rest", and by the numbers their nights there were easier than anywhere else.
+7. **Left to it, two pets nuzzle and say nothing.** The smoke run had 359 nuzzles and 8 things said: each
+   nuzzle was an urgent offer, accepted, and returned. With closeness wearing off like any other ease and an
+   offer no longer an alarm, the showcase had 130 things said, 33 told, 21 gifts and 34 nuzzles, 117 of them
+   answered, with no visitor present for any thought.
+8. **Comfort has to be winnable to matter.** In the first smoke life it only ever fell: nothing a pet did
+   was felt to help. Once a snug place, a soft thing and a dark night's sleep each said what they did, pets
+   used them, and "rest on the anchor" became part of a family's message.
+9. **The house shrinks down a line.** Rooms entered: 7, 8, 4, 4, 3. Children hatch where the parent is and
+   stay. An unopened door needed a hint of what was behind it before the first pet went through one; the
+   ninth room was never found.
+10. **Two of the four needs hardly move.** Company was at 95 or more for 44 to 95% of each pet's steps and
+    curiosity for 48 to 90%, after one round of retuning. The pets' days run on comfort, energy and belief.
+
+## v3: the engine
+
+- **Turbo time works.** The world waits while any model call is in flight and otherwise runs without
+  sleeping. Thirty world days with up to four pets awake took 6 h 56 min. A waking thought took about 16 s
+  (median 13 to 17 s by pet), a night's thinking about 55 s, with thinking set low and 3,000 tokens.
+- **Two calls at once is no faster** on this Mac (7.4 against 7.3 ms a character with
+  `OLLAMA_NUM_PARALLEL=2`), so calls are made one at a time and Ollama is left at its default.
+- **The call budget held**: 136 calls in the run's last world hour, with four pets, against a budget of 150.
+- **The constrained output shape held**: 3,012 steps, 1 to 5% of each pet's not possible, no malformed reply.
+- **Third-person self-talk was the model's own.** The smoke pets sometimes wrote of themselves as "the
+  character" or "the agent". Neither word was in any of the 812 prompts checked.
+- **One pet's error used to freeze the house** and a made thing could take a fixture's name and replace it.
+  Both were found by a fresh reader of the code, not by a run.
+
+## v3: what has not been verified
+
+- The real clock. Both runs were turbo. The first lineage on the real clock starts with this handover.
+- Nobody has listened to a v3 voice or clicked a v3 visitor control. Both were driven by scripts and looked
+  at in a headless browser.
+- A model-driven pet has never been in the garden, never died of neglect, and never met the visitor.
+- Real weather through the window (§6.6) is built and switched off.
+- Every number is from one family.
+
+## v3: open questions
+
+- Whether a child given less of its parent's words at first would still coin its own by generation 4.
+- Whether any family finds the lamp rule, and what would make a told belief get weighed against a sense.
+- Whether "the cold is the rest" came from how the cellar felt or from the argument that produced it. The log
+  cannot say.
+- Whether the lab register ("test", "requires", "stabilize") is the model, the word "project", or the first
+  message it ever inherited.
+
+---
+
+# v1 and v2
 
 ## The short version
 
@@ -46,7 +127,9 @@ All times are real time. "Fast clock" is a world day every 30 minutes; the real 
 | `data.v2.3-first` | V2.3 | fast | 2.4 h | 2 things, 1 useful, never a Child |
 | `data.v2.3` | V2.3 | fast | 3.8 h | became a Child at 3.5 h, after senses were added |
 | throwaway Adult | V2.4 | fast | 20 min | started as an Adult to see teaching and a self-portrait |
-| `data` | V2.5 | real | 18.4 h and running | Child on day 3, Youngling on day 8, Adult on day 9 |
+| `data.v2.5` | V2.5 | real | closed for v3 | Child on day 3, Youngling on day 8, Adult on day 9; wrote the first v3 egg's message |
+| `data.smoke` | v3 | turbo | about 9 h | 26 world days, 5 pets, 4 generations; cut short by a power cut |
+| `data.showcase` | v3 | turbo | 6.9 h | 30 world days, 7 pets, 5 generations; SHOWCASE.md |
 
 The `data*` folders are not in the repository; they are large and local.
 
