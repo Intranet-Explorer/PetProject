@@ -377,7 +377,7 @@ minutes old, was archived as `data.showcase-0` and the run restarted on the fixe
 ## Part 11: the showcase
 
 One real-model run in turbo time, 10 October 2026, 10:20 to 17:16: 30 world days, 7 pets, 5 generations. It is
-written up in SHOWCASE.md and kept in `data.showcase/`. An earlier attempt, 16 minutes old when the review's
+written up in showcase/first-run.md and kept in `data.showcase-1/`. An earlier attempt, 16 minutes old when the review's
 fixes went in, is `data.showcase-0`.
 
 - **The meter-talk pattern was changed while judging, and criterion 1 depends on it.** By the pattern the
@@ -389,7 +389,7 @@ fixes went in, is `data.showcase-0`.
   both figures are given wherever one is). The share is now computed from the thoughts' words, not from the
   flag stored when each was logged, so an old run is read by today's pattern.
 - **The criterion itself was not replaced**, but it measures less than its name. These pets do not talk like
-  meters; they do say "my project requires" in 38% of thoughts. SHOWCASE.md says so under criterion 1 and
+  meters; the word "project" is in 38% of their thoughts. SHOWCASE.md says so under criterion 1 and
   under "What's still boring".
 - **A drifted rule kept its old words.** The cellar's night rule drifted on day 7 from costing comfort to
   giving a little, and the sense line went on saying "the cellar's cold gets into you" for the other 23 days.

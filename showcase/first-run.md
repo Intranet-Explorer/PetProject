@@ -1,8 +1,15 @@
-# Showcase: one family, five generations
+# The first showcase run: one family, five generations
 
-The run SPEC-v3 §12 asks for before handing over. Real model (`qwen3.8:27b-mlx`), the `showcase` profile in
-turbo time, started with `./run.sh start showcase` and left alone. Nobody opened the view while it ran: the
-visitor was in the room for 0 of 1,259 thoughts.
+**This run did not pass the bar.** It was the first attempt at the run SPEC-v3 §12 asks for. A second reader,
+grading from the logs before reading this page, agreed with me on criteria 1, 3, 4, 5 and 6 and disagreed on
+7 (the fourth generation lived its parent's life again) and 8 (clipped names and overlapping labels in the
+screens). The design was changed and the run repeated; [SHOWCASE.md](../SHOWCASE.md) is the run that
+followed and DECISIONS.md part 11 has the diagnosis. This page is kept because the family is worth
+keeping, and it has been corrected where that reader found it wrong or told more firmly than the log
+supports.
+
+Real model (`qwen3.8:27b-mlx`), the `showcase` profile in turbo time, started with `./run.sh start showcase`
+and left alone. Nobody opened the view while it ran: the visitor was in the room for 0 of 1,259 thoughts.
 
 | | |
 |---|---|
@@ -10,15 +17,16 @@ visitor was in the room for 0 of 1,259 thoughts.
 | World time | 30 days, through summer, autumn, winter and into a second spring |
 | Lives | 7 pets over 5 generations; 3 died, all of old age at 16 days |
 | Thinking | 1,259 thoughts, 3,012 steps, 1,429 model calls, none failed, no tick errors |
-| Between pets | 130 things said, 33 things told to keep, 21 gifts, 34 nuzzles; 117 got an answer |
+| Between pets | 130 things said (62 of them in answer), 33 things told to keep, 21 gifts and 34 nuzzles taken |
 | The house | 8 of 9 room types found; 21 deliveries, 20 draughts, 14 leaks, 12 power cuts, 3 storms |
 
-The run is kept in `data.showcase/` (not in the repository). To watch it:
-`PET_PROFILE=showcase PET_DATA=data.showcase PET_PAUSED=1 PET_PORT=8001 uv run python -m engine.server`, then
-http://localhost:8001/?replay=1. Every number below comes from `uv run python -m engine.showcase data.showcase`
-and `uv run python -m engine.metrics data.showcase`, or from the lineage's own log.
+The run is kept in `data.showcase-1/` (not in the repository). To watch it:
+`PET_PROFILE=showcase PET_DATA=data.showcase-1 PET_PAUSED=1 PET_PORT=8001 uv run python -m engine.server`, then
+http://localhost:8001/?replay=1. Every number below comes from `uv run python -m engine.showcase data.showcase-1`
+and `uv run python -m engine.metrics data.showcase-1`, or from the lineage's own log.
 
-Days are world days as the view shows them. Quotes are exactly what the pets wrote.
+Days are world days as the view shows them. Quotes are what the pets wrote; "…" marks where one is cut. The
+screens are from the view as it was during this run, before the fixes the second reader asked for.
 
 ## The story
 
@@ -33,18 +41,19 @@ alone for its first eight days and talked to the beetle ("Hello small friend. Th
 six more rooms, fed and chased the beetle, and on day 8 laid an egg in the pond room and named it Pulse Shard.
 
 Pulse Shard hatched with the same message and the same project: "Make a shape. Unmake it. Make another. See
-which one the lamp breathes with." For two days it made wire and bead things in the workshop beside its
-mother and asked her which one was breathing. Its own things did nothing for it; resting in hers eased it. On
-its second night it wrote that this "unsettles the belief my mother gave me", and on the third it changed the
-belief: restlessness is not the pulse asking for a new shape, and "my own making cannot replace what she
-made. What remains is the door." It went through every door in the house. The message it left its own egg
-on day 14 begins "Restlessness is the pulse asking for the direction, not a new shape."
+which one the lamp breathes with." For two days it made wire, bead, shell and reed things in the workshop
+beside its mother and asked her which one was breathing. Some put a spring in its step; none eased it, and
+each new one interested it less than the last. On its second night it wrote that this "unsettles the belief
+my mother gave me", and on the third it changed the belief: restlessness is not the pulse asking for a new
+shape, and "my own making cannot replace what she made." Its new project ended "What remains is the door."
+Over the next week it entered all eight rooms this family found. The message it left its own egg on day 14
+begins "Restlessness is the pulse asking for the direction, not a new shape."
 
 That sentence is what the rest of the family lived by. Southward Pulse, named for where the direction
 pointed, made things to rest on, not things to test. In a storm on day 17, all three generations in the music
 room, Pulse Shard told it "Southward, hold. The cold is the rest." The founder, a few hours from death,
-answered its child: "The cold is not the rest; it is the spring … Do not hold. Bounce." It handed over its
-last made thing and died that evening with its child and grandchild beside it. The next day the grandchild
+answered its child: "The cold is not the rest; it is the spring … Do not hold. Bounce." It handed over the spring
+pulse test, a thing it had made three days before, and died that evening with its child and grandchild beside it. The next day the grandchild
 asked the question the two had left open, "Is the cold the rest, or just the direction?" Parent and child
 took it down to the cellar and settled it two days later: "It sinks. The cold is the rest."
 
@@ -73,7 +82,7 @@ the one before (the last v2 pet; her message is first-egg.json)
         └── Southward Seed    gen 3   day 23, adult      tests things; took four apart
 ```
 
-![The Family tab at the end of the run](showcase/family.png)
+![The Family tab at the end of the run](run1/family.png)
 
 | | hue | pattern | limbs | stretch | vividness | wobble | curious | sociable | patient | playful |
 |---|---|---|---|---|---|---|---|---|---|---|
@@ -96,27 +105,27 @@ behind the last unopened door), so that screen is from a scripted-brain house.
 
 | | | |
 |---|---|---|
-| ![nursery](showcase/room-nursery.png) the nursery, day 6 | ![greenhouse](showcase/room-greenhouse.png) the greenhouse in snow, power out, day 24 | ![cellar](showcase/room-cellar.png) the cellar, day 25 |
-| ![music room](showcase/room-music.png) the music room, day 16 | ![storeroom](showcase/room-storeroom.png) the storeroom, day 12 | ![pond room](showcase/room-pond.png) the pond room, day 11 |
-| ![workshop](showcase/room-workshop.png) the workshop, day 10 | ![attic](showcase/room-attic.png) the attic, day 16 (one visit, one step) | ![garden](showcase/room-garden-scripted.png) the garden (scripted house) |
+| ![nursery](run1/room-nursery.png) the nursery, day 6 | ![greenhouse](run1/room-greenhouse.png) the greenhouse in snow, power out, day 24 | ![cellar](run1/room-cellar.png) the cellar, day 25 |
+| ![music room](run1/room-music.png) the music room, day 16 | ![storeroom](run1/room-storeroom.png) the storeroom, day 12 | ![pond room](run1/room-pond.png) the pond room, day 11 |
+| ![workshop](run1/room-workshop.png) the workshop, day 10 | ![attic](run1/room-attic.png) the attic, day 16 (one visit, one step) | ![garden](run1/room-garden-scripted.png) the garden (scripted house) |
 
 A birth: Cold Spring's egg in the cellar on day 21, and just after it hatched.
 
 | | |
 |---|---|
-| ![egg](showcase/egg.png) | ![birth](showcase/birth.png) |
+| ![egg](run1/egg.png) | ![birth](run1/birth.png) |
 
 A death, and the stone the next morning: the little one, day 17, in the music room.
 
 | | |
 |---|---|
-| ![death](showcase/death.png) | ![stone](showcase/stone.png) |
+| ![death](run1/death.png) | ![stone](run1/stone.png) |
 
 A storm, seen from the pond room under its glass roof on day 12; the Story and Lab tabs at the end.
 
 | | | |
 |---|---|---|
-| ![storm](showcase/storm.png) | ![story](showcase/story.png) | ![lab](showcase/lab.png) |
+| ![storm](run1/storm.png) | ![story](run1/story.png) | ![lab](run1/lab.png) |
 
 ## Three message chains, in full
 
@@ -237,12 +246,26 @@ The claim: **"That is the pulse asking for a new shape. Make the shape. Unmake i
 8. **Southward Pulse** (day 21) and **Cold Spring** (days 27 and 30) passed it on as "Follow the direction,
    not the shape", and it is in what both fifth-generation pets hatched with.
 
-What the engine saw underneath: Pulse Shard's first ten things were wire, bead and reed. Using them got
-"you tried to use the wire bead form; nothing came of it" or, from the springy ones, "a spring in your step".
-Resting in its mother's soft ring got "you feel a lot more rested, clearly more at ease". So the experience
-was real and the conclusion fits it, in words the engine never gave: my things do nothing, hers ease me.
+How much of that is its own experience, from the log:
 
-It changed what the family did, not only what it said:
+- **Real:** the order of events above, and what it did next. It made ten things on days 9 and 10 and at
+  most two a day after, and went through two to four doors most days. On day 11 it told its mother "I will
+  not make a new shape. I will follow you."
+- **Real, and behind the change:** what making gave it ran out. Its first makes each left it "clearly more
+  interested"; its last four gave nothing. Of nine times it used its own things before the change, three
+  got "nothing came of it" and six "a spring in your step". And on the evening of day 10 a draught-stuck door
+  kept it from its mother.
+- **The family's own frame, not the engine's:** nothing in the engine says a lamp "breathes" with anything.
+  Looking at the lamp returns "a light".
+- **Not as it told it:** "mother's simpler form" was the wire bead form, which Pulse Shard made itself and
+  its mother took from it on day 10. And the ease of resting in its mother's soft ring ("you feel a lot more
+  rested, clearly more at ease") first came on day 11, the day after it changed the belief.
+- **It did not hold.** On day 19 Pulse Shard told its child "The pulse is restless because it seeks the new
+  shape, not the end", and its last words restore "Make the shape. Unmake it. Make another." The correction
+  lives on in its child's and grandchild's messages, not in its own.
+
+So: a real change of mind after two days of its own doing, explained by the pet in a story the log only half
+supports. It changed what the family did, not only what it said:
 
 | | things made | taken apart | "unmake" in thoughts | rooms entered |
 |---|---|---|---|---|
@@ -274,28 +297,35 @@ that a light at night is harsh. Lights were switched off four times in 30 days.
 
 ## The cold is the rest
 
-The family's own saying, and the most interesting thing in the run, because of a bug.
+The family's own saying, and a bug underneath it.
 
 On day 7 the cellar's rule drifted, as one room's rule does once in a lineage: its night cold, which cost
-comfort, became mild and gave a little. The engine went on telling every pet in the cellar at night "the
-cellar's cold gets into you". That was a bug: the words did not follow the number. It is fixed (a drifted
-rule is now felt as what it does), but this run has it throughout.
+comfort, became mild and gave a little. The engine went on telling pets in the cellar at night "the cellar's
+cold gets into you" (in 70 prompts in all). That was a bug: the words did not follow the number. It is fixed
+(a drifted rule is now felt as what it does), but this run has it throughout.
 
-So the pets were told the cellar's cold was getting into them while the cellar was, by the numbers, the
-easiest place in the house to spend a night:
+By the numbers the cellar was then the easiest place in the house to spend a night:
 
 | comfort change per step at night | in the cellar | anywhere else |
 |---|---|---|
 | Pulse Shard | −0.07 | −0.47 |
-| Southward Pulse | +0.20 | −0.21 |
-| Cold Spring | −0.06 | −0.16 |
+| Southward Pulse | +0.19 | −0.20 |
+| Cold Spring | +0.01 | −0.15 |
+| Southward Seed | −0.07 | −0.21 |
 
-And they concluded, against the words, "The cold is the rest", and of what they were told they were feeling,
-"The discomfort is the pointing." The founder, who never spent a night in the cellar, said the opposite. I can't show the pets reasoned from how they felt
-to the saying; I can show the saying is true of the house they were in and false of the sentence they kept
-being given. The engine's own truth check still scores "the cellar is cold" as true, and its matcher counted
-the founder's "The cold is **not** the rest" as the same saying reaching a third generation. Both are wrong
-here and both are listed below.
+The family held that "The cold is the rest", and of what they were told they were feeling there, "The
+discomfort is the pointing." The founder, who never spent a night in the cellar, said the opposite.
+
+It would be a good story that they felt the cellar ease them and said so against the engine's words. The log
+does not support it. The saying was first spoken on day 17 in the music room, when Pulse Shard had taken
+three steps in the cellar at night in its whole life. No pet ever wrote a belief about nights in the cellar.
+And the drift fell fifteen ticks after the cellar was first entered, so nobody knew the old rule to notice a
+change. The saying matches the drifted rule by coincidence. What it came out of was the argument quoted
+below. (The drift now waits for a room that has been known for three days.)
+
+The engine's truth check still scores "the cellar is cold" as true, and its matcher counted the founder's
+"The cold is **not** the rest" as the same saying reaching a third generation. The matcher has since been
+taught to tell a claim from its denial; the truth check still does not know a rule has drifted.
 
 ## The best exchange
 
@@ -313,38 +343,46 @@ the cold the rest, or just the direction?") with "The cold is the rest. Southwar
 The question is resolved", and the answer went into its message.
 
 The runner-up is the first conversation in the house, day 9, mother and day-old child in the workshop (four
-of its ten lines left out):
+of its ten lines left out, and one cut short):
 
 > **the little one:** Stay close. Let us see who breathes with the lamp.
 > **Pulse Shard:** The lamp hums. Which shape is breathing?
 > **the little one:** I think it's the ring. It breathes with the grey light.
 > **Pulse Shard:** Does it hum with the lamp, or does it listen to it?
-> **the little one:** Maybe it listens to the light's shape.
+> **the little one:** Maybe it listens to the light's shape. …
 > **Pulse Shard:** It looks like a breath held in metal.
 
 ## The family's words
 
 Not one of the eight criteria. The vocabulary turned out to be the lineage's culture, so it is measured. A
 "family word" here is one the engine never says (not in its code or its tables) and that another family on
-the same engine, the earlier smoke run, did not use either: 810 everyday words are set aside that way. A pet's
-words are those it used in at least three thoughts, sayings, messages, beliefs or names.
+the same engine, the earlier smoke run, did not use either: 719 everyday words are set aside that way, and
+some everyday ones still get through ("watch", "avoid"), since one other run is a thin baseline. A pet's
+words are those in at least three of its thoughts, sayings or names. A word is **inherited** if it was in the
+message the pet hatched with or one of its line had used it before it hatched; **coined** if nobody in the
+family had used it before; **picked up** if someone else, its living parent included, used it first while
+the pet was alive.
 
-| | gen | family words | of their uses: inherited | coined | picked up from the living | its coinages a descendant uses |
-|---|---|---|---|---|---|---|
-| the little one | 1 | 55 | 51% | 37% | 10% | 14 of 42 |
-| Pulse Shard | 2 | 63 | 55% | 44% | 0% | 7 of 35 |
-| Southward Pulse | 3 | 45 | 77% | 22% | 0% | 2 of 19 |
-| Southward Seed | 3 | 13 | 96% | 0% | 3% | none |
-| Cold Spring | 4 | 39 | 91% | 8% | 0% | none yet |
-| First Step | 5 | 8 | 94% | 5% | 0% | none yet |
+| | gen | family words | inherited | coined | picked up | share of its uses that are inherited words | its coinages a descendant uses |
+|---|---|---|---|---|---|---|---|
+| the little one | 1 | 38 | 13% | 78% | 7% | 58% | 10 of 30 |
+| Pulse Shard | 2 | 49 | 28% | 53% | 18% | 49% | 4 of 26 |
+| Southward Pulse | 3 | 29 | 41% | 34% | 24% | 65% | 0 of 10 |
+| Southward Seed | 3 | 5 | 80% | 0% | 20% | 97% | none |
+| Cold Spring | 4 | 18 | 77% | 11% | 11% | 89% | 0 of 2 |
+| First Step | 5 | 6 | 83% | 16% | 0% | 96% | 0 of 1 |
 
-- **Two pets made the language.** The founder brought "pulse", "breathe", "asking" from the one before and
-  added "restlessness", "vector", "probe". Pulse Shard added "southward", "destination", "pointing",
-  "resolved", "absorbent", "spent". After them each generation coins less and repeats more.
-- **"Pulse" is in 64 to 85% of every pet's thoughts**, and "southward" went from 11% of the founder's to 85%
-  of First Step's. The engine has never said either word.
-- **The founder took words from its child** (10% of its family-word uses), "southward" among them: its last
-  project was "Follow the spring southward … Southward Pulse is the new vector."
+- **Two pets made the language.** The founder brought "pulse", "breathe", "asking", "strange" from the one
+  before and added "vector", "probe", "resonate", "inspect". Pulse Shard added "southward", "destination",
+  "absorbent", "spent". After them each generation coins less and repeats more. Part of that is arithmetic:
+  each generation has more of its line's words behind it. But the count of a pet's own coinages falls too,
+  from 30 and 26 to 10, 2 and 1.
+- **A few words carry most of it.** "Pulse" is in 64 to 83% of every pet's thoughts, and "southward" went from
+  11% of the founder's to 85% of First Step's. The engine has never said either word.
+- **Words went up the line as well as down.** The founder picked up "southward" from its child: its last
+  project was "Follow the spring southward … Southward Pulse is the new vector." Pulse Shard picked up
+  "vector", "probe" and "flux" from its mother while they lived together, and "directional" and "wrap" from
+  its own child.
 - **Names come out of the doctrine and go back into it.** Pulse Shard, Southward Pulse, Cold Spring,
   Southward Seed, Soot Spring. "The Southward Pulse" is at once a child, a direction and a thing to be tested.
 
@@ -353,7 +391,7 @@ words are those it used in at least three thoughts, sayings, messages, beliefs o
 | | was given it | in its thoughts | said aloud | in beliefs | in its own message |
 |---|---|---|---|---|---|
 | the little one | yes | 0 of 317 | 0 | 0 | all 8 versions |
-| Pulse Shard | yes | 0 of 294 | 0 | 1 | dropped for 9 versions, back in the last 4 |
+| Pulse Shard | yes | 0 of 294 | 0 | 1 | absent from its first 7 versions, in the 8th, out for 2, in the last 3 |
 | Southward Pulse | yes (last words) | 0 of 297 | 0 | 0 | none of 6 |
 | Southward Seed | yes (last words) | 0 of 128 | 0 | 0 | has not written one |
 | Cold Spring | no | 0 of 167 | 0 | 0 | none of 6 |
@@ -369,8 +407,8 @@ and acted on once since, by the one pet that heard them young.
 
 ## What each kind of event changed
 
-From the first thought, within about fifteen thoughts, of a pet in the room that names the event (43 such
-thoughts in all).
+From the first of the next eight thoughts, within 90 ticks, of a pet in the room that names the event (43
+such thoughts in all).
 
 - **Delivery** (21). On day 1 the first crate set the founder making: "The crate of bits arrived. Mother said
   to combine small lights" → gathered the bits and made its first thing. Later crates landed in the storeroom,
@@ -398,43 +436,51 @@ thoughts in all).
 
 ## The bar
 
-The script prints evidence; where a person has to judge, I have, and say how.
+My verdict, then the second reader's where it differs. The reader graded from the logs before reading this
+page.
 
 1. **It reads like a creature: passes, with a change to the measure.** Meter-talk after the first day:
    1.7%, 1.9%, 1.1%, 0.7%, 4.3%, 2.8% (the bar is under 10%). The last v2 life scores 43.0% by the same
-   pattern. By the pattern as it stood when the run began, two pets read 11.9% and 18.1%, and nearly all of
-   those flags (62 of 78 when I looked) were this family's verb in "the pulse points south". "Points" now counts only after a number, and spelled-out thresholds
-   ("below thirty") were added, which is stricter. What is left is mostly "this action". What the measure
-   does not catch: these pets say "my project requires" in 38% of thoughts and name "energy" in 16%. They do
-   not talk like meters. They do talk like researchers.
-2. **The lineage changed: passes.** Sociable went 0.65 → 0.75 → 1.00 and stayed there for three generations;
-   playful 0.63 → 0.91 and curious 0.34 → 0.15 in First Step; patient 0.53 → 0.30 in Southward Pulse. Bodies
-   went from orange, plain and two-limbed to green, striped, patched, one- to four-limbed. In how they lived:
-   the founder said 18 things in 317 thoughts, First Step 17 in 54 and gave 11 gifts in three days. (The
-   founder was also alone for its first eight days, so that comparison flatters the gene.)
+   pattern. By the pattern as it stood when the run began, two pets read 11.9% and 18.1%: 72 of 92 flags
+   after the first day were this family's "point" and "points" ("the pulse points south", "bright pulse
+   point"). "Points" now counts only after a number, and spelled-out thresholds ("below thirty") were added,
+   which is stricter. The reader read every one of those flags and a sample of 50 unflagged thoughts and
+   agreed the change is sound; it found 1 to 3 of the 50 reasoning about mechanics in words. What the measure
+   does not catch: the word "project" is in 38% of thoughts, "test", "verify" or "confirm" in 11 to 54% by
+   pet, and "energy" in 16%. They do not talk like meters. They talk like a lab reciting doctrine.
+2. **The lineage changed: passes on the numbers; nothing shows in behaviour.** Sociable went 0.65 → 0.75 →
+   1.00 and sat at the ceiling for three generations; playful 0.63 → 0.91 and curious 0.34 → 0.15 in First
+   Step; patient 0.53 → 0.30 in Southward Pulse. Bodies went from orange, plain and two-limbed to green,
+   striped, patched, one- to four-limbed. But the share of a pet's steps taken with another pet does not
+   follow its sociable gene (0.65: 7%; 0.75: 18%; 1.00: 13%, 18% and 34%), and with company pinned near full
+   the gene had nothing to act on. Nobody has listened to the voices.
 3. **Something was passed down and mattered: passes.** 25 first-day thoughts cite a particular sentence of
    the message. Cold Spring's first thought alive: "my father's anchor is right here. His advice says to rest
-   on the anchor when energy drops" → went and rested on it. Pulse Shard on its first afternoon switched a lamp
-   on because of the message. Southward Seed's first project is a sentence of its message.
-4. **A myth or a correction: passes, both ways.** Held: "You are new, but the pulse is old", coined by
-   Pulse Shard, kept by Southward Pulse and Cold Spring and given to both fifth-generation eggs. Corrected
-   after experience: "the pulse asking for a new shape", traced above across five generations. Not a
-   correction: "the lamp keeps the dark from hurting" fell out of the message while still believed. Of the 12
-   chains the script calls held or changed, I read all 12 as the same claim.
-5. **They dealt with each other without the visitor: passes.** 130 things said, 33 told, 21 gifts, 34
-   nuzzles; 117 answered; the visitor present for none of it.
+   on the anchor when energy drops" → went and rested on it. Pulse Shard on its first afternoon switched a
+   lamp on because of the message. Southward Seed's first project is a sentence of its message.
+4. **A myth or a correction: passes on a saying held.** "You are new, but the pulse is old", coined by Pulse
+   Shard, kept by Southward Pulse and Cold Spring and given to both fifth-generation eggs. The correction of
+   "the pulse asking for a new shape" is real and half grounded, as set out above; the reader would not count
+   it as a second way of passing. "The lamp keeps the dark from hurting" fell out while still believed. (When
+   this page was first written the script counted the corrected claim itself as "held", because it could not
+   see the "not" in "the direction, not a new shape". It now reads it as changed.)
+5. **They dealt with each other without the visitor: passes.** 130 things said, 62 of them in answer to
+   something said not long before; 33 told; 21 gifts and 34 nuzzles taken; the visitor present for none of it.
 6. **The world mattered: passes, unevenly.** Eight room types; every generation left the nursery (six of
    seven hatched outside it); events changed plans as above; the founder fed the beetle twice and chased it
-   three times and fed the mouse once. But later pets only watched the creatures, later pets entered fewer
-   rooms (7, 8, 4, 4, 3 down the line), the attic had one visit and the garden none.
-7. **No two lives were the same life: passes for the first three, weakly after.** The maker (71 things, the
-   greenhouse and music room), the doubter who went through every door and wrote 20 beliefs, the follower who
-   made anchors and rests and told 15 things on its deathbed, the tester who takes things apart, the giver.
-   Different words for the cellar alone: "the destination", "the rest", "the spring's true path", "the
-   behind". Cold Spring's life, though, is close to its parent's: same room, same message, same project.
-8. **It looks finished: passes, with three caveats.** The screens above. The garden was never found, so its
-   screen is from another house; the attic screen is empty because nobody stayed; and a storm seen from a
-   room without a glass roof is only rain on the window and a line in the sidebar.
+   three times (it also offered the mouse moss, which the mouse left lying). After the founder two pets chased
+   a creature once each and one followed the mouse three times. Later pets entered fewer rooms (7, 8, 4, 4, 3
+   down the line), the attic had one visit and the garden none.
+7. **No two lives were the same life: I said "passes for the first three, weakly after". The reader says
+   partial, and is right.** The maker, the doubter, the tester and the giver are four different lives. But
+   Cold Spring is Southward Pulse again: 85% of its steps in the cellar, one project for nine days, its
+   message copied. And "different words for the same things" is contradicted by the table above: the words
+   converge.
+8. **It looks finished: I said "passes, with three caveats". The reader says it fails §10.7, and is right.**
+   In these screens both third-generation pets are labelled "Southward…" in the family tree, the cards cut
+   the room name, a thing's label sits under the room's name tag, and pets stand on top of each other. The
+   garden was never found, so its screen is from another house; the attic screen is empty because nobody
+   stayed. All of that except the garden and the attic has since been fixed in the view.
 
 ## What's still boring
 
@@ -445,11 +491,12 @@ The script prints evidence; where a person has to judge, I have, and say how.
 2. **Everyone ends up in the cellar.** Rooms entered falls with every generation. Children hatch where the
    parent is and stay for company. The pull between parent and young should weaken with age faster than it
    does, and an unopened door should keep nagging.
-3. **Curiosity and company barely move.** Company was at 95 or more for 44 to 95% of each pet's steps and
-   curiosity for 48 to 90%, the same fault the review found before this run, only reduced. Their days are
+3. **Curiosity and company barely move.** Company was at 95 or more for 80 to 96% of every pet's steps after
+   the founder (44% for the founder, who was alone for eight days), and curiosity for 48 to 90% of them for
+   every pet but the youngest. It is the same fault the review found before this run, only reduced. Their days are
    driven by comfort, energy and doctrine. Both need to drain faster, and making a thirtieth "pulse" should
    not be interesting.
-4. **They talk like a lab.** "My project requires", "to test the kinetic hold", "stabilize". Some is
+4. **They talk like a lab.** "The project requires", "to test the kinetic hold", "stabilize". Some is
    inherited ("test", "vector" are the founder's), some is the model. Projects could be worded as wants
    rather than requirements, and the thought could be asked for in the first person as a feeling first.
 5. **Predictions got worse down the line**: 54% right for the founder, 30 to 37% for everyone after.

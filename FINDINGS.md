@@ -129,7 +129,7 @@ All times are real time. "Fast clock" is a world day every 30 minutes; the real 
 | throwaway Adult | V2.4 | fast | 20 min | started as an Adult to see teaching and a self-portrait |
 | `data.v2.5` | V2.5 | real | closed for v3 | Child on day 3, Youngling on day 8, Adult on day 9; wrote the first v3 egg's message |
 | `data.smoke` | v3 | turbo | about 9 h | 26 world days, 5 pets, 4 generations; cut short by a power cut |
-| `data.showcase` | v3 | turbo | 6.9 h | 30 world days, 7 pets, 5 generations; SHOWCASE.md |
+| `data.showcase-1` | v3 | turbo | 6.9 h | 30 world days, 7 pets, 5 generations; did not pass the bar; showcase/first-run.md |
 
 The `data*` folders are not in the repository; they are large and local.
 
