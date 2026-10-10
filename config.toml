@@ -6,6 +6,9 @@ day_seconds = 7200        # real seconds per world day (the showcase used 900)
 min_think_seconds = 70    # a pet thinks at most this often, scaled by how patient it is ...
 urgent_seconds = 20       # ... unless something urgent happened: a low need, being spoken to, an event
 max_idle_seconds = 180    # ... and at least this often
+patient_spread = 0.4      # the most patient pet thinks this much less often than the least (§8.1)
+elder_think = 1.25        # an elder thinks this much less often (§4.1)
+walk_seconds = 90         # a step that cannot reach where it is going in this long happens where the pet stands
 turbo = false             # SPEC-v3 amendment: world time does not follow the wall clock. While a model call is in
                           # flight the world waits; otherwise it runs straight on to the next thing due.
 
@@ -50,19 +53,23 @@ calls_per_hour = 150      # across all pets; routine thoughts slow down to stay 
 [effects]                 # what the plain actions do; a pet is told none of the numbers
 drift = { energy = -0.2, comfort = -0.1, curiosity = -0.3 }   # per 10 s, just from being awake
 miserable = 0.4           # how much of the interest in a thing is left to a pet that is miserable
-cozy = 0.5                # comfort per 10 s beside a bed, a blanket, a rug
+cozy = 0.35                # comfort per 10 s beside a bed, a blanket, a rug
 open_window = -0.5        # comfort per 10 s at night in a room with the window open
-yours = 0.2               # comfort per 10 s beside a thing of its own that it has kept a world day (§3.3)
+yours = 0.1               # comfort per 10 s beside a thing of its own that it has kept a world day (§3.3)
 rest_per_10s = 2.0        # energy while resting; a bed or bench has its own figure in house.toml
-observe = { curiosity = 0.5 }
-look = { curiosity = 1.0 }
+observe = { curiosity = 0.3 }
+look = { curiosity = 0.7 }
 speak = { energy = -0.5 }
 gather = { energy = -0.5 }
 eat = { energy = 12.0, comfort = 1.0 }
 ripe = { energy = 9.0, comfort = 3.0 }    # a ripe plant from the garden or greenhouse
 double_feed_seconds = 300 # a second meal this soon after the last gives discomfort in place of energy
 new_room = 8.0            # curiosity the first time it walks into a room
-show = { curiosity = 2.0 }
+show = { curiosity = 2.0, company = 1.0 }   # to the one shown; the one showing gets the company
+said_to = 2.0             # company from speaking to another pet, or telling
+gift = 3.0                # company for both when a gift is taken
+paint = { energy = -2.0 }
+play = { energy = -0.5 }  # a toy takes a little energy
 nuzzle = { company = 8.0, comfort = 2.0 }
 spoken_to = 3.0           # company from being spoken to by another pet
 visitor_talk = 4.0        # company from the visitor talking
@@ -70,21 +77,26 @@ feed_creature = { company = 2.0, curiosity = 1.5 }
 chase = { energy = -2.0, curiosity = 2.0 }
 # company per 10 s (§7.4): near another pet, in a room with one, with a creature about, with a creature it has fed,
 # alone (times how sociable it is), and while the visitor is looking in
-company = { near = 0.6, room = 0.25, creature = 0.1, friend = 0.3, alone = -0.03, visitor = 0.05 }
+company = { near = 0.15, room = 0.05, creature = 0.03, friend = 0.1, alone = -0.05, visitor = 0.05 }
 stone = { company = 3.0, comfort = 1.0 }   # touching the stone of one of its own
 offer_seconds = 300       # an offer nobody takes lapses after this
 reply_seconds = 1500      # speech answered within this counts as a reply (Lab): about twenty thoughts
 nuzzle_wear = 0.7         # each nuzzle with the same one is worth this much of the last, until a night eases it
 
 [novelty]                 # familiarity (SPEC-v2 §4): doing a thing again is worth less each time
-max = 4.0                 # curiosity for doing something not done for a while
+max = 3.0                 # curiosity for doing something not done for a while
 seconds = 150             # real seconds per point regained
 fresh_seconds = 600       # a made thing gives its full curiosity only if left alone this long
-wear = 0.8                # each repeat is worth this much of the last (a curious pet tires of things faster) ...
+wear = 0.75               # each repeat is worth this much of the last (a curious pet tires of things faster) ...
 floor = 0.1               # ... down to this
 cap = 10                  # repeats stop counting here
 eases = 2                 # repeats forgotten each night
 familiar = 4              # from this many repeats it is told the thing has grown familiar
+
+[feel]                    # where a need turns from one word to the next (§3.1), and how temperament moves that
+steps = [80, 60, 40, 20]  # below these a need is one word worse
+gene_shift = 24           # a gene at 1.0 feels each step this many points sooner than one at 0.0 (sensitive, curious, sociable)
+trend = 0.8               # per 10 s: faster than this and it is "getting worse" or "getting better"
 
 [packet]
 max_chars = 9000          # about 2,500 tokens; what is cut first is in mind.py and DECISIONS.md
@@ -93,7 +105,13 @@ max_chars = 9000          # about 2,500 tokens; what is cut first is in mind.py 
 egg_minutes = 10          # real minutes as an egg
 lifespan_days = 24        # before wellbeing and hardiness adjust it by up to 30%
 adult_days = 6            # days as an Adult before Elder
-neglect_days = 1          # comfort and energy both at the bottom this long: it weakens
+wellbeing_share = 0.3     # how much of a lifespan a life well or badly lived can add or take (§4.1) ...
+wellbeing_span = 30       # ... reached this many points of lifelong wellbeing above or below 50
+hardy_share = 0.2         # the spread of lifespan between the least and the most hardy
+egg_energy = 25.0         # what laying an egg takes
+neglect_days = 1          # this long with comfort and energy low (waking time; good time pays it back): it weakens
+neglect_below = 20        # "low": the mean of comfort and energy under this
+awake_share = 0.7         # the part of a world day a pet is awake, for turning days into waking ticks
 neglect_cost_days = 2     # lifespan lost per further day of it
 fade_minutes = 3          # real minutes a dead pet lies still before its stone is all that is left
 population = 4            # pets and eggs alive at once
@@ -113,6 +131,8 @@ taught_max = 4
 
 [make]
 carry = 3                 # bits a pet can carry
+effort = 2.0              # energy to make a thing, plus one per part; combining costs effort + 1 (halved at a workbench)
+tired = 8                 # too tired to make anything below this much energy
 loose_bits = 12           # dropped bits a room's floor holds before the oldest is swept away
 crowded = 10              # made things in one room before it is too crowded to make more
 parts = { hatchling = 2, child = 3, youngling = 3, adult = 3, elder = 3 }   # a made thing's parts; combining goes to 6

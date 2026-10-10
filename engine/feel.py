@@ -14,7 +14,6 @@ WORDS = {
     "curiosity": ["fascinated", "interested", "a bit bored", "bored", "restless for something new"],
     "company": ["close to someone", "not lonely", "a bit lonely", "lonely", "aching for company"],
 }
-STEPS = [80, 60, 40, 20]          # the levels at which a need moves down a word
 GENE = {"comfort": "sensitive", "curiosity": "curious", "company": "sociable"}   # the gene that moves a need's thresholds
 SEEMS = {   # how a pet looks to another, from its worst need (§7.1)
     "energy": ["lively", "awake", "a little tired", "tired", "worn out"],
@@ -27,10 +26,13 @@ MORE = {"energy": ("more rested", "more tired"), "comfort": ("more at ease", "le
 SIZES = [(8, "a lot"), (3, "clearly"), (0.5, "a little")]
 
 
+STEPS, SHIFT, TREND = [80, 60, 40, 20], 24, 0.8   # set from config.toml [feel] when the config is loaded (world.derive)
+
+
 def level(pet, need):
     """0 (best) to 4 (worst). A sensitive pet feels uncomfortable sooner, a curious one bored sooner,
     a sociable one lonely sooner: up to 12 points earlier, never said to it in so many words (§8.1)."""
-    shift = (pet["temper"].get(GENE.get(need, ""), 0.5) - 0.5) * 24
+    shift = (pet["temper"].get(GENE.get(need, ""), 0.5) - 0.5) * SHIFT
     return sum(pet["needs"][need] < s + shift for s in STEPS)
 
 
@@ -42,7 +44,7 @@ def feelings(pet):
     for n in sorted(NEEDS, key=lambda n: -level(pet, n)):
         rate, lvl = pet["trend"].get(n, 0), level(pet, n)
         out.append(WORDS[n][lvl] + (" (it is hard to think of anything else)" if lvl == 4 else "")
-                   + (" and getting worse" if rate <= -0.8 and lvl < 4 else " and getting better" if rate >= 0.8 else ""))
+                   + (" and getting worse" if rate <= -TREND and lvl < 4 else " and getting better" if rate >= TREND else ""))
     return "; ".join(out)
 
 
@@ -93,11 +95,11 @@ def ago(house, cfg, tick):
 
 # Words that name a need. Each has a pole: +1 if more of the word means the need is better met.
 NAMES = {
-    "energy": [(r"energy|rested|awake|lively|refreshed|strength|strong", 1), (r"tired|exhaust|sleepy|weary|worn|drained|fatigue", -1)],
+    "energy": [(r"energy|rested|awake|lively|refreshed", 1), (r"tired|exhaust|sleepy|weary|worn|drained|fatigue", -1)],
     "comfort": [(r"comfort(?!able)|comfortable|at ease|ease|calm|cozy|cosy|settled|safe|warm|sooth|peace|relax|content|better", 1),
                 (r"uneasy|uncomfortable|miserable|unease|harsh|cold|hurt|discomfort|worse|unsettled", -1)],
     "curiosity": [(r"curio|interest|fascinat|absorbed|engaged|entertain|delight|new", 1), (r"bored|boredom|restless|dull", -1)],
-    "company": [(r"company|close to|together|loved|befriend|less alone|not alone", 1), (r"lonely|loneli|alone|aching", -1)],
+    "company": [(r"company|companion|close to|together|loved|befriend|less alone|not alone|connect", 1), (r"lonely|loneli|alone|aching", -1)],
 }
 UP = re.compile(r"\b(more|ris\w*|rais\w*|increas\w*|grow\w*|higher|gain\w*|restor\w*|improv\w*|recover\w*|return\w*|better|up|will feel|feel|become|becoming|get|getting)\b")
 DOWN = re.compile(r"\b(less|no longer|not|stop\w*|fad\w*|eas\w*|drop\w*|fall\w*|lower\w*|decreas\w*|reduc\w*|los\w*|drain\w*|declin\w*|down|away|gone|lift\w*|pass\w*|relie\w*)\b")
@@ -136,6 +138,9 @@ def score(text, deltas, house, pet):
     need, way = expected(text)
     if need:
         actual = (deltas.get(need, 0) >= 0.5) - (deltas.get(need, 0) <= -0.5)
+        pinned = (way > 0 and pet["needs"][need] >= 99.5) or (way < 0 and pet["needs"][need] <= 0.5)
+        if pinned and actual == 0:   # it expected more of what was already full: nothing could have shown it right
+            return "unscorable", need
         return ("correct" if way == actual else "wrong"), need
     s, room = text.lower(), house["rooms"][pet["room"]]
     for name, o in room["objects"].items():           # a visible change: "the lamp is off", "the music box is playing"

@@ -79,7 +79,7 @@ class Stub:
         if t == "lay_egg":
             return {"type": t, "name": "Egg%d" % r.randrange(1000), "message": self.message(packet)}
         if t == "bequeath":
-            return {"type": t, "what": pick(c["mine"]), "to": "my children"}
+            return {"type": t, "what": pick(c["leave"]), "to": "my children"}
         if t == "write_belief":
             return {"type": t, "statement": pick(SAYINGS), "source": pick(["lived", "seen"] + ["told by " + x for x in c["tellers"]])}
         if t == "revise_belief":
@@ -100,7 +100,7 @@ class Stub:
                 "arrange": c["movable"], "combine": len(c["free"]) > 1 and c["materials"], "teach": c["mine"],
                 "give": (c["awake"] or c["creatures"]) and (c["carrying"] or c["bits"]), "show": c["awake"] and c["things"],
                 "follow": c["pets"] + c["creatures"], "nuzzle": c["awake"] or c["eggs"], "accept": c["offers"], "take": c["theirs"],
-                "chase": c["creatures"], "tell": c["awake"], "bequeath": c["mine"], "revise_belief": c["beliefs"], "use": c["things"]}
+                "chase": c["creatures"], "tell": c["awake"], "bequeath": c["leave"], "revise_belief": c["beliefs"], "use": c["things"]}
         return bool(need.get(t, True))
 
     async def act(self, packet, ctx):

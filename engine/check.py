@@ -134,7 +134,12 @@ async def main():
         assert pet["carrying"] == ["wax"] and nest["made"]["bits"] == ["fluff"] and nest["made"]["owner"] == pet["id"], "a part uses up the bit that fits"
         assert "yours" in mind.perceive(h, cfg, pet, m.mem)[0].split("soft nest (")[1].split(")")[0], "every thing says whose it is"
         r = await do(eng, pet, {"type": "make", "recipe": dict(recipe, name="hard thing", material="hard"), "near": "here"}, {"type": "observe"})
-        assert r[0]["reason"] and "hard" in r[0]["reason"], "a thing can only be what its bits allow"
+        assert not r[0]["reason"] and "pebble" in room_of(eng, pet)["objects"]["hard thing"]["made"]["bits"], "what it is short of, it picks up on the way"
+        things.unmake(h, cfg, pet, "hard thing")
+        room_of(eng, pet)["spots"] = [s for s in room_of(eng, pet)["spots"] if not s["loose"]]
+        pet["carrying"] = ["wax"]
+        r = await do(eng, pet, {"type": "make", "recipe": dict(recipe, name="sweet thing", material="sweet"), "near": "here"}, {"type": "observe"})
+        assert r[0]["reason"] and "sweet" in r[0]["reason"], "a thing can only be what the bits to hand allow"
         e0 = pet["needs"]["energy"]
         r = await do(eng, pet, {"type": "unmake", "target": "soft nest"}, {"type": "gather", "what": "fluff"})
         assert "soft nest" not in room_of(eng, pet)["objects"] and r[0]["own"]["energy"] <= 0, "unmaking returns the stuff, not energy"
@@ -259,7 +264,7 @@ async def main():
             "a parent and its young feel the pull when they are apart"
         egg["room"] = home
         cfg["life"]["population"] = 2
-        assert life.can_lay(h, cfg, pet) == "the house is full" and "the house is full" not in physics.senses(h, cfg, pet)
+        assert life.can_lay(h, cfg, pet) == "the house is full" and "the house is full" in physics.senses(h, cfg, pet), "the cap is felt, not counted"
         cfg["life"]["population"] = 4
 
         # ---- §7 others ----
@@ -363,7 +368,8 @@ async def main():
         packet, ctx = mind.perceive(h, cfg, pet, m.mem)
         assert len(packet) <= cfg["packet"]["max_chars"] + 2000, "the packet stays near its budget"
         pet["events"] = []
-        m.mem.write("the lamp is harsh at night", h["tick"], "told by mother")
+        first = m.mem.write("the lamp is harsh at night", h["tick"], "told by mother")
+        assert first == "lamp" and not re.search(r"\d", first), "a belief is known by a word of its own, not a number"
         m.mem.write("the bed is a good place to rest", h["tick"], "lived")
         m.today.append([h["tick"], "[night, the nursery] you rested on the bed; you feel a lot more rested", 5])
         m.brain.reply = {"dream": "I rested and thought about the lamp.", "changes": [{"type": "write_belief", "statement": "soft things ease me", "source": "lived"}],
@@ -372,8 +378,8 @@ async def main():
         for _ in range(50):
             await eng.tick()
         text, asks = m.brain.nights[0]
-        assert "to look at again: b1" in text and "review" in asks and "message" not in asks, text
-        assert pet["project"]["text"] == "make the nursery soft" and not m.mem.is_active("b1") and len(m.mem.active()) == 2
+        assert "to look at again: lamp" in text and "review" in asks and "message" not in asks, text
+        assert pet["project"]["text"] == "make the nursery soft" and not m.mem.is_active("lamp") and len(m.mem.active()) == 2
         assert pet["sleep"] and pet["sleep"]["done"] and pet["diary"][-1]["dream"].startswith("I rested")
         at(eng, 7, day=h["clock"]["day"] + 1)
         await eng.tick()

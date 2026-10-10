@@ -1,6 +1,7 @@
 """A pet's own memory (SPEC §8, SPEC-v3 §8.3): its append-only journal, its beliefs with where each came
 from, and what it knows of itself. One folder per pet, under its lineage."""
 import json
+import re
 from pathlib import Path
 
 
@@ -35,10 +36,20 @@ class Memory:
         held = self.active()
         return min(held, key=lambda b: (b.get("reviewed", b["created"]), b["created"])) if held else None
 
+    def handle(self, statement):
+        """What a belief is called: a word of its own that no other belief of this pet's has, never a number."""
+        from .story import content
+        used = {b["id"] for b in self.beliefs}
+        words = [w for w in re.findall(r"[a-z]+", statement.lower()) if len(w) >= 4 and content(w)]
+        for name in words + ["%s-%s" % (a, b) for a, b in zip(words, words[1:])] + ["%s-%s" % (w, x) for w in words[:3] for x in ("again", "still", "also", "more", "anew")]:
+            if name not in used:
+                return name
+        return "belief-" + "".join(chr(97 + int(c)) for c in str(len(self.beliefs)))
+
     def write(self, statement, tick, source="lived"):
         if len(self.active()) >= self.max:
             return None
-        b = {"id": "b%d" % (len(self.beliefs) + 1), "statement": statement, "source": source,
+        b = {"id": self.handle(statement), "statement": statement, "source": source,
              "created": tick, "revised": tick, "status": "active"}
         self.beliefs.append(b)
         self._save(b, "write", tick)

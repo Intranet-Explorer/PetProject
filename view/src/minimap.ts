@@ -11,7 +11,7 @@ export function drawMap(box: HTMLElement, s: Snap, viewed: string, chosen: strin
   const [gx, gy] = [Math.max(...s.rooms.map((r) => r.cell[0])) + 1, Math.max(...s.rooms.map((r) => r.cell[1])) + 1];
   const at = (cell: number[]) => [cell[0] * (CW + GAP) + 2, cell[1] * (CH + GAP) + 2];
   const map = svg("svg", { viewBox: `0 0 ${gx * (CW + GAP) - GAP + 4} ${gy * (CH + GAP) - GAP + 4}` });
-  const dark = !s.power || s.clock.phase === "night", shut: SVGElement[] = [];   // a door blown shut is drawn last, over the open one from its other side
+  const dark = s.clock.phase === "night" || (!s.power && s.clock.phase !== "day"), shut: SVGElement[] = [];   // a door blown shut is drawn last, over the open one from its other side
   for (const r of s.rooms) {
     const [x, y] = at(r.cell);
     if (!r.type) {   // only a blank, and only if a door of a found room leads to it

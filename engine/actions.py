@@ -91,6 +91,11 @@ def others_things(house, pet, room):
     return [n for n, o in things.made(room).items() if not things.free_to_change(house, pet, o)]
 
 
+def heirlooms(house, pet, room):
+    """Things here that were left to this pet (§5.3). They are still marked as the giver's, and can be left on."""
+    return [n for n, o in things.made(room).items() if pet["id"] in (o["made"].get("heirloom") or {}).get("to", [])]
+
+
 def changeable(house, pet, room):
     return [n for n, o in things.made(room).items() if things.free_to_change(house, pet, o) and not o["made"].get("heirloom")]
 
@@ -113,7 +118,7 @@ def allowed(house, cfg, pet, mem):
         "nuzzle": (bool(others) and feel.level(pet, "company") >= 1) or eggs,   # one already close to someone feels no need to
         "accept": bool(pet["offers"]), "take": bool(others_things(house, pet, room)), "chase": bool(crs),
         "tell": bool(others), "lay_egg": life.can_lay(house, cfg, pet) is None,
-        "bequeath": bool(kids) and bool(mine), "revise_belief": bool(mem.active()),
+        "bequeath": bool(kids) and bool(mine or heirlooms(house, pet, room)), "revise_belief": bool(mem.active()),
         "write_belief": True, "arrange": any(movable(cfg, o) for o in room["objects"].values()) or eggs,
     }
     return [a for a in life.actions_of(pet["stage"]) if can.get(a, True)]
@@ -173,6 +178,8 @@ def check(a, house, cfg, pet, mem):
             ok = o is not None and movable(cfg, o)
         if not ok:
             return "that cannot be moved"
+        if norm(a.get("near")) == norm(a.get("object")):
+            return "it cannot be put beside itself"
         return None if find(house, pet, a.get("near"))[0] else "there is no such place to put it"
     if t == "combine":
         return things.check_combine(a, house, cfg, pet, norm)
@@ -302,7 +309,8 @@ def apply(house, cfg, pet, a, mem):
     if t == "rest":
         return "you rested", {"energy": E["rest_per_10s"]}, None
     if t == "move":
-        return "you went over to " + norm(a["to"]), {}, None
+        to = norm(a["to"])
+        return "you went over to " + ("the " + to if "the " + to in PLACES or find(house, pet, to)[0] in ("thing", "bit", "creature") else a["to"].strip()), {}, None
     if t == "look":
         return look(house, cfg, pet, a)
     if t == "go":
@@ -336,6 +344,10 @@ def apply(house, cfg, pet, a, mem):
             ref["pos"] = free_tile(house, cfg, room, to)
             return "you moved the egg", {}, None
         o = room["objects"][ref]
+        water = room["objects"].get(norm(a["near"]), {}).get("fix", {}).get("water")
+        if water and "made" in o:   # the pond's own rule (§6.1): what is set on the water floats away
+            o["pos"] = list(min((t for t in water if not any(x["pos"] == t for x in room["objects"].values())), key=lambda t: dist(t, pet["pos"]), default=water[0]))
+            return "you set %s on the water" % ref, {}, "arrange"
         o["pos"] = free_tile(house, cfg, room, to, ref)
         return "you moved %s over by %s" % (ref, norm(a["near"])), {}, "arrange"
     if t == "combine":
@@ -343,7 +355,7 @@ def apply(house, cfg, pet, a, mem):
     if t == "paint":
         room["paint"] = {"wall": a["wall"], "floor": a["floor"]}
         moment(house, "painted", "%s painted %s: %s walls, %s floor" % (name, room["name"], a["wall"], a["floor"]), pet["id"], room["id"])
-        return "you painted the walls %s and the floor %s" % (a["wall"], a["floor"]), {"energy": -2.0}, "paint"
+        return "you painted the walls %s and the floor %s" % (a["wall"], a["floor"]), dict(E["paint"]), "paint"
     if t == "teach":
         return things.teach(house, pet, a, norm(a["target"]))
     if t == "give":
@@ -352,8 +364,8 @@ def apply(house, cfg, pet, a, mem):
         other, what = find(house, pet, a["to"])[1], norm(a["what"])
         add_event(house, other, "%s showed you the %s: %s" % (handle(house, other, pet), what, describe_thing(house, cfg, other, what)))
         other["news"].append("spoken")
-        bump(other, cfg, {"curiosity": E["show"]["curiosity"], "company": 1.0})
-        return "you showed the %s to %s" % (what, handle(house, pet, other)), {"company": 1.0}, "show"
+        bump(other, cfg, E["show"])
+        return "you showed the %s to %s" % (what, handle(house, pet, other)), {"company": E["show"]["company"]}, "show"
     if t == "follow":
         kind, ref = find(house, pet, a["who"])
         pet["following"] = ref["id"]
@@ -393,7 +405,7 @@ def apply(house, cfg, pet, a, mem):
         bump(other, cfg, {"company": E["spoken_to"]})
         house.setdefault("said", []).append({"tick": house["tick"], "from": pet["id"], "to": other["id"], "kind": "tell", "text": text})
         moment(house, "told", "%s told %s something to keep" % (name, label(other)), pet["id"], room["id"])
-        return "you told %s what you wanted them to keep" % handle(house, pet, other), {"company": 2.0}, "tell"
+        return "you told %s what you wanted them to keep" % handle(house, pet, other), {"company": E["said_to"]}, "tell"
     if t == "lay_egg":
         return life.lay_egg(house, cfg, pet, a, clean)
     if t == "bequeath":
@@ -479,7 +491,7 @@ def go(house, cfg, pet, d):
 
 
 def speak(house, cfg, pet, a, mem):
-    text, room = clean(a["text"], 160), house["rooms"][pet["room"]]
+    text, room = life.last_sentence(clean(a["text"], 170), 140), house["rooms"][pet["room"]]
     kind, other = find(house, pet, a.get("to")) if filled(a.get("to")) else (None, None)
     pet["said"] = {"text": text, "tick": house["tick"], "to": other["id"] if kind == "pet" else "visitor" if kind == "visitor" else None}
     rec = {"tick": house["tick"], "from": pet["id"], "to": pet["said"]["to"], "kind": "speak", "text": text}
@@ -505,7 +517,7 @@ def speak(house, cfg, pet, a, mem):
         moment(house, "named", "the little one named itself " + pet["name"], pet["id"], room["id"])
     fx = dict(cfg["effects"]["speak"])
     if kind == "pet":
-        fx["company"] = 2.0
+        fx["company"] = cfg["effects"]["said_to"]
     return 'you said%s: "%s"' % (" to " + handle(house, pet, other) if kind == "pet" else "", text), fx, "speak"
 
 
@@ -562,7 +574,7 @@ def use(house, cfg, pet, name):
             from . import director
             room["sounding_until"] = house["tick"] + ticks(cfg, 90)
             director.startle(house, cfg, room, pet)
-        return "you played with the %s" % name, {"curiosity": fix["toy"], "energy": -0.5}, "use " + name
+        return "you played with the %s" % name, {"curiosity": fix["toy"], **E["play"]}, "use " + name
     if "rest" in fix:
         return "you lay on the %s a moment" % name, {"energy": fix["rest"] * 1.5}, "use " + name
     if fix.get("mirror"):
@@ -607,7 +619,7 @@ def accept(house, cfg, pet, off):
             a["times"][key], a["seen_at"][key] = min(cfg["novelty"]["cap"], n + 1), house["tick"]
         bump(giver, cfg, gain[giver["id"]])
         add_event(house, giver, "%s leaned back against you" % handle(house, giver, pet))
-        giver["news"].append("event")
+        giver["news"].append("answer")
         house.setdefault("said", []).append(rec)
         pair, today = "|".join(sorted((giver["id"], pet["id"]))), house["clock"]["day"]
         if house.setdefault("nuzzled", {}).get(pair) != today:   # a moment the first time in a day, not every time
@@ -630,11 +642,11 @@ def accept(house, cfg, pet, off):
             return "the %s is no longer %s's to give" % (what, handle(house, pet, giver)), {}, None
         o["made"]["owner"], o["pos"] = pet["id"], free_tile(house, cfg, room, pet["pos"], what)
     add_event(house, giver, "%s took the %s you offered" % (handle(house, giver, pet), what))
-    giver["news"].append("event")
-    bump(giver, cfg, {"company": 3.0})
+    giver["news"].append("answer")
+    bump(giver, cfg, {"company": E["gift"]})
     house.setdefault("said", []).append(rec)
     moment(house, "gift", "%s gave %s %s" % (label(giver), label(pet), ("some " if off["bit"] else "the ") + what), pet["id"], room["id"])
-    return "you took the %s from %s" % (what, handle(house, pet, giver)), {"company": 3.0}, "gift"
+    return "you took the %s from %s" % (what, handle(house, pet, giver)), {"company": E["gift"]}, "gift"
 
 
 def lapse(house, cfg, pet):

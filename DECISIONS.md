@@ -306,3 +306,70 @@ README.md's history and NOTES.md.)
   notices "there are things you know that Drift does not; you could tell them while you can".
 - **The Lab and the showcase script read the logs on the clock they were written on**: the engine notes its
   profile in house.json.
+
+## Part 10: the fresh-eyes review
+
+A fresh agent that had not seen the build read the spec, the code and the smoke run's logs, and came back with
+31 findings. What was done about them, the ones that changed a design first. The first showcase attempt, 16
+minutes old, was archived as `data.showcase-0` and the run restarted on the fixed engine.
+
+- **One pet's failing step could freeze the house** (an exception left the tick to be retried for ever). Each
+  pet's tick is now caught on its own: the error is logged, that pet's intention is dropped, the clock goes on.
+- **A made thing could take a fixture's name and replace it** (a hatchling naming something "bed" lost the
+  bed). A made name can no longer equal any fixture, stone, bit, creature, door or pet in the house; a second
+  "soft nest" is "soft nest two", in words, since digits in names were also reaching the packet.
+- **Three needs sat at the ceiling** in the later smoke generations (company over 90 for 77 to 98% of steps),
+  so the feelings line barely changed. Company near another pet rises a quarter as fast (0.15 per 10 s) and
+  falls a little faster alone; looking and watching give less interest and familiarity wears faster (0.75);
+  snug places, soft things and "yours" give a little less than the first comfort fix set them to.
+- **The bar script could pass on evidence that could not fail.** Criterion 3 now needs a first-day thought
+  that shares two words of content with one particular sentence the pet was told (the engine's own "you want
+  your mother" cannot make one). Criterion 4 follows every sentence a parent ever put in its message through
+  each line of three generations and reports held, changed or dropped; it passes by itself only when one is
+  held, otherwise it lists what a reader must judge. Criterion 6 only counts a thought by a pet in the event's
+  room that names the event in words nothing else would use. Each prints "has evidence to be read" where a
+  person has to decide, and that is how SHOWCASE.md treats them.
+- **Beliefs are known by a word, not a number.** Pets were citing "b15" in 3 to 10% of thoughts. A belief's
+  handle is now the first word of its own that no other belief of that pet has ("lamp", "pond"). The packet
+  also no longer says which step of a plan it is on, counts repeats in words, and the mirror gives limbs in
+  words.
+- **Sayings belong to one family.** The claim index was shared by every lineage in a house, so a second
+  family could never have sayings of its own. Claims are matched within the lineage.
+- **An inherited heirloom can be handed on**, as §5.3 says, and none can be eaten or stolen by the mouse. An
+  elder in its last three days with a living child and something useful of its own "finds itself thinking
+  about which of its things its children should have": in 26 smoke days nobody had used `bequeath`.
+- **The pond's rule can now fire.** Nothing could ever be put on the water. Arranging a made thing "near the
+  pond" sets it on the water, and within the hour it is in another room.
+- **Neglect can happen.** It needed comfort and energy both under 10 without a break for a waking day, which
+  a night's sleep always broke. Time with their mean under 20 now adds up, good time pays it back, and a
+  waking day's worth makes a pet weak; each further such day costs two of lifespan (less for the hardy).
+- **`make` picks up what it is short of** from the floor on the way, if it has room to carry it. A third of
+  the smoke run's makes failed for want of one bit that was lying beside the pet.
+- **A reply to an offer is ordinary news.** With offers, "leaned back against you" and "took what you offered"
+  no longer count as urgent, and the budget now counts calls that are queued as well as those answered: the
+  smoke run had gone to 166 calls in a world hour against 150, with 70% of thoughts on the urgent path.
+- **A prediction that could not have come true is not scored.** "More at ease" with comfort already full
+  was being marked wrong; it is unscorable now. "Stronger sense of companionship" is no longer read as energy.
+- **Numbers moved out of the code** (§11.5): the feeling thresholds and temperament's shift, think-rate
+  factors, lifespan shares, egg and making costs, company gains, creature stays and tastes, arrival and storm
+  timings, the crisis threshold, and the table of rule drifts are in config.toml and house.toml. What is left
+  in code is geometry (door tiles, the ring a moth flies), wording, and the shapes of formulas.
+- **Smaller**: a draught shuts its door from both sides; a delivery is told to each pet as it would know of
+  it; speech ends on a whole sentence; what a pet carried is left where it died; the old family's log is
+  closed when a new one starts; the lineage's end is noted once; a house is only opened on the clock it was
+  made on; "the house is full" is felt whenever that is what stands in the way of an egg; a parent's words
+  now come after the pet's own beliefs in the packet, as §5.2 says; heirlooms in other rooms are listed.
+- **In the view**: the header is one row at every width (a power-cut chip used to wrap it and move the room);
+  the moment banner sits at the foot of the room for four seconds, not across the top for eight; a power cut
+  by day no longer darkens the room; the Family tab remembers which family and whose life were open; the
+  founder's mother reads "the one before"; the temperament chart on a card is large enough to read.
+- **Left as they are, knowingly**: pets still walk over fixtures and each other (no pathfinding); a thought in
+  flight when the engine is killed is lost with the inbox lines it consumed, and a night killed between its
+  two calls is thought again; the life record keeps the first and last five versions of a message (all of
+  them are in the log) and its "most-used things" are the ten most-used things it made; the belief review
+  waits until a pet holds two beliefs; the Lab gives lifelong wellbeing as one number, not a curve; door
+  names are per room ("the west door" is a different door in each), which one pet took for the rooms
+  shifting, and which the packet now heads "this room's doors".
+- **The lay-egg and night prompts say that what a pet was told is its own to pass on, change or leave out.**
+  §5.2 says that is how myths form, and in the smoke run children wrote wholly new messages: of everything
+  three generations handed down, no sentence survived to the third. The words leave the choice with the pet.

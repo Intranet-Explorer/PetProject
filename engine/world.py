@@ -42,6 +42,8 @@ def derive(cfg):
     cfg["ticks_per_hour"] = cfg["ticks_per_day"] / 24
     cfg["dt"] = cfg["clock"]["tick_seconds"] / 10   # standing rates are written per 10 s
     cfg["W"], cfg["H"] = cfg["house"]["house"]["room_size"]
+    from . import feel   # the words module keeps its thresholds as plain names; they come from here
+    feel.STEPS, feel.SHIFT, feel.TREND = cfg["feel"]["steps"], cfg["feel"]["gene_shift"], cfg["feel"]["trend"]
     return cfg
 
 

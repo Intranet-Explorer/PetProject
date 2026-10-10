@@ -38,7 +38,7 @@ def collapse(lines):
             out[-1][1] += 1
         else:
             out.append([text, 1])
-    return ["%s%s" % (t, " (%s times)" % ("twice" if n == 2 else n) if n > 1 else "") for t, n in out]
+    return ["%s%s" % (t, " (twice)" if n == 2 else " (several times)" if n < 6 else " (many times)" if n > 1 else "") for t, n in out]
 
 
 def sounds(house, cfg, pet):
@@ -146,7 +146,7 @@ def perceive(house, cfg, pet, mem):
     since = [e for t, e in pet["events"] if t > pet["seen"]]
     earlier = collapse([e for t, e in pet["events"] if t <= pet["seen"]])[-RECENT:]
     plan = pet["plan"]
-    busy = "%s (step %s of it)" % (plan["intention"], ["one", "two", "three", "four", "five"][min(plan["i"], 4)]) if plan else "nothing"
+    busy = "%s (not finished)" % plan["intention"] if plan else "nothing"
     offers = []
     for off in pet["offers"]:
         giver = house["pets"].get(off["from"])
@@ -162,6 +162,9 @@ def perceive(house, cfg, pet, mem):
     project = "%s (started %s)" % (proj["text"], feel.ago(house, cfg, proj["since"])) if proj else "none yet; you can choose one when you sleep"
     mine_here = [n for n in things.mine(house, pet, room)]
     heirs = [n for n, o in things.made(room).items() if pet["id"] in (o["made"].get("heirloom") or {}).get("to", [])]
+
+    far_heirs = ["%s (in %s)" % (n, r["name"]) for r in house["rooms"].values() if r["type"] and r["id"] != room["id"]
+                 for n, o in things.made(r).items() if pet["id"] in (o["made"].get("heirloom") or {}).get("to", [])]
 
     def room_note(rid):
         r = house["rooms"][rid]
@@ -185,7 +188,7 @@ def perceive(house, cfg, pet, mem):
         "who": "with you: " + (" · ".join(who) or "nobody"),
         "bits": "lying about: " + bits,
         "carry": "you carry: " + carry,
-        "doors": "doors: " + doors,
+        "doors": "this room's doors: " + doors,
         "sounds": "from next door: " + "; ".join(sounds(house, cfg, pet)),
         "doing": "you are doing: " + busy,
         "since": "since you last thought:" + ("".join("\n  " + e for e in since) or " nothing"),
@@ -193,11 +196,12 @@ def perceive(house, cfg, pet, mem):
         "said": "said to you: " + "; ".join(pet["inbox"]),
         "offers": "offered to you: " + "; ".join(offers),
         "project": "your project: " + project,
+        "beliefs": "your beliefs:" + ("".join("\n  %s (%s): %s" % (b["id"], b.get("source", "lived"), b["statement"]) for b in beliefs) or " none yet"),
         "parent": "".join("%s your %s %s you: \"%s\"\n" % ("what" if m["kind"] == "message" else "the last thing", m["who"],
                                                           "told" if m["kind"] == "message" else "said to", m["text"]) for m in parent_words).rstrip("\n"),
         "told": "".join('what %s told you: "%s"\n' % (m["who"], m["text"]) for m in tells).rstrip("\n"),
-        "beliefs": "your beliefs:" + ("".join("\n  %s (%s): %s" % (b["id"], b.get("source", "lived"), b["statement"]) for b in beliefs) or " none yet"),
-        "things": "your things here: " + "; ".join("%s (for: %s)" % (n, objs[n]["made"]["recipe"]["purpose"]) for n in dict.fromkeys(mine_here + heirs)),
+        "things": "your things here: " + "; ".join("%s (for: %s)" % (n, objs[n]["made"]["recipe"]["purpose"]) for n in dict.fromkeys(mine_here + heirs)) + (
+            "" if not far_heirs else "%sleft to you, elsewhere: %s" % ("; " if mine_here or heirs else "", ", ".join(far_heirs))),
         "rooms": "rooms you know: " + "; ".join(room_note(r) for r in pet["rooms"]),
         "known": "who you know: " + "; ".join(filter(None, (known_line(p, l) for p, l in pet["known"].items()))),
         "can": "you can: " + ", ".join(can),
@@ -229,6 +233,7 @@ def perceive(house, cfg, pet, mem):
         "creatures": [c["kind"] for c in creatures], "bits": kinds, "carrying": list(dict.fromkeys(pet["carrying"])),
         "doors": list(room["doors"]), "eggs": bool(eggs), "mine": mine_here, "free": free,
         "theirs": [n for n in actions.others_things(house, pet, room) if not objs[n]["made"].get("heirloom")],
+        "leave": list(dict.fromkeys(mine_here + heirs)),
         "movable": [n for n, o in objs.items() if actions.movable(cfg, o)] + (["egg"] if any(e["parent"] == pet["id"] for e in eggs) else []),
         "beliefs": [b["id"] for b in beliefs], "make": [most, reach],
         "materials": sorted({objs[n]["made"]["recipe"]["material"] for n in free}),

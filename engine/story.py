@@ -68,7 +68,7 @@ def claims(eng, pet, kind, text):
     index = house["claims"]
     for sentence in split(text):
         words = content(sentence)
-        best = max(index, key=lambda c: alike(words, set(c["words"])), default=None)
+        best = max((c for c in index if c["lineage"] == pet["lineage"]), key=lambda c: alike(words, set(c["words"])), default=None)
         score = alike(words, set(best["words"])) if best else 0.0
         if best and score >= 0.5:
             mine = pet["id"] in best["pets"]

@@ -65,7 +65,7 @@ def new_day(house, cfg, was):
         moment(house, "storm", "a storm came over the house")
         r = rnd(house, "storm", c["day"])
         if r.random() < cfg["house"]["weather"]["storm_power_cut"]:   # some time in the dark hours, so night and light come apart
-            house["storm_cut"] = house["tick"] + hours(cfg, r.uniform(11, 16))
+            house["storm_cut"] = house["tick"] + hours(cfg, r.uniform(*cfg["house"]["weather"]["storm_cut_hours"]))
 
 
 def power_cut(house, cfg, hrs, why):
@@ -120,7 +120,7 @@ def events(house, cfg):
     if tick < house["next_event"] or not awake_pets(house):
         return
     r = rnd(house, "event", tick)
-    crisis = any(p["needs"]["comfort"] < 15 or p["needs"]["energy"] < 15 or p["weak"] for p in awake_pets(house))
+    crisis = any(p["needs"]["comfort"] < E["crisis_below"] or p["needs"]["energy"] < E["crisis_below"] or p["weak"] for p in awake_pets(house))
     quiet = tick - house["last_moment"] >= hours(cfg, E["quiet_hours"])
     house["next_event"] = tick + hours(cfg, E["every_hours"] * (0.5 if quiet else 2.0 if crisis else 1.0) * r.uniform(0.6, 1.4))
     if crisis:
@@ -147,6 +147,7 @@ def events(house, cfg):
         room["cold_until"] = tick + hours(cfg, r.uniform(*E["draught_hours"]))
         d = r.choice(list(room["doors"]))
         house["shut"]["%s|%s" % (room["id"], d)] = room["cold_until"]
+        house["shut"]["%s|%s" % (room["doors"][d], {"north": "south", "south": "north", "west": "east", "east": "west"}[d])] = room["cold_until"]
         tell_all(house, "a draught blew the %s door shut; the room has gone cold" % d, room=room["id"])
         moment(house, "draught", "a draught shut the %s door of %s" % (d, room["name"]), None, room["id"])
         note(house, "draught", room["id"], d)
@@ -154,7 +155,9 @@ def events(house, cfg):
         store = next((x for x in rooms if x["type"] == "storeroom"), room)
         bits = [r.choice(sorted(cfg["house"]["bits"])) for _ in range(E["delivery_bits"])]
         things.drop_bits(house, cfg, store, [cfg["W"] // 2, cfg["H"] // 2], bits)
-        tell_all(house, "something heavy was set down somewhere in the house" if store is not room else "a crate of bits has appeared here")
+        for p in awake_pets(house):
+            add_event(house, p, "a crate of bits has appeared here" if p["room"] == store["id"] else "something heavy was set down somewhere in the house")
+            p["news"].append("event")
         moment(house, "delivery", "a crate of bits turned up in %s: %s" % (store["name"], ", ".join(bits)), None, store["id"])
         note(house, "delivery", store["id"], ", ".join(bits))
     elif kind == "lost_thing":
@@ -184,18 +187,12 @@ def events(house, cfg):
         note(house, "surprise", room["id"], bit + " (the director's, in the visitor's name)")
 
 
-DRIFTS = {   # the one change of rule in a lineage (§6.5): room type -> the rule as it becomes
-    "cellar": {"cold_night": 0.3}, "attic": {"sun": -0.4}, "pond": {"rest": 0.6}, "workshop": {"combine": 2.0},
-    "greenhouse": {"warm_day": -0.3}, "garden": {"fresh": -0.3}, "music": {"linger": -0.3}, "storeroom": {"dark": 1.5},
-}
-
-
 def drift(house, cfg):
-    rooms = [x for x in found(house) if x["type"] in DRIFTS and not x.get("drift")]
+    rooms = [x for x in found(house) if x["type"] in cfg["house"]["drifts"] and not x.get("drift")]
     if not rooms:
         return
     room = rnd(house, "drift", house["lineage"]["id"]).choice(rooms)
-    room["drift"] = dict(DRIFTS[room["type"]])
+    room["drift"] = dict(cfg["house"]["drifts"][room["type"]])
     house["lineage"]["drift"] = {"room": room["id"], "type": room["type"], "rule": room["drift"], "tick": house["tick"]}
     note(house, "rule drift", room["id"], "%s: %s" % (room["type"], room["drift"]))   # logged; the pets are not told
     moment(house, "drift", "something about %s is not as it was" % room["name"], None, room["id"])
@@ -264,7 +261,7 @@ def creatures(house, cfg):
                 if not goal or goal == cr["pos"]:
                     goal = cr["goal"] = [r.randrange(cfg["W"]), r.randrange(cfg["H"])]
         elif kind == "mouse":
-            sweet = [(n, o) for n, o in things.made(room).items() if things.prop(cfg, o).get("food")]
+            sweet = [(n, o) for n, o in things.made(room).items() if things.prop(cfg, o).get("food") and not o["made"].get("heirloom")]
             moving = [p for p in pets if p["plan"] and p["plan"]["left"] is None]   # a pet on the move
             friend = max(pets, key=lambda p: cr["fed"].get(p["id"], 0), default=None)
             shy = C["mouse"]["shy"]
@@ -338,12 +335,12 @@ def arrive(house, cfg):
     dark = [x for x in rooms if x["type"] in ("cellar", "storeroom")] or rooms
     options += [("mouse", r.choice(dark)), ("beetle", r.choice(rooms))]
     options = [(k, x) for k, x in options if k not in have]
-    if not options or r.random() > 0.35:
+    if not options or r.random() > cfg["house"]["house"]["creature_chance"]:
         return
     kind, room = r.choice(options)
     house["n"]["creature"] += 1
     pos = free_tile(house, cfg, room, [r.randrange(cfg["W"]), r.randrange(cfg["H"])])
-    stay = {"moth": 6, "bird": 5, "mouse": 30, "beetle": 30}[kind]
+    stay = C[kind]["stay_hours"]
     house["creatures"].append({"id": "c%d" % house["n"]["creature"], "kind": kind, "room": room["id"], "pos": pos, "nest": list(pos),
                                "doing": DOING[kind], "since": tick, "until": tick + hours(cfg, stay), "fed": {}, "carry": None})
     seen(house, cfg, house["creatures"][-1], "a %s has come in" % kind)
@@ -359,8 +356,8 @@ def leave(house, cr, how):
 
 def fed(house, cfg, cr, pet, bit):
     """A pet gave a creature a bit (§6.5). The mouse likes seeds, the moth soft things, the bird seeds; the beetle carries anything off."""
-    likes = {"mouse": ["seed", "petal"], "moth": ["fluff", "cloth", "felt", "moss"], "bird": ["seed"], "beetle": list(cfg["house"]["bits"])}[cr["kind"]]
-    liked = bit in likes
+    likes = cfg["house"]["creatures"][cr["kind"]]["likes"]
+    liked = likes == "anything" or bit in likes
     cr["fed"][pet["id"]] = cr["fed"].get(pet["id"], 0) + (1 if liked else 0)
     pet["trust"][cr["kind"]] = pet["trust"].get(cr["kind"], 0) + (1 if liked else 0)
     pet["met"][cr["kind"]] = pet["met"].get(cr["kind"], 0) + 1

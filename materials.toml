@@ -13,7 +13,7 @@ double_feed = -6.0    # what a meal gives in place of energy when it comes withi
 [soft]
 need = "comfort"
 says = "comfort when used; a bigger one gives more"
-use = { comfort = 5.0 }   # v2 had 2.0: too little to ever win comfort back against its drift (see DECISIONS.md)
+use = { comfort = 4.0 }   # v2 had 2.0: too little to ever win comfort back against its drift (see DECISIONS.md)
 by_size = true
 
 [hard]
@@ -71,6 +71,7 @@ food = true
 need = "comfort"
 says = "comfort for everyone in the room; it fades as you get used to it and comes back overnight"
 room = true
+fades = 0.85              # each minute beside it, it smells this much as strong as the minute before
 scent = 0.4               # comfort per 10 s, times how fresh the smell still is to that pet
 
 [glassy]

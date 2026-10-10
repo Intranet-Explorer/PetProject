@@ -285,7 +285,7 @@ async def api_family():
              "to": [label(h["pets"][x]) for x in o["made"]["heirloom"]["to"] if x in h["pets"]]}
             for r in h["rooms"].values() if r["type"] for n, o in things.made(r).items() if o["made"].get("heirloom")]
     says = [{"text": c["text"], "gens": c["gens"], "truth": c["truth"], "first": c["first"], "forms": c["forms"],
-             "pets": [{"id": x, "name": label(h["pets"][x]) if x in h["pets"] else x} for x in c["pets"]]} for c in story.sayings(h, 8)]
+             "pets": [{"id": x, "name": label(h["pets"][x]) if x in h["pets"] else "the one before" if x == "before" else "someone gone"} for x in c["pets"]]} for c in story.sayings(h, 8)]
     return {"pets": [pet_view(p) for p in h["pets"].values()], "sayings": says, "heirlooms": heir, "lineage": h["lineage"],
             "records": {p["id"]: p["life"] for p in h["pets"].values() if p.get("life")}}
 

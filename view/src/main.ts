@@ -149,7 +149,7 @@ function flash(text: string, error = false, go: (() => void) | null = null) {
   b.hidden = false;
   b.onclick = () => { b.hidden = true; go?.(); };
   clearTimeout(bannerTimer);
-  bannerTimer = setTimeout(() => (b.hidden = true), error ? 5000 : 8000);
+  bannerTimer = setTimeout(() => (b.hidden = true), error ? 5000 : 4500);
 }
 
 function header(s: Snap, here: RoomV) {
@@ -218,7 +218,7 @@ function cards(s: Snap) {
       el("div", "", el("b", "", p.stage === "egg" ? p.name ?? "An egg" : p.label, el("small", "", ` ${p.stage} · ${s.rooms.find((r) => r.id === p.room)?.name?.replace(/^the /, "") ?? ""}`)),
         el("span", "seems", state(p)),
         el("span", "", p.stage === "egg" ? `generation ${p.gen}` : p.project ? `“${p.project.text}”` : "no project")),
-      radial(p.temper, 34, false)) as HTMLButtonElement;
+      radial(p.temper, 46, false)) as HTMLButtonElement;
     b.title = p.project?.text ?? "";
     b.onclick = () => jump({ pet: p.id, room: p.room });
     return el("li", "", b);

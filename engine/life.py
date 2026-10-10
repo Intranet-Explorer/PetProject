@@ -36,8 +36,8 @@ def span(cfg, pet):
     """How many days this life will run (§4.1): a base, moved up to 30% by how well it has lived, a little by
     how hardy it is, and cut by neglect. Never shown to the pet."""
     L = cfg["life"]
-    lived = max(-1.0, min(1.0, (wellbeing(pet, cfg) - 50) / 30))
-    return L["lifespan_days"] * (1 + 0.3 * lived) * (1 + 0.2 * (pet["temper"]["hardy"] - 0.5)) - pet["lost_days"]
+    lived = max(-1.0, min(1.0, (wellbeing(pet, cfg) - 50) / L["wellbeing_span"]))
+    return L["lifespan_days"] * (1 + L["wellbeing_share"] * lived) * (1 + L["hardy_share"] * (pet["temper"]["hardy"] - 0.5)) - pet["lost_days"]
 
 
 def fertility(pet):
@@ -54,6 +54,9 @@ def body_feels(house, cfg, pet):
         out.append("you feel very old and tired")
     elif stage == "elder":
         out.append("your body feels slower than it used to")
+    if stage == "elder" and left <= 3 and pet["useful"] and any(house["pets"].get(c, {}).get("stage", "dead") != "dead" for c in pet["children"]) \
+            and not any((o["made"].get("heirloom") or {}).get("from") == pet["id"] for r in house["rooms"].values() if r["type"] for o in things.made(r).values()):
+        out.append("you find yourself thinking about which of your things your children should have")   # §5.3: bequeath
     if stage == "elder":   # the old feel there are things to hand on while they can (§7.2: tell)
         young = [p for p in house["pets"].values() if p["room"] == pet["room"] and p["id"] != pet["id"] and p["stage"] not in ("egg", "dead", "elder")
                  and not p["sleep"]]
@@ -65,9 +68,10 @@ def body_feels(house, cfg, pet):
         out.append("you haven't made anything that's really yours")
     if stage in ("adult", "elder") and pet["eggs"] < fertility(pet):
         pull = (house["tick"] - pet["stage_at"]["adult"]) >= L["egg_pull_days"] * cfg["ticks_per_day"] and pet["eggs"] == 0
-        full = len(alive(house)) >= L["population"]
-        if pull or left <= 2:
-            out.append("the house is full" if full else "you feel ready to lay an egg")
+        if len(alive(house)) >= L["population"]:
+            out.append("the house is full")
+        elif pull or left <= 2:
+            out.append("you feel ready to lay an egg")
     return out
 
 
@@ -117,7 +121,7 @@ def lay_egg(house, cfg, pet, a, clean):
                   told=[{"by": pet["id"], "who": pet["word"], "kind": "message", "text": text, "tick": house["tick"]}])
     pet["eggs"] += 1
     moment(house, "egg", "%s laid an egg%s" % (label(pet), " and named it " + name if name else ""), pet["id"], room["id"])
-    return "you laid an egg%s and told it what you want it to know" % (" and named it " + name if name else ""), {"energy": -25.0}, "lay egg"
+    return "you laid an egg%s and told it what you want it to know" % (" and named it " + name if name else ""), {"energy": -cfg["life"]["egg_energy"]}, "lay egg"
 
 
 def last_sentence(text, limit):
@@ -173,23 +177,23 @@ def grow(house, cfg, pet):
 # ---- wearing down and dying ----
 
 def wear(house, cfg, pet):
-    """Each waking tick: remember how well it is living, and what neglect costs (§4.1). Returns a cause of death or None."""
+    """Each waking tick: remember how well it is living, and what neglect costs (§4.1). Time with comfort and
+    energy both low adds up, and time when they are not pays it back; after `neglect_days` of it the pet is weak,
+    and every further day of it costs days of life."""
     L, needs = cfg["life"], pet["needs"]
     pet["well"][0] += sum(needs.values()) / len(needs)
     pet["well"][1] += 1
-    if needs["comfort"] < 10 and needs["energy"] < 10:
-        pet["low_since"] = pet["low_since"] if pet["low_since"] is not None else house["tick"]
-        if house["tick"] - pet["low_since"] >= L["neglect_days"] * cfg["ticks_per_day"]:
-            if not pet["weak"]:
-                pet["weak"] = True
-                pet["news"].append("event")
-                moment(house, "weak", "%s has grown weak" % label(pet), pet["id"], pet["room"])
-            pet["lost_days"] += L["neglect_cost_days"] * (1.4 - 0.8 * pet["temper"]["hardy"]) / cfg["ticks_per_day"]
-    else:
-        pet["low_since"] = None
-        if pet["weak"] and needs["comfort"] > 30 and needs["energy"] > 30:
-            pet["weak"] = False
-    return None
+    low = (needs["comfort"] + needs["energy"]) / 2 < L["neglect_below"]
+    pet["neglect"] = max(0, pet.get("neglect", 0) + (1 if low else -1))
+    if pet["neglect"] >= L["neglect_days"] * cfg["ticks_per_day"] * L["awake_share"]:
+        if not pet["weak"]:
+            pet["weak"] = True
+            pet["news"].append("event")
+            moment(house, "weak", "%s has grown weak" % label(pet), pet["id"], pet["room"])
+        if low:
+            pet["lost_days"] += L["neglect_cost_days"] * (1.4 - 0.8 * pet["temper"]["hardy"]) / (cfg["ticks_per_day"] * L["awake_share"])
+    elif pet["weak"] and pet["neglect"] < L["neglect_days"] * cfg["ticks_per_day"] * L["awake_share"] / 2:
+        pet["weak"] = False
 
 
 def due(house, cfg, pet):
@@ -202,6 +206,8 @@ def due(house, cfg, pet):
 def die(house, cfg, pet, cause):
     """It lies still. Its things stay where they are and are free for others to change; its last words go to
     its children (§4.2, §5.2)."""
+    things.drop_bits(house, cfg, house["rooms"][pet["room"]], pet["pos"], pet["carrying"])   # what it carried lies where it fell
+    pet["carrying"] = []
     pet.update(stage_before=pet["stage"], stage="dead", died=house["tick"], cause=cause, plan=None, thinking=None, sleep=None, following=None)
     name = label(pet)
     if pet["message"]:
@@ -232,7 +238,7 @@ def bury(house, cfg, pet):
     room["objects"][name] = {"pos": free_tile(house, cfg, room, pet["pos"]),
                              "memorial": {"pet": pet["id"], "text": "a stone for %s, who lived %d days and made %d things" % (label(pet), lived, pet["made"])}}
     pet["buried"] = True
-    if not alive(house):
+    if not alive(house) and house["lineage"]["ended"] is None:
         house["lineage"]["ended"] = house["tick"]
         moment(house, "ended", "the house is quiet: nobody is left of this family", None, room["id"])
 

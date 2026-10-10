@@ -40,7 +40,7 @@ WRITTEN = {   # how each action is written, shown only for the actions it can do
     "chase": '{"type": "chase", "who": a small creature here}',
     "tell": '{"type": "tell", "to": someone here, "text": something for them to keep, up to 400 chars}',
     "lay_egg": ('{"type": "lay_egg", "name": a name for your child, up to 16 chars (or "" to leave it to them), '
-                '"message": what you want your child to know, in your own words, up to 600 chars}'),
+                '"message": what you want your child to know, in your own words, up to 600 chars; what you were told yourself is yours to pass on, change or leave out}'),
     "bequeath": '{"type": "bequeath", "what": a thing of yours here, "to": a child\'s name, or "my children"}',
     "write_belief": '{"type": "write_belief", "statement": text, "source": how you know it: lived | seen | told by <who>}',
     "revise_belief": '{"type": "revise_belief", "id": belief id, "statement": new text or "discard"}',
@@ -62,7 +62,7 @@ NIGHT_PARTS = {
     "review": '"review": {"decision": "keep | revise | discard", "statement": "<the new text, if you revise it>"}',
     "project": '"project": {"decision": "keep | set | finish | abandon", "text": "<the project in a few of your own words, if you set one: something for the coming days>"}',
     "people": '"people": [<for anyone you want to remember something about: {"who": "<who>", "line": "<one line, in your own words>"}>]',
-    "message": '"message": "<your message for your children as you would have it now, up to 600 characters; the same words again if nothing has changed>"',
+    "message": '"message": "<your message for your children as you would have it now, up to 600 characters; the same words again if nothing has changed. What you were told yourself is yours to pass on, change or leave out>"',
     "my_life": '"my_life": "<the story of your life, in your own words, up to 800 characters>"',
 }
 
@@ -92,7 +92,7 @@ def schema(ctx):
         "look": [one("look", target={"enum": visible + ["visitor"]})],
         "move": [one("move", to={"enum": c["things"] + anyone + list(SPOTS)})],
         "go": [one("go", door={"enum": c["doors"]})],
-        "speak": [one("speak", text=text(120))] + ([one("speak", text=text(120), to={"enum": awake + ["visitor"]})] if awake else []),
+        "speak": [one("speak", text=text(160))] + ([one("speak", text=text(160), to={"enum": awake + ["visitor"]})] if awake else []),
         "use": [one("use", target={"enum": c["things"]})],
         "gather": [one("gather", what={"enum": c["bits"]})] if c["bits"] else [],
         "drop": [one("drop", what={"enum": c["carrying"]})] if c["carrying"] else [],
@@ -113,7 +113,7 @@ def schema(ctx):
         "chase": [one("chase", who={"enum": c["creatures"]})] if c["creatures"] else [],
         "tell": [one("tell", to={"enum": awake}, text=text(400))] if awake else [],
         "lay_egg": [one("lay_egg", name=text(16, 0), message=text(640))],
-        "bequeath": [one("bequeath", what={"enum": c["mine"]}, to={"enum": c["kids"] + ["my children"]})] if c["mine"] else [],
+        "bequeath": [one("bequeath", what={"enum": c["leave"]}, to={"enum": c["kids"] + ["my children"]})] if c["leave"] else [],
         "write_belief": [one("write_belief", statement=text(240), source={"enum": ["lived", "seen"] + ["told by " + t for t in c["tellers"]]})],
         "revise_belief": [one("revise_belief", id={"enum": c["beliefs"]}, statement=text(240))] if c["beliefs"] else [],
     }

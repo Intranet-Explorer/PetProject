@@ -69,10 +69,23 @@ def who_s(house, pet, other):
     return "your %s" % rel if rel else label(other)
 
 
-def unique_name(house, name):
-    """Two pets may both make a "soft nest": the second becomes "soft nest 2"."""
-    n = house["names"][name] = house["names"].get(name, 0) + 1
-    return name if n == 1 else "%s %d" % (name, n)
+COUNT = ["", "", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve"]
+
+
+def unique_name(house, cfg, name):
+    """Two pets may both make a "soft nest": the second becomes "soft nest two". A made thing never takes the
+    name of anything else in the house (a fixture, a stone, a bit, a pet), or it would replace or hide it."""
+    taken = {n for r in house["rooms"].values() if r["type"] for n in r["objects"]}
+    taken |= {f["name"] for r in cfg["house"]["rooms"].values() for f in r["fixtures"]} | set(cfg["house"]["bits"])
+    taken |= {(p["name"] or "").lower() for p in house["pets"].values()} | {"egg", "visitor", "here", "the little one", "middle"}
+    taken |= {k for c in ("moth", "beetle", "mouse", "bird") for k in (c,)} | {d + " door" for d in ("north", "south", "east", "west")}
+    if name.startswith("stone for"):
+        name = "a " + name
+    while True:
+        n = house["names"][name] = house["names"].get(name, 0) + 1
+        out = name if n == 1 else "%s %s" % (name, COUNT[n] if n < len(COUNT) else "number %d" % n)
+        if out not in taken:
+            return out
 
 
 def clean_name(text):
@@ -94,13 +107,34 @@ def can_make(cfg, pet):
     return min(cfg["make"]["parts"].get(pet["stage"], 0), len(pet["carrying"])), allowed
 
 
+def to_pick_up(house, cfg, pet, recipe):
+    """The bits lying here that this recipe still needs: one that can be the material if nothing carried can, and
+    one more per part it is short of, as far as it has room to carry."""
+    room, bits = house["rooms"][pet["room"]], cfg["house"]["bits"]
+    have, room_left = list(pet["carrying"]), cfg["make"]["carry"] - len(pet["carrying"])
+    spots = sorted((s for s in room["spots"] if s["ready"]), key=lambda s: dist(s["pos"], pet["pos"]))
+    out = []
+    if not any(recipe.get("material") in bits[b]["can"] for b in have):
+        spot = next((s for s in spots if recipe.get("material") in bits[s["bit"]]["can"]), None)
+        if spot and room_left > 0:
+            out.append(spot)
+    for s in spots:
+        if len(have) + len(out) >= len(recipe.get("parts") or []) or len(out) >= room_left:
+            break
+        if s not in out:
+            out.append(s)
+    return out
+
+
 def check_make(a, house, cfg, pet):
     r = a.get("recipe")
-    most, allowed = can_make(cfg, pet)
-    if not pet["carrying"]:
-        return "you have nothing to make it from"
     if not isinstance(r, dict) or not isinstance(r.get("parts"), list) or not r["parts"]:
         return "no recipe"
+    carrying = pet["carrying"] + [s["bit"] for s in to_pick_up(house, cfg, pet, r)]
+    most = min(cfg["make"]["parts"].get(pet["stage"], 0), len(carrying))
+    allowed = {p for b in carrying for p in cfg["house"]["bits"][b]["can"]}
+    if not carrying:
+        return "you have nothing to make it from"
     if len(r["parts"]) > most:
         return "you do not have enough bits for that many parts"
     for p in r["parts"]:
@@ -108,12 +142,12 @@ def check_make(a, house, cfg, pet):
                 and p.get("color") in COLORS and p.get("at", "center") in PLACES):
             return "bad part"
     if r.get("material") not in allowed:
-        return "nothing you carry can be made %s" % r.get("material")
+        return "nothing here can be made %s" % r.get("material")
     if not clean_name(r.get("name")) or not isinstance(r.get("purpose"), str):
         return "it needs a name and a purpose"
     if len(made(house["rooms"][pet["room"]])) >= cfg["make"]["crowded"]:
         return "this room is too crowded for another thing"
-    if pet["needs"]["energy"] < 8:
+    if pet["needs"]["energy"] < cfg["make"]["tired"]:
         return "you are too tired to make anything"
     return None
 
@@ -121,10 +155,17 @@ def check_make(a, house, cfg, pet):
 def make(house, cfg, pet, a, clean):
     r, room = a["recipe"], house["rooms"][pet["room"]]
     want, n = r["material"], len(r["parts"])
+    picked = to_pick_up(house, cfg, pet, r)
+    for spot in picked:   # what it was short of, it picks up from the floor on the way
+        pet["carrying"].append(spot["bit"])
+        if spot["loose"]:
+            room["spots"].remove(spot)
+        else:
+            spot["ready"], spot["back"] = False, house["tick"] + hours(cfg, cfg["house"]["rooms"][room["type"]]["regrow_hours"])
     # one bit per part: the one that gives the property first, then whatever else is carried
     order = sorted(pet["carrying"], key=lambda b: want not in cfg["house"]["bits"][b]["can"])
     used, pet["carrying"] = order[:n], order[n:]
-    name = unique_name(house, clean_name(r["name"]))
+    name = unique_name(house, cfg, clean_name(r["name"]))
     recipe = {"name": name, "material": want, "purpose": clean(r["purpose"], 80),
               "parts": [{"shape": p["shape"], "size": p["size"], "color": p["color"], "at": p.get("at", "center")} for p in r["parts"]]}
     house["n"]["thing"] += 1
@@ -136,8 +177,9 @@ def make(house, cfg, pet, a, clean):
     room["objects"][name] = o
     pet["made"] += 1
     moment(house, "made", "%s made a %s" % (label(pet), name), pet["id"], room["id"])
+    how = "out of what you carried" if not picked else "from %s" % " and ".join(sorted(set(used)))
     # Novelty goes by kind and wears; a thing like one it made lately is no longer new (§3.3).
-    return "you made %s out of what you carried" % name, {"energy": -(2.0 + n)}, "make " + want
+    return "you made %s %s" % (name, how), {"energy": -(cfg["make"]["effort"] + n)}, "make " + want
 
 
 def drop_bits(house, cfg, room, pos, bits):
@@ -180,7 +222,7 @@ def check_combine(a, house, cfg, pet, norm):
         return "it needs a name and a purpose"
     if r.get("material") not in {things[n]["made"]["recipe"]["material"] for n in (x, y)}:
         return "it has to keep the nature of one of the two"
-    if pet["needs"]["energy"] < 6:
+    if pet["needs"]["energy"] < cfg["make"]["tired"]:
         return "you are too tired to do that"
     return None
 
@@ -191,7 +233,7 @@ def combine(house, cfg, pet, a, clean, norm):
     olds = [room["objects"].pop(n) for n in (x, y)]
     for n, o in zip((x, y), olds):
         gone(house, o, n, "combined")
-    name = unique_name(house, clean_name(r["name"]))
+    name = unique_name(house, cfg, clean_name(r["name"]))
     recipe = {"name": name, "material": r["material"], "purpose": clean(r["purpose"], 80),
               "parts": [dict(p) for o in olds for p in o["made"]["recipe"]["parts"]][:6]}
     house["n"]["thing"] += 1
@@ -203,7 +245,7 @@ def combine(house, cfg, pet, a, clean, norm):
         o["state"] = "on"
     room["objects"][name] = o
     pet["made"] += 1
-    effort = 3.0 * (room_rule(cfg, room, "combine", 1.0) if room["type"] == "workshop" else 1.0)   # easier at a bench (§6.1)
+    effort = (cfg["make"]["effort"] + 1) * (room_rule(cfg, room, "combine", 1.0) if room["type"] == "workshop" else 1.0)   # easier at a bench (§6.1)
     moment(house, "made", "%s combined the %s and the %s into a %s" % (label(pet), x, y, name), pet["id"], room["id"])
     return "you combined %s and %s into %s" % (x, y, name), {"energy": -effort}, "combine " + r["material"]
 
@@ -238,6 +280,8 @@ def use(house, cfg, pet, name):
     if m.get("light"):
         o["state"] = "off" if o["state"] == "on" else "on"
         return "you switched %s %s" % (name, o["state"]), fx, kind
+    if m.get("food") and o["made"].get("heirloom"):
+        return "you cannot bring yourself to eat the %s; it was left to someone" % name, {}, None
     if m.get("food"):
         del room["objects"][name]
         pet["prev_eat"], pet["last_eat"] = pet.get("last_eat", LONG_AGO), house["tick"]
@@ -303,7 +347,7 @@ def standing(house, cfg, pet):
             for need, rate in d["near"].items():
                 out.append((o["made"]["behavior"]["do"], need, rate, n, "the %s beside you is doing something that holds your eye" % n))
         if "scent" in p:   # fragrant: the whole room, fading as this pet gets used to it (§6.3)
-            fresh = 0.85 ** pet["scent"].get(n, 0)
+            fresh = p.get("fades", 0.85) ** pet["scent"].get(n, 0)
             if fresh > 0.15:
                 out.append(("fragrant", "comfort", p["scent"] * fresh, n, "the room smells sweet from the %s" % n))
         if close and "sun" in p and sunny(house) and (room.get("type") in ("garden", "greenhouse", "attic", "pond") or any(

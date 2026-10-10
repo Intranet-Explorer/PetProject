@@ -8,6 +8,7 @@ max_doors = 3
 seed = 1                  # the door plan and the order rooms are found in come from this, so a house can be rebuilt
 season_days = 6
 creatures = 2             # small creatures in the house at once
+creature_chance = 0.35    # each real minute there is room for one, the chance that one turns up
 
 # Where a pet stands to go through each door, and where it arrives from the other side.
 [house.doors]
@@ -106,7 +107,7 @@ fixtures = [
   { name = "plant", pos = [8, 6], movable = true },
   { name = "bowl", pos = [5, 7], meal = 2 },
   { name = "ball", pos = [4, 5], movable = true, toy = 1.0 },
-  { name = "blanket", pos = [9, 3], movable = true, soft = 5.0, cozy = true },
+  { name = "blanket", pos = [9, 3], movable = true, soft = 3.5, cozy = true },
   { name = "music box", pos = [7, 2], states = ["silent", "playing"] },
   { name = "rock", pos = [3, 6], movable = true },
   { name = "window", pos = [0, 3], window = true },
@@ -141,7 +142,7 @@ fixtures = [
   { name = "barrel", pos = [2, 2] },
   { name = "shelf", pos = [9, 1] },
   { name = "lantern", pos = [5, 1], light = "off" },
-  { name = "old rug", pos = [8, 5], movable = true, soft = 3.0 },
+  { name = "old rug", pos = [8, 5], movable = true, soft = 2.5 },
 ]
 
 [rooms.attic]
@@ -285,7 +286,8 @@ cold = -0.3               # comfort at night, away from anything warm
 weather = { clear = 3, cloudy = 3, snow = 4, storm = 1 }
 
 [weather]
-storm_power_cut = 0.5     # chance a storm takes the power for part of the day
+storm_power_cut = 0.5     # chance a storm takes the power for part of the day ...
+storm_cut_hours = [11, 16]   # ... this many hours into the storm's day, so that it falls in the dark
 storm = -0.2              # comfort while the storm is overhead, unless someone is near
 heat = -0.15              # energy by day in the heat, except in the cellar and by the pond
 snow_cold = -0.2          # extra cold on a day of snow
@@ -295,6 +297,7 @@ snow_cold = -0.2          # extra cold on a day of snow
 [events]
 every_hours = 9           # about one event this often; sooner when the house has gone quiet, later in a crisis
 quiet_hours = 6           # "quiet": no moment worth the name for this long
+crisis_below = 15         # "a crisis": some pet weak, or with comfort or energy under this
 power_cut_hours = [1, 3]
 leak_hours = [2, 5]
 draught_hours = [1, 3]
@@ -306,17 +309,30 @@ kinds = { power_cut = 2, leak = 2, draught = 2, delivery = 3, lost_thing = 2 }
 
 # ---- small creatures (§6.5): scripted, never a model ----
 
-[creatures.moth]
-when = "night"            # comes to a lit light, circles it, leaves when the light goes or the day comes
+[creatures.moth]              # comes to a lit light at night, circles it, leaves when the light goes or the day comes
+stay_hours = 6
+likes = ["fluff", "cloth", "felt", "moss"]
 eats_hours = 2            # a soft thing left this long beside its light gets moth-eaten and gives half
-[creatures.beetle]
-when = "day"
+[creatures.beetle]            # wanders by day, sleeps where it first appeared
+stay_hours = 30
+likes = "anything"
 carry_chance = 0.4        # it picks up a loose bit it passes and puts it down somewhere else
-[creatures.mouse]
-when = "any"
-home = "cellar"           # or the darkest room found so far
+[creatures.mouse]             # turns up in the cellar or the storeroom if either has been found
+stay_hours = 30
+likes = ["seed", "petal"]
 shy = 3                   # keeps this many tiles from a pet that is moving
-trust_to_wait = 3         # fed this many times by one pet, it starts waiting for that pet in the morning
-[creatures.bird]
-when = "morning"
-home = "garden"
+trust_to_wait = 3         # fed this many times by one pet, it starts waiting for that pet
+[creatures.bird]              # the garden, in the morning
+stay_hours = 5
+likes = ["seed"]
+
+# ---- rule drift (§6.5): once in a lineage one found room's rule becomes this. Logged; the pets are not told. ----
+[drifts]
+cellar = { cold_night = 0.3 }       # mild at night
+attic = { sun = -0.4 }              # the sun shaft turns harsh
+pond = { rest = 0.6 }               # the water stops helping rest
+workshop = { combine = 2.0 }        # the bench makes combining harder
+greenhouse = { warm_day = -0.3 }    # close and stuffy by day
+garden = { fresh = -0.3 }           # rain stops easing
+music = { linger = -0.3 }           # its sounds start to grate next door
+storeroom = { dark = 1.5 }          # it becomes worth looking round

@@ -56,7 +56,7 @@ def describe_change(old, new):
 def describe(g):
     """Plain-language description of the body. Looking in the mirror is the only way the pet sees itself."""
     level = lambda k, low, mid, high: low if g[k] < 0.4 else high if g[k] > 0.7 else mid
-    limbs = "no limbs" if not g["limbs"] else "%d limb%s" % (g["limbs"], "s" * (g["limbs"] > 1))
+    limbs = "no limbs" if not g["limbs"] else "%s limb%s" % (["no", "one", "two", "three", "four"][min(g["limbs"], 4)], "s" * (g["limbs"] > 1))
     text = "%s and %s, %s %s, %s, with %s eyes set %s, and %s" % (
         level("roundness", "angular", "rounded", "very round"),
         "squat" if g["stretch"] < 0.95 else "tall" if g["stretch"] > 1.15 else "about as tall as wide",

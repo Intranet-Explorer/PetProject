@@ -119,7 +119,7 @@ class Mind:
         quiet = (h["tick"] - pet["last_call"]) * c["tick_seconds"]
         if URGENT & set(pet["news"]) and quiet >= c["urgent_seconds"]:
             return "something happened"
-        floor = c["min_think_seconds"] * (0.8 + 0.4 * pet["temper"]["patient"]) * (1.25 if pet["stage"] == "elder" else 1.0)
+        floor = c["min_think_seconds"] * (1 - c["patient_spread"] / 2 + c["patient_spread"] * pet["temper"]["patient"]) * (c["elder_think"] if pet["stage"] == "elder" else 1.0)
         if quiet < (0 if self.brain.instant and not self.cfg["stub"].get("paced") else floor):
             return None
         if not self.brain.instant and self.eng.over_budget():
@@ -238,7 +238,7 @@ class Mind:
                 if actions.check(a, h, self.cfg, pet, self.mem):
                     return self.finish_step(a)
             goal = actions.destination(h, self.cfg, pet, a)
-            if goal and pet["pos"] != goal and h["tick"] - plan["step_began"] < ticks(self.cfg, 90):   # nobody is chased for ever
+            if goal and pet["pos"] != goal and h["tick"] - plan["step_began"] < ticks(self.cfg, self.cfg["clock"]["walk_seconds"]):   # nobody is chased for ever
                 return self.walk(goal)
             plan["left"] = ticks(self.cfg, self.cfg["steps"][a["type"]])
             if a["type"] == "follow" and not actions.check(a, h, self.cfg, pet, self.mem):
@@ -275,7 +275,7 @@ class Mind:
             tags, scale = fx.pop("tags", []), fx.pop("scale", 1.0)
             if t == "rest":   # what it rests on and beside decides how much rest it gets
                 beds = [(o["fix"]["rest"], n) for n, o in room["objects"].items() if "rest" in o.get("fix", {}) and dist(pet["pos"], o["pos"]) <= 1]
-                per_10s, on = max(beds + [(cfg["effects"]["rest_per_10s"], None)])
+                per_10s, on = max(beds + [(cfg["effects"]["rest_per_10s"], None)], key=lambda b: b[0])
                 if room["type"] == "pond":
                     per_10s, tags = per_10s * things.room_rule(cfg, room, "rest", 1.0), tags + ["pond"]
                 per_10s, quality, share = things.rest(h, cfg, pet, per_10s)
@@ -490,6 +490,8 @@ class Engine:
         self.dir.mkdir(parents=True, exist_ok=True)
         self.path = self.dir / "house.json"
         self.house = json.loads(self.path.read_text()) if self.path.exists() else new_house(cfg)
+        if "profile" in self.house and self.house["profile"] != cfg.get("profile"):
+            raise ValueError("this house was made with profile %r; start it with PET_PROFILE=%s" % (self.house["profile"], self.house["profile"] or ""))
         self.house["profile"] = cfg.get("profile")   # so the Lab and the showcase script read the logs on the same clock
         self.sched, self.minds, self.db, self.narrator, self.present, self.tasks = Scheduler(), {}, None, None, None, set()
         self.sched.most = cfg["model"]["parallel"]
@@ -512,6 +514,7 @@ class Engine:
         """A first egg in the nursery. The house stays as the last family left it (§4.2)."""
         if self.db:
             self.db.commit()
+            self.db.close()
         pet = life.found(self.house, self.cfg, told, body)
         self.open_lineage()
         log.pet_row(self.db, pet)
@@ -536,7 +539,8 @@ class Engine:
         h, per_hour = self.house, self.cfg["model"]["calls_per_hour"]
         hour = ticks(self.cfg, 3600)
         h["calls"] = [t for t in h["calls"] if t > h["tick"] - hour]
-        return len(h["calls"]) >= per_hour or sum(t > h["tick"] - hour // 10 for t in h["calls"]) >= per_hour / 10
+        waiting = len(self.sched.queue) + self.sched.active   # asked for but not yet answered: they will count too
+        return len(h["calls"]) + waiting >= per_hour or sum(t > h["tick"] - hour // 10 for t in h["calls"]) + waiting >= per_hour / 10
 
     def call(self, priority, pet_id, kind, why, fn, chars=0):
         """Queue one model call and log it when it is done."""
@@ -632,7 +636,11 @@ class Engine:
             elif life.due(h, cfg, pet):
                 self.kill(pet, life.due(h, cfg, pet))
             else:
-                self.minds[pet["id"]].tick()
+                try:
+                    self.minds[pet["id"]].tick()
+                except Exception:   # one pet's bad step must not stop the clock for everyone (the tick would be retried for ever)
+                    logging.exception("tick failed for %s; its intention is dropped", pet["id"])
+                    pet["plan"], pet["following"] = None, None
         if h["tick"] % ticks(cfg, 60) == 0:
             story.daily(self)
         self.flush()

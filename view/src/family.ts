@@ -7,11 +7,14 @@ import { thingPicture } from "./things";
 import type { Part, Recipe } from "./things";
 import type { PetV } from "./types";
 
-let chosen: string | null = null;    // whose life is open under the tree
-let lineage: number | null = null;   // which family's tree is shown: the present one unless another was picked
+const kept = (() => { try { return JSON.parse(localStorage.getItem("family") ?? "{}"); } catch { return {}; } })();
+const keep = () => { try { localStorage.setItem("family", JSON.stringify({ chosen, lineage })); } catch { /* not remembered */ } };
+let chosen: string | null = kept.chosen ?? null;    // whose life is open under the tree
+let lineage: number | null = kept.lineage ?? null;   // which family's tree is shown: the present one unless another was picked
 export function showRecord(id: string | null) {
   chosen = id;
   lineage = null;
+  keep();
 }
 
 const TRUTH: Record<string, [string, string]> = { true: ["✓ true of this house", "correct"], false: ["✗ not so", "wrong"] };
@@ -47,7 +50,7 @@ function tree(c: Ctx, pets: PetV[], redraw: () => void) {
     node.style.left = `${x}px`;
     node.style.top = `${y}px`;
     node.title = `${p.label}, generation ${p.gen}`;
-    node.onclick = () => { chosen = chosen === p.id ? null : p.id; redraw(); };
+    node.onclick = () => { chosen = chosen === p.id ? null : p.id; keep(); redraw(); };
     box.append(node);
   }
   return el("div", "treebox", box);
@@ -102,7 +105,7 @@ export function family(c: Ctx): Kid[] {
   const lines = [...new Set(all.map((p) => p.lineage))].sort((a, b) => b - a);
   const pick = el("select", "") as HTMLSelectElement;
   pick.append(...lines.map((n) => new Option(n === now ? `Family ${n} (living now)` : `Family ${n}`, String(n), false, n === which)));
-  pick.onchange = () => { lineage = Number(pick.value); chosen = null; redraw(); };
+  pick.onchange = () => { lineage = Number(pick.value); chosen = null; keep(); redraw(); };
   const who = pets.find((p) => p.id === chosen), rec = who && d.records?.[who.id];
   const sayings = (d.sayings ?? []) as { text: string; gens: number[]; truth: string | null; forms: [string, string][]; pets: { id: string; name: string }[] }[];
   const heir = (d.heirlooms ?? []) as { name: string; room: string; recipe: Recipe; line: string[]; to: string[] }[];

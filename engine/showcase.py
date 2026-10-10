@@ -13,8 +13,8 @@ from pathlib import Path
 from . import story
 from .world import GENES, ROOT, load_config
 
-EVENT_WORDS = {"power cut": r"dark|light|lamp|power", "leak": r"water|wet|leak|floor", "draught": r"cold|draught|door|shut|wind",
-               "delivery": r"crate|heavy|deliver|bits|storeroom", "lost thing": r"gone|missing|lost|where", "storm": r"storm|thunder|rain"}
+EVENT_WORDS = {"power cut": r"went dark|gone dark|power|every light|lights? (went|are|is) (out|dark)|no light", "leak": r"water (is|was)? ?coming|wet floor|floor is wet|leak|shifted",
+               "draught": r"draught|blew|stuck shut|door (is )?(stuck|shut)", "delivery": r"crate|set down|deliver", "lost thing": r"not where|is gone|went missing|has gone|missing"}
 
 
 def main(data=ROOT / "data", profile=None):
@@ -67,30 +67,55 @@ def main(data=ROOT / "data", profile=None):
         print("   %-14s gen %d: hue %d, %s, %d limbs, roundness %.2f, stretch %.2f" % (p["label"], p["gen"], g["hue"], g["pattern"], g["limbs"], g["roundness"], g["stretch"]))
     ok[2] = bool(drift) and max(drift)[0] >= 0.2
 
-    print("\n## 3. Something was passed down and mattered (a child's first-day thoughts that lean on what it was told)")
-    found = 0
+    print("\n## 3. Something was passed down and mattered (a child's first-day thoughts that use a particular thing its parent told it)")
+    # A candidate is a first-day thought that shares at least two words of content with ONE sentence of the message it
+    # hatched with, not counting the words every such thought has ("mother", "told", "said"). The engine's own
+    # sense line "you want your mother" cannot make one. Whether the thought changed what it did is for a reader.
+    common, found = {"mother", "father", "parent", "told", "tell", "said", "say"}, 0
     for p in hatched:
         told = [r["text"] for r in db.execute("SELECT text FROM messages WHERE to_pet=? AND kind='message'", (p["pet"],))]
         if not told or p["gen"] < 2:
             continue
-        words = story.content(" ".join(told))
+        claims = [(c, story.content(c) - common) for c in story.split(told[0])]
         for r in db.execute("SELECT thought, intention FROM intentions WHERE pet=? AND started<? ORDER BY tick", (p["pet"], p["born"] + day)):
-            if re.search(r"\b(mother|father|parent)\b", r["thought"], re.I) and len(words & story.content(r["thought"])) >= 2:
+            words = story.content(r["thought"]) - common
+            best = max(claims, key=lambda cw: len(cw[1] & words), default=None)
+            if best and len(best[1] & words) >= 2 and re.search(r"\b(mother|father|parent)\b", r["thought"], re.I):
                 found += 1
                 if found <= 6:
-                    print("   %s: %s  => %s" % (p["label"], r["thought"][:260], r["intention"][:80]))
-    print("   %d such thoughts by children of this lineage" % found)
-    ok[3] = found > 0
+                    print('   %s was told: "%s"\n      thought: %s\n      did: %s' % (p["label"], best[0], r["thought"][:260], r["intention"][:90]))
+    print("   %d candidate thoughts (to be read)" % found)
+    ok[3] = None if found else False
 
-    print("\n## 4. A myth or a correction (claims that travelled three generations, or were changed or dropped on the way)")
-    sayings = [c for c in house["claims"] if len(c["gens"]) >= 3 and c["lineage"] == lin]
-    for c in sayings[:6]:
-        print("   held %d generations [%s]: %s" % (len(c["gens"]), c["truth"] or "unchecked", c["text"]))
-        for who, form in c["forms"][:4]:
-            print("        %s said it as: %s" % (pets.get(who, {}).get("label", who), form))
-    for r in db.execute("SELECT c.pet, c.text, c.truth, c.gen FROM claims c WHERE relation='dropped' AND gen>=3 LIMIT 6"):
-        print("   dropped by %s (gen %d) [%s]: %s" % (pets[r["pet"]]["label"], r["gen"], r["truth"] or "unchecked", r["text"]))
-    ok[4] = bool(sayings) or db.execute("SELECT count(*) FROM claims WHERE relation IN ('dropped','changed') AND gen>=3").fetchone()[0] > 0
+    print("\n## 4. A myth or a correction (a claim followed through three generations of messages)")
+    # For every line of three generations A -> B -> C (the last v2 pet counts as the founder's parent): each
+    # sentence A told B, whether B kept it in its own message to C, and whether C kept it in its own message.
+    # "Held" needs all three. A "correction" needs B to have kept it and C to have changed or dropped it; whether
+    # C's own experience contradicted it is for a reader.
+    msgs = {}   # pet -> every version of the message it wrote, oldest first
+    for r in db.execute("SELECT pet, text FROM messages WHERE kind IN ('message', 'last words') ORDER BY tick"):
+        msgs.setdefault(r["pet"], []).append(r["text"])
+    held = corrected = 0
+    state = lambda sentence, texts: max((story.alike(story.content(sentence), story.content(x)) for t in texts for x in story.split(t)), default=0.0)
+    for c in hatched:
+        b = pets.get(c["parent"])
+        if not b or c["pet"] not in msgs:
+            continue
+        a = pets[b["parent"]]["pet"] if b["parent"] in pets else "before" if b["gen"] == 1 else None
+        if a not in msgs or b["pet"] not in msgs:
+            continue
+        for sentence in dict.fromkeys(x for t in msgs[a] for x in story.split(t)):   # anything A ever put in its message
+            in_b, in_c = state(sentence, msgs[b["pet"]]), state(sentence, msgs[c["pet"]])
+            if in_b < 0.5:
+                continue
+            kind = "held" if in_c >= 0.8 else "changed" if in_c >= 0.5 else "dropped"
+            held += kind == "held"
+            corrected += kind != "held"
+            if held + corrected <= 14:
+                print('   %s -> %s -> %s [%s by the third; %s]: "%s"' % (
+                    "the one before" if a == "before" else pets[a]["label"], b["label"], c["label"], kind, story.truth(sentence) or "unchecked", sentence[:150]))
+    print("   over every line of three generations: %d sentences held, %d changed or dropped by the third" % (held, corrected))
+    ok[4] = True if held else None if corrected else False
 
     print("\n## 5. They dealt with each other without the visitor")
     rows = dict(db.execute("SELECT kind, count(*) FROM social WHERE to_pet IS NOT NULL AND to_pet != 'visitor' GROUP BY 1").fetchall())
@@ -111,18 +136,28 @@ def main(data=ROOT / "data", profile=None):
         n = db.execute("SELECT count(DISTINCT room) FROM steps WHERE pet=?", (p["pet"],)).fetchone()[0]
         by_gen.setdefault(p["gen"], []).append(n)
         print("   %-14s gen %d was in %d rooms" % (p["label"], p["gen"], n))
+    # An event changed what a pet did: the first thought, within about fifteen thoughts' time, of a pet that was in the
+    # event's room (any pet, for a power cut), that names what happened in words no other thought would use.
     changed = 0
     for e in db.execute("SELECT tick, kind, room, detail FROM events WHERE kind IN ('power cut','leak','draught','delivery','lost thing') ORDER BY tick"):
-        for r in db.execute("SELECT pet, thought, intention FROM intentions WHERE started>? AND started<? ORDER BY started LIMIT 6", (e["tick"], e["tick"] + 120)):
+        where = "" if e["kind"] in ("power cut", "delivery") else " AND room=%r" % e["room"]
+        for r in db.execute("SELECT pet, thought, intention FROM intentions WHERE started>? AND started<?%s ORDER BY started LIMIT 8" % where, (e["tick"], e["tick"] + 90)):
             if re.search(EVENT_WORDS[e["kind"]], r["thought"], re.I):
                 changed += 1
-                if changed <= 5:
-                    print("   after the %s: %s: %s => %s" % (e["kind"], pets[r["pet"]]["label"], r["thought"][:220], r["intention"][:70]))
+                if changed <= 6:
+                    print("   after the %s: %s: %s => %s" % (e["kind"], pets[r["pet"]]["label"], r["thought"][:230], r["intention"][:80]))
                 break
+    print("   %d events followed by a thought about them (to be read: did it change what the pet did?)" % changed)
     twice = db.execute("SELECT pet, kind, count(*) n FROM creatures WHERE pet IS NOT NULL GROUP BY 1, 2 HAVING n > 1").fetchall()
-    watched = db.execute("SELECT pet, json_extract(action,'$.target') t, count(*) n FROM steps WHERE kind IN ('look','follow') AND reason IS NULL AND json_extract(action,'$.target') IN ('moth','beetle','mouse','bird') GROUP BY 1, 2").fetchall()
-    print("   creatures fed or chased more than once by the same pet: %s; watched: %s" % ([(pets[r["pet"]]["label"], r["kind"], r["n"]) for r in twice], [(pets[r["pet"]]["label"], r["t"], r["n"]) for r in watched]))
-    ok[6] = len(types) >= 5 and all(max(v) > 1 for v in by_gen.values()) and changed > 0 and bool(twice)
+    watched = db.execute("""SELECT pet, coalesce(json_extract(action,'$.target'), json_extract(action,'$.who')) t, count(*) n FROM steps
+                            WHERE kind IN ('look','follow') AND reason IS NULL AND coalesce(json_extract(action,'$.target'), json_extract(action,'$.who')) IN ('moth','beetle','mouse','bird')
+                            GROUP BY 1, 2""").fetchall()
+    both = {(r["pet"], r["kind"]): r["n"] for r in twice}
+    for r in watched:
+        both[(r["pet"], r["t"])] = both.get((r["pet"], r["t"]), 0) + r["n"]
+    often = [(pets[k[0]]["label"], k[1], n) for k, n in both.items() if n > 1]
+    print("   the same pet and the same creature more than once (fed, chased, watched or followed): %s" % often)
+    ok[6] = False if not (len(types) >= 5 and all(max(v) > 1 for v in by_gen.values()) and changed and often) else None
 
     print("\n## 7. No two lives were the same life")
     for p in hatched:
@@ -136,7 +171,7 @@ def main(data=ROOT / "data", profile=None):
     ok[7] = None
 
     print("\n## 8. It looks finished: judged from the screenshots, not from here")
-    print("\nfrom the logs: " + ", ".join("%d %s" % (k, "passes" if v else "to be read" if v is None else "FAILS") for k, v in ok.items()))
+    print("\nfrom the logs: " + ", ".join("%d %s" % (k, "passes" if v else "has evidence to be read" if v is None else "FAILS") for k, v in ok.items()))
 
 
 if __name__ == "__main__":

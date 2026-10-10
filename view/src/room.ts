@@ -196,7 +196,7 @@ export class Room {
 
     const base = ({ day: 0, dusk: 0.22, night: 0.5 } as Record<string, number>)[snap.clock.phase] ?? 0;
     const murk = snap.clock.phase === "day" ? ({ cloudy: 0.03, rain: 0.06, storm: 0.13, snow: 0.02 } as Record<string, number>)[snap.weather] ?? 0 : 0;
-    this.dark = clamp(base + murk + kind.dim - (room.lit ? 0.2 : 0) + (snap.power ? 0 : 0.2), 0, 0.7);
+    this.dark = clamp(base + murk + kind.dim - (room.lit ? 0.2 : 0) + (snap.power || snap.clock.phase === "day" ? 0 : 0.2), 0, 0.7);   // a power cut by day changes nothing you can see
     this.shade.alpha = this.dark;
 
     // startles and hearts come from what just happened (§10.3)
