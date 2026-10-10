@@ -97,6 +97,7 @@ function mind(c: Ctx): Kid[] {
       d.met && Object.keys(d.met).length ? el("p", "hint", `Creatures met: ${Object.entries(d.met as Record<string, number>).map(([k, n]) => `${k} (${n})`).join(", ")}.`) : null),
     d.portraits?.length ? section("How it draws itself", el("div", "row", ...(d.portraits as { day: number; parts: [] }[]).map((s) => el("figure", "", thingPicture(s), el("figcaption", "hint", `day ${s.day}`))))) : null,
     section("Temperament", el("p", "hint", "What it was born with. It is never told; it only shows in how it feels and acts."), radial(p.temper, 130)),
+    d.packet ? fold("packet", "The page it was last shown", el("p", "hint", "Everything it knew when it last thought, word for word. No numbers reach it."), el("pre", "packet", d.packet)) : null,
     link("Its place in the family", () => c.show("family", p.id)),
   ];
 }

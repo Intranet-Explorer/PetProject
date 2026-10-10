@@ -239,3 +239,4 @@ blockquote.thought { border-left-color: var(--accent); }
 .voicelab .heard { list-style: none; padding: 0; margin: 6px 0 0; font-size: 12px; max-height: 180px; overflow: auto; }
 .voicelab .heard span { opacity: .6; font-variant-numeric: tabular-nums; }
 #playing { font-size: 12px; opacity: .8; max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+pre.packet { white-space: pre-wrap; font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; margin: 6px 0 0; }
