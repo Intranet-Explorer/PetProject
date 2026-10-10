@@ -67,7 +67,7 @@ def pet_view(p):
     step = plan["steps"][min(plan["i"], len(plan["steps"]) - 1)] if plan else None
     out.update(
         needs={n: round(v, 1) for n, v in p["needs"].items()}, levels={n: feel.level(p, n) for n in p["needs"]},
-        feelings=feel.feelings(p), seems=feel.seems(p), doing=mind.doing(h, p), asleep=bool(p["sleep"]), thinking=p["thinking"],
+        feelings=feel.feelings(p), felt={n: feel.WORDS[n][feel.level(p, n)] for n in p["needs"]}, seems=feel.seems(p), doing=mind.doing(h, p), asleep=bool(p["sleep"]), thinking=p["thinking"],
         carrying=p["carrying"], following=p["following"], weak=p["weak"], said=said, days=round(life.days(h, cfg, p), 1),
         project=p["project"], offers=[{"from": o["from"], "kind": o["kind"]} for o in p["offers"]],
         plan={"intention": plan["intention"], "thought": plan["thought"], "expect": plan["expect"], "i": plan["i"], "why": plan["why"],

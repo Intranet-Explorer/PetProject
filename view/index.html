@@ -5,110 +5,89 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Pet</title>
   <link rel="stylesheet" href="/src/style.css">
+  <script>try { const t = localStorage.getItem("theme"); if (t) document.documentElement.dataset.theme = t; } catch {}</script>
 </head>
 <body>
   <header>
     <div class="brand">
-      <h1 id="petName">Pet</h1>
-      <span id="petStage"></span>
+      <h1>Pet</h1>
+      <span id="family"></span>
     </div>
     <div id="status" class="chips"><span class="chip">connecting…</span></div>
-    <span class="sound">
+    <label class="follow">Follow <select id="follow" aria-label="Follow"></select></label>
+    <button id="replayBtn">Replay</button>
+    <button id="themeBtn" aria-label="Switch between light and dark">Dark</button>
+    <!-- Voice (§10.6) is ported after the view; its controls wait here, out of sight, until it is. -->
+    <span class="sound" hidden>
       <span id="playing" role="status"></span>
       <button id="soundBtn" aria-pressed="false">Sound off</button>
       <input id="volume" type="range" min="0" max="100" value="60" aria-label="Volume">
     </span>
     <button id="drawerBtn" aria-expanded="false" aria-controls="drawer">Mind and lab</button>
   </header>
+  <section id="replayBar" aria-label="Replay" hidden>
+    <span class="chip on">Replay</span>
+    <select id="replayLineage" aria-label="Family"></select>
+    <button id="replayPlay" aria-pressed="false">Play</button>
+    <input id="replayScrub" type="range" min="0" max="1000" value="0" aria-label="Where in the run">
+    <span id="replayWhen"></span>
+    <select id="replaySpeed" aria-label="Speed"></select>
+    <button id="replayLive">Back to now</button>
+  </section>
   <main>
-    <div id="stage">
-      <div id="room" aria-label="The room"></div>
-      <p id="banner" role="status" hidden></p>
+    <div class="top">
+      <div id="stage">
+        <div id="room" aria-label="The room"></div>
+        <p id="roomName"></p>
+        <p id="banner" role="status" hidden></p>
+        <div id="tip" hidden></div>
+      </div>
+      <aside id="side" aria-label="The house">
+        <div id="sky"></div>
+        <div id="map" role="group" aria-label="Rooms of the house"></div>
+        <ul id="happening"></ul>
+        <h2>Lately</h2>
+        <ol id="moments" aria-label="Moments"></ol>
+      </aside>
     </div>
-    <section class="controls" aria-label="Visitor controls">
+    <ul id="cards" aria-label="Everyone in the house"></ul>
+    <section id="controls" class="controls" aria-label="Visitor controls">
       <button id="feed">Feed</button>
-      <button id="poke">Poke</button>
       <button id="window">Open window</button>
       <span class="place">
-        <label for="placeObject">Move the</label>
-        <select id="placeObject"></select>
-        <button id="placeBtn" aria-pressed="false">Pick a tile</button>
+        <select id="giveBit" aria-label="What to give"></select>
+        <button id="giveBtn">Give</button>
       </span>
-      <details id="give">
-        <summary>Give it something</summary>
-        <span class="place">
-          <select id="giveColor" aria-label="Color"></select>
-          <select id="giveShape" aria-label="Shape"></select>
-          <label for="giveMaterial">made of</label>
-          <select id="giveMaterial"></select>
-          <button id="giveBtn" aria-pressed="false">Pick a tile</button>
-        </span>
-      </details>
       <form id="talkForm">
-        <input id="talkText" maxlength="200" placeholder="Say something to it" aria-label="Talk">
+        <input id="talkText" maxlength="200" placeholder="Say something" aria-label="Talk">
         <button>Say</button>
       </form>
+      <span id="chosen" class="place" hidden>
+        <span id="chosenWhat"></span>
+        <button id="poke">Poke</button>
+        <form id="nameForm"><input id="nameText" maxlength="16" placeholder="a name" aria-label="A name"><button>Name it</button></form>
+        <button id="chosenDone" aria-label="Let go">×</button>
+      </span>
     </section>
-    <ol id="moments" aria-label="Moments"></ol>
+    <section id="ended" hidden>
+      <p>The house is quiet. Nobody is left of this family; their stones and their things are still here.</p>
+      <button id="newLineage">Start a new family</button>
+    </section>
   </main>
   <aside id="drawer" hidden aria-label="Mind and lab">
     <div class="tabs" role="tablist">
       <button role="tab" data-tab="mind">Mind</button>
       <button role="tab" data-tab="things">Things</button>
-      <button role="tab" data-tab="self">Self</button>
-      <button role="tab" data-tab="diary">Diary</button>
-      <button role="tab" data-tab="beliefs">Beliefs</button>
+      <button role="tab" data-tab="family">Family</button>
+      <button role="tab" data-tab="story">Story</button>
       <button role="tab" data-tab="lab">Lab</button>
       <button id="drawerClose" aria-label="Close">×</button>
     </div>
-    <section class="panel" data-panel="mind">
-      <div id="needs"></div>
-      <h2 id="doing"></h2>
-      <p id="thought"></p>
-      <ol id="steps"></ol>
-      <p id="expecting" class="hint"></p>
-      <p id="before" class="hint"></p>
-    </section>
-    <section class="panel" data-panel="things" hidden>
-      <p class="hint">Everything it has made, with the name and purpose it gave. The line under each is for you, not the pet: what the thing really does.</p>
-      <ul id="shelf"></ul>
-    </section>
-    <section class="panel" data-panel="self" hidden>
-      <p class="hint">Once it is an Adult it draws itself each night. Its body as it was is on the left; how it drew itself is on the right.</p>
-      <ul id="portraits"></ul>
-    </section>
-    <section class="panel" data-panel="diary" hidden>
-      <div id="diary"></div>
-    </section>
-    <section class="panel" data-panel="beliefs" hidden>
-      <ul id="beliefs"></ul>
-      <details><summary id="discardedLabel">Discarded</summary><ul id="discarded"></ul></details>
-    </section>
-    <section class="panel" data-panel="lab" hidden>
-      <table id="compare"></table>
-      <canvas id="chart" width="640" height="220" aria-label="Hidden-rule prediction accuracy over time"></canvas>
-      <p class="hint">Share of its last 50 predictions that were right, counting only predictions about a need a hidden rule had just moved.</p>
-      <h2>Voice lab</h2>
-      <p class="hint">Its voice is made in your browser from its body and how it is. The pet never hears it, and nothing here reaches the pet or the engine.</p>
-      <div class="lab">
-        <span class="row"><input id="labText" maxlength="120" value="Hello? I am ready for something new!" aria-label="A sentence to say"><button id="labSay">Say it</button></span>
-        <div id="labSounds" class="row"></div>
-        <label class="filter"><input type="checkbox" id="labOwn"> Try a different voice (otherwise it is the pet's own, as it is now)</label>
-        <div class="sliders">
-          <label for="labStage">Stage</label><select id="labStage"><option>hatchling</option><option>child</option><option>youngling</option><option>adult</option></select>
-          <label for="labRound">Roundness</label><input id="labRound" type="range" min="20" max="100">
-          <label for="labWobble">Wobble</label><input id="labWobble" type="range" min="0" max="100">
-          <label for="labEnergy">Energy</label><input id="labEnergy" type="range" min="0" max="100">
-          <label for="labComfort">Comfort</label><input id="labComfort" type="range" min="0" max="100">
-        </div>
-        <p id="labHint" class="hint"></p>
-        <p class="hint">Heard lately</p>
-        <ol id="heard"></ol>
-      </div>
-      <h2>Journal</h2>
-      <label class="filter"><input type="checkbox" id="ruleOnly"> Only moments a hidden rule fired</label>
-      <ol id="journal"></ol>
-    </section>
+    <section class="panel" data-panel="mind"></section>
+    <section class="panel" data-panel="things" hidden></section>
+    <section class="panel" data-panel="family" hidden></section>
+    <section class="panel" data-panel="story" hidden></section>
+    <section class="panel" data-panel="lab" hidden></section>
   </aside>
   <script type="module" src="/src/main.ts"></script>
 </body>

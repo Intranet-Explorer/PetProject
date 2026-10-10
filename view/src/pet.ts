@@ -9,8 +9,11 @@ export type Genome = {
 const INK = 0x16241f;
 const hsl = (h: number, s: number, l: number) => `hsl(${h}, ${Math.round(s * 100)}%, ${Math.round(l)}%)`;
 
+/** How it is just now, beyond its genome: half-shut eyes, an elder's greying (0 to 1), lying dead. Display only. */
+export type Look = { tired?: boolean; grey?: number; dead?: boolean };
+
 /** The same pseudo-random numbers every redraw, so a pattern holds still. */
-function fixedRandom(seed: number) {
+export function fixedRandom(seed: number) {
   return () => ((seed = (seed * 1664525 + 1013904223) % 4294967296) / 4294967296);
 }
 
@@ -26,13 +29,14 @@ export class PetBody extends Container {
     this.addChild(this.shape, this.pattern, this.clip, this.face);
   }
 
-  draw(g: Genome, stage: string, comfort: number, asleep: boolean) {
-    const egg = stage === "egg";
-    const size = { child: 18, youngling: 21, adult: 24 }[stage] ?? 15;   // it grows with each stage
+  draw(g: Genome, stage: string, comfort: number, asleep: boolean, look: Look = {}) {
+    const egg = stage === "egg", grey = look.grey ?? 0, shut = asleep || look.dead;
+    const size = { child: 18, youngling: 21, adult: 24, elder: 24 }[stage] ?? 15;   // it grows with each stage
     const [w, h] = egg ? [size * 0.85, size * 1.15] : [size, size * g.stretch];
     const corner = Math.min(w, h) * (egg ? 1 : g.roundness);
-    const light = 36 + comfort * 0.24;                             // display only: brighter when comfortable
-    const body = hsl(g.hue, g.saturation, light), dark = hsl(g.hue, g.saturation, light - 17);
+    const light = 36 + comfort * 0.24 + grey * 8;                  // display only: brighter when comfortable
+    const sat = g.saturation * (1 - grey * 0.6);                   // an elder is a little greyer
+    const body = hsl(g.hue, sat, light), dark = hsl(g.hue, sat, light - 17);
     const outline = (to: Graphics) => to.roundRect(-w, -h, 2 * w, 2 * h, corner);
 
     this.shape.clear().ellipse(0, h + 2, w * 0.9, 4).fill({ color: INK, alpha: 0.18 });
@@ -57,10 +61,12 @@ export class PetBody extends Container {
     if (egg) return;
     const r = size * (0.1 + g.eye_size * 0.2), dx = w * (0.18 + g.eye_spacing * 0.6), y = -h * 0.2;
     for (const x of [-dx, dx]) {
-      if (asleep) f.rect(x - r, y, 2 * r, 2).fill(INK);
-      else f.circle(x, y, r).fill(0xffffff).circle(x, y + r * 0.2, r * 0.5).fill(INK);
+      if (shut) f.rect(x - r, y, 2 * r, 2).fill(INK);
+      else f.circle(x, y, r).fill(0xffffff).circle(x, y + r * (look.tired ? 0.45 : 0.2), r * 0.5).fill(INK);
+      // tired: the lid comes half way down
+      if (look.tired && !shut) f.moveTo(x - r - 0.6, y).arc(x, y, r + 0.6, Math.PI, Math.PI * 2).closePath().fill(body).rect(x - r - 0.6, y - 0.8, 2 * r + 1.2, 1.6).fill(INK);
     }
-    if (asleep) for (const [x, zy, s] of [[w, -h, 3], [w + 7, -h - 8, 4], [w + 15, -h - 18, 5]]) {
+    if (asleep && !look.dead) for (const [x, zy, s] of [[w, -h, 3], [w + 7, -h - 8, 4], [w + 15, -h - 18, 5]]) {
       f.poly([x, zy, x + 2 * s, zy, x, zy + 2 * s, x + 2 * s, zy + 2 * s]).stroke({ width: 1.5, color: INK }); // z z z
     }
   }

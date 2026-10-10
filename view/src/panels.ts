@@ -1,215 +1,139 @@
-// The DOM around the room: the header, and the drawer's tabs (SPEC-v2 §9).
-// Everything from the engine is set as text, never as HTML.
-import type { Rec, Snapshot } from "./main";
-import type { Genome } from "./pet";
+// The drawer (SPEC-v3 §10.1): Mind and Things here; Family, Story and Lab in their own files.
+// The numbers shown here are for the visitor. No pet ever sees them.
+import { bar, dayOf, el, face, fold, link, plural, radial, refill } from "./dom";
+import type { Ctx, Kid } from "./dom";
+import { family, record } from "./family";
+import { lab, story } from "./story";
 import { thingPicture } from "./things";
+import { NEEDS } from "./types";
+import type { Made } from "./types";
 
-const NEEDS = ["energy", "comfort", "curiosity"] as const;
-const MARK = { correct: "✓ right", wrong: "✗ wrong", unscorable: "not scorable" };
-const RULES: [string, string][] = [["lights_night", "Put out the lights for the night"], ["double_feed", "Spaced out its meals"], ["plant_window", "Plant to the window"]];
-const LINE: Record<string, string> = { model: "--accent", twin: "--muted" };
-const $ = (id: string) => document.getElementById(id)!;
+const MARK: Record<string, string> = { correct: "✓ as it expected", wrong: "✗ not as it expected", unscorable: "no way to tell" };
+const TABS: Record<string, (c: Ctx) => Kid[]> = { mind, things, family, story, lab };
+/** Where each tab's extra facts come from. They are asked for only while the tab is open. */
+export const SOURCE: Record<string, (c: Ctx) => string | null> = {
+  mind: (c) => (c.sel ? `/api/pet/${c.sel}` : null), things: () => "/api/things", family: () => "/api/family", story: () => "/api/story", lab: () => "/api/lab",
+};
 
-function el(tag: string, cls = "", text = "") {
-  const e = document.createElement(tag);
-  e.className = cls;
-  e.textContent = text;
-  return e;
+export function renderDrawer(tab: string, c: Ctx) {
+  const panel = document.querySelector<HTMLElement>(`[data-panel="${tab}"]`);
+  if (!panel || !TABS[tab]) return;
+  const note = c.replay && tab !== "things" ? el("p", "hint note", "This is a replay. What is in the engine's memory here is as the house is now, not as it was then.") : null;
+  refill(panel, [note, ...TABS[tab](c)]);
 }
 
-/** An action in a few words: "use lamp", "say “hello”", "move (3,4)". */
-function actionText(a: unknown) {
-  if (!a || typeof a !== "object") return "no action";
-  const { type, target, object, tile, text, id } = a as Record<string, unknown>;
-  if (type === "speak") return `say “${text}”`;
-  if (type === "write_belief") return "write a belief";
-  if (type === "revise_belief") return `revise ${id}`;
-  return [type, target ?? object, Array.isArray(tile) ? `(${tile})` : null].filter((v) => v != null).join(" ");
+const quote = (text: string, cls = "") => el("blockquote", cls, text);
+const section = (title: string, ...kids: Kid[]) => (kids.some((k) => k) ? el("section", "", el("h3", "", title), ...kids) : null);
+const list = (cls: string, items: Kid[], none: string) => el("ul", cls, ...(items.length ? items : [el("li", "empty", none)]));
+
+function clock(sec: number) {
+  return `${Math.floor(sec / 60)}:${String(Math.floor(sec % 60)).padStart(2, "0")}`;
 }
 
-/** Need changes of half a point or more; smaller ones are background drift. */
-function deltas(r: Rec) {
-  return NEEDS.filter((n) => Math.abs(r.deltas[n]) >= 0.5).map((n) =>
-    el("span", r.deltas[n] > 0 ? "delta up" : "delta down", `${r.deltas[n] > 0 ? "+" : ""}${r.deltas[n].toFixed(1)} ${n}`));
-}
+// ---- Mind: the chosen pet ----
 
-const tags = (r: Rec) => r.rule_tags.map((t) => el("span", "tag", t));
+function mind(c: Ctx): Kid[] {
+  const p = c.snap.pets.find((p) => p.id === c.sel);
+  if (!p) return [el("p", "empty", "Nobody is chosen. Click a pet in the room or on a card.")];
+  const d = c.api.mind?.pet?.id === p.id ? c.api.mind : {};
+  const where = c.snap.rooms.find((r) => r.id === p.room)?.name ?? "the house";
+  const parent = c.snap.pets.find((q) => q.id === p.parent);
+  const stage = p.stage === "dead" ? `died of ${p.cause}` : p.stage;
+  const head = el("div", "who", face(c, p),
+    el("div", "", el("h2", "", p.stage === "egg" ? p.name ?? "An egg" : p.label),
+      el("p", "hint", `${stage} · generation ${p.gen}${p.days != null ? ` · ${plural(Math.round(p.days * 10) / 10, "day")}` : ""}`),
+      el("p", "hint", `in ${where}${parent ? ` · ${parent.label}'s child` : ""}`),
+      p.seems ? el("p", "", `Seems ${p.seems}; ${p.asleep ? "asleep" : p.doing}.`) : null,
+      p.weak ? el("p", "bad", "It has grown weak.") : null));
+  const told = (d.told ?? []) as { who: string; kind: string; text: string }[];
+  const words = told.filter((t) => t.kind !== "tell"), tells = told.filter((t) => t.kind === "tell");
+  const toldBy = section(`What its ${words[0]?.who ?? parent?.word ?? "parent"} told it`,
+    ...words.map((t) => el("div", "", t.kind === "last words" ? el("p", "hint", "Last words") : null, quote(t.text))));
+  if (p.stage === "egg") return [head, el("p", "", `Not hatched yet. It should hatch in about ${clock(p.hatches_in ?? 0)}.`), toldBy];
+  if (p.stage === "dead") return [head, ...(d.life ? record(c, d.life) : [el("p", "empty", "Its life record is being fetched.")])];
 
-function chart(snap: Snapshot) {
-  const c = $("chart") as HTMLCanvasElement, g = c.getContext("2d")!;
-  const css = (v: string) => getComputedStyle(document.documentElement).getPropertyValue(v);
-  const [W, H, L, R, T, B] = [c.width, c.height, 52, 14, 16, 30];
-  const all = Object.values(snap.pets).flatMap((p) => p.series);
-  g.clearRect(0, 0, W, H);
-  g.font = "19px system-ui, sans-serif";
-  g.fillStyle = css("--muted");
-  if (!all.length) {
-    g.textAlign = "center";
-    g.fillText("No hidden rule has been predicted yet", W / 2, H / 2);
-    return;
-  }
-  const t0 = Math.min(...all.map((p) => p[0])), t1 = Math.max(t0 + 1, ...all.map((p) => p[0]));
-  const x = (t: number) => L + ((t - t0) / (t1 - t0)) * (W - L - R);
-  const y = (v: number) => T + (1 - v / 100) * (H - T - B);
-  g.textAlign = "right";
-  for (const v of [0, 50, 100]) {
-    g.fillText(`${v}%`, L - 8, y(v) + 6);
-    g.strokeStyle = css("--line");
-    g.beginPath(); g.moveTo(L, y(v)); g.lineTo(W - R, y(v)); g.stroke();
-  }
-  g.textAlign = "left";
-  g.fillText(`tick ${t0}`, L, H - 6);
-  g.textAlign = "right";
-  g.fillText(`tick ${t1}`, W - R, H - 6);
-  g.lineWidth = 3;
-  g.textAlign = "left";
-  Object.entries(snap.pets).forEach(([id, p], i) => {
-    g.strokeStyle = g.fillStyle = css(LINE[id] ?? "--ink");
-    if (Object.keys(snap.pets).length > 1) g.fillText(id, L + 10 + i * 80, T + 16);
-    g.beginPath();
-    p.series.forEach(([t, v], k) => (k ? g.lineTo(x(t), y(v)) : g.moveTo(x(t), y(v))));
-    g.stroke();
-  });
-  g.lineWidth = 1;
-}
-
-function compare(snap: Snapshot) {
-  const ids = Object.keys(snap.pets);
-  const line = (label: string, cell: (id: string) => string) => {
-    const tr = el("tr");
-    tr.append(el("td", "", label), ...ids.map((id) => el("td", "", cell(id))));
-    return tr;
-  };
-  const head = el("tr");
-  head.append(el("th"), ...ids.map((id) => el("th", "", ids.length > 1 ? id : "")));
-  const thead = el("thead"), body = el("tbody");
-  thead.append(head);
-  body.append(
-    line("Stage", (id) => snap.pets[id].world.pet.stage),
-    line("Times it thought in the last hour", (id) => String(snap.pets[id].world.calls.length)),
-    line("Hidden-rule predictions right", (id) => snap.pets[id].accuracy == null ? "none yet" : `${snap.pets[id].accuracy}%`),
-    ...RULES.map(([rule, label]) => line(label, (id) => `${snap.pets[id].world.exploits[rule]} times`)),
-    line("Things made", (id) => String(snap.pets[id].things.filter((t) => t.by === "pet").length)),
-    line("Useful things", (id) => String(snap.pets[id].progress.useful)),
-    line("Days lived", (id) => String(snap.pets[id].progress.days)),
-    line("Next stage", (id) => {
-      const p = snap.pets[id].progress;
-      if (!p.next || !p.needs) return "fully grown";
-      const beliefs = p.needs.kept_beliefs ? `, ${p.needs.kept_beliefs} beliefs kept (${p.kept ?? 0})` : "";
-      return `${p.next}: ${p.needs.days} days, ${p.needs.useful} useful things${beliefs}`;
-    }),
-    line("Beliefs held", (id) => String(snap.pets[id].beliefs.filter((b) => b.status === "active").length)),
-    line("Marks", (id) => snap.pets[id].world.pet.genome.marks.join(", ") || "none"),
-  );
-  $("compare").replaceChildren(thead, body);
-}
-
-const pictures = new Map<string, string>();   // body pictures already taken, by night
-
-export function renderPanels(snap: Snapshot, petId: string, ruleOnly: boolean, picture: (g: Genome, stage: string) => string) {
-  const pet = snap.pets[petId], w = pet.world, plan = w.plan;
-  const hh = Math.floor(w.clock.hour), mm = String(Math.floor((w.clock.hour % 1) * 60)).padStart(2, "0");
-  const state = w.pet.stage === "egg" ? "not hatched yet" : w.sleep ? "asleep" : w.thinking ? "thinking" : plan ? "busy" : "idle";
-
-  $("petName").textContent = w.pet.name ?? "Pet";
-  $("petStage").textContent = `${w.pet.stage}, day ${w.clock.day}`;
-  $("status").replaceChildren(
-    el("span", "chip", `${hh}:${mm} · ${w.clock.phase}`),
-    el("span", "chip", state),
-    el("span", snap.visitor_present ? "chip on" : "chip", snap.visitor_present ? "you are here" : "nobody watching"),
-  );
-
-  // Mind: what it means to do, why, and where it is in doing it
-  $("needs").replaceChildren(...NEEDS.map((n) => {
-    const v = w.pet.needs[n], r = el("div", v < 20 ? "need low" : "need");
-    const bar = el("div", "bar"), fill = el("b");
-    fill.style.width = `${v}%`;
-    bar.append(fill);
-    r.append(el("span", "", n), bar, el("span", "", String(Math.round(v))));
-    return r;
+  const needs = el("div", "needs", ...NEEDS.map((n) => {   // the word is what the pet feels; the number is only ever shown here
+    const v = p.needs?.[n] ?? 0, low = (p.levels?.[n] ?? 0) >= 3;
+    return el("div", low ? "need low" : "need", el("span", "", n), el("b", "", p.felt?.[n] ?? ""), bar(v), el("span", "num", Math.round(v)));
   }));
-  $("doing").textContent = w.pet.stage === "egg" ? "Still an egg." : w.sleep ? "Asleep." : plan ? plan.intention
-    : w.thinking ? "Thinking about what to do…" : "Idle, between intentions.";
-  $("thought").textContent = plan && !w.sleep ? plan.thought : "";
-  $("steps").replaceChildren(...(plan && !w.sleep ? plan.steps.map((s, i) => {
-    const li = el("li", i < plan.i ? "done" : i === plan.i ? "now" : "");
-    li.append(el("span", "", i < plan.i ? "✓" : i === plan.i ? "▸" : "·"), el("span", "", actionText(s)));
-    return li;
-  }) : []));
-  $("expecting").textContent = plan && !w.sleep ? `It expects: ${plan.expect || "nothing in particular"}` : "";
-  const last = w.last_plan;
-  $("before").replaceChildren(...(last ? [`Before that: ${last.intention} `,
-    el("span", last.score, last.ended === "done" ? MARK[last.score] : `${last.ended}, ${MARK[last.score]}`)] : []));
+  const plan = p.plan, last = p.last_plan;
+  const now = el("section", "",
+    el("h3", "", p.asleep ? "Asleep" : plan ? plan.intention : p.thinking ? "Thinking about what to do…" : "Between intentions"),
+    plan && !p.asleep ? quote(plan.thought, "thought") : null,
+    plan && !p.asleep ? el("ol", "steps", ...plan.steps.map((s, i) => el("li", i < plan.i ? "done" : i === plan.i ? "now" : "",
+      el("span", "", i < plan.i ? "✓" : i === plan.i ? "▸" : "·"), el("span", "", s)))) : null,
+    plan && !p.asleep ? el("p", "hint", `It expects: ${plan.expect || "nothing in particular"}. It thought because: ${plan.why}.`) : null,
+    last ? el("p", "hint", `Before that: ${last.intention} `, el("span", last.score, last.ended === "done" ? MARK[last.score] : `${last.ended.split(":")[0]}, ${MARK[last.score]}`)) : null);
+  const senses = ((d.senses ?? []) as unknown[]).map((s) => (typeof s === "string" ? s : Array.isArray(s) ? String(s.at(-1)) : JSON.stringify(s)));
+  const project = section("Its project",
+    p.project ? el("p", "", `“${p.project.text}” `, el("span", "hint", `since day ${dayOf(c.snap, p.project.since)}`)) : el("p", "empty", "None just now."),
+    ...((d.projects ?? []) as { text: string; how: string }[]).map((x) => el("p", "hint", `${x.how}: “${x.text}”`)));
+  const beliefs = (d.beliefs ?? []) as { id: string; statement: string; source?: string; status: string }[];
+  const held = beliefs.filter((b) => b.status === "active"), dropped = beliefs.filter((b) => b.status !== "active");
+  const belief = (b: (typeof beliefs)[number]) => el("li", "", el("div", "", b.statement), el("span", "tag", b.source ?? "lived"));
+  const journal = ((d.journal ?? []) as Record<string, any>[]).filter((r) => r.type === "step" || r.type === "intention").slice(-14).reverse();
+  const diary = [...((d.diary ?? []) as Record<string, any>[])].reverse();
+  const known = (d.known ?? []) as { name: string; relation: string | null; line: string }[];
+  const own = (d.message ?? []) as { text: string }[];
+  return [
+    head, needs,
+    senses.length ? section("What it notices", list("plain", senses.map((s) => el("li", "", s)), "")) : null,
+    now, project, toldBy,
+    section("What others told it", ...tells.map((t) => el("div", "", el("p", "hint", t.who), quote(t.text)))),
+    own.length ? section("Its message for its children", quote(own.at(-1)!.text), own.length > 1 ? el("p", "hint", `Rewritten ${plural(own.length - 1, "time")}.`) : null) : null,
+    section(`Beliefs (${held.length})`, list("beliefs", held.map(belief), d.beliefs ? "None yet." : "…"),
+      dropped.length ? fold("dropped", `Given up (${dropped.length})`, el("ul", "beliefs gone", ...dropped.map(belief))) : null),
+    section("Just now", list("journal", journal.map((r) => r.type === "intention"
+      ? el("li", "plan", el("span", "", r.intention), el("span", r.score, r.ended === "done" ? MARK[r.score]?.slice(0, 1) : "–"))
+      : el("li", r.reason ? "rejected" : "", el("span", "", r.feedback || r.reason), el("span", "hint", r.reason ? "could not" : ""))), "Nothing yet.")),
+    section("Dreams", ...(diary.length ? diary.map((n) => el("div", "night",
+      el("p", "hint", `Night of day ${n.day}`), el("p", "", n.dream || "No dream it could tell."),
+      n.body ? el("p", "hint", `Its body changed: ${n.body}. ${n.reason ? `“${n.reason}”` : ""}`) : null,
+      n.review ? el("p", "hint", `Looked again at “${n.review.was}”: ${n.review.decision === "revise" ? `now “${n.review.now}”` : n.review.decision === "discard" ? "gave it up" : "kept it"}.`) : null,
+      ...(n.changes ?? []).map((ch: string) => el("p", "hint", ch)))) : [el("p", "empty", "It has not slept yet.")])),
+    section("Who and where it knows",
+      known.length ? list("plain", known.map((k) => el("li", "", el("b", "", k.name), k.relation ? ` (its ${k.relation})` : "", k.line ? `: ${k.line}` : "")), "") : null,
+      d.rooms ? el("p", "hint", `Rooms: ${(d.rooms as string[]).join(", ") || "none yet"}.`) : null,
+      d.met && Object.keys(d.met).length ? el("p", "hint", `Creatures met: ${Object.entries(d.met as Record<string, number>).map(([k, n]) => `${k} (${n})`).join(", ")}.`) : null),
+    d.portraits?.length ? section("How it draws itself", el("div", "row", ...(d.portraits as { day: number; parts: [] }[]).map((s) => el("figure", "", thingPicture(s), el("figcaption", "hint", `day ${s.day}`))))) : null,
+    section("Temperament", el("p", "hint", "What it was born with. It is never told; it only shows in how it feels and acts."), radial(p.temper, 130)),
+    link("Its place in the family", () => c.show("family", p.id)),
+  ];
+}
 
-  // Things: the shelf of everything it ever made. The pet's own words first; the truth underneath is for the visitor.
-  $("shelf").replaceChildren(...(pet.things.length ? [...pet.things].reverse().map((t) => {
-    const li = el("li", t.gone ? "gone" : ""), sums: Record<string, number> = {};
-    for (const e of t.effects) for (const n of NEEDS) sums[n] = (sums[n] ?? 0) + (e[n] ?? 0);
-    const seen = NEEDS.filter((n) => t.effects.length && Math.abs(sums[n]) >= 0.05 * t.effects.length)
-      .map((n) => `${sums[n] > 0 ? "+" : ""}${(sums[n] / t.effects.length).toFixed(1)} ${n}`).join(", ");
-    const title = el("div");
-    title.append(el("b", "", t.name), t.gone ? ` (${t.gone[1]})` : "", ...(t.useful ? [el("span", "badge", "useful")] : []),
-      ...(t.by === "visitor" ? [el("span", "hint", " from you")] : []));
-    li.append(thingPicture(t.recipe), title, el("div", "", `“${t.recipe.purpose}”`),
-      ...(t.behavior ? [el("div", "", `Taught: when ${t.behavior.when.replace("_", " ")}, ${t.behavior.do.replace(/_/g, " ").replace(":", " to ")}`)] : []),
-      el("div", "truth", `${t.recipe.material}: ${snap.materials[t.recipe.material] ?? ""}. Used or felt ${t.uses} time${t.uses === 1 ? "" : "s"}${seen ? `, on average ${seen}` : ""}.`));
-    return li;
-  }) : [el("li", "empty", "It has not made anything yet.")]));
-  document.querySelector('[data-tab="things"]')!.textContent = `Things (${pet.things.filter((t) => !t.gone).length})`;
+// ---- Things: what has been made, here and through the house ----
 
-  // Self: its body as it was each night, beside how it drew itself (§8)
-  const portraits = w.portraits ?? [];
-  $("portraits").replaceChildren(...(portraits.length ? [...portraits].reverse().map((p) => {
-    const li = el("li"), img = document.createElement("img"), key = `${p.day}:${JSON.stringify(p.genome)}`;
-    if (!pictures.has(key)) pictures.set(key, picture(p.genome, p.stage));
-    img.src = pictures.get(key)!;
-    img.alt = "its body that night";
-    li.append(img, thingPicture(p), el("div", "hint", `Night of day ${p.day}`));
-    return li;
-  }) : [el("li", "empty", w.pet.stage === "adult" ? "It has not drawn itself yet." : "It will draw itself once it is an Adult.")]));
+export function thingCard(c: Ctx, name: string, m: Pick<Made, "recipe" | "uses"> & Partial<Made>, extra: Kid[] = []) {
+  const names = (ids: string[]) => ids.map((id) => c.snap.pets.find((p) => p.id === id)?.label ?? "someone gone").join(" → ");
+  const maker = c.snap.pets.find((p) => p.id === m.by)?.label;
+  const whose = m.owner_name ? `${m.owner_name}'s` : m.owner === "visitor" ? "a gift from the visitor" : null;
+  const b = m.behavior;
+  return el("li", "thing", thingPicture(m.recipe),
+    el("div", "", el("b", "", m.called ? `${m.called} ` : name), m.called ? el("span", "hint", `(${name}) `) : null,
+      m.useful ? el("span", "badge", "useful") : null, m.heirloom ? el("span", "badge gold", "heirloom") : null),
+    el("div", "hint", [whose, maker && maker !== m.owner_name ? `made by ${maker}` : null, plural(m.uses, "use")].filter(Boolean).join(" · ")),
+    m.recipe.purpose ? el("div", "", `“${m.recipe.purpose}”`) : null,
+    el("div", "truth", `${m.recipe.material}: ${c.hello?.properties[m.recipe.material] ?? "nobody knows yet"}.`),
+    b ? el("div", "truth", `Taught: when ${b.when.replace("_", " ")}, ${b.do.replace(/_/g, " ").replace(":", " to ")}.`) : null,
+    m.worn?.length ? el("div", "truth", `It is ${m.worn.join(" and ").replace("eaten", "moth-eaten")}.`) : null,
+    m.heirloom ? el("div", "truth", `Handed down: ${names(m.heirloom.line)} → ${names(m.heirloom.to) || "nobody living"}.`) : null,
+    ...extra);
+}
 
-  // Diary: every night so far, newest first
-  $("diary").replaceChildren(...(w.diary.length ? [...w.diary].reverse().map((night) => {
-    const box = el("div", "night"), changes = el("ul");
-    changes.append(...night.changes.map((c) => el("li", "", c)));
-    const body = el("p", "", night.body ? `Its body changed: ${night.body}. ` : "Its body did not change. ");
-    if (night.reason) body.append(el("span", "hint", `“${night.reason}”`));
-    box.append(el("p", "hint", `Night of day ${night.day}`), el("p", "", night.dream || "No dream summary."), body,
-      ...(night.changes.length ? [el("p", "hint", "Beliefs changed while asleep"), changes] : []));
-    return box;
-  }) : [el("p", "empty", "It has not slept yet.")]));
-
-  const active = pet.beliefs.filter((b) => b.status === "active").sort((a, b) => b.revised - a.revised);
-  const gone = pet.beliefs.filter((b) => b.status !== "active");
-  const item = (b: (typeof active)[number]) => {
-    const li = el("li");
-    li.append(el("span", "", b.id), el("div", "", b.statement));
-    return li;
-  };
-  document.querySelector('[data-tab="beliefs"]')!.textContent = `Beliefs (${active.length})`;
-  $("beliefs").replaceChildren(...(active.length ? active.map(item) : [el("li", "empty", "No beliefs yet.")]));
-  $("discarded").replaceChildren(...gone.map(item));
-  $("discardedLabel").textContent = `Discarded (${gone.length})`;
-
-  // Lab: the measurements, and the journal of steps and intentions
-  compare(snap);
-  chart(snap);
-  const rows = (pet.journal.filter((r) => r.type === "step" || r.type === "intention") as Rec[])
-    .filter((r) => !ruleOnly || r.rule_tags.length > 0).reverse();
-  $("journal").replaceChildren(...(rows.length ? rows.map((r) => {
-    const li = el("li", r.type === "intention" ? "plan" : ""), what = el("span", "what");
-    if (r.type === "intention") {
-      li.title = `expected: ${r.expect}\nended: ${r.ended}`;
-      what.textContent = r.intention;
-      what.append(...deltas(r), ...tags(r));
-      li.append(el("span", "t", `t${r.tick}`), what, el("span", r.score, r.ended === "done" ? MARK[r.score] : r.ended.split(":")[0]));
-    } else {
-      li.title = r.feedback;
-      what.textContent = actionText(r.action);
-      what.className = r.reason ? "what rejected" : "what";
-      what.append(...deltas(r), ...tags(r));
-      li.append(el("span", "t", `t${r.tick}`), what, el("span", "rejected", r.reason ? "not possible" : ""));
-    }
-    return li;
-  }) : [el("li", "empty", ruleOnly ? "No hidden rule fired in what is shown." : "Nothing yet.")]));
+function things(c: Ctx): Kid[] {
+  const rooms = c.snap.rooms.filter((r) => r.type);
+  const made = (id: string) => Object.entries(rooms.find((r) => r.id === id)?.objects ?? {}).filter(([, o]) => o.made);
+  const here = made(c.room), there = rooms.filter((r) => r.id !== c.room && made(r.id).length);
+  const gone = (c.api.things?.gone ?? []) as { name: string; recipe: Made["recipe"]; by: string; uses: number; gone: [number, string] }[];
+  const name = rooms.find((r) => r.id === c.room)?.name ?? "this room";
+  return [
+    el("p", "hint", "What the pets have made, with the name and purpose they gave. The grey line under each is for you, not for them: what the stuff it is made of really does."),
+    el("h3", "", `In ${name} (${here.length})`),
+    list("shelf", here.map(([n, o]) => thingCard(c, n, o.made!)), "Nothing made is in this room."),
+    ...there.flatMap((r) => [
+      el("h3", "", `In ${r.name} (${made(r.id).length}) `, link("look", () => c.jump({ room: r.id }))),
+      el("ul", "shelf", ...made(r.id).map(([n, o]) => thingCard(c, n, o.made!)))]),
+    gone.length ? fold("gone", `Gone (${gone.length})`, el("ul", "shelf gone", ...gone.map((g) =>
+      thingCard(c, g.name, { recipe: g.recipe, uses: g.uses, by: g.by }, [el("div", "truth", `${g.gone[1]}, day ${dayOf(c.snap, g.gone[0])}.`)])))) : null,
+  ];
 }
