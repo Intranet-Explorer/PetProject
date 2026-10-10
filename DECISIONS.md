@@ -373,3 +373,48 @@ minutes old, was archived as `data.showcase-0` and the run restarted on the fixe
 - **The lay-egg and night prompts say that what a pet was told is its own to pass on, change or leave out.**
   §5.2 says that is how myths form, and in the smoke run children wrote wholly new messages: of everything
   three generations handed down, no sentence survived to the third. The words leave the choice with the pet.
+
+## Part 11: the showcase
+
+One real-model run in turbo time, 10 October 2026, 10:20 to 17:16: 30 world days, 7 pets, 5 generations. It is
+written up in SHOWCASE.md and kept in `data.showcase/`. An earlier attempt, 16 minutes old when the review's
+fixes went in, is `data.showcase-0`.
+
+- **The meter-talk pattern was changed while judging, and criterion 1 depends on it.** By the pattern the
+  run started with, two pets were over the bar (11.9% and 18.1% of thoughts after the first day). Nearly all
+  of those flags were the verb in this family's "the pulse points south": `\bpoints?\b` was written for v2's
+  "6 points". It now needs a number in front of it. Spelled-out thresholds ("below thirty") were added at the
+  same time, which is stricter. By the new pattern every pet is under 5% and the last v2 life is 43.0% of
+  thoughts and 57.9% of beliefs (it was first measured at 25.2% of thoughts with a narrower pattern still, so
+  both figures are given wherever one is). The share is now computed from the thoughts' words, not from the
+  flag stored when each was logged, so an old run is read by today's pattern.
+- **The criterion itself was not replaced**, but it measures less than its name. These pets do not talk like
+  meters; they do say "my project requires" in 38% of thoughts. SHOWCASE.md says so under criterion 1 and
+  under "What's still boring".
+- **A drifted rule kept its old words.** The cellar's night rule drifted on day 7 from costing comfort to
+  giving a little, and the sense line went on saying "the cellar's cold gets into you" for the other 23 days.
+  Every room rule's sense line now follows the sign of its number, with a self-check. The run was not
+  repeated for it: no criterion rests on that line, and the family's saying "the cold is the rest" turned out
+  to be true of the drifted room against the words, which SHOWCASE.md sets out with the comfort figures.
+- **The run was let go past the fourth generation** (to day 30, just under seven real hours) so that the
+  third generation's deaths and the fourth's messages were in it. §12.1 asks for at least four generations
+  lived or twelve hours.
+- **The garden was never found**, so criterion 8's "every room type" is met with eight screens from the run
+  and one from a scripted-brain house, labelled as such.
+- **The family's vocabulary is measured** in the bar script's last section, at Tyler's request during the
+  run: per pet, the words that neither the engine's own text nor another family on the same engine uses,
+  split into inherited, coined, and picked up from the living, with what became of "below thirty" and of
+  "Make the shape. Unmake it." It is not a ninth criterion. The baseline is one other run (`data.smoke`); a
+  word that family also happened to coin is set aside with the everyday ones.
+- **Claim matching, checked by hand.** On the smoke run, with the first matcher, about a third of 30
+  sampled "changed" matches were not the same claim, and matches at 0.8 or over ("repeated") were sound;
+  the containment rule was tightened for that. On this run I read the 12 three-generation chains the bar
+  script calls held or changed, and all 12 are the same claim. Two faults remain and both showed here: the
+  matcher cannot see "not" (the engine counted "The cold is not the rest" as the family saying reaching a
+  third generation), and the truth patterns do not know a rule has drifted ("the cellar is cold" is still
+  scored true). Left as they are and listed in SHOWCASE.md.
+- **Criterion 4 is passed two ways and the write-up says which claim did what**: a saying held for three
+  generations inside v3, and "the pulse asking for a new shape" changed by a child after two days of its own
+  things doing nothing. "The lamp keeps the dark from hurting", the one inherited claim the engine can score,
+  was dropped from the message while still held as a belief, so it is not counted as a correction.
+
