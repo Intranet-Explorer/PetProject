@@ -158,12 +158,12 @@ class Mind:
             return
         if pet["plan"]:
             self.end_plan("interrupted")
-        thought = actions.clean(str(turn.get("thought", "")), 300)
+        thought = life.last_sentence(actions.clean(str(turn.get("thought", "")), 340), 300)   # whole sentences: these are what is read
         pet["meter"] = [pet["meter"][0] + feel.meter_talk(thought), pet["meter"][1] + 1]
         pet["following"] = None
         pet["plan"] = {
             "thought": thought, "intention": actions.clean(turn["intention"], 120), "steps": turn["steps"][:5],
-            "expect": actions.clean(turn["expect"], 200), "why": why, "meter": feel.meter_talk(thought),
+            "expect": life.last_sentence(actions.clean(turn["expect"], 230), 200), "why": why, "meter": feel.meter_talk(thought),
             "i": 0, "left": None,                       # the step it is on; ticks left doing it (None while walking there)
             "started": h["tick"], "needs0": dict(pet["needs"]), "tags": [], "tag_need": {}, "room": pet["room"],
             "step_needs0": None, "step_tags": [],

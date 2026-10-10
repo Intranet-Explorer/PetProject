@@ -118,8 +118,8 @@ def schema(ctx):
         "revise_belief": [one("revise_belief", id={"enum": c["beliefs"]}, statement=text(240))] if c["beliefs"] else [],
     }
     step = {"anyOf": [x for a in c["allowed"] for x in v[a]]}
-    return obj(thought={"type": "string"}, intention=text(120),
-               steps={"type": "array", "items": step, "minItems": 2, "maxItems": 5}, expect={"type": "string"})
+    return obj(thought=text(340, 0), intention=text(120),
+               steps={"type": "array", "items": step, "minItems": 2, "maxItems": 5}, expect=text(230, 0))
 
 
 def prompt(packet, ctx):
