@@ -34,7 +34,7 @@ def glyph(rows, ox, oy):
 def kinds():
     s = Sheet("kinds.png", 8)
     for name, rows in art.KINDS.items():
-        extra = {"anchor": [0, 24]} if name in ("shelf", "mirror", "picture") else {}   # these hang on the wall above their tile
+        extra = {"anchor": [0, 24]} if name in ("shelf", "mirror", "picture", "wall hook") else {}   # these hang on the wall above their tile
         s.add("kind." + name, pic(rows), tint="hue", **extra)
     egg = pic(art.EGG)
     lean = Image.new("RGBA", egg.size, (0, 0, 0, 0))   # the second frame: the egg rocks to one side
@@ -47,7 +47,7 @@ def kinds():
 # ---- fixtures, scenery, doors ----
 
 UNLIT = {"lamp": {"Y": "a", "y": "A", "w": "c"}, "work lamp": {"Y": "E", "w": "t"}, "lantern": {"Y": "i", "w": "I"},
-         "old lantern": {"k": "B", "Y": "e", "w": "E"}, "dial box": {"Y": "i", "w": "I"}}
+         "old lantern": {"k": "B", "Y": "e", "w": "E"}, "dial box": {"Y": "i", "w": "I"}, "little radio": {"Y": "B", "w": "b"}}
 WALL_HUNG = {"lantern": 26, "old lantern": 26, "window": 28, "mirror": 28, "skylight": 30}   # how far above its tile's top edge the picture's top is
 
 
@@ -145,6 +145,8 @@ def fixtures():
         s.add("door.gate.north." + st, g, anchor=[0, 16]); s.add("door.gate.south." + st, g, anchor=[0, -16])
         s.add("door.gate.west." + st, sg, anchor=[9, 0]); s.add("door.gate.east." + st, sg.transpose(Image.FLIP_LEFT_RIGHT), anchor=[-16, 0])
         s.add("door." + st, n, anchor=[0, 20])
+    for st, swap in (("", UNLIT["little radio"]), (".off", UNLIT["little radio"]), (".on", None)):   # the visitor's own, set down on the floor (SPEC-v3.3 §3.2)
+        put("little radio" + st, F["little radio"], swap)
     return s
 
 
@@ -213,6 +215,10 @@ def ui():
         s.add("emote." + name, pic(rows))
     for name, rows in art.ICON.items():
         s.add("icon.room." + name, pic(rows))
+    for name, sign in art.ACT.items():   # what a pet's body is doing: a sign on a small white plate, the same plate for all, to go over its head
+        assert all(len(r) == 10 for r in sign) and len(sign) == 10 and sign[0][0] + sign[0][9] + sign[9][0] + sign[9][9] == "....", "the sign %r is 10 x 10 with empty corners" % name
+        plate = [r if not 1 <= y <= 10 else r[0] + "".join(m if m != "." else c for m, c in zip(sign[y - 1], r[1:11])) + r[11] for y, r in enumerate(art.UI["act"])]
+        s.add("icon.act." + name, pic(plate), anchor=[-2, -2])
     return s
 
 

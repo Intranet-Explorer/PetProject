@@ -119,6 +119,36 @@
    "pack": "ninja",
    "file": "Audio/Sounds/Jump & Bounce/Bounce.wav",
    "gain": 0.35
+  },
+  "bell": {
+   "pack": "ninja",
+   "file": "Audio/Sounds/Bonus/Coin.wav",
+   "gain": 0.15
+  },
+  "chime": {
+   "pack": "ninja",
+   "file": "Audio/Sounds/Bonus/Coin2.wav",
+   "gain": 0.18
+  },
+  "chimes": {
+   "pack": "ninja",
+   "file": "Audio/Sounds/Bonus/Gold1.wav",
+   "gain": 0.21
+  },
+  "drum": {
+   "pack": "ninja",
+   "file": "Audio/Sounds/Hit & Impact/Impact.wav",
+   "gain": 0.15
+  },
+  "flute": {
+   "pack": "ninja",
+   "file": "Audio/Jingles/Success1.wav",
+   "gain": 0.28
+  },
+  "clatter": {
+   "pack": "ninja",
+   "file": "Audio/Sounds/Hit & Impact/Hit5.wav",
+   "gain": 0.19
   }
  },
  "music": {
@@ -166,6 +196,280 @@
    "pack": "ninja",
    "file": "Audio/Musics/26 - Lost Village.ogg",
    "gain": 0.1
+  }
+ },
+ "moods": {
+  "calm": [
+   {
+    "pack": "ninja",
+    "file": "Audio/Musics/5 - Peaceful.ogg",
+    "gain": 0.08
+   },
+   {
+    "pack": "ninja",
+    "file": "Audio/Musics/9 - Quiet.ogg",
+    "gain": 0.06
+   },
+   {
+    "pack": "ninja",
+    "file": "Audio/Musics/27 - Chill.ogg",
+    "gain": 0.21
+   }
+  ],
+  "lively": [
+   {
+    "pack": "ninja",
+    "file": "Audio/Musics/20 - Good Time.ogg",
+    "gain": 0.16
+   },
+   {
+    "pack": "ninja",
+    "file": "Audio/Musics/31 - Sunny.ogg",
+    "gain": 0.09
+   },
+   {
+    "pack": "ninja",
+    "file": "Audio/Musics/23 - Road.ogg",
+    "gain": 0.09
+   },
+   {
+    "pack": "ninja",
+    "file": "Audio/Musics/4 - Village.ogg",
+    "gain": 0.12
+   }
+  ],
+  "mysterious": [
+   {
+    "pack": "ninja",
+    "file": "Audio/Musics/13 - Mystical.ogg",
+    "gain": 0.08
+   },
+   {
+    "pack": "ninja",
+    "file": "Audio/Musics/2 - The Cave.ogg",
+    "gain": 0.08
+   },
+   {
+    "pack": "ninja",
+    "file": "Audio/Musics/26 - Lost Village.ogg",
+    "gain": 0.24
+   },
+   {
+    "pack": "ninja",
+    "file": "Audio/Musics/30 - Ruins.ogg",
+    "gain": 0.24
+   }
+  ],
+  "sad": [
+   {
+    "pack": "ninja",
+    "file": "Audio/Musics/7 - Sad Theme.ogg",
+    "gain": 0.3
+   },
+   {
+    "pack": "ninja",
+    "file": "Audio/Musics/16 - Melancholia.ogg",
+    "gain": 0.14
+   },
+   {
+    "pack": "ninja",
+    "file": "Audio/Musics/29 - Lament.ogg",
+    "gain": 0.14
+   }
+  ]
+ },
+ "ambience": {
+  "rooms": {
+   "nursery": [
+    {
+     "synth": "crackle",
+     "gain": 0.03,
+     "rate": 1,
+     "steady": true,
+     "says": "a clock: one soft tick a second, evenly, tick then tock"
+    }
+   ],
+   "garden": [
+    {
+     "synth": "wind",
+     "gain": 0.04,
+     "rate": 0.15,
+     "pitch": 500,
+     "says": "a light breeze in leaves, coming and going"
+    },
+    {
+     "synth": "birds",
+     "gain": 0.05,
+     "rate": 0.2,
+     "sfx": "call",
+     "when": "day",
+     "says": "a few birds, now here, now there, never a chorus"
+    },
+    {
+     "synth": "crickets",
+     "gain": 0.03,
+     "rate": 2,
+     "when": "night",
+     "says": "crickets after dark"
+    }
+   ],
+   "cellar": [
+    {
+     "synth": "drips",
+     "gain": 0.05,
+     "rate": 0.15,
+     "echo": 0.7,
+     "sfx": "drip",
+     "says": "slow drips with a long echo"
+    },
+    {
+     "synth": "wind",
+     "gain": 0.02,
+     "rate": 0.05,
+     "pitch": 90,
+     "says": "a low draught, more felt than heard"
+    }
+   ],
+   "attic": [
+    {
+     "synth": "wind",
+     "gain": 0.045,
+     "rate": 0.1,
+     "pitch": 900,
+     "says": "wind under the eaves: thin, rising to a faint whistle and falling away"
+    },
+    {
+     "synth": "creak",
+     "gain": 0.035,
+     "rate": 0.04,
+     "says": "a rafter creaks now and then"
+    }
+   ],
+   "pond": [
+    {
+     "synth": "water",
+     "gain": 0.05,
+     "rate": 0.3,
+     "says": "still water lapping at its edge"
+    },
+    {
+     "synth": "wind",
+     "gain": 0.02,
+     "rate": 0.3,
+     "pitch": 3000,
+     "says": "reeds rustling: dry, high, in short breaths"
+    },
+    {
+     "synth": "drips",
+     "gain": 0.04,
+     "rate": 0.05,
+     "sfx": "splash",
+     "says": "a plop now and then, as something surfaces"
+    }
+   ],
+   "workshop": [
+    {
+     "synth": "creak",
+     "gain": 0.04,
+     "rate": 0.08,
+     "says": "timber and the bench settling"
+    },
+    {
+     "synth": "crackle",
+     "gain": 0.025,
+     "rate": 1.5,
+     "says": "small uneven ticks, like metal cooling"
+    }
+   ],
+   "music": [
+    {
+     "synth": "hum",
+     "gain": 0.02,
+     "pitch": 440,
+     "says": "a faint ringing, as if the strings were answering the room: pure, high, slowly swelling"
+    }
+   ],
+   "greenhouse": [
+    {
+     "synth": "hum",
+     "gain": 0.03,
+     "pitch": 70,
+     "says": "a warm low hum from the hot pipe"
+    },
+    {
+     "synth": "crackle",
+     "gain": 0.015,
+     "rate": 0.4,
+     "says": "the pipe ticking as it warms"
+    },
+    {
+     "synth": "drips",
+     "gain": 0.025,
+     "rate": 0.06,
+     "sfx": "drip",
+     "says": "condensation dripping off the glass, close by, no echo"
+    }
+   ],
+   "storeroom": [
+    {
+     "synth": "creak",
+     "gain": 0.02,
+     "rate": 0.02,
+     "says": "near silence: a board settles about once a minute"
+    }
+   ]
+  },
+  "weather": {
+   "rain": [
+    {
+     "pack": "ninja",
+     "file": "Audio/Sounds/Ambient/Rain.wav",
+     "gain": 0.3
+    }
+   ],
+   "storm": [
+    {
+     "pack": "ninja",
+     "file": "Audio/Sounds/Ambient/Rain.wav",
+     "gain": 0.4
+    },
+    {
+     "pack": "ninja",
+     "file": "Audio/Sounds/Ambient/Storm.wav",
+     "gain": 0.35
+    }
+   ],
+   "snow": [
+    {
+     "synth": "wind",
+     "gain": 0.025,
+     "rate": 0.05,
+     "pitch": 250,
+     "says": "a hush: slow soft wind, muffled, nothing sharp"
+    }
+   ],
+   "heat": [
+    {
+     "synth": "crickets",
+     "gain": 0.03,
+     "rate": 6,
+     "says": "cicadas: a dry steady shimmer"
+    }
+   ]
+  }
+ },
+ "instruments": {
+  "bell": "bell",
+  "drum": "drum",
+  "wind chime": "chime",
+  "flute": "flute",
+  "chimes": "chimes",
+  "default": "clatter",
+  "hum": {
+   "synth": "hum",
+   "gain": 0.04,
+   "pitch": 180,
+   "says": "one steady note with a slow wobble, coming from the thing itself"
   }
  }
 }

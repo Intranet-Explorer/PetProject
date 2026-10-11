@@ -62,8 +62,10 @@ A pack whose licence forbids redistribution lives outside the repository: give i
   name>` the engine's fixtures (lamp, bed, bowl, music box, dial box, heavy book, …; `fix.<name>.<state>` where a
   state looks different: `fix.lamp.on`) · `kind.<kind>` made things · `bit.<bit>` things to gather ·
   `creature.<kind>` · `emote.<mood>` (tired, uneasy, lonely, bored, content, and more) · `fx.*` puffs, sparkles,
-  hearts, notes, z's · `ui.*` bubbles and frames · `icon.room.<type>` for the minimap · `door.<state>` · `egg` ·
-  `stone` (a memorial).
+  hearts, notes, z's · `ui.*` bubbles and frames · `icon.room.<type>` for the minimap · `icon.act.<icon>` what a
+  pet's body is doing by itself, to go over its head (one for each `icon` in activities.toml: 12 × 12, a sign on a
+  small white plate so it reads on any floor) · `door.<state>` · `egg` · `stone` (a memorial).
+- `fix.little radio` (`.on`, `.off`) is the visitor's own radio, set down in a room until the pets find theirs.
 
 ## kinds.json
 
@@ -78,7 +80,10 @@ A pack whose licence forbids redistribution lives outside the repository: give i
 - `not`: materials this kind cannot be made of (a candle cannot be springy). Everything else is allowed.
 - `a`: the article, for sentences ("a cushion", "an urn").
 - `flat`: it lies flat on the floor (a rug, a blanket) and can be walked over; the view's pets walk round anything else.
-- The engine reads `rank`, `wall`, `not`, `a`. The view reads `sprite`.
+- `store`: it keeps things, this many (a shelf, a chest, a crate, a basket, a box). `inside`: they go in it, out of
+  sight, instead of on it.
+- `hooks`: things can be hung on it, this many (a wall hook). `hangs`: a pet can hang it on a wall or on a hook.
+- The engine reads `rank`, `wall`, `not`, `a`, `flat`, `store`, `inside`, `hooks`, `hangs`. The view reads `sprite`.
 
 ## rooms/<type>.json
 
@@ -119,7 +124,41 @@ A pack whose licence forbids redistribution lives outside the repository: give i
 ```
 
 `sfx` names the view uses: pickup, drop, make, unmake, combine, door, step, eat, write, book, call, heart, radio,
-arrival (and `arrival.<discovery>`). Music is off unless the visitor turns it on.
+arrival (and `arrival.<discovery>`). `music` is one quiet track per room type, off unless the visitor turns it on.
+
+Three more sections say what the house sounds like (SPEC-v3.3 §3 and §4):
+
+```json
+{ "moods": { "calm": [ { "pack": "ninja", "file": "Audio/Musics/5 - Peaceful.ogg", "gain": 0.08 } ],
+             "lively": [], "mysterious": [], "sad": [] },
+  "ambience": {
+    "rooms":   { "cellar": [ { "synth": "drips", "gain": 0.05, "rate": 0.15, "echo": 0.7, "sfx": "drip", "says": "slow drips with a long echo" },
+                             { "synth": "wind", "gain": 0.02, "rate": 0.05, "pitch": 90, "says": "a low draught, more felt than heard" } ] },
+    "weather": { "storm": [ { "pack": "ninja", "file": "Audio/Sounds/Ambient/Rain.wav", "gain": 0.4 },
+                            { "pack": "ninja", "file": "Audio/Sounds/Ambient/Storm.wav", "gain": 0.35 } ] } },
+  "instruments": { "bell": "bell", "wind chime": "chime", "default": "clatter",
+                   "hum": { "synth": "hum", "gain": 0.04, "pitch": 180, "says": "one steady note with a slow wobble" } } }
+```
+
+- `moods`: the visitor's music. Each of calm, lively, mysterious and sad has 2 to 4 tracks, played one after another
+  or shuffled; `gain` evens them out (a quiet track has the higher gain), so one volume serves them all.
+- `ambience.rooms.<room type>`: 1 to 3 quiet layers that play together while that room is looked at.
+  `ambience.weather.<weather>`: 1 or 2 more on top while the sky is so (rain, storm, snow, heat; a sky with no entry
+  adds nothing). Which rooms hear the weather, and how muffled, is the page's business (`light.sky` in a layout
+  says where the sky is open or glass).
+- A layer is one of two things:
+  - a file that loops: `pack`, `file`, `gain`. Only files long enough to loop are given this way; cross-fade the
+    ends (Storm.wav ends quieter than it starts).
+  - a sound the page makes: `synth` is one of wind, drips, crackle, hum, crickets, water, birds, creak, with `gain`
+    (0 to 0.1) and `says`, one line on what it should sound like in this place. The rest are optional and a page
+    that ignores them still sounds right: `rate`, how often, per second (events for drips, birds, creak, crackle
+    and crickets; swells for wind and water) · `pitch`, in Hz (the note of a hum, where a wind is centred: 90 is a
+    rumble, 900 a whistle, 3000 a rustle) · `echo` 0 to 1, how long a drip rings on · `steady` true, evenly spaced
+    (a clock) rather than scattered · `when` "day" or "night", the only time it plays · `sfx`, an effect of `sfx`
+    that may be played for each event instead of making one (a drip, a bird's call, a splash).
+- `instruments`: the sound of a thing that sounds when used (an act with `loud`), by its kind or, for a fixture, its
+  name -> a name in `sfx`. `default` is for any other loud thing (anything made of something noisy). `hum` is a
+  thing humming by itself (`made.hums`): a layer like those above, played from where the thing is.
 
 ## Adding a pack
 
@@ -128,5 +167,9 @@ arrival (and `arrival.<discovery>`). Music is off unless the visitor turns it on
    to `packs.json` and to `third_party/CREDITS.md`. (A pack that may not be redistributed stays outside: see above.)
 3. Point names in `sprites.json` at the new files: a new look for an existing name, or new names.
 4. For new kinds of thing, add them to `kinds.json`; for new furniture, use it in `rooms/*.json`.
-5. Run `uv run python -m engine.check` (it checks that every kind, fixture and layout names a sprite that exists,
-   that every layout leaves its doors reachable, and that nothing in the catalog is unusable).
+5. Run `uv run python view/assets/own/src/validate.py` (seconds: every sprite, kind, fixture, activity sign, layout
+   and sound names something that exists, every layout leaves its doors reachable, nothing in the catalog is
+   unusable, no file lies about unused), and `uv run python -m engine.check` (minutes: the whole house, the art too).
+
+The pictures in `own/` and the JSON beside this file (all but `kinds.json`) are written by `own/src/build.py` from
+the tables in `own/src`: change them there and run it again (its first lines say how).

@@ -83,7 +83,7 @@ if parts.exists():
             bad("kinds-from-parts.json names the kind %r, which the catalog does not have" % k)
 
 # ---- everything the house has: fixtures and their states, bits, small creatures, feelings ----
-for name in ("fix.dial box", "fix.dial box.on", "fix.dial box.off", "fix.heavy book", "egg", "stone", "crate", "door.open", "door.shut", "door.stuck",
+for name in ("fix.dial box", "fix.dial box.on", "fix.dial box.off", "fix.little radio", "fix.little radio.on", "fix.little radio.off", "fix.heavy book", "egg", "stone", "crate", "door.open", "door.shut", "door.stuck",
              "ui.bubble.say", "ui.bubble.think", "ui.bubble.say.tail", "ui.bubble.think.tail", "ui.plate", "ui.panel", "icon.room.unknown",
              "fx.sparkle", "fx.puff", "fx.flash", "fx.heart", "fx.note", "fx.zzz", "fx.dust", "fx.glow", "fx.chalk dust", "fx.drip", "fx.rain", "fx.snow"):
     have(name)
@@ -99,6 +99,9 @@ for c in house["creatures"]:
                 bad("creature.%s has no %r animation" % (c, a))
 for mood in ("tired", "uneasy", "lonely", "bored", "content"):
     have("emote." + mood)
+for a in tomllib.loads((ROOT / "activities.toml").read_text()).values():   # what a pet's body does by itself: a sign for each
+    if isinstance(a, dict) and "icon" in a:
+        have("icon.act." + a["icon"])
 
 # ---- room layouts ----
 for kind, room in house["rooms"].items():
@@ -197,6 +200,56 @@ for group, lo, hi in (("sfx", 0.15, 0.35), ("music", 0.05, 0.15)):
         pack_file(s, "%s %s" % (group, name))
         if not lo <= s.get("gain", 0) <= hi:
             bad("%s %s: gain %s is outside %s to %s" % (group, name, s.get("gain"), lo, hi))
+
+
+def layer(l, what):
+    """One layer of a soundscape: a file of a pack that loops, or a sound the page makes."""
+    if "synth" not in l:
+        pack_file(l, what)
+    elif l["synth"] not in "wind drips crackle hum crickets water birds creak".split():
+        bad("%s: the page makes no sound called %r" % (what, l["synth"]))
+    elif l.get("sfx", "pickup") not in sounds["sfx"]:
+        bad("%s: no sfx %r" % (what, l["sfx"]))
+    if not 0 < l.get("gain", 0) <= (0.1 if "synth" in l else 0.5):
+        bad("%s: gain %s is not a quiet one" % (what, l.get("gain")))
+
+
+for mood in ("calm", "lively", "mysterious", "sad"):   # the visitor's music (SPEC-v3.3 §3.1)
+    tracks = sounds.get("moods", {}).get(mood, [])
+    if not 2 <= len(tracks) <= 4:
+        bad("sounds.json has %d %s tracks, not 2 to 4" % (len(tracks), mood))
+    for t in tracks:
+        pack_file(t, "mood " + mood)
+        if not 0.05 <= t.get("gain", 0) <= 0.3:
+            bad("mood %s: gain %s of %s is outside 0.05 to 0.3" % (mood, t.get("gain"), t.get("file")))
+amb = sounds.get("ambience", {})   # what each room sounds like by itself, and the weather on top (§4)
+for kind in house["rooms"]:
+    layers = amb.get("rooms", {}).get(kind, [])
+    if not 1 <= len(layers) <= 3:
+        bad("the %s has %d layers of ambience, not 1 to 3" % (kind, len(layers)))
+    for l in layers:
+        layer(l, "ambience of the %s" % kind)
+skies = {w for s in house["seasons"].values() for w in s["weather"]}
+for w in ("rain", "storm"):
+    if w not in amb.get("weather", {}):
+        bad("sounds.json has no ambience for %s" % w)
+for w, layers in amb.get("weather", {}).items():
+    if w not in skies or not 1 <= len(layers) <= 2:
+        bad("ambience for the weather %r: %s" % (w, "there is no such weather" if w not in skies else "%d layers, not 1 or 2" % len(layers)))
+    for l in layers:
+        layer(l, "ambience of %s" % w)
+inst = sounds.get("instruments", {})   # things that sound when used (§4)
+fixtures = {f["name"]: f for r in house["rooms"].values() for f in r["fixtures"]}
+for name in ["bell", "drum", "wind chime", "flute", "hum"] + [n for n, f in fixtures.items() if f.get("loud")]:
+    if name not in inst:
+        bad("sounds.json: instruments has no %r" % name)
+for name, v in inst.items():
+    if name not in ("hum", "default") and name not in kinds and name not in fixtures:
+        bad("instruments: %r is neither a kind nor a fixture" % name)
+    if isinstance(v, dict):
+        layer(v, "instruments %s" % name)
+    elif v not in sounds["sfx"]:
+        bad("instruments %s: no sfx %r" % (name, v))
 
 for name, pack in packs.items():   # a pack may bring a font for the page's headings
     if pack.get("font"):

@@ -137,9 +137,63 @@ SFX = {"pickup": "Bonus/Bonus2.wav", "drop": "Jump & Bounce/Bounce4.wav", "make"
        "radio": "Magic & Skill/Fx.wav", "arrival": "Bonus/PowerUp1.wav", "arrival.writing": "Menu/Accept3.wav", "arrival.songs": "Menu/Accept.wav",
        "arrival.taming": "Creature/Wings.wav", "arrival.radio": "Magic & Skill/Spirit.wav", "arrival.book": "Menu/Accept8.wav",
        "arrival.strangers": "Bonus/Bonus.wav", "drip": "Elemental/WaterDrop.wav", "rain": "Ambient/Rain.wav", "splash": "Elemental/Water6.wav",
-       "bounce": "Jump & Bounce/Bounce.wav"}
+       "bounce": "Jump & Bounce/Bounce.wav",
+       # things that sound when used (INSTRUMENTS): one clear note, a rising run of four, an octave ring, a falling thud, two soft pure notes, a rattle
+       "bell": "Bonus/Coin.wav", "chime": "Bonus/Coin2.wav", "chimes": "Bonus/Gold1.wav", "drum": "Hit & Impact/Impact.wav",
+       "flute": "Audio/Jingles/Success1.wav", "clatter": "Hit & Impact/Hit5.wav"}
 MUSIC = {"nursery": "5 - Peaceful.ogg", "garden": "11 - Clearing.ogg", "cellar": "2 - The Cave.ogg", "attic": "9 - Quiet.ogg", "pond": "18 - Aquatic.ogg",
          "workshop": "4 - Village.ogg", "music": "27 - Chill.ogg", "greenhouse": "13 - Mystical.ogg", "storeroom": "26 - Lost Village.ogg"}
+
+
+# The visitor's music by mood (SPEC-v3.3 §3.1). The number is how loud the track is by itself (root mean square of its
+# samples, measured once by decoding it in a browser: nothing here reads ogg); the gain evens the tracks out.
+MOODS = {"calm": {"5 - Peaceful.ogg": 0.146, "9 - Quiet.ogg": 0.186, "27 - Chill.ogg": 0.057},
+         "lively": {"20 - Good Time.ogg": 0.073, "31 - Sunny.ogg": 0.128, "23 - Road.ogg": 0.135, "4 - Village.ogg": 0.097},
+         "mysterious": {"13 - Mystical.ogg": 0.156, "2 - The Cave.ogg": 0.151, "26 - Lost Village.ogg": 0.049, "30 - Ruins.ogg": 0.049},
+         "sad": {"7 - Sad Theme.ogg": 0.040, "16 - Melancholia.ogg": 0.084, "29 - Lament.ogg": 0.088}}
+
+# What each room sounds like by itself (SPEC-v3.3 §4), and the weather on top: a file of the pack that loops, or a
+# sound the page makes (README.md says what the keys mean). Quiet, and no two rooms alike.
+LOOP = lambda f, gain: {"pack": "ninja", "file": S + "Ambient/" + f, "gain": gain}
+AMBIENCE = {
+    "rooms": {
+        "nursery": [{"synth": "crackle", "gain": 0.03, "rate": 1, "steady": True, "says": "a clock: one soft tick a second, evenly, tick then tock"}],
+        "garden": [{"synth": "wind", "gain": 0.04, "rate": 0.15, "pitch": 500, "says": "a light breeze in leaves, coming and going"},
+                   {"synth": "birds", "gain": 0.05, "rate": 0.2, "sfx": "call", "when": "day", "says": "a few birds, now here, now there, never a chorus"},
+                   {"synth": "crickets", "gain": 0.03, "rate": 2, "when": "night", "says": "crickets after dark"}],
+        "cellar": [{"synth": "drips", "gain": 0.05, "rate": 0.15, "echo": 0.7, "sfx": "drip", "says": "slow drips with a long echo"},
+                   {"synth": "wind", "gain": 0.02, "rate": 0.05, "pitch": 90, "says": "a low draught, more felt than heard"}],
+        "attic": [{"synth": "wind", "gain": 0.045, "rate": 0.1, "pitch": 900, "says": "wind under the eaves: thin, rising to a faint whistle and falling away"},
+                  {"synth": "creak", "gain": 0.035, "rate": 0.04, "says": "a rafter creaks now and then"}],
+        "pond": [{"synth": "water", "gain": 0.05, "rate": 0.3, "says": "still water lapping at its edge"},
+                 {"synth": "wind", "gain": 0.02, "rate": 0.3, "pitch": 3000, "says": "reeds rustling: dry, high, in short breaths"},
+                 {"synth": "drips", "gain": 0.04, "rate": 0.05, "sfx": "splash", "says": "a plop now and then, as something surfaces"}],
+        "workshop": [{"synth": "creak", "gain": 0.04, "rate": 0.08, "says": "timber and the bench settling"},
+                     {"synth": "crackle", "gain": 0.025, "rate": 1.5, "says": "small uneven ticks, like metal cooling"}],
+        "music": [{"synth": "hum", "gain": 0.02, "pitch": 440, "says": "a faint ringing, as if the strings were answering the room: pure, high, slowly swelling"}],
+        "greenhouse": [{"synth": "hum", "gain": 0.03, "pitch": 70, "says": "a warm low hum from the hot pipe"},
+                       {"synth": "crackle", "gain": 0.015, "rate": 0.4, "says": "the pipe ticking as it warms"},
+                       {"synth": "drips", "gain": 0.025, "rate": 0.06, "sfx": "drip", "says": "condensation dripping off the glass, close by, no echo"}],
+        "storeroom": [{"synth": "creak", "gain": 0.02, "rate": 0.02, "says": "near silence: a board settles about once a minute"}]},
+    "weather": {
+        "rain": [LOOP("Rain.wav", 0.3)],
+        "storm": [LOOP("Rain.wav", 0.4), LOOP("Storm.wav", 0.35)],   # the second is the thunder: low rolls, four in fourteen seconds
+        "snow": [{"synth": "wind", "gain": 0.025, "rate": 0.05, "pitch": 250, "says": "a hush: slow soft wind, muffled, nothing sharp"}],
+        "heat": [{"synth": "crickets", "gain": 0.03, "rate": 6, "says": "cicadas: a dry steady shimmer"}]}}
+
+# The sound of a thing that sounds when used (SPEC-v3.3 §4), by its kind or its fixture name -> an effect in SFX.
+# "default" is for any other noisy thing; "hum" is a thing humming by itself, which the page makes.
+INSTRUMENTS = {"bell": "bell", "drum": "drum", "wind chime": "chime", "flute": "flute", "chimes": "chimes", "default": "clatter",
+               "hum": {"synth": "hum", "gain": 0.04, "pitch": 180, "says": "one steady note with a slow wobble, coming from the thing itself"}}
+
+
+def named(x):
+    """Every pack file a piece of sounds.json names, however deep it lies."""
+    if isinstance(x, dict) and "file" in x:
+        yield x["file"]
+    elif isinstance(x, (dict, list)):
+        for v in (x.values() if isinstance(x, dict) else x):
+            yield from named(v)
 
 
 def loudness(path):
@@ -151,8 +205,11 @@ def loudness(path):
 
 def sounds(pack):
     """Every effect about as loud as every other: quieter files get the higher gain, all within 0.15 to 0.35."""
-    sfx = {n: {"pack": "ninja", "file": S + f, "gain": round(max(0.15, min(0.35, 0.25 * 0.05 / max(loudness(os.path.join(pack, S + f)), 0.001))), 2)} for n, f in SFX.items()}
-    return {"sfx": sfx, "music": {n: {"pack": "ninja", "file": "Audio/Musics/" + f, "gain": 0.1} for n, f in MUSIC.items()}}
+    sfx = {n: f if f.startswith("Audio/") else S + f for n, f in SFX.items()}
+    sfx = {n: {"pack": "ninja", "file": f, "gain": round(max(0.15, min(0.35, 0.25 * 0.05 / max(loudness(os.path.join(pack, f)), 0.001))), 2)} for n, f in sfx.items()}
+    moods = {m: [{"pack": "ninja", "file": "Audio/Musics/" + f, "gain": round(max(0.05, min(0.3, 0.012 / rms)), 2)} for f, rms in tracks.items()] for m, tracks in MOODS.items()}
+    return {"sfx": sfx, "music": {n: {"pack": "ninja", "file": "Audio/Musics/" + f, "gain": 0.1} for n, f in MUSIC.items()},
+            "moods": moods, "ambience": AMBIENCE, "instruments": INSTRUMENTS}
 
 
 # ---- rooms ----
@@ -381,7 +438,7 @@ def write(own, pack):
         used.add(file)
     sprites.update(own)
     snd = sounds(pack)
-    used |= {s["file"] for group in snd.values() for s in group.values()} | {"LICENSE.txt", FONT}
+    used |= set(named(snd)) | {"LICENSE.txt", FONT}
     dest = os.path.join(ASSETS, NINJA)
     for root, _, files in os.walk(dest):   # nothing unused stays
         for f in files:
