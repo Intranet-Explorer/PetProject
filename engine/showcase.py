@@ -28,6 +28,10 @@ def main(data=ROOT / "data", profile=None):
     for p in pets.values():
         p["genome"], p["temper"] = json.loads(p["genome"]), json.loads(p["temper"])
         p["label"] = p["name"] or "the little one"
+    names = [p["label"] for p in pets.values()]
+    for p in pets.values():   # twins have chosen the same name; the report has to tell them apart
+        if names.count(p["label"]) > 1:
+            p["label"] += " (%s)" % p["pet"]
     hatched = [p for p in pets.values() if p["born"] is not None]
     day = cfg["ticks_per_day"]
     gens = max((p["gen"] for p in hatched), default=0)
