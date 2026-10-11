@@ -1191,7 +1191,7 @@ async def main():
         eN.close()
         # ---- SPEC-v3.3: alive. The body acts between thoughts and asks no brain; a focus steers it; tidying is real and
         # ends; things are kept on shelves and have homes; the visitor's music and radio reach the pets ----
-        from . import alive, body, order, radio, songs
+        from . import alive as watch, body, order, radio, songs
         cA = load_config(body=True)
         cA["life"]["egg_minutes"], cA["stub"] = 0.1, dict(cA["stub"], paced=True)
         cB = load_config()
@@ -1304,8 +1304,8 @@ async def main():
             await eS.tick()
         eS.save()
         eS.close()
-        out, _, _ = alive.measure(d + "/day", show=False)
-        assert alive.passes(out), "at least five different things in any five minutes, never still for thirty seconds, resting under a quarter: %s" % out
+        out, _, _ = watch.measure(d + "/day", show=False)
+        assert watch.passes(out), "at least five different things in any five minutes, never still for thirty seconds, resting under a quarter: %s" % out
     print("self-check passed")
 
 
