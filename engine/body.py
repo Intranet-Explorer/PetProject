@@ -56,7 +56,8 @@ def targets(house, cfg, pet, mem, name, A):
                 kin = [p for p in house["pets"].values() if p["room"] == rid and p["stage"] not in ("egg", "dead") and not p["sleep"] and relation(house, pet, p)]
                 if focus.get("type") == "be with" and want and want["room"] == rid:
                     out.append({"what": d, "goal": list(house["door_tiles"][d]), "bonus": 2.5})
-                elif house["tick"] - state(pet).get("went", LONG_AGO) >= ticks(cfg, cfg["body"]["go_again_seconds"]):
+                elif focus.get("type") in (None, "explore", "play") and house["tick"] - pet["rooms"].get(room["id"], LONG_AGO) >= ticks(cfg, cfg["body"]["go_again_seconds"]):
+                    # (it stays where its mind put it a good while, and where its mind wants it: it never walks out on a focus)
                     out.append({"what": d, "goal": list(house["door_tiles"][d]),
                                 "bonus": (0.6 if kin and not kin_here(house, pet) else 0.0) + (0.8 if focus.get("type") == "explore" else 0.0)})
         return out
@@ -242,7 +243,7 @@ def finish(mind, now, cut=False):
             elif do == "go" and name in room["doors"] and actions.check({"type": "go", "door": name}, h, cfg, pet, mind.mem) is None:
                 text, fx, key = actions.go(h, cfg, pet, name)
                 add_event(h, pet, text)
-                b["went"], room = h["tick"], h["rooms"][pet["room"]]
+                room = h["rooms"][pet["room"]]
             elif do == "peek" and now.get("door") in room["doors"]:
                 there = [p for p in h["pets"].values() if p["room"] == room["doors"][now["door"]] and p["stage"] not in ("egg", "dead")]
                 add_event(h, pet, "you peeked into %s: %s" % (now["what"], ", ".join("%s is there" % actions.handle(h, pet, p) for p in there) or "nobody is there"))

@@ -351,6 +351,8 @@ class Mind:
         story.acted(h, cfg, pet, act, not reason)
         eng.did(pet, plan.get("step_began", h["tick"]), h["tick"], t, t in ("rest", "look", "observe"), "mind", "" if reason else told[:120],
                 still=h["tick"] - plan.get("step_at", h["tick"]), rest=t == "rest")
+        b = body.state(pet)   # a decided look counts toward how much of its time goes on resting and looking, like the body's own
+        b["idle"] = (b["idle"] + [int(t in ("rest", "look", "observe"))] * min(60, h["tick"] - plan.get("step_began", h["tick"]) + 1))[-cfg["body"]["window_ticks"]:]
         if reason:
             self.end_plan("not possible: " + reason)
         elif plan["i"] == len(plan["steps"]) and cfg["body"]["on"]:
