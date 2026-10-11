@@ -846,7 +846,7 @@ async def main():
                 break
         got = [r[0] for r in e4.db.execute("SELECT text FROM moments WHERE kind LIKE 'arrival %' ORDER BY n")]
         kinds = [r[0] for r in e4.db.execute("SELECT kind FROM moments WHERE kind LIKE 'arrival %' ORDER BY n")]
-        want = ["arrival " + n for n in director.ORDER if n != "book" or book.available(c4)]
+        want = ["arrival " + n for n in (director.ORDER if book.available(c4) else director.ORDER[:director.ORDER.index("book")])]   # with no encyclopedia the book, and what follows it, wait
         assert kinds == want[:len(kinds)] and len(kinds) >= 4, "each discovery arrives once, in order, with its moment: %s" % kinds
         used = {r[0] for r in e4.db.execute("SELECT DISTINCT kind FROM steps WHERE reason IS NULL")}
         assert {"write", "scrub", "sing", "compose"} <= used, "the stub uses the new actions: %s" % sorted(used)
@@ -1024,6 +1024,16 @@ async def main():
         rr["objects"]["soft blob"]["made"]["heirloom"] = {"from": "p1", "to": ["p2"], "tick": 9, "line": ["p0", "p1"]}
         raw["gone_things"] = [{"name": "gone ring", "recipe": old(["ring"], "glassy")["made"]["recipe"], "by": "p1", "owner": "p1", "uses": 0, "ups": 0, "made": 1, "gone": [2, "taken apart"]}]
         (Path(d) / "kinds" / "house.json").write_text(json.dumps(raw))
+        # a finished run opened only to be looked at is brought up to date in memory and not one byte of it is written
+        import hashlib
+        prints = lambda: {str(f): hashlib.sha1(f.read_bytes()).hexdigest() + str(f.stat().st_mtime_ns) for f in sorted((Path(d) / "kinds").rglob("*")) if f.is_file()}
+        before = prints()
+        look = Engine(c8, d + "/kinds", scripted, readonly=True)
+        assert look.house["rooms"][rr["id"]]["objects"]["soft blob"]["made"]["recipe"]["kind"] == "cushion", "what is shown has kinds"
+        mind.perceive(look.house, c8, next(p_ for p_ in look.house["pets"].values() if p_["id"] in look.minds), next(iter(look.minds.values())).mem)
+        look.save()
+        look.close()
+        assert prints() == before, "and the files are exactly as they were: %s" % sorted(k for k in before if prints().get(k) != before[k])
         e9 = Engine(c8, d + "/kinds", scripted)
         r9 = e9.house["rooms"][rr["id"]]
         for name, (shapes, material, kind) in want.items():

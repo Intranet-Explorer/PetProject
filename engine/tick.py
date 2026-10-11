@@ -66,7 +66,7 @@ class Mind:
     def __init__(self, eng, pet):
         self.eng, self.pet, self.cfg = eng, pet, eng.cfg
         self.dir = eng.lineage_dir(pet["lineage"]) / pet["id"]
-        self.mem = Memory(self.dir, self.cfg, eng.db, pet["id"])
+        self.mem = Memory(self.dir, self.cfg, eng.db, pet["id"], readonly=eng.readonly)
         self.brain = eng.make_brain(self.cfg, self.dir, "%s|%s" % (eng.house["seed"], pet["id"]),
                                     {"lineage": pet["lineage"], "pet": pet["id"], "gen": pet["gen"]})
         self.state_path = self.dir / "state.json"
@@ -100,6 +100,8 @@ class Mind:
         self.mem.journal(rec)
 
     def save(self):
+        if self.eng.readonly:
+            return
         tmp = self.state_path.with_suffix(".tmp")
         tmp.write_text(json.dumps({"brain": self.brain.s, "journal": list(self.journal), "window": list(self.window),
                                    "series": self.series, "today": self.today}))
@@ -498,9 +500,12 @@ class Mind:
 class Engine:
     """The running house: its state, every pet's mind, the one queue of model calls, the lineage's log."""
 
-    def __init__(self, cfg, data_dir, make_brain):
-        self.cfg, self.dir, self.make_brain = cfg, Path(data_dir), make_brain
-        self.dir.mkdir(parents=True, exist_ok=True)
+    def __init__(self, cfg, data_dir, make_brain, readonly=False):
+        """`readonly`: open a house only to look at it (an archived run, PET_PAUSED). It is brought up to date in memory
+        so the view can draw it, and nothing of it is written back: not the house, not a pet's files, not its log."""
+        self.cfg, self.dir, self.make_brain, self.readonly = cfg, Path(data_dir), make_brain, readonly
+        if not readonly:
+            self.dir.mkdir(parents=True, exist_ok=True)
         self.path = self.dir / "house.json"
         self.house = json.loads(self.path.read_text()) if self.path.exists() else new_house(cfg)
         if "profile" in self.house and self.house["profile"] != cfg.get("profile"):
@@ -550,8 +555,9 @@ class Engine:
 
     def open_lineage(self):
         d = self.lineage_dir()
-        d.mkdir(parents=True, exist_ok=True)
-        self.db = log.open_db(d / "lineage.db")
+        if not self.readonly:
+            d.mkdir(parents=True, exist_ok=True)
+        self.db = log.open_db(d / "lineage.db", self.readonly)
         self.narrator = self.make_brain(self.cfg, d / "house", "%s|house" % self.house["seed"], {"lineage": self.house["lineage"]["id"], "pet": "house"})
 
     def new_lineage(self, told=None, body=None):
@@ -712,6 +718,8 @@ class Engine:
             self.db = None
 
     def save(self):
+        if self.readonly:
+            return
         tmp = self.path.with_suffix(".tmp")
         tmp.write_text(json.dumps(self.house))
         tmp.replace(self.path)

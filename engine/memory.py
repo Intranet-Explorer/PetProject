@@ -6,18 +6,24 @@ from pathlib import Path
 
 
 class Memory:
-    def __init__(self, directory, cfg, db=None, pet_id=""):
+    def __init__(self, directory, cfg, db=None, pet_id="", readonly=False):
         self.dir, self.db, self.pet_id, self.max = Path(directory), db, pet_id, cfg["beliefs"]["max_active"]
-        self.dir.mkdir(parents=True, exist_ok=True)
+        self.readonly = readonly   # a house opened only to be looked at: nothing of it is written
+        if not readonly:
+            self.dir.mkdir(parents=True, exist_ok=True)
         self.path = self.dir / "beliefs.json"
         self.beliefs = json.loads(self.path.read_text()) if self.path.exists() else []
 
     def update_self(self, **facts):
+        if self.readonly:
+            return
         path = self.dir / "self.json"
         me = json.loads(path.read_text()) if path.exists() else {}
         path.write_text(json.dumps({**me, **facts}, indent=1))
 
     def journal(self, rec):
+        if self.readonly:
+            return
         with (self.dir / "journal.jsonl").open("a") as f:
             f.write(json.dumps(rec) + "\n")
 

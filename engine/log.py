@@ -35,7 +35,10 @@ CREATE INDEX IF NOT EXISTS intentions_pet ON intentions (pet, tick);
 """
 
 
-def open_db(path):
+def open_db(path, readonly=False):
+    """`readonly`: a finished run opened to be looked at. Its log is not written, not even to add a table."""
+    if readonly:
+        return sqlite3.connect("file:%s?mode=ro" % path, uri=True)
     db = sqlite3.connect(path)
     db.executescript(SCHEMA)
     return db

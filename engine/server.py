@@ -23,8 +23,8 @@ from .world import ROOT, STAGE_WORD, alive, label, load_config, power_on, relati
 
 cfg = load_config(profile=os.environ.get("PET_PROFILE") or None)
 DATA = ROOT / os.environ.get("PET_DATA", "data")
-eng = Engine(cfg, DATA, stub_brains if cfg["stub"]["enabled"] else model_brains)
 PAUSED = bool(os.environ.get("PET_PAUSED"))   # open a finished run to look at and replay, without living it any further
+eng = Engine(cfg, DATA, stub_brains if cfg["stub"]["enabled"] else model_brains, readonly=PAUSED)   # ... and without writing a byte of it
 clients = {}   # websocket -> {"seen": when it last reported an attentive visitor, "room": the room it is showing}
 
 
@@ -290,6 +290,8 @@ async def ws(sock: WebSocket):
             elif msg.get("type") == "new_lineage":
                 if eng.house["lineage"]["ended"] is not None:   # only once the house is empty; the old family's things stay (§4.2)
                     eng.new_lineage()
+            elif PAUSED:
+                await sock.send_json({"error": "this is a finished run, opened to look at: nothing in it can be changed"})
             else:
                 error = actions.visit(eng.house, cfg, msg)
                 if error:
@@ -359,7 +361,12 @@ async def api_v31():
     h, db = eng.house, eng.db
     if not db:
         return {"walls": [], "songs": [], "library": [], "radio": [], "arrivals": {}}
-    rows = lambda sql, keys: [dict(zip(keys, r)) for r in db.execute(sql).fetchall()]
+
+    def rows(sql, keys):
+        try:
+            return [dict(zip(keys, r)) for r in db.execute(sql).fetchall()]
+        except Exception:   # a run from before v3.1, opened to look at: its log has no such table, and is not given one
+            return []
     name = lambda pid: (label(h["pets"][pid]) if pid in h["pets"] else {"visitor": "the visitor", "music box": "the music box", "bird": "a bird"}.get(pid, pid))
     walls_ = {}
     for r in rows("SELECT id, tick, room, place, text, by, medium, what, actor FROM inscriptions ORDER BY tick", ("id", "tick", "room", "place", "text", "by", "medium", "what", "actor")):
