@@ -167,6 +167,8 @@ export class Labels {
   private tags = new Map<string, { tag: Tag; card: Card; fits: boolean; lead: Graphics }>();
   /** Are the things' names showing just now (the room says so every frame). */
   naming = false;
+  /** The things pets are busy with just now, by name: a thing's name shows while a pet is at it. */
+  using = new Set<string>();
   /** Where the pointer is on screen, or null: the name of the thing under it shows. */
   pointer: number[] | null = null;
   /** Places on screen that plates, bubbles and faces keep off (memorial stones). */
@@ -371,7 +373,8 @@ export class Labels {
   /** Does this name show just now: all of them for a moment or while held on, each one while the pointer is on its thing. */
   private shown(t: Tag, now: number) {
     const p = this.pointer, r = t.rect;
-    return this.naming || now < (t.until ?? 0) || (!!p && inside(r, p[0], p[1]));
+    return this.naming || now < (t.until ?? 0) || (!!p && inside(r, p[0], p[1]))
+      || (this.using.size > 0 && /^[mt]\./.test(t.key) && t.key.slice(2).split("|").some((n) => this.using.has(n)));
   }
 
   /** A bubble's tail, all the way to its owner: a wedge for speech, a string of dots for a thought, in lettering pixels. */

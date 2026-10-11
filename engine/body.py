@@ -203,8 +203,11 @@ def choose(mind):
 
 def say(cfg, house, pet, now, form, where=""):
     """An activity in words: `doing` for the page, `did` for what the pet is told afterwards."""
-    who = house["pets"].get(now.get("who") or "")
-    return cfg["activities"][now["name"]][form].format(what=now.get("what") or "", where=where,
+    who, what = house["pets"].get(now.get("who") or ""), now.get("what") or ""
+    o = house["rooms"][pet["room"]]["objects"].get(what, {})
+    if form == "doing" and "made" in o and o["made"]["recipe"].get("kind") and o["made"]["recipe"]["kind"] not in what:
+        what = "%s (a %s)" % (what, o["made"]["recipe"]["kind"])   # its maker's name for it says little to a stranger: what it is, too
+    return cfg["activities"][now["name"]][form].format(what=what, where=where,
                                                          who=(actions.handle(house, pet, who) if form == "did" else label(who)) if who else "someone")
 
 

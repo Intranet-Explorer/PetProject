@@ -286,7 +286,9 @@ function header(s: Snap) {
   const here = unsaid.length ? `Here: ${unsaid.map((p) => `${p.label} is ${doingOf(p) || "here"}`).join("; ")}.` : s.pets.some((p) => p.room === view.room && p.stage !== "dead" && p.stage !== "egg") ? "" : "Here: nobody just now.";
   if (now.dataset.key !== text + here) {
     now.dataset.key = text + here;
-    line.replaceChildren(text, ...(here ? [el("span", "here", here)] : []));
+    const mine = s.pets.filter((p) => p.room === view.room && p.needs);
+    const lead = !!unsaid.length && unsaid.length === mine.length;   // the sentence is all about other rooms: this room's own line leads
+    line.replaceChildren(...(lead ? [here, el("span", "here", text)] : [text, ...(here ? [el("span", "here", here)] : [])]));
     now.classList.remove("long");
     now.classList.toggle("long", line.offsetHeight > now.clientHeight);   // more than the box holds: set smaller
     if (line.offsetHeight > now.clientHeight) line.querySelector(".here")?.remove();   // still more: the engine's sentence alone

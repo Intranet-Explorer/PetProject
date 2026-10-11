@@ -507,6 +507,8 @@ export class Room {
       if (box) [box.x, box.y, box.w, box.h] = [r.x * K, r.y * K, r.w * K, r.h * K];
     }
     this.words.naming = this.namesOn || now < this.namesUntil;
+    this.words.using.clear();   // whatever a pet is busy with says what it is, while it is
+    for (const a of this.pets.values()) { const w = a.pet.asleep ? null : a.pet.body ? (a.pet.body.walking ? null : a.pet.body.what) : a.pet.act?.what; if (w) this.words.using.add(w); }
     const at = this.pointer;
     if (at) { this.aim[0] = at[0] * K; this.aim[1] = at[1] * K; }
     this.words.pointer = at ? this.aim : null;
