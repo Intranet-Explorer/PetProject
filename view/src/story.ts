@@ -1,17 +1,37 @@
 // The Story tab (SPEC-v3 §10.5) and the Lab tab (§11.4): what happened, and what it measured out to.
-import { el, fold, GENES, plural } from "./dom";
+import { about, dayOf, el, fold, GENES, plural, scroller, when, whole } from "./dom";
 import type { Ctx, Kid } from "./dom";
 import { record } from "./family";
 import { icon, svg } from "./icons";
-import { hhmm } from "./types";
-import type { Chronicle, Moment } from "./types";
+import { hhmm, tickMs } from "./types";
+import type { Chronicle, Heard, Moment, V31 } from "./types";
 
 /** One moment (§9.1): a small picture, when, and what; a click goes to who and where it was. */
 export function momentRow(c: Pick<Ctx, "jump">, m: Moment, day = false) {
-  const b = el("button", "moment", icon(m.kind), el("span", "t", day ? `day ${m.day}, ${hhmm(m.hour)}` : hhmm(m.hour)), el("span", "", m.text)) as HTMLButtonElement;
+  const b = el("button", "moment", icon(m.kind), el("span", "t", day ? `day ${m.day}, ${hhmm(m.hour)}` : hhmm(m.hour)), el("span", "", whole(m.text))) as HTMLButtonElement;
   b.type = "button";
   b.onclick = () => c.jump({ pet: m.pet, room: m.room });
   return el("li", "", b);
+}
+
+/** What the box said (SPEC-v3.1 §5.3), set out like the moments it sits beside. Nothing to say was static. */
+const heardRow = (c: Ctx, h: Heard) => el("li", "", el("div", "moment", icon("radio"), el("span", "t", when(c.snap, h.tick).split(", ")[1]),
+  h.text ? el("span", "", `“${h.text}” `, el("span", "hint", h.source)) : el("span", "hint", "only static")));
+
+const FOUND: Record<string, string> = { writing: "Writing", songs: "Songs", taming: "Taming", radio: "The radio", book: "The book", strangers: "Strangers" };
+/** The six discoveries (SPEC-v3.1 §1): which have come, and roughly how long until each of the rest, in real time. */
+function discoveries(c: Ctx, v: V31) {
+  const all = Object.entries(v.arrivals ?? {}).filter(([n]) => FOUND[n]), s = c.snap;
+  if (!all.length) return null;
+  const wait = (n: string, due: number) => {
+    const left = due - s.tick, third = n === "strangers" ? ", and not before the family's third generation" : "";
+    if (left <= 0) return `any time now, once someone is awake to meet it${third}`;
+    return `in ${s.turbo && v.ticks_per_day ? plural(Math.max(1, Math.round(left / v.ticks_per_day)), "day") + " of the house" : about((left * tickMs(s)) / 1000)}${third}`;
+  };
+  const next = all.find(([, a]) => a.arrived == null), come = all.filter(([, a]) => a.arrived != null).length;
+  return fold("discoveries", `Discoveries: ${come} of ${all.length} have come${next ? `. Next, ${FOUND[next[0]].toLowerCase()}, ${wait(next[0], next[1].due).split(",")[0]}` : ""}`,
+    el("ul", "arrivals", ...all.map(([n, a]) => el("li", a.arrived == null ? "" : "come", icon(`arrival ${n}`), el("b", "", FOUND[n]),
+      el("span", "hint", a.arrived == null ? wait(n, a.due) : `came on ${when(s, a.arrived)}`)))));
 }
 
 export function story(c: Ctx): Kid[] {
@@ -19,19 +39,34 @@ export function story(c: Ctx): Kid[] {
   const moments = (d?.moments ?? [...c.snap.moments].reverse()) as Moment[];
   const chron = (d?.chronicle ?? [...c.snap.chronicle].reverse()) as Chronicle[];
   const told = (e: Chronicle) => e.text || (e.lines.length ? e.lines.join("; ") + "." : "A quiet day.");
-  const days = [...new Set(moments.map((m) => m.day))].filter((n) => n !== today).sort((a, b) => b - a);
+  const v = (c.api.v31 ?? {}) as V31, lib = v.library ?? [];
+  const days = [...new Set([...moments.map((m) => m.day), ...(v.radio ?? []).map((h) => dayOf(c.snap, h.tick))])].filter((n) => n !== today).sort((a, b) => b - a);
   const latest = chron[0], records = (c.api.story?.records ?? []) as Record<string, any>[];
   const now = moments.filter((m) => m.day === today);
+  const box = (n: number) => (v.radio ?? []).filter((h) => dayOf(c.snap, h.tick) === n), boxToday = box(today);   // newest first, like the moments
+  const read = (b: (typeof lib)[number]) => el("li", "", el("p", "", el("b", "", b.name), ` asked the book: “${b.question}” `, el("span", "hint", when(c.snap, b.tick))),
+    b.text ? el("blockquote", "", el("b", "", `${b.title}. `), b.text) : el("p", "hint", "The book had nothing to say to that."));
   return [
     latest ? el("section", "chronicle", el("h3", "", `Day ${latest.day}, ${latest.season}`), el("p", "", told(latest)), el("p", "hint", latest.summary))
       : el("p", "empty", "The first day is not over yet; the chronicle is written each night."),
+    discoveries(c, v),
     el("h3", "", `Today, day ${today}`),
     el("ol", "moments", ...(now.length ? now.map((m) => momentRow(c, m)) : [el("li", "empty", "Nothing worth the name yet today.")])),
+    // what the box said that day, beside what the pets did (SPEC-v3.1 §5.3)
+    boxToday.length ? el("h4", "", `What the box said today (${boxToday.length})`) : null,
+    boxToday.length ? el("ol", "moments", ...boxToday.slice(0, 4).map((h) => heardRow(c, h))) : null,
+    boxToday.length > 4 ? fold("box-today", `${boxToday.length - 4} earlier today`, el("ol", "moments", ...boxToday.slice(4).map((h) => heardRow(c, h)))) : null,
     days.length ? el("h3", "", "Earlier") : null,
     ...days.map((n) => {
-      const e = chron.find((x) => x.day === n), list = moments.filter((m) => m.day === n);
-      return fold(`day-${n}`, `Day ${n}${e ? `, ${e.season}` : ""} · ${plural(list.length, "moment")}`, e && e !== latest ? el("p", "", told(e)) : null, el("ol", "moments", ...list.map((m) => momentRow(c, m))));
+      const e = chron.find((x) => x.day === n), list = moments.filter((m) => m.day === n), said = box(n);
+      return fold(`day-${n}`, `Day ${n}${e ? `, ${e.season}` : ""} · ${plural(list.length, "moment")}${said.length ? ` · the box spoke ${said.length === 1 ? "once" : `${said.length} times`}` : ""}`,
+        e && e !== latest ? el("p", "", told(e)) : null, el("ol", "moments", ...list.map((m) => momentRow(c, m))),
+        said.length ? el("h4", "", "What the box said that day") : null, said.length ? el("ol", "moments", ...said.map((h) => heardRow(c, h))) : null);
     }),
+    // SPEC-v3.1 §6.3: every question put to the book, by whom, and what it answered
+    el("h3", "", `Library (${lib.length})`),
+    lib.length ? el("ul", "sayings", ...lib.slice(0, 4).map(read)) : el("p", "empty", c.snap.arrived?.book == null ? "There is no book in the house yet." : "Nobody has asked the book anything yet."),
+    lib.length > 4 ? fold("library", `${lib.length - 4} earlier questions`, el("ul", "sayings", ...lib.slice(4).map(read))) : null,
     records.length ? el("h3", "", "Lives that are over") : null,
     ...records.map((r) => fold(`life-${r.id}`, `${r.name}, generation ${r.gen}: ${r.days} days, ${r.cause}`, ...record(c, r))),
   ];
@@ -108,7 +143,8 @@ export function lab(c: Ctx): Kid[] {
       el("span", "num", `${d.calls_last_hour} of ${d.budget}`)),
     el("p", "hint", `By kind, over the whole family: ${pairs(d.calls_by_kind)}.`),
     el("h3", "", "Each pet"),
-    el("div", "scroll", table),
+    pets.length > 2 ? el("p", "hint", `${plural(pets.length, "pet")}: the table scrolls sideways.`) : null,
+    scroller("lab-pets", "scroll", table),
     el("h3", "", "Temperament over the generations"),
     drift(d.temper),
     el("h3", "", `What they have claimed (${claims.length})`),

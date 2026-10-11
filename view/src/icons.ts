@@ -33,6 +33,14 @@ export const PATHS: Record<string, string> = {
   snow: "M8 2v12M3 5l10 6M13 5 3 11M6.5 2.5 8 4l1.5-1.5M6.5 13.5 8 12l1.5 1.5",
   heat: "M8 6a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5ZM8 2v1.5M3.5 8.5H2M14 8.5h-1.5M4.5 5l-1-1M11.5 5l1-1M3 13.5c1.5-1 2.5 1 4 0s2.5 1 4 0 2 .5 2.5 0",
   moon: "M12.5 10.5A5.5 5.5 0 0 1 6 3a5.5 5.5 0 1 0 6.5 7.5Z",
+  // SPEC-v3.1: the six discoveries and what the family does with them
+  chalk: "M10.5 2.5l3 3-6.5 6.5-3-3ZM2.5 12.5c1 1.5 2.5 1.5 4 1.5",
+  scrub: "M2.5 6c2-2 3.5 2 5.5 0s3.5-1 5.5 0M2.5 10c2-2 3.5 2 5.5 0M3.5 13.5 12.5 2.5",
+  radio: "M2.5 6.5h11v7h-11ZM5 6.5 11 2M5.8 11.3a1.3 1.3 0 1 0 0-2.6 1.3 1.3 0 0 0 0 2.6ZM9.5 9h2.5M9.5 11.5h2.5",
+  book: "M8 4.5C6.5 3.5 4.5 3.2 2.5 3.5v9c2-.3 4 0 5.5 1 1.5-1 3.5-1.3 5.5-1v-9c-2-.3-4 0-5.5 1ZM8 4.5v9",
+  paw: "M8 8.5c-2 0-3.5 1.8-3.5 3.3 0 1.2 1.2 1.5 3.5 1.5s3.5-.3 3.5-1.5C11.5 10.3 10 8.5 8 8.5ZM3.6 7.4a.9.9 0 1 0 0-1.8.9.9 0 0 0 0 1.8ZM6.4 4.9a.9.9 0 1 0 0-1.8.9.9 0 0 0 0 1.8ZM9.6 4.9a.9.9 0 1 0 0-1.8.9.9 0 0 0 0 1.8ZM12.4 7.4a.9.9 0 1 0 0-1.8.9.9 0 0 0 0 1.8Z",
+  stranger: "M5.5 4C3.8 4 2.5 6.8 2.5 9a3 3 0 0 0 6 0C8.5 6.8 7.2 4 5.5 4ZM11.2 6.2c-1.2 0-2.2 1.9-2.2 3.6a2.2 2.2 0 0 0 4.4 0c0-1.7-1-3.6-2.2-3.6Z",
+  crossed: "M2.5 5.5h10l-2.5-2.5M13.5 10.5h-10l2.5 2.5",
   // rooms
   nursery: "M2 12.5V5M2 9.5h12v3M14 9.5V8a2 2 0 0 0-2-2H7v3.5M4.5 8a1.2 1.2 0 1 0 0-2.4 1.2 1.2 0 0 0 0 2.4Z",
   garden: "M8 14V7M8 9C5 9 3.5 7.5 3.5 5 6 5 8 6.5 8 9ZM8 7c0-2.5 1.5-4.5 4.5-4.5C12.5 5 11 7 8 7Z",
@@ -51,6 +59,9 @@ const KIND: Record<string, string> = {
   room: "door", entered: "door", power: "bolt", storm: "storm", leak: "drop", floated: "drop", draught: "wind", drift: "wind", season: "leaf",
   delivery: "crate", lost: "crate", took: "crate", told: "speech", message: "speech", named: "speech", saying: "speech", discarded: "speech",
   ate: "bowl", painted: "brush", mouse: "mouse", words: "speech", mark: "star",
+  "arrival writing": "chalk", "arrival songs": "music", "arrival taming": "paw", "arrival radio": "radio", "arrival book": "book", "arrival strangers": "stranger",
+  wrote: "chalk", scrubbed: "scrub", song: "music", tamed: "paw", untamed: "paw", young: "mouse", "creature died": "stone", read: "book",
+  moth: "mouse", beetle: "mouse", bird: "mouse",
   clear: "sun", cloudy: "cloud", "power cut": "bolt", "lost thing": "crate", "rule drift": "wind", surprise: "crate",
 };
 

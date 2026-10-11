@@ -19,6 +19,7 @@
     <button id="themeBtn" aria-label="Switch between light and dark">Dark</button>
     <span class="sound">
       <span id="playing" role="status"></span>
+      <button id="radioBtn" hidden>Mute radio</button>
       <button id="soundBtn" aria-pressed="false">Sound off</button>
       <input id="volume" type="range" min="0" max="100" value="80" aria-label="Volume">
     </span>
@@ -58,8 +59,15 @@
         <button id="giveBtn">Give</button>
       </span>
       <form id="talkForm">
-        <input id="talkText" maxlength="200" placeholder="Say something" aria-label="Talk">
+        <input id="talkText" maxlength="200" placeholder="Say or write something" aria-label="Something to say or to write">
         <button>Say</button>
+        <select id="writeOn" aria-label="Which wall to write on">
+          <option value="north wall">on the north wall</option>
+          <option value="south wall">on the south wall</option>
+          <option value="west wall">on the west wall</option>
+          <option value="east wall">on the east wall</option>
+        </select>
+        <button id="writeBtn" type="button">Write</button>
       </form>
       <span id="chosen" class="place" hidden>
         <span id="chosenWhat"></span>

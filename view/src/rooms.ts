@@ -45,6 +45,10 @@ function tint(base: number, name: string | null) {
   return name && PALETTE[name] ? mix(base, hex(name), 0.5) : base;
 }
 
+/** The colour of a room's walls as painted, for whatever is drawn on them. */
+export const wallColor = (type: string | null, paint: string | null) => tint((ROOMS[type ?? ""] ?? ROOMS.nursery).wall, paint);
+export const light = (c: number) => (0.299 * ((c >> 16) & 255) + 0.587 * ((c >> 8) & 255) + 0.114 * (c & 255)) / 255 > 0.5;
+
 export type Look = { wall: string | null; floor: string | null; season: string; sky: number; snow: boolean };
 type Ctx = { w: number; h: number; W: number; H: number; wall: number; floor: number; rnd: () => number; look: Look };
 

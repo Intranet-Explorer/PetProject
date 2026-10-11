@@ -11,6 +11,7 @@ const SOUNDS: [Parameters<Voice["sample"]>[0], string][] = [
   ["stageup", "New stage"], ["hm", "“Hm?”"], ["whimper", "Whimper"], ["last", "A death"], ["breath", "A breath (asleep)"], ["hum", "A taught thing's hum"],
   ["moth", "Moth"], ["beetle", "Beetle"], ["mouse", "Mouse"], ["bird", "Bird"], ["rain", "Rain"], ["thunder", "Thunder"],
   ["powerdown", "Power cut"], ["drip", "Leak"], ["whoosh", "Draught"], ["thud", "Delivery"],
+  ["chalk", "Writing arrives"], ["chime", "Songs arrive"], ["patter", "Taming arrives"], ["tuning", "The radio arrives"], ["pages", "The book arrives"], ["knock", "A stranger arrives"],
 ];
 
 /** `who` gives the pet whose voice the lab plays with (the selected one) and the snapshot it is in. */

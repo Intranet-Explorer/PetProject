@@ -1,6 +1,6 @@
 // The drawer (SPEC-v3 §10.1): Mind and Things here; Family, Story and Lab in their own files.
 // The numbers shown here are for the visitor. No pet ever sees them.
-import { bar, dayOf, el, face, fold, link, plural, radial, refill } from "./dom";
+import { bar, dayOf, el, face, fold, link, plural, radial, refill, when, whole } from "./dom";
 import type { Ctx, Kid } from "./dom";
 import { family, record } from "./family";
 import { lab, story } from "./story";
@@ -14,6 +14,9 @@ const TABS: Record<string, (c: Ctx) => Kid[]> = { mind, things, family, story, l
 export const SOURCE: Record<string, (c: Ctx) => string | null> = {
   mind: (c) => (c.sel ? `/api/pet/${c.sel}` : null), things: () => "/api/things", family: () => "/api/family", story: () => "/api/story", lab: () => "/api/lab",
 };
+
+/** The tabs that also show what SPEC-v3.1 added: the walls, the songbook, the library, the radio, the discoveries. */
+export const MORE: Record<string, string> = { family: "/api/v31", story: "/api/v31" };
 
 export function renderDrawer(tab: string, c: Ctx) {
   const panel = document.querySelector<HTMLElement>(`[data-panel="${tab}"]`);
@@ -42,14 +45,16 @@ function mind(c: Ctx): Kid[] {
   const head = el("div", "who", face(c, p),
     el("div", "", el("h2", "", p.stage === "egg" ? p.name ?? "An egg" : p.label),
       el("p", "hint", `${stage} · generation ${p.gen}${p.days != null ? ` · ${plural(Math.round(p.days * 10) / 10, "day")}` : ""}`),
-      el("p", "hint", `in ${where}${parent ? ` · ${parent.label}'s child` : ""}`),
+      el("p", "hint", `in ${where}${parent ? ` · ${parent.label}'s child` : ""}${c.snap.pets.some((q) => (q.family ?? 1) !== (p.family ?? 1)) ? ` · of the ${p.family === 2 ? "second" : "first"} family` : ""}`),
       p.seems ? el("p", "", `Seems ${p.seems}; ${p.asleep ? "asleep" : p.doing}.`) : null,
+      p.animals?.length ? el("p", "hint", `Its ${p.animals.length > 1 ? "animals" : "animal"}: ${p.animals.map((a) => (a.name ? `${a.name} the ${a.kind}` : `a ${a.kind}`)).join(", ")}.`) : null,
       p.weak ? el("p", "bad", "It has grown weak.") : null));
   const told = (d.told ?? []) as { who: string; kind: string; text: string }[];
   const words = told.filter((t) => t.kind !== "tell"), tells = told.filter((t) => t.kind === "tell");
   const toldBy = section(`What its ${words[0]?.who ?? parent?.word ?? "parent"} told it`,
     ...words.map((t) => el("div", "", t.kind === "last words" ? el("p", "hint", "Last words") : null, quote(t.text))));
-  if (p.stage === "egg") return [head, el("p", "", `Not hatched yet. It should hatch in about ${clock(p.hatches_in ?? 0)}.`), toldBy];
+  if (p.stage === "egg") return [head, el("p", "", `Not hatched yet. It should hatch in about ${clock(p.hatches_in ?? 0)}.`), toldBy,
+    !p.parent && d.told && !words.length ? el("p", "hint", "It is nobody's egg: no one left it any words.") : null];   // a foundling (SPEC-v3.1 §7.1)
   if (p.stage === "dead") return [head, ...(d.life ? record(c, d.life) : [el("p", "empty", "Its life record is being fetched.")])];
 
   const needs = el("div", "needs", ...NEEDS.map((n) => {   // the word is what the pet feels; the number is only ever shown here
@@ -66,8 +71,17 @@ function mind(c: Ctx): Kid[] {
     last ? el("p", "hint", `Before that: ${last.intention} `, el("span", last.score, last.ended === "done" ? MARK[last.score] : `${last.ended.split(":")[0]}, ${MARK[last.score]}`)) : null);
   const senses = ((d.senses ?? []) as unknown[]).map((s) => (typeof s === "string" ? s : Array.isArray(s) ? String(s.at(-1)) : JSON.stringify(s)));
   const project = section("Its project",
-    p.project ? el("p", "", `“${p.project.text}” `, el("span", "hint", `since day ${dayOf(c.snap, p.project.since)}`)) : el("p", "empty", "None just now."),
-    ...((d.projects ?? []) as { text: string; how: string }[]).map((x) => el("p", "hint", `${x.how}: “${x.text}”`)));
+    p.project ? el("p", "", `“${whole(p.project.text)}” `, el("span", "hint", `since day ${dayOf(c.snap, p.project.since)}`)) : el("p", "empty", "None just now."),
+    ...((d.projects ?? []) as { text: string; how: string }[]).map((x) => el("p", "hint", `${x.how}: “${whole(x.text)}”`)));
+  // SPEC-v3.1: what it last asked the book and what it read there (§6.3), and the songs it carries (§3)
+  const read = section("What it read in the book", ...(p.read ?? []).map((r) => el("div", "", el("p", "hint", `It asked: “${r.question}” · ${when(c.snap, r.tick)}`),
+    r.text ? el("blockquote", "", el("b", "", `${r.title}. `), r.text) : el("p", "hint", "The book had nothing to say to that."))));
+  const songs = (p.songs ?? []).map((id) => c.snap.songs?.[id]).filter((s) => !!s);
+  const sings = section(`Songs it knows (${songs.length})`, songs.length ? el("ul", "plain", ...songs.map((s) => {
+    const play = link("▶", () => c.hear(s.notes, p.id), "play");
+    play.setAttribute("aria-label", `Hear ${p.label} sing “${s.name}”`);
+    return el("li", "", play, ` ${s.name} `, el("span", "hint", s.by === p.id ? (s.from ? "as it heard it" : "its own") : ""));
+  })) : null);
   const beliefs = (d.beliefs ?? []) as { id: string; statement: string; source?: string; status: string }[];
   const held = beliefs.filter((b) => b.status === "active"), dropped = beliefs.filter((b) => b.status !== "active");
   const belief = (b: (typeof beliefs)[number]) => el("li", "", el("div", "", b.statement), el("span", "tag", b.source ?? "lived"));
@@ -78,7 +92,7 @@ function mind(c: Ctx): Kid[] {
   return [
     head, needs,
     senses.length ? section("What it notices", list("plain", senses.map((s) => el("li", "", s)), "")) : null,
-    now, project, toldBy,
+    now, project, read, sings, toldBy,
     section("What others told it", ...tells.map((t) => el("div", "", el("p", "hint", t.who), quote(t.text)))),
     own.length ? section("Its message for its children", quote(own.at(-1)!.text), own.length > 1 ? el("p", "hint", `Rewritten ${plural(own.length - 1, "time")}.`) : null) : null,
     section(`Beliefs (${held.length})`, list("beliefs", held.map(belief), d.beliefs ? "None yet." : "…"),

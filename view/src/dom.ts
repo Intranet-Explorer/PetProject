@@ -2,7 +2,8 @@
 import { svg } from "./icons";
 import type { Genome, Look } from "./pet";
 import { bodyStage } from "./types";
-import type { Hello, PetV, Snap } from "./types";
+import { hhmm } from "./types";
+import type { Hello, Note, PetV, Snap } from "./types";
 
 export const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 export type Kid = Node | string | number | null | undefined | false;
@@ -30,11 +31,25 @@ export type Ctx = {
   picture: (g: Genome, stage: string, look?: Look) => string;
   jump: (to: { pet?: string | null; room?: string | null }) => void;
   show: (tab: string, pet?: string) => void;   // open a tab of the drawer, on a pet if one is given
+  hear: (notes: Note[], by: string) => void;   // play a song as its singer would sing it
 };
 
 export const plural = (n: number, one: string, many = one + "s") => `${n} ${n === 1 ? one : many}`;
 /** A tick as a day of the house, for "since day 3". */
 export const dayOf = (snap: Snap, tick: number) => 1 + Math.floor((8 + (tick * snap.tick_seconds * 24) / snap.day_seconds) / 24);
+
+/** A tick as a day and an hour: "day 3, 14:20". */
+export function when(snap: Snap, tick: number) {
+  const m = Math.round((8 + (tick * snap.tick_seconds * 24) / snap.day_seconds) * 60);   // the house starts at 08:00 on day 1
+  return `day ${1 + Math.floor(m / 1440)}, ${hhmm(0, m % 1440)}`;
+}
+/** A length of real time, roughly: "under a minute", "about 20 minutes", "about 3 hours", "about 2 days". */
+export function about(seconds: number) {
+  const [n, unit] = seconds < 3600 ? [seconds / 60, "minute"] : seconds < 36 * 3600 ? [seconds / 3600, "hour"] : [seconds / 86400, "day"];
+  return seconds < 60 ? "under a minute" : `about ${plural(Math.round(n), unit)}`;
+}
+/** Words the engine had to cut short end on a dash or a comma; shown, they trail off instead. */
+export const whole = (text: string) => text.replace(/\s*[,;:—–-]\s*$/, "…");
 
 export const GENES = ["curious", "sensitive", "sociable", "bold", "patient", "playful", "fertile", "hardy"];
 
@@ -69,10 +84,15 @@ export function bar(value: number, max = 100, cls = "") {
 /** Fill a panel again without shutting the sections the visitor has opened. */
 export function refill(panel: HTMLElement, kids: Kid[]) {
   const open = new Set([...panel.querySelectorAll<HTMLElement>("details[open]")].map((d) => d.dataset.key));
-  const top = panel.scrollTop;
+  const top = panel.scrollTop, inner = new Map([...panel.querySelectorAll<HTMLElement>("[data-scroll]")].map((e) => [e.dataset.scroll, [e.scrollLeft, e.scrollTop]]));
   panel.replaceChildren(...kids.filter((k) => k != null && k !== false).map((k) => (typeof k === "number" ? String(k) : (k as Node | string))));
   for (const d of panel.querySelectorAll<HTMLDetailsElement>("details")) if (open.has(d.dataset.key)) d.open = true;
   panel.scrollTop = top;
+  for (const e of panel.querySelectorAll<HTMLElement>("[data-scroll]")) {   // a box that scrolls by itself (the tree, a wide table) stays where it was scrolled to
+    const at = inner.get(e.dataset.scroll);
+    if (at) [e.scrollLeft, e.scrollTop] = at;
+    else if (e.dataset.scroll === "tree") e.scrollTop = e.scrollHeight;   // first shown: the living, at the foot of the tree
+  }
 }
 
 /** A folding section that remembers by `key` whether it was open. */
@@ -80,6 +100,14 @@ export function fold(key: string, summary: Kid, ...kids: Kid[]) {
   const d = el("details", "", el("summary", "", summary), ...kids);
   d.dataset.key = key;
   return d;
+}
+
+/** A box that scrolls by itself, and keeps its place by `key` when the panel is filled again. */
+export function scroller(key: string, cls: string, ...kids: Kid[]) {
+  const box = el("div", cls, ...kids);
+  box.dataset.scroll = key;
+  box.tabIndex = 0;   // so the keyboard can scroll it too
+  return box;
 }
 
 /** A pet's body as a small still picture: as it is now, or as it was when it died. */

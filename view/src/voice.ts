@@ -1,10 +1,10 @@
 // The house's sound (VOICE.md, SPEC-v3 §10.6). Web Audio only: no libraries, no audio files; from youngling on, a
 // word a pet really knows is said with the browser's own speech voice, pitched to its body.
 // View-only: it listens to what the view already receives and nothing here goes back to the engine.
-import { hash, news, planSound, planSpeech, voiceOf } from "./voice-plan";
+import { hash, news, planSong, planSound, planSpeech, semitone, voiceOf } from "./voice-plan";
 import type { HouseSound, Plan, Seen, SoundKind, VoiceInput } from "./voice-plan";
 import { bodyStage } from "./types";
-import type { PetV, Snap } from "./types";
+import type { Heard, Note, PetV, Snap } from "./types";
 
 const STORE = "sound";
 const AHEAD = 6;   // seconds of heartbeat or breathing kept scheduled on the audio clock; a snapshot tops it up every 2 s
@@ -16,6 +16,8 @@ const LABEL: Record<SoundKind, string> = {
 const HOUSE: Record<HouseSound | Creature, string> = {
   powerdown: "the power's hum dying", powerup: "the power coming back", thunder: "thunder", drip: "water dripping", whoosh: "a draught, and a door",
   thud: "a crate set down", moth: "a moth's flutter", beetle: "a beetle's clicks", mouse: "a mouse's squeak", bird: "birdsong",
+  chalk: "chalk on a wall (writing has come)", chime: "the music box, by itself (songs have come)", patter: "small feet coming closer (taming has come)",
+  tuning: "a dial finding a voice (the radio has come)", pages: "a heavy book set down (the book has come)", knock: "a knock from inside an egg (a stranger has come)",
 };
 export type Creature = "moth" | "beetle" | "mouse" | "bird";
 const WET = ["rain", "storm"], OPEN = ["garden", "greenhouse", "attic", "pond"], SHUT_IN = ["cellar", "storeroom"];
@@ -140,8 +142,48 @@ export function effect(ctx: BaseAudioContext, dest: AudioNode, kind: HouseSound 
     case "moth": return at + Math.max(...[0, 1, 2, 3, 4, 5, 6, 7].map((i) => burst("bandpass", 3200, 2600, i * 0.045, 0.03, 0.3, 0.005)));
     case "beetle": return at + Math.max(...[0, 0.11, 0.2].map((t) => tone("square", 190, 150, t, 0.018, 0.1, 900)));
     case "mouse": return at + Math.max(tone("sine", 2600, 3400, 0, 0.07, 0.1), tone("sine", 2900, 3600, 0.12, 0.06, 0.08));
+    // the six discoveries (SPEC-v3.1 §1)
+    case "chalk": return at + Math.max(...[0, 0.24, 0.5].map((t) => burst("bandpass", 2400, 3800, t, 0.17, 0.2)), tone("sine", 900, 500, 0.72, 0.04, 0.12));   // three strokes and a tap
+    case "chime": return at + Math.max(...[1047, 1319, 1568, 2093].map((f, i) => tone("sine", f, f, i * 0.12, 0.6, 0.13)));
+    case "patter": return at + Math.max(...[0, 1, 2, 3, 4].map((i) => tone("sine", 240, 120, i * 0.09, 0.05, 0.16)), tone("sine", 1800, 2400, 0.56, 0.08, 0.06));
+    case "tuning": burst("bandpass", 600, 3200, 0, 0.7, 0.16, 0.1); tone("sine", 2400, 700, 0.1, 0.6, 0.05); return at + tone("square", 120, 80, 0.74, 0.03, 0.2, 800);
+    case "pages": tone("sine", 70, 38, 0, 0.3, 0.55); return at + Math.max(...[0.36, 0.48, 0.6].map((t) => burst("highpass", 2500, 4500, t, 0.09, 0.12, 0.01)));
+    case "knock": tone("triangle", 180, 110, 0, 0.07, 0.4, 700); tone("triangle", 180, 110, 0.18, 0.07, 0.4, 700); return at + tone("sine", 520, 780, 0.5, 0.3, 0.12);
     case "bird": return at + Math.max(...[[0, 2400, 3100], [0.13, 3100, 2500], [0.26, 2600, 3300], [0.42, 3300, 3300], [0.5, 3300, 2700]].map(([t, a, b]) => tone("sine", a, b, t, 0.1, 0.11)));
   }
+}
+
+/** A tune that is nobody's voice (SPEC-v3.1 §3.4): the music box plucks each note and lets it ring, a bird whistles
+ *  it high with a little run up into each note. Returns when it ends. */
+export function tune(ctx: BaseAudioContext, dest: AudioNode, notes: Note[], at: number, bird = false) {
+  let t = at;
+  for (const [pitch, long] of notes) {
+    const f = (bird ? 1175 : 880) * 2 ** (semitone(pitch) / 12), dur = (bird ? 0.13 : 0.3) * (long ? 2 : 1);
+    for (const [k, gain] of bird ? [[1, 0.1]] : [[1, 0.2], [3, 0.04]]) {   // the box's comb rings with a high partial
+      const osc = new OscillatorNode(ctx, { frequency: f * k }), env = new GainNode(ctx, { gain: 0 });
+      osc.frequency.setValueAtTime(f * k * (bird ? 0.86 : 1), t);
+      osc.frequency.exponentialRampToValueAtTime(f * k, t + 0.04);
+      env.gain.setValueAtTime(0, t);
+      env.gain.linearRampToValueAtTime(gain, t + (bird ? 0.015 : 0.004));
+      env.gain.exponentialRampToValueAtTime(0.001, t + dur + (bird ? 0 : 0.9));
+      osc.connect(env).connect(dest);
+      osc.start(t);
+      osc.stop(t + dur + 1);
+    }
+    t += dur + (bird ? 0.05 : 0);
+  }
+  return t + (bird ? 0 : 0.6);
+}
+
+/** An old radio's crackle (SPEC-v3.1 §5.3): the same noise as the rain, through a narrow band, jumping about. */
+function crackle(ctx: BaseAudioContext, dest: AudioNode, at: number, seconds: number, level: number) {
+  const src = new AudioBufferSourceNode(ctx, { buffer: hiss(ctx, 2), loop: true }), env = new GainNode(ctx, { gain: 0 });
+  for (let t = 0; t < seconds; t += 0.07) env.gain.setValueAtTime(level * (0.25 + Math.random() ** 3), at + t);
+  env.gain.setValueAtTime(0, at + seconds);
+  src.connect(new BiquadFilterNode(ctx, { type: "bandpass", frequency: 1900, Q: 0.7 })).connect(env).connect(dest);
+  src.start(at);
+  src.stop(at + seconds + 0.05);
+  return at + seconds;
 }
 
 /** A pet as the voice needs it. The real words it can say: its name, the things of its own that proved useful,
@@ -270,6 +312,37 @@ export class Voice {
     this.note(`${name}: ${LABEL[kind]}`);
   }
 
+  /** A song (SPEC-v3.1 §3.4), in the singer's own voice, or the music box's or a bird's. It waits its turn like
+   *  speech, so two singing at once take turns. */
+  private sing(name: string, title: string, notes: Note[], v: VoiceInput | "box" | "bird", dest: GainNode) {
+    const ctx = this.ctx!, now = ctx.currentTime, at = Math.max(now + 0.03, this.talkFree + 0.35);
+    if (at - now > 14) return;
+    this.talkFree = typeof v === "string" ? tune(ctx, dest, notes, at, v === "bird") : schedule(ctx, dest, planSong(notes, v), at);
+    this.sfxFree = Math.max(this.sfxFree, this.talkFree + 0.15);
+    this.note(`${name}${dest === this.far ? ", next door" : ""} sings “${title}”`);
+  }
+
+  /** For the Songbook: hear one version now, outside the queue. False if sound is off. */
+  hear(notes: Note[], v: VoiceInput | "box" | "bird") {
+    if (!this.live || !this.ctx) return false;
+    const at = this.ctx.currentTime + 0.03;
+    typeof v === "string" ? tune(this.ctx, this.master, notes, at, v === "bird") : schedule(this.ctx, this.master, planSong(notes, v), at);
+    return true;
+  }
+
+  /** The box speaks (SPEC-v3.1 §5.3): quietly, in the browser's own voice made slow and low, under a crackle. Next
+   *  door it is only the crackle, muffled. Nothing to say is static. */
+  private wireless(h: Heard, dest: GainNode) {
+    const ctx = this.ctx!, at = ctx.currentTime + 0.05, words = dest === this.near && h.text && typeof speechSynthesis !== "undefined";
+    crackle(ctx, dest, at, h.text ? Math.min(14, 0.6 + h.text.length * 0.07) : 1.8, h.text ? 0.035 : 0.12);
+    if (words) {
+      const u = new SpeechSynthesisUtterance(h.text);
+      [u.rate, u.pitch, u.volume] = [0.9, 0.7, this.volume * 0.35];
+      speechSynthesis.speak(u);
+    }
+    this.note(h.text ? `the box${words ? "" : ", next door"}: “${h.text}”` : "static from the box");
+  }
+
   /** For the voice lab: play one thing now, outside the queue. */
   sample(what: SoundKind | HouseSound | Creature | "say" | "heartbeat" | "breath" | "hum" | "rain", v: VoiceInput, text = "") {
     if (!this.live || !this.ctx) return false;
@@ -341,6 +414,15 @@ export class Voice {
       const p = pets.get(m.pet), dest = p && this.bus(m.room ?? p.room, s, here);
       if (p && dest) this.sound(p.label, m.kind, voiceInput(p, s), dest);
     }
+    for (const x of t.sing) {   // SPEC-v3.1 §3.4: whoever sang, in their own voice, as loud as their room is from here
+      const song = s.songs?.[x.song], p = pets.get(x.by), dest = song && this.bus(x.room, s, here);
+      const beast = s.creatures.find((c) => c.id === x.by), who = p?.label ?? (x.by === "music box" ? "the music box" : beast?.name ?? `a ${beast?.kind ?? "bird"}`);
+      if (dest) this.sing(who, song!.name, song!.notes, p ? voiceInput(p, s) : x.by === "music box" ? "box" : "bird", dest);
+    }
+    for (const h of t.heard) {
+      const dest = this.bus(h.room, s, here);
+      if (dest) this.wireless(h, dest);
+    }
     for (const h of t.house.filter((h) => h.kind !== "powerdown")) {   // weather and events have sounds of their own
       const dest = h.kind === "thunder" ? this.near : this.bus(h.room, s, here);
       if (dest) { effect(ctx, dest, h.kind, now + 0.05); this.note(HOUSE[h.kind]); }
@@ -389,13 +471,15 @@ export class Voice {
       this.nextCall[kind] = now + (singing ? 4 : 9) + (hash(c.id + s.tick) % 6);
     }
 
-    const humming = Object.entries(room?.objects ?? {}).filter(([, o]) => o.made?.active && o.made.behavior?.do === "hum").map(([name]) => name);
-    for (const name of humming) {   // a thing taught to hum has its own sound, not a pet's
+    // a thing taught to hum has its own sound, not a pet's; so has the box while it is on, between the things it says
+    const humming = Object.entries(room?.objects ?? {}).filter(([, o]) => (o.made?.active && o.made.behavior?.do === "hum") || (o.fix?.radio && o.state === "on")).map(([name]) => name);
+    for (const name of humming) {
       if (this.hums.has(name)) continue;
       const h = drone(ctx, this.near, name);
-      h.gain.gain.setTargetAtTime(0.03, now, 0.5);
+      const box = !!room?.objects[name]?.fix?.radio;
+      h.gain.gain.setTargetAtTime(box ? 0.012 : 0.03, now, 0.5);
       this.hums.set(name, h);
-      this.note(`a hum from the ${name} (it was taught to)`);
+      this.note(box ? "the box hums, switched on" : `a hum from the ${name} (it was taught to)`);
     }
     for (const [name, h] of this.hums) {
       if (humming.includes(name)) continue;

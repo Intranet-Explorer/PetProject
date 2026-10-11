@@ -190,6 +190,24 @@ export const FIX: Record<string, Draw> = {
     g.rect(x - 20, y - 21, 12, 11).fill(0xa87447).rect(x - 3, y - 19, 9, 9).fill(0xc9b27a).rect(x + 10, y - 22, 11, 12).fill(0x7f8c8a);
     g.rect(x - 18, y - 5, 16, 10).fill(0xb98456).rect(x + 4, y - 3, 8, 8).fill(0x9fb7d0).rect(x - 12, y + 10, 26, 9).fill(0xa87447);
   },
+  // ---- what turned up later (SPEC-v3.1 §5, §6) ----
+  "dial box"(g, x, y, o) {   // a small set with a cloth front, an aerial and one dial; the room makes the dial glow while it is on
+    g.moveTo(x + 9, y - 7).lineTo(x + 17, y - 25).stroke({ width: 1.6, color: IRON }).circle(x + 17, y - 25, 2).fill(IRON);
+    g.roundRect(x - 18, y - 8, 36, 25, 4).fill(0x9a5f3c).stroke(line);
+    g.roundRect(x - 14, y - 4, 17, 17, 2).fill(0xd9c49a).stroke({ width: 1, color: INK, alpha: 0.6 });
+    for (const dy of [0, 4, 8]) g.rect(x - 12, y + dy, 13, 1.2).fill({ color: INK, alpha: 0.35 });
+    g.circle(x + 10, y + 4, 5.5).fill(o.state === "on" ? 0xffd76a : 0x6f6a60).stroke({ width: 1.5, color: INK }).rect(x + 9.4, y - 0.5, 1.2, 4.5).fill(INK);
+    g.rect(x - 14, y + 17, 5, 2.5).rect(x + 9, y + 17, 5, 2.5).fill(INK);
+  },
+  "heavy book"(g, x, y) {   // too heavy to move: it lies open on a low stand
+    g.rect(x - 4, y + 8, 8, 10).fill(WOOD_D).rect(x - 13, y + 16, 26, 4).fill(WOOD_D).stroke({ width: 1, color: INK, alpha: 0.5 });
+    g.poly([x - 25, y + 4, x, y + 9, x + 25, y + 4, x + 25, y + 8, x, y + 13, x - 25, y + 8]).fill(0x7a2f2f).stroke({ width: 1.2, color: INK });
+    g.poly([x - 23, y - 12, x, y - 7, x, y + 9, x - 23, y + 4]).fill(0xf3ecd8).stroke(line);
+    g.poly([x + 23, y - 12, x, y - 7, x, y + 9, x + 23, y + 4]).fill(0xe9e0c8).stroke(line);
+    for (const dy of [-5, -1, 3]) g.moveTo(x - 19, y + dy - 2).lineTo(x - 4, y + dy + 1.2).moveTo(x + 4, y + dy + 1.2).lineTo(x + 19, y + dy - 2);
+    g.stroke({ width: 1, color: INK, alpha: 0.4 });
+    g.poly([x + 12, y + 6, x + 15, y + 5.4, x + 15, y + 15, x + 13.5, y + 13, x + 12, y + 15.6]).fill(0xe2b33c).stroke({ width: 0.8, color: INK });   // a ribbon to keep the place
+  },
 };
 
 export function fixture(g: Graphics, name: string, x: number, y: number, o: Obj, env: Env) {
@@ -229,6 +247,7 @@ export function bit(g: Graphics, kind: string, looks: { shape: string; color: st
     case "bell": g.moveTo(x - d(7), y + d(5)).quadraticCurveTo(x - d(6), y - d(8), x, y - d(8)).quadraticCurveTo(x + d(6), y - d(8), x + d(7), y + d(5)).closePath().fill(c).stroke(ink).circle(x, y + d(6.5), d(2)).fill(INK); break;
     case "felt": g.roundRect(x - d(7), y - d(6), d(14), d(12), d(2)).fill(c).stroke(ink); for (const dx of [-4, 0, 4]) g.rect(x + d(dx) - 0.5, y - d(4), 1, d(2.5)); g.fill({ color: 0xffffff, alpha: 0.8 }); break;
     case "resin": g.moveTo(x, y - d(9)).quadraticCurveTo(x + d(8), y + d(2), x, y + d(7)).quadraticCurveTo(x - d(8), y + d(2), x, y - d(9)).fill({ color: c, alpha: 0.9 }).stroke(ink).circle(x - d(2), y + d(1), d(1.6)).fill({ color: 0xffffff, alpha: 0.7 }); break;
+    case "chalk": g.roundRect(x - d(9), y - d(1), d(18), d(6), d(2.5)).fill(0xfbfaf4).stroke(ink).circle(x - d(11), y + d(6), d(1)).circle(x - d(7), y + d(7.5), d(0.8)).circle(x - d(13), y + d(8), d(0.7)).fill({ color: 0xffffff, alpha: 0.9 }); break;
     case "vine": g.moveTo(x - d(9), y + d(6)).bezierCurveTo(x - d(8), y - d(10), x + d(8), y - d(8), x + d(5), y + d(1)).bezierCurveTo(x + d(3), y + d(6), x - d(3), y + d(4), x - d(1), y - d(1)).stroke({ width: 2, color: c }).ellipse(x + d(7), y - d(5), d(3.5), d(2.2)).fill(LEAF_L); break;
     default:   // a kind the view has not met: the plain shape house.toml gives it
       if (looks?.shape === "square") g.rect(x - d(6), y - d(6), d(12), d(12)).fill(c).stroke(ink);
@@ -269,9 +288,11 @@ export function door(g: Graphics, dir: string, tile: number[], how: "open" | "sh
   return [bx, by, bw, bh];
 }
 
-/** The small creatures (§6.5), drawn about (0,0) every frame so they can flutter, scuttle and hop. `t` is ms. */
-export function creature(g: Graphics, kind: string, t: number, moving: boolean) {
+/** The small creatures (§6.5), drawn about (0,0) every frame so they can flutter, scuttle and hop. `t` is ms.
+ *  `flag`: the colour of the pet it is tame to (SPEC-v3.1 §4.4), flown as a small pennant. */
+export function creature(g: Graphics, kind: string, t: number, moving: boolean, flag?: string | null) {
   g.clear();
+  if (flag) g.moveTo(7, -4).lineTo(7, -23).stroke({ width: 1.4, color: INK }).poly([7, -23, 18, -19.5, 7, -16]).fill(flag).stroke({ width: 1.2, color: INK });
   if (kind === "moth") {
     const flap = 0.35 + 0.65 * Math.abs(Math.sin(t / 60));
     g.ellipse(0, 12, 8, 2.5).fill({ color: INK, alpha: 0.12 });

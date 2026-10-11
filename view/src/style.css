@@ -3,22 +3,27 @@
 :root {
   --bg: #f3f5f4; --surface: #ffffff; --ink: #17231f; --muted: #5d6c66; --line: #dde5e1;
   --accent: #b9590a; --good: #2c7a58; --bad: #b23c2b; --gold: #96700f; --shadow: rgb(23 35 31 / 10%);
+  --fam1: #1f7a8c; --fam2: #a8468a;   /* each family's colour (SPEC-v3.1 §7.4): name plates, cards, the tree */
   --mono: ui-monospace, "SF Mono", Menlo, monospace;
-  --drawer: 440px; --side: clamp(236px, 17vw, 400px); --chrome: 226px;
+  --drawer: 440px; --side: clamp(236px, 17vw, 400px); --chrome: 238px;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #131917; --surface: #1c2421; --ink: #e7edea; --muted: #97a7a0; --line: #2e3935;
     --accent: #f09a4a; --good: #62c096; --bad: #f08573; --gold: #e2b33c; --shadow: rgb(0 0 0 / 40%);
+    --fam1: #5cc3d6; --fam2: #e58fc8;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #131917; --surface: #1c2421; --ink: #e7edea; --muted: #97a7a0; --line: #2e3935;
   --accent: #f09a4a; --good: #62c096; --bad: #f08573; --gold: #e2b33c; --shadow: rgb(0 0 0 / 40%);
+  --fam1: #5cc3d6; --fam2: #e58fc8;
   color-scheme: dark;
 }
+.fam1 { --fam: var(--fam1); }
+.fam2 { --fam: var(--fam2); }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 html, body { height: 100%; }
@@ -33,7 +38,7 @@ header > *, #replayBar > * { flex: none; }
 .brand { display: flex; align-items: baseline; gap: 10px; }
 h1 { margin: 0; font-size: 22px; font-weight: 650; letter-spacing: -0.01em; }
 #family { color: var(--muted); font-size: 14px; white-space: nowrap; }
-header .chips { display: flex; gap: 6px; font-size: 13px; color: var(--muted); margin-right: auto; flex: 1 1 0; min-width: 0; overflow: hidden; }
+header .chips { display: flex; flex-wrap: nowrap; gap: 6px; font-size: 13px; color: var(--muted); margin-right: auto; flex: 1 1 0; min-width: 0; overflow: hidden; }
 .chips { display: flex; gap: 6px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
 .chip { background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px; white-space: nowrap; display: inline-flex; gap: 5px; align-items: center; }
 .chip.on { color: var(--good); }
@@ -41,9 +46,19 @@ header .chips { display: flex; gap: 6px; font-size: 13px; color: var(--muted); m
 .follow { font-size: 14px; color: var(--muted); display: flex; gap: 6px; align-items: center; }
 .sound { display: flex; align-items: center; gap: 8px; }
 .sound input { width: 64px; accent-color: var(--accent); }
-.follow select { max-width: 200px; }
+.follow select { max-width: 240px; }
 body.open .sound input, body.open #playing, body.open #family { display: none; }
-@media (max-width: 1400px) { #playing { display: none; } }
+/* beside the open drawer there is not width for one row: always two, the name and the chips over the buttons, so nothing is squeezed or cut */
+@media (min-width: 1100px) {
+  body.open { --chrome: 280px; }
+  body.open header { flex-wrap: wrap; }
+  body.open header .chips { flex-basis: calc(100% - 90px); }
+  body.open #map svg { max-height: 150px; }   /* the room is smaller here, and so is the column beside it: leave some of it for what just happened */
+}
+@media (max-width: 1400px) {
+  #playing { display: none; }
+  header:has(#radioBtn:not([hidden])) #family { display: none; }   /* once there is a radio to mute, its switch needs the room; the cards say who is alive */
+}
 #replayScrub { flex: 1; min-width: 160px; accent-color: var(--accent); }
 #replayWhen { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; min-width: 150px; }
 
@@ -68,6 +83,8 @@ main { flex: 1; min-height: 0; display: flex; flex-direction: column; align-item
 #banner { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); padding: 5px 16px; max-width: 86%; cursor: pointer;
           background: #17231f; color: #fff; border-radius: 999px; font-weight: 600; font-size: 14px; text-align: center; box-shadow: 0 2px 10px var(--shadow); }
 #banner.error { background: var(--bad); color: #fff; }
+#banner.arrival { background: #6f4e06; padding: 7px 18px; font-size: 15px; box-shadow: 0 0 0 2px #f2c94c, 0 2px 12px var(--shadow); }   /* a discovery (SPEC-v3.1 §1) */
+#banner .icon { margin-right: 8px; color: #f2c94c; }
 #tip { position: absolute; z-index: 2; max-width: 260px; padding: 5px 10px; border-radius: 8px; background: #17231f; color: #fff; font-size: 13px;
        line-height: 1.35; pointer-events: none; transform: translate(14px, 14px); white-space: pre-line; }
 #tip.left { transform: translate(calc(-100% - 14px), 14px); }
@@ -75,7 +92,7 @@ main { flex: 1; min-height: 0; display: flex; flex-direction: column; align-item
 #tip.left.up { transform: translate(calc(-100% - 14px), calc(-100% - 10px)); }
 
 /* the house beside the room: sky, map, what is going on, what just happened. It takes its height from the room. */
-#side { width: var(--side); flex: none; display: flex; flex-direction: column; gap: 8px; contain: size; min-height: 0; }
+#side { width: var(--side); flex: none; display: flex; flex-direction: column; gap: 8px; contain: size; min-height: 0; overflow: hidden; }
 #sky { display: flex; gap: 8px; align-items: center; font-size: 14px; }
 #sky b { font-weight: 650; }
 #sky span { color: var(--muted); font-size: 13px; display: block; line-height: 1.3; }
@@ -93,11 +110,13 @@ main { flex: 1; min-height: 0; display: flex; flex-direction: column; align-item
 #map .dim { fill: #0b1030; pointer-events: none; }
 #map .pet { stroke: #17231f; stroke-width: 1.3; }
 #map .pet.chosen { stroke: #fff; stroke-width: 2; paint-order: stroke; filter: drop-shadow(0 0 2px #17231f); }
-#happening { display: flex; flex-direction: column; gap: 2px; font-size: 13px; }
-#happening li { display: flex; gap: 6px; align-items: center; color: var(--muted); }
+/* whole lines only, here and under Lately: one that would be cut wraps into a second column, which is out of sight */
+#happening { display: flex; flex-flow: column wrap; align-content: flex-start; gap: 2px 0; font-size: 13px; flex: 0 1 auto; min-height: 0; overflow: hidden; }
+#happening li { display: flex; gap: 6px; align-items: center; color: var(--muted); width: 100%; }
 #happening li.warn { color: var(--bad); }
 #side h2 { margin: 2px 0 0; font-size: 13px; font-weight: 650; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
-#moments { flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: none; mask-image: linear-gradient(#000 calc(100% - 28px), transparent); }
+#moments { flex: 1; min-height: 0; display: flex; flex-flow: column wrap; align-content: flex-start; overflow: hidden; }   /* the Story tab has them all */
+#moments li { width: 100%; }
 .moment { display: grid; grid-template-columns: 16px auto minmax(0, 1fr); gap: 6px; align-items: baseline; width: 100%; text-align: left; border: 0; background: none;
           padding: 3px 4px; border-radius: 6px; font-size: 13px; line-height: 1.35; color: var(--ink); }
 .moment:hover { background: var(--surface); }
@@ -105,11 +124,12 @@ main { flex: 1; min-height: 0; display: flex; flex-direction: column; align-item
 .moment .t { font: 12px var(--mono); color: var(--muted); white-space: nowrap; }
 
 /* a card for everyone alive, and every egg (§10.1) */
-#cards { display: flex; gap: 8px; width: 100%; max-width: 1280px; justify-content: safe center; overflow-x: auto; }   /* one row; it scrolls sideways before a name is cut */
-#cards li { flex: 1 0 250px; max-width: 320px; display: flex; }
+#cards { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; justify-content: center; }   /* one row while they fit, each narrower; then a second, before a card is cut */
+#cards li { flex: 1 1 192px; max-width: 320px; display: flex; container-type: inline-size; }
 .card { flex: 1; min-width: 0; display: grid; grid-template-columns: 46px minmax(0, 1fr) 34px; gap: 0 8px; align-items: center; text-align: left;
-        padding: 6px 8px; border-radius: 10px; line-height: 1.3; height: 74px; }
-.card.chosen { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+        padding: 4px 8px 4px 6px; border-radius: 10px; line-height: 1.25; height: 86px; border-left: 4px solid var(--fam, var(--line)); }
+.card.chosen { border-color: var(--accent); border-left-color: var(--fam, var(--accent)); box-shadow: inset 0 0 0 1px var(--accent); }
+.card span .icon { vertical-align: -2px; }
 .card .face { width: 46px; height: 54px; }
 .card b { display: block; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .card b small { font-weight: 400; color: var(--muted); font-size: 12px; }
@@ -117,13 +137,18 @@ main { flex: 1; min-height: 0; display: flex; flex-direction: column; align-item
 .card span.seems { color: var(--ink); }
 .card .radial { width: 34px; height: 34px; }
 .face { object-fit: contain; }
+@container (max-width: 252px) {   /* many in the house, or the drawer open: a narrower card drops its chart rather than cut what it says */
+  .card { grid-template-columns: 38px minmax(0, 1fr); gap: 0 6px; }
+  .card .face { width: 38px; height: 46px; }
+  .card .radial { display: none; }
+}
 .empty-house { color: var(--muted); font-size: 14px; padding: 8px; }
 
-.controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center; width: 100%; max-width: 1040px; min-height: 36px; }
+.controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center; width: 100%; max-width: 1240px; min-height: 36px; }
 .place { display: flex; gap: 6px; align-items: center; }
 #chosenWhat { font-size: 14px; color: var(--accent); font-weight: 600; }
-#talkForm { display: flex; gap: 6px; flex: 1 1 220px; max-width: 420px; }
-#talkText { flex: 1; min-width: 0; }
+#talkForm { display: flex; gap: 6px; flex: 1 1 400px; max-width: 600px; }
+#talkText { flex: 1; min-width: 60px; }
 #nameForm { display: flex; gap: 6px; }
 #nameText { width: 110px; }
 #ended { width: 100%; max-width: 1040px; display: flex; gap: 16px; align-items: center; justify-content: center; padding: 10px 20px; border-radius: 12px;
@@ -139,7 +164,6 @@ main { flex: 1; min-height: 0; display: flex; flex-direction: column; align-item
   #stage { width: 100%; }
   #side { contain: none; width: 100%; max-width: 420px; }
   #moments { max-height: 120px; }
-  #cards { flex-wrap: wrap; }
 }
 .tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line); padding: 8px 12px 0; }
 .tabs button { border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: none; padding: 8px 10px; color: var(--muted); white-space: nowrap; font-size: 14px; }
@@ -149,6 +173,7 @@ main { flex: 1; min-height: 0; display: flex; flex-direction: column; align-item
 .panel > * { flex: none; }
 h2 { margin: 0; font-size: 18px; font-weight: 650; }
 h3 { margin: 6px 0 4px; font-size: 15px; font-weight: 650; }
+h4 { margin: 4px 0 0; font-size: 13px; font-weight: 650; color: var(--muted); }
 .hint, .empty, details > summary { color: var(--muted); font-size: 13px; }
 .note { padding: 6px 10px; border: 1px dashed var(--line); border-radius: 8px; }
 .bad { color: var(--bad); }
@@ -205,16 +230,26 @@ blockquote.thought { border-left-color: var(--accent); }
 .shelf.gone .thing { opacity: 0.6; }
 
 /* the family tree: generations top to bottom, the living outlined */
-.treebox { overflow-x: auto; padding: 2px 0 6px; }
+/* it scrolls in its own box, both ways, however many generations there are; it opens on the living, at its foot */
+.treebox { overflow: auto; max-height: 66vh; padding: 8px 6px; border: 1px solid var(--line); border-radius: 12px; scrollbar-width: thin; }
 .tree { position: relative; margin: 0 auto; }
 .tree .lines { position: absolute; inset: 0; }
 .tree .lines path { fill: none; stroke: var(--line); stroke-width: 2; }
+.tree .lines.over { pointer-events: none; }
+.tree .lines path.cross { stroke: var(--accent); stroke-dasharray: 5 4; }   /* something crossed between the families */
+.crossmark { pointer-events: auto; }
+.crossmark circle { fill: var(--surface); stroke: var(--accent); stroke-width: 1.5; }
+.crossmark text { fill: var(--accent); font-size: 12px; }
+.treename { position: absolute; top: 0; text-align: center; font-size: 12px; font-weight: 650; color: var(--fam); white-space: nowrap; }
+.treecross { position: absolute; top: 0; transform: translateX(-50%); font-size: 11px; line-height: 16px; color: var(--accent); border: 1px solid var(--accent); border-radius: 999px;
+             padding: 0 6px; background: var(--surface); white-space: nowrap; }
+.node b::before, .owner b::before { content: ""; display: inline-block; width: 8px; height: 8px; margin-right: 4px; border-radius: 50%; background: var(--fam, var(--muted)); }
 .node { position: absolute; width: 88px; margin: 0 4px; height: 126px; padding: 4px 2px; display: flex; flex-direction: column; align-items: center; line-height: 1.2;
-        border-radius: 10px; border-color: transparent; background: none; }
+        border-radius: 10px; border-color: transparent; background: var(--surface); }
 .node .face { width: 52px; height: 56px; }
 .node b { font-size: 13px; font-weight: 650; max-width: 100%; text-align: center; overflow-wrap: anywhere; }   /* a long name takes a second line */
 .node span { font-size: 11px; color: var(--muted); white-space: nowrap; }
-.node.alive { border-color: var(--good); background: color-mix(in srgb, var(--good) 8%, transparent); }
+.node.alive { border-color: var(--good); background: color-mix(in srgb, var(--good) 8%, var(--surface)); }
 .node.dead .face { filter: grayscale(0.6); opacity: 0.8; }
 .node.chosen { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
 .life { padding: 12px; border: 1px solid var(--line); border-radius: 12px; gap: 10px; }
@@ -228,11 +263,11 @@ blockquote.thought { border-left-color: var(--accent); }
 .meter b.over { background: var(--bad); }
 .meter i { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--ink); }
 .meter i.old { background: var(--muted); width: 0; border-left: 2px dotted var(--muted); }
-.scroll { overflow-x: auto; }
+.scroll { overflow-x: auto; scrollbar-width: thin; border: 1px solid var(--line); border-radius: 10px; padding: 0 0 4px 8px; }
 .compare { border-collapse: collapse; font-size: 13px; min-width: 100%; }
 .compare th, .compare td { padding: 5px 12px 5px 0; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; font-weight: 400;
-                           font-variant-numeric: tabular-nums; min-width: 92px; max-width: 170px; }
-.compare th:first-child, .compare td:first-child { color: var(--muted); position: sticky; left: 0; background: var(--surface); min-width: 150px; }
+                           font-variant-numeric: tabular-nums; min-width: 84px; max-width: 170px; }
+.compare th:first-child, .compare td:first-child { color: var(--muted); position: sticky; left: 0; background: var(--surface); min-width: 118px; max-width: 118px; }
 .compare thead th { font-weight: 650; }
 
 /* the voice lab, at the foot of the Lab tab */
@@ -245,3 +280,19 @@ blockquote.thought { border-left-color: var(--accent); }
 .voicelab .heard span { opacity: .6; font-variant-numeric: tabular-nums; }
 #playing { font-size: 12px; opacity: .8; max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 pre.packet { white-space: pre-wrap; font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; margin: 6px 0 0; }
+
+/* SPEC-v3.1: the songbook, the walls, the discoveries */
+.songtree, .songtree ul { display: flex; flex-direction: column; gap: 8px; }
+.songtree ul { margin: 8px 0 0 12px; padding-left: 12px; border-left: 2px solid var(--line); }   /* a version sits in under the one it came from */
+.version { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 8px; font-size: 14px; padding-left: 8px; border-left: 3px solid var(--fam, var(--line)); }
+.play { width: 26px; height: 26px; padding: 0 0 0 2px; border-radius: 50%; color: var(--accent); font-size: 11px; line-height: 1; vertical-align: 1px; }
+.staff { display: block; margin: 3px 0; max-width: 100%; border-block: 1px solid var(--line); }
+.staff rect { fill: var(--ink); }
+.staff rect.changed { fill: var(--accent); }
+.walls blockquote.chalk { font-family: "Chalkboard SE", "Comic Sans MS", cursive; }
+.walls blockquote.scratch { font-style: italic; color: var(--muted); }
+.walls li.gone blockquote { text-decoration: line-through; text-decoration-color: var(--muted); color: var(--muted); }
+.arrivals li { display: grid; grid-template-columns: 18px 80px minmax(0, 1fr); gap: 8px; align-items: baseline; padding: 3px 0; font-size: 14px; }
+.arrivals .icon { align-self: center; color: var(--muted); }
+.arrivals li.come .icon { color: var(--good); }
+div.moment { cursor: default; }

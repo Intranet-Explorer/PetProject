@@ -1,20 +1,21 @@
 // Wiring (SPEC-v3 §10): one websocket to the engine (or a recorded run played back), snapshots in, the visitor's
 // actions out. Decides which room is on screen, and keeps that choice across a reload.
-import { $, el, radial } from "./dom";
+import { $, el, radial, when, whole } from "./dom";
 import type { Ctx } from "./dom";
 import { showRecord } from "./family";
 import { icon } from "./icons";
 import { drawMap } from "./minimap";
-import { renderDrawer, SOURCE } from "./panels";
+import { MORE, renderDrawer, SOURCE } from "./panels";
 import type { Genome, Look } from "./pet";
 import { startReplay } from "./replay";
 import type { Replay } from "./replay";
 import { Room } from "./room";
 import type { Target } from "./room";
 import { momentRow } from "./story";
-import { bodyStage, hhmm } from "./types";
+import { ago, bodyStage, fam, hhmm } from "./types";
+import { voiceInput } from "./voice";
 import { initVoice } from "./voicelab";
-import type { Hello, Moment, PetV, RoomV, Snap } from "./types";
+import type { Creature, Hello, Mark, Moment, Note, PetV, RoomV, Snap } from "./types";
 
 const remember = (key: string, value: string) => { try { localStorage.setItem(key, value); } catch { /* private window */ } };
 const recall = (key: string) => { try { return localStorage.getItem(key); } catch { return null; } };
@@ -48,17 +49,26 @@ function picture(g: Genome, stage: string, look: Look = {}) {
   return pictures.get(key)!;
 }
 
-const ctx = (): Ctx => ({ snap: snap!, hello, sel: view.sel, room: view.room, replay: !!replayId, api, picture, jump, show: openTab, voiceLab });
+const ctx = (): Ctx => ({ snap: snap!, hello, sel: view.sel, room: view.room, replay: !!replayId, api, picture, jump, show: openTab, voiceLab, hear });
 
 /** Sound (§10.6): every snapshot that reaches the screen passes through, live or replayed, with the room being
  *  looked at. View-only, like everything in this file: nothing about sound goes back to the engine. */
 const { voice, lab: voiceLab } = initVoice(() => { const p = pet(view.sel) ?? snap?.pets.find((q) => q.needs); return p && snap ? { pet: p, snap } : null; });
 function onSnapshot(s: Snap, here: string) { voice.update(s, here, view.sel); }
+/** One version of a song, as whoever made it would sing it (SPEC-v3.1 §3.4): a pet in its own voice (the dead keep
+ *  theirs: the Family tab knows their bodies), the music box, or a bird. */
+function hear(notes: Note[], by: string) {
+  const p = pet(by) ?? ((api.family as { pets?: PetV[] } | undefined)?.pets ?? []).find((q) => q.id === by);
+  if (!voice.hear(notes, p ? voiceInput(p, snap ?? undefined) : by === "music box" ? "box" : "bird")) flash("Turn sound on, in the header, to hear it.");
+}
 
 // ---- which room to show ----
 
 const WEIGHT: Record<string, number> = { hatched: 100, death: 100, egg: 90, ended: 90, befriended: 70, nuzzle: 60, gift: 60, mouse: 60, told: 55,
-                                         heirloom: 55, took: 55, room: 50, weak: 50, named: 45, words: 45, stage: 40, leak: 40, draught: 40, lost: 35, floated: 35 };
+                                         heirloom: 55, took: 55, room: 50, weak: 50, named: 45, words: 45, stage: 40, leak: 40, draught: 40, lost: 35, floated: 35,
+                                         // SPEC-v3.1: a discovery is worth looking at wherever it turns up
+                                         "arrival writing": 95, "arrival songs": 95, "arrival taming": 95, "arrival radio": 95, "arrival book": 95, "arrival strangers": 95,
+                                         tamed: 65, young: 60, "creature died": 60, scrubbed: 55, crossed: 55, wrote: 50, song: 50, read: 45, untamed: 45 };
 
 /** "Follow: auto" (§10.1): the room where the most is going on. A birth or a death wins at once; otherwise it
  *  takes a clearly better room, and a few seconds since the last move, to look away. */
@@ -66,7 +76,7 @@ function auto(s: Snap) {
   const score = new Map<string, number>();
   const add = (id: string | null, n: number) => { if (id && s.rooms.find((r) => r.id === id)?.type) score.set(id, Math.max(score.get(id) ?? 0, n)); };
   for (const m of s.moments) {
-    const age = (s.tick - m.tick) * s.tick_seconds;
+    const age = ago(s, m.tick);
     if (age <= 40) add(m.room, (WEIGHT[m.kind] ?? 0) - age / 4);
   }
   const up = s.pets.filter((p) => p.stage !== "dead" && p.stage !== "egg");
@@ -123,8 +133,8 @@ function render() {
   for (const [k, v] of Object.entries({ room: view.room, follow: view.follow, sel: view.sel ?? "" })) remember(k, v);
 
   onSnapshot(s, view.room);
+  header(s, here);   // before the room: what is written on the south wall keeps clear of the plate with the room's name
   room.update({ snap: s, room: here, hello, selected: view.sel, picked, replay: !!replayId });
-  header(s, here);
   drawMap($("map"), s, view.room, view.sel, (id) => jump({ room: id }));
   side(s);
   cards(s);
@@ -134,8 +144,10 @@ function render() {
   // Moments (§9.1): a banner when something worth seeing happens. Not on first load: that would announce old news.
   const newest = s.moments.at(-1);
   if (newest && newest.n !== bannerN) {
+    // a discovery (SPEC-v3.1 §1) is never passed over for whatever came just after it
+    const fresh = bannerN >= 0 ? s.moments.filter((m) => m.n > bannerN) : [], m = fresh.find((m) => m.kind.startsWith("arrival")) ?? fresh.at(-1);
     // a project's own words are long and are in the list beside the room; the banner says whose it is
-    if (bannerN >= 0 && newest.n > bannerN) flash(newest.kind === "project" ? newest.text.split(":")[0] : newest.text, false, () => jump(newest));
+    if (m) flash(m.kind === "project" ? m.text.split(":")[0] : m.text, false, () => jump(m), m.kind);
     bannerN = newest.n;
   } else if (!newest) bannerN = 0;
 }
@@ -143,14 +155,14 @@ let sent = "";
 let bannerN = -1;
 let bannerTimer: ReturnType<typeof setTimeout> | undefined;
 
-function flash(text: string, error = false, go: (() => void) | null = null) {
-  const b = $("banner");
-  b.textContent = text;
-  b.className = error ? "error" : "";
+function flash(text: string, error = false, go: (() => void) | null = null, kind = "") {
+  const b = $("banner"), arrival = kind.startsWith("arrival");   // a discovery has its own picture and stays up longer
+  b.replaceChildren(...(arrival ? [icon(kind, 18)] : []), text);
+  b.className = error ? "error" : arrival ? "arrival" : "";
   b.hidden = false;
   b.onclick = () => { b.hidden = true; go?.(); };
   clearTimeout(bannerTimer);
-  bannerTimer = setTimeout(() => (b.hidden = true), error ? 5000 : 4500);
+  bannerTimer = setTimeout(() => (b.hidden = true), arrival ? 10_000 : error ? 5000 : 4500);
 }
 
 function header(s: Snap, here: RoomV) {
@@ -168,9 +180,15 @@ function header(s: Snap, here: RoomV) {
   const key = options.map((p) => p.id + p.label + p.stage).join();
   if (pick.dataset.key !== key) {
     pick.dataset.key = key;
-    pick.replaceChildren(new Option("whatever is happening", "auto"), new Option("nobody: stay in this room", ""), ...options.map((p) => new Option(p.stage === "egg" ? `${p.name ?? "an egg"} (in the egg)` : p.label, p.id)));
+    pick.replaceChildren(new Option("whatever is happening", "auto"), new Option("nobody (stay here)", ""), ...options.map((p) => new Option(p.stage === "egg" ? `${p.name ?? "an egg"} (egg)` : p.label, p.id)));
   }
   pick.value = view.follow;
+  // SPEC-v3.1 §5.3: this turns the box off in the house, not only its sound here; only a pet can turn it on again
+  const radio = $<HTMLButtonElement>("radioBtn"), on = !!s.radio?.on;
+  radio.hidden = !!replayId || !s.radio?.here;
+  radio.disabled = !on;
+  radio.textContent = on ? "Mute radio" : "Radio is off";
+  radio.title = on ? "Switch the box off in the house. A pet can switch it on again." : "The box is switched off. Only a pet can switch it on.";
 }
 
 /** Beside the room: the sky, what is going on in the house, and the last few moments. */
@@ -190,13 +208,20 @@ function side(s: Snap) {
       ...(r.wet ? [line("warn", "drop", `water is coming into ${r.name}`, r.id)] : []),
       ...(r.cold ? [line("warn", "wind", `a draught in ${r.name}${r.shut.length ? `; its ${r.shut.join(" and ")} door is shut` : ""}`, r.id)] : []),
     ]),
-    ...s.creatures.map((cr) => line("", "mouse", `a ${cr.kind} in ${name(cr.room)}, ${cr.doing}`, cr.room)),
+    ...found(s).filter((r) => Object.values(r.objects).some((o) => o.fix?.radio && o.state === "on")).map((r) => line("", "radio", `the box is on in ${r.name}`, r.id)),
+    ...s.creatures.map((cr) => line("", cr.tame ? "paw" : "mouse", `${beast(cr)} in ${name(cr.room)}, ${cr.doing}`, cr.room)),
   );
   const key = `${s.moments.at(-1)?.n}`;
   if ($("moments").dataset.key !== key) {
     $("moments").dataset.key = key;
     $("moments").replaceChildren(...[...s.moments].reverse().slice(0, 30).map((m: Moment) => momentRow({ jump }, m, m.day !== c.day)));
   }
+}
+
+/** A creature in a few words: "a moth"; once tame, whose it is and what it is called (SPEC-v3.1 §4.4). Never how far it trusts anyone. */
+function beast(c: Creature) {
+  const owner = pet(c.tame)?.label;
+  return c.name ? `${c.name}${owner ? `, ${owner}'s ${c.kind},` : ` the ${c.kind}`}` : `a ${c.kind}${owner ? `, tame to ${owner},` : ""}`;
 }
 
 function clockLeft(sec: number) {
@@ -206,8 +231,8 @@ function clockLeft(sec: number) {
 /** A card for every living pet and every egg (§10.1). Rebuilt only when what they show changes. */
 function cards(s: Snap) {
   const who = s.pets.filter((p) => p.stage !== "dead").sort((a, b) => a.laid - b.laid);
-  const state = (p: PetV) => (p.stage === "egg" ? `hatches in ${clockLeft(p.hatches_in ?? 0)}` : p.asleep ? "asleep" : `seems ${p.seems}`);
-  const key = JSON.stringify(who.map((p) => [p.id, p.label, p.stage, p.room, state(p), p.project?.text, p.genome, p.id === view.sel, p.stage === "elder"]));
+  const state = (p: PetV) => (p.stage === "egg" ? `hatches in ${clockLeft(p.hatches_in ?? 0).replace("about ", "")}` : p.asleep ? "asleep" : `seems ${p.seems}`);
+  const key = JSON.stringify(who.map((p) => [p.id, p.label, p.stage, p.room, state(p), p.project?.text, p.genome, p.id === view.sel, p.stage === "elder", p.family, p.animals]));
   const box = $("cards");
   if (box.dataset.key === key) return;
   box.dataset.key = key;
@@ -215,12 +240,17 @@ function cards(s: Snap) {
     const stage = bodyStage(p), img = el("img", "face") as HTMLImageElement;
     img.src = picture(p.genome, stage, { grey: stage === "elder" ? 0.55 : 0 });
     img.alt = "";
-    const b = el("button", `card${p.id === view.sel ? " chosen" : ""}`, img,
-      el("div", "", el("b", "", p.stage === "egg" ? p.name ?? "An egg" : p.label, el("small", "", ` ${p.stage}`)),
-        el("span", "seems", `${state(p)} · ${s.rooms.find((r) => r.id === p.room)?.name?.replace(/^the /, "") ?? ""}`),
-        el("span", "", p.stage === "egg" ? `generation ${p.gen}` : p.project ? `“${p.project.text}”` : "no project")),
+    const animals = (p.animals ?? []).map((a) => a.name ?? `a ${a.kind}`).join(", ");   // SPEC-v3.1 §4.4
+    const where = s.rooms.find((r) => r.id === p.room)?.name?.replace(/^the /, "") ?? "";
+    // short lines, one fact each, so a narrow card (many alive, or the drawer open) cuts no word; only a long project trails off
+    const b = el("button", `card ${fam(p.family)}${p.id === view.sel ? " chosen" : ""}`, img,
+      el("div", "", el("b", "", p.stage === "egg" ? p.name ?? "An egg" : p.label),
+        el("span", "", `${p.stage} · ${where}`),
+        el("span", "seems", state(p)),
+        el("span", "proj", p.stage === "egg" ? `generation ${p.gen}` : p.project ? `“${whole(p.project.text)}”` : "no project"),
+        animals ? el("span", "", icon("paw", 12), ` ${animals}`) : null),
       radial(p.temper, 46, false)) as HTMLButtonElement;
-    b.title = p.project?.text ?? "";
+    b.title = [p.project?.text, animals && `its animals: ${animals}`].filter(Boolean).join("\n");
     b.onclick = () => jump({ pet: p.id, room: p.room });
     return el("li", "", b);
   }) : [el("li", "empty-house", "Nobody is alive in the house.")]));
@@ -240,9 +270,10 @@ function controls(s: Snap, here: RoomV) {
   const give = $<HTMLSelectElement>("giveBit");
   if (!give.options.length && hello) give.replaceChildren(...Object.keys(hello.bits).sort().map((b) => new Option(b)));
   const p = pet(view.sel), near = p && p.room === here.id && p.stage !== "egg" && p.stage !== "dead" ? p : null;
+  const foundling = p && p.room === here.id && p.stage === "egg" && !p.parent && !p.name ? p : null;   // an egg that is nobody's can be given a name (SPEC-v3.1 §7.1)
   const thing = picked ? here.objects[picked] : null;
-  $("chosen").hidden = !thing && !near;
-  $("chosenWhat").textContent = thing ? `the ${picked}: click a tile to move it` : near ? near.label : "";
+  $("chosen").hidden = !thing && !near && !foundling;
+  $("chosenWhat").textContent = thing ? `the ${picked}: click a tile to move it` : near ? near.label : foundling ? "the egg that is nobody's" : "";
   $("poke").hidden = !!thing || !near;
   $("nameForm").hidden = !!thing && !thing.made;
   $("chosenDone").hidden = !thing;
@@ -264,6 +295,9 @@ room.onClick = (t: Target) => {
   render();
 };
 
+/** An inscription in full (SPEC-v3.1 §2.4): the words, whose hand, and when. */
+const written = (m: Mark) => `“${m.text}”\n${m.medium === "scratch" ? "scratched" : "chalked"} by ${m.by_name ?? "someone"}, ${snap ? when(snap, m.tick) : ""}${(m.clarity ?? 1) < 0.5 ? "; it is fading" : ""}`;
+
 /** What the pointer is over, in a few words. */
 room.onHover = (t, fx, fy) => {
   const tip = $("tip"), here = snap?.rooms.find((r) => r.id === view.room);
@@ -272,7 +306,8 @@ room.onHover = (t, fx, fy) => {
     const p = pet(t.pet), c = snap.creatures.find((c) => c.id === t.creature), o = t.object ? here.objects[t.object] : null;
     if (p) text = p.stage === "egg" ? `${p.name ?? "an egg"}: hatches in ${clockLeft(p.hatches_in ?? 0)}` : p.stage === "dead" ? `${p.label} has died` :
       `${p.label}, ${p.stage}: seems ${p.seems}; ${p.asleep ? "asleep" : p.doing}${p.carrying?.length ? `\ncarrying ${p.carrying.join(", ")}` : ""}${pet(p.following) ? `\nfollowing ${pet(p.following)!.label}` : ""}`;
-    else if (c) text = `a ${c.kind}, ${c.doing}`;
+    else if (c) text = `${beast(c).replace(/,$/, "")}: ${c.doing}`;
+    else if (t.mark) text = written(t.mark);
     else if (t.door) {
       const to = snap.rooms.find((r) => r.id === here.doors[t.door!]);
       text = (to?.type ? `the door to ${to.name}` : "a door nobody has been through") + (here.shut.includes(t.door) ? ", blown shut" : "");
@@ -280,6 +315,7 @@ room.onHover = (t, fx, fy) => {
     else if (o?.memorial) text = o.memorial.text;
     else if (o) text = `${t.object}${o.state === "ripe" ? ", ripe" : o.grow != null ? `, ${Math.round(Math.min(1, o.grow) * 100)}% grown` : o.state ? `, ${o.state}` : ""}${o.fix?.movable && !replayId ? "\nclick to move it" : ""}`;
     else if (t.bit) text = `some ${t.bit}`;
+    if (o && !p && !c) for (const m of here.marks ?? []) if (m.on === t.object) text += `\n${written(m)}`;   // what is written on it
   }
   tip.hidden = !text;
   tip.textContent = text;
@@ -300,6 +336,13 @@ $("talkForm").onsubmit = (e) => {
   if (input.value.trim()) act({ type: "talk", text: input.value });
   input.value = "";
 };
+$("writeBtn").onclick = () => {   // SPEC-v3.1 §2.3: the visitor's hand, in chalk, on a wall of the room being looked at
+  const input = $<HTMLInputElement>("talkText");
+  if (input.value.trim()) act({ type: "write", text: input.value, on: $<HTMLSelectElement>("writeOn").value });
+  else input.focus();
+  input.value = "";
+};
+$("radioBtn").onclick = () => act({ type: "radio_off" });
 $("nameForm").onsubmit = (e) => {
   e.preventDefault();
   const input = $<HTMLInputElement>("nameText");
@@ -341,11 +384,13 @@ function connect() {
 /** A tab's extra facts are asked for only while it is open, every few seconds (not every tick). */
 async function poll() {
   if (!view.drawer || !snap || document.hidden) return;
-  const tab = view.tab, url = SOURCE[tab]?.(ctx());
-  if (!url) return;
+  const tab = view.tab;
+  const ask = async (key: string, url: string | null | undefined) => {
+    const r = url ? await fetch(url) : null;
+    if (r?.ok) api[key] = await r.json();
+  };
   try {
-    const r = await fetch(url);
-    if (r.ok) api[tab] = await r.json();
+    await Promise.all([ask(tab, SOURCE[tab]?.(ctx())), ask("v31", MORE[tab])]);
     if (view.drawer && view.tab === tab) renderDrawer(tab, ctx());
   } catch { /* the engine is away; the socket says so */ }
 }

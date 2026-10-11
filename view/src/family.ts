@@ -1,11 +1,14 @@
 // The Family tab (SPEC-v3 §10.4): the tree, a life record for whoever is clicked, the family's sayings and heirlooms.
-import { el, face, fold, link, plural, radial } from "./dom";
+// SPEC-v3.1 adds what a family leaves behind that is not a thing: its animals, its walls and its songs, and a
+// second family beside the first, with a line wherever something crossed from one to the other.
+import { dayOf, el, face, fold, link, plural, radial, scroller, when, whole } from "./dom";
 import type { Ctx, Kid } from "./dom";
-import { svg } from "./icons";
+import { icon, svg } from "./icons";
 import type { Genome } from "./pet";
 import { thingPicture } from "./things";
 import type { Part, Recipe } from "./things";
-import type { PetV } from "./types";
+import { fam } from "./types";
+import type { Note, PetV, V31 } from "./types";
 
 const kept = (() => { try { return JSON.parse(localStorage.getItem("family") ?? "{}"); } catch { return {}; } })();
 const keep = () => { try { localStorage.setItem("family", JSON.stringify({ chosen, lineage })); } catch { /* not remembered */ } };
@@ -20,23 +23,45 @@ export function showRecord(id: string | null) {
 const TRUTH: Record<string, [string, string]> = { true: ["✓ true of this house", "correct"], false: ["✗ not so", "wrong"] };
 const [CW, CH] = [96, 148];
 
-function tree(c: Ctx, pets: PetV[], redraw: () => void) {
+/** Something that went from one family to the other: who had it, who has it now, and what it was. */
+type Crossing = { from: string; to: string; what: string };
+const NAMES: Record<number, string> = { 1: "First family", 2: "Second family" };
+
+/** The tree, or two side by side once a second family lives here (SPEC-v3.1 §7.4), each in its colour, with a line
+ *  wherever something crossed between them. It scrolls in its own box, and is drawn a little smaller to fit. */
+function tree(c: Ctx, pets: PetV[], crossings: Crossing[], sayings: number, redraw: () => void) {
   const kids = (id: string) => pets.filter((p) => p.parent === id).sort((a, b) => a.laid - b.laid);
-  const roots = pets.filter((p) => !pets.some((q) => q.id === p.parent)).sort((a, b) => a.laid - b.laid);
-  const X = new Map<string, number>();
+  const of = (p: PetV) => p.family ?? 1;
+  const roots = pets.filter((p) => !pets.some((q) => q.id === p.parent)).sort((a, b) => of(a) - of(b) || a.laid - b.laid);
+  const X = new Map<string, number>(), two = new Set(pets.map(of)).size > 1, span = new Map<number, number[]>(), TOP = two ? 26 : 0;
   let next = 0;
   const place = (p: PetV) => {   // leaves side by side, each parent over the middle of its children
     const ch = kids(p.id);
     ch.forEach(place);
     X.set(p.id, ch.length ? (X.get(ch[0].id)! + X.get(ch.at(-1)!.id)!) / 2 : next++);
   };
-  roots.forEach(place);
+  for (const r of roots) {
+    if (span.size && !span.has(of(r))) next += 0.4;   // a gap between the families
+    const from = next;
+    place(r);
+    span.set(of(r), [span.get(of(r))?.[0] ?? from, next]);
+  }
   const gens = [...new Set(pets.map((p) => p.gen))].sort((a, b) => a - b);
-  const at = (p: PetV) => [X.get(p.id)! * CW, gens.indexOf(p.gen) * CH];
-  const lines = svg("svg", { class: "lines", width: next * CW, height: gens.length * CH });
+  const at = (p: PetV) => [X.get(p.id)! * CW, TOP + gens.indexOf(p.gen) * CH];
+  const [W, H] = [next * CW, TOP + gens.length * CH];
+  const lines = svg("svg", { class: "lines", width: W, height: H }), over = svg("svg", { class: "lines over", width: W, height: H });
   const box = el("div", "tree", lines);
-  box.style.width = `${next * CW}px`;
-  box.style.height = `${gens.length * CH}px`;
+  box.style.width = `${W}px`;
+  box.style.height = `${H}px`;
+  // drawn smaller to fit the drawer and most of its height, but never so small that a name cannot be read
+  const room = (document.querySelector<HTMLElement>('[data-panel="family"]')?.clientWidth ?? 440) - 40;
+  box.style.zoom = String(Math.max(0.78, Math.min(1, room / W, (innerHeight * 0.62) / H)));
+  if (two) for (const [n, [a, b]] of span) {
+    const name = el("span", `treename ${fam(n)}`, NAMES[n] ?? `Family ${n}`);
+    name.style.left = `${a * CW}px`;
+    name.style.width = `${(b - a) * CW}px`;
+    box.append(name);
+  }
   for (const p of pets) {
     const [x, y] = at(p), parent = pets.find((q) => q.id === p.parent);
     if (parent) {
@@ -45,15 +70,36 @@ function tree(c: Ctx, pets: PetV[], redraw: () => void) {
     }
     const dead = p.stage === "dead", egg = p.stage === "egg";
     const life = dead ? `lived ${plural(Math.round(p.days ?? 0), "day")}` : egg ? "not hatched" : `${p.stage}, day ${Math.floor(p.days ?? 0) + 1}`;
-    const node = el("button", `node ${dead ? "dead" : "alive"}${chosen === p.id ? " chosen" : ""}`, face(c, p),
+    const node = el("button", `node ${fam(of(p))} ${dead ? "dead" : "alive"}${chosen === p.id ? " chosen" : ""}`, face(c, p),
       el("b", "", egg ? p.name ?? "an egg" : p.label), el("span", "", life), p.eggs ? el("span", "", plural(p.eggs, "egg")) : null) as HTMLButtonElement;
     node.style.left = `${x}px`;
     node.style.top = `${y}px`;
-    node.title = `${p.label}, generation ${p.gen}`;
+    node.title = `${p.label}, generation ${p.gen}${two ? `, of the ${(NAMES[of(p)] ?? "other family").toLowerCase()}` : ""}`;
     node.onclick = () => { chosen = chosen === p.id ? null : p.id; keep(); redraw(); };
     box.append(node);
   }
-  return el("div", "treebox", box);
+  // a dashed line from who had it to who has it now, under the faces, and where it crosses the gap between the trees a mark that says what it was
+  const gap = ([...span.values()].sort((a, b) => a[0] - b[0])[0]?.[1] ?? 0) * CW + 0.2 * CW, seen = new Set<string>(), marks: number[] = [];
+  for (const x of crossings) {
+    const [a, b] = [pets.find((p) => p.id === x.from), pets.find((p) => p.id === x.to)];
+    if (!a || !b || seen.has(a.id + b.id)) continue;
+    seen.add(a.id + b.id);
+    const [[ax, ay], [bx, by]] = [at(a), at(b)], right = bx > ax, [x1, y1, x2, y2] = [ax + (right ? CW - 8 : 8), ay + 34, bx + (right ? 8 : CW - 8), by + 34];
+    let my = x2 === x1 ? (y1 + y2) / 2 : y1 + ((gap - x1) / (x2 - x1)) * (y2 - y1);
+    while (marks.some((m) => Math.abs(m - my) < 20)) my += 20;   // two that cross at the same height: one under the other
+    marks.push(my);
+    lines.append(svg("path", { class: "cross", d: `M${x1} ${y1}L${gap} ${my}L${x2} ${y2}` }));
+    over.append(svg("g", { class: "crossmark" }, svg("circle", { cx: gap, cy: my, r: 9 }), svg("text", { x: gap, y: my + 4, "text-anchor": "middle" }, "♪"),
+      svg("title", {}, crossings.filter((y) => y.from === x.from && y.to === x.to).map((y) => y.what).join("; "))));
+  }
+  if (two && sayings && span.size > 1) {   // sayings cross too, but the house does not say between whom: a mark between the trees
+    const mark = el("span", "treecross", `⇄ ${sayings}`);
+    mark.style.left = `${gap}px`;
+    mark.title = `${plural(sayings, "saying")} said in both families; they are listed under the trees`;
+    box.append(mark);
+  }
+  box.append(over);
+  return scroller("tree", "treebox", box);
 }
 
 const bodyOf = (c: Ctx, g: Genome, stage: string, caption: string) => {
@@ -88,15 +134,73 @@ export function record(c: Ctx, r: Record<string, any>): Kid[] {
       el("figure", t.gone ? "gone" : "", thingPicture(t.recipe), el("figcaption", "hint", `${t.name} · ${t.uses}`))))) : null,
     el("p", "hint", [r.heirlooms_given?.length ? `Left behind: ${r.heirlooms_given.join(", ")}.` : "", r.heirlooms_received?.length ? `Was left: ${r.heirlooms_received.join(", ")}.` : "",
       r.rooms?.length ? `Knew ${r.rooms.join(", ")}.` : "", Object.keys(r.creatures ?? {}).length ? `Met ${Object.entries(r.creatures).map(([k, n]) => `the ${k} (${n})`).join(", ")}.` : ""].join(" ")),
-    r.projects?.length ? el("section", "", el("h3", "", "Projects"), ...(r.projects as { text: string; how: string }[]).map((p) => el("p", "", `“${p.text}” `, el("span", "hint", p.how)))) : null,
+    r.projects?.length ? el("section", "", el("h3", "", "Projects"), ...(r.projects as { text: string; how: string }[]).map((p) => el("p", "", `“${whole(p.text)}” `, el("span", "hint", p.how)))) : null,
     r.beliefs?.length ? fold(`beliefs-${r.id}`, `What it believed at the end (${r.beliefs.length})`,
       el("ul", "beliefs", ...(r.beliefs as { statement: string; source: string }[]).map((b) => el("li", "", el("div", "", b.statement), el("span", "tag", b.source))))) : null,
     r.diary?.length ? fold(`dreams-${r.id}`, `Its dreams (${r.diary.length})`, ...(r.diary as string[]).map((d) => el("p", "night", d))) : null,
   ];
 }
 
+/** A tune as dots on five lines' worth of height: higher is higher, a long note is wider. A note that differs
+ *  from the version it came from (`was`) is in the accent colour, so a slip of the ear can be seen. */
+function staff(notes: Note[], was?: Note[]) {
+  const [DX, H] = [9, 30], y = (pitch: string) => {
+    const [a, b] = pitch.split(" "), i = ["do", "re", "mi", "so", "la"].indexOf(b ?? a) + (b ? (a === "low" ? -5 : 5) : 0);
+    return H - 6 - (i + 5) * 1.35;
+  };
+  let x = 4;
+  const out = svg("svg", { class: "staff", width: notes.reduce((w, n) => w + (n[1] ? DX * 1.7 : DX), 8), height: H, role: "img", "aria-label": notes.map(([p, l]) => `${p}${l ? ", long" : ""}`).join("; ") });
+  notes.forEach(([pitch, long], i) => {
+    const w = long ? DX * 1.7 : DX, changed = !!was && (was[i]?.[0] !== pitch || was[i]?.[1] !== long);
+    out.append(svg("rect", { x, y: y(pitch) - 2.5, width: w - 3, height: 5, rx: 2.5, class: changed ? "changed" : "" }));
+    x += w;
+  });
+  return out;
+}
+
+/** The Songbook (SPEC-v3.1 §3.4): every song, and under each every version of it, set in under the one it came from. */
+function songbook(c: Ctx, songs: NonNullable<V31["songs"]>): Kid[] {
+  const HOW: Record<string, string> = { "made up": "made up by", "by ear": "picked up by ear by", "the music box": "played by", "the bird": "sung by" };
+  const version = (s: (typeof songs)[number], from?: (typeof songs)[number]): HTMLElement => {
+    const play = link("▶", () => c.hear(s.notes, s.by), "play");
+    play.title = `Hear it as ${s.by_name} sings it`;
+    play.setAttribute("aria-label", `Hear “${s.name}” as ${s.by_name} sings it`);
+    const crossed = !!from?.family && !!s.family && from.family !== s.family;   // the music box and the birds are nobody's family
+    const later = songs.filter((x) => x.parent === s.id);
+    return el("li", "", el("div", `version ${s.family ? fam(s.family) : ""}`, play, el("div", "",
+        el("div", "", from ? null : el("b", "", `${s.name} `), `${HOW[s.how ?? ""] ?? s.how ?? "from"} ${s.by_name}`, crossed ? el("span", "badge gold", "crossed over") : null),
+        staff(s.notes, from?.notes),
+        el("div", "hint", `${s.sounds} · ${when(c.snap, s.tick)} · ${s.known_by.length ? `${s.known_by.join(", ")} ${s.known_by.length > 1 ? "sing" : "sings"} it now` : "nobody sings it now"}`))),
+      later.length ? el("ul", "", ...later.map((x) => version(x, s))) : null);
+  };
+  const first = songs.filter((s) => !s.parent || !songs.some((x) => x.id === s.parent));
+  return [
+    el("h3", "", `Songbook (${first.length})`),
+    first.length ? el("p", "hint", "Every tune, and under it each way it has been sung since. A song taught is kept note for note; one picked up by ear may slip a note, shown in colour. ▶ plays a version in the voice of whoever made it.") : null,
+    first.length ? el("ul", "songtree", ...first.map((s) => version(s))) : el("p", "empty", c.snap.arrived?.songs == null ? "Nobody in the house has heard a tune yet." : "Nobody has made up a song yet."),
+  ];
+}
+
+/** Walls (SPEC-v3.1 §2.4): every inscription ever written, by room, whose hand, and what became of it. */
+function walls(c: Ctx, all: NonNullable<V31["walls"]>): Kid[] {
+  const rooms = [...new Set(all.map((w) => w.room))];
+  const one = (w: (typeof all)[number]) => el("li", w.fate === "there" ? "" : "gone", el("blockquote", w.medium === "scratch" ? "scratch" : "chalk", w.text),
+    el("p", "hint", `${w.medium === "scratch" ? "scratched" : "chalked"} on the ${w.place} by ${w.by_name}, ${when(c.snap, w.tick)} · `,
+      w.fate === "there" ? el("span", "correct", "still there") : el("span", "wrong", `${w.fate}${w.gone_by && w.fate !== "faded away" ? ` by ${w.gone_by}${w.fate === "worn away" ? ", writing over it" : ""}` : ""}${w.gone != null ? `, day ${dayOf(c.snap, w.gone)}` : ""}`)));
+  return [
+    el("h3", "", `Walls (${all.length})`),
+    all.length ? null : el("p", "empty", c.snap.arrived?.writing == null ? "Nobody in the house can write yet." : "Nothing has been written on a wall yet."),
+    ...rooms.flatMap((id) => {
+      const here = all.filter((w) => w.room === id).reverse(), there = here.filter((w) => w.fate === "there"), gone = here.filter((w) => w.fate !== "there");
+      return [el("h4", "", `${here[0].room_name[0].toUpperCase()}${here[0].room_name.slice(1)} `, link("look", () => c.jump({ room: id }))),
+        el("ul", "sayings walls", ...there.map(one), ...gone.slice(0, 3).map(one)),
+        gone.length > 3 ? fold(`walls-${id}`, `${gone.length - 3} more that are gone`, el("ul", "sayings walls", ...gone.slice(3).map(one))) : null];
+    }),
+  ];
+}
+
 export function family(c: Ctx): Kid[] {
-  const d = c.api.family;
+  const d = c.api.family, v = (c.api.v31 ?? {}) as V31;
   if (!d) return [el("p", "empty", "Asking the house about its family…")];
   const all = d.pets as PetV[], now = d.lineage?.id as number;
   const which = (chosen && all.find((p) => p.id === chosen)?.lineage) || lineage || now;
@@ -110,15 +214,33 @@ export function family(c: Ctx): Kid[] {
   const sayings = (d.sayings ?? []) as { text: string; gens: number[]; truth: string | null; forms: [string, string][]; pets: { id: string; name: string }[] }[];
   const heir = (d.heirlooms ?? []) as { name: string; room: string; recipe: Recipe; line: string[]; to: string[] }[];
   const name = (id: string) => all.find((p) => p.id === id)?.label ?? id;
+  // What crossed between the families (SPEC-v3.1 §7.2): a song one family made that the other now sings (a new version
+  // by ear, or the same one sung by someone of the other family), and the sayings the house has heard in both.
+  const songs = v.songs ?? [], crossed = v.crossed ?? [], living = pets.filter((p) => p.stage !== "dead");
+  const crossings: Crossing[] = which !== now ? [] : songs.flatMap((s) => {
+    const from = songs.find((x) => x.id === s.parent);
+    const byEar = from?.family && s.family && from.family !== s.family ? [{ from: from.by, to: s.by, what: `“${s.name}”, picked up by ear` }] : [];
+    const sung = living.filter((p) => s.family && (p.family ?? 1) !== s.family && p.id !== s.by && s.known_by.includes(p.label) && living.filter((q) => q.label === p.label).length === 1);
+    return [...byEar, ...sung.map((p) => ({ from: s.by, to: p.id, what: `“${s.name}”, sung by ${p.label}` }))];
+  });
+  const families = new Set(pets.map((p) => p.family ?? 1)).size, keepers = living.filter((p) => p.animals?.length);
   return [
-    el("p", "hint", `${plural(pets.length, "life", "lives")} over ${plural(new Set(pets.map((p) => p.gen)).size, "generation")}. The living are outlined. Click anyone for their life.`),
+    el("p", "hint", `${plural(pets.length, "life", "lives")} over ${plural(new Set(pets.map((p) => p.gen)).size, "generation")}${families > 1 ? `, in ${families} families` : ""}. The living are outlined. Click anyone for their life.`),
     lines.length > 1 ? pick : null,
-    tree(c, pets, redraw),
+    tree(c, pets, crossings, crossed.length, redraw),
     who ? el("section", "life", el("div", "who", face(c, who), el("div", "", el("h2", "", who.label),
         el("p", "hint", who.stage === "dead" ? `generation ${who.gen}` : `${who.stage} · generation ${who.gen} · alive`),
         who.stage !== "dead" ? link("See its mind", () => c.show("mind", who.id)) : null)),
       rec ? null : radial(who.temper, 130),
       ...(rec ? record(c, rec) : [])) : null,
+    families > 1 && which === now ? el("section", "", el("h3", "", "Between the families"),
+      crossings.length || crossed.length ? el("ul", "plain", ...crossings.map((x) => el("li", "", icon("music"), ` ${name(x.from)} → ${name(x.to)}: ${x.what}`)),
+        ...crossed.map((x) => el("li", "", icon("crossed"), ` “${x.text}” `, el("span", "hint", "said in both families"))))
+        : el("p", "empty", "Nothing has passed from one family to the other yet: no song, no saying.")) : null,
+    which === now ? el("section", "", el("h3", "", "Animals"),
+      keepers.length ? el("ul", "plain", ...keepers.map((p) => el("li", `owner ${fam(p.family)}`, el("b", "", p.label), ": ",
+        p.animals!.map((a) => `${a.name ? `${a.name} the ${a.kind}` : `a ${a.kind}`} (${c.snap.rooms.find((r) => r.id === a.room)?.name ?? "somewhere"})`).join(", "))))
+        : el("p", "empty", c.snap.arrived?.taming == null ? "The creatures of the house are nobody's yet." : "No creature has taken to anyone yet.")) : null,
     el("h3", "", "Family sayings"),
     sayings.length ? el("ul", "sayings", ...sayings.map((s) => el("li", "", el("blockquote", "", s.text),
       el("p", "hint", `${plural(s.gens.length, "generation")}: ${s.pets.map((p) => p.name).join(" → ")} `, el("span", TRUTH[s.truth ?? ""]?.[1] ?? "", TRUTH[s.truth ?? ""]?.[0] ?? "nothing the house can check")),
@@ -128,5 +250,6 @@ export function family(c: Ctx): Kid[] {
     heir.length ? el("ul", "shelf", ...heir.map((h) => el("li", "thing", thingPicture(h.recipe), el("div", "", el("b", "", h.name), el("span", "badge gold", "heirloom")),
       el("div", "hint", `in ${h.room}`), el("div", "truth", `${h.line.join(" → ")} → ${h.to.join(", ") || "nobody living"}`))))
       : el("p", "empty", "Nothing has been left to anyone yet."),
+    ...(which === now ? [...songbook(c, songs), ...walls(c, v.walls ?? [])] : []),
   ];
 }

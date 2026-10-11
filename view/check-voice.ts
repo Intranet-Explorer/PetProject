@@ -1,6 +1,6 @@
 // Self-check for the voice's plans: node check-voice.ts   (no browser, no sound)
 import assert from "node:assert/strict";
-import { hash, news, planSound, planSpeech, syllables, voiceOf } from "./src/voice-plan.ts";
+import { hash, news, planSong, planSound, planSpeech, semitone, syllables, voiceOf } from "./src/voice-plan.ts";
 import type { Seen, VoiceInput } from "./src/voice-plan.ts";
 
 const genome = { roundness: 0.72, stretch: 1.075, wobble: 0.2, hue: 31, saturation: 0.6, pattern: "speckle",
@@ -97,5 +97,23 @@ const more = news(first.seen, snap({ moments: [{ n: 1, kind: "made", pet: "p1", 
   { n: 3, kind: "power", pet: null, room: null }, { n: 4, kind: "death", pet: "p1", room: "r11" }, { n: 5, kind: "season", pet: null, room: null }] }));
 assert.deepEqual(more.sounds.map((x) => [x.kind, x.pet, x.room]), [["cry", "p2", "r10"], ["last", "p1", "r11"]]);
 assert.deepEqual(more.house, [{ kind: "powerdown", room: null }]);
+
+// SPEC-v3.1 §3.4: a song is the singer's own voice holding the notes of a five-note scale; each one sung is heard once
+assert.deepEqual(["low do", "low la", "do", "re", "mi", "so", "la", "high do", "high la"].map(semitone), [-12, -3, 0, 2, 4, 7, 9, 12, 21]);
+const tune: [string, number][] = [["mi", 0], ["so", 0], ["la", 1], ["high do", 0]], sung = planSong(tune, pet({ stage: "adult" }));
+assert.ok(sung.tones.length === 4 && sung.tones.every((n) => n.f0 === n.f1));                                   // held, not bent
+assert.ok(near(sung.tones[0].f0, base("adult") * 2 ** (4 / 12)) && near(sung.tones[3].f0 / sung.tones[0].f0, 2 ** (8 / 12)));   // "do" is where it speaks
+assert.ok(near(sung.tones[2].dur, 2 * sung.tones[0].dur) && sung.tones.every((n, i) => i === 0 || n.at >= sung.tones[i - 1].at + sung.tones[i - 1].dur));   // a long note is twice a short one
+assert.ok(near(planSong(tune, pet({ stage: "child" })).tones[0].f0 / sung.tones[0].f0, 520 / 330));             // the same song, higher in a child
+assert.ok(planSong(tune, pet({ stage: "elder" })).length > sung.length && sung.timbre.wave === voiceOf(pet({ stage: "adult" })).timbre.wave);
+const quiet = news(null, snap({ sung: [{ tick: 9, by: "p1", song: "s1", room: "r11" }], radio: { said: [{ tick: 8, room: "r11", source: "weather", text: "rain" }] } }));
+assert.ok(quiet.sing.length === 0 && quiet.heard.length === 0);                                                // old news on the first look
+const later = snap({ sung: [{ tick: 9, by: "p1", song: "s1", room: "r11" }, { tick: 10, by: "p2", song: "s1", room: "r11" }, { tick: 10, by: "music box", song: "s2", room: "r11" }],
+  radio: { said: [{ tick: 8, room: "r11", source: "weather", text: "rain" }, { tick: 10, room: "r11", source: "", text: "" }] },
+  pets: [{ id: "p1", room: "r11", said: { text: "♪ the cellar song", tick: 10, song: "s1" } }] });
+const heard = news(quiet.seen, later);
+assert.deepEqual([heard.sing.map((x) => x.by), heard.heard.map((x) => x.text), heard.speak], [["p2", "music box"], [""], []]);   // each once, static too; a song is not also babbled
+assert.ok(news(heard.seen, later).sing.length === 0 && news(first.seen, snap()).sing.length === 0);            // not again; and a recording without the new fields is fine
+assert.equal(news(first.seen, snap({ moments: [{ n: 2, kind: "arrival radio", pet: null, room: "r00" }] })).house[0].kind, "tuning");   // a discovery has its own sound
 
 console.log("voice check ok");

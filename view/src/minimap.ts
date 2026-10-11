@@ -37,7 +37,9 @@ export function drawMap(box: HTMLElement, s: Snap, viewed: string, chosen: strin
     const spot = (pos: number[]) => [x + 9 + (pos[0] / (s.size[0] - 1)) * (CW - 18), y + 22 + (pos[1] / (s.size[1] - 1)) * (CH - 29)];
     for (const c of s.creatures.filter((c) => c.room === r.id)) {
       const [px, py] = spot(c.pos);
-      g.append(svg("path", { d: `M${px} ${py - 4}l4 4-4 4-4-4Z`, fill: "#17231f" }, svg("title", {}, `a ${c.kind}`)));
+      const owner = s.pets.find((p) => p.id === c.tame);   // somebody's animal is in its pet's colour (SPEC-v3.1 §4.4)
+      g.append(svg("path", { d: `M${px} ${py - 4}l4 4-4 4-4-4Z`, fill: owner ? `hsl(${owner.genome.hue} ${Math.round(owner.genome.saturation * 100)}% 52%)` : "#17231f", stroke: "#17231f", "stroke-width": owner ? 1 : 0 },
+        svg("title", {}, c.name ?? `a ${c.kind}`)));
     }
     for (const p of s.pets.filter((p) => p.room === r.id && !(p.stage === "dead" && p.buried))) {
       const [px, py] = spot(p.pos), cls = `pet${p.id === chosen ? " chosen" : ""}`;
