@@ -916,3 +916,43 @@ SPEC-v3.2, built in the worktree beside v3.1 and deployed with it in one restart
 - **A paused engine is now read-only**: the house is brought up to date in memory so the view can draw it and
   nothing is written, not the house, not a pet's files, not a table in its log; and a visitor's command to a
   paused house is refused. The self-check hashes every file of a house before and after opening it this way.
+
+### More added before the deploy (Tyler, 11 October)
+
+- **A door come unstuck is told.** When a draught lets go of a door, the pets in the room on each side are
+  told "the west door has come unstuck" (one that is asleep, when it wakes). Nothing told them before, and
+  Quiet sat for hours in the workshop, which has one door, believing it shut. Its beliefs are left alone. At
+  the first start under this code the engine also tells of every draught of the last two world days whose
+  door is free now, so Quiet hears it.
+- **Real weather is on** (`[weather] real = true`): once an hour the engine asks Open-Meteo what the sky is
+  over the Twin Cities (§6.6, built in v3 and left off). It is on for a house on a real clock, which the
+  living one is; the turbo and test profiles (`showcase`, `viewdev`, `v31check`) turn it off, because their
+  clocks are not the real one and their checks should not depend on the weather outside; and a paused house
+  never asks.
+- **The v3.1 branch is pushed** to the private repository as a backup, and main after the merge.
+
+### The cold readings (§10.3), and what they changed
+
+Three readers who had seen nothing of the build looked at the page in turn, wrote down what they could tell
+from each screenshot before looking anything up, and then checked themselves against the page's own data.
+The spec asks for one reading and one repeat; the third was to check the fixes made after the second.
+
+- **First reading** (24 views): what room it was, 24 of 24; what every creature was doing, 13 of 17; how it
+  felt, 17 of 17 from the cards and 0 of 17 from the room; what every object was, 0 of 24. It read a mother
+  and child swapped because a thought bubble sat nearer the wrong one, saw two pets drawn on one spot, and
+  took chalk for feathers and clay for potatoes. Changed: every bubble has a tail to its owner and the
+  owner's name; pets stand side by side; mood shows in the body (the sad, sitting and happy frames); bits
+  are smaller than made things; everything drawn has a hover card; a power cut darkens made lights too; the
+  drawer no longer squeezes the room.
+- **Second reading** (37 views): rooms 37 of 37; doing 24 of 28; feeling 25 of 25 from the cards; every
+  object 1 of 37. "The page does not pass the ten-second test": loose things and made things could not be
+  named without hovering, the book read as a crate, the music box as a chest, the memorial as a metronome,
+  and a death was not in the headline. Changed: **when a room comes into view everything in it is named for
+  eight seconds** (a made thing by its kind, a fixture by its name, one label for each kind of bit), and a
+  Names button holds the labels on. This departs from §3.3 ("object names are not drawn permanently") only
+  as far as §0's test needs: they are not permanent, and they are the kind, not the pet's own name for the
+  thing. Also: made things carry a pip in their maker's family colour; the book, music box, hot pipe, rock,
+  sun shaft, memorial and sculpture were redrawn; the five mood faces became bold signs; a stone is always
+  labelled and nothing is drawn over it; a death, a birth, an arrival or a storm is in the headline for a
+  while; a storm shows on window glass in every room that has any; cards say what a pet is doing and what it
+  wants on separate lines.
