@@ -285,7 +285,7 @@ async def main():
         C, was = cfg["effects"]["company"], dict(egg["needs"])
         rate = lambda: next(e["rate"] for e in physics.effects(h, cfg, egg) if e["tag"] == "company")
         egg["needs"]["company"] = C["presence_to"] + 5
-        assert rate() == C["together"]
+        assert rate() == C["together"] * (0.5 + egg["temper"]["sociable"])
         egg["needs"]["company"] = C["presence_to"] - 5
         assert rate() == C["near"]
         egg["needs"]["curiosity"] = 10

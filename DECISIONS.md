@@ -461,4 +461,10 @@ The first run is kept as `data.showcase-1`. Diagnosis from its log, and the chan
   it is back at 0.3 with the smaller gains kept. And the pull toward an untried door only looked at the room
   the pet was in; a bored pet in a room with none now thinks of the nearest room it knows that has one, and
   which way that is.
+- **One number was changed while the second run was going, at the start of world day 11**, and the engine
+  restarted on the same house. Closeness past what presence gives was set to slip at 0.03 per 10 s, which in
+  real seconds is five points a world day on the showcase clock: the second-generation pet, which talks and
+  nuzzles a good deal, was back at 95 or more for 66% of its steps. It now slips at 0.08 times the same
+  sociable factor as being alone (0.12 for the most sociable, 0.06 for the least), so thirty points of
+  closeness last a sociable pet about forty minutes without a word.
 

@@ -79,7 +79,7 @@ chase = { energy = -2.0, curiosity = 2.0 }
 # alone (times how sociable it is), and while the visitor is looking in
 # Being in a room with someone lifts company only as far as `presence_to`; past that it slips by `together` unless
 # something passes between them (a word, a gift, a lean).
-company = { near = 0.15, room = 0.05, creature = 0.03, friend = 0.1, alone = -0.05, visitor = 0.05, presence_to = 65, together = -0.03 }
+company = { near = 0.15, room = 0.05, creature = 0.03, friend = 0.1, alone = -0.05, visitor = 0.05, presence_to = 65, together = -0.08 }
 stone = { company = 3.0, comfort = 1.0 }   # touching the stone of one of its own
 offer_seconds = 300       # an offer nobody takes lapses after this
 reply_seconds = 1500      # speech answered within this counts as a reply (Lab): about twenty thoughts

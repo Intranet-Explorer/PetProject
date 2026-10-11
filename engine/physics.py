@@ -34,7 +34,8 @@ def effects(house, cfg, pet):
     visited = house.get("visitor_room") == pet["room"] and (house["tick"] - house["visitor_last"]) * cfg["clock"]["tick_seconds"] <= 30
     if others:   # presence alone only goes so far; the rest has to pass between them
         close = any(dist(pet["pos"], o["pos"]) <= 3 for o in others)
-        out.append(effect("company", "company", C["together"] if pet["needs"]["company"] >= C["presence_to"] else C["near"] if close else C["room"], None, False))
+        fades = C["together"] * (0.5 + T["sociable"])   # closeness slips, sooner for a sociable pet, as being alone does
+        out.append(effect("company", "company", fades if pet["needs"]["company"] >= C["presence_to"] else C["near"] if close else C["room"], None, False))
     elif about:
         fed = any(pet["trust"].get(cr["kind"], 0) >= 1 for cr in about)
         out.append(effect("company", "company", C["friend"] if fed else C["creature"], None, False))
