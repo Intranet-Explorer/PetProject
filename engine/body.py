@@ -2,10 +2,13 @@
 is not carrying out something it decided picks the best activity for the moment from activities.toml and does it:
 short, visible and real (tidying moves things, eating empties the bowl). The mind still decides everything that
 belongs to the pet's story; the body only fills the time in between, in character."""
-from . import actions, feel, order, songs, things
+from . import actions, feel, order, songs, story, things
 from .world import LONG_AGO, STAGES, add_event, beside, dist, free_tile, here, label, relation, rnd, ticks
 
 URGENT = {"visitor", "woke", "hatched", "low", "spoken", "event"}   # what stops it in its tracks (as it hurries a thought)
+# what a finished activity is to whoever is watching: the same words the steps a mind decides use, where there is one
+ACT = {"inspect": "look", "play": "use", "eat": "eat", "stone": "use", "go": "go", "tidy": "put_away", "gather": "gather", "fiddle": "fiddle",
+       "tend": "tend", "dance": "dance", "babble": "babble", "nap": "nap", "listen": "listen", "watch": "watch"}
 COUNT = ["", "", "two", "three", "four", "five", "six", "seven", "eight", "nine"]
 
 
@@ -220,9 +223,13 @@ def finish(mind, now, cut=False):
     done = not cut and now["began"] is not None
     name = actions.norm(now.get("what")) if now.get("what") else None
     news = {p["id"]: list(p["news"]) for p in h["pets"].values() if "news" in p}   # a body is never news to anyone: nobody is asked to think about it
+    act = None
     try:
         if done:
             do, o = now["do"], room["objects"].get(name)
+            if do in ACT:   # numbered like any finished step, so the view plays it once (and sounds what sounds: §4)
+                act = story.act_of(h, pet, {"type": ACT[do], "door" if do == "go" else "target": now.get("what"), "to": now.get("who")})
+                act.update(type=ACT[do], body=now["name"], loud=bool(o and ((things.prop(cfg, o).get("loud") if "made" in o else o.get("fix", {}).get("loud")))))
             if do == "inspect" and o is not None:
                 _, fx, key = actions.look(h, cfg, pet, {"target": name})
             elif do in ("play", "eat", "stone") and o is not None and not ("made" in o and things.prop(cfg, o).get("food")):
@@ -264,6 +271,8 @@ def finish(mind, now, cut=False):
             fx.pop("scale", None)
             actions.bump(pet, cfg, {n: v for n, v in fx.items() if n in pet["needs"]})
             did = say(cfg, h, pet, now, "did", where)
+            if act:
+                story.acted(h, cfg, pet, act, True)
     except Exception:   # a body's mistake must never stop a pet: it just did not do that
         import logging
         logging.exception("body activity %s failed for %s", now["name"], pet["id"])
