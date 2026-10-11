@@ -629,3 +629,21 @@ The first run is kept as `data.showcase-1`. Diagnosis from its log, and the chan
   cited the cushion on their first day, neither made a belief of it or passed it on, and nothing in their
   days contradicted it. So: changed by the first generation after its own nights, without the pet ever
   noticing a contradiction, then fell out.
+
+### Tyler's decision on the fourth run (11 October, 11:10, while it was running)
+
+Given before the run's result was known, and recorded here in his words as I read them. It replaces §12.2's
+"change the design … and run again" for this run, and it is his departure, not mine.
+
+- **There is no fifth run**, whatever the fourth shows.
+- If the fourth run passes, it is the showcase.
+- If it falls short only for want of time (too few generations by 21:59) or by a small margin on a threshold
+  (such as the third run's 11.3% against 10%), it is treated as passing, **the third and fourth runs together
+  are the evidence**, and SHOWCASE.md says exactly that.
+- Only a real defect stops it: a crash, errors, something broken on the screen, or a criterion clearly
+  failed. Then the defect is fixed, not the pets' behaviour.
+- Either way the real lineage starts tonight.
+
+What this does not change: the fourth run is still left alone until it stops by the rule above, a reader
+who has not seen my account still grades it against the eight criteria before I write anything, and
+SHOWCASE.md reports each criterion as it measured, with no figure rounded toward the bar.
