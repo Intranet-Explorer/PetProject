@@ -244,6 +244,10 @@ def culture(db, pets, hatched, day):
     plain = ordinary_words(other) - before
     house_words = engine_words() | plain
     print("   (set aside as everyday words: %d that another family on this engine, in %s, also used%s)" % (len(plain), other.name, "" if plain else "; THAT RUN IS MISSING, so everyday words are counted as the family's"))
+    # A pet's name is not a word of the family's each time someone says who is in the room: "Twine is tired" is taken
+    # out, "the twine ring" stays. ponytail: by capital letter, so the word at the start of a sentence goes with the name.
+    names = sorted({p["name"] for p in pets.values() if p["name"]}, key=len, reverse=True)
+    unnamed = lambda t: re.sub(r"\b(%s)\b" % "|".join(map(re.escape, names)), " ", t or "") if names else (t or "")
     said = {}   # pet -> [(tick, kind, text)] of everything it thought, said or wrote
     for sql, kind in (("SELECT pet, started tick, thought || ' ' || intention text FROM intentions", "thought"),
                       ("SELECT from_pet pet, tick, text FROM social WHERE kind IN ('speak','tell')", "said"),
@@ -251,7 +255,7 @@ def culture(db, pets, hatched, day):
                       ("SELECT pet, tick, statement text FROM beliefs WHERE op IN ('write','revise')", "belief"),
                       ("SELECT pet, tick, json_extract(action,'$.recipe.name') text FROM steps WHERE kind IN ('make','combine') AND reason IS NULL", "name")):
         for r in db.execute(sql):
-            said.setdefault(r["pet"], []).append((r["tick"], kind, r["text"] or ""))
+            said.setdefault(r["pet"], []).append((r["tick"], kind, unnamed(r["text"])))
     # A word is a pet's when it is in three of its thoughts, sayings or names (a message saved again night after night,
     # or a belief written twice, is not three uses). When it first appeared anywhere counts every kind of text.
     uses, start = {}, {}   # pet -> word -> uses; (pet, word) -> the tick it first used it
@@ -281,7 +285,7 @@ def culture(db, pets, hatched, day):
             p["label"], p["gen"], len(mine), 100 * len(took) / n, 100 * len(coined) / n, 100 * len(heard) / n,
             100 * sum(mine[w] for w in took) / total, 100 * sum(mine[w] for w in coined) / total, 100 * sum(mine[w] for w in heard) / total))
         print("      inherited: %s\n      coined: %s\n      picked up: %s\n      coined and used by a descendant: %d of %d (%s)" % (top(took), top(coined), top(heard), len(kept), len(coined), top(kept)))
-    thoughts = {p["pet"]: [words(r["thought"]) for r in db.execute("SELECT thought FROM intentions WHERE pet=?", (p["pet"],))] for p in hatched}
+    thoughts = {p["pet"]: [words(unnamed(r["thought"])) for r in db.execute("SELECT thought FROM intentions WHERE pet=?", (p["pet"],))] for p in hatched}
     common = sorted({w for u in uses.values() for w in u}, key=lambda w: -sum(u.get(w, 0) for u in uses.values()))[:10]
     print("\n   share of each pet's thoughts using the family's ten commonest words:\n   %-15s %s" % ("", " ".join("%9s" % w[:9] for w in common)))
     for p in hatched:
