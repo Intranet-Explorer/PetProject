@@ -19,7 +19,7 @@ export type Who = { id: string; name: string; family: number; selected: boolean;
 /** A short plain name for a thing in the room, shown for a moment when the room comes into view (or held on).
  *  `rect`: the thing on screen (kept up to date by the room). `pri`: lower is kept first when there is no room for all.
  *  `always`: it stays, faintly, when the others have gone (a memorial stone). */
-export type Tag = { key: string; text: string; rect: Rect; pri: number; always?: boolean };
+export type Tag = { key: string; text: string; rect: Rect; pri: number; always?: boolean; until?: number };   // `until`: it shows until then whatever else (a newcomer's "just hatched")
 
 const INK = "#2b2233", PAPER = "#fffdf2", ACCENT = "#ffb347";
 export const FAMILY: Record<number, string> = { 1: "#1f7a8c", 2: "#a8468a" };   // each family's colour (SPEC-v3.1 §7.4); the page's style has the same two
@@ -139,7 +139,7 @@ class Card {
     this.s.destroy();
   }
 }
-type Entry = { who: Who; plate: Card; cap: Card; dots: Card; say: Card; link: Graphics; linkFor: Card | null; mood: Sprite; face: Rect; nub: Graphics };
+type Entry = { who: Who; plate: Card; cap: Card; dots: Card; say: Card; link: Graphics; linkFor: Card | null; mood: Sprite; face: Rect; nub: Graphics; word: Card; wordUntil: number };
 type Body = Rect & { id: string };
 
 export class Labels {
@@ -150,7 +150,7 @@ export class Labels {
   private entries = new Map<string, Entry>();
   private box: { card: Card; link: Graphics; key: string } | null = null;
   private tip: { card: Card; at: number[] } | null = null;
-  private tags = new Map<string, { tag: Tag; card: Card; fits: boolean }>();
+  private tags = new Map<string, { tag: Tag; card: Card; fits: boolean; lead: Graphics }>();
   /** Are the things' names showing just now (the room says so every frame). */
   naming = false;
   /** Places on screen that plates, bubbles and faces keep off (memorial stones). */
@@ -171,17 +171,23 @@ export class Labels {
       for (const k of [e.plate, e.cap, e.dots, e.say]) k.destroy();
       e.link.destroy();
       e.nub.destroy();
+      e.word.destroy();
       e.mood.destroy();
       this.entries.delete(id);
     }
     for (const w of who) {
       let e = this.entries.get(w.id);
       if (!e) {
-        e = { who: w, plate: new Card(), cap: new Card(), dots: new Card(), say: new Card(), link: new Graphics(), linkFor: null, mood: new Sprite(), face: { x: 0, y: 0, w: 0, h: 0 }, nub: new Graphics() };
+        e = { who: { ...w, mood: null }, plate: new Card(), cap: new Card(), dots: new Card(), say: new Card(), link: new Graphics(), linkFor: null, mood: new Sprite(), face: { x: 0, y: 0, w: 0, h: 0 }, nub: new Graphics(), word: new Card(), wordUntil: 0 };
+        this.cards.addChild(e.word.s);
         this.entries.set(w.id, e);
         this.cards.addChild(e.mood, e.plate.s, e.dots.s, e.cap.s, e.say.s);
         this.links.addChild(e.link, e.nub);
         e.dots.set("dots" + F, F, dotsCanvas);
+      }
+      if (w.mood && w.mood !== e.who.mood) {   // a sign that has just appeared says in a word what it means, for a few seconds
+        e.word.set(w.mood + F, F, () => { const t = plain(w.mood!), [c, x] = canvas(measure(t) + 6, 11); frame(x, c.width, c.height, PAPER, INK); draw(x, [t], 3, 1, { color: INK }); return c; });
+        e.wordUntil = performance.now() + 6000;
       }
       e.who = w;
       const color = w.faded ? "#6d6875" : FAMILY[w.family] ?? FAMILY[1], tab = w.tab ? { name: w.name, color } : undefined;
@@ -214,10 +220,10 @@ export class Labels {
 
   /** The names of the things in the room (see Tag). Call again whenever the set of things changes. */
   name(list: Tag[]) {
-    for (const [key, t] of this.tags) if (!list.some((n) => n.key === key)) { t.card.destroy(); this.tags.delete(key); }
+    for (const [key, t] of this.tags) if (!list.some((n) => n.key === key)) { t.card.destroy(); t.lead.destroy(); this.tags.delete(key); }
     for (const tag of list) {
       let t = this.tags.get(tag.key);
-      if (!t) { this.tags.set(tag.key, (t = { tag, card: new Card(), fits: false })); this.cards.addChildAt(t.card.s, 0); }
+      if (!t) { this.tags.set(tag.key, (t = { tag, card: new Card(), fits: false, lead: new Graphics() })); this.cards.addChildAt(t.card.s, 0); this.links.addChild(t.lead); }
       t.tag = tag;
       t.card.set(tag.text + this.F, this.F, () => tagCanvas(tag.text));
     }
@@ -240,23 +246,29 @@ export class Labels {
     // bearing has to say it alone. It nods a little.
     for (const [id, e] of this.entries) {
       const b = bodies.get(id), w = (e.mood.texture.width || 16) * K, h = (e.mood.texture.height || 15) * K, nub = e.nub.clear();
+      const said = !!e.who.mood && now < e.wordUntil, extra = said ? e.word.w + this.F : 0, W = w + extra;   // the sign, and for a moment its word beside it
+      let left = false;
       e.face.w = 0;
       if (b && e.who.mood) for (const bare of [true, false]) {   // over bare floor if there is such a place; else over a thing rather than not at all
-        for (const [x, y] of [[b.x + b.w - K, b.y - 7 * K], [b.x + K - w, b.y - 7 * K], [b.x + b.w / 2 - w / 2, b.y - h - K], [b.x + b.w, b.y + b.h - h], [b.x - w, b.y + b.h - h]]) {
-          const r = { x, y: Math.max(room.y, y), w, h };
-          if (r.x < room.x || r.x + w > room.x + room.w || hit(r, { x: b.x + K, y: b.y + K, w: b.w - 2 * K, h: b.h - 2 * K }) || this.keepOff.some((k) => hit(k, r))) continue;
+        for (const [x, y, onLeft] of [[b.x + b.w - K, b.y - 7 * K, 0], [b.x + K - W, b.y - 7 * K, 1], [b.x + b.w / 2 - w / 2, b.y - h - K, 0], [b.x + b.w, b.y + b.h - h, 0], [b.x - W, b.y + b.h - h, 1]]) {
+          const r = { x, y: Math.max(room.y, y), w: W, h };
+          if (r.x < room.x || r.x + W > room.x + room.w || hit(r, { x: b.x + K, y: b.y + K, w: b.w - 2 * K, h: b.h - 2 * K }) || this.keepOff.some((k) => hit(k, r))) continue;
           let free = !bare || !this.things.some((t) => hit(t, r));
           for (const [other, ob] of bodies) if (other !== id && hit(r, ob)) free = false;
           for (const o of this.entries.values()) if (o !== e && o.face.w && hit(r, o.face)) free = false;
-          if (free) { [e.face.x, e.face.y, e.face.w, e.face.h] = [r.x, r.y, w, h]; break; }
+          if (free) { [e.face.x, e.face.y, e.face.w, e.face.h, left] = [r.x, r.y, W, h, !!onLeft]; break; }
         }
         if (e.face.w) break;
       }
+      const fx0 = e.face.x + (left ? extra : 0);   // where the sign itself is, within the room it and its word take
       e.mood.visible = e.face.w > 0;
       e.mood.scale.set(K);
-      e.mood.position.set(Math.round(e.face.x), Math.round(e.face.y));
-      if (b && e.face.w) {   // a small tail from the face to the head it belongs to
-        const hx = b.x + b.w / 2, hy = b.y + 2 * K, fx = clamp(hx, e.face.x + 2 * K, e.face.x + w - 2 * K), fy = clamp(hy, e.face.y + 2 * K, e.face.y + h - K);
+      e.mood.position.set(Math.round(fx0), Math.round(e.face.y));
+      e.word.want = said && e.face.w ? 1 : 0;
+      e.word.ease(dt);
+      e.word.s.position.set(Math.round(left ? e.face.x : fx0 + w + this.F), Math.round(e.face.y + (h - e.word.h) / 2));
+      if (b && e.face.w) {   // a small tail from the sign to the head it belongs to
+        const hx = b.x + b.w / 2, hy = b.y + 2 * K, fx = clamp(hx, fx0 + 2 * K, fx0 + w - 2 * K), fy = clamp(hy, e.face.y + 2 * K, e.face.y + h - K);
         for (const k of [0.45, 0.8]) nub.rect(Math.round((fx + (hx - fx) * k) / K) * K - K, Math.round((fy + (hy - fy) * k) / K) * K - K, 2 * K, 2 * K);
         nub.fill(0x2b2233);
       }
@@ -283,9 +295,15 @@ export class Labels {
     }
     for (const t of this.tags.values()) {   // names: on for a moment, or held; a stone keeps its own, faintly
       const k = t.card, r = t.tag.rect;
-      k.want = !t.fits ? 0 : this.naming ? 1 : t.tag.always ? 0.72 : 0;
+      k.want = !t.fits ? 0 : this.naming || now < (t.tag.until ?? 0) ? 1 : t.tag.always ? 0.72 : 0;
       k.ease(dt);
       k.s.position.set(Math.round(clamp(r.x + r.w / 2 + k.dx, room.x, Math.max(room.x, room.x + room.w - k.w))), Math.round(clamp(r.y + k.dy, room.y, Math.max(room.y, room.y + room.h - k.h))));
+      const lead = t.lead.clear(), at = { x: k.s.x, y: k.s.y, w: k.w, h: k.h };
+      if (k.alpha > 0.3 && gap(at, r) > 3 * this.F) {   // set a little way off: a thin line back to the thing it names
+        const F = this.F, tx = clamp(at.x + at.w / 2, r.x + r.w * 0.25, r.x + r.w * 0.75), ty = clamp(at.y + at.h / 2, r.y + r.h * 0.25, r.y + r.h * 0.75), ax = clamp(tx, at.x, at.x + at.w), ay = clamp(ty, at.y, at.y + at.h);
+        for (let i = 0, n = Math.max(1, Math.ceil(Math.hypot(tx - ax, ty - ay) / F)); i <= n; i++) lead.rect(Math.round((ax + ((tx - ax) * i) / n) / F) * F, Math.round((ay + ((ty - ay) * i) / n) / F) * F, F, F);
+        lead.fill({ color: 0x2b2233, alpha: k.alpha });
+      }
     }
     if (this.tip) {
       const k = this.tip.card;
@@ -412,16 +430,19 @@ export class Labels {
       e.linkFor = full ? e.cap : small ? e.dots : null;
     }
     // the names of things, the most worth knowing first; what finds no clear place by its thing goes without
+    // Each sits on bare floor or wall by its own thing, never on another thing or another name; in a cluster it goes to
+    // the nearest clear spot and a thin line ties it back. What finds no place goes without, the least important first.
+    const others = [...this.tags.values()].map((t) => t.tag.rect), now2 = performance.now();
     for (const t of [...this.tags.values()].sort((a, b) => a.tag.pri - b.tag.pri)) {
       t.fits = false;
-      if (!this.naming && !t.tag.always) continue;
+      if (!this.naming && !t.tag.always && now2 >= (t.tag.until ?? 0)) continue;
       const r = t.tag.rect, { w, h } = t.card, cx = r.x + r.w / 2, fit = fitter(w, h);
-      const free = (q: Rect) => inside(q) && !placed.some((p) => hit(p, q)) && !solid.some((f) => hit(f, q));
-      let at = [fit(cx - w / 2, r.y + r.h + F), fit(cx - w / 2, r.y - h - F), fit(r.x + r.w + F, r.y + r.h - h), fit(r.x - w - F, r.y + r.h - h), fit(r.x, r.y + r.h + F), fit(r.x + r.w - w, r.y + r.h + F), fit(r.x, r.y - h - F),
-                fit(r.x + r.w - w, r.y - h - F), fit(r.x + r.w + F, r.y), fit(r.x - w - F, r.y), fit(cx - w / 2, r.y + r.h + h + 2 * F)].find(free) ?? null;
-      if (!at && t.tag.always) for (let gy = 0, far = Infinity; gy < 10; gy++) for (let gx = 0; gx < 10; gx++) {   // the one label that must not go missing: the nearest clear place
-        const q = fit(room.x + (gx / 9) * (room.w - w), room.y + (gy / 9) * (room.h - h)), d = gap(q, r);
-        if (d < far && d < 30 * F && free(q)) [at, far] = [q, d];
+      const free = (q: Rect) => inside(q) && !placed.some((p) => hit(p, q)) && !solid.some((f) => hit(f, q)) && !others.some((o) => o !== r && hit(o, q)) && !this.things.some((o) => hit(o, q) && !hit(o, { x: r.x + 1, y: r.y + 1, w: r.w - 2, h: r.h - 2 }));
+      let at: Rect | null = null;
+      for (let ring = 0; ring < 5 && !at; ring++) {   // by the thing first, then further out
+        const dx = ring * (h + 2 * F), dy = ring * (h + F);
+        at = [fit(cx - w / 2, r.y + r.h + F + dy), fit(cx - w / 2, r.y - h - F - dy), fit(r.x + r.w + F + dx, r.y + r.h - h), fit(r.x - w - F - dx, r.y + r.h - h), fit(r.x + r.w + F + dx, r.y - dy), fit(r.x - w - F - dx, r.y - dy),
+              fit(r.x + r.w + F + dx, r.y + r.h + dy), fit(r.x - w - F - dx, r.y + r.h + dy), fit(r.x, r.y + r.h + F + dy), fit(r.x + r.w - w, r.y - h - F - dy)].find(free) ?? null;
       }
       if (!at) continue;
       t.fits = true;
