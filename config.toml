@@ -51,7 +51,7 @@ night_tokens = 8000       # cap on a sleep call, thinking included
 calls_per_hour = 150      # across all pets; routine thoughts slow down to stay under it, urgent ones never wait for it
 
 [effects]                 # what the plain actions do; a pet is told none of the numbers
-drift = { energy = -0.2, comfort = -0.1, curiosity = -0.3 }   # per 10 s, just from being awake
+drift = { energy = -0.2, comfort = -0.1, curiosity = -0.2 }   # per 10 s, just from being awake; curiosity's is at half full, and in proportion elsewhere
 miserable = 0.4           # how much of the interest in a thing is left to a pet that is miserable
 cozy = 0.35                # comfort per 10 s beside a bed, a blanket, a rug
 restless = -0.3           # comfort per 10 s while bored, twice it while restless: staying put is not free

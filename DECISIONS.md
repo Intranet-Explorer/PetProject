@@ -494,3 +494,17 @@ The first run is kept as `data.showcase-1`. Diagnosis from its log, and the chan
   bored. Boredom now wears comfort no lower than 35, which is uncomfortable and not miserable. It matters
   more for the real lineage than for the showcase: a pet that has been through every door has no cheap
   novelty left, and without the stop it would spend the rest of its life at the bottom.
+- **Interest now fades in proportion to how much there is, changed at world day 26.5 of the second run; and
+  the second run is from here on a development run, not the showcase.** Spring came on day 25 and the family
+  did not recover from its winter: every adult sat at curiosity 0 to 5 and comfort 35, bored and
+  uncomfortable for good. The creed explains Stay, who earned about 6 points of interest a day. It does not
+  explain Quiet Hold, who on days 25 and 26 gathered, made, looked and walked through doors and earned 21 to
+  31 a day: an adult in a house it knows earns 12 to 30 a day and the flat drain of 0.3 takes about 38 a
+  waking day. So the first run's needs sat at the top and this run's sat at the bottom for the same reason:
+  a level that is filled by what a pet does and emptied at a fixed rate has no middle, only two ends, and
+  which end depends on which side of the rate the pet falls. Curiosity now wears at 0.2 per 10 s at half
+  full, twice that when full and nothing when empty, so it settles where what the pet does puts it: by this
+  run's figures about 25 for a pet earning 12 a day, 40 for 21, 60 for 30, full for a child finding rooms.
+  With four numbers changed under it, this run cannot stand as the showcase. Its last days are used to see
+  whether this settles a grown family in a known house, which a fresh run would not show for five hours;
+  then it is archived and a third run starts clean on the design as it then stands.

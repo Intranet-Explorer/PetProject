@@ -293,6 +293,11 @@ async def main():
         egg["needs"]["comfort"] = was["comfort"]
         egg["needs"]["curiosity"] = 90
         assert not any(e["tag"] == "restless" for e in physics.effects(h, cfg, egg))
+        fade = lambda: next(e["rate"] for e in physics.effects(h, cfg, egg) if e["tag"] == "drift" and e["need"] == "curiosity")
+        egg["needs"]["curiosity"] = 50
+        assert fade() == cfg["effects"]["drift"]["curiosity"], "interest wears off in proportion to how much there is"
+        egg["needs"]["curiosity"] = 100
+        assert fade() == 2 * cfg["effects"]["drift"]["curiosity"]
         egg["needs"]["curiosity"] = keen
         egg["needs"]["company"] = C["presence_to"] + 5
         assert rate() == C["together"] * (0.5 + egg["temper"]["sociable"])

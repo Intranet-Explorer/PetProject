@@ -23,7 +23,9 @@ def effects(house, cfg, pet):
     E, D = cfg["effects"], cfg["effects"]["drift"]
     out.append(effect("drift", "energy", D["energy"] * (1.5 if elder else 1) * (1.3 if pet["weak"] else 1), None, False))
     out.append(effect("drift", "comfort", D["comfort"], None, False))
-    out.append(effect("drift", "curiosity", D["curiosity"], None, False))
+    # Interest wears off faster the keener it is. A flat rate has no middle: a pet that earns a little less than
+    # it loses sits at the bottom for life, and one that earns a little more sits at the top (both showcase runs).
+    out.append(effect("drift", "curiosity", D["curiosity"] * pet["needs"]["curiosity"] / 50, None, False))
     bored = feel_level(pet, "curiosity") - 2   # boredom is the one lack a snug room cannot answer, so it has to cost something
     if bored > 0 and pet["needs"]["comfort"] > E["restless_to"]:   # it makes a pet uncomfortable, never miserable: misery dulls interest, and that would be a trap
         out.append(effect("restless", "comfort", E["restless"] * bored, "you have sat with the same things too long to be easy", False))
