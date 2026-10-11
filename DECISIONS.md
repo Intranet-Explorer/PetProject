@@ -508,3 +508,18 @@ The first run is kept as `data.showcase-1`. Diagnosis from its log, and the chan
   With four numbers changed under it, this run cannot stand as the showcase. Its last days are used to see
   whether this settles a grown family in a known house, which a fresh run would not show for five hours;
   then it is archived and a third run starts clean on the design as it then stands.
+- **The second run was stopped at world day 28.5 and archived as `data.showcase-2`** (seven pets, four
+  generations, three deaths of old age). In its last two days, under the proportional fade, the three adults'
+  curiosity climbed from 6, 17 and 27 to 29, 57 and 39 and was still rising, in the order of what each earned
+  (28, 45 and 23 a day); nobody was "too miserable to take much interest" again; comfort began to come back.
+  So the fade does what it was meant to. What the run is otherwise worth is in FINDINGS.md.
+- **Closeness fades the same way from the third run on.** Having written that a flat rate has no middle, I
+  could not leave the one I had just called too small. Past what presence gives (65), closeness now slips in
+  proportion to how far past it is: 0.3 per 10 s times the sociable factor at 82, twice that at 100, nothing
+  at 65. By the second run's figures a pet whose kin give it 40 points of words and leans a day sits near
+  80, one given 15 near 70, and only one given 80 or more stays near the top.
+- **The second run's founder and its first child fail criterion 1 on one inherited word**: 14.0% and 10.5%
+  of their thoughts, and 53 of the 57 flags are "cost" or "costs". It comes from the v2.5 mother's message
+  to the first v3 egg ("it costs less than either alone"), which the founder made a belief of and its child
+  a habit ("without the cost of making"). §3.4 names "costs", the pets mean by it what §3.4 means, and I have
+  not touched the pattern. It is noted here because the same message starts the third run.

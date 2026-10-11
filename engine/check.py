@@ -299,8 +299,10 @@ async def main():
         egg["needs"]["curiosity"] = 100
         assert fade() == 2 * cfg["effects"]["drift"]["curiosity"]
         egg["needs"]["curiosity"] = keen
-        egg["needs"]["company"] = C["presence_to"] + 5
-        assert rate() == C["together"] * (0.5 + egg["temper"]["sociable"])
+        egg["needs"]["company"] = (100 + C["presence_to"]) / 2
+        assert abs(rate() - C["together"] * (0.5 + egg["temper"]["sociable"])) < 1e-9
+        egg["needs"]["company"] = 100
+        assert abs(rate() - 2 * C["together"] * (0.5 + egg["temper"]["sociable"])) < 1e-9
         egg["needs"]["company"] = C["presence_to"] - 5
         assert rate() == C["near"]
         egg["needs"]["curiosity"] = 10
