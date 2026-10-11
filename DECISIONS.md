@@ -468,3 +468,22 @@ The first run is kept as `data.showcase-1`. Diagnosis from its log, and the chan
   sociable factor as being alone (0.12 for the most sociable, 0.06 for the least), so thirty points of
   closeness last a sociable pet about forty minutes without a word.
 
+- **That change was too small to do what it was for.** At 0.08 a sociable pet loses about twenty points of
+  closeness in a world day on the showcase clock, and its family's words give that back several times over:
+  from day 11 to day 14 the same pet was at 95 or more for every step. I have left it. A pet that spends the
+  whole day among kin that talk to it being full of company is not wrong, and they still talk (46 things
+  said, 19 told, by day 14).
+- **Boredom now costs comfort, changed while the second run was going, at world day 14.4** (same house,
+  engine restarted). What the logs showed: the founder came to believe that making is a drain and named its
+  egg Stay; Stay's project is to stop making and sit with the beetle; its sibling's is "to hold stillness
+  without making". From day 11 to 14 Stay sat in the nursery with energy 96, comfort 98, company 100 and
+  curiosity 27 on average, saying it was restless and that the west door pulled, and staying put because
+  "staying is the final making". The creed is the family's and is not mine to fix. What is mine is that the
+  creed was free: a nursery has a bed, a meal, a rug and kin, so it answers every need but one, and that one
+  did nothing except supply a word. A lack that costs nothing loses to any doctrine, and three generations
+  sitting in one room would fail criteria 6 and 7 for a reason that is the house's and not theirs. So: while
+  a pet is bored its comfort wears at 0.3 per 10 s, and at 0.6 while it is restless, and it is told so ("you
+  have sat with the same things too long to be easy"). Beside a bed that is about level while bored and a
+  slow slide while restless. The family can keep the creed and pay for it, or break it; either is theirs.
+  This is the second number changed inside this run, so generations one and two lived their first days under
+  a different house than the later ones. SHOWCASE.md has to say so wherever it compares them.
