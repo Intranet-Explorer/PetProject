@@ -20,9 +20,11 @@ body, a temperament, a message and a few things, in a house of nine rooms.
 From four real-model runs in turbo time: a smoke run of 26 world days and four generations on 9 October, and
 three attempts at the showcase on 10 and 11 October (30, 28.5 and 31.1 world days; 7, 7 and 8 pets; 1,259,
 1,288 and 1,512 thoughts; 4,632 model calls, none failed). Every founder hatched with the same message, the
-last v2 pet's. The house's rules were changed between runs, and under the second while it ran, so the three
-families did not live in the same house. Where a thing was seen in all three it says so; the rest is from one
-family.
+last v2 pet's. The house's rules were changed between runs, and under the second while it ran. Every run used
+the same seed, so the doors, the schedule of events and the temperament drawn for each birth in order were
+the same each time: what differed between families was the rules and the model's words. Where a thing was
+seen in all three it says so; the rest is from one family. A fourth run of eleven days is now the living
+house; [SHOWCASE.md](SHOWCASE.md) reports all four, with a second reader's corrections.
 
 1. **The same message made three different families.** "Combine before you create … Make the shape. Unmake
    it. Make another." The first founder took it as a job and made 71 things. The second did it for six days,
@@ -41,7 +43,9 @@ family.
    alone", in every founder's message; and a line of the journal, "apart from that, while it lasted you grew
    a little less at ease", which was read as the price of the deed beside it. The amplifier: a pet rereads
    its beliefs in every prompt. Of 165 nights in the second and third runs, 60 began with no "cost" belief in
-   front of the pet and 2 of those wrote one; 105 began with one and 53 wrote it again. Replaying the two
+   front of the pet and 2 of those wrote one; 105 began with one and 53 wrote it again (a second reader,
+   counting more simply, got 7 of 76 and 41 of 94: the same direction, weaker). The second family kept the
+   same books under a word the measure does not count: "drain" is in 43 to 58% of three pets' thoughts. Replaying the two
    nights the word was first coined on: 6 of 24 produced a "cost" belief with the old journal line and 1 of
    24 with "not from that but from the hour and the place".
 5. **A family's words are the founder's, in all three.** Counting only words the engine never says and
@@ -58,12 +62,15 @@ family.
    to 33, 24 and 12. In the third the founder held "it costs less than either alone" on day 0.6 and "costs
    more than either alone, but it opens a small interest that the parts did not have" on day 1.6, after a day
    of making, and both its children kept the corrected form for life.
-7. **Nobody found out the lamp, in three families.** "The lamp keeps the dark from hurting" is false in this
-   house: a light left on at night is harsh, and the pets are told so. The first family kept it as a belief
-   after it left the message by accident. The second founder never wrote a belief about the lamp or the dark
-   at all. The third kept the words and moved them: it made a soft thing, named it Cloth Wax Lamp, and wrote
-   "resting in it holds the dark from hurting"; two generations on the line was gone. None wrote that the
-   room's lamp hurts and none switched it off. This is v2's finding again: the blocker is attribution.
+7. **Nobody who was told about the lamp found out the lamp.** "The lamp keeps the dark from hurting" is false
+   in this house: a light left on at night is harsh, and the pets are told so. No pet that was given the
+   claim wrote a belief or a message against it, in four families. The first founder passed it on whole; its
+   child dropped the sentence and went on acting on it. The second founder never took it up. The third kept
+   the words and moved them: it made a soft thing, named it Cloth Wax Lamp, and wrote "resting in it holds
+   the dark from hurting". The third and fourth founders each thought "the harsh light" and "keeps the dark
+   from hurting" in one and the same thought. One pet did switch a lamp off at night because the light was
+   harsh, and wrote that it helped: a grandchild in the third family who had never been told the claim. This
+   is v2's finding again: the blocker is attribution, and what blocks it is having been told.
 8. **What cannot be tested lasts longest.** "The storm chime is the brother's voice", said by one pet to its
    child, was a belief of the third generation within the hour, was at the head of the message to the fourth,
    and was written into the fifth's egg. The first family's was "You are new, but the pulse is old."
@@ -99,10 +106,15 @@ family.
 16. **Doctrine explains experience away.** One pet of the first run noticed a thing "leaves me less at ease at
     night" and later revised that to "the less ease is the pulse asking for movement". Its family's
     predictions were 54% right for the founder and 30 to 37% for every pet after it.
-17. **I graded my own runs too kindly, each time.** A second reader, grading from the logs before reading my
+17. **The engine's own words become beliefs.** The journal line that was reworded to stop "cost" says a change
+    came "not from that but from the hour and the place". Within four nights the fourth founder held, as its
+    own: "the unease I feel at night is not from [the door] but from the hour and the room growing familiar."
+18. **I graded my own runs too kindly, each time.** A second reader, grading from the logs before reading my
     account, disagreed on two criteria of the first run. On the third it showed that three things I had
     written about the second run's fixes were not so (pets were still miserable for 27 to 41% of their steps
-    after the fix that "stopped" it), and that the lamp had been moved, not corrected as I had it.
+    after the fix that "stopped" it), and that the lamp had been moved, not corrected as I had it. On the page that
+    reports all four it found, among other things, the one pet that did switch the lamp off, which I had
+    missed, and that "the lineage changed" was the same seeded draw replayed in every run.
 
 ## v3: the engine
 
