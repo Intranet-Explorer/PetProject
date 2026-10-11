@@ -677,3 +677,119 @@ and SHOWCASE.md is written from the four runs as they stand. SPEC-v3.1 is then b
 - Tried on a copy of the house for 100 seconds with the real model before the house itself was started: 24
   ticks, three steps taken, no errors.
 - **Not verified:** a night, a birth and a death on the live clock. Every run before this was turbo.
+
+## Part 13: v3.1, things the family can discover
+
+SPEC-v3.1 built into the living house. Tyler was asked for the two things its §0 says to ask: the radio's
+news source (he chose NPR's top stories, beside the forecast and "On this day") and the encyclopedia (he chose
+the edition with pictures, `wikipedia_en-simple_all_maxi_2026-09.zim`, 2.9 GB, from download.kiwix.org).
+
+### How it was built
+
+- **In a separate worktree, not in the folder the house runs from.** The live engine is kept alive by launchd,
+  so a crash would have restarted it on whatever half-written code was in its folder. Everything was written
+  and checked in `../PetProject-v31` on a branch and merged at the deploy.
+- **I stopped the live engine once by mistake**, at about 12:20 on 11 October, with a `pkill` whose pattern
+  matched it as well as the test server I meant. It shut down cleanly, launchd started it again about twenty
+  seconds later, and the house and family were as they had been, less one thought in flight. Test servers are
+  now stopped by their process ids only.
+- **The house is started with `./run.sh start live`**, not `./run.sh start` as §9.3 has it: this family lives
+  on the showcase's world clock (part 12, last entry) and the engine refuses to start it on another.
+
+### Arrivals (§1)
+
+- Counted from the tick the house was first loaded by v3.1 code (`house["v31"]["at"]`). One at a time and in
+  order: a discovery that cannot come yet holds back the ones after it.
+- **None of the new actions is announced with a stage.** A pet that grows into a stage is told what it can now
+  do, and that list is v3's. Chalk, a tune that stays with it, a creature that no longer runs, a book: each
+  tells the pet what it could do when the pet meets it.
+- **Chalk is a bit that never turns up before writing has arrived** (`late = "writing"` in house.toml), then
+  comes in deliveries like any other.
+- **The music box is the nursery's**, the only one in the house. "One night" is taken as: at night, with a pet
+  awake somewhere. Only pets awake in the nursery hear the tune well enough to keep it, so it plays again on
+  later nights until one has. If a day and a half pass with nobody awake at night, it plays by day.
+- **The book waits for the encyclopedia** and, by the one-at-a-time rule, so do the strangers behind it.
+- **A foundling appears in the farthest room the family has found**, never behind a door nobody has tried:
+  the spec allows either, and an egg in a room that does not exist yet would have meant making the room
+  without anyone finding it.
+- `arrivals.force` (§9.2) brings each a twentieth of a world day after the one before.
+
+### Writing (§2)
+
+- A wall's inscription remembers how far along the wall the writer stood, so the view can put it there.
+- **Whose hand**: its own; kin by what they are to it (the five relations the engine knows: parent, child,
+  sibling, grandparent, grandchild); someone living that it knows, by name; the visitor's; otherwise "a hand
+  you don't know". A great-grandparent's hand is one it does not know, as the spec's "long dead".
+- **A scrub names the writing by where it is and how it begins**, and only the (at most three) inscriptions a
+  pet is shown can be named. The writer is told if it is there to see; if not, it finds its words gone when
+  it next comes into the room.
+- "Writing over a faded one restores it" is read as: the same words (alike by the claim tracker's measure) on
+  the same wall or thing.
+- Writing gives a little interest, wearing with repetition like anything else. Not in the spec; without it a
+  pet has no felt reason to write a second time.
+
+### Songs (§3)
+
+- A note is written `"<pitch> <short|long>"`, the pitch one of fifteen: do re mi so la, and each with `low` or
+  `high` before it.
+- **A listener picks a tune up by ear only if it knows no version of it.** Otherwise every hearing would add
+  another variant and a repertoire of eight would fill with one song.
+- **Taught, a pet's own version gives way to the teacher's.** That is what "exactly" has to mean for a pet
+  that already had it by ear.
+- A song bequeathed is the children's at once, exactly, and marked as left to them.
+- How a tune "sounds" (rising, falling, level, turning back on itself; slow, quick, unhurried; low, high) is
+  worked out from the notes. There is no "sad": nothing in five notes says so.
+
+### Taming (§4)
+
+- Trust is per creature and per pet: 2 for food it likes, a little for each minute a pet stays still within
+  three tiles or keeps close to it, less for a pet rushing by, 3 lost to a chase and 1 to a loud thing used in
+  its room. Tame at 6; no longer tame below 3. A creature already fed before taming arrived starts with what
+  its feedings would have earned.
+- **A tame creature that is chased does not leave the house.** It goes to the far corner and thinks the worse
+  of the pet. Wild ones flee as before.
+- **When its pet dies it goes to the child it trusts most**, or failing children to another of the family, and
+  stays tame to them (§4 Why: "stays with the children").
+- **The mouse senses a leak one world minute ahead**: the leak is put off that long when a tame mouse is in
+  the room it will come to. A storm it senses in the last hours of the day before.
+- Creatures now die of age only if some pet has their trust; wild ones still come and go as before.
+- Two creatures of one kind (a parent and its young) answer to the same word in an action until one has a
+  name. `ponytail:` first match wins; name them apart.
+
+### The radio (§5)
+
+- **The forecast's text is written by the engine** from Open-Meteo's numbers (the host v3's real weather
+  uses): it serves no prose. "On this day" is Wikimedia's feed of selected events; the news is NPR's top
+  stories, title and summary.
+- The box is called "dial box" in the house. A pet is never told what it is.
+- It speaks to whoever is awake in its room; next door it is "something talking, too muffled to make out".
+- Each source is asked at most once an hour and only once there is a box in the house. The whole of every
+  reply is kept in `data/radio/fetched.log`.
+- Cleaning also strips quotation marks, so nothing the box says can close the quotation it is shown in.
+
+### The book (§6)
+
+- Searched in the process with `python-libzim`; nothing is served and no socket is opened (checked by
+  running a lookup with sockets disabled).
+- **Titles before full text**: the question's own words are tried as article titles, in order, and only then
+  the book's full-text index. "Why does it rain" finds Rain, not a song called "Why Does My Heart Feel So Bad?".
+- The pictures in the edition Tyler chose are not used by anything.
+
+### Strangers (§7)
+
+- **A family is a mark on a pet (`family`), not a second lineage.** One house, one log, one clock; the second
+  family's founder is generation 1 of its own line.
+- **Before the foundling arrives the house keeps v3's limit of four.** From then on it is five in the house
+  and three of a family. A family already over three when it arrives loses nobody; it lays no more until it
+  is under.
+- A pet of the other family is "a stranger" until the two have been awake in a room together for eight world
+  hours, then "Sol, of the other family". Two unfamiliar strangers in a room are both "a stranger".
+  `ponytail:` first match wins.
+- A foundling's body is drawn fresh from the house's seed and the tick it arrived on.
+
+### The packet (§8)
+
+- The new lines are cut, after v3's own, in the spec's order, and each cut keeps the newest: the clearest
+  inscription, the box's last words, the three songs last sung, the last passage read. The inscription a pet
+  stands in front of has a line of its own that is never cut; what is sung to a pet arrives with what is said
+  to it, which is never cut.

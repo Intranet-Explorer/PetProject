@@ -660,8 +660,9 @@ def arrive_writing(house, cfg):
 
 
 def arrive_songs(house, cfg):
-    box = next((x for x in found(house) if "music box" in x["objects"]), None)
-    if not box or house["clock"]["phase"] != "night":
+    box, v, A = next((x for x in found(house) if "music box" in x["objects"]), None), house["v31"], cfg["arrivals"]
+    overdue = (house["tick"] - v["at"]) / cfg["ticks_per_day"] >= (0.05 if A["force"] else A["songs"]) + 1.5
+    if not box or (house["clock"]["phase"] != "night" and not overdue):   # "one night"; by day only if no night has found anyone awake
         return False
     learned = songs.music_box(house, cfg, box)
     house["v31"].update(box_again=None if learned else box["id"], box_next=house["tick"] + cfg["ticks_per_day"] // 2)

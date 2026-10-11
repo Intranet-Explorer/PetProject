@@ -25,3 +25,9 @@ adult = 3
 [house.events]
 every_hours = 5
 drift_after_days = 3
+
+[arrivals]
+force = true
+
+[radio]
+every_minutes = 1

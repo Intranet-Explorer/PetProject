@@ -1,0 +1,35 @@
+# SPEC-v3.1 §9.2: for checking v3.1 on a COPY of the live house, never on the house itself. The showcase's world
+# in turbo time (so the copy keeps the family's clock), with every arrival forced early and the box speaking often.
+#   PET_PROFILE=v31check PET_DATA=<a copy of data/> PET_PORT=8001 uv run python -m engine.server
+
+[arrivals]
+force = true
+
+[radio]
+every_minutes = 4
+
+[clock]
+day_seconds = 1800        # about 18 thoughts per pet per world day at the usual think rate
+turbo = true
+
+[life]
+egg_minutes = 5
+lifespan_days = 13
+adult_days = 4
+egg_pull_days = 1
+neglect_days = 0.5
+
+[growth]
+child = 1.5
+youngling = 3
+adult = 5
+
+[house.events]            # merged over house.toml: a short life should still meet a few events
+every_hours = 7
+drift_after_days = 6
+
+[sleep]
+think = "low"             # the night's thinking, capped (amendment): a short night must not cost minutes of model time
+
+[model]
+night_tokens = 3000
