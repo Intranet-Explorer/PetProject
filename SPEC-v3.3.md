@@ -7,7 +7,7 @@ v3.1 and v3.2 gave the house new things and a real look. The pets still don't *d
 - **Nothing in the house needs doing.** Needs are the only motive, and things they make pile up in heaps.
 - **Tyler rarely hears them talk.** Speech is rare, and the rooms have gone quiet.
 
-v3.3 makes the pets **always visibly busy** without spending more model calls, by giving each pet a body that acts on its own between thoughts. It adds order (tidying and places to keep things), lets Tyler turn the radio on for them whenever he likes, brings back sound, and fixes what the v3.2 deploy left rough.
+v3.3 makes the pets **always visibly busy** without spending more model calls, by giving each pet a body that acts on its own between thoughts. It adds order (tidying and places to keep things), lets Tyler play music and turn the radio on for them whenever he likes, brings back sound, and fixes what the v3.2 deploy left rough.
 
 This is **Phase A**. Phase B (purpose: crafting by discovery, tools, building, work, mysteries, games) is outlined in §7 so Phase A is built to take it. SPEC-v3, v3.1 and v3.2 still hold. Departures go in DECISIONS.md as **Part 15**.
 
@@ -38,10 +38,10 @@ Commits authored as Intranet-Explorer, short imperative subjects, no co-author t
 - Runs every engine tick (about 2 s). When the pet isn't already doing something, it picks the best **activity** from a menu and does it.
 - Activities are **short** (3–20 s), **animated**, and **real**: they change the world where they should (tidying moves things, gathering fills paws, eating empties the bowl) and are logged, more briefly than a model-chosen step.
 - **Starting menu** (defined in data, `activities.toml`, so Phase B can add more without engine changes):
-  wander · explore a doorway · peek into the next room · inspect a thing · fiddle with a thing · play with a toy (ball, top, bell…) · sit by the window · short nap · stretch / yawn / groom · eat · tidy (pick something up and put it where it belongs, §2) · carry a thing to its place · gather a bit · tend a plant · follow kin · sit with kin · watch or follow a creature · visit a memorial stone · hum or murmur to itself · babble to someone nearby · sing a song it knows
+  wander · explore a doorway · peek into the next room · inspect a thing · fiddle with a thing · play with a toy (ball, top, bell…) · sit by the window · short nap · stretch / yawn / groom · eat · tidy (pick something up and put it where it belongs, §2) · carry a thing to its place · gather a bit · tend a plant · follow kin · sit with kin · watch or follow a creature · visit a memorial stone · hum or murmur to itself · dance (when music plays, §3.1) · babble to someone nearby · sing a song it knows
 - **Scoring**, each tick, for each activity the pet could do now:
   - **needs:** the most urgent need pulls toward what eases it (tired → nap; lonely → sit with kin)
-  - **temperament:** curious → explore and inspect; playful → toys and play; sociable → kin; orderly → tidy (§2.4); bold → doorways
+  - **temperament:** curious → explore and inspect; playful → toys, play and dance; sociable → kin; orderly → tidy (§2.4); bold → doorways
   - **habits** (§1.3)
   - **the mind's current focus** (§1.2): strongly weights what serves it
   - **time of day and weather:** windows at dusk, staying in when it storms
@@ -88,13 +88,23 @@ Commits authored as Intranet-Explorer, short imperative subjects, no co-author t
 
 ---
 
-## 3. The visitor can turn on the radio
+## 3. The visitor's music and radio
 
-**Why:** Tyler wants to put the radio on for the pets whenever he likes. *(Amended 11 Oct: radio only, no music-by-mood controls.)*
+**Why:** Tyler wants to share music and news with the pets whenever he likes, not only after they find the radio, and to switch their radio on for them so they get news updates.
 
+### 3.1 Music
+- A **Music** control in the header: the pack's tracks grouped by mood (calm, lively, mysterious, sad), playing **in the room being viewed** or **through the whole house**, or off.
+- Pets perceive it: *"the visitor is playing lively music"*. Effects (felt, never counted):
+  - calm music eases comfort a little
+  - lively music lifts curiosity and makes play and dancing likelier (a **dance** activity in the body layer)
+  - a song a pet knows gets sung along to
+  - any tune heard long enough can be learned like a song (§3.2 of v3.1), so the visitor's music can end up in the family's songbook and drift down the generations
+
+### 3.2 Radio
 - A **Radio** control in the header: on or off, and what it plays (news, forecast, On this day, or a mix), in the room being viewed.
-- Before the pets have found the radio (v3.1 arrival), this is the visitor's own little radio, set down in the room being viewed. Once they've found theirs, the control switches theirs on or off and pets can still switch it themselves.
-- Pets perceive it like the found radio: quoted, attributed ("the visitor turned the box on"), logged, cleaned with the same blocklist. Listening can ease boredom; a pet may come over to listen, or wander off.
+- **Before** the pets have found their radio (the v3.1 arrival), this is the visitor's own little radio, set down in the room being viewed.
+- **Once they've found theirs**, the control switches **their** radio on or off and chooses what it plays, wherever it is, so Tyler can put the news on for them any time. Pets can still switch it themselves.
+- Pets perceive the radio as before: quoted, attributed ("the visitor turned the box on"), logged, cleaned with the same blocklist. Listening can ease boredom; a pet may come over to listen, or wander off.
 
 ## 4. Sound
 
@@ -103,7 +113,7 @@ Commits authored as Intranet-Explorer, short imperative subjects, no co-author t
 - **Check first:** confirm that a pet's speech plays (babble plus real words) when Tyler watches its room, and whether that broke in v3.2. Pets also speak rarely, so both need fixing.
 - **Pets vocalise far more**, through the body layer, in their genome voices: murmurs while working, hums, chirps of interest, yawns, little laughs at play, greetings when kin arrive, grumbles at clutter, gasps at events. Short, frequent, quiet.
 - **Every room gets an ambient soundscape** at low volume, from the pack's sounds or made in the browser: water and reeds in the pond room, creaks and ticks in the workshop, wind and birds in the garden, drips in the cellar, wind under the eaves in the attic, a warm hum in the greenhouse, a faint resonance in the music room, near-silence in the storeroom, a clock in the nursery. Weather layers on top (rain under open sky, thunder).
-- Room ambience has its own on/off and starts on with sound. The header's existing **Music** button (the pack's background music) stays as it is.
+- The header's **Music** control is the visitor's music (§3.1); room ambience has its own on/off and starts on with sound.
 - **Things that make sound must make sound.** When a pet uses a bell, drum, chime, harp, gong, or any noisy or humming thing, the view plays it: in the room being viewed at full volume, muffled through a door, matching what the pets themselves hear (the music room's sounds carry next door). Right now using an instrument is silent in the view even when another pet "hears ringing through the door".
 
 ---
@@ -119,7 +129,7 @@ Commits authored as Intranet-Explorer, short imperative subjects, no co-author t
 
 ## 6. Packet and budget
 
-- The new lines in the packet: since-you-last-thought (body activities), clutter, the radio, habits. All of these fit under the existing packet budget, with old cut rules applied first.
+- The new lines in the packet: since-you-last-thought (body activities), clutter, music or radio, habits. All of these fit under the existing packet budget, with old cut rules applied first.
 - The body layer runs in the engine with no model calls. If the engine's tick time grows noticeably with 5 pets, profile it and fix it before deploy.
 
 ---
