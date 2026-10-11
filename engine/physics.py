@@ -33,23 +33,24 @@ def effects(house, cfg, pet):
     if snug:
         out.append(effect("cozy", "comfort", E["cozy"], "it is snug here by the %s" % snug, False))
 
-    # company (§7.4): rises near others, falls slowly alone; a sociable pet loses it faster
-    others, C = here(house, pet), cfg["effects"]["company"]
+    # company (§7.4) settles toward what the company at hand gives: another pet in the room lifts it as far as
+    # `presence_to`, a creature it has fed as far as `friend_to`, any creature `creature_to`, and alone it sinks to
+    # `alone_to`. Above that it slips, sooner for a sociable pet and faster the more there is of it. Closeness past
+    # what presence gives slips at `together` wherever the pet is (the rest has to pass between them: a word, a gift,
+    # a lean), so going off alone never keeps it better than staying; below that, being alone wears at `alone`.
+    # (Third run: alone kept closeness twelve times better than staying, and a fed beetle kept the founder at 97.)
+    others, C, have = here(house, pet), cfg["effects"]["company"], pet["needs"]["company"]
     about = [cr for cr in house["creatures"] if cr["room"] == pet["room"]]
     visited = house.get("visitor_room") == pet["room"] and (house["tick"] - house["visitor_last"]) * cfg["clock"]["tick_seconds"] <= 30
-    if others:   # presence alone only goes so far; the rest has to pass between them
-        close = any(dist(pet["pos"], o["pos"]) <= 3 for o in others)
-        # closeness slips, sooner for a sociable pet as being alone does, and faster the more of it there is:
-        # `together` is the rate halfway between what presence gives and full
-        fades = C["together"] * (0.5 + T["sociable"]) * (pet["needs"]["company"] - C["presence_to"]) / ((100 - C["presence_to"]) / 2)
-        out.append(effect("company", "company", fades if pet["needs"]["company"] >= C["presence_to"] else C["near"] if close else C["room"], None, False))
-    elif about:
-        fed = any(pet["trust"].get(cr["kind"], 0) >= 1 for cr in about)
-        out.append(effect("company", "company", C["friend"] if fed else C["creature"], None, False))
-    elif visited:
-        out.append(effect("company", "company", C["visitor"], None, False))
-    else:
-        out.append(effect("company", "company", C["alone"] * (0.5 + T["sociable"]), None, False))
+    fed, P = any(pet["trust"].get(cr["kind"], 0) >= 1 for cr in about), C["presence_to"]
+    to, lift = ((P, C["near"] if any(dist(pet["pos"], o["pos"]) <= 3 for o in others) else C["room"]) if others
+                else (P, C["visitor"]) if visited
+                else (C["friend_to"], C["friend"]) if fed else (C["creature_to"], C["creature"]) if about else (C["alone_to"], 0.0))
+    if have < to:
+        out.append(effect("company", "company", lift, None, False))
+    else:   # each rate is the one halfway up its stretch: `together` between presence and full, `alone` between alone and presence
+        slip = C["together"] * max(0.0, have - P) / ((100 - P) / 2) + C["alone"] * (min(have, P) - to) / ((P - C["alone_to"]) / 2)
+        out.append(effect("company", "company", slip * (0.5 + T["sociable"]), None, False))
 
     # the v2 rules, now physics for anything that gives light (§5 of v2)
     night = c["phase"] == "night"
@@ -123,7 +124,7 @@ def senses(house, cfg, pet, acting=None):
     felt += life.body_feels(house, cfg, pet)
     room = house["rooms"][pet["room"]]
     if len(things.made(room)) >= cfg["make"]["crowded"]:
-        felt.append("this room is crowded with made things")
+        felt.append("this room is crowded with made things: there is no room to make another here unless one is taken apart")
     if pet["spring"]:
         felt.append("there is a spring in your step")
     felt += drawn(house, cfg, pet, room, felt)
@@ -163,7 +164,7 @@ def drawn(house, cfg, pet, room, felt):
                     continue
                 seen.add(rid)
                 there = house["rooms"][rid]
-                if any(x not in pet["rooms"] for x in there["doors"].values()):
+                if any(x not in pet["rooms"] and house["shut"].get("%s|%s" % (rid, d), 0) <= house["tick"] for d, x in there["doors"].items()):
                     out.append("you keep thinking of %s, through the %s door: there is a door there you have never tried" % (there["name"], way))
                     break
                 queue += [(x, way) for x in there["doors"].values() if x in pet["rooms"]]

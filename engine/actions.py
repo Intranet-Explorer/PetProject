@@ -199,6 +199,8 @@ def check(a, house, cfg, pet, mem):
             return None
         if find(house, pet, what)[0] == "bit" and len(pet["carrying"]) < cfg["make"]["carry"]:
             return None   # something lying here: it picks it up to give
+        if tk == "creature" and what in things.mine(house, pet, room):   # it is theirs and it is here: the reason is the creature
+            return "the %s only takes small things you are carrying" % tr["kind"]
         return "you can only give what you carry or a thing of yours that is here"
     if t == "show":
         tk, tr = find(house, pet, a.get("to"))
@@ -222,6 +224,9 @@ def check(a, house, cfg, pet, mem):
             return "nothing to tell"
         return None if kind == "pet" and not ref["sleep"] else "there is nobody awake like that here"
     if t == "lay_egg":
+        name = clean(a.get("name") or "", 16).strip().lower()
+        if name and any((p["name"] or "").lower() == name for p in life.alive(house)):   # two Twines at once: nobody could tell who "Twine said" meant
+            return "there is already one called that in the house: another name, or leave it to them"
         return life.can_lay(house, cfg, pet) or (None if filled(a.get("message")) else "the egg needs your words")
     if t == "bequeath":
         return life.check_bequeath(a, house, cfg, pet, norm)
@@ -513,7 +518,8 @@ def speak(house, cfg, pet, a, mem):
         pet["spoke"] = True
         moment(house, "words", '%s spoke for the first time: "%s"' % (label(pet), text), pet["id"], room["id"])
     name = re.search(r"\bmy name is ([A-Za-z][\w'-]{0,15})", text, re.I)
-    if name and (not pet["name"] or name.group(1).strip().lower() == pet.get("called", "").lower()):
+    if name and (not pet["name"] or name.group(1).strip().lower() == pet.get("called", "").lower()) \
+            and not any((p["name"] or "").lower() == name.group(1).strip().lower() for p in life.alive(house) if p is not pet):
         pet["name"] = name.group(1).strip()
         mem.update_self(name=pet["name"], named_at=house["tick"])
         moment(house, "named", "the little one named itself " + pet["name"], pet["id"], room["id"])
@@ -640,7 +646,8 @@ def accept(house, cfg, pet, off):
         if house.setdefault("nuzzled", {}).get(pair) != today:   # a moment the first time in a day, not every time
             house["nuzzled"] = {k: d for k, d in house["nuzzled"].items() if d == today} | {pair: today}
             moment(house, "nuzzle", "%s and %s nuzzled" % (label(giver), label(pet)), pet["id"], room["id"])
-        worn = pet["times"]["nuzzle " + giver["id"]] > cfg["novelty"]["familiar"]
+        # said once, when it turns: told after every lean it became a law the pets recited (third run: on 65 to 81% of leans)
+        worn = pet["times"]["nuzzle " + giver["id"]] == cfg["novelty"]["familiar"] + 1
         return "you leaned against %s%s" % (handle(house, pet, giver), "; it is familiar now, and eases you less" if worn else ""), gain[pet["id"]], None
     what = off["what"]
     if off["bit"]:

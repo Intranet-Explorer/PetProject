@@ -67,9 +67,13 @@ def changed(deltas):
 
 def result(text, own, meanwhile):
     """A step's result: what happened, how it left the pet, and apart from that what the time itself did."""
-    # a need the step itself moved is not reported twice: "a lot more rested ... apart from that, more tired" reads as nonsense
+    # a need the step itself moved is not reported twice: "a lot more rested ... not from that, more tired" reads as nonsense
     felt, drift = changed(own), changed({n: d for n, d in meanwhile.items() if abs(own.get(n, 0)) < 0.5})
-    return text + ("; you feel " + felt if felt else "") + ("; apart from that, while it lasted you grew " + drift if drift else "")
+    # The separation has to name where the other change came from. "apart from that, while it lasted you grew a little
+    # less at ease" was read as the price of the deed (third run: "Leaning toward Calm Seed costs ease", from a step
+    # that does nothing to ease). Replaying the two nights on which a pet first wrote "cost" into a belief: 6 of 24
+    # with the old words, 1 of 24 with these (DECISIONS, part 12).
+    return text + ("; you feel " + felt if felt else "") + ("; not from that but from the hour and the place, you grew " + drift if drift else "")
 
 
 def near_word(a, b):

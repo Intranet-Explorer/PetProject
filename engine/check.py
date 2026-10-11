@@ -182,7 +182,7 @@ async def main():
         r = await do(eng, pet, {"type": "rest"}, {"type": "observe"})
         assert "sunk into the blanket" in r[0]["feedback"] and r[0]["own"]["comfort"] >= 2, "resting on something soft eases it"
         r = await do(eng, pet, {"type": "rest"}, {"type": "look", "target": "mirror"})
-        assert "apart from that" in r[0]["feedback"] or "rested" in r[0]["feedback"]
+        assert "not from that but from the hour and the place" in r[0]["feedback"] or "rested" in r[0]["feedback"]
         assert "you see yourself" in r[1]["feedback"]
 
         # ---- §6.1 the house ----
@@ -254,6 +254,7 @@ async def main():
         egg = h["pets"][pet["children"][0]]
         assert egg["stage"] == "egg" and egg["name"] == "Sol" and egg["told"][0]["text"].startswith("The lamp is harsh") and egg["gen"] == 2
         assert egg["genome"] != pet["genome"] and egg["temper"] != pet["temper"], "a child's body and temperament are its parent's, changed a little"
+        assert "already one called that" in actions.check({"type": "lay_egg", "name": "sol", "message": "x"}, h, cfg, pet, m.mem), "no two in the house share a name"
         assert r[1]["own"]["company"] > 0 or pet["needs"]["company"] == 100
         assert eng.db.execute("SELECT count(*) FROM claims WHERE kind='message' AND pet != 'before'").fetchone()[0] == 2, "a message is split into claims"
         for _ in range(ticks(cfg, 130)):
@@ -305,6 +306,30 @@ async def main():
         assert abs(rate() - 2 * C["together"] * (0.5 + egg["temper"]["sociable"])) < 1e-9
         egg["needs"]["company"] = C["presence_to"] - 5
         assert rate() == C["near"]
+        # one rule everywhere: alone, closeness never keeps better than it does beside someone, and it sinks no lower than alone gives
+        home, creatures, h["creatures"] = egg["room"], h["creatures"], []
+        empty = next(r for r in h["rooms"] if not any(p["room"] == r for p in h["pets"].values()))
+        for have in range(30, 101, 5):
+            egg["needs"]["company"] = have
+            beside = rate()
+            egg["room"] = empty
+            assert rate() <= min(beside, 0), (have, rate(), beside)
+            egg["room"] = home
+        egg["room"], egg["needs"]["company"] = empty, C["alone_to"] - 1
+        assert rate() == 0, "alone, company sinks to what being alone gives and no further"
+        egg["needs"]["company"] = (C["alone_to"] + C["presence_to"]) / 2
+        assert abs(rate() - C["alone"] * (0.5 + egg["temper"]["sociable"])) < 1e-9
+        h["creatures"] = [dict(creatures[0], room=empty)] if creatures else [{"kind": "beetle", "room": empty}]
+        egg["needs"]["company"] = C["creature_to"] + 20
+        assert rate() < 0, "a creature is company only so far"
+        egg["needs"]["company"] = C["creature_to"] - 1
+        assert rate() in (C["creature"], C["friend"])
+        egg["room"], h["creatures"] = home, creatures
+        # boredom can happen and cannot become misery: the figures a pet took in during the third run were 0.2 to 0.32
+        # of interest per 10 s awake, so a quiet life (0.15) has to settle below "bored" and a busy one (0.36) above "a bit bored"
+        k = -cfg["effects"]["drift"]["curiosity"]
+        assert 50 * 0.15 / k < feel.STEPS[2] and 50 * 0.36 / k >= feel.STEPS[1], "interest has to be able to run low, and to stay up"
+        assert cfg["effects"]["restless_to"] > feel.STEPS[3] + feel.SHIFT / 2, "boredom alone never makes even the most sensitive pet miserable"
         egg["needs"]["curiosity"] = 10
         assert any("door is one you have never been through" in s for s in physics.senses(h, cfg, egg)), physics.senses(h, cfg, egg)
         here_doors, been = h["rooms"][egg["room"]]["doors"], egg["rooms"]

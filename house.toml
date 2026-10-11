@@ -97,7 +97,7 @@ looks = { shape = "ring", color = "green" }
 [rooms.nursery]
 name = "the nursery"
 feel = "a small bright room with a window and a bed"
-hint = "the smell of the room you hatched in"   # what comes under the door before anyone has been through it
+hint = "a smell of clean bedding and warm dust"   # what comes under the door before anyone has been through it
 window = true
 regrow_hours = 6
 bits = { fluff = 3, pebble = 2, wax = 2 }

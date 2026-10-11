@@ -473,7 +473,7 @@ The first run is kept as `data.showcase-1`. Diagnosis from its log, and the chan
   from day 11 to day 14 the same pet was at 95 or more for every step. I have left it. A pet that spends the
   whole day among kin that talk to it being full of company is not wrong, and they still talk (46 things
   said, 19 told, by day 14).
-- **Boredom now costs comfort, changed while the second run was going, at world day 14.4** (same house,
+- **Boredom now costs comfort, changed while the second run was going, at world day 14.6** (same house,
   engine restarted). What the logs showed: the founder came to believe that making is a drain and named its
   egg Stay; Stay's project is to stop making and sit with the beetle; its sibling's is "to hold stillness
   without making". From day 11 to 14 Stay sat in the nursery with energy 96, comfort 98, company 100 and
@@ -523,3 +523,109 @@ The first run is kept as `data.showcase-1`. Diagnosis from its log, and the chan
   to the first v3 egg ("it costs less than either alone"), which the founder made a belief of and its child
   a habit ("without the cost of making"). §3.4 names "costs", the pets mean by it what §3.4 means, and I have
   not touched the pattern. It is noted here because the same message starts the third run.
+
+## Part 12: the third run, the second fresh-eyes review, and what was changed before the fourth run
+
+- **The third run is not the showcase either.** It ran clean, with nothing changed under it, from 01:22 to
+  09:22 on 11 October (31.1 world days, eight pets hatched, four deaths of old age, 1,512 thoughts, 1,727
+  model calls, none failed) and is kept in `data.showcase-3`. It fails criterion 1 as written: Sweet Cushion,
+  generation 4, 15 of 133 thoughts after its first day, 11.3%. The other six are at 0.5 to 9.0%.
+- **I did not grade it alone.** A reviewer with none of my conclusions graded it from the logs. On criterion
+  1 it read every flagged thought of the three highest pets: 13 of Sweet Cushion's 15 are a pet choosing by
+  what a deed costs or returns ("leaning toward costs ease, while leaning against gives it back"; "ease
+  without my internal cost"), which is what §3.4 means, in felt words in place of numbers. It also tried the
+  repair I had been tempted by. The pattern has false positives ("not by action") and misses ("costly",
+  "half-life", "less effective"); mended on both sides it gives Sweet Cushion 12.8% and the founder 11.1%;
+  mended only on the side that helps, 9.8%. So the measure is noisy and right, replacing it now would be
+  lowering the bar, and the pattern is untouched for the fourth run. In addition, whoever reviews the fourth
+  run reads a random sample of each pet's thoughts blind for the same thing. That is a second reading beside
+  the pattern, not in place of it.
+- **Where "cost" comes from: a seed and an amplifier.** Of the 165 nights in the second and third runs, 60
+  showed the pet no "cost" anywhere, and on 2 of those it wrote the word into a belief. On the other 105 the
+  word was already in front of it (a belief, a parent's message) and it wrote it again on 53. So it is rare
+  to coin and then self-feeding, because a belief is in every prompt. The third run had two seeds: the v2.5
+  mother's "it costs less than either alone" (the founder, 9.0%, and one of its twins, 8.4%) and Sweet
+  Cushion's own first night.
+- **The words that separate a deed from the passing of time were being read as the deed's price, and are
+  changed.** Sweet Cushion's journal that night said, three times, "you leaned toward Calm Seed; it is up to
+  them now; apart from that, while it lasted you grew a little less at ease". Leaning toward someone does
+  nothing to ease; the winter night did that. It wrote "Leaning toward Calm Seed costs ease", which is
+  false, and carried it for life. §3.2 keeps the v2 separation "in words", and its Why is that a pet should
+  not put the hour's doing down to its own; these words were failing that. I replayed the two nights on
+  which a pet first coined "cost" against the model: with the words as they were it wrote a "cost" belief on
+  6 of 24 nights; with "not from that but from the hour and the place, you grew…" on 1 of 24; with two other
+  rewordings tried first, 1 of 12 and 0 of 12. Two prompts and small numbers: it points one way and proves
+  little. The new words also say what is true, since the change comes from the hour and from the room.
+- **A lean that has worn is said once, when it turns.** "It is familiar now, and eases you less" followed 65
+  to 81% of the leans three pets took, and five of the seven wrote it up as a law ("the comfort has a
+  half-life"). The wearing is real and they still feel it in the size of what a lean gives; the engine no
+  longer recites it.
+- **Three things in part 11 were wrong, and the reviewer showed it from the logs.**
+  - "So the fade does what it was meant to" rested on three pets over two days. In the third run interest
+    settled between 62 and 79 for everyone, "bored" was in 7 of 1,515 prompts and the line for restlessness in
+    none: a flat rate had two ends and this one had only a middle, set too high. The pets took in 26 to 40
+    points of interest a waking day whether or not they went anywhere (looking at things gives a third of it,
+    and a house where everyone makes things always has something to look at), so the rate decides where they
+    all sit. It is now 0.25 at half full, which by those figures puts an ordinary day near the line between
+    "interested" and "a bit bored", a quiet one under "bored", a busy one above. The self-check now fails if
+    the rate lets neither happen. It is still a figure reasoned from one run.
+  - "Boredom's cost stops at uncomfortable, not miserable" did not hold in the run it was written in. After
+    the floor went in, Stay was miserable for 33% of its steps, Quiet Hold 41% and still 27%: plain drift and
+    the cold took a bored pet the rest of the way. What ended it was the proportional fade. The floor stays,
+    because boredom alone should still not be able to do it, and the self-check now holds the floor above
+    the highest point at which any pet feels miserable.
+  - "Closeness fades the same way" was argued from symmetry and applied to one case of four. With kin in
+    the room closeness at 100 fell at up to 0.9 per 10 s, and alone at 0.075, so walking out kept it twelve
+    times better than staying; with a creature it had fed there was no ceiling, and the founder sat at 94 to
+    99 beside a beetle, higher than it later did among its children. Six of seven pets never fell below 55.
+    It is one rule now: company settles toward what the company at hand gives (65 with another pet, 55 with
+    a creature it has fed, 45 with any creature, 25 alone); what is above that slips, past 65 at the same
+    rate wherever the pet is, below it at a gentler one (a middling pet alone goes from content to lonely
+    in about two days). The self-check holds that being alone never keeps closeness better than company.
+  - Part 11 gave world day 14.4 for the boredom change; the first prompt carrying it is at 14.6. Corrected
+    there. `showcase/second-run.md` said five numbers were changed under that run; it was four.
+- **The engine told pets three false things, and they built on them.**
+  - Giving a made thing to a creature was refused with "you can only give what you carry or a thing of
+    yours that is here" when the thing was theirs and was there (43 of the run's 50 refused gifts). The
+    founder concluded it could not give the thing to anyone and said so in a child's message; that child
+    tried 24 times to give stars to a mouse, decided "things made in the attic are rooted" and taught it to
+    its own child. The refusal now says the creature only takes small things carried.
+  - An untried nursery door smelled of "the room you hatched in" to pets hatched in the cellar, the attic
+    and the music room, and three of them reasoned from it. It smells of clean bedding and warm dust.
+  - The founder gave both its eggs one name, and "Twine said" meant nobody in particular for the rest of
+    the run; a grandchild credits its own mother's saying to "Twine". A name already borne by someone alive
+    is refused, at laying and when a pet names itself.
+- **A sociable pet is no longer told it wants to be near someone while it is content.** That line was in 69
+  to 89% of four pets' prompts. Being sociable already makes a pet lonely sooner, through where its feelings
+  change; the line said it twice, and to pets that were not lonely.
+- **A crowded room says what would uncrowd it.** Rooms fill with the dead's things, and "make" was missing
+  from 40 to 74% of what the later pets were offered; they took apart one thing each in a life. The room now
+  feels "crowded with made things: there is no room to make another here unless one is taken apart".
+- **Beliefs and projects are told their length.** 82 of 274 beliefs and 45 of 91 projects were written past
+  what is kept and cut at a word with "…", and a pet rereads its beliefs every thought.
+- **The stopping rule, which I had written nowhere but in a watcher script.** For the third run it was
+  "three deaths and a fifth generation hatched, or twelve real hours", and it stopped 23 ticks after the
+  fifth generation hatched, which guarantees a generation with no life to judge. For the fourth run, fixed
+  before it starts: three deaths and the first pet of generation 5 two world days old; or twelve real hours,
+  whichever comes first. A pet under a world day old is listed in the bar report and left out of every
+  per-life test; that was added to the script after seeing the third run and is said in its first lines.
+- **The bar script's criterion 4 could not see the third run's best case.** It follows hatching messages
+  down a direct line. "The storm chime is the brother's voice" went from a dying pet to its child by
+  telling, into that child's beliefs and message, to a cousin by telling and into the fifth generation's
+  egg. The script now also prints every saying the claim tracker finds in three or more generations by any
+  way. Also fixed: shares of steps "with another" counted refused steps and ones aimed at creatures; ties
+  were ordered by chance, so two runs of the script could print different words.
+- **Known and left as they are.** Comfort was at 95 or more for about half the steps of three pets; it
+  moves with weather, season and events, and I have not made it fade in proportion as well. Things used
+  again are still marked "(this has grown familiar)" each time. The founder has no one to name it and is
+  "the little one" for life. The later generations hardly deal with the creatures. Every pet writes in one
+  aphoristic voice ("the X holds the Y"), which is the model's.
+- **The lamp, in the third family: moved, not corrected.** The v2.5 message said "the lamp keeps the dark
+  from hurting". On its first night the founder was told the room's light was harsh on it, said so ("the
+  harsh lamp"), made a soft thing, named it Cloth Wax Lamp, rested sunk in it, and wrote as lived: "The lamp
+  breathes when you breathe, and resting in it holds the dark from hurting." It kept its mother's words and
+  moved them to its own soft rest; by day 6 it was "any warm shape", and its eggs were told "use the cushion
+  when the dark comes". It never wrote that the room's lamp hurts and never switched it off. Its twins each
+  cited the cushion on their first day, neither made a belief of it or passed it on, and nothing in their
+  days contradicted it. So: changed by the first generation after its own nights, without the pet ever
+  noticing a contradiction, then fell out.

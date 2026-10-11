@@ -42,7 +42,7 @@ WRITTEN = {   # how each action is written, shown only for the actions it can do
     "lay_egg": ('{"type": "lay_egg", "name": a name for your child, up to 16 chars (or "" to leave it to them), '
                 '"message": what you want your child to know, in your own words, up to 600 chars; what you were told yourself is yours to pass on, change or leave out}'),
     "bequeath": '{"type": "bequeath", "what": a thing of yours here, "to": a child\'s name, or "my children"}',
-    "write_belief": '{"type": "write_belief", "statement": text, "source": how you know it: lived | seen | told by <who>}',
+    "write_belief": '{"type": "write_belief", "statement": one short sentence of at most 200 characters, "source": how you know it: lived | seen | told by <who>}',
     "revise_belief": '{"type": "revise_belief", "id": belief id, "statement": new text or "discard"}',
 }
 FORMAT = """
@@ -57,10 +57,10 @@ Reply with one JSON object and nothing else:
 """
 NIGHT_PARTS = {
     "dream": '"dream": "<two or three sentences about your day, in your own words>"',
-    "changes": ('"changes": [<at most 3 of {"type": "write_belief", "statement": "<one short sentence, about how something works or about yourself or someone; '
+    "changes": ('"changes": [<at most 3 of {"type": "write_belief", "statement": "<one short sentence of at most 200 characters, about how something works or about yourself or someone; '
                 'not a list of what happened>", "source": "lived | seen | told by <who>"} or {"type": "revise_belief", "id": "<belief id>", "statement": "<new text or discard>"}>]'),
     "review": '"review": {"decision": "keep | revise | discard", "statement": "<the new text, if you revise it>"}',
-    "project": '"project": {"decision": "keep | set | finish | abandon", "text": "<the project in a few of your own words, if you set one: something for the coming days>"}',
+    "project": '"project": {"decision": "keep | set | finish | abandon", "text": "<the project in a few of your own words, at most 130 characters, if you set one: something for the coming days>"}',
     "people": '"people": [<for anyone you want to remember something about: {"who": "<who>", "line": "<one line, in your own words>"}>]',
     "message": '"message": "<your message for your children as you would have it now, up to 600 characters; the same words again if nothing has changed. What you were told yourself is yours to pass on, change or leave out>"',
     "my_life": '"my_life": "<the story of your life, in your own words, up to 800 characters>"',

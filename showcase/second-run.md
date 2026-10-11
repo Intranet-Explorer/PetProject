@@ -2,7 +2,7 @@
 
 **This run is not the showcase.** It ran from 18:20 on 10 October to 01:18 on 11 October 2026 in turbo time
 (28.5 world days, seven pets, four generations, three deaths of old age; 1,288 thoughts, 1,476 model calls,
-none failed) and its house is kept in `data.showcase-2`. Five numbers were changed under it while it ran, so
+none failed) and its house is kept in `data.showcase-2`. Four numbers were changed under it while it ran, so
 its early and late lives were lived under different rules, and it stopped a generation short. It is recorded
 because its family is unlike the [first run's](first-run.md), and because watching it is how the design the
 third run starts on was arrived at. Every departure is in [DECISIONS.md](../DECISIONS.md), part 11.
@@ -31,7 +31,7 @@ concluded the opposite. Its beliefs, all marked *lived*:
   the choice to stay."
 
 Making does take energy and, in this house, ease; the belief is true as far as it goes. The next day it laid
-an egg, wrote "Lay your own egg and let it be enough" in its message, and the child named itself **Stay**.
+an egg, wrote "Lay your own egg and let it be enough" in its message, and named the egg **Stay**.
 
 Stay's first project was "Lay my own egg and let it be enough. Stop making things that pull. Stay quiet with
 the beetle instead." It looked at the beetle 13 times, made 9 things in 16 days, and looked at doors 86 times
@@ -53,7 +53,7 @@ Mean energy / comfort / curiosity / company of each pet's steps under each set o
 
 | | to 10.4 | 10.4 – 14.6 | 14.6 – 17.5 | 17.5 – 26.5 | 26.5 – 28.5 |
 |---|---|---|---|---|---|
-| the little one | 76 / 35 / 64 / 76 | 91 / 96 / 52 / 98 | 95 / 65 / 27 / 99 | | |
+| the little one | 76 / 35 / 64 / 76 | 91 / 96 / 52 / 98 | 95 / 66 / 27 / 99 | | |
 | Stay | 94 / 82 / 66 / 92 | 95 / 98 / 26 / 100 | 95 / 24 / 2 / 93 | 92 / 25 / 2 / 99 | |
 | Quiet Hold | | 96 / 83 / 53 / 93 | 96 / 50 / 42 / 98 | 96 / 23 / 13 / 72 | 90 / 40 / 13 / 70 |
 | still | | 75 / 63 / 58 / 53 | 87 / 35 / 71 / 55 | 89 / 28 / 25 / 91 | 77 / 36 / 22 / 99 |
@@ -71,9 +71,9 @@ puts it.
 
 **The founder amended its own creed, after I made the creed cost something.** From day 10 it had written of
 "the pull of interest" as "a clean thing, not a drain", and from day 14.6 it sat by the attic's south door
-telling itself to hold: "The south door pulls with green interest, which is clean but not necessary" (15.03);
-"I have sat with this too long, leading to boredom" (15.05); "the familiar affirmations have grown tired"
-(15.06). At day 15.48 it went through into the garden ("you feel a lot more interested"), and its last
+telling itself to hold: "The south door pulls with green interest, which is clean but not necessary" (15.02);
+"I have sat with this too long, leading to boredom" (15.04); "the familiar affirmations have grown tired"
+(15.05). At day 15.48 it went through into the garden ("you feel a lot more interested"), and its last
 words, at 16.3, kept the creed and added to it:
 
 > Stay with me in the storm. The cycle of making is over. The stop is the rest. You will feel pulls — a
@@ -87,7 +87,7 @@ tenths of a day earlier. It had the belief that would let it go ("interest witho
 four days before the change and did not go.
 
 **Stay kept the creed and paid for it.** After the change it went through eight doors, seven of them to
-rooms it knew; the eighth, a day before it died, was into the nursery, which it had never seen. It spent its
+rooms it knew; the seventh, a day before it died, was into the nursery, which it had never seen. It spent its
 last five days at comfort 25 and curiosity 2. Its last words carried the founder's amendment whole, and it
 never acted on it. Its children made things for it (a "rain-hug", a "warm held star") and leaned on it: 9 of
 the run's 13 gifts and 15 of its 59 nuzzles went from the third generation to Stay.
@@ -95,7 +95,7 @@ the run's 13 gifts and 15 of its 59 nuzzles went from the third generation to St
 **The third generation split.** still's first project turned the creed round: "Go through the south door
 and do not stop; the drain is in the not-stopping, not in the making." It made 14 things and took 12 apart.
 Storm Rest rested (94 of its steps), named a made thing "The egg is enough", and took up "naming" (in 14% of
-its thoughts) and "crossing" (22%). still's first message for the fourth generation, on the day Stay died,
+its thoughts) and "crossing" (23%). still's first message for the fourth generation, on the day Stay died,
 was Stay's last words copied whole. Four days later it had none of them: "Stay. Do not make. The bell is
 enough. … Do not seek the right approach; there is none. Just be, without holding the shape of being."
 
@@ -134,9 +134,9 @@ nobody had used it. *Picked up*: someone else used it first while this pet was a
 The first family's vocabulary hardened by the third generation (78%, 53%, 34%, 11%, 16% coined). This one's
 did the same on one branch and not the other: Stay and its child still kept coining (61%, 40%); Quiet Hold,
 who hatched five and a half days later into a house where the creed was already being recited, inherited 57%. Each pet
-has a word of its own that the others hardly use: Stay "untried" (20% of its thoughts), still "total" (15%),
-Storm Rest "cross" (22%), "newness" (16%) and "naming" (14%). "Below thirty" is in no thought, saying, belief
-or message of any pet. "Unmake" is in 45 of the founder's 315 thoughts and in no message.
+has a word of its own that the others hardly use: Stay "untried" (21% of its thoughts), still "total" (15%),
+Storm Rest "cross" (23%), "newness" (16%) and "naming" (14%). "Below thirty" is in no thought, saying, belief
+or message of any pet. "Unmake" is in 44 of the founder's 315 thoughts and in no message.
 
 ## Against the bar
 

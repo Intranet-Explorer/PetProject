@@ -134,8 +134,6 @@ def perceive(house, cfg, pet, mem):
     if T["playful"] > 0.6 and any("toy" in o.get("fix", {}) or things.prop(cfg, o).get("use", {}).get("curiosity") if "made" in o
                                   else "toy" in o.get("fix", {}) for o in objs.values()):
         senses.append("something here looks like it wants to be played with")
-    if others and T["sociable"] > 0.6 and feel.level(pet, "company") == 1:   # a sociable pet feels the pull before it is lonely
-        senses.append("you want to be near " + actions.handle(house, pet, others[0]))
     unseen = [d for d, rid in room["doors"].items() if rid not in pet["rooms"]]
     if unseen and feel.level(pet, "curiosity") >= (2 if T["bold"] < 0.4 else 1):   # boredom points at the one thing here not yet tried
         senses.append("you wonder what is through the %s door" % unseen[0])

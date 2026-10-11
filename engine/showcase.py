@@ -29,13 +29,18 @@ def main(data=ROOT / "data", profile=None):
         p["genome"], p["temper"] = json.loads(p["genome"]), json.loads(p["temper"])
         p["label"] = p["name"] or "the little one"
     names = [p["label"] for p in pets.values()]
-    for p in pets.values():   # twins have chosen the same name; the report has to tell them apart
+    for p in pets.values():   # a parent gave two eggs one name (third run; the engine now refuses it): the report tells them apart
         if names.count(p["label"]) > 1:
             p["label"] += " (%s)" % p["pet"]
     hatched = [p for p in pets.values() if p["born"] is not None]
     day = cfg["ticks_per_day"]
     gens = max((p["gen"] for p in hatched), default=0)
-    print("# The bar: lineage %d, day %d, %d pets hatched over %d generations\n" % (lin, house["clock"]["day"], len(hatched), gens))
+    print("# The bar: lineage %d, day %d, %d pets hatched over %d generations" % (lin, house["clock"]["day"], len(hatched), gens))
+    # A pet that has not had a day of life has not lived one to judge: it is listed, and left out of every per-life test.
+    end = db.execute("SELECT max(tick) FROM steps").fetchone()[0] or 0
+    lived = [p for p in hatched if (p["died"] or end) - p["born"] >= day]
+    print("  %d of them lived a world day or more, over %d generations%s\n" % (len(lived), max((p["gen"] for p in lived), default=0),
+          "; not judged, under a day old: " + ", ".join("%s (gen %d)" % (p["label"], p["gen"]) for p in hatched if p not in lived) if len(lived) < len(hatched) else ""))
     ok = {}
 
     print("## 1. It reads like a creature (meter-talk under 10% for every pet after its first day; v2.5: 43.0% of thoughts and 57.9% of beliefs"
@@ -48,7 +53,8 @@ def main(data=ROOT / "data", profile=None):
         beliefs = json.loads(path.read_text()) if path.exists() else []
         from .feel import meter_talk
         b = round(100 * sum(meter_talk(x["statement"]) for x in beliefs) / len(beliefs), 1) if beliefs else None
-        print("   %-14s gen %d: %s%% of %d thoughts after day 1 (%s%% of all %d); %s%% of %d beliefs" % (p["label"], p["gen"], share, n, every, total, b, len(beliefs)))
+        pct = lambda v: "–" if v is None else "%s%%" % v
+        print("   %-14s gen %d: %s of %d thoughts after day 1 (%s of all %d); %s of %d beliefs" % (p["label"], p["gen"], pct(share), n, pct(every), total, pct(b), len(beliefs)))
         worst = max(worst, share or 0) if n >= 10 else worst
     ok[1] = worst < 10
     from .feel import METER
@@ -75,11 +81,12 @@ def main(data=ROOT / "data", profile=None):
     # Did the temperament show in how they lived? Beside each gene, the behaviour it is meant to lean (for a reader).
     for p in hatched:
         n = db.execute("SELECT count(*) FROM steps WHERE pet=?", (p["pet"],)).fetchone()[0] or 1
-        share = lambda kinds: 100 * db.execute("SELECT count(*) FROM steps WHERE pet=? AND kind IN (%s)" % ",".join("?" * len(kinds)), (p["pet"], *kinds)).fetchone()[0] / n
+        # steps that were carried out, and for "with another" not the ones aimed at a creature
+        share = lambda kinds, more="": 100 * db.execute("SELECT count(*) FROM steps WHERE pet=? AND reason IS NULL AND kind IN (%s)%s" % (",".join("?" * len(kinds)), more), (p["pet"], *kinds)).fetchone()[0] / n
         rooms = db.execute("SELECT count(DISTINCT room) FROM steps WHERE pet=?", (p["pet"],)).fetchone()[0]
         t = p["temper"]
         print("   %-15s sociable %.2f: %2d%% of steps with another (speak, tell, give, nuzzle, show, accept, follow) | curious %.2f, bold %.2f: %d rooms, %2d%% look/observe | playful %.2f: %2d%% make/combine/arrange/teach/paint" % (
-            p["label"], t["sociable"], share(("speak", "tell", "give", "nuzzle", "show", "accept", "follow")), t["curious"], t["bold"], rooms, share(("look", "observe")),
+            p["label"], t["sociable"], share(("speak", "tell", "give", "nuzzle", "show", "accept", "follow"), " AND coalesce(json_extract(action,'$.to'), json_extract(action,'$.who'), '') NOT IN ('moth','beetle','mouse','bird')"), t["curious"], t["bold"], rooms, share(("look", "observe")),
             t["playful"], share(("make", "combine", "arrange", "teach", "paint"))))
     ok[2] = None if drift and max(drift)[0] >= 0.2 else False
 
@@ -134,6 +141,17 @@ def main(data=ROOT / "data", profile=None):
     for _, text in sorted(lines, key=lambda x: x[0]):   # held first, then changed, then dropped, each in the order found
         print(text)
     print("   over every line of three generations: %d sentences held, %d changed or dropped by the third" % (held, corrected))
+    # The lines above follow hatching messages down a direct line only. A saying also travels by telling and by belief,
+    # and sideways; the engine's claim tracker (the Lab's claim lineages) groups every form of one saying whoever held it.
+    spans = db.execute("SELECT claim FROM claims GROUP BY claim HAVING count(DISTINCT gen) >= 3 ORDER BY max(gen) - min(gen) DESC, count(*) DESC, claim").fetchall()
+    print("   sayings held in three or more generations by any way (message, telling, belief), from the claim tracker: %d" % len(spans))
+    for (claim,) in spans[:8]:
+        seen = set()
+        for r in db.execute("SELECT pet, gen, kind, truth, tick, text FROM claims WHERE claim=? ORDER BY tick", (claim,)):
+            if (r["pet"], r["kind"]) not in seen:   # the first time each pet held it each way
+                seen.add((r["pet"], r["kind"]))
+                print('      %s day %.1f, %s gen %d, %s%s: "%s"' % ("·" if len(seen) > 1 else "saying:", r["tick"] / day, "the one before" if r["pet"] == "before" else pets[r["pet"]]["label"],
+                                                              r["gen"], r["kind"], " [%s]" % r["truth"] if r["truth"] else "", r["text"][:140]))
     ok[4] = True if held else None if corrected else False
 
     print("\n## 5. They dealt with each other without the visitor")
@@ -156,7 +174,8 @@ def main(data=ROOT / "data", profile=None):
     by_gen = {}
     for p in hatched:
         n = db.execute("SELECT count(DISTINCT room) FROM steps WHERE pet=?", (p["pet"],)).fetchone()[0]
-        by_gen.setdefault(p["gen"], []).append(n)
+        if p in lived:
+            by_gen.setdefault(p["gen"], []).append(n)
         print("   %-14s gen %d was in %d rooms" % (p["label"], p["gen"], n))
     # An event changed what a pet did: the first of the next eight thoughts, within 90 ticks, of a pet that was in the
     # event's room (any pet, for a power cut), that names what happened in words no other thought would use.
@@ -280,13 +299,13 @@ def culture(db, pets, hatched, day):
         heard = set(mine) - took - coined
         total, n = sum(mine.values()) or 1, len(mine) or 1
         kept = {w for w in coined if any(uses.get(q["pet"], {}).get(w, 0) >= 3 for q in below(p))}
-        top = lambda ws: ", ".join(sorted(ws, key=lambda w: -mine[w])[:8]) or "none"
+        top = lambda ws: ", ".join(sorted(ws, key=lambda w: (-mine[w], w))[:8]) or "none"
         print("   %-15s gen %d: %3d words: %2d%% inherited, %2d%% coined, %2d%% picked up (by uses: %2d%%, %2d%%, %2d%%)" % (
             p["label"], p["gen"], len(mine), 100 * len(took) / n, 100 * len(coined) / n, 100 * len(heard) / n,
             100 * sum(mine[w] for w in took) / total, 100 * sum(mine[w] for w in coined) / total, 100 * sum(mine[w] for w in heard) / total))
         print("      inherited: %s\n      coined: %s\n      picked up: %s\n      coined and used by a descendant: %d of %d (%s)" % (top(took), top(coined), top(heard), len(kept), len(coined), top(kept)))
     thoughts = {p["pet"]: [words(unnamed(r["thought"])) for r in db.execute("SELECT thought FROM intentions WHERE pet=?", (p["pet"],))] for p in hatched}
-    common = sorted({w for u in uses.values() for w in u}, key=lambda w: -sum(u.get(w, 0) for u in uses.values()))[:10]
+    common = sorted({w for u in uses.values() for w in u}, key=lambda w: (-sum(u.get(w, 0) for u in uses.values()), w))[:10]
     print("\n   share of each pet's thoughts using the family's ten commonest words:\n   %-15s %s" % ("", " ".join("%9s" % w[:9] for w in common)))
     for p in hatched:
         t = thoughts[p["pet"]] or [set()]
