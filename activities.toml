@@ -189,7 +189,6 @@ seconds = [3, 5]
 base = 0.3
 temper = { orderly = 2.4 }
 focus = ["tidy"]
-stage = "child"
 
 [gather]
 do = "gather"

@@ -105,8 +105,6 @@ def targets(house, cfg, pet, mem, name, A):
         food = [n for n, o in objs.items() if ("meal" in o.get("fix", {}) and o.get("servings")) or (o.get("fix", {}).get("plant") and o.get("state") == "ripe")]
         return [{"what": n, "goal": near(objs[n]["pos"])} for n in food[:1]]
     if do == "tidy":
-        if STAGES.index(pet["stage"]) < STAGES.index("child"):
-            return []
         job = order.job(house, cfg, pet, room)   # the worse the mess, the more it pulls, on the orderly most of all
         pull = order.clutter(house, cfg, room) * cfg["body"]["mess_pull"] * (0.4 + 1.2 * pet["temper"].get("orderly", 0.5))
         return [{"what": job[0], "where": job[1], "goal": near(objs[job[0]]["pos"]), "bonus": pull}] if job else []
@@ -183,9 +181,12 @@ def choose(mind):
     """The best thing to do now. There is always something: a pet awake is never doing nothing (§1.4)."""
     pet, h, cfg = mind.pet, mind.eng.house, mind.cfg
     b, r, best = state(pet), rnd(h, "body", pet["id"], h["tick"]), None
+    rested = sum(b["idle"]) / max(1, len(b["idle"]))
     for name, A in cfg["activities"].items():
         if STAGES.index(pet["stage"]) < STAGES.index(A.get("stage", "hatchling")) or A.get("needs_tool") or A.get("needs_place"):
             continue   # (Phase B: a tool it must carry, a place it must be at; nothing has either yet)
+        if A.get("passive") and rested >= cfg["body"]["passive_max"] and not (A["do"] == "nap" and feel.level(pet, "energy") >= 3):
+            continue   # it has sat and looked enough for now, whatever its mind is on (§0); a worn-out pet may still nap
         for t in targets(h, cfg, pet, mind.mem, name, A):
             s = score(h, cfg, pet, name, A, t, b, r)
             if best is None or s > best[0]:

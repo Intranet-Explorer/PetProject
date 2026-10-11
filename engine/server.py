@@ -124,7 +124,7 @@ def sign_view(p):
         return None
     plan = p["plan"]
     t = plan["steps"][min(plan["i"], len(plan["steps"]) - 1)].get("type")
-    return {"icon": "walk" if plan["left"] is None and t not in ("go",) else cfg["signs"].get(t), "word": mind.doing(eng.house, p), "step": t, "walking": plan["left"] is None}
+    return {"icon": cfg["signs"].get(t), "word": mind.doing(eng.house, p), "step": t, "walking": plan["left"] is None}
 
 
 def room_view(r):
