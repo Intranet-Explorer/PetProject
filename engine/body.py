@@ -76,6 +76,8 @@ def targets(house, cfg, pet, mem, name, A):
     if do == "window":
         return [{"what": n, "goal": near([o["pos"][0], max(o["pos"][1], 0)])} for n, o in objs.items() if o.get("fix", {}).get("window")][:1]
     if do == "nap":
+        if feel.level(pet, "energy") < 1 and focus.get("type") != "rest":
+            return []   # not tired, and not minded to rest
         beds = [o["pos"] for o in objs.values() if "rest" in o.get("fix", {}) or o.get("fix", {}).get("cozy")]
         return [{"goal": near(min(beds, key=lambda t: dist(me, t))) if beds else None}]
     if do == "eat":
@@ -141,7 +143,8 @@ def score(house, cfg, pet, name, A, t, b, r):
     now = {phase(house), house["weather"]} | ({"music"} if music(house, pet) else set())
     s += sum(w for k, w in A.get("when", {}).items() if k in now)
     s -= B["variety"] * b["recent"][-8:].count(name) + (B["again"] if b["recent"][-1:] == [name] else 0.0)
-    s += B["fresh"] if name not in b["recent"][-10:] else 0.0
+    # the longer since it last did this, the more it is due: whatever its mind is about, in five minutes it has done many things (§0)
+    s += B["fresh"] * min(1.0, (house["tick"] - b.get("done", {}).get(name, LONG_AGO)) / ticks(cfg, B["fresh_seconds"]))
     if b.get("last_still") and (not t.get("goal") or t["goal"] == pet["pos"]) and not A.get("rest"):
         s -= B["again"]   # it has just done something on this spot: next it moves (§1.4)
     if A.get("passive"):   # resting, looking and watching stay a small part of the day, unless it is worn out
@@ -296,6 +299,8 @@ def finish(mind, now, cut=False):
             for k2 in sorted(b["habits"], key=b["habits"].get)[:20]:
                 del b["habits"][k2]
     b["recent"] = (b["recent"] + [now["name"]])[-12:]
+    if done:
+        b.setdefault("done", {})[now["name"]] = h["tick"]
     b["last_passive"] = bool(now["passive"]) and done
     span = max(1, h["tick"] - start)
     b["idle"] = (b["idle"] + [1 if now["passive"] and now["began"] is not None else 0] * min(span, 60))[-cfg["body"]["window_ticks"]:]

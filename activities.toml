@@ -76,7 +76,7 @@ did = "nosed at the {what} door"
 icon = "door"
 voice = "chirp"
 seconds = [4, 7]
-base = 0.8
+base = 0.5
 temper = { bold = 1.0, curious = 0.5 }
 needs = { curiosity = 0.8 }
 focus = ["explore"]
@@ -88,7 +88,7 @@ doing = "peeking into {what}"
 did = "peeked into {what}"
 icon = "door"
 seconds = [3, 6]
-base = 0.7
+base = 0.4
 temper = { bold = 0.6, curious = 0.5, sociable = 0.3 }
 needs = { curiosity = 0.6, company = 0.5 }
 focus = ["explore", "be with"]
