@@ -54,7 +54,7 @@ export type PetV = {
 /** A step a pet has just finished (SPEC-v3.2 §5.2). `what` is the thing, bit or song it was about, `to` whom or
  *  where; `kind`/`color` describe a thing that was made, unmade or combined; `ok` false means it turned out not possible. */
 export type Act = { n: number; tick: number; pet: string; type: string; what?: string | null; to?: string | null; room: string; ok: boolean;
-  kind?: string | null; color?: string | null; from?: string[] | null };
+  kind?: string | null; color?: string | null; from?: string[] | null; to_id?: string | null; text?: string | null };
 export type Creature = { id: string; kind: string; room: string; pos: Tile; doing: string; carry: string | null; tame?: string | null; name?: string | null };
 export type Moment = { n: number; tick: number; day: number; hour: number; kind: string; text: string; pet: string | null; room: string | null };
 export type HouseEvent = { tick: number; day: number; kind: string; room: string | null; detail: string };

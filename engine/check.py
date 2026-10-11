@@ -1006,6 +1006,8 @@ async def main():
         assert e8.db.execute("SELECT count(*) FROM inscriptions WHERE what='gone with the thing'").fetchone()[0] == 1
         last = h8["acts"][-1]
         assert last["type"] == "combine" and last["ok"] and last["what"] == "ringing light" and last["kind"] == "mobile" and last["from"] == ["glow", "ring-a"] and last["n"] == h8["n"]["act"]
+        assert story_.now(h8, c8).endswith("Not long ago, Bo hatched."), "a birth is in the headline for a while: %s" % story_.now(h8, c8)
+        h8["moments"] = [m_ for m_ in h8["moments"] if m_["kind"] not in ("hatched", "storm", "power", "death") and not m_["kind"].startswith("arrival")]
         line = story_.now(h8, c8)
         assert line.startswith("Po, an old one, is ") and "just joined two things into a blue mobile." in line and not re.search(r"\d|youngling|hatchling|elder\b", line), line
         e8.close()

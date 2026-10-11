@@ -224,11 +224,14 @@ def act_of(house, pet, a):
     to = a.get("to") or a.get("who") or a.get("from") or a.get("near") or a.get("on") or a.get("b")
     o = room["objects"].get(norm(what)) if isinstance(what, str) else None
     recipe = o["made"]["recipe"] if o and "made" in o else (a.get("recipe") if t == "make" else None) or {}
+    from .actions import find
+    who = find(house, pet, to) if isinstance(to, str) else (None, None)   # "your mother" is the pet's word for her: keep who it is
     if t == "use" and o and ("meal" in o.get("fix", {}) or (o.get("fix", {}).get("plant") and o.get("state") == "ripe")):
         t = "eat"   # for whoever is watching, eating is its own thing to see
     return {"pet": pet["id"], "type": t, "what": what if isinstance(what, str) else None, "to": to if isinstance(to, str) else None, "room": pet["room"],
             "kind": recipe.get("kind"), "color": recipe.get("color"), "from": [norm(a.get("a")), norm(a.get("b"))] if t == "combine" else None,
-            "text": a.get("text") if t in ("speak", "tell", "write") else None, "things": house["n"]["thing"]}
+            "text": a.get("text") if t in ("speak", "tell", "write") else None, "things": house["n"]["thing"],
+            "to_id": who[1]["id"] if who[0] == "pet" else None}
 
 
 def acted(house, cfg, pet, act, ok):
@@ -276,9 +279,15 @@ def now(house, cfg):
     if others and len(first) < 90:
         o = others[0]
         first += " %s is %s%s." % (cap(name(o)), mind.doing(house, o).split(" (")[0], "" if o["room"] == pet["room"] else " in " + house["rooms"][o["room"]]["name"])
+    # what nobody should have to find in the log: a death for two world hours, a birth, an arrival or a storm for one
+    big = next((m for m in reversed(house["moments"][-30:]) if (m["kind"] == "death" and house["tick"] - m["tick"] <= 2 * cfg["ticks_per_hour"])
+                or (m["kind"] in ("hatched", "storm", "power") or m["kind"].startswith("arrival")) and house["tick"] - m["tick"] <= cfg["ticks_per_hour"]), None)
+    if big:
+        return "%s Not long ago, %s." % (first, big["text"])
     if not last or who not in living:
         return first
-    to = next((p for p in living if last.get("to") and (p["name"] or "").lower() == str(last["to"]).lower()), None)
+    to = house["pets"].get(last.get("to_id") or "")
+    said = str(last.get("to") or "someone")
     told = {"thing": things.a_thing(cfg, {"kind": last.get("kind") or "thing", "color": last.get("color")}), "what": last.get("what") or "something",
-            "to": name(to, who) if to else (last.get("to") or "someone")}
+            "to": name(to, who) if to else "someone" if said.startswith(("your ", "a stranger")) else said}
     return "%s %s just %s." % (first, cap(name(who)), PAST[last["type"]].format(**told))

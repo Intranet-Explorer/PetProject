@@ -41,6 +41,7 @@ def begin(house, cfg):
         house["power_was_out"] = False
         tell_all(house, "the lights that went dark can be lit again")
         note(house, "power back", None, "")
+        moment(house, "power back", "the power came back")
     if house["tick"] % hours(cfg, 1) == 0:
         hourly(house, cfg)
     if house["tick"] % ticks(cfg, 10) == 0:
