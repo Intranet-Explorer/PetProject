@@ -332,7 +332,7 @@ function controls(s: Snap, here: RoomV) {
   const p = pet(view.sel), near = p && p.room === here.id && p.stage !== "egg" && p.stage !== "dead" ? p : null;
   const foundling = p && p.room === here.id && p.stage === "egg" && !p.parent && !p.name ? p : null;   // an egg that is nobody's can be given a name (SPEC-v3.1 §7.1)
   const thing = picked ? here.objects[picked] : null, can = thing ? !!thing.made : !!(near || foundling);
-  $("chosenWhat").textContent = thing ? `the ${picked}: click a tile to move it` : near ? near.label : foundling ? "the egg that is nobody's" : "nobody chosen here";
+  $("chosenWhat").textContent = thing ? `the ${picked}: click a tile to move it` : near ? near.label : foundling ? (foundling.family === 2 ? "the egg that is nobody's" : "the first egg") : "nobody chosen here";
   $("chosenWhat").classList.toggle("none", !thing && !near && !foundling);
   $<HTMLButtonElement>("poke").disabled = !!thing || !near;
   $<HTMLInputElement>("nameText").disabled = ($("nameForm").querySelector("button") as HTMLButtonElement).disabled = !can;
