@@ -298,7 +298,7 @@ def boards(board, line, knot):
 def tiles():
     s = Sheet("tiles.png", 9)
     for style in WALLS:
-        for part, im in wall_set(style, None if style == "glass" else "141b1b").items():
+        for part, im in wall_set(style, None).items():   # nothing is painted beyond the walls: the page shows through, in either theme
             s.add("tile.wall.%s.%s" % (style, part), im)
     s.add("tile.floor.boards.old", boards("d2b37d", "b3957f", "c8966b"))
     s.add("tile.floor.boards.dark", boards("816855", "695953", "90775e"))

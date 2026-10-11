@@ -211,6 +211,8 @@ export class Room {
       old.destroy();
     }
     const s = (this.still = new Still(sc.snap, sc.room, lay, this.K));
+    this.light.shape = s.shape;
+    this.lit = "";   // a new room: draw its light afresh
     this.ground.addChild(s.ground);
     this.walls.addChild(s.wallLayer);
     this.flat.addChild(s.flat);

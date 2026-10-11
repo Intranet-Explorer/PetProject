@@ -60,6 +60,8 @@ export class Still {
   band: Record<string, Rect> = { north: { x: OX, y: 2, w: FX * TILE, h: OY - 5 }, south: { x: OX, y: OY + FY * TILE + 2, w: FX * TILE, h: TILE - 4 },
                                  west: { x: 2, y: OY, w: OX - 4, h: FY * TILE }, east: { x: OX + FX * TILE + 2, y: OY, w: OX - 4, h: FY * TILE } };
   sun: number[] | null = null;  // the attic's shaft of sun, if there is one: where it falls
+  /** What the room's floor and walls actually paint, as one picture: light and dark fall only there, never on the page beyond the walls. */
+  shape: HTMLCanvasElement | null = null;
 
   constructor(snap: Snap, room: RoomV, readonly layout: Layout | null, readonly K: number) {
     const L = layout ?? {};
@@ -126,12 +128,15 @@ export class Still {
       this.ground.addChild(g);
     }
     let light = 0, n = 0;
+    const shape = L.floor || L.walls ? Object.assign(document.createElement("canvas"), { width: W, height: H }) : null, sx = shape?.getContext("2d");
+    this.shape = shape;
     for (const [rows, color] of [[L.floor, paint.floor], [L.walls, paint.wall]] as const) {
       for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
         const name = rows?.[y]?.[x];
         if (!name) continue;
         const s = new Sprite(color && has(name) ? tinted(name, color, {}, 0.7).texture : tex(name)), sz = size(name);
         s.position.set(x * TILE - sz.ax, y * TILE - sz.ay);
+        if (has(name)) sx?.drawImage(canvasOf(name), x * TILE - sz.ax, y * TILE - sz.ay);
         this.ground.addChild(s);
         if (rows === L.walls && y < 2 && has(name)) { light += lightness(color ? tinted(name, color, {}, 0.7).canvas : canvasOf(name)); n++; }
       }

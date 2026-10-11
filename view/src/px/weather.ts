@@ -53,6 +53,7 @@ export class Light {
   private cv = document.createElement("canvas");
   private x: CanvasRenderingContext2D;
   private env: Env | null = null;
+  shape: HTMLCanvasElement | null = null;   // the room's own silhouette (Still.shape), set by the room
   private ambient: RGB = WHITE;
   private drawn = -1e9;
   private dirty = true;
@@ -143,6 +144,11 @@ export class Light {
     x.globalCompositeOperation = "source-over";
     x.fillStyle = "#ffffff";
     for (const w of e.windows) x.fillRect(Math.round(w.x), Math.round(w.y), Math.round(w.w), Math.round(w.h));   // the glass keeps its own light: the sky is painted on it (see glass)
+    if (this.shape) {   // light and dark fall on the room only: beyond its walls the page shows through
+      x.globalCompositeOperation = "destination-in";
+      x.drawImage(this.shape, 0, 0);
+      x.globalCompositeOperation = "source-over";
+    }
     this.dark.texture.source.update();
     this.drawn = now;
     this.dirty = false;
