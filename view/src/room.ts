@@ -1,777 +1,464 @@
-// The room canvas (SPEC-v3 §10.2, §10.3). The world is data; this only draws the one room being looked at.
-// Things that hold still are rebuilt when the snapshot changes them; pets, creatures, weather and light move every frame.
-import { Application, Container, Graphics, Text } from "pixi.js";
-import { PetBody } from "./pet";
+// The room (SPEC-v3.2 §1.4, §3 to §5): the one room being looked at, as pixel art drawn from data. The world is the
+// engine's; this only draws it. The pieces are in px/ (see px/README.md): the art and its recolouring, the still parts
+// of a room, light and weather, the pets and creatures and how they move, the small effects, the lettering.
+// Whole pixels only: the 14 x 11 tile canvas is shown at the largest whole-number scale that fits its element.
+import { Application, Container, Graphics } from "pixi.js";
 import type { Genome, Look } from "./pet";
-import { bit, creature, door, fixture, heirloomMark, stone, windowRect } from "./props";
-import { backdrop, INK, light, mid, mix, PAD, ROOMS, skyColor, T, wallColor } from "./rooms";
-import { thingSvg } from "./things";
+import { petPortrait } from "./petsprite";
 import { ago, bodyStage, tickMs } from "./types";
-import type { Creature, Hello, Mark, Obj, PetV, RoomV, Snap } from "./types";
+import type { Act, Hello, Mark, PetV, RoomV, Snap, Tile } from "./types";
+import { play } from "./px/acts";
+import type { Ghost } from "./px/acts";
+import { CreatureActor, doing, PetActor } from "./px/actors";
+import type { Stage } from "./px/actors";
+import { canvasOf, kind, layout, loadArt } from "./px/assets";
+import type { Layout } from "./px/assets";
+import { Labels } from "./px/bubbles";
+import type { Who } from "./px/bubbles";
+import { Fx } from "./px/fx";
+import { clamp, FX, FY, H, idx, inside, OX, OY, onFloor, tileAt, TILE, W } from "./px/geom";
+import { Marks } from "./px/marks";
+import { nearestFree } from "./px/path";
+import { Still } from "./px/still";
+import type { Thing } from "./px/still";
+import { hslInt } from "./px/tint";
+import { Light } from "./px/weather";
 
-const FONT = "system-ui, -apple-system, sans-serif";
-const HAND = '"Chalkboard SE", "Chalkboard", "Comic Sans MS", "Bradley Hand", cursive';   // words on a wall are in somebody's hand
-const FAMILY: Record<number, number> = { 1: 0x1f7a8c, 2: 0xa8468a };   // each family's colour (SPEC-v3.1 §7.4); style.css has the same two
-const SIZE: Record<string, number> = { child: 18, youngling: 21, adult: 24, elder: 24 };   // half a body's width, by stage; smaller before
-/** A pet's own colour, as the map shows it: what its animals wear. */
-const colorOf = (p: PetV) => `hsl(${p.genome.hue}, ${Math.round(p.genome.saturation * 100)}%, 52%)`;
-const S = 1.3;        // pets are drawn a little over the genome's size: four fit in a room and each still reads
-const FEET = 18;      // a body stands with its feet this far below the middle of its tile
-const NIGHT = 0x0b1030, WARM = 0xffd76a, ACCENT = 0xc9650f;
-
-const CRISP = Math.min(4, devicePixelRatio * 2);   // words are drawn finer than the room, since they may be scaled up
 export type Rect = { x: number; y: number; w: number; h: number };
-const hit = (a: Rect, b: Rect) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
-const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 /** What is under the pointer. */
 export type Target = { tile: [number, number]; pet?: string; creature?: string; door?: string; object?: string; bit?: string; mark?: Mark };
-type Plate = { c: Container; w: number; h: number };
 export type Scene = { snap: Snap; room: RoomV; hello: Hello | null; selected: string | null; picked: string | null; replay: boolean };
+/** What a hover card can show about a Target (§3.3): see `Room.describe`. Every field but `title` may be missing. */
+export type Card = { what: "pet" | "creature" | "thing" | "fixture" | "stone" | "bit" | "door" | "writing"; title: string; sprite: HTMLCanvasElement | null;
+  name?: string | null; kind?: string; color?: string | null; material?: string; maker?: string | null; owner?: string | null; heirloom?: boolean; worn?: string[];
+  purpose?: string; does?: string | null; state?: string | null; text?: string };
 
-/** A name on a small plate, so it reads on any floor. */
-class Tag {
-  c = new Container();
-  w = 0;
-  h = 0;
-  private bg = new Graphics();
-  private text: Text;
-  private key = "";
-  constructor(size = 12, private faint = false) {
-    this.text = new Text({ text: "", resolution: CRISP, style: { fontFamily: FONT, fontSize: size, fontWeight: faint ? "500" : "600", fill: faint ? 0x3d4d47 : INK } });
-    this.text.position.set(6, 2);
-    this.c.addChild(this.bg, this.text);
-  }
-  /** `k` makes it bigger when the canvas is shown small, so the words stay a readable size on screen.
-   *  `dot`: a spot of colour before the name, for whose family or whose animal it is. */
-  set(text: string, k: number, ring = false, dot: number | string | null = null) {
-    if (this.key === text + ring + k + dot) return;
-    this.key = text + ring + k + dot;
-    this.text.text = text;
-    this.text.x = dot == null ? 6 : 17;
-    const [w, h] = [Math.ceil(this.text.width) + (dot == null ? 12 : 23), Math.ceil(this.text.height) + 4];
-    [this.w, this.h] = [w * k, h * k];
-    this.c.scale.set(k);
-    this.bg.clear().roundRect(0, 0, w, h, h / 2).fill({ color: 0xfffdf6, alpha: this.faint ? 0.72 : 0.9 });
-    if (ring) this.bg.stroke({ width: 2, color: ACCENT });
-    if (dot != null) this.bg.circle(10, h / 2, 4).fill(dot).stroke({ width: 1, color: INK, alpha: 0.55 });
-  }
-}
+const norm = (s: string | null | undefined) => (s ?? "").trim().toLowerCase();
+const recall = (k: string) => { try { return localStorage.getItem(k); } catch { return null; } };
+const remember = (k: string, v: string) => { try { localStorage.setItem(k, v); } catch { /* private window */ } };
 
-/** One pet on the floor: its body, and the small signs of how it is. */
-class Actor {
-  c = new Container();
-  body = new PetBody();
-  ring = new Graphics();
-  dots = new Graphics();
-  heart = new Graphics();
-  bang = new Graphics();
-  carry = new Graphics();
-  tag = new Tag();
-  bubble: Container | null = null;
-  bubbleKey = "";
-  bubbleSize = [0, 0];
-  pet!: PetV;
-  from = [0, 0];
-  to = [0, 0];
-  t0 = 0;
-  dur = 1;
-  seed = Math.random() * 6;
-  drawn = "";
-  carried = "";
-  half = [20, 20];        // half its width and height on screen
-  heartAt = -1e9;
-  startleAt = -1e9;
-
-  constructor() {
-    for (const x of [-9, 0, 9]) this.dots.circle(x, 0, 3.2).fill(INK);
-    this.heart.circle(-3.6, -3, 4.2).circle(3.6, -3, 4.2).poly([-7.4, -1, 7.4, -1, 0, 8.5]).fill(0xe2506a);
-    this.bang.roundRect(-2, -12, 4, 10, 2).circle(0, 2.5, 2.2).fill(ACCENT);
-    this.c.addChild(this.ring, this.body, this.carry, this.dots, this.heart, this.bang);
-    this.heart.visible = this.bang.visible = false;
-  }
+const skies = new WeakMap<Layout, string | null>();
+/** Is there sky over this room. ponytail: a layout should say so (`light.sky`: "open" or "glass"); until every one
+ *  does, a room with sky among its tiles is open, and one whose north wall is mostly window is under glass. */
+function skyOf(l: Layout | null): string | null {
+  if (!l) return null;
+  if (!skies.has(l)) skies.set(l, l.light?.sky ?? ([...(l.floor ?? []), ...(l.walls ?? [])].flat().some((n) => n?.startsWith("tile.sky")) ? "open" : (l.light?.window?.length ?? 0) >= 6 ? "glass" : null));
+  return skies.get(l)!;
 }
 
 export class Room {
   onClick: (t: Target) => void = () => {};
   onHover: (t: Target | null, fx: number, fy: number) => void = () => {};
+  /** Ids of the page's own elements that lie over the room: plates and bubbles keep out from under them. */
+  clear: string[] = ["roomName", "banner"];
   private app = new Application();
-  private back = new Graphics();        // walls, floor, doors
-  private script = new Container();     // what is written on the walls
-  private props = new Container();      // fixtures, made things, bits, stones
-  private fx = new Graphics();          // ripples, hums, notes, drips: on the floor, moving
-  private actors = new Container();     // pets and creatures
-  private shade = new Graphics();       // the dark
-  private weather = new Graphics();     // rain, snow, heat in the rooms that have a sky; above the dark, so a wet night shows
-  private glow = new Graphics();        // lights, above the dark
-  private panes = new Graphics();       // windows: the only light in a power cut
-  private flash = new Graphics();
-  private tags = new Container();
-  private bubbles = new Container();
-  private size = [12, 8];
-  private px = [0, 0];
+  private el: HTMLElement | null = null;
+  private world = new Container();      // everything in the art's own pixels, scaled up by K
+  private ground = new Container();
+  private walls = new Container();
+  private flat = new Container();
+  private sorted = new Container();     // what stands on the floor, by depth
+  private top = new Container();
+  private mark = new Graphics();        // round the thing the visitor has picked up
+  private fx = new Fx();
+  private light = new Light();
+  private marks = new Marks();
+  private words = new Labels();
+  private still: Still | null = null;
+  private ghosts = new Map<string, Ghost>();
+  private pets = new Map<string, PetActor>();
+  private beasts = new Map<string, CreatureActor>();
+  private heads = new Map<string, Rect>();
   private scene: Scene | null = null;
+  private ready = false;
+  private K = 0;                        // screen pixels to a pixel of the art
+  private F = 1;                        // screen pixels to a pixel of lettering
   private built = "";
+  private lit = "";
   private roomId = "";
-  private pets = new Map<string, Actor>();
-  private beasts = new Map<string, { g: Graphics; c: Creature; at: number[]; from: number[]; to: number[]; t0: number; tag: Tag | null; flag: string | null }>();
-  private bouncing: Graphics[] = [];
-  private lights: number[][] = [];      // [x, y, radius]
-  private hums: number[][] = [];
-  private loud: number[][] = [];
-  private playing: number[][] = [];
-  private water: number[][] = [];
-  private windows: Obj[] = [];
-  private doors: { rect: number[]; to: string; dir: string }[] = [];
-  private things: { tag: Plate; at: number[]; must: boolean }[] = [];
-  private marks: { rect: number[]; m: Mark }[] = [];   // where each inscription is, for the pointer
-  private dials: number[][] = [];       // a box that is on: its dial glows
-  private books: number[][] = [];
-  private box: (Plate & { key: string }) | null = null;   // what the box is saying
-
-  private placed: (Rect & { kind: string })[] = [];
-  private dark = 0;
-  private lastUpdate = 0;
-  private pace = 2000;
   private tick = -1;
-  private seenEvent = -1;
+  private pace = 2000;
+  private lastUpdate = 0;
+  private last = 0;
+  private seenAct: number | null = null;
   private seenMoment = -1;
+  private seenEvent = -1;
+  private weather = "";
   private pointer: number[] | null = null;
-  private k = 1;                        // how much bigger or smaller words are drawn, so they stay a steady size on screen
+  private next = { note: 0, air: 0, glint: 0, drip: 0 };
+  private stage: Stage;
+  private avoid: Rect[] = [];
+  private avoidAt = -1e9;
+  private flashing = false;
+  private box: Thing | null = null;     // the box with a dial, if it is in this room
+  private boxAt = [0, 0];
 
-  async init(el: HTMLElement, w: number, h: number) {
-    const [width, height] = [w * T + 2 * PAD, h * T + 2 * PAD];
-    // sharp on a big screen too: the canvas is stretched by CSS, so draw it at about the size it will be shown
-    const shown = Math.min(innerWidth - 300, ((innerHeight - 250) * width) / height);
-    await this.app.init({ width, height, background: 0xcfc3ab, antialias: true, autoDensity: true,
-                          resolution: Math.min(3, devicePixelRatio * Math.max(1, shown / width)) });
-    el.append(this.app.canvas);
-    this.size = [w, h];
-    this.px = [width, height];
-    this.shade.rect(0, 0, width, height).fill(NIGHT);
-    this.flash.rect(0, 0, width, height).fill(0xffffff);
-    this.flash.alpha = 0;
-    this.glow.blendMode = "add";
-    this.actors.sortableChildren = true;
-    const stage = this.app.stage;
-    stage.addChild(this.back, this.script, this.props, this.fx, this.actors, this.shade, this.weather, this.glow, this.panes, this.flash, this.tags, this.bubbles);
-    stage.eventMode = "static";
-    stage.hitArea = this.app.screen;
-    stage.on("pointerdown", (e) => { this.point([e.global.x, e.global.y]); this.onClick(this.under(e.global.x, e.global.y)); });   // a tap shows what a hover would
-    stage.on("pointermove", (e) => this.point([e.global.x, e.global.y]));
-    stage.on("pointerleave", () => this.point(null));
+  constructor() {
+    this.stage = { now: 0, dt: 16, fx: this.fx, blocked: new Uint8Array(FX * FY), K: 1,
+      free: (t, me) => onFloor(t) && !this.stage.blocked[idx(t)] && ![...this.pets.values()].some((a) => a.pet.id !== me && ((a.home[0] === t[0] && a.home[1] === t[1]) || (a.w.tile()[0] === t[0] && a.w.tile()[1] === t[1]))),
+      where: (name, near) => this.where(name, near),
+      book: () => { const t = this.still && [...this.still.things.values()].find((t) => t.obj.fix?.book); return t ? [t.x, t.y - 4] : null; },
+      others: () => [...[...this.pets.values()].map((a) => [a.w.x, a.w.y]), ...[...this.beasts.values()].map((b) => [b.w.x, b.w.y])] };
+  }
+
+  /** `el`: where the room goes. Give it a width (and, to limit its height, a CSS max-height): the canvas takes the
+   *  largest whole-number scale that fits, and is centred in it. The size of the floor is the engine's (12 x 8). */
+  async init(el: HTMLElement, _w = FX, _h = FY) {
+    await Promise.all([loadArt(), this.app.init({ width: W, height: H, backgroundAlpha: 0, antialias: false, roundPixels: true, resolution: 1, autoDensity: false })]);
+    this.el = el;
+    const cv = this.app.canvas;
+    cv.style.display = "block";
+    cv.style.margin = "0 auto";
+    cv.style.imageRendering = "pixelated";
+    el.append(cv);
+    this.sorted.sortableChildren = true;
+    this.world.addChild(this.ground, this.walls, this.marks.c, this.flat, this.sorted, this.top, this.mark, this.light.dark, this.light.glow, this.light.panes, this.fx.c, this.light.falling);
+    this.app.stage.addChild(this.world, this.words.c);
+    const at = (e: PointerEvent) => { const r = cv.getBoundingClientRect(); return [((e.clientX - r.left) / r.width) * W, ((e.clientY - r.top) / r.height) * H]; };
+    cv.addEventListener("pointerdown", (e) => { this.point(at(e)); const p = at(e); this.onClick(this.under(p[0], p[1])); });   // a tap shows what a hover would
+    cv.addEventListener("pointermove", (e) => this.point(at(e)));
+    cv.addEventListener("pointerleave", () => this.point(null));
+    new ResizeObserver(() => this.fit()).observe(el);
+    addEventListener("resize", () => this.fit());   // a change of zoom or screen changes the pixel ratio without changing the element
+    this.fit();
     this.app.ticker.add(() => this.frame(performance.now()));
-    new ResizeObserver(() => {   // shown smaller than drawn (a narrow window, the drawer open): bigger words; on a big screen, smaller
-      const k = Math.round(clamp(width / (this.app.canvas.clientWidth || width), 0.62, 1.9) * 10) / 10;
-      if (k === this.k) return;
-      [this.k, this.built] = [k, ""];
-      for (const a of this.pets.values()) a.bubbleKey = "resized";
-      if (this.box) this.box.key = "resized";
-      if (this.scene) this.update(this.scene);
-    }).observe(this.app.canvas);
+    this.ready = true;
+    if (this.scene) this.update(this.scene);
   }
 
-  /** Say what the pointer is over; again whenever a snapshot changes what is there. */
-  private point(at: number[] | null = this.pointer) {
-    this.pointer = at;
-    const t = at && this.under(at[0], at[1]);
-    this.app.canvas.style.cursor = t && (t.pet || t.object || t.door) ? "pointer" : "";
-    this.onHover(t, (at?.[0] ?? 0) / this.px[0], (at?.[1] ?? 0) / this.px[1]);
+  /** The largest whole number of screen pixels to an art pixel that fits the element. */
+  private fit() {
+    const el = this.el;
+    if (!el) return;
+    const dpr = devicePixelRatio || 1, tall = parseFloat(getComputedStyle(el).maxHeight) || Infinity;   // the element's width decides, and its max-height if it has one
+    const K = Math.max(1, Math.floor(Math.min(((el.clientWidth || W) * dpr) / W, (tall * dpr) / H) + 0.001));
+    if (K === this.K) return;
+    this.K = this.stage.K = K;
+    this.F = Math.max(1, Math.round(K / 2));
+    this.app.renderer.resize(W * K, H * K);
+    this.app.canvas.style.setProperty("width", `${(W * K) / dpr}px`, "important");
+    this.app.canvas.style.setProperty("height", `${(H * K) / dpr}px`, "important");
+    this.world.scale.set(K);
+    this.built = "";
+    if (this.scene && this.ready) this.update(this.scene);
   }
 
-  /** A still picture of a body, for cards, the family tree and the life records. */
+  /** A still picture of a body, for cards, the family tree and the life records (kept for the page; petsprite.ts has more). */
   picture(genome: Genome, stage: string, look: Look = {}): string {
-    const body = new PetBody();
-    body.draw(genome, stage, 70, false, look);
-    body.scale.set(2);
-    const url = (this.app.renderer.extract.canvas(body) as HTMLCanvasElement).toDataURL();
-    body.destroy({ children: true });
-    return url;
+    return petPortrait(genome, stage, 2, { grey: look.grey }).toDataURL();
   }
 
-  /** The name plates and speech bubbles as they are laid out now, for checking that none overlap. */
-  labels() {
-    return this.placed;
+  /** The name plates, captions and bubbles as they are laid out now (CSS pixels within the canvas), for checking that none overlap. */
+  labels(): (Rect & { kind: string })[] {
+    const dpr = devicePixelRatio || 1;
+    return this.words.placed.map((r) => ({ x: r.x / dpr, y: r.y / dpr, w: r.w / dpr, h: r.h / dpr, kind: r.kind }));
   }
 
   // ---- a snapshot arrives ----
 
   update(sc: Scene) {
+    this.scene = sc;
+    if (!this.ready) return;
     const now = performance.now(), { snap, room } = sc, fresh = room.id !== this.roomId;
-    if (snap.tick !== this.tick) {   // a new moment of the house, not just a click: how long since the last one sets the walking pace
-      // a step takes as long as the tick it happens in (twice as long on the live clock), so a walk is a glide and not a step and a wait
-      this.pace = this.tick < 0 ? tickMs(snap) : fresh ? this.pace : clamp(now - this.lastUpdate, 120, Math.max(2600, tickMs(snap) * 1.25));
+    if (snap.tick !== this.tick) {   // a new moment of the house: how long since the last one sets the walking pace, so a walk is a glide and not a step and a wait
+      this.pace = this.tick < 0 || fresh ? tickMs(snap) : clamp(now - this.lastUpdate, 120, Math.max(2600, tickMs(snap) * 1.25));
       [this.tick, this.lastUpdate] = [snap.tick, now];
     }
-    this.scene = sc;
     this.roomId = room.id;
-    const kind = ROOMS[room.type ?? ""] ?? ROOMS.nursery;
-    const sky = skyColor(snap.clock.phase, snap.weather);
-    const key = JSON.stringify([room.objects, room.spots, room.paint, room.doors, room.shut, room.wet, snap.clock.phase, snap.clock.season, snap.weather,
-                                snap.power, sc.picked, snap.rooms.map((r) => r.type), room.marks]);
-    if (key !== this.built) this.build(sc, sky);
-    this.built = key;
+    if (fresh) { this.fx.clear(); this.ghosts.clear(); }
 
-    const base = ({ day: 0, dusk: 0.22, night: 0.5 } as Record<string, number>)[snap.clock.phase] ?? 0;
-    const murk = snap.clock.phase === "day" ? ({ cloudy: 0.03, rain: 0.06, storm: 0.13, snow: 0.02 } as Record<string, number>)[snap.weather] ?? 0 : 0;
-    this.dark = clamp(base + murk + kind.dim - (room.lit ? 0.2 : 0) + (snap.power || snap.clock.phase === "day" ? 0 : 0.2), 0, 0.7);   // a power cut by day changes nothing you can see
-    this.shade.alpha = this.dark;
+    const lay = layout(room.type, () => { this.built = ""; if (this.scene) this.update(this.scene); });
+    const keep = this.keep();
+    const key = JSON.stringify([room.id, room.type, lay === undefined, Object.entries(room.objects).map(([n, o]) => [n, o.pos, o.state, o.wall, o.servings === 0, o.grow != null && o.grow < 0.35, o.water,
+      o.made && [o.made.recipe, o.made.active, o.made.behavior?.do, o.made.worn, !!o.made.heirloom], !!o.memorial]), room.spots, room.paint, room.doors, room.shut, room.wet, snap.power,
+      snap.rooms.map((r) => r.type), room.marks, this.K, keep, snap.door_tiles]);
+    if (key !== this.built) {
+      this.built = key;
+      this.rebuild(sc, lay ?? null, keep, now);
+    }
+    const still = this.still!;
+    this.mark.clear();
+    const held = sc.picked ? still.things.get(sc.picked) : null;
+    if (held) this.mark.rect(Math.round(held.rect.x) - 2, Math.round(held.rect.y) - 2, Math.round(held.rect.w) + 4, Math.round(held.rect.h) + 4).stroke({ width: 1, color: 0xffb347, alignment: 1 });
 
-    // startles and hearts come from what just happened (§10.3)
-    const event = snap.events.filter((e) => !e.room || e.room === room.id).at(-1);
-    const startled = !fresh && this.seenEvent >= 0 && !!event && event.tick > this.seenEvent && event.kind !== "power back";
-    this.seenEvent = Math.max(event?.tick ?? 0, fresh ? 0 : this.seenEvent);
-    const nuzzlers = snap.moments.filter((m) => m.kind === "nuzzle" && m.n > this.seenMoment && m.room === room.id && ago(snap, m.tick) < 20);
-    this.seenMoment = snap.moments.at(-1)?.n ?? this.seenMoment;
+    // light and weather
+    const reading = snap.read_glow ? [...still.things.values()].filter((t) => t.obj.fix?.book).map((t) => ({ x: t.x, y: t.y - 6, r: 24, color: [255, 236, 150], made: true })) : [];
+    const env = { phase: snap.clock.phase, weather: snap.weather, season: snap.clock.season, power: snap.power, lit: room.lit, cold: room.cold, night: lay?.light?.night ?? 0.45, day: lay?.light?.day ?? 0,
+                  sky: skyOf(lay ?? null), windowTiles: lay?.light?.window ?? [], windows: still.windows.map((w) => w.rect), lamps: [...still.lamps.filter((l) => l.made || snap.power), ...reading], sun: still.sun };
+    const lit = JSON.stringify(env);
+    if (lit !== this.lit) { this.lit = lit; this.light.set(env); }
 
-    const here = snap.pets.filter((p) => p.room === room.id && !(p.stage === "dead" && p.buried));
-    for (const [id, a] of this.pets) if (fresh || !here.some((p) => p.id === id)) {
-      a.c.destroy({ children: true });
-      a.tag.c.destroy({ children: true });
-      a.bubble?.destroy({ children: true });
-      this.pets.delete(id);
-    }
-    const aside = this.spread(here, room);
-    for (const p of here) {
-      let a = this.pets.get(p.id);
-      const goal = mid(p.pos);
-      goal[0] = clamp(goal[0] + (aside.get(p.id) ?? 0) * T, PAD + 16, PAD + this.size[0] * T - 16);
-      if (!a) {
-        a = new Actor();
-        a.c.position.set(goal[0], goal[1]);
-        this.pets.set(p.id, a);
-        this.actors.addChild(a.c);
-        this.tags.addChild(a.tag.c);
-      }
-      if (goal[0] !== a.to[0] || goal[1] !== a.to[1]) [a.from, a.to, a.t0, a.dur] = [[a.c.x, a.c.y], goal, now, this.pace];
-      a.pet = p;
-      if (startled && p.stage !== "egg" && p.stage !== "dead" && !p.asleep) a.startleAt = now;
-      if (nuzzlers.some((m) => m.pet === p.id || m.text.includes(p.label))) a.heartAt = now;
-      this.dress(a, sc);
-    }
-    const beasts = snap.creatures.filter((c) => c.room === room.id);
-    for (const [id, b] of this.beasts) if (fresh || !beasts.some((c) => c.id === id)) {
-      b.g.destroy();
-      b.tag?.c.destroy({ children: true });
-      this.beasts.delete(id);
-    }
-    for (const c of beasts) {
-      let b = this.beasts.get(c.id);
-      const goal = mid(c.pos);
-      if (!b) {
-        b = { g: new Graphics(), c, at: [goal[0], goal[1] + 8], from: [goal[0], goal[1] + 8], to: [goal[0], goal[1] + 8], t0: now, tag: null, flag: null };
-        this.beasts.set(c.id, b);
-        this.actors.addChild(b.g);
-      }
-      if (goal[0] !== b.to[0] || goal[1] + 8 !== b.to[1]) [b.from, b.to, b.t0] = [b.at, [goal[0], goal[1] + 8], now];
-      b.c = c;
-      // somebody's animal (SPEC-v3.1 §4.4): it flies its pet's colour, and wears its name once it has one
-      const owner = snap.pets.find((p) => p.id === c.tame);
-      b.flag = owner ? colorOf(owner) : null;
-      if (c.name && !b.tag) this.tags.addChild((b.tag = new Tag(10, true)).c);
-      b.tag?.set(c.name ?? "", this.k, false, b.flag);
-    }
-    this.air(sc);
+    this.cast(sc, fresh, now);
+    this.say(sc);
+    this.happen(sc, fresh, now);
     if (this.pointer) this.point();
   }
 
-  /** Sideways nudges, in tiles, so nobody stands hidden (§10.7): the engine lets pets share a tile, and stand on the
-   *  tile a thing, an egg or a body is on. ponytail: a few rounds of pushing apart along the row; a crowd of five on
-   *  one tile still overlaps at the edges, and a real packing of the room would be the fix. */
-  private spread(here: PetV[], room: RoomV) {
-    const off = new Map<string, number>(), half = (p: PetV) => ((p.stage === "egg" ? 9 : SIZE[bodyStage(p)] ?? 15) * S) / T;
-    const walks = (p: PetV) => p.stage !== "egg" && p.stage !== "dead", walkers = here.filter(walks);
-    const still = [...Object.entries(room.objects).filter(([n, o]) => !o.fix?.window && !o.fix?.sun && !o.water && !/rug|blanket|bed/.test(n)).map(([, o]) => ({ pos: o.pos, half: 0.3 })),
-                   ...here.filter((p) => !walks(p)).map((p) => ({ pos: p.pos, half: half(p) }))];
-    const x = (p: PetV) => p.pos[0] + (off.get(p.id) ?? 0);
-    const push = (p: PetV, d: number) => off.set(p.id, clamp((off.get(p.id) ?? 0) + d, -0.62, 0.62));
-    for (let round = 0; round < 4; round++) for (const [i, p] of walkers.entries()) {
-      for (const f of still) {   // beside whatever is on its tile, not on top of it
-        const need = half(p) + f.half, dx = x(p) - f.pos[0];
-        if (f.pos[1] === p.pos[1] && Math.abs(dx) < need) push(p, (need - Math.abs(dx)) * (dx > 0 || (dx === 0 && p.pos[0] < this.size[0] - 1) ? 1 : -1));
+  /** The stretch of the south wall the page's plate with the room's name lies over, in the room's pixels. */
+  private keep(): number[] | null {
+    const e = document.getElementById(this.clear[0] ?? ""), view = this.app.canvas.getBoundingClientRect();
+    if (!e || e.hidden || !view.width) return null;
+    const b = e.getBoundingClientRect(), s = W / view.width;
+    return b.bottom < view.bottom - view.height * 0.2 ? null : [Math.round((b.left - view.left) * s), Math.round((b.right - view.left) * s)];
+  }
+
+  /** Everything that holds still, built again. What made things stood there a moment ago is kept for the effects. */
+  private rebuild(sc: Scene, lay: Layout | null, keep: number[] | null, now: number) {
+    const old = this.still;
+    if (old) {
+      this.ghosts.clear();
+      for (const [n, t] of old.things) if (t.drawn) this.ghosts.set(n, { texture: t.texture, x: t.x, y: t.y, scale: t.scale, h: t.rect.h });
+      old.destroy();
+    }
+    const s = (this.still = new Still(sc.snap, sc.room, lay, this.K));
+    this.ground.addChild(s.ground);
+    this.walls.addChild(s.wallLayer);
+    this.flat.addChild(s.flat);
+    this.top.addChild(s.top);
+    this.box = [...s.things.values()].find((t) => t.obj.fix?.radio) ?? null;
+    this.marks.build(sc.room, s, this.F / this.K, keep, now);
+    for (const c of s.standing) this.sorted.addChild(c);
+  }
+
+  /** Where each pet stands: on the engine's tile, or the nearest free one if that tile has furniture on it or is taken. */
+  private cast(sc: Scene, fresh: boolean, now: number) {
+    const { snap, room } = sc, still = this.still!;
+    const here = snap.pets.filter((p) => p.room === room.id && !(p.stage === "dead" && p.buried));
+    for (const [id, a] of this.pets) if (fresh || !here.some((p) => p.id === id)) { a.c.destroy({ children: true }); this.pets.delete(id); this.heads.delete(id); }
+    const fixed = (p: PetV) => p.stage === "egg" || p.stage === "dead", taken = new Set<number>();
+    for (const p of [...here].sort((a, b) => Number(fixed(b)) - Number(fixed(a)) || (a.id < b.id ? -1 : 1))) {
+      let a = this.pets.get(p.id);
+      const first = !a;
+      if (!a) {
+        this.pets.set(p.id, (a = new PetActor()));
+        this.sorted.addChild(a.c);
       }
-      for (const q of walkers.slice(i + 1)) {   // and clear of each other; one a row behind may overlap more
-        const dy = Math.abs(q.pos[1] - p.pos[1]), need = (half(p) + half(q)) * (dy ? 0.4 : 0.92), dx = x(q) - x(p);
-        if (dy > 1 || Math.abs(dx) >= need) continue;
-        const d = ((need - Math.abs(dx)) / 2) * (dx < 0 ? -1 : 1);
-        push(p, -d);
-        push(q, d);
+      const was = a.pet, same = was && was.pos[0] === p.pos[0] && was.pos[1] === p.pos[1] && !still.blocked[idx(a.home)] && !taken.has(idx(a.home));
+      const want: Tile = [clamp(Math.round(p.pos[0]), 0, FX - 1), clamp(Math.round(p.pos[1]), 0, FY - 1)];
+      const home = same ? a.home : nearestFree(want, still.blocked, taken, first ? want : a.w.tile());
+      taken.add(idx(home));
+      const d = doing(p), o = d ? room.objects[norm(d.what)] ?? room.objects[d.what ?? ""] : null;
+      a.eating = d?.type === "eat" || (d?.type === "use" && !!o?.fix && ("meal" in o.fix || !!o.fix.plant));   // (an older engine called eating "use")
+      a.update(p, home, this.stage, this.pace, sc.selected === p.id, first);
+      if (first) a.step(this.stage);
+    }
+    // nobody walks through one who is asleep, an egg, or a body: their tiles are shut to the others' paths
+    const walk = (this.stage.blocked = still.blocked.slice());
+    for (const a of this.pets.values()) if (fixed(a.pet) || a.pet.asleep) walk[idx(a.home)] = 1;
+    const beasts = snap.creatures.filter((c) => c.room === room.id);
+    for (const [id, b] of this.beasts) if (fresh || !beasts.some((c) => c.id === id)) { b.c.destroy({ children: true }); this.beasts.delete(id); }
+    for (const c of beasts) {
+      let b = this.beasts.get(c.id);
+      const first = !b;
+      if (!b) {
+        this.beasts.set(c.id, (b = new CreatureActor()));
+        this.sorted.addChild(b.c);
+        if (!fresh) for (const a of this.pets.values()) { a.turn(OX + c.pos[0] * TILE, OY + c.pos[1] * TILE, now, 1800); if (Math.random() < 0.3) a.react("happy", now + 300, 800); }   // somebody new on the floor
       }
-    }
-    return off;
-  }
-
-  /** What the box is saying (SPEC-v3.1 §5.3), as a bubble of its own: the words, or a line of static. */
-  private air(sc: Scene) {
-    const { snap, room } = sc;
-    const said = (snap.radio?.said ?? []).filter((h) => h.room === room.id && ago(snap, h.tick) <= 30).at(-1);
-    const key = said ? `${said.tick}${said.text}` : "";
-    if (key === (this.box?.key ?? "")) return;
-    this.box?.c.destroy({ children: true });
-    this.box = null;
-    if (!said) return;
-    const from = new Text({ text: said.text ? `the box · ${said.source}` : "the box", resolution: CRISP, style: { fontFamily: FONT, fontSize: 11, fontWeight: "700", fill: 0x7a4a1e } });
-    const words = new Text({ text: said.text ? `“${said.text}”` : "only static", resolution: CRISP,
-                             style: { fontFamily: FONT, fontSize: 13, fontStyle: "italic", fill: said.text ? INK : 0x586a63, wordWrap: true, wordWrapWidth: 215, lineHeight: 17 } });
-    from.position.set(9, 5);
-    words.position.set(9, said.text ? 20 : 34);
-    const [w, h] = [Math.ceil(Math.max(words.width, from.width, said.text ? 0 : 120)) + 18, Math.ceil(words.y + words.height) + 7];
-    const bg = new Graphics().roundRect(0, 0, w, h, 6).fill(0xfbf3dc).stroke({ width: 1.5, color: 0x7a4a1e });
-    if (!said.text) {   // nothing to say: the jagged line of a set between stations
-      const r = this.rnd(key);
-      bg.moveTo(9, 26);
-      for (let x = 12; x < w - 9; x += 3) bg.lineTo(x, 26 + (r() - 0.5) * 12);
-      bg.stroke({ width: 1.2, color: 0x586a63 });
-    }
-    const c = new Container();
-    c.addChild(bg, from, words);
-    c.scale.set(this.k);
-    this.bubbles.addChild(c);
-    this.box = { c, w: w * this.k, h: h * this.k, key };
-  }
-
-  /** Words in somebody's hand (SPEC-v3.1 §2.4), cut to fit `max` wide: chalk is white on the patch of wall it was
-   *  rubbed into, a scratch only a shade off the wall and fainter; both fade as they age. Drawn about its middle. */
-  private hand(m: Mark, max: number, wall: number): Plate {
-    const chalk = m.medium !== "scratch", clear = m.clarity ?? 1, pale = light(wall);
-    const t = new Text({ text: m.text, resolution: CRISP, style: { fontFamily: HAND, fontSize: clamp(12.5 * this.k, 11, 19), fontWeight: chalk ? "700" : "400", fontStyle: chalk ? "normal" : "italic",
-                                                                   fill: chalk ? 0xfdfcf5 : pale ? mix(wall, INK, 0.8) : mix(wall, 0xffffff, 0.8) } });
-    for (let n = m.text.length; t.width > max && n > 1;) {
-      n = Math.max(1, Math.min(n - 1, Math.floor((n * max) / t.width)));
-      t.text = m.text.slice(0, n).trimEnd() + "…";
-    }
-    t.anchor.set(0.5);
-    t.alpha = chalk ? 0.45 + 0.55 * clear : 0.32 + 0.4 * clear;
-    const c = new Container(), w = Math.ceil(t.width) + 14, h = Math.ceil(t.height);
-    if (chalk) {   // rubbed in with the side of the stick, not ruled: a few uneven passes
-      const r = this.rnd(m.text + m.id), smear = new Graphics();
-      for (let i = 0; i < 3; i++) smear.roundRect(-w / 2 + (r() - 0.5) * 8, -h / 2 + 2 + (r() - 0.5) * 3, w + (r() - 0.5) * 8, h - 4, 4 + r() * 6).fill({ color: mix(wall, 0x1c2622, 0.72), alpha: (pale ? 0.36 : 0.2) * (0.6 + 0.4 * clear) });
-      c.addChild(smear);
-    }
-    c.addChild(t);
-    return { c, w, h };
-  }
-
-  /** Where along the south wall the page's own plate with the room's name lies. */
-  private nameplate() {
-    const e = document.getElementById("roomName")?.getBoundingClientRect(), view = this.app.canvas.getBoundingClientRect(), s = view.width ? this.px[0] / view.width : 1;
-    return e ? [(e.left - view.left) * s, (e.right - view.left) * s] : [0, 0];
-  }
-
-  /** Inscriptions along the walls: each takes the stretch of its wall left free by the door, the windows and the
-   *  other writing there, near where its writer stood. What is written on a thing or a stone goes above it. */
-  private write(sc: Scene) {
-    for (const c of this.script.removeChildren()) c.destroy({ children: true });
-    this.marks = [];
-    const { room } = sc, [W, H] = [this.size[0] * T, this.size[1] * T], wall = wallColor(room.type, room.paint?.wall ?? null), all = room.marks ?? [];
-    for (const side of ["north", "south", "west", "east"]) {
-      const flat = side === "north" || side === "south", len = flat ? W : H, i = flat ? 0 : 1;
-      const mine = all.filter((m) => m.on === `${side} wall`).sort((a, b) => (a.at ?? 0.5) - (b.at ?? 0.5));
-      const taken = [...this.doors.filter((d) => d.dir === side).map((d) => [d.rect[i], d.rect[i] + d.rect[i + 2]]),
-                     ...(side === "north" || side === "west" ? this.windows.map(windowRect).filter((r) => (r[2] > r[3]) === flat).map((r) => [r[i], r[i] + r[i + 2]]) : []),
-                     ...(side === "south" ? [this.nameplate()] : [])]
-        .map(([a, b]) => [a - PAD - 8, b - PAD + 8]).sort((a, b) => a[0] - b[0]);
-      const gaps: { from: number; to: number; marks: Mark[] }[] = [];
-      let at = 4;
-      for (const [a, b] of [...taken, [len - 4, len]]) {
-        if (a - at > 70) gaps.push({ from: at, to: a, marks: [] });
-        at = Math.max(at, b);
-      }
-      for (const m of mine) {   // each into the free stretch nearest to where it was written, if there is room there for the words
-        const x = (m.at ?? 0.5) * len, far = (g: { from: number; to: number }) => Math.abs(clamp(x, g.from, g.to) - x) + Math.max(0, m.text.length * 7 * this.k - (g.to - g.from));
-        [...gaps].sort((a, b) => far(a) - far(b))[0]?.marks.push(m);
-      }
-      for (const g of gaps) g.marks.forEach((m, n) => {
-        const slot = (g.to - g.from) / g.marks.length, from = g.from + n * slot;
-        const p = this.hand(m, Math.max(34, slot - 22), wall), along = PAD + clamp((m.at ?? 0.5) * len, from + p.w / 2 + 2, from + slot - p.w / 2 - 2);
-        const across = side === "north" ? PAD / 2 : side === "south" ? PAD + H + PAD / 2 : side === "west" ? PAD / 2 : PAD + W + PAD / 2;
-        p.c.position.set(flat ? along : across, flat ? across : along);
-        p.c.rotation = (flat ? 0 : side === "west" ? -Math.PI / 2 : Math.PI / 2) + (((m.id * 37) % 5) - 2) * 0.006;   // nobody writes dead level
-        this.script.addChild(p.c);
-        this.marks.push({ m, rect: flat ? [along - p.w / 2, across - PAD / 2, p.w, PAD] : [across - PAD / 2, along - p.w / 2, PAD, p.w] });
-      });
-    }
-    for (const m of all) {   // on a thing or a stone: a scrawl on it, and the words over it where there is room
-      const o = room.objects[m.on];
-      if (!o) continue;
-      const [x, y] = mid(o.pos), p = this.hand(m, Math.max(160, 150 * this.k), wall), over = new Container(), scrawl = new Graphics();
-      for (const dy of [0, 5]) scrawl.moveTo(x - 9, y + 3 + dy).bezierCurveTo(x - 4, y - 1 + dy, x - 1, y + 7 + dy, x + 3, y + 3 + dy).bezierCurveTo(x + 6, y + dy, x + 8, y + 5 + dy, x + 10, y + 2 + dy);
-      scrawl.stroke({ width: 1.6, color: 0xfdfcf5, alpha: 0.5 + 0.5 * (m.clarity ?? 1) });
-      this.props.addChild(scrawl);
-      p.c.position.set(p.w / 2, p.h / 2);
-      over.addChild(p.c);
-      this.tags.addChildAt(over, 0);
-      this.things.push({ tag: { c: over, w: p.w, h: p.h }, at: [x, y - 34 - p.h], must: false });
+      const owner = snap.pets.find((p) => p.id === c.tame);
+      b.update(c, this.stage, this.pace, first, owner ? hslInt(owner.genome.hue, owner.genome.saturation, 0.55) : null);
     }
   }
 
-  /** A pet's body, name plate, what it carries and what it is saying, redrawn only when they change. */
-  private dress(a: Actor, sc: Scene) {
-    const p = a.pet, stage = bodyStage(p), dead = p.stage === "dead", g = p.genome;
-    const look: Look = { tired: (p.levels?.energy ?? 0) >= 3, grey: stage === "elder" ? (p.old ? 0.85 : 0.55) : 0, dead };
-    const comfort = Math.round((p.needs?.comfort ?? 60) / 10) * 10;
-    const key = JSON.stringify([g, stage, comfort, p.asleep, look]);
-    if (key !== a.drawn) {
-      a.body.draw(g, stage, comfort, !!p.asleep, look);
-      a.drawn = key;
-      const size = SIZE[stage] ?? 15;
-      const [w, h] = stage === "egg" ? [size * 0.85, size * 1.15] : [size, size * g.stretch];
-      a.half = dead ? [h * S, w * S] : [w * S, h * S];
+  /** Name plates, thought captions, speech, and what the box is saying. */
+  private say(sc: Scene) {
+    const { snap, room } = sc, who: Who[] = [];
+    for (const a of this.pets.values()) {
+      const p = a.pet, egg = p.stage === "egg", dead = p.stage === "dead";
+      const said = p.said && ago(snap, p.said.tick) <= (sc.replay ? 30 : 16) ? p.said : null;
+      who.push({ id: p.id, name: egg ? p.name ?? "egg" : p.label, family: p.family ?? 1, selected: sc.selected === p.id, faded: dead,
+                 caption: egg || dead || p.asleep ? null : p.plan?.intention || null, thinking: !!p.thinking && !p.asleep && !egg && !dead,
+                 say: said ? { key: `${said.tick}${said.text}`, text: said.text, to: said.to_name, song: !!said.song } : null });
     }
-    const chosen = sc.selected === p.id;
-    a.ring.clear();
-    if (chosen) a.ring.ellipse(0, FEET + 1, a.half[0] + 8, 8).stroke({ width: 2.5, color: ACCENT, alpha: 0.9 });
-    a.tag.set(p.stage === "egg" ? p.name ?? "an egg" : p.label, this.k, chosen, FAMILY[p.family ?? 1] ?? null);
-    a.tag.c.alpha = dead ? 0.75 : 1;
+    const heard = (snap.radio?.said ?? []).filter((h) => h.room === room.id && ago(snap, h.tick) <= 30).at(-1);
+    this.words.sync(who, heard ? { key: `${heard.tick}${heard.text}`, text: heard.text, source: heard.source } : null, this.F, (W * this.K) / this.F);
+  }
 
-    const carried = (p.carrying ?? []).join();
-    if (carried !== a.carried) {
-      a.carried = carried;
-      a.carry.clear();
-      (p.carrying ?? []).slice(0, 3).forEach((k, i) => bit(a.carry, k, sc.hello?.bits[k]?.looks, a.half[0] + 9, FEET - 12 - i * 14, 0.8));
+  /** What has just happened here: each finished step once (never twice, also after a reload), startles, a turn to the window. */
+  private happen(sc: Scene, fresh: boolean, now: number) {
+    const { snap, room } = sc, house = `${snap.start}|${snap.lineage.id}|${snap.profile}`;
+    const cast = { pets: this.pets, things: this.still!.things, ghosts: this.ghosts, fx: this.fx, now, where: (n: string | null | undefined) => this.where(n), petAt: (n: string | null | undefined) => this.petBy(n) };
+    const acts = snap.acts ?? [], top = acts.reduce((n, a) => Math.max(n, a.n), 0);
+    if (this.seenAct == null) {
+      const [h, n] = (recall("pet.acts") ?? "").split("#");
+      this.seenAct = h === house && Number(n) <= top ? Number(n) : top;
     }
-    const said = p.said && ago(sc.snap, p.said.tick) <= (sc.replay ? 30 : 16) ? p.said : null;
-    const bubbleKey = said ? `${said.tick}${said.text}` : "";
-    if (bubbleKey !== a.bubbleKey) {
-      a.bubbleKey = bubbleKey;
-      a.bubble?.destroy({ children: true });
-      a.bubble = null;
-      if (said) {
-        const words = new Text({ text: said.text.length > 150 ? said.text.slice(0, 148) + "…" : said.text, resolution: CRISP,
-                                 style: { fontFamily: FONT, fontSize: 13, fill: INK, wordWrap: true, wordWrapWidth: 190, lineHeight: 17 } });
-        const to = said.to_name ? new Text({ text: `→ ${said.to_name}`, resolution: CRISP, style: { fontFamily: FONT, fontSize: 11, fontWeight: "700", fill: 0xa8500a } }) : null;   // who it is for (§10.3)
-        to?.position.set(9, 5);
-        words.position.set(9, to ? 20 : 6);
-        const [w, h] = [Math.ceil(Math.max(words.width, to?.width ?? 0)) + 18, Math.ceil(words.height) + (to ? 27 : 13)];
-        const box = new Graphics().roundRect(0, 0, w, h, 9).fill(0xffffff).stroke({ width: 1.5, color: INK });
-        a.bubble = new Container();
-        a.bubble.addChild(box, words);
-        if (to) a.bubble.addChild(to);
-        a.bubble.scale.set(this.k);
-        a.bubbleSize = [w * this.k, h * this.k];
-        this.bubbles.addChild(a.bubble);
-      }
+    if (top < this.seenAct) this.seenAct = top;   // a replay wound back, or another house
+    for (const a of acts) if (a.n > this.seenAct && a.room === room.id && !fresh && (snap.tick - a.tick) * snap.tick_seconds <= 12) play(a, cast);
+    if (top !== this.seenAct) remember("pet.acts", `${house}#${top}`);
+    this.seenAct = top;
+    // a recording from before the engine sent finished steps: the moments say a little of it
+    const moments = snap.moments, last = moments.at(-1)?.n ?? this.seenMoment;
+    if (!snap.acts && this.seenMoment >= 0 && !fresh) for (const m of moments) if (m.n > this.seenMoment && m.room === room.id && m.pet && ago(snap, m.tick) < 20) {
+      const type = ({ nuzzle: "nuzzle", gift: "give", song: "sing", wrote: "write", scrubbed: "scrub", read: "ask_book" } as Record<string, string>)[m.kind];
+      const to = [...this.pets.values()].find((a) => a.pet.id !== m.pet && m.text.includes(a.pet.label))?.pet.id;
+      if (type) play({ n: 0, tick: m.tick, pet: m.pet, type, to, room: room.id, ok: true } as Act, cast);
+    }
+    this.seenMoment = last < this.seenMoment ? last : Math.max(this.seenMoment, last);
+
+    const event = snap.events.filter((e) => !e.room || e.room === room.id).at(-1);
+    if (!fresh && this.seenEvent >= 0 && event && event.tick > this.seenEvent && event.kind !== "power back") this.startle(now, 1);
+    this.seenEvent = fresh ? event?.tick ?? 0 : Math.max(event?.tick ?? 0, this.seenEvent);
+    if (snap.weather !== this.weather && this.weather && (snap.weather === "rain" || snap.weather === "storm" || snap.weather === "snow")) {
+      const w = this.still!.windows[0]?.rect;   // the weather has turned: a look toward the window
+      if (w) for (const a of this.pets.values()) a.turn(w.x, w.y, now + Math.random() * 600, 2200);
+    }
+    this.weather = snap.weather;
+  }
+
+  private startle(now: number, chance: number) {
+    for (const a of this.pets.values()) if (Math.random() < chance && !a.pet.asleep && a.pet.stage !== "egg" && a.pet.stage !== "dead") {
+      a.react("startled", now, 750);
+      this.fx.spawn("bang", a.w.x + 6, a.w.y - a.box.h - 4, { vy: -4, life: 800 });
     }
   }
 
-  /** Everything in the room that holds still between snapshots. */
-  private build(sc: Scene, sky: number) {
-    const { snap, room, hello } = sc, [w, h] = this.size, type = room.type ?? "nursery";
-    const env = { phase: snap.clock.phase, power: snap.power, season: snap.clock.season };
-    backdrop(this.back, type, room.id, w, h, { ...room.paint, season: snap.clock.season, sky, snow: snap.weather === "snow" });
-    this.app.renderer.background.color = ROOMS[type]?.wall ?? 0xcfc3ab;
-    this.doors = Object.entries(room.doors).map(([dir, to]) => {
-      const there = snap.rooms.find((r) => r.id === to);
-      const how = room.shut.includes(dir) ? "shut" : there?.type ? "open" : "unknown";
-      return { rect: door(this.back, dir, snap.door_tiles[dir], how, ROOMS[there?.type ?? ""]?.floor ?? 0, w, h), to, dir };
-    });
-
-    for (const c of this.props.removeChildren()) c.destroy({ children: true });
-    for (const t of this.things) t.tag.c.destroy({ children: true });
-    [this.bouncing, this.lights, this.hums, this.loud, this.playing, this.water, this.windows, this.things, this.dials, this.books] = [[], [], [], [], [], [], [], [], [], []];
-    const under = new Graphics(), over = new Graphics(), made: Container[] = [];
-    const flat = (n: string, o: Obj) => (o.fix?.water || o.fix?.sun || /rug|blanket/.test(n) ? 0 : 1);
-    const all = Object.entries(room.objects).sort(([an, a], [bn, b]) => flat(an, a) - flat(bn, b) || a.pos[1] - b.pos[1]);
-    if (room.wet) {   // a leak: water standing on the floor
-      const r = this.rnd(room.id);
-      for (let i = 0; i < 7; i++) under.ellipse(PAD + 30 + r() * (w * T - 60), PAD + 20 + r() * (h * T - 40), 26 + r() * 30, 9 + r() * 9).fill({ color: 0x5f9fc4, alpha: 0.42 });
-    }
-    for (const [name, o] of all) {
-      const [x, y] = mid(o.pos);
-      if (name === sc.picked) under.roundRect(x - T / 2 + 2, y - T / 2 + 2, T - 4, T - 4, 10).stroke({ width: 3, color: ACCENT });
-      if (o.made) {   // something a pet made: drawn from its recipe, showing what it has been taught to do (§7)
-        const m = o.made, doing = m.active ? m.behavior?.do ?? "" : "", worn = m.worn;
-        if ((o.state === "on" || doing === "glow") && snap.power) this.lights.push([x, y, 58]);
-        if (doing === "dim") under.circle(x, y, 46).fill({ color: NIGHT, alpha: 0.22 });
-        if (doing === "hum") this.hums.push([x, y]);
-        const recolor = doing.startsWith("change_color:") ? doing.split(":")[1] : undefined;
-        const drawn = new Graphics().svg(`<svg xmlns="http://www.w3.org/2000/svg">${thingSvg(m.recipe, 0, 0, recolor)}</svg>`);
-        drawn.position.set(x, y);
-        drawn.alpha = worn.length ? 0.82 : 1;
-        if (doing === "bounce") this.bouncing.push(drawn);
-        made.push(drawn);
-        // how it has worn (§6.1): damp from the cellar floor, dust from the attic, the moth's holes
-        if (worn.includes("damp")) for (const dx of [-12, 0, 11]) over.moveTo(x + dx, y + 12).quadraticCurveTo(x + dx + 4, y + 20, x + dx, y + 21).quadraticCurveTo(x + dx - 4, y + 20, x + dx, y + 12).fill({ color: 0x5f9fc4, alpha: 0.85 });
-        if (worn.includes("dusty")) { const r = this.rnd(name); for (let i = 0; i < 12; i++) over.circle(x - 20 + r() * 40, y - 20 + r() * 34, 1.6).fill({ color: 0xd9d4c6, alpha: 0.9 }); }
-        if (worn.includes("eaten")) for (const [dx, dy] of [[-9, -6], [7, 3], [-2, 9]]) over.circle(x + dx, y + dy, 3).fill(ROOMS[type]?.floor ?? 0xe6dcc8).stroke({ width: 1, color: INK, alpha: 0.5 });
-        if (m.heirloom) heirloomMark(over, x + 19, y - 24);
-        const tag = new Tag(10, true);
-        tag.set(m.called ?? name, this.k);
-        this.things.push({ tag, at: [x, y + 25], must: false });
-      } else if (o.memorial) {
-        stone(over, x, y);
-        const tag = new Tag(11, true);
-        tag.set(snap.pets.find((p) => p.id === o.memorial!.pet)?.label ?? name.replace(/^stone for (.)/, (_, c: string) => c.toUpperCase()), this.k);
-        this.things.push({ tag, at: [x, y + 21], must: true });
-      } else if (o.fix?.window) {
-        this.windows.push(o);
-      } else if (o.water) {
-        for (const [tx, ty] of o.water) under.roundRect(PAD + tx * T - 3, PAD + ty * T - 3, T + 6, T + 6, 16).fill(0x9fb5ad);
-        for (const [tx, ty] of o.water) under.roundRect(PAD + tx * T + 3, PAD + ty * T + 3, T - 6, T - 6, 14).fill(mix(0x4f9fc0, sky, 0.3));
-        const r = this.rnd(room.id + name);
-        for (let i = 0; i < 4; i++) {
-          const [tx, ty] = o.water[Math.floor(r() * o.water.length)], [lx, ly] = [PAD + tx * T + 14 + r() * 28, PAD + ty * T + 14 + r() * 28];
-          under.circle(lx, ly, 8).fill(0x4f9b63).stroke({ width: 1, color: INK, alpha: 0.5 }).poly([lx, ly, lx + 8, ly - 3, lx + 8, ly + 3]).fill(mix(0x4f9fc0, sky, 0.3));
-        }
-        this.water = o.water;
-      } else if (o.fix?.sun) {   // the attic's shaft of sun (§6.1): a warm patch that crosses the floor with the hour
-        const clear = snap.weather === "clear" || snap.weather === "heat";
-        const [col, a] = snap.clock.phase === "night" ? [0xbfd0ff, 0.1] : [0xfff0b0, snap.clock.phase === "dusk" ? 0.25 : clear ? 0.62 : 0.22];
-        const top = windowRect(this.windows[0] ?? { pos: [5, 0] });
-        under.poly([top[0] + 8, PAD, top[0] + top[2] - 8, PAD, x + 40, y + 6, x - 34, y + 6]).fill({ color: col, alpha: a * 0.3 });
-        under.poly([x - 30, y - 22, x + 44, y - 22, x + 30, y + 24, x - 44, y + 24]).fill({ color: col, alpha: a });
-      } else {
-        fixture(under, name, x, y, o, env);
-        if (o.fix?.light && o.state === "on" && snap.power) this.lights.push([x, y - 8, 96]);
-        if (o.fix?.loud) this.loud.push([x, y]);
-        if (o.fix?.radio && o.state === "on") this.dials.push([x + 10, y + 4]);
-        if (o.fix?.book) this.books.push([x, y]);
-        if (o.state === "playing") this.playing.push([x, y]);
-      }
-    }
-    for (const s of room.spots) {
-      const [x, y] = mid(s.pos);
-      over.ellipse(x, y + 16, 9, 2.5).fill({ color: INK, alpha: 0.12 });
-      bit(over, s.bit, hello?.bits[s.bit]?.looks, x, y + 8);
-    }
-    this.props.addChild(under, ...made, over);
-    for (const t of this.things) this.tags.addChildAt(t.tag.c, 0);
-    this.write(sc);
+  private petBy(name: string | null | undefined): PetActor | null {
+    const n = norm(name);
+    if (!n) return null;
+    for (const a of this.pets.values()) if (a.pet.id === name || norm(a.pet.name) === n || norm(a.pet.label) === n) return a;
+    return null;
   }
-
-  private rnd(key: string) {
-    let seed = [...key].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) % 4294967296, 7);
-    return () => ((seed = (seed * 1664525 + 1013904223) % 4294967296) / 4294967296);
+  /** The place of a pet, creature, thing, door or wall by its name, in the room's pixels; a wall, at the point nearest `near`. */
+  private where(name: string | null | undefined, near?: number[]): number[] | null {
+    const n = norm(name), still = this.still;
+    if (!n || !still) return null;
+    const a = this.petBy(name);
+    if (a) return [a.w.x, a.w.y];
+    for (const b of this.beasts.values()) if (b.cr.id === name || norm(b.cr.name) === n || b.cr.kind === n.replace(/^(the|a) /, "")) return [b.w.x, b.w.y];
+    const t = still.things.get(n) ?? still.things.get(name ?? "");
+    if (t) return [t.x, t.y - Math.min(8, t.rect.h / 2)];
+    const side = /(north|south|west|east)/.exec(n)?.[1], p = near ?? [W / 2, OY + (FY * TILE) / 2];
+    if (!side) return null;
+    const d = still.doors.find((d) => d.dir === side);
+    if (n.includes("door") && d) return [d.rect.x + d.rect.w / 2, d.rect.y + d.rect.h / 2];
+    return side === "north" ? [p[0], OY - 10] : side === "south" ? [p[0], OY + FY * TILE + 6] : side === "west" ? [OX - 6, p[1] - 8] : [OX + FX * TILE + 6, p[1] - 8];
   }
 
   // ---- every frame ----
 
   private frame(now: number) {
-    const sc = this.scene;
-    if (!sc) return;
-    const { snap, room } = sc, [w, h] = this.size, [W, H] = [w * T, h * T];
-    const storm = snap.weather === "storm", slot = Math.floor(now / 5200), at = slot * 5200 + ((slot * 7919) % 3800);
-    const flashing = storm && ((now > at && now < at + 90) || (now > at + 170 && now < at + 250));
-    const sky = ROOMS[room.type ?? ""]?.sky;
-
-    for (const a of this.pets.values()) this.animate(a, now);   // each sets its zIndex to its y: whoever is lower on the floor is in front
-    for (const b of this.beasts.values()) {
-      const lin = Math.min(1, (now - b.t0) / this.pace), k = b.flag ? lin * lin * (3 - 2 * lin) : lin, moth = b.c.kind === "moth";   // a tame one eases after its pet; a wild one scuttles
-      const [x, y] = (b.at = [b.from[0] + (b.to[0] - b.from[0]) * k, b.from[1] + (b.to[1] - b.from[1]) * k]);   // a moth flutters about where it is
-      b.g.position.set(x + (moth ? Math.sin(now / 210) * 7 : 0), y + (moth ? Math.cos(now / 170) * 6 - 22 : 0));
-      b.g.zIndex = y;
-      if (Math.abs(b.to[0] - b.from[0]) > 1) b.g.scale.x = b.to[0] > b.from[0] && !moth ? -1 : 1;
-      creature(b.g, b.c.kind, now, k < 1 && (b.to[0] !== b.from[0] || b.to[1] !== b.from[1]), b.flag);
-      if (b.c.carry) bit(b.g, b.c.carry, sc.hello?.bits[b.c.carry]?.looks, 0, -14, 0.75);
+    const sc = this.scene, still = this.still;
+    if (!sc || !still || !this.ready) return;
+    const dt = Math.min(100, now - (this.last || now)), st = this.stage, K = this.K;
+    this.last = now;
+    [st.now, st.dt] = [now, dt];
+    for (const a of this.pets.values()) {
+      a.step(st);
+      const r = a.rect(), h = this.heads.get(a.pet.id) ?? { x: 0, y: 0, w: 0, h: 0 };
+      const mood = a.pet.emote && !a.pet.asleep ? 1 : 0;   // the face by its head is part of what must stay clear
+      [h.x, h.y, h.w, h.h] = [r.x * K, (r.y - 5 * mood) * K, (r.w + 11 * mood) * K, (r.h + 5 * mood) * K];
+      this.heads.set(a.pet.id, h);
     }
-    for (const b of this.bouncing) b.pivot.y = Math.abs(Math.sin(now / 180)) * 9;
-
-    // on the floor: water moving, things humming, notes in the air, a draught, drips
-    const f = this.fx.clear();
-    this.water.slice(0, 5).forEach(([tx, ty], i) => {
-      const k = ((now / 2600 + i * 0.37) % 1), [x, y] = [PAD + tx * T + T / 2 + Math.sin(i * 5) * 12, PAD + ty * T + T / 2 + Math.cos(i * 3) * 10];
-      f.ellipse(x, y, 4 + k * 16, 2 + k * 7).stroke({ width: 1.5, color: 0xffffff, alpha: 0.5 * (1 - k) });
-    });
-    for (const [x, y] of this.hums) for (const i of [0, 1, 2]) {
-      const k = (now / 1800 + i / 3) % 1;
-      f.circle(x, y, 26 + k * 22).stroke({ width: 1.5, color: INK, alpha: 0.3 * (1 - k) });
+    for (const b of this.beasts.values()) b.step(st);
+    this.alive(sc, still, now);
+    this.light.step(now);
+    if (this.light.flashing && !this.flashing) this.startle(now, 0.3);   // thunder: some of them jump
+    this.flashing = this.light.flashing;
+    const tip = this.marks.step(now);
+    if (tip && Math.random() < 0.3) this.fx.spawn("grit", tip[0] / K, tip[1] / K, { vx: (Math.random() - 0.5) * 10, vy: 8, g: 30, life: 500 });
+    this.fx.step(now, dt);
+    this.mark.alpha = 0.6 + 0.4 * Math.sin(now / 200);
+    if (now - this.avoidAt > 500) {   // the page's own plates over the room take their space first
+      this.avoidAt = now;
+      const view = this.app.canvas.getBoundingClientRect(), s = view.width ? (W * K) / view.width : 1;
+      this.avoid = this.clear.map((id) => document.getElementById(id)).filter((e): e is HTMLElement => !!e && !e.hidden && e.offsetParent !== null).map((e) => e.getBoundingClientRect())
+        .map((b) => ({ x: (b.left - view.left) * s, y: (b.top - view.top) * s, w: b.width * s, h: b.height * s }));
     }
-    {   // notes rise from whatever is playing, and from the instruments while the room still rings (§6.1)
-      const notes = (from: number[][], color: number, big: number) => from.forEach(([x, y], n) => [0, 1].forEach((i) => {
-        const k = (now / 2200 + i / 2 + n * 0.3) % 1, [nx, ny] = [x + 14 + i * 12 + Math.sin(k * 6) * 5, y - 22 - k * 34];
-        f.circle(nx, ny, 3.5 * big).rect(nx + 2.2 * big, ny - 13 * big, 1.6 * big, 13 * big).fill({ color, alpha: Math.min(1, 1.6 * (1 - k)) });
-      }));
-      notes([...this.playing, ...(room.sounding ? (this.loud.length ? this.loud : [[PAD + W / 2, PAD + H / 2]]) : [])], INK, 1);
-      // and over whoever is singing (SPEC-v3.1 §3.4): a pet, a bird, or the music box by itself
-      notes((snap.sung ?? []).filter((x) => x.room === room.id && ago(snap, x.tick) <= 10).flatMap((x) => {
-        const a = this.pets.get(x.by), b = this.beasts.get(x.by), box = x.by === "music box" ? room.objects["music box"] : null;
-        return a ? [[a.c.x + a.half[0] - 14, Math.max(66, a.c.y + a.body.y - a.half[1] + 26)]] : b ? [[b.g.x, b.g.y + 6]] : box ? [mid(box.pos)] : [];
-      }), ACCENT, 1.25);
-    }
-    if (snap.read_glow) for (const [x, y] of this.books) for (let i = 0; i < 5; i++) {   // the book has just been read (SPEC-v3.1 §6.3): motes of light lift off the page
-      const k = (now / 1700 + i / 5) % 1;
-      f.star(x - 18 + ((i * 37) % 36), y - 8 - k * 30, 4, 3.6 * (1 - k) + 1, 1.2).fill({ color: 0xffe58a, alpha: 1 - k });
-    }
-    if (room.cold) for (let i = 0; i < 4; i++) {   // a draught: pale wisps crossing the floor
-      const k = (now / 3400 + i / 4) % 1, x = PAD + k * W, y = PAD + H * (0.2 + i * 0.2);
-      f.moveTo(x - 40, y).bezierCurveTo(x - 20, y - 12, x - 10, y + 12, x + 10, y).stroke({ width: 2.5, color: 0xdfeeff, alpha: 0.6 * Math.sin(k * Math.PI) });
-    }
-    if (room.wet) for (const i of [0, 1]) {
-      const k = (now / 1300 + i * 0.5) % 1, x = PAD + W * (0.3 + i * 0.37);
-      f.ellipse(x, PAD + k * k * H * 0.5, 2, 4).fill({ color: 0x5f9fc4, alpha: 0.8 });
-    }
-    if (room.type === "attic") {   // dust in the air
-      for (let i = 0; i < 16; i++) f.circle(PAD + ((i * 0.618 * W + now * 0.004 * (1 + (i % 3))) % W), PAD + ((i * 0.37 * H + Math.sin(now / 1900 + i) * 14 + H) % H), 1.4);
-      f.fill({ color: 0xfff6d8, alpha: 0.5 });
-    }
-
-    // weather where there is a sky: all of it in the garden, on the roof under glass (§10.2)
-    const wx = this.weather.clear(), wet = snap.weather === "rain" || storm;
-    if (sky && wet) {
-      const n = (sky === "open" ? 70 : 34) * (storm ? 1.5 : 1), len = sky === "open" ? 15 : 8;
-      for (let i = 0; i < n; i++) {
-        const x = PAD + ((i * 0.618034 * W + now * 0.06) % W), y = PAD + ((i * 0.3779 * H + now * (0.55 + (i % 5) * 0.04)) % H);
-        wx.moveTo(x, y).lineTo(x - len * 0.3, y + len);
-      }
-      wx.stroke({ width: 1.5, color: sky === "open" ? 0xdcebf5 : 0xffffff, alpha: (sky === "open" ? 0.6 : 0.34) * (1 - this.dark * 0.5) });
-    } else if (sky && snap.weather === "snow") {
-      for (let i = 0; i < (sky === "open" ? 60 : 28); i++) wx.circle(PAD + ((i * 0.618034 * W + Math.sin(now / 900 + i) * 9 + W) % W), PAD + ((i * 0.3779 * H + now * (0.03 + (i % 4) * 0.006)) % H), 1.5 + (i % 3) * 0.6);
-      wx.fill({ color: 0xffffff, alpha: (sky === "open" ? 0.95 : 0.55) * (1 - this.dark * 0.4) });
-    } else if (sky && snap.weather === "heat" && snap.clock.phase === "day") {
-      for (let j = 0; j < 6; j++) {
-        const y = PAD + H - ((now * 0.012 + (j * H) / 6) % H);
-        wx.moveTo(PAD, y);
-        for (let x = 0; x <= W; x += 24) wx.lineTo(PAD + x, y + Math.sin(x / 38 + now / 500 + j) * 4);
-      }
-      wx.stroke({ width: 4, color: 0xfff3c4, alpha: 0.2 });
-    }
-
-    // light: lamps glow above the dark; windows show the sky whatever the power is doing
-    const gl = this.glow.clear();
-    for (const [x, y, r] of this.lights) {
-      const flick = 1 + Math.sin(now / 130 + x) * 0.015;
-      for (let i = 0; i < 9; i++) gl.circle(x, y, r * (1 - i / 10) * flick).fill({ color: WARM, alpha: 0.045 * (0.25 + this.dark * 1.4) });   // rings, for a soft edge
-    }
-    for (const [x, y] of this.dials) for (const r of [13, 9, 6]) gl.circle(x, y, r + Math.sin(now / 400) * 1.2).fill({ color: WARM, alpha: 0.13 + this.dark * 0.12 });   // the box is on
-    if (snap.read_glow) for (const [x, y] of this.books) for (let i = 0; i < 6; i++) gl.circle(x, y - 2, (44 - i * 6) * (1 + Math.sin(now / 300) * 0.05)).fill({ color: 0xffe58a, alpha: 0.05 + this.dark * 0.05 });
-    const pn = this.panes.clear(), pane = flashing ? 0xffffff : skyColor(snap.clock.phase, snap.weather);
-    for (const o of this.windows) {
-      const [x, y, ww, hh] = windowRect(o), roof = ww > hh;
-      pn.rect(x, y, ww, hh).fill(pane);
-      if (snap.clock.phase === "night" && !wet && snap.weather !== "snow") pn.circle(x + ww * 0.7, y + hh * 0.3, 2.5).fill(0xf6f0d0).circle(x + ww * 0.25, y + hh * 0.6, 1).circle(x + ww * 0.5, y + hh * 0.2, 1).fill(0xffffff);
-      if (wet) {
-        for (let i = 0; i < 5; i++) { const k = (now / 420 + i * 0.23) % 1, px = x + ((i * 0.4 + 0.1) % 1) * ww, py = y + k * (hh - 7); pn.moveTo(px, py).lineTo(px - 2, py + 7); }
-        pn.stroke({ width: 1.3, color: 0xffffff, alpha: 0.75 });
-      } else if (snap.weather === "snow") {
-        for (let i = 0; i < 5; i++) pn.circle(x + 3 + ((i * 0.37) % 1) * (ww - 6), y + 2 + ((now / 2600 + i * 0.21) % 1) * (hh - 4), 1.4);
-        pn.fill(0xffffff);
-      } else if (snap.weather === "heat" && snap.clock.phase === "day") {
-        pn.circle(x + ww * 0.5, y + hh * 0.35, 4 + Math.sin(now / 300) * 0.6).fill(0xfff3b0);
-      }
-      roof ? pn.rect(x + ww / 2 - 1, y, 2, hh).fill(INK) : pn.rect(x, y + hh / 2 - 1, ww, 2).fill(INK);
-      pn.rect(x, y, ww, hh).stroke({ width: 3, color: INK });
-      if (o.state === "open") {   // pushed open into the room
-        roof ? pn.poly([x, y + hh, x + ww, y + hh, x + ww - 8, y + hh + 12, x + 8, y + hh + 12]).fill({ color: 0xffffff, alpha: 0.7 }).stroke({ width: 2, color: INK })
-             : pn.poly([x + ww, y, x + ww + 14, y + 8, x + ww + 14, y + hh - 8, x + ww, y + hh]).fill({ color: 0xffffff, alpha: 0.7 }).stroke({ width: 2, color: INK });
-      }
-    }
-    this.flash.alpha = flashing ? (sky ? 0.38 : this.windows.length ? 0.1 : 0) : 0;
-    this.layout();
+    const box = this.box;
+    if (box) [this.boxAt[0], this.boxAt[1]] = [box.x * K, (box.y - box.rect.h / 2) * K];
+    this.words.step(now, dt, this.heads, W * K, H * K, this.avoid, box ? this.boxAt : null);
   }
 
-  /** Display only: walk between where the last two snapshots put it, and show how it is in how it holds itself. */
-  private animate(a: Actor, now: number) {
-    const p = a.pet, egg = p.stage === "egg", dead = p.stage === "dead", elder = p.stage === "elder";
-    let k = Math.min(1, (now - a.t0) / a.dur);
-    const far = Math.hypot(a.to[0] - a.from[0], a.to[1] - a.from[1]), moving = k < 1 && far > 2;
-    if (elder) k = k * k * (3 - 2 * k);   // an elder shuffles: slow to start, slow to stop
-    a.c.position.set(a.from[0] + (a.to[0] - a.from[0]) * k, a.from[1] + (a.to[1] - a.from[1]) * k);
-    a.c.zIndex = a.c.y;
-    const b = a.body, levels = p.levels, energy = p.needs?.energy ?? 50;
-    const still = dead || egg || !!p.asleep;
-    const content = !!levels && Math.max(...Object.values(levels)) <= 1;
-    const uneasy = !!levels && (levels.comfort >= 3 || !!p.weak);
-    const slow = elder ? 1.6 : 1;
-    const hop = moving && !still ? Math.abs(Math.sin(now / (130 * slow))) * (elder ? 2.5 : 5) : 0;
-    const bob = still ? 0 : Math.sin(now / ((900 - energy * 5) * slow) + a.seed) * (content ? 4.5 : 2.5);
-    const jump = now - a.startleAt < 520 ? Math.sin(((now - a.startleAt) / 520) * Math.PI) * 16 : 0;
-    // feet on the tile; in the top row it stands a little lower instead, so its head is never cut by the top of the room
-    const tall = a.half[1] * 1.08, lift = a.half[1] - FEET;
-    b.position.set(uneasy && !still ? Math.sin(now / 35) * 1.5 : 0, Math.max(-lift + bob - hop - jump, tall + 4 - a.c.y));
-    const squash = still ? 0 : Math.sin(now / 260 + a.seed) * p.genome.wobble * 0.07;
-    b.scale.set(S * (1 + squash), S * (1 - squash));
-    b.rotation = dead ? Math.PI / 2 : egg ? Math.sin(now / ((p.hatches_in ?? 99) < 20 ? 90 : 420) + a.seed) * ((p.hatches_in ?? 99) < 20 ? 0.16 : 0.07)
-      : elder ? (p.old ? 0.11 : 0.07) : 0;   // an elder stoops a little
-    a.c.alpha = dead ? 1 - 0.8 * (p.fade ?? 0) : 1;
-    const top = b.y - (dead ? a.half[0] : a.half[1]);
-    a.dots.visible = !!p.thinking && !p.asleep && !dead;
-    a.dots.position.set(a.half[0] + 16, top + 8);   // by its head, clear of where a name plate or a bubble may go
-    a.dots.alpha = 0.35 + 0.35 * (1 + Math.sin(now / 250));
-    const hk = (now - a.heartAt) / 5000;
-    a.heart.visible = hk < 1;
-    a.heart.position.set(a.half[0] * 0.6, Math.max(top - 6 - hk * 22, 8 - a.c.y));
-    a.heart.alpha = Math.min(1, 3 * (1 - hk));
-    a.heart.scale.set(1 + Math.sin(now / 160) * 0.1);
-    a.bang.visible = now - a.startleAt < 1400;
-    a.bang.position.set(-a.half[0] * 0.5, Math.max(top - 8 - jump, 14 - a.c.y));
-  }
-
-  /** Name plates and speech bubbles, placed so none sits on another (§10.7). A pet's plate always shows and moves
-   *  out of the way; a made thing's small plate gives way and hides. */
-  private layout() {
-    const [W, H] = this.px, placed: (Rect & { kind: string })[] = [];
-    // the page's own plates over the room (its name, the moment banner) take their space first
-    const view = this.app.canvas.getBoundingClientRect(), s = view.width ? W / view.width : 1;
-    for (const id of ["roomName", "banner"]) {
-      const e = document.getElementById(id);
-      if (!e || e.hidden) continue;
-      const b = e.getBoundingClientRect();
-      placed.push({ x: (b.left - view.left) * s, y: (b.top - view.top) * s, w: b.width * s, h: b.height * s, kind: "page" });
+  /** The small life of the room's things: glints on glass, a springy thing's bob, notes from what sounds, drips, a draught, dust in the sun. */
+  private alive(sc: Scene, still: Still, now: number) {
+    const { snap, room } = sc, fx = this.fx, K = this.K, n = this.next;
+    for (const t of still.things.values()) {
+      if (t.s.destroyed) continue;
+      if (t.bob || t.bounce) t.s.y = t.y - Math.round((t.bounce ? Math.abs(Math.sin(now / 190 + t.x)) * 5 : (Math.sin(now / 700 + t.x) + 1) * 1) * K) / K;
     }
-    const actors = [...this.pets.values()].sort((a, b) => a.c.y - b.c.y || a.c.x - b.c.x);
-    const bodies = actors.map((a) => ({ x: a.c.x - a.half[0], y: a.c.y + a.body.y - a.half[1], w: 2 * a.half[0], h: 2 * a.half[1], a }));
-    const free = (r: Rect, me?: Actor) => !placed.some((q) => hit(q, r)) && !bodies.some((q) => q.a !== me && hit(q, r));
-    const put = (c: Container, r: Rect, kind: string) => {
-      c.position.set(Math.round(r.x), Math.round(r.y));
-      placed.push({ ...r, kind });
-    };
-    for (const t of this.things.filter((t) => t.must)) put(t.tag.c, { x: clamp(t.at[0] - t.tag.w / 2, 2, W - t.tag.w - 2), y: t.at[1], w: t.tag.w, h: t.tag.h }, "stone");
-    for (const a of actors) {
-      const { w, h } = a.tag, x = clamp(a.c.x - w / 2, 2, W - w - 2);
-      const below = { x, y: Math.min(a.c.y + FEET + 5, H - h - 2), w, h }, above = { x, y: Math.max(2, a.c.y + a.body.y - a.half[1] - h - 4), w, h };
-      const r = free(below, a) ? below : free(above, a) ? above : below;
-      for (let n = 0; n < 8 && placed.some((q) => hit(q, r)); n++) {   // nowhere clear: step down past whatever plate is in the way
-        const q = placed.find((q) => hit(q, r))!;
-        r.y = q.y + q.h + 2 + r.h > H ? q.y - r.h - 2 : q.y + q.h + 2;
+    if (now > n.glint) {
+      n.glint = now + 700;
+      for (const t of still.things.values()) {
+        if ((t.glassy && Math.random() < 0.3) || (t.heirloom && Math.random() < 0.2)) fx.spawn("glint", t.rect.x + 2 + Math.random() * (t.rect.w - 4), t.rect.y + 2 + Math.random() * (t.rect.h / 2), { life: 450 });
+        if (t.noisy && Math.random() < 0.7) fx.spawn("tick", t.x + (Math.random() < 0.5 ? -1 : 1) * (t.rect.w / 2 + 3), t.y - t.rect.h / 2, { life: 420, vx: 0 });
+        if (t.fragrant && Math.random() < 0.3) fx.spawn("speck", t.x + (Math.random() - 0.5) * 6, t.rect.y, { vy: -6, life: 1500, sway: 2, tint: 0xf5a8c8 });
+        if (t.obj.water && Math.random() < 0.5) { const w = t.obj.water[Math.floor(Math.random() * t.obj.water.length)]; fx.spawn("glint", OX + w[0] * TILE + 3 + Math.random() * 10, OY + w[1] * TILE + 3 + Math.random() * 10, { life: 600, alpha: 0.7 }); }
+        if (t.obj.fix?.book && snap.read_glow) fx.spawn("sparkle", t.x + (Math.random() - 0.5) * 10, t.y - 8, { vy: -10, life: 800 });
       }
-      put(a.tag.c, r, "pet");
     }
-    for (const t of this.things.filter((t) => !t.must)) {
-      const r = { x: clamp(t.at[0] - t.tag.w / 2, 2, W - t.tag.w - 2), y: Math.min(t.at[1], H - t.tag.h - 2), w: t.tag.w, h: t.tag.h };
-      t.tag.c.visible = free(r);
-      if (t.tag.c.visible) put(t.tag.c, r, "thing");
+    if (now > n.note) {   // notes over whoever is singing, whatever is playing, and the instruments while the room still rings
+      n.note = now + 480;
+      const up = (x: number, y: number) => fx.spawn("note", x + (Math.random() - 0.5) * 8, y, { vx: (Math.random() - 0.5) * 6, vy: -14, life: 1600, sway: 2 });
+      for (const s of snap.sung ?? []) if (s.room === room.id && ago(snap, s.tick) <= 10) {
+        const p = this.pets.get(s.by), b = this.beasts.get(s.by), t = still.things.get(s.by);
+        if (p) up(p.w.x, p.w.y - p.box.h - 2); else if (b) up(b.w.x, b.w.y - 12); else if (t) up(t.x, t.rect.y);
+      }
+      for (const t of still.things.values()) if (t.obj.state === "playing" || (room.sounding && t.obj.fix?.loud)) up(t.x, t.rect.y);
     }
-    for (const b of this.beasts.values()) if (b.tag) {   // an animal's name, under it
-      const r = { x: clamp(b.g.x - b.tag.w / 2, 2, W - b.tag.w - 2), y: Math.min(b.at[1] + 14, H - b.tag.h - 2), w: b.tag.w, h: b.tag.h };
-      for (let n = 0; n < 4 && placed.some((q) => hit(q, r)); n++) r.y = placed.find((q) => hit(q, r))!.y - r.h - 2;
-      put(b.tag.c, r, "pet");
+    if (now > n.drip && (room.wet || room.cold || (still.sun && snap.clock.phase !== "night"))) {
+      n.drip = now + 240;
+      if (room.wet && Math.random() < 0.5) fx.spawn("drop", OX + Math.random() * FX * TILE, OY - 4, { vy: 60, g: 160, life: 500 + Math.random() * 500 });
+      if (room.cold) fx.spawn("speck", OX, OY + Math.random() * FY * TILE, { vx: 34, life: 3000, sway: 2, tint: 0xdcecff, alpha: 0.7 });   // a draught: pale wisps crossing the floor
+      if (still.sun && snap.clock.phase !== "night" && Math.random() < 0.4) fx.spawn("speck", still.sun[0] + (Math.random() - 0.5) * 24, still.sun[1] + (Math.random() - 0.5) * 16, { vy: -3, life: 2600, sway: 2, tint: 0xfff2c0, alpha: 0.7 });
     }
-    /** A bubble for whoever is at `x`, with its top at `top`: over it if that is clear; else higher, to one side, or
-     *  under it, wherever it covers least of the plates, the other bubbles and above all the faces of the others (§10.7). */
-    const float = (c: Container, w: number, h: number, x: number, top: number, wide: number, foot: number, me?: Actor) => {
-      const cx = clamp(x - w / 2, 3, W - w - 3), ys = [-1, -0.5, 0, 0.5].map((n) => clamp((top + foot) / 2 - h / 2 + n * h, 3, H - h - 3));
-      const spots = [...[0, 1, 2, 3].map((n) => [cx, top - h - 10 - n * 24]), [clamp(x - w + 18, 3, W - w - 3), top - h - 10], [clamp(x - 18, 3, W - w - 3), top - h - 10],
-                     ...ys.flatMap((y) => [[x + wide + 12, y], [x - wide - 12 - w, y]]), [cx, foot + 26], [cx, foot + 50]].map(([x, y]) => ({ x, y, w, h }));
-      const shared = (a: Rect, b: Rect) => Math.max(0, Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x)) * Math.max(0, Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y));
-      const cost = (r: Rect) => placed.filter((q) => q.kind !== "thing" && hit(q, r)).length * 12
-        + bodies.filter((q) => q.a !== me).reduce((n, q) => n + (shared({ ...q, h: q.h * 0.6 }, r) / (q.w * q.h * 0.6)) * (me?.pet.said?.to === q.a.pet.id ? 30 : 8), 0)   // a face, and most of all the listener's
-        + (r.x < 2 || r.y < 2 || r.x + w > W - 2 || r.y + h > H - 2 ? 100 : 0) + Math.abs(r.y + h / 2 - top) / 400;
-      put(c, spots.reduce((best, r) => (cost(r) < cost(best) ? r : best)), "bubble");
-    };
-    for (const a of actors) if (a.bubble) float(a.bubble, a.bubbleSize[0], a.bubbleSize[1], a.c.x, a.c.y + a.body.y - a.half[1], a.half[0], a.c.y + FEET, a);
-    if (this.box) {   // the box speaks from where it stands, or from the middle of the room if somebody has carried it off
-      const set = Object.values(this.scene?.room.objects ?? {}).find((o) => o.fix?.radio), [x, y] = set ? mid(set.pos) : [W / 2, PAD + 120];
-      float(this.box.c, this.box.w, this.box.h, x, y - 26, 20, y + 18);
-    }
-    this.placed = placed;
   }
 
   // ---- the pointer ----
 
+  /** Say what the pointer is over; again whenever a snapshot changes what is there. */
+  private point(at: number[] | null = this.pointer) {
+    this.pointer = at;
+    const t = at && this.under(at[0], at[1]), cv = this.app.canvas;
+    cv.style.cursor = t && (t.pet || t.object || t.door) ? "pointer" : "";
+    const box = (this.el ?? cv).getBoundingClientRect(), view = cv.getBoundingClientRect();
+    const [x, y] = at ? [view.left + (at[0] / W) * view.width, view.top + (at[1] / H) * view.height] : [box.left, box.top];
+    this.onHover(t, box.width ? (x - box.left) / box.width : 0, box.height ? (y - box.top) / box.height : 0);
+  }
+
   private under(x: number, y: number): Target {
-    const [w, h] = this.size, room = this.scene?.room;
-    const tile: [number, number] = [clamp(Math.floor((x - PAD) / T), 0, w - 1), clamp(Math.floor((y - PAD) / T), 0, h - 1)];
-    const out: Target = { tile };
-    if (!room) return out;
-    const inside = (r: number[]) => x >= r[0] && x <= r[0] + r[2] && y >= r[1] && y <= r[1] + r[3];
-    for (const [id, a] of this.pets) if (Math.abs(x - a.c.x) < a.half[0] + 3 && y > a.c.y + a.body.y - a.half[1] - 3 && y < a.c.y + FEET + 4) out.pet = id;
-    for (const [id, b] of this.beasts) if (Math.hypot(x - b.g.x, y - b.g.y) < 20) out.creature = id;
-    out.mark = this.marks.find((s) => inside(s.rect))?.m;
-    const d = this.doors.find((d) => inside(d.rect));
-    if (d) out.door = d.dir;
-    const win = Object.entries(room.objects).find(([, o]) => o.fix?.window && inside(windowRect(o)));
-    const obj = win ?? Object.entries(room.objects).reverse().find(([, o]) => !o.fix?.sun && (o.water ?? [o.pos]).some((t) => t[0] === tile[0] && t[1] === tile[1]));
-    if (obj && (win || (x >= PAD && y >= PAD && x <= PAD + w * T && y <= PAD + h * T))) out.object = obj[0];
-    out.bit = room.spots.find((s) => s.pos[0] === tile[0] && s.pos[1] === tile[1])?.bit;
+    const out: Target = { tile: tileAt(x, y) }, still = this.still, room = this.scene?.room;
+    if (!still || !room) return out;
+    const grown = (r: Rect, by: number) => ({ x: r.x - by, y: r.y - by, w: r.w + 2 * by, h: r.h + 2 * by });
+    let front = -Infinity;
+    for (const [id, a] of this.pets) if (inside(grown(a.rect(), 2), x, y) && a.c.y > front) [out.pet, front] = [id, a.c.y];
+    for (const [id, b] of this.beasts) if (inside(grown(b.rect(), 3), x, y)) out.creature = id;
+    out.mark = this.marks.rects.find((m) => inside(grown(m.rect, 1), x, y))?.m;
+    out.door = still.doors.find((d) => inside(d.rect, x, y))?.dir;
+    let best: Thing | null = null;
+    for (const t of still.things.values()) if (inside(grown(t.rect, 1), x, y) && (!best || t.rect.w * t.rect.h < best.rect.w * best.rect.h)) best = t;   // the smallest thing under the pointer: a cup on a rug, not the rug
+    const onTile = x >= OX && y >= OY && x < OX + FX * TILE && y < OY + FY * TILE;
+    out.object = best?.name ?? (onTile ? Object.entries(room.objects).reverse().find(([, o]) => !o.fix?.sun && !o.wall && (o.water ?? [o.pos]).some((t) => t[0] === out.tile[0] && t[1] === out.tile[1]))?.[0] : undefined);
+    out.bit = still.spots.find((s) => inside(grown(s.rect, 2), x, y))?.bit ?? (onTile && !out.object ? room.spots.find((s) => s.pos[0] === out.tile[0] && s.pos[1] === out.tile[1])?.bit : undefined);
     return out;
+  }
+
+  /** What a hover card can show about what is under the pointer (SPEC-v3.2 §3.3): its picture as a canvas (16 pixels
+   *  or so: scale it up with `image-rendering: pixelated`), and in plain words what it is. Null if there is nothing to say. */
+  describe(t: Target | null): Card | null {
+    const sc = this.scene, still = this.still;
+    if (!t || !sc || !still) return null;
+    const { snap, room } = sc;
+    const p = t.pet ? this.pets.get(t.pet) : null, b = t.creature ? this.beasts.get(t.creature) : null, th = t.object ? still.things.get(t.object) : null;
+    if (p) return { what: "pet", title: p.pet.stage === "egg" ? p.pet.name ?? "an egg" : p.pet.label, sprite: petPortrait(p.pet.genome, p.pet.stage === "egg" ? "egg" : bodyStage(p.pet), 1), name: p.pet.name };
+    if (b) {
+      const owner = snap.pets.find((q) => q.id === b.cr.tame);
+      return { what: "creature", title: b.cr.name ?? `a ${b.cr.kind}`, sprite: canvasOf(`creature.${b.cr.kind}`), name: b.cr.name ?? null, kind: b.cr.kind, owner: owner?.label ?? null, state: b.cr.doing };
+    }
+    if (t.mark) return { what: "writing", title: t.mark.medium === "scratch" ? "words scratched on the wall" : "words in chalk", sprite: null, text: t.mark.text, maker: t.mark.by_name ?? null };
+    if (th?.drawn) {
+      const m = th.obj.made!, d = th.drawn, a = kind(d.kind)?.a ?? (/^[aeiou]/.test(d.color ?? d.kind) ? "an" : "a");
+      return { what: "thing", title: `${d.color ? (/^[aeiou]/.test(d.color) ? "an" : "a") : a} ${d.color ? `${d.color} ` : ""}${d.kind}`, sprite: th.canvas, name: m.called ?? th.name, kind: d.kind, color: d.color, material: d.material,
+               maker: snap.pets.find((q) => q.id === m.by)?.label ?? null, owner: m.owner_name, heirloom: !!m.heirloom, worn: m.worn, purpose: m.recipe.purpose,
+               does: m.behavior ? `${m.behavior.do} when ${m.behavior.when}` : null, state: th.obj.state ?? null };
+    }
+    if (th) return { what: th.obj.memorial ? "stone" : "fixture", title: th.obj.memorial ? "a memorial stone" : `the ${th.name}`, sprite: th.canvas, name: th.name, state: th.obj.state ?? null, text: th.obj.memorial?.text };
+    if (t.object && room.objects[t.object]) return { what: "fixture", title: `the ${t.object}`, sprite: null, name: t.object, state: room.objects[t.object].state ?? null };
+    if (t.bit) return { what: "bit", title: `some ${t.bit}`, sprite: canvasOf(`bit.${t.bit}`), kind: t.bit };
+    if (t.door) {
+      const to = snap.rooms.find((r) => r.id === room.doors[t.door!]);
+      return { what: "door", title: to?.type ? `the door to ${to.name}` : "a door nobody has been through", sprite: null, state: room.shut.includes(t.door) ? "stuck shut" : to?.type ? "open" : "shut" };
+    }
+    return null;
   }
 }
