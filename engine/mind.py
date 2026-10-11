@@ -2,8 +2,8 @@
 No numbers, no coordinates, no counts of anything, and no sentence telling the pet what it is or what it is
 like. Its temperament shows only in what is mentioned and how (§8.1). Alongside the text comes `ctx`: the
 names the packet shows, so a brain's reply can be held to things that are really there."""
-from . import actions, feel, life, physics, things
-from .world import LONG_AGO, dist, here, neighbours, room_type
+from . import actions, feel, life, physics, songs, things, walls
+from .world import LONG_AGO, dist, family, here, neighbours, room_type
 
 BUSY = {"observe": "watching the room", "look": "looking at something", "move": "walking", "go": "heading for a door",
         "speak": "speaking", "rest": "resting", "use": "using something", "gather": "picking something up",
@@ -11,11 +11,15 @@ BUSY = {"observe": "watching the room", "look": "looking at something", "move": 
         "arrange": "moving something", "combine": "putting two things together", "paint": "painting", "teach": "teaching a thing",
         "give": "holding something out", "show": "showing something", "follow": "following someone", "nuzzle": "leaning close",
         "accept": "taking what was offered", "take": "taking something", "chase": "chasing", "tell": "telling something",
-        "lay_egg": "laying an egg", "bequeath": "choosing what to leave", "write_belief": "thinking", "revise_belief": "thinking"}
+        "lay_egg": "laying an egg", "bequeath": "choosing what to leave", "write_belief": "thinking", "revise_belief": "thinking",
+        "write": "writing on something", "scrub": "rubbing out some words", "compose": "making up a tune", "sing": "singing",
+        "teach_song": "teaching a song", "call": "calling", "name": "naming something", "ask_book": "reading the book"}
 RECENT = 6          # how many earlier happenings are shown
 # What is cut first when the packet is over its budget (§8.3), least needed first. Never cut: how it feels, what
 # it notices, what is here, who is here, what just happened, what was said to it, its parent's words, what it can do.
-CUT_ORDER = ["earlier", "rooms", "known", "told", "things", "sounds", "beliefs"]
+# SPEC-v3.1 §8 adds, after v3's own: older inscriptions, older words from the box, songs beyond the last three sung, what
+# it read beyond the last passage. Never cut: anything said or sung to it, the inscription it is standing in front of.
+CUT_ORDER = ["earlier", "rooms", "known", "told", "things", "sounds", "beliefs", "writing", "box", "songs", "read"]
 
 
 def doing(house, pet):
@@ -59,6 +63,10 @@ def sounds(house, cfg, pet):
             out.append("you hear something humming %s" % where)
         if any(c["room"] == rid and c["kind"] == "bird" and c["doing"].startswith("singing") for c in house["creatures"]):
             out.append("a bird is singing %s" % where)
+        if any(s["room"] == rid and (tick - s["tick"]) * cfg["clock"]["tick_seconds"] <= 40 for s in house.get("sung", [])):
+            out.append("you hear a tune %s" % where)
+        if any(s["room"] == rid and (tick - s["tick"]) * cfg["clock"]["tick_seconds"] <= 60 for s in house.get("radio", {}).get("said", [])):
+            out.append("something is talking %s, too muffled to make out" % where)   # the box, through a door: sound and no words (§5.1)
     return out
 
 
@@ -105,7 +113,14 @@ def perceive(house, cfg, pet, mem):
                                            feel.seems(p), '; just said "%s"' % said["text"] if said else "")
 
     who = [other_line(p) for p in others] + ["%s lies still and does not move" % actions.handle(house, pet, p) for p in lying]
-    who += ["a %s (%s; %s)" % (c["kind"], feel.near_word(me, c["pos"]), c["doing"]) for c in creatures]
+    def creature_line(c):
+        mine = c.get("tame") == pet["id"]
+        owner = house["pets"].get(c.get("tame") or "")
+        what = ("your %s" if mine else "a %s") % c["kind"] + (" called %s" % c["name"] if c.get("name") and (mine or pet["met"].get(c["kind"])) else "")
+        doing = c["doing"].replace(actions.label(pet), "you") if mine else c["doing"]
+        return "%s (%s; %s%s)" % (what, feel.near_word(me, c["pos"]), doing, "; it is %s's" % actions.handle(house, pet, owner) if owner and not mine else "")
+
+    who += [creature_line(c) for c in creatures]
 
     ready = [s for s in room["spots"] if s["ready"]]
     kinds = sorted({s["bit"] for s in ready})
@@ -139,6 +154,12 @@ def perceive(house, cfg, pet, mem):
         senses.append("you wonder what is through the %s door" % unseen[0])
     if pet.get("called") and not pet["name"]:
         senses.append("the visitor calls you " + pet["called"])
+    if "chalk" in pet["carrying"] and "write" in can:
+        senses.append("the chalk leaves a white mark on what it touches; you could write with it")
+    elif "write" in can and not walls.marks(room):
+        senses.append("something hard that you carry would scratch a mark into the wall, faintly")
+    if "name" in can and "egg" in actions.nameable(house, pet):
+        senses.append("the egg here is nobody's, and nobody has given it a name")
 
     # ---- what happened ----
     since = [e for t, e in pet["events"] if t > pet["seen"]]
@@ -166,6 +187,18 @@ def perceive(house, cfg, pet, mem):
 
     far_heirs = ["%s (in %s)" % (n, r["name"]) for r in house["rooms"].values() if r["type"] and r["id"] != room["id"]
                  for n, o in things.made(r).items() if pet["id"] in (o["made"].get("heirloom") or {}).get("to", [])]
+
+    # ---- SPEC-v3.1: what is written here, what it has heard and read, its songs, its animals ----
+    front, written, handles = walls.read(house, cfg, pet)
+    box = [b for b in pet.get("box", []) if tick - b["tick"] <= cfg["ticks_per_day"]]
+    known_songs = sorted(pet.get("songs", []), key=lambda e: -e.get("last", e["since"]))
+    song_names = [songs.book(house)[e["id"]]["name"] for e in known_songs if e["id"] in songs.book(house)]
+    reads = pet.get("read", [])[:cfg["book"]["keep"]]
+    animals = [c for c in house["creatures"] if c.get("tame") == pet["id"]]
+
+    def animal(c):
+        where = "here" if c["room"] == room["id"] else "in " + house["rooms"][c["room"]]["name"] if c["room"] in pet["rooms"] else "somewhere else"
+        return "%s (%s)" % (("%s, a %s" % (c["name"], c["kind"])) if c.get("name") else "a %s, not yet named" % c["kind"], where)
 
     def room_note(rid):
         r = house["rooms"][rid]
@@ -195,6 +228,12 @@ def perceive(house, cfg, pet, mem):
         "since": "since you last thought:" + ("".join("\n  " + e for e in since) or " nothing"),
         "earlier": "earlier: " + "  |  ".join(earlier),
         "said": "said to you: " + "; ".join(pet["inbox"]),
+        "front": "written right in front of you: " + (front or ""),
+        "writing": "written in this room: " + "  |  ".join(written),
+        "box": "what you heard the box say: " + "  |  ".join('"%s"' % b["text"] for b in box),
+        "read": "".join('what you read in the book, under "%s": "%s"\n' % (r["title"], r["text"]) for r in reads).rstrip("\n"),
+        "songs": "songs you know: " + ", ".join('"%s"' % n for n in song_names),
+        "animals": "your animals: " + "; ".join(animal(c) for c in animals),
         "offers": "offered to you: " + "; ".join(offers),
         "project": "your project: " + project,
         "beliefs": "your beliefs:" + ("".join("\n  %s (%s): %s" % (b["id"], b.get("source", "lived"), b["statement"]) for b in beliefs) or " none yet"),
@@ -208,7 +247,9 @@ def perceive(house, cfg, pet, mem):
         "can": "you can: " + ", ".join(can),
     }
     empty = {"sounds": "from next door: ", "earlier": "earlier: ", "said": "said to you: ", "offers": "offered to you: ", "parent": "",
-             "told": "", "things": "your things here: ", "known": "who you know: "}
+             "told": "", "things": "your things here: ", "known": "who you know: ", "front": "written right in front of you: ",
+             "writing": "written in this room: ", "box": "what you heard the box say: ", "read": "", "songs": "songs you know: ",
+             "animals": "your animals: "}
     for k, blank in empty.items():
         if sections[k] == blank:
             del sections[k]
@@ -219,7 +260,19 @@ def perceive(house, cfg, pet, mem):
         if k == "beliefs" and len(beliefs) > 8:
             sections[k] = "your beliefs:" + "".join("\n  %s (%s): %s" % (b["id"], b.get("source", "lived"), b["statement"]) for b in beliefs[:8])
             cut.append(k)
-        elif k in sections and k != "beliefs":
+        elif k == "writing" and len(written) > 1:      # the older inscriptions go first; the clearest stays
+            sections[k] = "written in this room: " + written[0]
+            cut.append(k)
+        elif k == "box" and len(box) > 1:
+            sections[k] = 'what you heard the box say: "%s"' % box[0]["text"]
+            cut.append(k)
+        elif k == "songs" and len(song_names) > 3:
+            sections[k] = "songs you know: " + ", ".join('"%s"' % n for n in song_names[:3])
+            cut.append(k)
+        elif k == "read" and len(reads) > 1:
+            sections[k] = 'what you read in the book, under "%s": "%s"' % (reads[0]["title"], reads[0]["text"])
+            cut.append(k)
+        elif k in sections and k not in ("beliefs", "writing", "box", "songs", "read"):
             del sections[k]
             cut.append(k)
     text = "\n".join(sections.values()) + "\n"
@@ -243,6 +296,10 @@ def perceive(house, cfg, pet, mem):
         "tellers": sorted({m["who"] for m in pet["told"]}), "kids": [house["pets"][c]["name"] for c in pet["children"]
                                                                     if house["pets"].get(c, {}).get("name") and house["pets"][c]["stage"] != "dead"],
         "cut": cut, "chars": len(text),
+        # SPEC-v3.1: what the new actions can name
+        "surfaces": walls.surfaces(house, pet, room), "writings": handles, "songs": song_names,
+        "tame": [c.get("name") or c["kind"] for c in animals], "nameable": actions.nameable(house, pet),
+        "asleep": [actions.handle(house, pet, p) for p in others if p["sleep"]],
     }
     return text, ctx
 

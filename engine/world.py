@@ -241,12 +241,22 @@ def generate_room(house, cfg, rid, kind=None, by=None):
         room["objects"][f["name"]] = o
     kinds = spec["bits"]
     if kinds == "any":
-        kinds = {b: 1 for b in rng.sample(sorted(cfg["house"]["bits"]), 4)}
+        kinds = {b: 1 for b in rng.sample(sorted(b for b, v in cfg["house"]["bits"].items() if not v.get("late")), 4)}
     for bit, n in kinds.items():
         for _ in range(n):
             spot = free_tile(house, cfg, room, [rng.randrange(cfg["W"]), rng.randrange(cfg["H"])])
             room["spots"].append({"bit": bit, "pos": spot, "ready": True, "back": None, "loose": False})
     return room
+
+
+def arrived(house, what):
+    """Has this discovery come to the house yet (SPEC-v3.1 §1)?"""
+    return what in house.get("v31", {}).get("arrived", {})
+
+
+def bit_kinds(house, cfg):
+    """The bits that can turn up by themselves: all of them but the ones whose discovery has not come yet."""
+    return sorted(b for b, v in cfg["house"]["bits"].items() if not v.get("late") or arrived(house, v["late"]))
 
 
 def neighbours(house, rid):
@@ -260,7 +270,7 @@ def new_temper(rng):
     return {g: round(rng.uniform(0.25, 0.75), 2) for g in GENES}
 
 
-def new_pet(house, cfg, room, pos, genome=None, temper=None, parent=None, name=None, told=None):
+def new_pet(house, cfg, room, pos, genome=None, temper=None, parent=None, name=None, told=None, family=None):
     """An egg. Everything a pet is, in one dict; its beliefs and journal live in its own folder."""
     house["n"]["pet"] += 1
     pid = "p%d" % house["n"]["pet"]
@@ -284,6 +294,10 @@ def new_pet(house, cfg, room, pos, genome=None, temper=None, parent=None, name=N
         "well": [0.0, 0], "low_since": None, "weak": False, "lost_days": 0.0, "span": None,
         "phase_seen": house["clock"]["phase"], "following": None, "spring": 0, "near_window": 0.0,
         "reviewed": [], "exploits": {}, "last_words": None, "life": None, "trust": {}, "meter": [0, 0],
+        # SPEC-v3.1: which family it is of, the songs it knows, what it has read, what the box last said in its hearing,
+        # how long it has spent with each pet of another family, and how many times its piece of chalk has written
+        "family": family or (mother["family"] if mother and "family" in mother else 1), "songs": [], "read": [], "box": [],
+        "with": {}, "knows": [], "chalked": 0, "animals": [],
     }
     house["pets"][pid] = pet
     if mother:
@@ -299,6 +313,15 @@ def here(house, pet, awake=False):
     """The other living, hatched pets in the same room."""
     return [p for p in house["pets"].values() if p["room"] == pet["room"] and p["id"] != pet["id"]
             and p["stage"] not in ("egg", "dead") and not (awake and p["sleep"])]
+
+
+def family(pet):
+    return pet.get("family", 1)
+
+
+def knows(pet, other):
+    """Is `other` someone it knows: one of its own family, or a stranger it has spent long enough beside (§7.2)?"""
+    return family(pet) == family(other) or other["id"] in pet.get("knows", [])
 
 
 def label(pet):

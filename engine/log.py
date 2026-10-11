@@ -26,6 +26,10 @@ CREATE TABLE IF NOT EXISTS genomes (pet TEXT, tick INT, day INT, genome TEXT, ca
 CREATE TABLE IF NOT EXISTS stages (pet TEXT, tick INT, day INT, stage_from TEXT, stage_to TEXT);
 CREATE TABLE IF NOT EXISTS social (tick INT, from_pet TEXT, to_pet TEXT, kind TEXT, text TEXT, reply INT);
 CREATE TABLE IF NOT EXISTS chronicle (day INT, summary TEXT, text TEXT);
+CREATE TABLE IF NOT EXISTS inscriptions (id INT, tick INT, room TEXT, place TEXT, text TEXT, by TEXT, medium TEXT, what TEXT, actor TEXT);
+CREATE TABLE IF NOT EXISTS songs (id TEXT, tick INT, name TEXT, notes TEXT, by TEXT, parent TEXT, how TEXT, family INT);
+CREATE TABLE IF NOT EXISTS radio (tick INT, room TEXT, source TEXT, text TEXT);
+CREATE TABLE IF NOT EXISTS library (pet TEXT, tick INT, question TEXT, title TEXT, text TEXT);
 CREATE INDEX IF NOT EXISTS steps_pet ON steps (pet, tick);
 CREATE INDEX IF NOT EXISTS intentions_pet ON intentions (pet, tick);
 """

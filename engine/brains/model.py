@@ -9,6 +9,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 from ..actions import PLACES as SPOTS
+from ..songs import NOTES, PITCH
 from ..things import COLORS, DO, PLACES, SHAPES, WHEN
 
 PART = '{"shape": %s, "size": 1 to 3, "color": %s, "at": %s}' % ("|".join(SHAPES), "|".join(COLORS), "|".join(PLACES))
@@ -44,6 +45,16 @@ WRITTEN = {   # how each action is written, shown only for the actions it can do
     "bequeath": '{"type": "bequeath", "what": a thing of yours here, "to": a child\'s name, or "my children"}',
     "write_belief": '{"type": "write_belief", "statement": one short sentence of at most 200 characters, "source": how you know it: lived | seen | told by <who>}',
     "revise_belief": '{"type": "revise_belief", "id": belief id, "statement": new text or "discard"}',
+    # SPEC-v3.1
+    "write": '{"type": "write", "text": a few words, at most 80 chars, "on": a wall (north wall | south wall | west wall | east wall), a stone here, or a thing of yours}',
+    "scrub": '{"type": "scrub", "what": one of the writings here, named by where it is and how it begins}',
+    "compose": ('{"type": "compose", "name": a name for the song, up to 24 chars, "notes": [3 to 12 notes, each a pitch (%s; or "low " or "high " before one) '
+                'followed by "short" or "long", for example "do short", "high so long"]}' % ", ".join(PITCH[5:10])),
+    "sing": '{"type": "sing", "song": a song you know, "to": someone here or "egg" (leave out to sing to the room)}',
+    "teach_song": '{"type": "teach_song", "song": a song you know, "to": someone awake here; they will have it note for note}',
+    "call": '{"type": "call", "who": an animal of yours}',
+    "name": '{"type": "name", "what": an animal of yours here, or "egg", "name": up to 16 chars}',
+    "ask_book": '{"type": "ask_book", "question": what you want to know, at most 80 chars}',
 }
 FORMAT = """
 Reply with one JSON object and nothing else:
@@ -113,11 +124,22 @@ def schema(ctx):
         "chase": [one("chase", who={"enum": c["creatures"]})] if c["creatures"] else [],
         "tell": [one("tell", to={"enum": awake}, text=text(400))] if awake else [],
         "lay_egg": [one("lay_egg", name=text(16, 0), message=text(640))],
-        "bequeath": [one("bequeath", what={"enum": c["leave"]}, to={"enum": c["kids"] + ["my children"]})] if c["leave"] else [],
+        "bequeath": [one("bequeath", what={"enum": c["leave"] + c["songs"]}, to={"enum": c["kids"] + ["my children"]})] if c["leave"] or c["songs"] else [],
+        "write": [one("write", text=text(100), on={"enum": c["surfaces"]})],
+        "scrub": [one("scrub", what={"enum": c["writings"]})] if c["writings"] else [],
+        "compose": [one("compose", name=text(24), notes={"type": "array", "items": {"enum": NOTES}, "minItems": 3, "maxItems": 12})],
+        "sing": ([one("sing", song={"enum": c["songs"]})] + ([one("sing", song={"enum": c["songs"]}, to={"enum": c["pets"] + (["egg"] if c["eggs"] else [])})]
+                                                              if c["pets"] or c["eggs"] else [])) if c["songs"] else [],
+        "teach_song": [one("teach_song", song={"enum": c["songs"]}, to={"enum": awake})] if c["songs"] and awake else [],
+        "call": [one("call", who={"enum": c["tame"]})] if c["tame"] else [],
+        "name": [one("name", what={"enum": c["nameable"]}, name=text(16))] if c["nameable"] else [],
+        "ask_book": [one("ask_book", question=text(80))],
         "write_belief": [one("write_belief", statement=text(240), source={"enum": ["lived", "seen"] + ["told by " + t for t in c["tellers"]]})],
         "revise_belief": [one("revise_belief", id={"enum": c["beliefs"]}, statement=text(240))] if c["beliefs"] else [],
     }
     step = {"anyOf": [x for a in c["allowed"] for x in v[a]]}
+    if not step["anyOf"]:
+        step = {"anyOf": v["observe"]}
     return obj(thought=text(340, 0), intention=text(120),
                steps={"type": "array", "items": step, "minItems": 2, "maxItems": 5}, expect=text(230, 0))
 

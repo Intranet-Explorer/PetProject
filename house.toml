@@ -83,6 +83,10 @@ looks = { shape = "square", color = "blue" }
 [bits.resin]
 can = ["warm", "bright"]
 looks = { shape = "blob", color = "orange" }
+[bits.chalk]              # SPEC-v3.1 §2: comes in a crate once writing has arrived, never before
+can = ["hard", "bright"]
+looks = { shape = "bar", color = "white" }
+late = "writing"
 [bits.vine]
 can = ["springy", "soft"]
 looks = { shape = "ring", color = "green" }

@@ -2,9 +2,9 @@
 world before it happens and again when the pet gets there; what it does is decided here, not by the pet."""
 import re
 
-from . import feel, genome, life, things
-from .world import (BACK, LONG_AGO, add_event, beside, dist, free_tile, generate_room, here, label, moment, power_on,
-                    relation, ticks, witness)
+from . import book, feel, genome, life, songs, things, walls
+from .world import (BACK, LONG_AGO, add_event, arrived, beside, dist, family, free_tile, generate_room, here, knows, label, moment,
+                    power_on, relation, ticks, witness)
 
 PLACES = {"the middle": (0.5, 0.5), "the north wall": (0.5, 0.0), "the south wall": (0.5, 1.0),
           "the west wall": (0.0, 0.5), "the east wall": (1.0, 0.5)}
@@ -31,8 +31,10 @@ def filled(v):
 
 def handle(house, me, other):
     """What `me` calls `other` in an action: its name, or "your mother", or "the little one"."""
+    if not knows(me, other):   # of the other family, and not yet someone it knows (SPEC-v3.1 §7.2)
+        return "a stranger"
     rel = relation(house, me, other)
-    return other["name"] or ("your " + rel if rel else "the little one")
+    return (other["name"] or ("your " + rel if rel else "the little one")) + (", of the other family" if family(me) != family(other) else "")
 
 
 def place(cfg, name):
@@ -49,7 +51,7 @@ def find(house, pet, name):
         if norm(handle(house, pet, p)) == n:
             return "pet", p
     for c in house["creatures"]:
-        if c["room"] == room["id"] and c["kind"] == n:
+        if c["room"] == room["id"] and n in (c["kind"], (c.get("name") or "").lower()):
             return "creature", c
     spots = [s for s in room["spots"] if s["ready"] and s["bit"] == n]
     if spots:
@@ -109,6 +111,7 @@ def allowed(house, cfg, pet, mem):
     mine, free = things.mine(house, pet, room), changeable(house, pet, room)
     kids = [c for c in pet["children"] if house["pets"].get(c, {}).get("stage", "dead") != "dead"]
     eggs = any(p["room"] == room["id"] and p["stage"] == "egg" for p in house["pets"].values())
+    pets_of_mine = [c for c in house["creatures"] if c.get("tame") == pet["id"]]
     can = {
         "gather": bits and len(pet["carrying"]) < cfg["make"]["carry"], "drop": bool(pet["carrying"]),
         "make": (bool(pet["carrying"]) or bits) and len(things.made(room)) < cfg["make"]["crowded"],
@@ -118,10 +121,24 @@ def allowed(house, cfg, pet, mem):
         "nuzzle": (bool(others) and feel.level(pet, "company") >= 1) or eggs,   # one already close to someone feels no need to
         "accept": bool(pet["offers"]), "take": bool(others_things(house, pet, room)), "chase": bool(crs),
         "tell": bool(others), "lay_egg": life.can_lay(house, cfg, pet) is None,
-        "bequeath": bool(kids) and bool(mine or heirlooms(house, pet, room)), "revise_belief": bool(mem.active()),
+        "bequeath": bool(kids) and bool(mine or heirlooms(house, pet, room) or pet.get("songs")), "revise_belief": bool(mem.active()),
+        # SPEC-v3.1: each appears only when it could be done now (§8)
+        "write": walls.tool(cfg, pet) is not None, "scrub": bool(walls.marks(room)),
+        "sing": bool(pet.get("songs")), "teach_song": bool(pet.get("songs")) and bool(others),
+        "call": any(c["room"] != room["id"] or dist(c["pos"], pet["pos"]) > 2 for c in pets_of_mine),
+        "name": bool(nameable(house, pet)),
+        "ask_book": any(o.get("fix", {}).get("book") for o in room["objects"].values()) and book.check_ask({"question": "?"}, house, cfg, pet, filled) is None,
         "write_belief": True, "arrange": any(movable(cfg, o) for o in room["objects"].values()) or eggs,
     }
-    return [a for a in life.actions_of(pet["stage"]) if can.get(a, True)]
+    return [a for a in life.unlocked(house, pet["stage"]) if can.get(a, True)]
+
+
+def nameable(house, pet):
+    """What it could give a name to here: an animal of its own that has none, or an egg that is nobody's (§4.1, §7.1)."""
+    out = [c["kind"] for c in house["creatures"] if c.get("tame") == pet["id"] and c["room"] == pet["room"] and not c.get("name")]
+    if any(p["room"] == pet["room"] and p["stage"] == "egg" and not p["parent"] and not p["name"] for p in house["pets"].values()):
+        out.append("egg")
+    return out
 
 
 def words(a):
@@ -137,7 +154,7 @@ def words(a):
 def check(a, house, cfg, pet, mem):
     """None if the action can happen now, else why not, in words the pet can use."""
     t, room = a.get("type"), house["rooms"][pet["room"]]
-    if t not in life.actions_of(pet["stage"]):
+    if t not in life.unlocked(house, pet["stage"]):
         return "you cannot do that yet"
     kind, ref = find(house, pet, a.get("target") or a.get("what") or a.get("who") or a.get("object") or a.get("to"))
     o = room["objects"].get(ref) if kind == "thing" else None
@@ -229,7 +246,36 @@ def check(a, house, cfg, pet, mem):
             return "there is already one called that in the house: another name, or leave it to them"
         return life.can_lay(house, cfg, pet) or (None if filled(a.get("message")) else "the egg needs your words")
     if t == "bequeath":
+        if norm(a.get("what")) not in room["objects"] and songs.known(house, pet, a.get("what") or ""):   # a song can be left too (SPEC-v3.1 §3.4)
+            return None if life.heirs(house, pet, a.get("to")) else "there is no child of yours to leave it to"
         return life.check_bequeath(a, house, cfg, pet, norm)
+    if t == "write":
+        return walls.check_write(a, house, cfg, pet, norm, filled)
+    if t == "scrub":
+        return None if walls.find(room, norm, a.get("what")) else "there are no such words here"
+    if t == "compose":
+        if not filled(a.get("name")):
+            return "the song needs a name"
+        return None if songs.parse(a.get("notes"), cfg) else "that is not a tune"
+    if t in ("sing", "teach_song"):
+        if not songs.known(house, pet, a.get("song") or ""):
+            return "you do not know a song by that name"
+        tk, tr = find(house, pet, a.get("to")) if filled(a.get("to")) else (None, None)
+        if t == "sing":
+            return None if not filled(a.get("to")) or tk in ("pet", "egg") else "there is nobody like that here"
+        return None if tk == "pet" and not tr["sleep"] else "there is nobody awake like that here"
+    if t == "call":
+        return None if tame(house, pet, a.get("who")) else "nothing of yours answers to that"
+    if t == "name":
+        what = norm(a.get("what"))
+        if not filled(a.get("name")):
+            return "no name"
+        if what == "egg":
+            return None if "egg" in nameable(house, pet) else "there is no egg here that wants a name"
+        cr = tame(house, pet, what)
+        return None if cr and cr["room"] == room["id"] else "you can only name an animal of your own that is here"
+    if t == "ask_book":
+        return book.check_ask(a, house, cfg, pet, filled)
     if t == "write_belief":
         if not filled(a.get("statement")):
             return "nothing to write"
@@ -249,6 +295,12 @@ def check_plan(turn, pet):
     return None
 
 
+def tame(house, pet, name):
+    """The animal of its own that a name points at: by its kind or by the name it was given."""
+    n = norm(name)
+    return next((c for c in house["creatures"] if c.get("tame") == pet["id"] and n in (c["kind"], (c.get("name") or "").lower())), None)
+
+
 def offer_from(house, pet, name):
     n = norm(name)
     for off in pet["offers"]:
@@ -263,7 +315,10 @@ def destination(house, cfg, pet, a):
     t = a["type"]
     name = {"use": "target", "unmake": "target", "teach": "target", "take": "what", "gather": "what", "move": "to",
             "give": "to", "nuzzle": "who", "tell": "to", "chase": "who", "accept": "from", "arrange": "object",
-            "combine": "a", "bequeath": "what", "make": "near"}.get(t)
+            "combine": "a", "bequeath": "what", "make": "near", "write": "on", "sing": "to", "teach_song": "to", "name": "what"}.get(t)
+    if t == "ask_book":
+        at = next((o["pos"] for o in house["rooms"][pet["room"]]["objects"].values() if o.get("fix", {}).get("book")), None)
+        return None if at is None or dist(pet["pos"], at) <= 1 else beside(cfg, at, pet["pos"])
     if t == "go":
         d = norm(a.get("door")).replace(" door", "")
         return list(house["door_tiles"][d]) if d in house["rooms"][pet["room"]]["doors"] else None
@@ -293,7 +348,7 @@ def describe_thing(house, cfg, pet, name):
             name, things.whose(house, pet, o), parts, m["recipe"]["material"], m["recipe"]["purpose"], worn,
             "; it is an heirloom" if heir else "")
     fix, state = o.get("fix", {}), o.get("state")
-    hint = ("a light" if "light" in fix else "something to eat from" if "meal" in fix else "a place to rest" if "rest" in fix
+    hint = ("its pages are full of small writing; it could be asked a question" if fix.get("book") else "a light" if "light" in fix else "something to eat from" if "meal" in fix else "a place to rest" if "rest" in fix
             else "soft to lie on" if "soft" in fix else "something to play with" if "toy" in fix
             else "something growing" if fix.get("plant") else "you could see yourself in it" if fix.get("mirror")
             else "you can see outside through it" if fix.get("window") else "water; things put in it drift off" if "water" in fix
@@ -415,7 +470,41 @@ def apply(house, cfg, pet, a, mem):
     if t == "lay_egg":
         return life.lay_egg(house, cfg, pet, a, clean)
     if t == "bequeath":
+        if norm(a["what"]) not in room["objects"]:
+            return songs.leave(house, cfg, pet, life.heirs(house, pet, a.get("to")), a["what"])
         return life.bequeath(house, cfg, pet, a, norm)
+    if t == "write":
+        return walls.write(house, cfg, pet, a, clean, norm)
+    if t == "scrub":
+        return walls.scrub(house, cfg, pet, a, norm)
+    if t == "compose":
+        return songs.compose(house, cfg, pet, a, clean)
+    if t == "sing":
+        return songs.sing(house, cfg, pet, a, find, handle, bump)
+    if t == "teach_song":
+        return songs.teach(house, cfg, pet, a, find, handle)
+    if t == "call":
+        from . import director
+        return director.come(house, cfg, tame(house, pet, a["who"]), pet), {}, None
+    if t == "name":
+        new = clean(a["name"], 16)
+        if norm(a["what"]) == "egg":
+            egg = next(p for p in house["pets"].values() if p["room"] == room["id"] and p["stage"] == "egg" and not p["parent"] and not p["name"])
+            if any((p["name"] or "").lower() == new.lower() for p in life.alive(house)):
+                return "there is already one called that in the house", {}, None
+            egg["name"] = new
+            moment(house, "named", "%s named the egg that is nobody's %s" % (name, new), pet["id"], room["id"])
+            return "you named the egg %s" % new, {}, "name"
+        cr = tame(house, pet, a["what"])
+        cr["name"] = new
+        for an in pet.get("animals", []):
+            if an["id"] == cr["id"]:
+                an["name"] = new
+        witness(house, pet, "%s calls the %s %s" % (name, cr["kind"], new))
+        moment(house, "named", "%s named the %s %s" % (name, cr["kind"], new), pet["id"], room["id"])
+        return "you named the %s %s" % (cr["kind"], new), {}, "name"
+    if t == "ask_book":
+        return book.ask(house, cfg, pet, a, clean)
     if t == "write_belief":
         source = a.get("source") if a.get("source") in SOURCES or str(a.get("source", "")).startswith("told by ") else "lived"
         bid = mem.write(belief(a["statement"]), house["tick"], source)
@@ -487,7 +576,7 @@ def go(house, cfg, pet, d):
     pet["news"].append("arrived")
     for lost in [l for l in pet.get("lost", []) if l["room"] == to["id"]]:
         taker = house["pets"].get(lost["by"])
-        add_event(house, pet, "your %s is gone%s" % (lost["name"], "; %s has it" % handle(house, pet, taker) if taker else ""))
+        add_event(house, pet, lost.get("text") or "your %s is gone%s" % (lost["name"], "; %s has it" % handle(house, pet, taker) if taker else ""))
         pet["lost"].remove(lost)
     if first and not fresh:
         moment(house, "entered", "%s went into %s for the first time" % (label(pet), to["name"]), pet["id"], to["id"])
@@ -565,6 +654,11 @@ def use(house, cfg, pet, name):
             return "you tried the %s; nothing happens, it stays dark" % name, {}, None
         o["state"] = "off" if o["state"] == "on" else "on"
         return "you switched the %s %s" % (name, o["state"]), {}, "use " + name
+    if fix.get("radio"):   # SPEC-v3.1 §5.1: switched on, it speaks before long
+        o["state"] = "on" if o["state"] == "off" else "off"
+        if o["state"] == "on":
+            house.setdefault("radio", {"next": 0, "told": [], "said": []})["next"] = house["tick"] + ticks(cfg, 20)
+        return "you turned the dial on the %s; %s" % (name, "it crackles, and a hum comes out of it" if o["state"] == "on" else "it goes quiet"), {}, "use " + name
     if "states" in fix:
         o["state"] = fix["states"][(fix["states"].index(o["state"]) + 1) % len(fix["states"])]
         return "the %s is now %s" % (name, o["state"]), {}, "use " + name
@@ -633,10 +727,11 @@ def accept(house, cfg, pet, off):
     rec = {"tick": house["tick"], "from": giver["id"], "to": pet["id"], "kind": off["kind"], "text": off.get("what", ""), "reply": True}
     if off["kind"] == "nuzzle":
         gain = {}
+        near = 1.0 if knows(pet, giver) and knows(giver, pet) else cfg["strangers"]["nuzzle"]   # a stranger's lean is worth less (SPEC-v3.1 §7.2)
         for a, b in ((pet, giver), (giver, pet)):   # closeness with the same one eases less each time, until a night has passed
             key = "nuzzle " + b["id"]
             n = a["times"].get(key, 0)
-            gain[a["id"]] = {k: v * max(0.1, E["nuzzle_wear"] ** n) for k, v in E["nuzzle"].items()}
+            gain[a["id"]] = {k: v * near * max(0.1, E["nuzzle_wear"] ** n) for k, v in E["nuzzle"].items()}
             a["times"][key], a["seen_at"][key] = min(cfg["novelty"]["cap"], n + 1), house["tick"]
         bump(giver, cfg, gain[giver["id"]])
         add_event(house, giver, "%s leaned back against you" % handle(house, giver, pet))
@@ -741,7 +836,12 @@ def visit(house, cfg, cmd):
         if not new:
             return "no name"
         p = house["pets"].get(cmd.get("pet"))
-        if p and p["room"] == rid and p["stage"] not in ("egg", "dead"):
+        if p and p["room"] == rid and p["stage"] == "egg" and not p["parent"] and not p["name"]:   # a foundling can be named by the visitor (§7.1)
+            if any((x["name"] or "").lower() == new.lower() for x in life.alive(house)):
+                return "there is already one called that"
+            p["name"] = new
+            moment(house, "named", "the visitor named the egg that is nobody's %s" % new, p["id"], rid)
+        elif p and p["room"] == rid and p["stage"] not in ("egg", "dead"):
             p["inbox"].append('the visitor calls you %s (say "my name is %s" if you want the name)' % (new, new) if not p["name"]
                               else "the visitor calls you %s" % new)
             p["news"].append("visitor")
@@ -751,6 +851,14 @@ def visit(house, cfg, cmd):
             tell("the visitor calls the %s '%s'" % (cmd["object"], new))
         else:
             return "nothing here to name"
+    elif t == "write":   # SPEC-v3.1 §2.3
+        if not filled(cmd.get("text")):
+            return "nothing to write"
+        m = walls.visitor(house, cfg, room, life.last_sentence(clean(cmd["text"], 100), cfg["writing"]["max_chars"]), cmd.get("on"))
+        tell("the visitor wrote something on the %s" % m["on"])
+    elif t == "radio_off":   # the mute switch (§5.3): off in the house, not just quiet in the view
+        from . import radio
+        radio.off(house)
     else:
         return "unknown visitor action"
     return None

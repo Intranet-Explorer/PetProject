@@ -14,15 +14,15 @@ import time
 from collections import Counter, deque
 from pathlib import Path
 
-from . import actions, director, feel, genome, life, log, mind, physics, sleep, story, things
+from . import actions, director, feel, genome, life, log, mind, physics, radio, sleep, story, things
 from .memory import Memory
-from .world import LONG_AGO, NEEDS, add_event, alive, dist, here, label, load_config, moment, new_house, relation, ticks
+from .world import LONG_AGO, NEEDS, add_event, alive, dist, family, here, hours, label, load_config, moment, new_house, relation, ticks
 
 URGENT = {"visitor", "woke", "hatched", "low", "spoken", "event"}   # news that does not wait for min_think_seconds
 SEEN = {"use": "used the %s", "make": "made a %s", "unmake": "took apart the %s", "combine": "put two things together",
         "rest": "rested", "paint": "painted the room", "teach": "taught the %s something", "lay_egg": "laid an egg",
         "take": "took the %s", "gather": "picked up some %s", "drop": "put down some %s", "arrange": "moved the %s",
-        "chase": "chased the %s"}
+        "chase": "chased the %s", "compose": "made up a tune", "ask_book": "bent over the book a while", "call": "called out for something"}
 
 
 class Scheduler:
@@ -363,6 +363,10 @@ class Mind:
             story.claims(eng, pet, "tell", actions.clean(a["text"], 440))
         elif t in ("write_belief", "revise_belief") and actions.belief(a["statement"]).lower() != "discard":
             story.claims(eng, pet, "belief", actions.belief(a["statement"]))
+        elif t == "write":   # SPEC-v3.1 §2.2: a saying can move between messages and walls
+            story.claims(eng, pet, "writing", actions.clean(a["text"], self.cfg["writing"]["max_chars"]))
+        elif t == "ask_book" and pet.get("read") and pet["read"][0]["tick"] == h["tick"]:
+            story.claims(eng, pet, "book", pet["read"][0]["text"])
         elif t == "speak" and pet["name"] and self.mem and not getattr(self, "named", False):
             self.named = True
             log.pet_row(eng.db, pet)
@@ -403,6 +407,13 @@ class Mind:
                 got = plan.setdefault("near", {}).setdefault(e["thing"], [e["need"], 0.0])
                 got[1] += e.get("credit", e["rate"]) * dt
         life.wear(h, self.cfg, pet)
+        for other in here(h, pet, awake=True):   # time beside one of another family makes a stranger someone it knows (SPEC-v3.1 §7.2)
+            if family(other) != family(pet) and other["id"] not in pet.setdefault("knows", []):
+                spent = pet.setdefault("with", {})
+                spent[other["id"]] = spent.get(other["id"], 0) + 1
+                if spent[other["id"]] >= hours(self.cfg, self.cfg["strangers"]["familiar_hours"]):
+                    pet["knows"].append(other["id"])
+                    add_event(h, pet, "the stranger is no stranger now: you know %s" % actions.handle(h, pet, other))
 
     def notice(self, before):
         """Reasons to think again (SPEC-v2 §3): a need turning bad, a change of light, a new mark on its body."""
@@ -496,6 +507,14 @@ class Engine:
             if (was["ticks_per_day"], was["clock"]["tick_seconds"]) != (cfg["ticks_per_day"], cfg["clock"]["tick_seconds"]):
                 raise ValueError("this house was made with profile %r; start it with PET_PROFILE=%s" % (self.house["profile"], self.house["profile"] or ""))
         self.house["profile"] = cfg.get("profile")   # so the Lab and the showcase script read the logs on the same clock
+        # SPEC-v3.1 comes to a house that is already lived in: the discoveries are counted from this tick, and everyone
+        # in it is given the few things a pet now carries. Nothing else about the house or the family is touched.
+        self.house.setdefault("v31", {"at": self.house["tick"], "arrived": {}})
+        for pet in self.house["pets"].values():
+            if pet["stage"] != "dead":
+                for k, v in (("family", 1), ("songs", []), ("read", []), ("box", []), ("with", {}), ("knows", []), ("chalked", 0), ("animals", [])):
+                    pet.setdefault(k, v)
+        self.radio_items = radio.items_in(cfg, self.dir / "radio")   # what the box has to say; the server keeps it fresh
         self.sched, self.minds, self.db, self.narrator, self.present, self.tasks = Scheduler(), {}, None, None, None, set()
         self.sched.most = cfg["model"]["parallel"]
         if self.house["lineage"]:
@@ -611,6 +630,14 @@ class Engine:
         for s in h["said"]:
             log.put(db, "social", tick=s["tick"], from_pet=s["from"], to_pet=s["to"], kind=s["kind"], text=s["text"], reply=int(bool(s.get("reply"))))
         h["fresh_moments"], h["fresh_events"], h["fresh_creatures"], h["said"] = [], [], [], []
+        for m in h.pop("fresh_marks", []):      # SPEC-v3.1: every inscription, song, word from the box and passage read
+            log.put(db, "inscriptions", **m)
+        for s in h.pop("fresh_songs", []):
+            log.put(db, "songs", id=s["id"], tick=s["tick"], name=s["name"], notes=s["notes"], by=s["by"], parent=s["from"], how=s["how"], family=s["family"])
+        for r in h.pop("fresh_radio", []):
+            log.put(db, "radio", **r)
+        for r in h.pop("fresh_reads", []):
+            log.put(db, "library", **r)
         for room in h["rooms"].values():
             if room["type"] and not room.get("logged"):
                 room["logged"] = True
@@ -624,6 +651,7 @@ class Engine:
             h["visitor_last"], h["visitor_room"] = h["tick"], present
         director.begin(h, cfg)
         things.behave(h, cfg)
+        radio.tick(h, cfg, self.radio_items)
         seconds = cfg["clock"]["tick_seconds"]
         for pet in list(h["pets"].values()):
             if pet["stage"] == "egg":

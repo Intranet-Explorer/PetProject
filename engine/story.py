@@ -73,6 +73,7 @@ def claims(eng, pet, kind, text):
     or changed. The index lives in the house; every row goes in the lineage's log."""
     house = eng.house
     index = house["claims"]
+    fam = pet.get("family", 1)
     for sentence in split(text):
         words = content(sentence, True)
         best = max((c for c in index if c["lineage"] == pet["lineage"]), key=lambda c: alike(words, set(c["words"])), default=None)
@@ -80,6 +81,10 @@ def claims(eng, pet, kind, text):
         if best and score >= 0.5:
             mine = pet["id"] in best["pets"]
             relation = "repeated" if score >= 0.8 else "changed"
+            if fam and best.get("family", 1) != fam and fam not in best.setdefault("crossed", []):   # SPEC-v3.1 §7.2
+                best["crossed"].append(fam)
+                relation = "crossed over"
+                moment(house, "crossed", 'a saying has crossed between the families: "%s"' % best["text"], pet["id"], pet.get("room"))
             if not mine:
                 best["pets"].append(pet["id"])
             if pet["gen"] not in best["gens"] and kind in ("message", "tell"):
@@ -93,7 +98,7 @@ def claims(eng, pet, kind, text):
             house["n"]["claim"] = house["n"].get("claim", 0) + 1
             claim = {"id": house["n"]["claim"], "text": sentence, "words": sorted(words), "first": pet["id"], "pets": [pet["id"]],
                      "gens": [pet["gen"]] if kind in ("message", "tell") else [], "forms": [], "truth": truth(sentence),
-                     "lineage": pet["lineage"], "kind": kind}
+                     "lineage": pet["lineage"], "kind": kind, "family": fam}
             index.append(claim)
             relation = "first"
         put(eng.db, "claims", claim=claim["id"], pet=pet["id"], tick=house["tick"], kind=kind, text=sentence, relation=relation,
@@ -162,6 +167,9 @@ def life_record(eng, pet, mem):
         "my_life": pet.get("my_life") or facts, "my_life_by": "itself" if pet.get("my_life") else "the engine",
         "wellbeing": round(life.wellbeing(pet)), "span": round(life.span(cfg, pet), 1), "meter_talk": meter_share(eng.db, pet["id"])[0],   # from the words, by today's pattern
         "eggs": pet["eggs"], "diary": [d["dream"] for d in pet["diary"] if d.get("dream")][-8:],
+        "family": pet.get("family", 1), "animals": pet.get("animals", []),   # SPEC-v3.1 §4.3: its animals are part of its life
+        "songs": [house.get("songs", {}).get(e["id"], {}).get("name") for e in pet.get("songs", [])],
+        "read": [{"question": r["question"], "title": r["title"]} for r in pet.get("read", [])],
     }
 
 

@@ -40,6 +40,14 @@ lay_egg = 20
 bequeath = 12
 write_belief = 10
 revise_belief = 10
+write = 12                # SPEC-v3.1
+scrub = 8
+compose = 16
+sing = 12
+teach_song = 16
+call = 4
+name = 6
+ask_book = 14
 
 [model]
 endpoint = "http://localhost:11434/v1"   # must be localhost
@@ -87,6 +95,11 @@ company = { near = 0.15, room = 0.05, creature = 0.03, friend = 0.1, visitor = 0
 stone = { company = 3.0, comfort = 1.0 }   # touching the stone of one of its own
 offer_seconds = 300       # an offer nobody takes lapses after this
 reply_seconds = 1500      # speech answered within this counts as a reply (Lab): about twenty thoughts
+write = { curiosity = 1.5 }             # v3.1: scratching words on a wall
+new_song = 3.0            # curiosity from hearing a song it does not know
+lullaby = 2.0             # comfort for an egg or a sleeping child sung to
+read = { curiosity = 4.0 }               # reading a passage in the book
+tame_died = { comfort = -6.0 }           # its animal has died
 nuzzle_wear = 0.7         # each nuzzle with the same one is worth this much of the last, until a night eases it
 
 [novelty]                 # familiarity (SPEC-v2 §4): doing a thing again is worth less each time
@@ -184,3 +197,69 @@ keep_days = 60
 host = "127.0.0.1"
 port = 8000
 origins = ["http://localhost:8000", "http://127.0.0.1:8000", "http://localhost:5173", "http://localhost:8001", "http://localhost:8002"]
+
+# ---- SPEC-v3.1: things the family can discover ----
+
+[arrivals]                # §1: world days after v3.1 came to this house. Each comes once, when a pet is awake to meet it.
+writing = 0
+songs = 2
+taming = 3
+radio = 5
+book = 7
+strangers = 10
+strangers_generations = 3 # ... and not before the family has had this many generations
+force = false             # §9.2, for the check on a copy: each arrival a twentieth of a world day after the one before
+
+[writing]                 # §2
+max_chars = 80
+cap = 6                   # inscriptions a room holds; at the cap a new one wears away the most faded
+shown = 3                 # how many a pet is shown at once
+chalk_writings = 3        # a piece of chalk is used up after this many
+chalk_days = 12           # world days until chalk has faded away ...
+scratch_days = 5          # ... and a scratch made with a hard bit
+damp = 2.0                # how many times faster in the cellar
+faded = 0.5               # past this share of its time it reads as faded
+
+[songs]                   # §3
+ear_drift = 0.15          # learned by ear, the chance that each note shifts one step
+repertoire = 8            # songs a pet holds; past it the least sung is forgotten
+min_notes = 3
+max_notes = 12
+
+[taming]                  # §4. Trust is a creature's, per pet, and hidden.
+tame_at = 6.0             # at this much it is that pet's animal; below half of it, no longer
+fed = 2.0                 # for a bit it likes
+still_per_minute = 0.15   # for a pet staying still within three tiles
+follow_per_minute = 0.3   # for a pet keeping close to it
+chased = -3.0
+noise = -1.0              # something loud used in its room
+rush_per_minute = -0.3    # a pet moving with a spring in its step close by
+creatures = 3             # in the house at once from then on, of which one wild one of each kind
+lifespan_days = { mouse = 40, beetle = 32, moth = 26, bird = 48 }   # longer than a pet's
+young_at = 0.4            # the share of its life at which a tame creature has young, once
+
+[radio]                   # §5. The engine fetches; a pet never does.
+every_minutes = 20        # real minutes between snippets while it is on
+fetch_minutes = 60        # each source at most this often
+max_chars = 200
+keep = 3                  # the box's last words a pet in the room still has in its head
+allow = ["api.open-meteo.com", "api.wikimedia.org", "feeds.npr.org"]   # the only hosts ever asked
+blocklist = []            # words Tyler does not want in the house: a snippet with one of them is dropped
+sources = [               # confirmed by Tyler on 11 October 2026
+  { name = "forecast", kind = "forecast", url = "https://api.open-meteo.com/v1/forecast?latitude=44.98&longitude=-93.27&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max&timezone=America%2FChicago&forecast_days=3" },
+  { name = "on this day", kind = "onthisday", url = "https://api.wikimedia.org/feed/v1/wikipedia/en/onthisday/selected/{month}/{day}" },
+  { name = "news", kind = "rss", url = "https://feeds.npr.org/1001/rss.xml" },
+]
+
+[book]                    # §6. An offline copy of Simple English Wikipedia; nothing leaves the Mac when a pet asks.
+zim = "book/wikipedia_en-simple_all_maxi_2026-09.zim"
+chars = 400               # about how much of an article a pet reads
+max_question = 80
+per_hours = 1             # each pet at most once a world hour
+keep = 2                  # the passages a pet still has in its head
+
+[strangers]               # §7
+population = 5            # pets and eggs alive at once, once a second family is in the house ...
+per_family = 3            # ... and at most this many of one family
+familiar_hours = 8        # world hours awake in the same room before a stranger is someone it knows
+nuzzle = 0.4              # how much of a nuzzle's ease there is with a stranger

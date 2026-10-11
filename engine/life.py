@@ -3,7 +3,7 @@ grows old, and dies; before that it may lay eggs, and what it hands on is a body
 and a couple of things."""
 from . import genome, things
 from .feel import level
-from .world import (GENES, STAGES, add_event, alive, free_tile, hours, label, moment, new_pet, rnd, ticks)
+from .world import (GENES, STAGES, add_event, alive, arrived, family, free_tile, hours, label, moment, new_pet, rnd, ticks)
 
 GROWS = {"hatchling": "child", "child": "youngling", "youngling": "adult"}
 UNLOCKS = {
@@ -11,6 +11,11 @@ UNLOCKS = {
                   "follow", "nuzzle", "accept", "take", "chase", "write_belief", "revise_belief"],
     "child": ["arrange"], "youngling": ["combine", "paint"], "adult": ["teach", "lay_egg"], "elder": ["tell", "bequeath"],
 }
+# SPEC-v3.1: what a discovery makes possible, the stage it needs, and the discovery it waits for. These are never
+# announced with a stage: a pet meets them in the world (a stick of chalk, a tune that stays with it, a creature that
+# no longer runs).
+LATE = {"scrub": ("hatchling", "writing"), "write": ("child", "writing"), "sing": ("hatchling", "songs"), "teach_song": ("hatchling", "songs"),
+        "compose": ("youngling", "songs"), "call": ("hatchling", "taming"), "name": ("hatchling", "taming"), "ask_book": ("child", "book")}
 
 
 def actions_of(stage):
@@ -19,6 +24,22 @@ def actions_of(stage):
     for s in STAGES[1:STAGES.index(stage) + 1] if stage in STAGES else []:
         out += UNLOCKS[s]
     return out
+
+
+def unlocked(house, stage):
+    """What a pet of this stage can ever do in this house as it is now: its stage's actions, and those of the
+    discoveries that have arrived (SPEC-v3.1 §1)."""
+    if stage not in STAGES[1:]:
+        return []
+    return actions_of(stage) + [a for a, (at, what) in LATE.items() if STAGES.index(stage) >= STAGES.index(at) and arrived(house, what)]
+
+
+def full(house, cfg, pet):
+    """Is there no room for another egg of this pet's? One family: the v3 limit. Two: five in the house, three of a family (§7.3)."""
+    if not arrived(house, "strangers"):
+        return len(alive(house)) >= cfg["life"]["population"]
+    S = cfg["strangers"]
+    return len(alive(house)) >= S["population"] or sum(family(p) == family(pet) for p in alive(house)) >= S["per_family"]
 
 
 def days(house, cfg, pet):
@@ -68,7 +89,7 @@ def body_feels(house, cfg, pet):
         out.append("you haven't made anything that's really yours")
     if stage in ("adult", "elder") and pet["eggs"] < fertility(pet):
         pull = (house["tick"] - pet["stage_at"]["adult"]) >= L["egg_pull_days"] * cfg["ticks_per_day"] and pet["eggs"] == 0
-        if len(alive(house)) >= L["population"]:
+        if full(house, cfg, pet):
             out.append("the house is full")
         elif pull or left <= 2:
             out.append("you feel ready to lay an egg")
@@ -105,7 +126,7 @@ def can_lay(house, cfg, pet):
     """None if it can lay an egg now, else what stops it, as it would feel it."""
     if pet["eggs"] >= fertility(pet):
         return "there are no more eggs in you"
-    if len(alive(house)) >= cfg["life"]["population"]:
+    if full(house, cfg, pet):
         return "the house is full"
     if level(pet, "energy") > 1:
         return "you are too tired to lay an egg"
@@ -139,6 +160,8 @@ def hatch(house, cfg, pet):
     pet["rooms"][pet["room"]] = house["tick"]
     pet["news"].append("hatched")
     add_event(house, pet, "you hatched; you can do things now: " + ", ".join(actions_of("hatchling")))
+    if not pet["told"]:
+        add_event(house, pet, "no one left you any words")   # a foundling starts with nothing inherited (SPEC-v3.1 §7.1)
     parent = house["pets"].get(pet["parent"])
     if parent and parent["stage"] != "dead":
         add_event(house, parent, "the egg you laid has hatched%s" % (": " + pet["name"] if pet["name"] else ""))

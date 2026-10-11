@@ -5,6 +5,7 @@ import random
 import re
 
 from ..actions import PLACES as SPOTS
+from ..songs import NOTES
 from ..things import COLORS, DO, PLACES, SHAPES, WHEN
 
 SAYINGS = ["the lamp is harsh at night", "rest where it is quiet", "the garden feeds you when the plants are ripe",
@@ -79,7 +80,24 @@ class Stub:
         if t == "lay_egg":
             return {"type": t, "name": "Egg%d" % r.randrange(1000), "message": self.message(packet)}
         if t == "bequeath":
-            return {"type": t, "what": pick(c["leave"]), "to": "my children"}
+            return {"type": t, "what": pick(c["leave"] + c["songs"]), "to": "my children"}
+        if t == "write":   # SPEC-v3.1: every new action, used the way a pet plausibly would
+            return {"type": t, "text": pick(SAYINGS), "on": pick(c["surfaces"])}
+        if t == "scrub":
+            return {"type": t, "what": pick(c["writings"])}
+        if t == "compose":
+            return {"type": t, "name": "tune %d" % self.s["n"], "notes": [pick(NOTES) for _ in range(r.randint(3, 12))]}
+        if t == "sing":
+            who = c["pets"] + (["egg"] if c["eggs"] else [])
+            return {"type": t, "song": pick(c["songs"]), **({"to": pick(who)} if who and r.random() < 0.6 else {})}
+        if t == "teach_song":
+            return {"type": t, "song": pick(c["songs"]), "to": pick(c["awake"])}
+        if t == "call":
+            return {"type": t, "who": pick(c["tame"])}
+        if t == "name":
+            return {"type": t, "what": pick(c["nameable"]), "name": "Nib%d" % r.randrange(1000)}
+        if t == "ask_book":
+            return {"type": t, "question": pick(["what is a beetle", "why does it rain", "what is a lamp", "what is a storm", "how do birds sing"])}
         if t == "write_belief":
             return {"type": t, "statement": pick(SAYINGS), "source": pick(["lived", "seen"] + ["told by " + x for x in c["tellers"]])}
         if t == "revise_belief":
@@ -100,7 +118,9 @@ class Stub:
                 "arrange": c["movable"], "combine": len(c["free"]) > 1 and c["materials"], "teach": c["mine"],
                 "give": (c["awake"] or c["creatures"]) and (c["carrying"] or c["bits"]), "show": c["awake"] and c["things"],
                 "follow": c["pets"] + c["creatures"], "nuzzle": c["awake"] or c["eggs"], "accept": c["offers"], "take": c["theirs"],
-                "chase": c["creatures"], "tell": c["awake"], "bequeath": c["leave"], "revise_belief": c["beliefs"], "use": c["things"]}
+                "chase": c["creatures"], "tell": c["awake"], "bequeath": c["leave"] or c["songs"], "revise_belief": c["beliefs"], "use": c["things"],
+                "write": c["surfaces"], "scrub": c["writings"], "sing": c["songs"], "teach_song": c["songs"] and c["awake"], "call": c["tame"],
+                "name": c["nameable"]}
         return bool(need.get(t, True))
 
     async def act(self, packet, ctx):
