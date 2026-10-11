@@ -886,3 +886,33 @@ SPEC-v3.2, built in the worktree beside v3.1 and deployed with it in one restart
   still be leaned on. Nothing else about company was touched.
 - **Check.** Two pets that lean and accept whenever they can, kept as lonely as can be for a world day, may
   not spend more than a fifth of their thoughts on it.
+
+### Added while v3.2 was being built (Tyler, 11 October)
+
+- **Taking a name.** In the living house the visitor called a hatchling Garry and it answered "Yes, I am
+  Garry", three times, and stayed nameless: only the exact words "my name is X" counted. Now, while the
+  visitor has offered a name, the pet has an action for it (`take_name`, in its list only then), and any
+  clear yes to that name takes it: "my name is Garry", "I am Garry", "I'm Garry", "call me Garry", "yes,
+  Garry". "I am not Garry" and "who is Garry?" do not. A pet that had already said yes has its name when the
+  house next starts (its last few sayings are read from the log). The pet's card says "you called it Garry;
+  waiting to hear", then "it took the name Garry". This went into the living house at once, as a small
+  change by itself (commits 9219ab1, 5bcab5e on the v3.0 code; two restarts, about a minute down), and Garry
+  has his name.
+- **Unnamed pets have labels of their own**: "the first one", "the third one", by the order they came into
+  the house, in words. They were all "the little one", and "the little one told the little one something to
+  keep" said nothing. A pet still calls its kin by what they are to it ("your mother"). This comes with the
+  v3.1 and v3.2 deploy.
+- **The start script waits for the old engine to finish stopping.** Starting again at once failed ("Bootstrap
+  failed: 5") and left the house down until it was run a second time.
+
+### A mistake, and what was changed because of it
+
+- **An archive was written to.** Two builders were told, by me, to open the third run's archive
+  (`data.showcase-3`) with `PET_PAUSED=1` to test old recordings. Paused did not mean read-only: the new
+  engine brought the house up to date and saved it (`house.json` converted to kinds; four empty tables added
+  to its log). Both stopped as soon as they saw it. The changed files were put back from an untouched copy
+  made at 11:33 the same day, with Tyler's leave, and all 47 files were compared and match; the recorded
+  frames were never touched. The copy is kept as `data.showcase-3.as-of-1133`.
+- **A paused engine is now read-only**: the house is brought up to date in memory so the view can draw it and
+  nothing is written, not the house, not a pet's files, not a table in its log; and a visitor's command to a
+  paused house is refused. The self-check hashes every file of a house before and after opening it this way.
