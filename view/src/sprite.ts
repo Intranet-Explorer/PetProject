@@ -24,7 +24,7 @@ export const artReady: Promise<void> = Promise.all(["packs.json", "sprites.json"
   Object.assign(art, { packs: packs ?? {}, sprites: sprites ?? {}, kinds: kinds ?? {}, fromParts: parts, sounds: sounds ?? {} });
   // a pixel face for the page's headings, if a pack brings one (packs.json: `"font": "<file in the pack>"`)
   const [name, pack] = Object.entries(art.packs).find(([, p]) => p.font && !p.local) ?? [], src = name && fileUrl({ pack: name, file: pack!.font! });
-  if (src && typeof FontFace !== "undefined") void new FontFace("PetPixel", `url("${src}")`).load().then((f) => document.fonts.add(f), () => {});
+  if (src && typeof FontFace !== "undefined") void new FontFace("PetPixel", `url("${src}")`).load().then((f) => { document.fonts.add(f); document.documentElement.classList.add("pixel"); }, () => {});
 });
 
 /** Where a pack's file is served from. A pack kept outside the repository (`local`) cannot be reached from the page. */

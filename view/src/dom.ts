@@ -129,12 +129,28 @@ export const stageWord = (p: Pick<PetV, "stage" | "stage_word" | "stage_before">
 /** The same for a stage's name on its own (a life record says "as far as elder"). */
 export const stageName = (stage: string) => STAGE[stage] ?? stage;
 
-/** How a pet feels, in at most two plain words, the worst first. Never a number. */
+const FINE = ["not lonely", "awake", "fine", "interested"];   // the engine's words for a need that is merely met: said alone, each reads oddly
+/** How a pet feels, in at most two plain words, the worst first. Never a number. When nothing is wrong it is the best
+ *  of how it feels ("at ease", "fascinated"), or simply "content". */
 export function moodWords(p: PetV): string[] {
-  if (p.mood) return p.mood.slice(0, 2);
+  const plain = (words: string[]) => (words.length === 1 && FINE.includes(words[0]) ? ["content"] : words);
+  if (p.mood) return plain(p.mood.slice(0, 2));
   if (!p.levels || !p.felt) return [];
   const low = NEEDS.filter((n) => p.levels![n] >= 2).sort((a, b) => p.levels![b] - p.levels![a]).slice(0, 2).map((n) => p.felt![n]);
-  return low.length ? low : [p.felt[[...NEEDS].sort((a, b) => p.levels![a] - p.levels![b])[0]]];   // nothing lacking: the best of how it feels
+  return low.length ? low : plain([p.felt[[...NEEDS].sort((a, b) => p.levels![a] - p.levels![b])[0]]]);
+}
+
+const ORDINAL = ["", "first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth", "tenth", "eleventh", "twelfth", "thirteenth", "fourteenth",
+  "fifteenth", "sixteenth", "seventeenth", "eighteenth", "nineteenth"];
+const TENS: Record<number, string[]> = { 2: ["twentieth", "twenty"], 3: ["thirtieth", "thirty"], 4: ["fortieth", "forty"], 5: ["fiftieth", "fifty"], 6: ["sixtieth", "sixty"],
+  7: ["seventieth", "seventy"], 8: ["eightieth", "eighty"], 9: ["ninetieth", "ninety"] };
+/** A pet with no name is "the first one", "the third one", by the order it came into the house (the number in its
+ *  id), as the engine now labels it. A recording made before that calls every one of them "the little one": this
+ *  gives each its own label back. */
+export function ownLabel(p: Pick<PetV, "id" | "label">): string {
+  const n = Number(p.id.slice(1));
+  if (p.label !== "the little one" || !Number.isInteger(n) || n < 1) return p.label;
+  return `the ${n < 20 ? ORDINAL[n] : n < 100 ? (n % 10 ? `${TENS[Math.floor(n / 10)][1]}-${ORDINAL[n % 10]}` : TENS[n / 10][0]) : "latest"} one`;
 }
 const EMOTE: Record<string, string> = { energy: "tired", comfort: "uneasy", curiosity: "bored", company: "lonely" };
 /** The one strong feeling that shows as a small picture beside a pet (§5.3), or null. */

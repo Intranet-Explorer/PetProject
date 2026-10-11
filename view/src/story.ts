@@ -25,7 +25,7 @@ function discoveries(c: Ctx, v: V31) {
   if (!all.length) return null;
   const wait = (n: string, due: number) => {
     const left = due - s.tick, third = n === "strangers" ? ", and not before the family's third generation" : "";
-    if (left <= 0) return `any time now, once someone is awake to meet it${third}`;
+    if (left <= 0) return `any time now${s.pets.some((p) => p.needs && !p.asleep) ? "" : ", once someone is awake to meet it"}${third}`;
     return `in ${s.turbo && v.ticks_per_day ? plural(Math.max(1, Math.round(left / v.ticks_per_day)), "day") + " of the house" : about((left * tickMs(s)) / 1000)}${third}`;
   };
   const next = all.find(([, a]) => a.arrived == null), come = all.filter(([, a]) => a.arrived != null).length;
@@ -39,7 +39,8 @@ export function story(c: Ctx): Kid[] {
   const d = c.replay ? null : c.api.story, today = c.snap.clock.day;
   const moments = (d?.moments ?? [...c.snap.moments].reverse()) as Moment[];
   const chron = (d?.chronicle ?? [...c.snap.chronicle].reverse()) as Chronicle[];
-  const told = (e: Chronicle) => e.text || (e.lines.length ? e.lines.join("; ") + "." : "A quiet day.");
+  // a day as it was written up; where nobody wrote it up, what happened as a short list, never one long run of semicolons
+  const told = (e: Chronicle) => (e.text ? el("p", "", e.text) : e.lines.length ? el("ul", "dayline", ...e.lines.map((l) => el("li", "", `${l[0].toUpperCase()}${l.slice(1)}.`))) : el("p", "", "A quiet day."));
   const v = (c.api.v31 ?? {}) as V31, lib = v.library ?? [];
   const days = [...new Set([...moments.map((m) => m.day), ...(v.radio ?? []).map((h) => dayOf(c.snap, h.tick))])].filter((n) => n !== today).sort((a, b) => b - a);
   const latest = chron[0], records = (c.api.story?.records ?? []) as Record<string, any>[];
@@ -48,7 +49,7 @@ export function story(c: Ctx): Kid[] {
   const read = (b: (typeof lib)[number]) => el("li", "", el("p", "", el("b", "", b.name), ` asked the book: “${b.question}” `, el("span", "hint", when(c.snap, b.tick))),
     b.text ? el("blockquote", "", el("b", "", `${b.title}. `), b.text) : el("p", "hint", "The book had nothing to say to that."));
   return [
-    latest ? el("section", "chronicle", el("h3", "", `Day ${latest.day}, ${latest.season}`), el("p", "", told(latest)))
+    latest ? el("section", "chronicle", el("h3", "", `Day ${latest.day}, ${latest.season}`), told(latest))
       : el("p", "empty", "The first day is not over yet; the chronicle is written each night."),
     discoveries(c, v),
     el("h3", "", `Today, day ${today}`),
@@ -61,7 +62,7 @@ export function story(c: Ctx): Kid[] {
     ...days.map((n) => {
       const e = chron.find((x) => x.day === n), list = moments.filter((m) => m.day === n), said = box(n);
       return fold(`day-${n}`, `Day ${n}${e ? `, ${e.season}` : ""} · ${plural(list.length, "moment")}${said.length ? ` · the box spoke ${said.length === 1 ? "once" : `${said.length} times`}` : ""}`,
-        e && e !== latest ? el("p", "", told(e)) : null, el("ol", "moments", ...list.map((m) => momentRow(c, m))),
+        e && e !== latest ? told(e) : null, el("ol", "moments", ...list.map((m) => momentRow(c, m))),
         said.length ? el("h4", "", "What the box said that day") : null, said.length ? el("ol", "moments", ...said.map((h) => heardRow(c, h))) : null);
     }),
     // SPEC-v3.1 §6.3: every question put to the book, by whom, and what it answered

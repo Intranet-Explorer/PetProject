@@ -167,7 +167,7 @@ export function planSong(notes: [string, number][], v: VoiceInput): Plan {
 
 /** The little of a snapshot the voice listens to (types.ts has the whole of it). */
 export type Ears = {
-  tick: number;
+  tick: number; tick_seconds?: number;
   pets: { id: string; room: string; said?: { text: string; tick: number; song?: string } | null }[];
   moments: { n: number; kind: string; pet: string | null; room: string | null }[];
   sung?: { tick: number; by: string; song: string; room: string }[];
@@ -185,7 +185,8 @@ const BY_HOUSE: Record<string, HouseSound> = { power: "powerdown", storm: "thund
 /** Compare what was heard before with what is here now. On the first look nothing plays: old news is not announced. */
 export function news(seen: Seen | null, s: Ears) {
   const sung = s.sung ?? [], said = s.radio?.said ?? [], acts = s.acts ?? [];
-  if (seen && s.tick < seen.tick) seen = null;   // a replay wound back: start listening afresh, announce nothing
+  // a replay wound back or scrubbed far ahead, or a tab left asleep: start listening afresh, announce nothing old
+  if (seen && (s.tick < seen.tick || (s.tick - seen.tick) * (s.tick_seconds ?? 0) > 120)) seen = null;
   const now: Seen = { tick: s.tick, act: Math.max(seen?.act ?? 0, ...acts.map((a) => a.n)), said: Object.fromEntries(s.pets.filter((p) => p.said).map((p) => [p.id, p.said!.tick])), moment: Math.max(0, ...s.moments.map((m) => m.n)),
                       sung: Math.max(seen?.sung ?? 0, ...sung.map((x) => x.tick)), radio: Math.max(seen?.radio ?? 0, ...said.map((x) => x.tick)) };
   const speak: { pet: string; text: string }[] = [], sounds: { kind: SoundKind; pet: string; room: string | null }[] = [], house: { kind: HouseSound; room: string | null; moment: string }[] = [];

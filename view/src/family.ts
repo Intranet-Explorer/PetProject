@@ -21,8 +21,18 @@ export function showRecord(id: string | null) {
   keep();
 }
 
-const TRUTH: Record<string, [string, string]> = { true: ["✓ true of this house", "correct"], false: ["✗ not so", "wrong"] };
+const TRUTH: Record<string, [string, string, string]> = {
+  true: ["✓ true of this house", "correct", "The engine checked this saying against how the house really works, and it holds."],
+  false: ["✗ not so", "wrong", "The engine checked this saying against how the house really works, and it does not hold. The family believes it all the same."] };
+const UNCHECKED = "The engine has no test for a saying like this one.";
 const [CW, CH] = [96, 124];
+
+/** Whether a saying holds, as the engine tested it; the title says what the mark means. */
+function mark(truth: string | null) {
+  const [text, cls, title] = TRUTH[truth ?? ""] ?? ["nothing the house can check", "", UNCHECKED], e = el("span", cls, text);
+  e.title = title;
+  return e;
+}
 
 /** Something that went from one family to the other: who had it, who has it now, and what it was. */
 type Crossing = { from: string; to: string; what: string };
@@ -56,8 +66,8 @@ function tree(c: Ctx, pets: PetV[], crossings: Crossing[], sayings: number, redr
   box.style.height = `${H}px`;
   // drawn smaller to fit the drawer's width, but never so small that a name cannot be read; past that it scrolls in its
   // own box, which is a whole number of generations high, so no row of faces is ever cut through
-  const room = (document.querySelector<HTMLElement>('[data-panel="family"]')?.clientWidth ?? 440) - 40;
-  const zoom = Math.max(0.8, Math.min(1, room / W)), rows = Math.max(2, Math.floor((innerHeight * 0.68 - TOP) / (CH * zoom)));
+  const panel = document.querySelector<HTMLElement>('[data-panel="family"]'), room = (panel?.clientWidth ?? 440) - 40;
+  const zoom = Math.max(0.8, Math.min(1, room / W)), rows = Math.max(2, Math.floor(((panel?.clientHeight ?? innerHeight) - 120 - TOP) / (CH * zoom)));
   box.style.zoom = String(zoom);
   if (two) for (const [n, [a, b]] of span) {
     const name = el("span", `treename ${fam(n)}`, NAMES[n] ?? `Family ${n}`);
@@ -241,8 +251,10 @@ export function family(c: Ctx): Kid[] {
         p.animals!.map((a) => `${a.name ? `${a.name} the ${a.kind}` : `a ${a.kind}`} (${c.snap.rooms.find((r) => r.id === a.room)?.name ?? "somewhere"})`).join(", "))))
         : el("p", "empty", c.snap.arrived?.taming == null ? "The creatures of the house are nobody's yet." : "No creature has taken to anyone yet.")) : null,
     el("h3", "", "Family sayings"),
+    sayings.length ? el("p", "hint", "What one generation told the next. After each: ", el("span", "correct", "✓ true of this house"), ", ", el("span", "wrong", "✗ not so"),
+      ", or nothing the house can check. That is the engine's own test of the saying against how the house really works; the pets are never told.") : null,
     sayings.length ? el("ul", "sayings", ...sayings.map((s) => el("li", "", el("blockquote", "", s.text),
-      el("p", "hint", `${plural(s.gens.length, "generation")}: ${s.pets.map((p) => p.name).join(" → ")} `, el("span", TRUTH[s.truth ?? ""]?.[1] ?? "", TRUTH[s.truth ?? ""]?.[0] ?? "nothing the house can check")),
+      el("p", "hint", `${plural(s.gens.length, "generation")}: ${s.pets.map((p) => p.name).join(" → ")} `, mark(s.truth)),
       s.forms.length ? fold(`forms-${s.text}`, `Said differently ${plural(s.forms.length, "time")}`, ...s.forms.map(([id, t]) => el("p", "", `${name(id)}: “${t}”`))) : null)))
       : el("p", "empty", "Nothing has been handed down a second time yet."),
     el("h3", "", "Heirlooms"),

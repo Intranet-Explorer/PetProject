@@ -1,7 +1,7 @@
 // Wiring (SPEC-v3 §10, SPEC-v3.2 §7): one websocket to the engine (or a recorded run played back), snapshots in, the
 // visitor's actions out. Lays the page out round the room, decides which room is on screen, and keeps that choice
 // across a reload.
-import { $, el, emoteOf, face, moodWords, stageWord, thoughtOf, when } from "./dom";
+import { $, el, emoteOf, face, moodWords, ownLabel, stageWord, thoughtOf, when } from "./dom";
 import type { Ctx, Kid } from "./dom";
 import { showRecord } from "./family";
 import { icon } from "./icons";
@@ -89,10 +89,22 @@ function layout() {
   set($("side"), sideWidth, stacked ? null : Math.ceil(h * k));
   $("side").classList.toggle("slim", sideWidth < 250);
   if (snap) drawMap($("map"), snap, view.room, view.sel, (id) => jump({ room: id }), mapWidth());
+  placeDrawer();
+}
+/** The drawer takes nothing from the room: it lies over the column beside it (the map, the sky, Lately), as tall as
+ *  the room, and the header, the cards and the controls stay as they were. Only where there is no such column to
+ *  speak of (a narrow window) does it lie over the right of the whole page instead. */
+function placeDrawer() {
+  if (!view.drawer) return;
+  const d = $("drawer"), stage = $("stage").getBoundingClientRect(), left = Math.round(stage.right) + GAP, width = Math.min(620, innerWidth - 16 - left);
+  const beside = width >= 380 && stage.height > 100 && !document.querySelector("main")!.classList.contains("stacked");
+  d.classList.toggle("beside", beside);
+  d.style.cssText = beside ? `left:${left}px;top:${Math.round(stage.top)}px;width:${width}px;height:${Math.round(stage.height)}px` : "";
 }
 const mapWidth = () => (sideWidth < 250 ? sideWidth : Math.min(190, sideWidth * 0.46));
 const watch = new ResizeObserver(() => { tall = 0; layout(); });   // a new window, or the drawer: measure afresh
 for (const e of [document.querySelector("header")!, document.querySelector("footer")!, document.querySelector("main")!, $("replayBar")]) watch.observe(e);
+document.querySelector("main")!.addEventListener("scroll", placeDrawer);
 
 // ---- which room to show ----
 
@@ -144,6 +156,7 @@ async function show(s: Snap) {
   if (s.hello) hello = s.hello;
   raw = s;
   snap = { ...s, ...tweak, clock: { ...s.clock, ...((tweak.clock as object) ?? {}) }, lineage: { ...s.lineage, ...((tweak.lineage as object) ?? {}) } };
+  snap.pets = snap.pets.map((p) => (p.label === "the little one" ? { ...p, label: ownLabel(p) } : p));   // a recording from before unnamed pets had labels of their own
   if (!ready) {
     layout();   // the room is given its box before it is made, so it is made the right size
     ready = Promise.all([room.init($("room"), s.size[0], s.size[1]), artReady]);
@@ -179,18 +192,37 @@ function render() {
   if (view.drawer) renderDrawer(view.tab, ctx());
 
   // Moments (§9.1): a banner when something worth seeing happens. Not on first load: that would announce old news.
-  const newest = s.moments.at(-1);
-  if (newest && newest.n !== bannerN) {
+  // Nor after a jump in time (a replay scrubbed, a tab left asleep): a banner is only ever for a moment that belongs
+  // to what is on screen, so whatever was up is taken down and nothing old is announced.
+  const newest = s.moments.at(-1), jumped = shownTick >= 0 && (s.tick < shownTick || (s.tick - shownTick) * s.tick_seconds > 120);
+  if (jumped) { $("banner").hidden = true; bannerN = newest?.n ?? 0; }
+  else if (newest && newest.n !== bannerN) {
     // a discovery (SPEC-v3.1 §1) is never passed over for whatever came just after it
-    const fresh = bannerN >= 0 ? s.moments.filter((m) => m.n > bannerN) : [], m = fresh.find((m) => m.kind.startsWith("arrival")) ?? fresh.at(-1);
+    const fresh = bannerN >= 0 ? s.moments.filter((m) => m.n > bannerN && m.tick > shownTick) : [], m = fresh.find((m) => m.kind.startsWith("arrival")) ?? fresh.at(-1);
     // a project's own words are long and are in the list beside the room; the banner says whose it is
     if (m) flash(m.kind === "project" ? m.text.split(":")[0] : m.text, false, () => jump(m), m.kind);
     bannerN = newest.n;
   } else if (!newest) bannerN = 0;
+  shownTick = s.tick;
 }
 let sent = "";
 let bannerN = -1;
+let shownTick = -1;   // the tick of the snapshot last drawn
 let bannerTimer: ReturnType<typeof setTimeout> | undefined;
+
+type Box = { x: number; y: number; w: number; h: number };
+const covers = (a: Box, b: Box) => Math.max(0, Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x)) * Math.max(0, Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y));
+/** The room as the page lays things over it, in the stage's own pixels: how big a floor tile is, the box the room's
+ *  walls stand in (the picture leaves half a tile clear at the sides and the foot), and everything words should keep
+ *  off: the name plates, captions and bubbles the room has laid out, and whoever is standing or sitting in it. */
+function roomBoxes() {
+  const stage = $("stage"), at = stage.getBoundingClientRect(), cv = $("room").querySelector("canvas")?.getBoundingClientRect() ?? at;
+  const [ox, oy, tile] = [cv.left - at.left, cv.top - at.top, cv.width / ((snap?.size[0] ?? 12) + 2)], edge = tile / 2 + 4;
+  const busy: Box[] = [...room.labels().map((r) => ({ x: r.x + ox, y: r.y + oy, w: r.w, h: r.h })),
+    ...(snap?.pets ?? []).filter((p) => p.room === view.room && !(p.stage === "dead" && p.buried)).map((p) => ({ x: ox + (p.pos[0] + 0.5) * tile, y: oy + (p.pos[1] + 1) * tile, w: 2 * tile, h: 2.2 * tile })),
+    ...(snap?.creatures ?? []).filter((c) => c.room === view.room).map((c) => ({ x: ox + (c.pos[0] + 0.75) * tile, y: oy + (c.pos[1] + 1.75) * tile, w: 1.5 * tile, h: 1.5 * tile }))];
+  return { tile, busy, inner: { x: ox + edge, y: oy + 4, w: cv.width - 2 * edge, h: cv.height - edge - 4 } };
+}
 
 function flash(text: string, error = false, go: (() => void) | null = null, kind = "") {
   const b = $("banner"), arrival = kind.startsWith("arrival");   // a discovery has its own picture and stays up longer
@@ -198,6 +230,13 @@ function flash(text: string, error = false, go: (() => void) | null = null, kind
   b.className = error ? "error" : arrival ? "arrival" : "";
   b.hidden = false;
   b.onclick = () => { b.hidden = true; go?.(); };
+  // inside the room's walls, wrapped if it is long; along the foot of the room, or along the top when someone is standing at the foot
+  const { inner, busy } = roomBoxes();
+  b.style.maxWidth = `${inner.w - 8}px`;
+  const [w, h] = [b.offsetWidth, b.offsetHeight], x = inner.x + (inner.w - w) / 2, over = (y: number) => busy.reduce((n, r) => n + covers({ x, y, w, h }, r), 0);
+  const [foot, head] = [inner.y + inner.h - h - 4, inner.y + 4];
+  b.style.left = `${x}px`;
+  b.style.top = `${over(head) < over(foot) ? head : foot}px`;
   clearTimeout(bannerTimer);
   bannerTimer = setTimeout(() => (b.hidden = true), arrival ? 10_000 : error ? 5000 : 4500);
 }
@@ -215,7 +254,15 @@ function nowLine(s: Snap) {
 
 function header(s: Snap) {
   const alive = s.pets.filter((p) => p.stage !== "dead");
-  $("family").textContent = `Family ${s.lineage.id}: ${alive.filter((p) => p.stage !== "egg").length} alive${alive.some((p) => p.stage === "egg") ? `, ${alive.filter((p) => p.stage === "egg").length} in the egg` : ""}`;
+  // how many families live here and how many are alive in each, each family in its colour (SPEC-v3.1 §7.4)
+  const fams = [...new Set(alive.map((p) => p.family ?? 1))].sort(), NTH = ["", "first", "second", "third"];
+  const count = (who: PetV[], eggs = who.filter((p) => p.stage === "egg").length) => `${who.length - eggs} alive${eggs ? `, ${eggs} in the egg` : ""}`;
+  const said = fams.length > 1 ? fams.map((f) => `${f}:${count(alive.filter((p) => (p.family ?? 1) === f))}`).join("|") : count(alive);
+  if ($("family").dataset.key !== said) {
+    $("family").dataset.key = said;
+    $("family").replaceChildren(...(!alive.length ? ["Nobody is alive in the house."] : fams.length < 2 ? [`One family: ${count(alive)}`]
+      : [`${fams.length === 2 ? "Two" : fams.length} families: `, ...fams.flatMap((f, i) => [i ? "; " : "", el("b", fam(f), `the ${NTH[f] ?? `${f}th`}`), `, ${count(alive.filter((p) => (p.family ?? 1) === f))}`])]));
+  }
   const chip = (cls: string, ...kids: (Node | string)[]) => el("span", cls, ...kids);
   $("status").replaceChildren(
     ...(s.power ? [] : [chip("chip warn", icon("bolt"), "power cut")]),
@@ -298,7 +345,7 @@ function cards(s: Snap) {
     const mind = el("button", "mind", "mind") as HTMLButtonElement;
     mind.title = egg ? "What it was left" : `${p.label}'s mind: what it believes, its project, what it has just done`;
     mind.onclick = (e) => { e.stopPropagation(); openTab("mind", p.id); };
-    const li = el("li", `card ${fam(p.family)}${p.id === view.sel ? " chosen" : ""}${egg ? " egg" : ""}`, el("span", "pic", face(p, 48), el("span", "", feels, place)),
+    const li = el("li", `card ${fam(p.family)}${p.id === view.sel ? " chosen" : ""}${egg ? " egg" : ""}`, el("span", "pic", face(p, 48), el("span", "", feels ? el("span", "plate", feels) : null, place)),
       el("span", "txt", el("span", "name", el("b", "", egg ? p.name ?? "An egg" : p.label), ` ${stageWord(p)} `, mind),
         egg ? el("span", "mood", `hatches in ${clockLeft(p.hatches_in ?? 0).replace("about ", "")}`) : el("span", "mood", moodWords(p).join(", ")),
         naming(p) ? el("span", "naming", naming(p)!) : null,
@@ -323,19 +370,23 @@ function controls(s: Snap, here: RoomV) {
   $("ended").hidden = !!replayId || !over;
   document.querySelector("footer")!.hidden = !!replayId;
   if (replayId || over) return;
-  const win = objs.find((o) => o.fix?.window);
-  $<HTMLButtonElement>("feed").disabled = !objs.some((o) => o.fix && "meal" in o.fix);
-  $<HTMLButtonElement>("window").disabled = !win;
-  $("window").textContent = win?.state === "open" ? "Close window" : "Open window";
+  // a control that cannot be used here says why: in its own words where it can, and in its title
+  const set = (id: string, off: boolean, why: string, text?: string) => { const b = $<HTMLButtonElement>(id); b.disabled = off; b.title = off ? why : ""; if (text) b.textContent = text; };
+  const win = objs.find((o) => o.fix?.window), bowl = objs.some((o) => o.fix && "meal" in o.fix);
+  set("feed", !bowl, `There is no bowl in ${here.name} to fill.`, bowl ? "Feed" : "No bowl");
+  set("window", !win, `There is no window in ${here.name}.`, !win ? "No window" : win.state === "open" ? "Close window" : "Open window");
   const give = $<HTMLSelectElement>("giveBit");
   if (!give.options.length && hello) give.replaceChildren(...Object.keys(hello.bits).sort().map((b) => new Option(b)));
   const p = pet(view.sel), near = p && p.room === here.id && p.stage !== "egg" && p.stage !== "dead" ? p : null;
   const foundling = p && p.room === here.id && p.stage === "egg" && !p.parent && !p.name ? p : null;   // an egg that is nobody's can be given a name (SPEC-v3.1 §7.1)
   const thing = picked ? here.objects[picked] : null, can = thing ? !!thing.made : !!(near || foundling);
-  $("chosenWhat").textContent = thing ? `the ${picked}: click a tile to move it` : near ? near.label : foundling ? (foundling.family === 2 ? "the egg that is nobody's" : "the first egg") : "nobody chosen here";
+  $("chosenWhat").textContent = thing ? `the ${picked}: click a tile to move it` : near ? near.label : foundling ? (foundling.family === 2 ? "the egg that is nobody's" : "the first egg") : "no one chosen";
   $("chosenWhat").classList.toggle("none", !thing && !near && !foundling);
-  $<HTMLButtonElement>("poke").disabled = !!thing || !near;
-  $<HTMLInputElement>("nameText").disabled = ($("nameForm").querySelector("button") as HTMLButtonElement).disabled = !can;
+  $("chosenWhat").title = thing || near || foundling ? "" : "Click a pet in this room, or its card, to poke or name it; click a thing a pet made to move or name it.";
+  set("poke", !!thing || !near, thing ? "A thing cannot be poked. Let go of it first (×)." : "Choose a pet in this room first: click it, or its card.");
+  set("nameBtn", !can, thing ? "Only a thing a pet has made can be given a name." : "Choose a pet in this room, or a thing a pet made, to name it.");
+  $<HTMLInputElement>("nameText").disabled = !can;
+  $<HTMLInputElement>("nameText").title = $("nameBtn").title;
   $("chosenDone").hidden = !thing;
   $("room").classList.toggle("placing", !!thing);
   // SPEC-v3.1 §5.3: this turns the box off in the house, not only its sound here; only a pet can turn it on again
@@ -383,7 +434,8 @@ function fixture(name: string, o: Obj, here: RoomV, s: Snap, shown: HTMLCanvasEl
   const does = Object.keys(FIX).filter((k) => k in fix && fix[k]).map((k) => FIX[k]);
   const said = fix.radio ? s.radio?.said.at(-1) : null;
   return [shown ?? (pic ? sprite(pic, 3) : null), el("div", "",
-    el("b", "", `the ${name}`), state ? el("span", "hint", ` · ${state}`) : null,
+    el("p", "", el("b", "", `the ${name}`), state ? el("span", "hint", ` · ${state}`) : null),
+    o.says ? el("p", "", `${cap(o.says)}.`) : null,
     said ? el("p", "", said.text ? `It just said: “${said.text}”` : "Only static just now.") : null,
     fix.book && s.read_glow ? el("p", "", "Someone is reading it.") : null,
     does.length ? el("p", "truth", el("b", "", "What it really does: "), `${does.join("; ")}.`) : null,
@@ -393,8 +445,9 @@ function fixture(name: string, o: Obj, here: RoomV, s: Snap, shown: HTMLCanvasEl
 
 /** The room's own picture of what is under the pointer, exactly as it is drawn there (its colour, its wear), three
  *  screen pixels to one. The room offers it through `describe`; without that, the card looks the picture up itself. */
+const told = (t: Target) => (room as unknown as { describe?: (t: Target) => { title: string; sprite?: HTMLCanvasElement | null; text?: string } | null }).describe?.(t) ?? null;
 function drawn(t: Target): HTMLCanvasElement | null {
-  const src = (room as unknown as { describe?: (t: Target) => { sprite?: HTMLCanvasElement | null } | null }).describe?.(t)?.sprite;
+  const src = told(t)?.sprite;
   if (!src?.width) return null;
   const c = el("canvas", "px") as HTMLCanvasElement, x = c.getContext("2d")!;
   [c.width, c.height] = [src.width * 3, src.height * 3];
@@ -410,7 +463,7 @@ function tipFor(t: Target): Kid[] | null {
   if (p) {
     const egg = p.stage === "egg", gone = p.stage === "dead", thought = thoughtOf(p), mood = egg || gone ? "" : moodWords(p).join(", ");
     return [face(p, 64), el("div", "",
-      el("b", "", egg ? p.name ?? "an egg" : p.label), el("span", "hint", ` · ${stageWord(p)}`),
+      el("p", "", el("b", "", egg ? p.name ?? "an egg" : p.label), el("span", "hint", ` · ${stageWord(p)}`)),
       egg ? el("p", "", `It will hatch in ${clockLeft(p.hatches_in ?? 0)}.`) : gone ? el("p", "", `${cap(p.label)} has died.`) : null,
       mood ? el("p", "", `Feeling ${mood}.`) : null,
       thought && !egg && !gone ? el("p", p.plan && !p.asleep ? "thought" : "", p.plan && !p.asleep ? thought : `${cap(thought)}.`) : null,
@@ -443,21 +496,34 @@ function tipFor(t: Target): Kid[] | null {
     return [drawn(t) ?? (hasSprite(`bit.${t.bit}`) ? sprite(`bit.${t.bit}`, 3) : null), el("div", "", el("b", "", `some ${t.bit}`), el("p", "hint", "Something to gather and make things from."),
       can.length ? el("p", "truth", el("b", "", "What it really does: "), `a thing made of it can be ${can.join(" or ")}.`) : null)];
   }
-  return null;
+  // anything else the room can say something about: its own scenery (a bookcase, a barrel) is "part of the room"
+  const it = told(t);
+  return it ? [drawn(t), el("div", "", el("p", "", el("b", "", it.title)), it.text ? el("p", "hint", `${cap(it.text)}.`) : null)] : null;
 }
 
 let tipTimer: ReturnType<typeof setTimeout> | undefined;
-/** Show the card for what is at this place in the room (`fx`, `fy` are how far across and down it, 0 to 1). */
+/** Show the card for what is at this place in the room (`fx`, `fy` are how far across and down the room's box it is,
+ *  0 to 1). The card stands beside what it describes, never on it, with a small point toward it; it stays inside the
+ *  room's walls, and of the four sides it takes the one where it covers least of the pets and their captions. */
 function card(t: Target | null, fx: number, fy: number, forMs = 0) {
   const tip = $("tip"), kids = t ? tipFor(t) : null;
   clearTimeout(tipTimer);
   tip.hidden = !kids;
   if (!kids) return;
-  const key = JSON.stringify([t, snap?.tick]);
-  if (tip.dataset.key !== key) { tip.dataset.key = key; tip.replaceChildren(...kids.filter((k): k is Node => k instanceof Node)); }
-  tip.style.left = `${fx * 100}%`;
-  tip.style.top = `${fy * 100}%`;
-  tip.className = `${fx > 0.55 ? "left" : ""} ${fy > 0.5 ? "up" : ""}`;
+  const key = JSON.stringify([t, snap?.tick]), nib = el("i", "nib");
+  if (tip.dataset.key !== key) { tip.dataset.key = key; tip.replaceChildren(...kids.filter((k): k is Node => k instanceof Node), nib); }
+  const stage = $("stage"), { tile, busy, inner } = roomBoxes(), [px, py] = [fx * stage.clientWidth, fy * stage.clientHeight];
+  const target = { x: px - tile * 0.8, y: py - tile * 0.9, w: tile * 1.6, h: tile * 1.7 }, [w, h] = [tip.offsetWidth, tip.offsetHeight], gap = 12;
+  const within = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(Math.max(lo, hi), v));
+  const spots = ([["right", target.x + target.w + gap, py - h / 2], ["left", target.x - gap - w, py - h / 2], ["below", px - w / 2, target.y + target.h + gap], ["above", px - w / 2, target.y - gap - h]] as [string, number, number][])
+    .map(([side, x, y]) => ({ side, x: within(x, inner.x, inner.x + inner.w - w), y: within(y, inner.y, inner.y + inner.h - h) }))
+    .map((p) => ({ ...p, cost: 20 * covers({ ...p, w, h }, target) + busy.reduce((n, r) => n + covers({ ...p, w, h }, r), 0) }));
+  const best = spots.reduce((a, b) => (b.cost < a.cost ? b : a));
+  tip.style.left = `${best.x}px`;
+  tip.style.top = `${best.y}px`;
+  const point = tip.querySelector<HTMLElement>(".nib")!, across = best.side === "below" || best.side === "above";
+  point.className = `nib ${best.side}`;
+  point.style.cssText = across ? `left:${within(px - best.x - 6, 6, w - 18)}px` : `top:${within(py - best.y - 6, 6, h - 18)}px`;
   if (forMs) tipTimer = setTimeout(() => (tip.hidden = true), forMs);
 }
 room.onHover = (t, fx, fy) => card(t, fx, fy);
@@ -537,6 +603,7 @@ function setDrawer(open: boolean) {
   $("drawerBtn").setAttribute("aria-expanded", String(open));
   document.body.classList.toggle("open", open);
   remember("drawer", open ? "1" : "0");
+  placeDrawer();
   if (open) showTab(view.tab);
 }
 function showTab(name: string) {
