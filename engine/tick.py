@@ -526,11 +526,11 @@ class Engine:
                     pet.setdefault(k, v)
         self.radio_items = radio.items_in(cfg, self.dir / "radio")   # what the box has to say; the server keeps it fresh
         self.to_kinds()
-        if not readonly and "unstuck_from" not in self.house and self.house.setdefault("unstuck_from", self.house["tick"]) is not None and self.db:
-            # once, for doors that came free before anyone was told when they do: every draught of the last two days whose
-            # door is free now is told to whoever is in the room on either side
+        if not readonly and "unstuck_all" not in self.house and self.house.setdefault("unstuck_all", self.house["tick"]) is not None and self.db:
+            # once, for doors that came free before anyone was told when they do: every door a draught ever shut that is
+            # free now is told to whoever is in the room on either side (Quiet's was shut five world days before this)
             back = {"north": "south", "south": "north", "west": "east", "east": "west"}
-            for rid, d in self.db.execute("SELECT room, detail FROM events WHERE kind='draught' AND tick > ?", (self.house["tick"] - 2 * cfg["ticks_per_day"],)).fetchall():
+            for rid, d in self.db.execute("SELECT DISTINCT room, detail FROM events WHERE kind='draught'").fetchall():
                 room = self.house["rooms"].get(rid)
                 if room and d in room.get("doors", {}):
                     for key in ("%s|%s" % (rid, d), "%s|%s" % (room["doors"][d], back[d])):

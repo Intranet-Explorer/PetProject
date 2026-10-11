@@ -922,8 +922,9 @@ SPEC-v3.2, built in the worktree beside v3.1 and deployed with it in one restart
 - **A door come unstuck is told.** When a draught lets go of a door, the pets in the room on each side are
   told "the west door has come unstuck" (one that is asleep, when it wakes). Nothing told them before, and
   Quiet sat for hours in the workshop, which has one door, believing it shut. Its beliefs are left alone. At
-  the first start under this code the engine also tells of every draught of the last two world days whose
-  door is free now, so Quiet hears it.
+  the first start under this code the engine also tells, once, of every door a draught ever shut that is free
+  now, so Quiet hears it. (The first deploy looked back only two world days and Quiet's draught was five days
+  old; the look-back was widened and the house restarted a second time, at night with everyone asleep.)
 - **Real weather is on** (`[weather] real = true`): once an hour the engine asks Open-Meteo what the sky is
   over the Twin Cities (§6.6, built in v3 and left off). It is on for a house on a real clock, which the
   living one is; the turbo and test profiles (`showcase`, `viewdev`, `v31check`) turn it off, because their
