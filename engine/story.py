@@ -144,6 +144,7 @@ def made_by(house, pet):
 
 
 def life_record(eng, pet, mem):
+    from . import body
     house, cfg = eng.house, eng.cfg
     day = lambda t: None if t is None else round((t - pet["laid"]) / cfg["ticks_per_day"], 1)
     name = label(pet)
@@ -157,6 +158,7 @@ def life_record(eng, pet, mem):
         "id": pet["id"], "name": name, "lineage": pet["lineage"], "gen": pet["gen"], "parent": pet["parent"], "word": pet["word"],
         "children": list(pet["children"]), "days": lived, "cause": pet["cause"], "stages": {s: day(t) for s, t in pet["stage_at"].items()},
         "reached": pet["stage_before"], "bodies": pet["bodies"], "genome": pet["genome"], "portraits": pet["portraits"][-6:],
+        "habits": body.habits(house, cfg, pet, 5),   # SPEC-v3.3 §1.3: what it did again and again, where and when
         "temper": pet["temper"], "messages": pet["message"][:1] + pet["message"][1:][-5:], "last_words": pet["last_words"],
         "told": [m for m in pet["told"] if m["kind"] in ("message", "last words")],
         "things": made_by(house, pet)[:10], "made": pet["made"], "useful": len(pet["useful"]),

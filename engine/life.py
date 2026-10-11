@@ -1,7 +1,7 @@
 """Life and death, eggs and inheritance (SPEC-v3 §4, §5). A pet hatches, grows by what it has lived and made,
 grows old, and dies; before that it may lay eggs, and what it hands on is a body, a temperament, a message,
 and a couple of things."""
-from . import genome, things
+from . import genome, order, things
 from .feel import level
 from .world import (GENES, STAGES, add_event, alive, arrived, family, free_tile, hours, label, moment, new_pet, rnd, ticks)
 
@@ -298,6 +298,8 @@ def bequeath(house, cfg, pet, a, norm):
     o = house["rooms"][pet["room"]]["objects"][name]
     o["made"]["heirloom"] = {"from": pet["id"], "to": [k["id"] for k in kids], "tick": house["tick"],
                              "line": (o["made"].get("heirloom") or {}).get("line", []) + [pet["id"]]}
+    if not o.get("home"):   # SPEC-v3.3 §2.3: an heirloom belongs by the family's stone, or the bed
+        order.heirloom_home(house, cfg, house["rooms"][pet["room"]], o)
     for k in kids:
         if k["stage"] != "egg":
             add_event(house, k, "your %s has left you the %s" % (pet["word"], name))
