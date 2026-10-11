@@ -504,8 +504,15 @@ class Engine:
             if pet["stage"] not in ("egg", "dead"):
                 self.minds[pet["id"]] = Mind(self, pet)
                 # a pet that has already said yes to the name it was offered has it ("Yes, I am Garry" used not to count)
-                if not pet["name"] and pet.get("said") and actions.takes(pet, pet["said"]["text"]) and not actions.name_taken(self.house, pet, pet["called"]) and not self.readonly_():
+                if not pet["name"] and self.said_yes(pet) and not actions.name_taken(self.house, pet, pet["called"]) and not self.readonly_():
                     actions.named(self.house, pet, self.minds[pet["id"]].mem, pet["called"].strip())
+
+    def said_yes(self, pet):
+        """Has it lately said yes to the name it was offered? Its last words, and the last few things it said, from the log."""
+        said = [pet["said"]["text"]] if pet.get("said") else []
+        if self.db and actions.offered(pet):
+            said += [r[0] for r in self.db.execute("SELECT text FROM social WHERE from_pet=? AND kind='speak' ORDER BY tick DESC LIMIT 12", (pet["id"],))]
+        return any(actions.takes(pet, t) for t in said)
 
     def readonly_(self):
         return getattr(self, "readonly", False)

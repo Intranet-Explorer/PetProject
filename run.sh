@@ -28,6 +28,10 @@ start)
 </dict></plist>
 PLIST
   launchctl bootout "gui/$(id -u)/$LABEL" 2>/dev/null || true
+  for _ in 1 2 3 4 5 6 7 8 9 10; do   # booting out takes a moment (the engine saves on its way down); starting too soon fails
+    launchctl print "gui/$(id -u)/$LABEL" >/dev/null 2>&1 || break
+    sleep 1
+  done
   launchctl bootstrap "gui/$(id -u)" "$PLIST"
   echo "started; view at http://localhost:8000, log in data/server.log" ;;
 stop)
