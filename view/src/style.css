@@ -315,3 +315,5 @@ pre.packet { white-space: pre-wrap; font: 12px/1.5 var(--mono); margin: 6px 0 0;
 .arrivals li { display: grid; grid-template-columns: 18px 80px minmax(0, 1fr); gap: 8px; align-items: baseline; padding: 3px 0; font-size: 14px; }
 .arrivals .icon { align-self: center; color: var(--muted); }
 .arrivals li.come .icon { color: var(--good); }
+
+.card .naming { color: var(--accent); }

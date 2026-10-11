@@ -282,7 +282,10 @@ function clockLeft(sec: number) {
 function cards(s: Snap) {
   const who = s.pets.filter((p) => p.stage !== "dead").sort((a, b) => a.laid - b.laid);
   const where = (p: PetV) => s.rooms.find((r) => r.id === p.room)?.name ?? "";
-  const key = JSON.stringify(who.map((p) => [p.id, p.label, p.stage, p.room, p.stage === "egg" ? clockLeft(p.hatches_in ?? 0) : [moodWords(p), emoteOf(p), thoughtOf(p)], p.genome, p.id === view.sel, p.family, p.animals]));
+  // the visitor's naming: what was offered, and whether the pet has taken it (said for a quarter of a day after it does)
+  const naming = (p: PetV) => !p.naming ? null : !p.naming.took ? `you called it ${p.naming.offered}; waiting to hear`
+    : p.naming.at != null && (s.tick - p.naming.at) * s.tick_seconds < s.day_seconds / 4 ? `it took the name ${p.naming.offered}` : null;
+  const key = JSON.stringify(who.map((p) => [naming(p), p.id, p.label, p.stage, p.room, p.stage === "egg" ? clockLeft(p.hatches_in ?? 0) : [moodWords(p), emoteOf(p), thoughtOf(p)], p.genome, p.id === view.sel, p.family, p.animals]));
   const box = $("cards");
   if (box.dataset.key === key) return;
   box.dataset.key = key;
@@ -298,6 +301,7 @@ function cards(s: Snap) {
     const li = el("li", `card ${fam(p.family)}${p.id === view.sel ? " chosen" : ""}${egg ? " egg" : ""}`, el("span", "pic", face(p, 48), el("span", "", feels, place)),
       el("span", "txt", el("span", "name", el("b", "", egg ? p.name ?? "An egg" : p.label), ` ${stageWord(p)} `, mind),
         egg ? el("span", "mood", `hatches in ${clockLeft(p.hatches_in ?? 0).replace("about ", "")}`) : el("span", "mood", moodWords(p).join(", ")),
+        naming(p) ? el("span", "naming", naming(p)!) : null,
         thought ? el("span", p.plan && !p.asleep ? "thought" : "doing", thought) : null,
         animals ? el("span", "", icon("paw", 12), ` ${animals}`) : null));
     // the whole card is the button that follows this pet; "mind" inside it is a button of its own

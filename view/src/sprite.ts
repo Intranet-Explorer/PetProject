@@ -80,7 +80,9 @@ export function recolor(px: ImageData, color: string) {
     if (!d[i + 3]) continue;
     const [, was, l] = hsl(d[i], d[i + 1], d[i + 2]);
     if (l < 0.2 || (l > 0.9 && was < 0.35)) continue;   // the outline; a highlight
-    [d[i], d[i + 1], d[i + 2]] = rgb(h, s, Math.max(0.08, Math.min(0.96, l + (tl - 0.5) * 0.55)));
+    // a colour with little colour in it (white, grey, black) is mostly a matter of light and dark: less of its tint, more of its lightness
+    const pale = s < 0.35;
+    [d[i], d[i + 1], d[i + 2]] = rgb(h, pale ? s * 0.3 : s, Math.max(0.08, Math.min(0.96, l + (tl - 0.5) * (pale ? 0.85 : 0.55))));
   }
   return px;
 }
