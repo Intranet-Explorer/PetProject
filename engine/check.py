@@ -557,6 +557,35 @@ async def main():
             raise AssertionError("a house must not be started on another world clock")
         except ValueError:
             pass
+
+        # ---- taking a name the visitor offers: an action for it, and any clear yes ("Yes, I am Garry" used not to count) ----
+        cN = load_config()
+        cN["life"]["egg_minutes"] = 0.1
+        eN, ga = engine(cN, d + "/name")
+        hN = eN.house
+        at(eN, 9)
+        await eN.tick()
+        gm = eN.minds[ga["id"]]
+        assert "take_name" not in actions.allowed(hN, cN, ga, gm.mem), "nothing to take until a name is offered"
+        assert actions.visit(hN, cN, {"room": ga["room"], "type": "name", "pet": ga["id"], "name": "Garry"}) is None
+        packet, ctx = mind.perceive(hN, cN, ga, gm.mem)
+        assert "take_name" in ctx["allowed"] and "the visitor calls you Garry; you could take the name" in packet and "take_name" in model_brain.prompt(packet, ctx)
+        model_brain.schema(ctx)
+        for said, yes in (("Who is Garry?", False), ("I am not Garry.", False), ("Garry is a strange sound.", False), ("Yes, I am Garry.", True), ("call me Garry", True),
+                          ("I'm Garry", True), ("Yes, Garry.", True), ("My name is Garry", True), ("The rain does the rest. I am Garry, and I am here.", True)):
+            assert actions.takes(ga, said) == yes, said
+        await do(eN, ga, {"type": "speak", "text": "Who is Garry? I am not Garry yet."})
+        assert not ga["name"], "saying the name is not taking it"
+        await do(eN, ga, {"type": "speak", "text": "Yes, I am Garry.", "to": "visitor"})
+        assert ga["name"] == "Garry" and hN["moments"][-1]["text"].endswith("took the name Garry") and "take_name" not in actions.allowed(hN, cN, ga, gm.mem), hN["moments"][-1]
+        ga["name"], ga["called"] = None, "Moss"
+        r = await do(eN, ga, {"type": "take_name"})
+        assert not r[0]["reason"] and ga["name"] == "Moss" and "took the name Moss" in r[0]["feedback"], r
+        ga["name"], ga["called"], ga["said"] = None, "Garry", {"text": "Yes, I am Garry.", "tick": hN["tick"], "to": "visitor"}
+        eN.close()
+        eN = Engine(cN, d + "/name", scripted)
+        assert eN.house["pets"][ga["id"]]["name"] == "Garry", "a pet that had already said yes has its name when the house is next started"
+        eN.close()
     print("self-check passed")
 
 

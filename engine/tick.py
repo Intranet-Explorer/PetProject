@@ -503,6 +503,12 @@ class Engine:
         for pet in self.house["pets"].values():
             if pet["stage"] not in ("egg", "dead"):
                 self.minds[pet["id"]] = Mind(self, pet)
+                # a pet that has already said yes to the name it was offered has it ("Yes, I am Garry" used not to count)
+                if not pet["name"] and pet.get("said") and actions.takes(pet, pet["said"]["text"]) and not actions.name_taken(self.house, pet, pet["called"]) and not self.readonly_():
+                    actions.named(self.house, pet, self.minds[pet["id"]].mem, pet["called"].strip())
+
+    def readonly_(self):
+        return getattr(self, "readonly", False)
 
     def lineage_dir(self, n=None):
         return self.dir / ("lineage-%d" % (n or self.house["lineage"]["id"]))

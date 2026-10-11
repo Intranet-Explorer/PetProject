@@ -22,7 +22,7 @@ class Stub:
         r, pick = self.rng, lambda xs: self.rng.choice(xs)
         self.s["n"] += 1
         anyone = c["pets"] + c["creatures"]
-        if t in ("observe", "rest"):
+        if t in ("observe", "rest", "take_name"):
             return {"type": t}
         if t == "look":
             return {"type": t, "target": pick(c["things"] + anyone + c["bits"] + [d + " door" for d in c["doors"]])}

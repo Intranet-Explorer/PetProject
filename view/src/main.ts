@@ -207,7 +207,10 @@ function clockLeft(sec: number) {
 function cards(s: Snap) {
   const who = s.pets.filter((p) => p.stage !== "dead").sort((a, b) => a.laid - b.laid);
   const state = (p: PetV) => (p.stage === "egg" ? `hatches in ${clockLeft(p.hatches_in ?? 0)}` : p.asleep ? "asleep" : `seems ${p.seems}`);
-  const key = JSON.stringify(who.map((p) => [p.id, p.label, p.stage, p.room, state(p), p.project?.text, p.genome, p.id === view.sel, p.stage === "elder"]));
+  // the visitor's naming: what was offered, and whether the pet has taken it (shown for a while after it does)
+  const naming = (p: PetV) => !p.naming ? null : !p.naming.took ? `you called it ${p.naming.offered}; waiting to hear`
+    : p.naming.at != null && (s.tick - p.naming.at) * s.tick_seconds < s.day_seconds / 4 ? `it took the name ${p.naming.offered}` : null;
+  const key = JSON.stringify(who.map((p) => [p.id, p.label, p.stage, p.room, state(p), p.project?.text, p.genome, p.id === view.sel, p.stage === "elder", naming(p)]));
   const box = $("cards");
   if (box.dataset.key === key) return;
   box.dataset.key = key;
@@ -218,7 +221,7 @@ function cards(s: Snap) {
     const b = el("button", `card${p.id === view.sel ? " chosen" : ""}`, img,
       el("div", "", el("b", "", p.stage === "egg" ? p.name ?? "An egg" : p.label, el("small", "", ` ${p.stage}`)),
         el("span", "seems", `${state(p)} · ${s.rooms.find((r) => r.id === p.room)?.name?.replace(/^the /, "") ?? ""}`),
-        el("span", "", p.stage === "egg" ? `generation ${p.gen}` : p.project ? `“${p.project.text}”` : "no project")),
+        el("span", naming(p) ? "naming" : "", naming(p) ?? (p.stage === "egg" ? `generation ${p.gen}` : p.project ? `“${p.project.text}”` : "no project"))),
       radial(p.temper, 46, false)) as HTMLButtonElement;
     b.title = p.project?.text ?? "";
     b.onclick = () => jump({ pet: p.id, room: p.room });

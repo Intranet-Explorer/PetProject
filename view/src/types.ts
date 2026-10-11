@@ -32,6 +32,7 @@ export type PetV = {
   thinking?: string | null; carrying?: string[]; following?: string | null; weak?: boolean;
   said?: { text: string; tick: number; to: string | null; to_name: string | null } | null;
   project?: { text: string; since: number } | null; plan?: Plan | null; step?: string | null;
+  naming?: { offered: string; took: boolean; at: number | null } | null;
   last_plan?: { intention: string; ended: string; score: string } | null; calls_hour?: number; spring?: boolean;
   portrait?: { day: number; parts: Part[] } | null; old?: boolean;
 };

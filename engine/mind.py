@@ -11,7 +11,7 @@ BUSY = {"observe": "watching the room", "look": "looking at something", "move": 
         "arrange": "moving something", "combine": "putting two things together", "paint": "painting", "teach": "teaching a thing",
         "give": "holding something out", "show": "showing something", "follow": "following someone", "nuzzle": "leaning close",
         "accept": "taking what was offered", "take": "taking something", "chase": "chasing", "tell": "telling something",
-        "lay_egg": "laying an egg", "bequeath": "choosing what to leave", "write_belief": "thinking", "revise_belief": "thinking"}
+        "lay_egg": "laying an egg", "bequeath": "choosing what to leave", "write_belief": "thinking", "revise_belief": "thinking", "take_name": "taking a name"}
 RECENT = 6          # how many earlier happenings are shown
 # What is cut first when the packet is over its budget (§8.3), least needed first. Never cut: how it feels, what
 # it notices, what is here, who is here, what just happened, what was said to it, its parent's words, what it can do.
@@ -137,8 +137,8 @@ def perceive(house, cfg, pet, mem):
     unseen = [d for d, rid in room["doors"].items() if rid not in pet["rooms"]]
     if unseen and feel.level(pet, "curiosity") >= (2 if T["bold"] < 0.4 else 1):   # boredom points at the one thing here not yet tried
         senses.append("you wonder what is through the %s door" % unseen[0])
-    if pet.get("called") and not pet["name"]:
-        senses.append("the visitor calls you " + pet["called"])
+    if actions.offered(pet):
+        senses.append("the visitor calls you %s; you could take the name" % pet["called"])
 
     # ---- what happened ----
     since = [e for t, e in pet["events"] if t > pet["seen"]]

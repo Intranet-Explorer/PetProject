@@ -40,6 +40,7 @@ lay_egg = 20
 bequeath = 12
 write_belief = 10
 revise_belief = 10
+take_name = 4
 
 [model]
 endpoint = "http://localhost:11434/v1"   # must be localhost

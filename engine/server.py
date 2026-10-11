@@ -52,6 +52,9 @@ def pet_view(p):
     h = eng.house
     out = {k: p.get(k) for k in ("id", "name", "stage", "room", "pos", "gen", "parent", "children", "word", "genome", "temper", "eggs",
                                  "laid", "born", "died", "cause", "lineage", "stage_before")}
+    # the visitor's naming, for the pet's card: the name offered, and whether the pet has taken it
+    out["naming"] = {"offered": p["called"], "took": (p.get("name") or "").lower() == p["called"].strip().lower(),
+                     "at": (p.get("named") or {}).get("tick")} if p.get("called") else None
     out.update(label=label(p), buried=bool(p.get("buried")), made=p.get("made", 0), useful=len(p.get("useful", [])))
     if p["stage"] == "dead":
         out["days"] = (p.get("life") or {}).get("days")

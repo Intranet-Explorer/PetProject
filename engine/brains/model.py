@@ -44,6 +44,7 @@ WRITTEN = {   # how each action is written, shown only for the actions it can do
     "bequeath": '{"type": "bequeath", "what": a thing of yours here, "to": a child\'s name, or "my children"}',
     "write_belief": '{"type": "write_belief", "statement": one short sentence of at most 200 characters, "source": how you know it: lived | seen | told by <who>}',
     "revise_belief": '{"type": "revise_belief", "id": belief id, "statement": new text or "discard"}',
+    "take_name": '{"type": "take_name"} (take the name the visitor calls you, as your own)',
 }
 FORMAT = """
 Reply with one JSON object and nothing else:
@@ -88,7 +89,7 @@ def schema(ctx):
     near = {"enum": c["things"] + ["here"]}
     one = lambda t, **p: obj(type={"const": t}, **p)
     v = {
-        "observe": [one("observe")], "rest": [one("rest")],
+        "observe": [one("observe")], "rest": [one("rest")], "take_name": [one("take_name")],
         "look": [one("look", target={"enum": visible + ["visitor"]})],
         "move": [one("move", to={"enum": c["things"] + anyone + list(SPOTS)})],
         "go": [one("go", door={"enum": c["doors"]})],
