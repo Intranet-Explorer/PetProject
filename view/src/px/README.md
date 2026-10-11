@@ -2,7 +2,8 @@
 
 `view/src/room.ts` draws the one room being looked at; the pieces it is made of are here. Everything is drawn from
 the data in `view/assets/` (see its README): no tile coordinate, file name or pack name appears in this code. A
-sprite name that is missing draws a magenta-checked tile and warns once in the console.
+sprite name that is missing draws a small plain box (a missing `icon.act.*` a small plain dot) and warns once in the
+console: nothing is ever a hole.
 
 | file | what it does |
 |---|---|
@@ -11,13 +12,13 @@ sprite name that is missing draws a magenta-checked tile and warns once in the c
 | `tint.ts` | a made thing's colour, material and wear laid on its kind's sprite (hue and saturation replaced, lightness kept), cached |
 | `font.ts` | the room's 5 x 7 pixel lettering: measure, wrap to lines, draw (plain or chalky) |
 | `path.ts` | the way round furniture on the floor grid; the nearest free tile |
-| `still.ts` | what holds still: floor, walls, decor, doors, fixtures in their states, made things by kind, bits, stones |
-| `weather.ts` | the light map (day, dusk, night, season, weather, lamps, power cuts, windows), rain and snow, storm flashes |
-| `actors.ts` | pets and creatures: walking the path, poses for each kind of step, life between thoughts |
-| `acts.ts` | each finished step played once: pop, puff, slide together, heart, notes, dust |
+| `still.ts` | what holds still: floor, walls, decor, doors, fixtures in their states, made things by kind, bits, stones; things put away on shelves, counts on chests, the tint of a named place |
+| `weather.ts` | the light map (day, dusk, night, season, weather, lamps, power cuts, windows; dark at the room's edges more than its middle), rain and snow, storm flashes |
+| `actors.ts` | pets and creatures: walking the path, poses for each kind of step, what a body does by itself (`MOVES`), a pale outline in low light |
+| `acts.ts` | each finished step or body activity played once: pop, puff, slide together, heart, notes, dust, a thing flown to its shelf |
 | `fx.ts` | the small moving things (sparkles, hearts, notes, z's, dust), pooled |
 | `marks.ts` | writing on the walls |
-| `bubbles.ts` | name plates, thought captions, speech bubbles, the box's words, and where each may go |
+| `bubbles.ts` | name plates, thought captions, speech bubbles, the sign of what a body is doing, the box's words, the names of things, and where each may go |
 
 ## What the page gives the room, and gets back
 
@@ -31,11 +32,30 @@ room.labels();                          // plates, captions and bubbles as laid 
 room.describe(target);                  // what a hover card can show: see below
 room.picture(genome, stage, look);      // a data URL of a body, kept for the old page; new code can use petsprite.ts directly
 room.clear = ["roomName", "banner"];    // ids of the page's own elements lying over the room: lettering keeps out from under them
+room.names(on);                         // hold the names of the things in the room on, or let them go
 ```
+
+**Names of things (SPEC-v3.3 §5).** They show for 8 seconds when a room comes into view, while `names(true)` holds
+them, and one at a time while the pointer is on its thing. Otherwise they are faded out and not drawn.
 
 **Size.** Give `element` a width (and, to cap the height, a CSS `max-height`). The canvas takes the largest whole
 number of screen pixels to an art pixel that fits, and is centred in the element; it sets its own CSS size
 (with `!important`), so a stylesheet rule that stretches it does nothing. It follows the element when that resizes.
+
+**Pets (SPEC-v3.3).** A pet is drawn `petScale(K)` times the art's pixels (about 1.6: 5/3 where an art pixel is 3
+screen pixels, 3/2 where it is 2 or 4), and everything about it follows: where it can be pointed at, its shadow, its
+plate and bubbles, how far apart two of them stand. In low light (dusk, night, storm, a power cut) each wears a thin
+pale outline, laid over the dark. While `pet.body` is set its body is at something by itself: over its head is the
+sign `icon.act.<body.icon>` (with `body.doing` in words for four seconds whenever it changes), and it moves as
+`MOVES` in `actors.ts` says: a table by the activity's name, then by its icon, so an activity added to
+`activities.toml` with a known icon needs nothing here, and one with a new icon still stands turned to what it is
+about and sways (or sits, if `snap.activities[name].rest`). While it carries out a step it decided (`pet.act`) there
+is no sign and it holds itself as v3.2 had it.
+
+**Order (SPEC-v3.3 §2).** A thing with `obj.on` stands small on the thing it is put away on, side by side with the
+others there, along that sprite's `surface` (`sprites.json`, optional: `[x, y, w]` inside the sprite; without it,
+across the sprite's middle). In a thing whose `store.inside` is true it is not drawn: the chest wears a small
+number. `room.areas` are tinted faintly, each name its own colour, and named when names show.
 
 **The hover card (SPEC-v3.2 §3.3).** Nothing in the room carries a permanent label except the pets' name plates.
 `onHover` and `onClick` give a `Target` (`tile`, and whichever of `pet`, `creature`, `door`, `object`, `bit`, `mark`
@@ -50,7 +70,9 @@ type Card = { what: "pet" | "creature" | "thing" | "fixture" | "stone" | "bit" |
   does?,                               // what it has been taught to do (for the owner's eyes only: the page decides whether to show it)
   state?, text?,                       // a fixture's state; one plain line (an inscription's words, what a creature is doing and whose it is,
                                        //   where a door leads, what a bit can become, "part of the room" for scenery)
-  can? };                              // a bit: the properties a thing made of it can have (hello.bits[bit].can)
+  can?,                                // a bit: the properties a thing made of it can have (hello.bits[bit].can)
+  notes? };                            // SPEC-v3.3 §2, plain lines to show as they are: "holds: a red cup, a blue bell", "room for 2 more",
+                                       //   "kept on the shelf", "its home is in the sleeping corner", "part of the making bench"
 ```
 
 Everything drawn answers: pets, creatures, made things, fixtures (`does` is the engine's `obj.says`), bits, doors,

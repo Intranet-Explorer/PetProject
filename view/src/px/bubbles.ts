@@ -5,21 +5,25 @@
 // put nearer to another pet than to its own. Nothing here may cover a pet's body or another bubble, and all of it stays
 // inside the room. When the room is crowded the captions that do not fit shrink to three dots and take turns.
 import { Container, Graphics, Sprite, Texture } from "pixi.js";
-import { canvasOf, def, fromCanvas } from "./assets";
+import { canvasOf, def, fromCanvas, has } from "./assets";
 import { draw, LINE, measure, plain, wrap } from "./font";
-import { clamp, hit, seeded } from "./geom";
+import { clamp, hit, inside, seeded } from "./geom";
 import type { Rect } from "./geom";
 
 export type Label = Rect & { kind: string };
 /** What the room wants said about one pet. `caption`: its intention, or null. `say`: its words, with whom they are for. */
 /** `mood`: the strong feeling to show as a face by its head (not while it sleeps). `tab`: its name goes on its bubbles (there are others here). */
+/** `icon` (SPEC-v3.3 §5): what its body is doing by itself: the sign's name (sprite icon.act.<name>), a key that changes
+ *  when the activity does, and the activity in a few words, shown beside the sign for a moment when it changes. */
 export type Who = { id: string; name: string; family: number; selected: boolean; faded: boolean; caption: string | null; thinking: boolean;
-  say: { key: string; text: string; to: string | null; song: boolean } | null; mood: string | null; tab: boolean };
+  say: { key: string; text: string; to: string | null; song: boolean } | null; mood: string | null; tab: boolean;
+  icon?: { name: string | null; key: string; word: string } | null };
 
 /** A short plain name for a thing in the room, shown for a moment when the room comes into view (or held on).
  *  `rect`: the thing on screen (kept up to date by the room). `pri`: lower is kept first when there is no room for all.
- *  `always`: it stays, faintly, when the others have gone (a memorial stone). */
-export type Tag = { key: string; text: string; rect: Rect; pri: number; always?: boolean; until?: number };   // `until`: it shows until then whatever else (a newcomer's "just hatched")
+ *  Names show for a moment when a room comes into view, while they are held on, and each while the pointer is on its
+ *  thing; otherwise they are gone (SPEC-v3.3 §5). */
+export type Tag = { key: string; text: string; rect: Rect; pri: number; until?: number };   // `until`: it shows until then whatever else (a newcomer's "just hatched")
 
 const INK = "#2b2233", PAPER = "#fffdf2", ACCENT = "#ffb347";
 export const FAMILY: Record<number, string> = { 1: "#1f7a8c", 2: "#a8468a" };   // each family's colour (SPEC-v3.1 §7.4); the page's style has the same two
@@ -53,7 +57,7 @@ function plateCanvas(name: string, color: string, ring: boolean) {
   return c;
 }
 /** `tab`: the owner's name on a small plate of its colour, set into the bubble's top edge. */
-function tagCanvas(text: string) {
+export function tagCanvas(text: string) {
   const t = plain(text), [c, x] = canvas(measure(t) + 6, 11);
   frame(x, c.width, c.height, "#2b2233", "#2b2233");
   draw(x, [t], 3, 1, { color: "#f4f0e0" });
@@ -95,17 +99,26 @@ function fillOf(art: string, or: number) {
 }
 /** A face from the art with a dark edge round it, so it shows on any floor by day or night. */
 const faces = new Map<string, Texture>();
-function faceTexture(mood: string) {
-  let t = faces.get(mood);
+/** The sign for a thing a body does when the art has none: a small plain dot. */
+function dot() {
+  const [c, x] = canvas(7, 7);
+  x.fillStyle = PAPER;
+  x.fillRect(1, 0, 5, 7); x.fillRect(0, 1, 7, 5);
+  x.fillStyle = INK;
+  x.fillRect(2, 2, 3, 3);
+  return c;
+}
+function faceTexture(mood: string, sprite = `emote.${mood}`, plain = false) {
+  let t = faces.get(sprite);
   if (t) return t;
-  const src = canvasOf(`emote.${mood}`), [c, x] = canvas(src.width + 2, src.height + 2);
+  const src = plain && !has(sprite) ? dot() : canvasOf(sprite), [c, x] = canvas(src.width + 2, src.height + 2);
   for (const [dx, dy] of [[0, 1], [2, 1], [1, 0], [1, 2], [0, 0], [2, 0], [0, 2], [2, 2]]) x.drawImage(src, dx, dy);
   x.globalCompositeOperation = "source-in";
   x.fillStyle = INK;
   x.fillRect(0, 0, c.width, c.height);
   x.globalCompositeOperation = "source-over";
   x.drawImage(src, 1, 1);
-  faces.set(mood, (t = fromCanvas(c)));
+  faces.set(sprite, (t = fromCanvas(c)));
   return t;
 }
 const gap = (a: Rect, b: Rect) => Math.hypot(Math.max(0, a.x - b.x - b.w, b.x - a.x - a.w), Math.max(0, a.y - b.y - b.h, b.y - a.y - a.h));
@@ -139,7 +152,8 @@ class Card {
     this.s.destroy();
   }
 }
-type Entry = { who: Who; plate: Card; cap: Card; dots: Card; say: Card; link: Graphics; linkFor: Card | null; mood: Sprite; face: Rect; nub: Graphics; word: Card; wordUntil: number };
+type Entry = { who: Who; plate: Card; cap: Card; dots: Card; say: Card; link: Graphics; linkFor: Card | null; mood: Sprite; face: Rect; nub: Graphics; word: Card; wordUntil: number;
+  icon: Sprite; sign: Rect; doing: Card; doingUntil: number; iconAt: number };   // the sign of what its body is doing, the room it takes, its few words, and when it last changed
 type Body = Rect & { id: string };
 
 export class Labels {
@@ -153,6 +167,8 @@ export class Labels {
   private tags = new Map<string, { tag: Tag; card: Card; fits: boolean; lead: Graphics }>();
   /** Are the things' names showing just now (the room says so every frame). */
   naming = false;
+  /** Where the pointer is on screen, or null: the name of the thing under it shows. */
+  pointer: number[] | null = null;
   /** Places on screen that plates, bubbles and faces keep off (memorial stones). */
   keepOff: Rect[] = [];
   /** The things in the room, on screen: a face by a pet's head sits over bare floor where it can, not on one of these. */
@@ -173,13 +189,18 @@ export class Labels {
       e.nub.destroy();
       e.word.destroy();
       e.mood.destroy();
+      e.icon.destroy();
+      e.doing.destroy();
       this.entries.delete(id);
     }
     for (const w of who) {
       let e = this.entries.get(w.id);
       if (!e) {
-        e = { who: { ...w, mood: null }, plate: new Card(), cap: new Card(), dots: new Card(), say: new Card(), link: new Graphics(), linkFor: null, mood: new Sprite(), face: { x: 0, y: 0, w: 0, h: 0 }, nub: new Graphics(), word: new Card(), wordUntil: 0 };
-        this.cards.addChild(e.word.s);
+        e = { who: { ...w, mood: null, icon: null }, plate: new Card(), cap: new Card(), dots: new Card(), say: new Card(), link: new Graphics(), linkFor: null, mood: new Sprite(), face: { x: 0, y: 0, w: 0, h: 0 }, nub: new Graphics(), word: new Card(), wordUntil: 0,
+              icon: new Sprite(), sign: { x: 0, y: 0, w: 0, h: 0 }, doing: new Card(), doingUntil: 0, iconAt: 0 };
+        e.icon.anchor.set(0.5, 1);
+        e.icon.visible = false;
+        this.cards.addChild(e.word.s, e.doing.s, e.icon);
         this.entries.set(w.id, e);
         this.cards.addChild(e.mood, e.plate.s, e.dots.s, e.cap.s, e.say.s);
         this.links.addChild(e.link, e.nub);
@@ -188,6 +209,11 @@ export class Labels {
       if (w.mood && w.mood !== e.who.mood) {   // a sign that has just appeared says in a word what it means, for a few seconds
         e.word.set(w.mood + F, F, () => { const t = plain(w.mood!), [c, x] = canvas(measure(t) + 6, 11); frame(x, c.width, c.height, PAPER, INK); draw(x, [t], 3, 1, { color: INK }); return c; });
         e.wordUntil = performance.now() + 6000;
+      }
+      if (w.icon && w.icon.key !== e.who.icon?.key) {   // its body has turned to something else: the sign pops, and says in a few words what it is
+        e.icon.texture = faceTexture("", `icon.act.${w.icon.name}`, true);
+        e.doing.set(w.icon.word + F, F, () => { const t = plain(w.icon!.word), [c, x] = canvas(measure(t) + 6, 11); frame(x, c.width, c.height, PAPER, INK); draw(x, [t], 3, 1, { color: INK }); return c; });
+        [e.iconAt, e.doingUntil] = [performance.now(), w.icon.word ? performance.now() + 4000 : 0];
       }
       e.who = w;
       const color = w.faded ? "#6d6875" : FAMILY[w.family] ?? FAMILY[1], tab = w.tab ? { name: w.name, color } : undefined;
@@ -273,6 +299,27 @@ export class Labels {
         nub.fill(0x2b2233);
       }
     }
+    // the sign of what its body is doing: over its head, or to a side of it; never on a body, a face or another sign
+    for (const [id, e] of this.entries) {
+      const b = bodies.get(id), s = e.sign, w = (e.icon.texture.width || 9) * K, h = (e.icon.texture.height || 9) * K;
+      let said = !!e.who.icon && now < e.doingUntil, x = 0, left = false;
+      s.w = 0;
+      if (b && e.who.icon) for (let i = 0; i < 10 && !s.w; i++) {   // five places with its few words beside it; failing those, the same five without
+        if (i === 5) said = false;
+        const extra = said ? e.doing.w + this.F : 0, at = i % 5, side = at === 1 || at === 2;
+        x = at === 0 ? b.x + b.w / 2 - w / 2 : at === 1 ? b.x - w - K : at === 2 ? b.x + b.w + K : at === 3 ? b.x - w / 2 : b.x + b.w - w / 2;
+        left = at === 1 || at === 3 || x + w + extra > room.x + room.w;   // the words to its right, or to its left where that is the clear side
+        s.x = left ? x - extra : x; s.y = Math.max(room.y, side ? b.y : b.y - h - K); s.w = w + extra; s.h = h;
+        if (i < 9 && this.taken(s, e, bodies, room)) s.w = 0;   // (the last place is taken whatever is there: a sign is never left out)
+      }
+      const k = Math.min(1, (now - e.iconAt) / 320);
+      e.icon.visible = s.w > 0;
+      e.icon.scale.set(K * (1 + 0.6 * Math.sin(k * Math.PI) * (1 - k)));   // a tiny pop when it changes, so the eye catches it
+      e.icon.position.set(Math.round(x + w / 2), Math.round(s.y + h));
+      e.doing.want = said && s.w ? 1 : 0;
+      e.doing.ease(dt);
+      e.doing.s.position.set(Math.round(left ? s.x : x + w + this.F), Math.round(s.y + (h - e.doing.h) / 2));
+    }
     if (now - this.laid > 140) {
       this.laid = now;
       this.lay(now, bodies, room, avoid, boxAt);
@@ -295,7 +342,7 @@ export class Labels {
     }
     for (const t of this.tags.values()) {   // names: on for a moment, or held; a stone keeps its own, faintly
       const k = t.card, r = t.tag.rect;
-      k.want = !t.fits ? 0 : this.naming || now < (t.tag.until ?? 0) ? 1 : t.tag.always ? 0.72 : 0;
+      k.want = t.fits && this.shown(t.tag, now) ? 1 : 0;
       k.ease(dt);
       k.s.position.set(Math.round(clamp(r.x + r.w / 2 + k.dx, room.x, Math.max(room.x, room.x + room.w - k.w))), Math.round(clamp(r.y + k.dy, room.y, Math.max(room.y, room.y + room.h - k.h))));
       const lead = t.lead.clear(), at = { x: k.s.x, y: k.s.y, w: k.w, h: k.h };
@@ -310,6 +357,21 @@ export class Labels {
       k.ease(dt);
       k.s.position.set(Math.round(clamp(this.tip.at[0] - k.w / 2, room.x, room.x + room.w - k.w)), Math.round(clamp(this.tip.at[1], room.y, room.y + room.h - k.h)));
     }
+  }
+
+  /** Is this place for a pet's sign on something it must not cover: beyond the room, a body, a face, another's sign, a stone. */
+  private taken(s: Rect, e: Entry, bodies: Map<string, Rect>, room: Rect) {
+    if (s.x < room.x || s.x + s.w > room.x + room.w || (e.face.w && hit(e.face, s))) return true;
+    for (const k of this.keepOff) if (hit(k, s)) return true;
+    for (const b of bodies.values()) if (hit(s, b)) return true;
+    for (const o of this.entries.values()) if (o !== e && ((o.face.w && hit(s, o.face)) || (o.sign.w && hit(s, o.sign)))) return true;
+    return false;
+  }
+
+  /** Does this name show just now: all of them for a moment or while held on, each one while the pointer is on its thing. */
+  private shown(t: Tag, now: number) {
+    const p = this.pointer, r = t.rect;
+    return this.naming || now < (t.until ?? 0) || (!!p && inside(r, p[0], p[1]));
   }
 
   /** A bubble's tail, all the way to its owner: a wedge for speech, a string of dots for a thought, in lettering pixels. */
@@ -336,7 +398,9 @@ export class Labels {
   private lay(now: number, bodies: Map<string, Rect>, room: Rect, avoid: Rect[], boxAt: number[] | null) {
     const F = this.F, placed: Label[] = avoid.map((r) => ({ ...r, kind: "page" }));
     const list = [...this.entries.values()].filter((e) => bodies.has(e.who.id)).sort((a, b) => bodies.get(a.who.id)!.y - bodies.get(b.who.id)!.y);
-    const solid: Body[] = list.flatMap((e) => [{ ...bodies.get(e.who.id)!, id: e.who.id }, ...(e.face.w ? [{ ...e.face, id: e.who.id }] : [])]);   // bodies, and the faces by their heads
+    const solid: Body[] = list.flatMap((e) => [{ ...bodies.get(e.who.id)!, id: e.who.id }, ...(e.face.w ? [{ ...e.face, id: e.who.id }] : []), ...(e.sign.w ? [{ ...e.sign, id: e.who.id }] : [])]);   // bodies, and the faces and signs by their heads
+    /** A pet with the sign over its head, as one: what is said or thought goes above the sign, not beside the pet for want of room. */
+    const whole = (e: Entry, b: Rect): Rect => (e.sign.w && e.sign.y < b.y && e.sign.x < b.x + b.w && e.sign.x + e.sign.w > b.x ? { x: b.x, y: e.sign.y, w: b.w, h: b.y + b.h - e.sign.y } : b);
     const inside = (r: Rect) => r.x >= room.x && r.y >= room.y && r.x + r.w <= room.x + room.w && r.y + r.h <= room.y + room.h;
     const clear = (r: Rect) => inside(r) && !placed.some((q) => hit(q, r)) && !solid.some((f) => hit(f, r)) && !this.keepOff.some((k) => hit(k, r));
     const plates = new Map<string, Rect>();
@@ -403,7 +467,7 @@ export class Labels {
       e.linkFor = null;
       e.say.want = 0;
       if (!e.who.say) continue;
-      const r = spot(b, e.say.w, e.say.h, e.who.id, true);
+      const r = spot(whole(e, b), e.say.w, e.say.h, e.who.id, true);
       if (!r) continue;
       put(e.say, b, r, "bubble");
       ropes.push({ ...rope(r, b), id: e.who.id });
@@ -420,9 +484,9 @@ export class Labels {
     const order = [...thinkers].sort((a, b) => Number(b.who.selected) - Number(a.who.selected) || ((thinkers.indexOf(a) + turn) % thinkers.length) - ((thinkers.indexOf(b) + turn) % thinkers.length));
     for (const e of list) if (e.who.say) e.cap.want = e.dots.want = 0;
     for (const e of order) {
-      const b = bodies.get(e.who.id)!, has = !!e.who.caption;
-      const full = has ? spot(b, e.cap.w, e.cap.h, e.who.id, false) ?? far(b, e.cap.w, e.cap.h, e.who.id) : null;
-      const small = !full && (has || e.who.thinking) ? spot(b, e.dots.w, e.dots.h, e.who.id, false) : null;
+      const b = bodies.get(e.who.id)!, has = !!e.who.caption, up = whole(e, b);
+      const full = has ? spot(up, e.cap.w, e.cap.h, e.who.id, false) ?? far(up, e.cap.w, e.cap.h, e.who.id) : null;
+      const small = !full && (has || e.who.thinking) ? spot(up, e.dots.w, e.dots.h, e.who.id, false) : null;
       [e.cap.want, e.dots.want] = [full ? 1 : 0, small ? 1 : 0];
       if (full) put(e.cap, b, full, "caption");
       if (small) put(e.dots, b, small, "caption");
@@ -435,7 +499,7 @@ export class Labels {
     const others = [...this.tags.values()].map((t) => t.tag.rect), now2 = performance.now();
     for (const t of [...this.tags.values()].sort((a, b) => a.tag.pri - b.tag.pri)) {
       t.fits = false;
-      if (!this.naming && !t.tag.always && now2 >= (t.tag.until ?? 0)) continue;
+      if (!this.shown(t.tag, now2)) continue;
       const r = t.tag.rect, { w, h } = t.card, cx = r.x + r.w / 2, fit = fitter(w, h);
       const free = (q: Rect) => inside(q) && !placed.some((p) => hit(p, q)) && !solid.some((f) => hit(f, q)) && !others.some((o) => o !== r && hit(o, q)) && !this.things.some((o) => hit(o, q) && !hit(o, { x: r.x + 1, y: r.y + 1, w: r.w - 2, h: r.h - 2 }));
       let at: Rect | null = null;

@@ -1,5 +1,5 @@
 // The art, as data (view/assets/README.md). Everything the room draws is looked up here by a name of ours; no tile,
-// file or pack is named in code. A name that is missing draws a magenta-checked tile and warns once.
+// file or pack is named in code. A name that is missing draws a small plain box and warns once.
 import { Rectangle, Texture, TextureSource } from "pixi.js";
 import type { Tile } from "../types";
 
@@ -9,8 +9,9 @@ TextureSource.defaultOptions.scaleMode = "nearest";
 export type Anim = { frames: [number, number][]; fps: number; flip?: boolean };
 /** `glass` (optional): the part of a window's picture that is sky, as [x, y, w, h] inside the sprite. `slice`: a frame
  *  that stretches, as the widths of its [left, top, right, bottom] borders. */
+/** `surface` (optional): where things put away on it stand, as [x, y, w] inside the sprite: a line `w` wide whose left end is at x, y. */
 export type SpriteDef = { pack: string; file: string; rect: [number, number, number, number]; anchor?: [number, number]; anims?: Record<string, Anim>;
-  tint?: string; fallback?: string; glass?: [number, number, number, number]; slice?: [number, number, number, number] };
+  tint?: string; fallback?: string; glass?: [number, number, number, number]; slice?: [number, number, number, number]; surface?: [number, number, number] };
 export type KindDef = { sprite?: string; wall?: boolean; a?: string; flat?: boolean };
 export type Decor = { sprite: string; at: Tile; layer?: string };
 /** A room type's layout. `doors`: a kind of door other than the plain one ("gate": sprites door.gate.<dir>.<state>).
@@ -79,10 +80,10 @@ export const fromParts = () => data.fromParts;
 let checks: HTMLCanvasElement | null = null;
 function placeholder() {
   if (checks) return checks;
-  checks = document.createElement("canvas");
+  checks = document.createElement("canvas");   // a small plain box standing on its tile: nothing is ever a hole, or an alarm, for want of a picture
   checks.width = checks.height = 16;
   const x = checks.getContext("2d")!;
-  for (let i = 0; i < 16; i++) { x.fillStyle = (i + (i >> 2)) % 2 ? "#ff00ff" : "#1a1020"; x.fillRect((i % 4) * 4, (i >> 2) * 4, 4, 4); }
+  for (const [c, bx, by, w, h] of [["#2b2233", 3, 7, 10, 9], ["#b9a88a", 4, 8, 8, 7], ["#d8cbb0", 4, 8, 8, 2], ["#8f7f66", 4, 14, 8, 1]] as const) { x.fillStyle = c; x.fillRect(bx, by, w, h); }
   return checks;
 }
 

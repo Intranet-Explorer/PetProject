@@ -6,21 +6,25 @@ import type { Texture } from "pixi.js";
 import { PALETTE } from "../things";
 import type { Part, Recipe } from "../things";
 import type { Made, Obj, RoomV, Snap, Tile } from "../types";
-import { canvasOf, def, fromParts, has, kind, pick, size, tex } from "./assets";
+import { canvasOf, def, fromCanvas, fromParts, has, kind, pick, size, tex } from "./assets";
 import type { Layout } from "./assets";
-import { FAMILY } from "./bubbles";
+import { FAMILY, tagCanvas } from "./bubbles";
 import { fxTexture } from "./fx";
 import { COLS, corner, FX, FY, H, idx, OX, OY, onFloor, ROWS, seeded, TILE, W } from "./geom";
 import type { Rect } from "./geom";
 import { grid } from "./path";
 import type { Grid } from "./path";
-import { tinted } from "./tint";
+import { hslInt, tinted } from "./tint";
 
 /** A made thing as it is drawn: its kind's sprite, its colour, its size (1 to 3). */
 export type Drawn = { kind: string; sprite: string; color: string | null; size: number; material: string };
 /** One thing standing in the room (a fixture, a made thing, a stone). `x`, `y`: the middle of its foot. */
-export type Thing = { name: string; obj: Obj; s: Sprite; x: number; y: number; rect: Rect; canvas: HTMLCanvasElement; texture: Texture; drawn: Drawn | null; scale: number;
-  wall: boolean; on: boolean; glassy: boolean; bob: boolean; bounce: boolean; noisy: boolean; fragrant: boolean; heirloom: boolean; extra: Sprite[] };
+/** `sprite`: the name of its picture. `stir`: a pet is at it just now (1 playing with it: it bounces; 2 fiddling: it
+ *  shakes; 3 it has been picked up to be put away: not shown), set by the room at every snapshot. */
+export type Thing = { name: string; obj: Obj; s: Sprite; x: number; y: number; rect: Rect; canvas: HTMLCanvasElement; texture: Texture; drawn: Drawn | null; scale: number; sprite: string;
+  wall: boolean; on: boolean; glassy: boolean; bob: boolean; bounce: boolean; noisy: boolean; fragrant: boolean; heirloom: boolean; extra: Sprite[]; stir: number };
+/** Where a thing put away on another stands (SPEC-v3.3 §2): its foot, its depth, and whether that is up on the wall. */
+type Slot = { x: number; y: number; z: number; wall: boolean };
 export type Lamp = { x: number; y: number; r: number; color: number[]; made: boolean };
 export type Door = { dir: string; to: string; rect: Rect; tile: Tile };
 export type Spot = { bit: string; pos: Tile; rect: Rect; s: Sprite };
@@ -42,6 +46,9 @@ export function drawnOf(m: Made): Drawn {
 
 const PLAIN = { floor: 0xd8c39a, wall: 0xa98f6f, trim: 0x6d5a48 };
 const SIZES = [0.75, 1, 1.25];
+const counts = new Map<string, Texture>();   // the small numbers on chests and crates, made once each
+/** The colour a named place in a room is tinted (SPEC-v3.3 §2.3): the same for the same name, in every room. */
+export const areaColor = (name: string) => hslInt(seeded(name)() * 360, 0.7, 0.62);
 
 export class Still {
   ground = new Container();     // floor and walls
@@ -67,6 +74,8 @@ export class Still {
   bounds: Rect = { x: 0, y: 0, w: W, h: H };
   /** The room's scenery (the layout's decor), for the pointer: what each piece is and where. */
   scenery: { sprite: string; rect: Rect }[] = [];
+  /** The places the room has grown ("sleeping corner"), each as the part of the floor it covers. */
+  areas: { name: string; rect: Rect }[] = [];
 
   constructor(snap: Snap, room: RoomV, readonly layout: Layout | null, readonly K: number) {
     const L = layout ?? {};
@@ -74,14 +83,18 @@ export class Still {
     const blocked: Tile[] = [...(L.blocked ?? [])];
     for (const d of L.decor ?? []) this.decor(d.sprite, d.at, d.layer);
     this.puddles(room);
+    this.places(room);
     for (const [dir, to] of Object.entries(room.doors)) this.door(snap, room, dir, to, L.doors);
 
-    const flatFirst = (o: Obj) => (o.fix?.soft ? 0 : 1);
+    // what is put away (SPEC-v3.3 §2) comes after what it is put away on: it stands on that, small; in a chest it is not seen
+    const flatFirst = (o: Obj) => (o.on && room.objects[o.on]?.store ? 2 : o.fix?.soft ? 0 : 1);
     for (const [name, o] of Object.entries(room.objects).sort(([, a], [, b]) => flatFirst(a) - flatFirst(b) || a.pos[1] - b.pos[1])) {
-      const lf = L.fixtures?.[name];
+      const lf = L.fixtures?.[name], store = o.on ? room.objects[o.on]?.store : undefined;
+      if (store?.inside) continue;
+      const slot = store ? this.slot(o.on!, name) : undefined;
       if (o.made) {
-        const t = this.made(name, o, snap.power, FAMILY[snap.pets.find((p) => p.id === o.made!.by)?.family ?? 1] ?? FAMILY[1]);
-        if (!t.wall && !kind(t.drawn!.kind)?.flat) blocked.push(o.pos);
+        const t = this.made(name, o, snap.power, FAMILY[snap.pets.find((p) => p.id === o.made!.by)?.family ?? 1] ?? FAMILY[1], slot);
+        if (!t.wall && !slot && !kind(t.drawn!.kind)?.flat) blocked.push(o.pos);
       } else if (o.memorial) {
         this.put(name, o, "stone", "sorted");
         blocked.push(o.pos);
@@ -95,9 +108,9 @@ export class Still {
         const state = dead ? "off" : o.servings != null ? (o.servings <= 0 ? "empty" : o.servings < 2 ? "half" : "full") : o.state === "ripe" ? "ripe" : o.grow != null ? (o.grow >= 0.4 ? "growing" : null) : o.state;
         const sprite = pick(state ? `${base}.${state}` : null, base), sz = size(sprite);
         const flat = !!o.fix?.soft || !!o.fix?.sun || !!o.water || lf?.walk || lf?.layer === "floor", onWall = !!o.wall || !!lf?.wall || lf?.layer === "wall";   // (a recording from before the layouts has its window on a floor tile: it is hung on the wall above all the same)
-        const t = this.put(name, o, sprite, flat ? "ground" : onWall ? "wall" : lf?.layer === "top" ? "top" : "sorted");
+        const t = this.put(name, o, sprite, slot ? "sorted" : flat ? "ground" : onWall ? "wall" : lf?.layer === "top" ? "top" : "sorted", undefined, undefined, slot ? this.small : 1, slot);
         if (o.fix?.window) this.windows.push({ name, rect: this.glass(sprite, t), open: o.state === "open" });
-        else if (!flat && !onWall && !o.fix?.sun && !o.water) blocked.push(o.pos);
+        else if (!flat && !onWall && !slot && !o.fix?.sun && !o.water) blocked.push(o.pos);
         if (dead) {   // a lamp that should be lit and is not: a small grey bolt over it, so a cut shows by day too
           const out = new Sprite(fxTexture("out"));
           out.anchor.set(0.5, 1);
@@ -120,6 +133,18 @@ export class Still {
       sp.zIndex = cy + 12;
       this.standing.push(sp);
       this.spots.push({ bit: s.bit, pos: s.pos, s: sp, rect: { x: cx + 8 - 8 * f, y: cy + 14 - 16 * f, w: 16 * f, h: 16 * f } });
+    }
+    for (const t of [...this.things.values()]) {   // what is kept inside a thing is not seen: a small number on it says how many
+      const n = t.obj.store?.inside ? t.obj.store.holds.length : 0, F = Math.max(1, Math.round(K / 2));
+      if (!n) continue;
+      let c = counts.get(`${n}|${F}`);
+      if (!c) counts.set(`${n}|${F}`, (c = fromCanvas(tagCanvas(String(n)))));
+      const b = new Sprite(c);
+      b.scale.set(F / K);
+      b.anchor.set(1, 0);
+      b.position.set(Math.round(t.rect.x + t.rect.w) + 2, Math.round(t.rect.y) - 2);
+      b.zIndex = t.s.zIndex + 0.4;
+      if (t.wall) this.wallLayer.addChild(b); else this.standing.push(b);
     }
     this.blocked = grid(blocked.filter(onFloor));
     for (const t of Object.values(snap.door_tiles)) if (onFloor(t)) this.blocked[idx(t)] = 0;   // a doorway is never shut off
@@ -206,6 +231,40 @@ export class Still {
     this.flat.addChild(g);
   }
 
+  /** The places a room has grown (SPEC-v3.3 §2.3): a faint tint on their tiles, with a line round the whole of each. */
+  private places(room: RoomV) {
+    if (!room.areas?.length) return;
+    const g = new Graphics();
+    for (const a of room.areas) {
+      const color = areaColor(a.name), tiles = a.tiles.filter(onFloor), at = (x: number, y: number) => tiles.some((t) => t[0] === x && t[1] === y);
+      if (!tiles.length) continue;
+      for (const t of tiles) g.rect(OX + t[0] * TILE, OY + t[1] * TILE, TILE, TILE);
+      g.fill({ color, alpha: 0.16 });
+      for (const [tx, ty] of tiles) {   // its edge, wherever the next tile is not part of it
+        const [x, y] = corner([tx, ty]);
+        if (!at(tx, ty - 1)) g.rect(x, y, TILE, 1);
+        if (!at(tx, ty + 1)) g.rect(x, y + TILE - 1, TILE, 1);
+        if (!at(tx - 1, ty)) g.rect(x, y, 1, TILE);
+        if (!at(tx + 1, ty)) g.rect(x + TILE - 1, y, 1, TILE);
+      }
+      g.fill({ color, alpha: 0.4 });
+      const xs = tiles.map((t) => t[0]), ys = tiles.map((t) => t[1]), [x0, y0] = corner([Math.min(...xs), Math.min(...ys)]);
+      this.areas.push({ name: a.name, rect: { x: x0, y: y0, w: (Math.max(...xs) - Math.min(...xs) + 1) * TILE, h: (Math.max(...ys) - Math.min(...ys) + 1) * TILE } });
+    }
+    this.flat.addChild(g);
+  }
+
+  /** Things put away on a thing are small: about half their size, on whole pixels. */
+  private get small() { return Math.max(1, Math.round(this.K * 0.6)) / this.K; }
+  /** Where the thing called `name` stands on the thing it is put away on: side by side along its surface (the
+   *  sprite's `surface`, or across its middle). */
+  private slot(on: string, name: string): Slot | undefined {
+    const t = this.things.get(on), holds = t?.obj.store?.holds ?? [];
+    if (!t) return undefined;
+    const sz = size(t.sprite), [sx, sy, sw] = def(t.sprite)?.surface ?? [2, Math.round(sz.h * 0.5), sz.w - 4], i = Math.max(0, holds.indexOf(name)), n = Math.max(1, holds.length);
+    return { x: Math.round(t.rect.x + (sx + (sw * (i + 0.5)) / n) * t.scale), y: Math.round(t.rect.y + sy * t.scale), z: t.s.zIndex + 0.3 + i * 0.01, wall: t.wall };
+  }
+
   private door(snap: Snap, room: RoomV, dir: string, to: string, style?: string) {
     const tile = snap.door_tiles[dir];
     if (!tile) return;
@@ -227,11 +286,12 @@ export class Still {
   }
 
   /** One sprite standing on (or hanging above) a tile. */
-  private put(name: string, o: Obj, sprite: string, where: "ground" | "wall" | "top" | "sorted", texture: Texture = tex(sprite), canvas = canvasOf(sprite), scale = 1): Thing {
-    const hung = !!o.wall || where === "wall";
-    // what hangs on the wall hangs on the north wall above its tile: its sprite's anchor lifts it there
+  private put(name: string, o: Obj, sprite: string, where: "ground" | "wall" | "top" | "sorted", texture: Texture = tex(sprite), canvas = canvasOf(sprite), scale = 1, slot?: Slot): Thing {
+    const hung = slot ? slot.wall : !!o.wall || where === "wall";
+    // what hangs on the wall hangs on the north wall above its tile: its sprite's anchor lifts it there (a thing not
+    // drawn for a wall, hung up all the same, goes just above the floor line)
     const sz = size(sprite), [cx, cy] = corner(hung ? [o.pos[0], 0] : o.pos), s = new Sprite(texture);
-    const [x, y] = [cx - sz.ax + sz.w / 2, cy - sz.ay + sz.h];
+    const [x, y] = slot ? [slot.x, slot.y] : [cx - sz.ax + sz.w / 2, hung && o.made && cy - sz.ay + sz.h > OY - 2 ? OY - 5 : cy - sz.ay + sz.h];
     s.anchor.set(0.5, 1);
     s.scale.set(scale);
     s.position.set(x, y);
@@ -239,26 +299,26 @@ export class Still {
     if (where === "ground") this.flat.addChild(s);
     else if (where === "top") this.top.addChild(s);
     else if (hung) this.wallLayer.addChild(s);
-    else { s.zIndex = cy + TILE - 4; this.standing.push(s); }
+    else { s.zIndex = slot?.z ?? cy + TILE - 4; this.standing.push(s); }
     if (hung || rect.y < OY - 4) this.wallBusy.push(rect);
-    const t: Thing = { name, obj: o, s, x, y, rect, canvas, texture, drawn: null, scale, wall: hung, on: false, glassy: false, bob: false, bounce: false, noisy: false,
-                       fragrant: false, heirloom: false, extra: [] };
+    const t: Thing = { name, obj: o, s, x, y, rect, canvas, texture, drawn: null, scale, sprite, wall: hung, on: false, glassy: false, bob: false, bounce: false, noisy: false,
+                       fragrant: false, heirloom: false, extra: [], stir: 0 };
     this.things.set(name, t);
     return t;
   }
 
   /** Something a pet made (§3): its kind's sprite in its colour, a little smaller or larger, looking like what it is made of. */
-  private made(name: string, o: Obj, power: boolean, maker: string): Thing {
+  private made(name: string, o: Obj, power: boolean, maker: string, slot?: Slot): Thing {
     const m = o.made!, d = drawnOf(m), doing = m.active ? m.behavior?.do ?? "" : "", mat = d.material;
     const color = doing.startsWith("change_color:") ? doing.split(":")[1] : d.color;
     const look = { soft: mat === "soft" || undefined, dark: mat === "dark" || undefined, damp: m.worn.includes("damp") || undefined, dusty: m.worn.includes("dusty") || undefined,
                    eaten: m.worn.includes("eaten") || undefined };
     const pic = has(d.sprite) ? tinted(d.sprite, color, look) : { texture: tex(d.sprite), canvas: canvasOf(d.sprite) };
-    const scale = Math.max(1, Math.round(this.K * (SIZES[Math.round(d.size) - 1] ?? 1))) / this.K;
-    const t = this.put(name, o, d.sprite, "sorted", pic.texture, pic.canvas, scale);
+    const scale = slot ? this.small : Math.max(1, Math.round(this.K * (SIZES[Math.round(d.size) - 1] ?? 1))) / this.K;
+    const t = this.put(name, o, d.sprite, "sorted", pic.texture, pic.canvas, scale, slot);
     t.drawn = { ...d, color };
     t.on = power && (o.state === "on" || doing === "glow" || ((mat === "bright" || mat === "warm") && m.active));   // a power cut is dark for made lights too
-    if (!t.wall) {   // a made thing sits on a small soft shadow: that, and its size, tell it from a bit lying loose
+    if (!t.wall && !slot) {   // a made thing sits on a small soft shadow: that, and its size, tell it from a bit lying loose
       const hw = Math.max(3, Math.round(t.rect.w / 2) - 1), g = new Graphics();
       g.rect(Math.round(t.x) - hw, Math.round(t.y) - 2, 2 * hw, 3).rect(Math.round(t.x) - hw + 2, Math.round(t.y) - 3, 2 * hw - 4, 1).rect(Math.round(t.x) - hw + 2, Math.round(t.y) + 1, 2 * hw - 4, 1).fill({ color: 0x1a1420, alpha: 0.22 });
       this.flat.addChild(g);

@@ -66,6 +66,8 @@ export class Light {
   private glassy: Rect[] = [];
   private dip = 0;
   private dipped = false;
+  private vig: CanvasGradient | null = null;
+  private vigFor = "";
   private drops: Sprite[] = [];
 
   constructor() {
@@ -131,8 +133,27 @@ export class Light {
     let a = this.ambient;
     if (this.flashing) a = mix(a, WHITE, e.sky === "open" ? 0.75 : e.sky === "glass" ? 0.6 : e.windows.length ? 0.22 : 0);
     x.globalCompositeOperation = "source-over";
-    x.fillStyle = css(a);
-    x.fillRect(0, 0, W, H);
+    // the dark gathers at the edges of the room and leaves its middle, where everyone is, plain to see (SPEC-v3.3 §5):
+    // the darker the hour or the weather, the more the middle is lifted out of it
+    const dk = this.darkness, key = a.join();
+    if (dk > 0.08 && !this.flashing) {
+      if (key !== this.vigFor) {
+        const g = (this.vig = x.createRadialGradient(0, 0, 0.25, 0, 0, 1)), mid = mix(a, WHITE, Math.min(0.4, dk * 0.9)), edge = a.map((v) => v * (1 - Math.min(0.25, dk * 0.5)));
+        g.addColorStop(0, css(mid));
+        g.addColorStop(0.55, css(mix(mid, a, 0.6)));
+        g.addColorStop(1, css(edge));
+        this.vigFor = key;
+      }
+      x.save();
+      x.translate(W / 2, OY + (FY * TILE) / 2);
+      x.scale(W * 0.66, H * 0.7);
+      x.fillStyle = this.vig!;
+      x.fillRect(-1, -1, 2, 2);
+      x.restore();
+    } else {
+      x.fillStyle = css(a);
+      x.fillRect(0, 0, W, H);
+    }
     x.globalCompositeOperation = "lighten";
     // what comes in at the windows: by night the moon, in a storm the flash; it is all there is in a power cut
     const pool = this.flashing ? WHITE : night ? mix(a, [150, 168, 236], e.power ? 0.3 : 0.5) : a;
@@ -154,7 +175,7 @@ export class Light {
       x.globalCompositeOperation = "lighten";
     }
     if (this.darkness > 0.25) for (let i = 0; i < this.pools.length; i += 2) {   // a pet is never lost in the dark
-      [[12, 0.22], [8, 0.42], [5, 0.62]].forEach(([r, k]) => { x.fillStyle = css(mix(a, [226, 232, 255], k)); disc(x, this.pools[i], this.pools[i + 1], r); });
+      [[19, 0.2], [13, 0.4], [8, 0.6]].forEach(([r, k]) => { x.fillStyle = css(mix(a, [226, 232, 255], k)); disc(x, this.pools[i], this.pools[i + 1], r); });
     }
     x.globalCompositeOperation = "source-over";
     x.fillStyle = "#ffffff";

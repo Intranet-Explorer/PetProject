@@ -3,8 +3,13 @@
 // drawing, no smoothing, no randomness that is not in the genome, so the same genome always gives the same pixels.
 import type { Genome } from "./pet";
 
-export type PetAnim = "idle" | "walk.down" | "walk.up" | "walk.left" | "walk.right" | "sit" | "sleep" | "eat" | "make" | "happy" | "sad" | "startled";
-export const PET_ANIMS: PetAnim[] = ["idle", "walk.down", "walk.up", "walk.left", "walk.right", "sit", "sleep", "eat", "make", "happy", "sad", "startled"];
+type Facing = "down" | "up" | "left" | "right";
+/** `stand.<dir>`: standing turned that way, breathing. `talk.<dir>`: the same, chattering. `sit.up`: sat down with its
+ *  back to us (at a window). `quiet`: head bowed, eyes shut. The rest are what they say (SPEC-v3.3 §1.4). */
+export type PetAnim = "idle" | `walk.${Facing}` | `stand.${Facing}` | `talk.${Facing}` | "sit" | "sit.up" | "sleep" | "eat" | "make" | "happy" | "sad" | "startled"
+  | "stretch" | "groom" | "dance" | "quiet";
+export const PET_ANIMS: PetAnim[] = ["idle", "walk.down", "walk.up", "walk.left", "walk.right", "sit", "sleep", "eat", "make", "happy", "sad", "startled",
+  "stand.down", "stand.up", "stand.left", "stand.right", "talk.down", "talk.up", "talk.left", "talk.right", "sit.up", "stretch", "groom", "dance", "quiet"];
 /** `size`: the side of a frame in source pixels (24 or 32). `frames[anim]`: that many canvases, each size x size, the
  *  pet standing on the bottom edge and centred. `fps`: how fast each plays. `egg`: an egg of this genome's colours
  *  (two frames: still, and rocking). `dead`: lying still. */
@@ -354,9 +359,22 @@ function build(g: Genome, stage: string, grey: number): PetSheet {
       : [f({ face, dh: -wide }), f({ face, feet: [9, 0], dh: 1, lean: -sway }), f({ face, dh: -wide }), f({ face, feet: [0, 9], dh: 1, lean: sway })];
   };
   const a = f(), b1 = f({ dh: -1, dw: sway, lean: -wide }), b2 = f({ dh: -1, dw: sway, lean: wide });   // breathing: steady, then spreading, then swaying too
+  // turned one way and standing: it breathes and blinks; chattering: its mouth goes and it bobs
+  const stand = (face: Pose["face"]) => [f({ face }), f({ face }), f({ face, dh: -1, dw: 1 }), f({ face, dh: -1, dw: 1 }), f({ face }), f({ face, eyes: "shut" }), f({ face, dh: -1, dw: 1 }), f({ face, dh: -1, dw: 1 })];
+  const talk = (face: Pose["face"]) => [f({ face, mouth: "open" }), f({ face, dh: -1, dw: 1 }), f({ face, mouth: "o", dy: 1 }), f({ face }), f({ face, mouth: "open", arms: 1 }), f({ face, dh: -1, dw: 1, eyes: "happy" })];
   const frames: Record<PetAnim, HTMLCanvasElement[]> = {
     idle: [a, a, b1, b1, a, a, b2, b2, a, f({ eyes: "shut" }), b1, b1, a, a, b2, b2],
     "walk.down": walk("down"), "walk.up": walk("up"), "walk.left": walk("left"), "walk.right": walk("right"),
+    "stand.down": stand("down"), "stand.up": stand("up"), "stand.left": stand("left"), "stand.right": stand("right"),
+    "talk.down": talk("down"), "talk.up": talk("up"), "talk.left": talk("left"), "talk.right": talk("right"),
+    "sit.up": [f({ face: "up", sit: true, dh: -1, dw: 1 }), f({ face: "up", sit: true, dw: 1 })],
+    stretch: [f({ dh: -2, dw: 1, eyes: "half" }), f({ dh: 1, arms: 2, eyes: "shut" }), f({ dh: 3, arms: 3, eyes: "shut", mouth: "open" }), f({ dh: 3, arms: 3, eyes: "shut", mouth: "open", lean: -1 }),
+      f({ dh: 3, arms: 3, eyes: "shut", mouth: "open", lean: 1 }), f({ dh: 1, arms: 1, eyes: "half", mouth: "o" })],
+    groom: [f({ sit: true, paws: 1, eyes: "shut", lean: -1 }), f({ sit: true, paws: 2, eyes: "shut", lean: -1 }), f({ sit: true, paws: 1, eyes: "shut", lean: -1, dh: -1 }), f({ sit: true, paws: 2, eyes: "shut" }),
+      f({ sit: true, paws: 1, eyes: "shut", lean: 1 }), f({ sit: true, paws: 2, eyes: "shut", lean: 1 }), f({ sit: true, paws: 1, eyes: "shut", lean: 1, dh: -1 }), f({ sit: true, eyes: "happy", dw: 1 })],
+    dance: [f({ lean: -2, dx: -1, eyes: "happy", mouth: "smile", arms: 2 }), f({ dy: 2, dx: -1, eyes: "happy", mouth: "open", arms: 3 }), f({ dh: -1, dw: 1, eyes: "happy", mouth: "smile", arms: 1 }),
+      f({ lean: 2, dx: 1, eyes: "happy", mouth: "smile", arms: 2 }), f({ dy: 2, dx: 1, eyes: "happy", mouth: "open", arms: 3 }), f({ dh: -1, dw: 1, eyes: "happy", mouth: "smile", arms: 1 })],
+    quiet: [f({ eyes: "shut", look: 1, dh: -1 }), f({ eyes: "shut", look: 1, dh: -1 }), f({ eyes: "shut", look: 1, dh: -2, dw: 1 }), f({ eyes: "half", look: 1, dh: -1 })],
     sit: [f({ sit: true, dh: -1, dw: 1, eyes: "half" }), f({ sit: true, dw: 1, eyes: "half" })],
     sleep: [f({ curl: true, eyes: "sleep" }), f({ curl: true, eyes: "sleep", dh: 1 })],
     eat: [f({ mouth: "open", sit: true }), f({ mouth: "open", sit: true, dh: -2, look: 1 }), f({ sit: true, dh: -1, dw: 1, eyes: "happy" }), f({ sit: true, dw: 1, eyes: "happy", mouth: "o" })],
@@ -366,7 +384,9 @@ function build(g: Genome, stage: string, grey: number): PetSheet {
       f({ dh: -2, look: 1, eyes: "sad", mouth: "frown", arms: -1, tear: 2 }), f({ dh: -1, look: 1, eyes: "sad", mouth: "frown", arms: -1 })],
     startled: [f({ dy: 3, dh: 2, eyes: "wide", mouth: "o", arms: 3 }), f({ dy: 1, dh: 1, eyes: "wide", mouth: "o", arms: 3 }), f({ dx: -1, eyes: "wide", mouth: "o", arms: 2 }), f({ dx: 1, eyes: "wide", mouth: "o", arms: 2 })],
   };
-  const k = st.slow, fps: Record<PetAnim, number> = { idle: 4 * k, "walk.down": 8 * k, "walk.up": 8 * k, "walk.left": 8 * k, "walk.right": 8 * k, sit: 1.5 * k, sleep: 1, eat: 5 * k, make: 8 * k, happy: 8 * k, sad: 2 * k, startled: 8 };
+  const k = st.slow, fps: Record<PetAnim, number> = { idle: 4 * k, "walk.down": 8 * k, "walk.up": 8 * k, "walk.left": 8 * k, "walk.right": 8 * k, sit: 1.5 * k, sleep: 1, eat: 5 * k, make: 8 * k, happy: 8 * k, sad: 2 * k, startled: 8,
+    "stand.down": 4 * k, "stand.up": 4 * k, "stand.left": 4 * k, "stand.right": 4 * k, "talk.down": 6 * k, "talk.up": 6 * k, "talk.left": 6 * k, "talk.right": 6 * k, "sit.up": 1.5 * k,
+    stretch: 2.5 * k, groom: 5 * k, dance: 6 * k, quiet: 1.2 * k };
   const eggPal = palette(g, 0, true);
   return { size: S, frames, fps, egg: [toCanvas(drawEgg(g, 0), eggPal), toCanvas(drawEgg(g, 1), eggPal)],
     dead: toCanvas(lying(drawPet(g, stage, { eyes: "x", mouth: "none" }), g.stretch * (1 - st.soft) + st.soft < 1), palette(g, Math.max(grey, 0.7))) };

@@ -1,7 +1,8 @@
 // A step a pet has just finished, played once (SPEC-v3.2 §5.2): the made thing pops in, an unmade one breaks into
 // bits with a puff, two things slide together and flash, a bit goes to the paws or to the floor, a gift is held out,
 // two lean together under a small heart, notes rise, chalk dust falls. A step that turned out not possible (ok false)
-// shows nothing. What lasts (walking there, sitting busy, resting, reading) is in actors.ts.
+// shows nothing. What lasts (walking there, sitting busy, resting, reading) is in actors.ts. The things a body does by
+// itself (SPEC-v3.3 §1: `body` is set) end the same way, smaller; a type nobody here has heard of shows nothing.
 import type { Texture } from "pixi.js";
 import type { Act } from "../types";
 import type { PetActor } from "./actors";
@@ -13,7 +14,9 @@ import type { Thing } from "./still";
 /** A made thing that was in the room a moment ago: what it looked like and where it stood. */
 export type Ghost = { texture: Texture; x: number; y: number; scale: number; h: number };
 export type Cast = { pets: Map<string, PetActor>; things: Map<string, Thing>; ghosts: Map<string, Ghost>; fx: Fx; now: number;
-  where: (name: string | null | undefined) => number[] | null; petAt: (name: string | null | undefined) => PetActor | null };
+  where: (name: string | null | undefined) => number[] | null; petAt: (name: string | null | undefined) => PetActor | null;
+  /** The thing a thing is put away on or in just now, if it is. */
+  kept: (name: string | null | undefined) => Thing | undefined };
 
 const norm = (s: string | null | undefined) => (s ?? "").trim().toLowerCase();
 
@@ -27,7 +30,7 @@ function wiggle(fx: Fx, t: Thing) {
 
 export function play(a: Act, c: Cast) {
   if (!a.ok) return;
-  const { fx, now } = c, me = c.pets.get(a.pet), at = me ? [me.w.x, me.w.y] : null;
+  const { fx, now } = c, me = c.pets.get(a.pet), at = me ? [me.w.x, me.w.y] : null, head = me ? me.tall : 16;
   const thing = c.things.get(norm(a.what)) ?? c.things.get(a.what ?? ""), other = c.petAt(a.to), there = c.where(a.to) ?? c.where(a.what);
   const picture = (what: string | null | undefined): [Texture, number] | null => {
     const t = c.things.get(norm(what)), g = c.ghosts.get(norm(what));
@@ -86,7 +89,7 @@ export function play(a: Act, c: Cast) {
       if (!p) break;
       me?.leanTo(p[0], p[1], now, 1700, 5);
       o?.leanTo(at[0], at[1], now, 1700, 5);
-      const top = Math.min(at[1], p[1]) - 20;
+      const top = Math.min(at[1], p[1]) - head - 6;
       fx.after(350, () => fx.spawn("heart", (at[0] + p[0]) / 2, top, { vy: -7, life: 1900, sway: 1 }));
       break;
     }
@@ -95,12 +98,12 @@ export function play(a: Act, c: Cast) {
       if (at && other) other.turn(at[0], at[1], now, 3000);
       break;
     case "sing": case "compose": case "teach_song":
-      if (at) for (let i = 0; i < 6; i++) fx.after(i * 260, () => fx.spawn("note", at[0] + (i % 2 ? 5 : -4), at[1] - 16, { vx: (i % 3 - 1) * 5, vy: -15, life: 1700, sway: 2 }));
+      if (at) for (let i = 0; i < 6; i++) fx.after(i * 260, () => fx.spawn("note", at[0] + (i % 2 ? 5 : -4), at[1] - head, { vx: (i % 3 - 1) * 5, vy: -15, life: 1700, sway: 2 }));
       if (at && other) other.turn(at[0], at[1], now, 2500);
       break;
     case "call":   // the creature comes trotting (the engine moves it); the caller hops
       me?.react("happy", now, 1000);
-      if (at) { fx.spawn("note", at[0] - 6, at[1] - 18, { vy: -12, life: 1100, sway: 2 }); }
+      if (at) { fx.spawn("note", at[0] - 6, at[1] - head - 2, { vy: -12, life: 1100, sway: 2 }); }
       break;
     case "write": {
       const p = there ?? (at && [at[0], Math.max(OY - 10, at[1] - 30)]);
@@ -115,8 +118,43 @@ export function play(a: Act, c: Cast) {
     case "ask_book":
       if (there) { fx.burst("page", there[0], there[1] - 8, 3, 14); fx.burst("sparkle", there[0], there[1] - 8, 5, 20); }
       break;
-    case "use": case "teach": case "arrange": case "name":
-      if (thing) { wiggle(fx, thing); if (a.type !== "use") fx.burst("sparkle", thing.x, thing.y - 8, 4, 18); }
+    case "use": case "teach": case "arrange": case "name": case "fiddle":
+      if (thing) { wiggle(fx, thing); if (a.type !== "use" && a.type !== "fiddle") fx.burst("sparkle", thing.x, thing.y - 8, 4, 18); }
+      if (thing && a.loud) for (let i = 0; i < 3; i++) fx.after(i * 180, () => fx.spawn("note", thing.x + (i - 1) * 5, thing.rect.y, { vx: (i - 1) * 5, vy: -14, life: 1300, sway: 2 }));   // it rang
+      break;
+    case "put_away": case "take_out": case "hang": {   // into its place in a low arc, and a little dust; or out of it, into the paws
+      const pic = picture(a.what), kept = c.kept(a.what), place = thing ? [thing.x, thing.y - thing.rect.h / 2] : kept ? [kept.x, kept.y - kept.rect.h / 2] : c.where(a.to);   // where it stands now; in a chest, the chest
+      if (!at || !place) break;
+      const paws = [at[0], at[1] - head * 0.6], out = a.type === "take_out";
+      if (thing && !out) thing.s.visible = false;
+      if (pic) fx.fly(pic[0], out ? place : paws, out ? paws : place, 480, pic[1], () => {
+        if (out) return;
+        if (thing && !thing.s.destroyed) { thing.s.visible = true; pop(fx, thing, 300); }
+        else if (kept && !kept.s.destroyed) wiggle(fx, kept);   // gone into it
+        fx.spawn("dust", place[0], place[1] + 3, { life: 450 });
+        if (a.type === "hang") fx.burst("sparkle", place[0], place[1], 3, 14);
+      });
+      else if (thing && !thing.s.destroyed) thing.s.visible = true;
+      break;
+    }
+    case "look": case "watch": case "listen":   // it has seen what it wanted to see
+      if (there) fx.spawn("glint", there[0], there[1] - 4, { life: 500 });
+      break;
+    case "tend":
+      if (thing) { wiggle(fx, thing); fx.burst("leaf", thing.x, thing.rect.y + 4, 4, 14, { tint: 0x8fd06a, life: 800 }); }
+      break;
+    case "dance":   // a last hop
+      me?.react("happy", now, 700);
+      if (at) fx.burst("note", at[0], at[1] - head, 3, 16, { life: 1100 });
+      break;
+    case "babble":
+      if (at && other) other.turn(at[0], at[1], now, 1800);
+      break;
+    case "nap":   // up again, with a stretch
+      me?.react("stretch", now, 1400);
+      break;
+    case "go":
+      if (at) fx.spawn("dust", at[0], at[1] - 2, { life: 400 });
       break;
     case "eat":   // the last mouthful: crumbs, and the bowl or plant gives a little
       if (thing) wiggle(fx, thing);

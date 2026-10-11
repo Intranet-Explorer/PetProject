@@ -6,7 +6,7 @@ import { Application, Container, Graphics, Sprite } from "pixi.js";
 import type { Genome, Look } from "./pet";
 import { petPortrait } from "./petsprite";
 import { ago, bodyStage, tickMs } from "./types";
-import type { Act, Hello, Mark, PetV, RoomV, Snap, Tile } from "./types";
+import type { Act, Hello, Mark, Obj, PetV, RoomV, Snap, Tile } from "./types";
 import { play } from "./px/acts";
 import type { Ghost } from "./px/acts";
 import { CreatureActor, doing, PetActor } from "./px/actors";
@@ -19,7 +19,7 @@ import { Fx } from "./px/fx";
 import { clamp, FX, FY, H, idx, inside, OX, OY, onFloor, tileAt, TILE, W } from "./px/geom";
 import { Marks } from "./px/marks";
 import { nearestFree } from "./px/path";
-import { Still } from "./px/still";
+import { drawnOf, Still } from "./px/still";
 import type { Thing } from "./px/still";
 import { hslInt } from "./px/tint";
 import { Light } from "./px/weather";
@@ -33,10 +33,15 @@ export type Scene = { snap: Snap; room: RoomV; hello: Hello | null; selected: st
 export type Card = { what: "pet" | "creature" | "thing" | "fixture" | "stone" | "bit" | "door" | "writing" | "scenery"; title: string; sprite: HTMLCanvasElement | null;
   name?: string | null; kind?: string; color?: string | null; material?: string; maker?: string | null; owner?: string | null; heirloom?: boolean; worn?: string[];
   purpose?: string; does?: string | null; state?: string | null; text?: string; can?: string[];
+  /** SPEC-v3.3 §2, plain lines to show as they are: what a thing that keeps things holds ("holds: a red ball, a flute",
+   *  "room for 2 more"), where a thing put away is kept, where its home is when it is not there, the place it stands in. */
+  notes?: string[];
   /** Where it is drawn, in CSS pixels from the top-left of the element given to `init`: a card can be put right by it. */
   rect?: Rect };
 
 const norm = (s: string | null | undefined) => (s ?? "").trim().toLowerCase();
+/** Would two pets on these tiles stand on each other: a pet is wider than a tile and taller than two (SPEC-v3.3 §5). */
+const near = (a: Tile, b: Tile) => Math.abs(a[0] - b[0]) <= 1 && Math.abs(a[1] - b[1]) <= (a[0] === b[0] ? 2 : 1);
 const recall = (k: string) => { try { return localStorage.getItem(k); } catch { return null; } };
 const remember = (k: string, v: string) => { try { localStorage.setItem(k, v); } catch { /* private window */ } };
 
@@ -69,6 +74,7 @@ export class Room {
   private flat = new Container();
   private sorted = new Container();     // what stands on the floor, by depth
   private top = new Container();
+  private rims = new Container();       // the pets' pale outlines, over the dark
   private mark = new Graphics();        // round the thing the visitor has picked up
   private fx = new Fx();
   private light = new Light();
@@ -95,6 +101,7 @@ export class Room {
   private seenEvent = -1;
   private weather = "";
   private pointer: number[] | null = null;
+  private aim = [0, 0];                 // the same, in screen pixels
   private next = { note: 0, air: 0, glint: 0, drip: 0 };
   private stage: Stage;
   private avoid: Rect[] = [];
@@ -102,7 +109,6 @@ export class Room {
   private flashing = false;
   private namesUntil = 0;               // the names of things show until then (a room has just come into view)
   private namesOn = false;              // or for as long as the page holds them on
-  private restAt = 0;                   // when the pointer last moved
   private tagKey = "";
   private beastBox = new Map<string, Rect>();
   private crate: Sprite | null = null;  // what a delivery came in, for a while after it
@@ -116,9 +122,10 @@ export class Room {
 
   constructor() {
     this.stage = { now: 0, dt: 16, fx: this.fx, blocked: new Uint8Array(FX * FY), K: 1,
-      free: (t, me) => onFloor(t) && !this.stage.blocked[idx(t)] && ![...this.pets.values()].some((a) => a.pet.id !== me && ((a.home[0] === t[0] && Math.abs(a.home[1] - t[1]) <= 1) || (a.w.tile()[0] === t[0] && a.w.tile()[1] === t[1]))),
+      free: (t, me) => onFloor(t) && !this.stage.blocked[idx(t)] && ![...this.pets.values()].some((a) => a.pet.id !== me && (near(a.home, t) || near(a.w.tile(), t))),
       where: (name, near) => this.where(name, near),
-      held: false,
+      held: false, dim: 0,
+      thing: (name) => this.still?.things.get(norm(name)) ?? this.still?.things.get(name ?? ""),
       book: () => { const t = this.still && [...this.still.things.values()].find((t) => t.obj.fix?.book); return t ? [t.x, t.y - 4] : null; },
       others: () => [...[...this.pets.values()].map((a) => [a.w.x, a.w.y]), ...[...this.beasts.values()].map((b) => [b.w.x, b.w.y])] };
   }
@@ -134,11 +141,11 @@ export class Room {
     cv.style.imageRendering = "pixelated";
     el.append(cv);
     this.sorted.sortableChildren = true;
-    this.world.addChild(this.ground, this.walls, this.marks.c, this.flat, this.sorted, this.top, this.mark, this.light.dark, this.light.glow, this.light.panes, this.fx.c, this.light.falling);
+    this.world.addChild(this.ground, this.walls, this.marks.c, this.flat, this.sorted, this.top, this.mark, this.light.dark, this.rims, this.light.glow, this.light.panes, this.fx.c, this.light.falling);
     this.app.stage.addChild(this.world, this.words.c);
     const at = (e: PointerEvent) => { const r = cv.getBoundingClientRect(); return [((e.clientX - r.left) / r.width) * W, ((e.clientY - r.top) / r.height) * H]; };
     cv.addEventListener("pointerdown", (e) => { this.point(at(e)); const p = at(e); this.onClick(this.under(p[0], p[1])); });   // a tap shows what a hover would
-    cv.addEventListener("pointermove", (e) => { this.restAt = performance.now(); this.point(at(e)); });
+    cv.addEventListener("pointermove", (e) => this.point(at(e)));
     cv.addEventListener("pointerleave", () => this.point(null));
     new ResizeObserver(() => this.fit()).observe(el);
     addEventListener("resize", () => this.fit());   // a change of zoom or screen changes the pixel ratio without changing the element
@@ -165,8 +172,8 @@ export class Room {
     if (this.scene && this.ready) this.update(this.scene);
   }
 
-  /** Hold the names of the things in the room on (true), or let them go (false). They also show by themselves for a
-   *  few seconds whenever a room comes into view, and while the pointer rests over the room. */
+  /** Hold the names of the things in the room on (true), or let them go (false). They also show by themselves for 8
+   *  seconds whenever a room comes into view, and each one while the pointer is on its thing; otherwise they are gone. */
   names(on: boolean) {
     this.namesOn = on;
   }
@@ -198,7 +205,7 @@ export class Room {
 
     const lay = layout(room.type, () => { this.built = ""; if (this.scene) this.update(this.scene); });
     const keep = this.keep();
-    const key = JSON.stringify([room.id, room.type, lay === undefined, Object.entries(room.objects).map(([n, o]) => [n, o.pos, o.state, o.wall, o.servings === 0, o.grow != null && o.grow < 0.35, o.water,
+    const key = JSON.stringify([room.id, room.type, lay === undefined, room.areas, Object.entries(room.objects).map(([n, o]) => [n, o.pos, o.state, o.wall, o.on, o.store?.holds, o.servings === 0, o.grow != null && o.grow < 0.35, o.water,
       o.made && [o.made.recipe, o.made.active, o.made.behavior?.do, o.made.worn, !!o.made.heirloom], !!o.memorial]), room.spots, room.paint, room.doors, room.shut, room.wet, snap.power,
       snap.rooms.map((r) => r.type), room.marks, this.K, keep, snap.door_tiles]);
     if (key !== this.built) {
@@ -219,6 +226,12 @@ export class Room {
     if (lit !== this.lit) { this.lit = lit; this.light.set(env); }
 
     this.cast(sc, fresh, now);
+    for (const t of still.things.values()) {   // what a pet is at just now stirs: a toy bounces, a thing being put away is off the floor and in its paws
+      let stir = 0;
+      for (const a of this.pets.values()) if (a.stirs && this.stage.thing(a.pet.body?.what) === t) stir = a.stirs;
+      if ((stir === 3) !== (t.stir === 3) && !t.s.destroyed) t.s.visible = stir !== 3;
+      t.stir = stir;
+    }
     this.arrived(sc);
     this.say(sc);
     this.tag(sc);
@@ -258,15 +271,16 @@ export class Room {
   private cast(sc: Scene, fresh: boolean, now: number) {
     const { snap, room } = sc, still = this.still!;
     const here = snap.pets.filter((p) => p.room === room.id && !(p.stage === "dead" && p.buried));
-    for (const [id, a] of this.pets) if (fresh || !here.some((p) => p.id === id)) { a.c.destroy({ children: true }); this.pets.delete(id); this.heads.delete(id); }
-    // nobody on another's tile, and nobody straight above or below another (the one in front would stand on the other's head): side by side, each whole
-    const fixed = (p: PetV) => p.stage === "egg" || p.stage === "dead", claimed: Tile[] = [], apart = (t: Tile) => !claimed.some((c) => c[0] === t[0] && Math.abs(c[1] - t[1]) <= 1);
+    for (const [id, a] of this.pets) if (fresh || !here.some((p) => p.id === id)) { a.c.destroy({ children: true }); a.rim.destroy(); this.pets.delete(id); this.heads.delete(id); }
+    // nobody on another's tile or right beside it, and nobody straight above or below another (the one in front would stand on the other's head): each whole
+    const fixed = (p: PetV) => p.stage === "egg" || p.stage === "dead", claimed: Tile[] = [], apart = (t: Tile) => !claimed.some((c) => near(c, t));
     for (const p of [...here].sort((a, b) => Number(fixed(b)) - Number(fixed(a)) || (a.id < b.id ? -1 : 1))) {
       let a = this.pets.get(p.id);
       const first = !a;
       if (!a) {
         this.pets.set(p.id, (a = new PetActor()));
         this.sorted.addChild(a.c);
+        this.rims.addChild(a.rim);
       }
       const was = a.pet, same = was && was.pos[0] === p.pos[0] && was.pos[1] === p.pos[1] && !still.blocked[idx(a.home)] && apart(a.home);
       const want: Tile = [clamp(Math.round(p.pos[0]), 0, FX - 1), clamp(Math.round(p.pos[1]), 0, FY - 1)];
@@ -275,7 +289,7 @@ export class Room {
       if (was?.stage === "egg" && p.stage !== "egg" && p.stage !== "dead") this.hatch(p, a.w.x, a.w.y, snap.tick, now);   // out of its shell this moment
       const d = doing(p), o = d ? room.objects[norm(d.what)] ?? room.objects[d.what ?? ""] : null;
       a.eating = d?.type === "eat" || (d?.type === "use" && !!o?.fix && ("meal" in o.fix || !!o.fix.plant));   // (an older engine called eating "use")
-      a.update(p, home, this.stage, this.pace, sc.selected === p.id, first);
+      a.update(p, home, this.stage, this.pace, sc.selected === p.id, first, !!snap.activities?.[p.body?.activity ?? ""]?.rest);
       if (first) a.step(this.stage);
     }
     // an egg that hatched here within the hour, before this room was looked at: its shell lies by the newcomer still
@@ -313,9 +327,11 @@ export class Room {
       const p = a.pet, egg = p.stage === "egg", dead = p.stage === "dead";
       const said = p.said && ago(snap, p.said.tick) <= (sc.replay ? 30 : 16) ? p.said : null;
       who.push({ id: p.id, name: egg ? p.name ?? "egg" : p.label, family: p.family ?? 1, selected: sc.selected === p.id, faded: dead,
-                 caption: egg || dead || p.asleep ? null : p.plan?.intention || null, thinking: !!p.thinking && !p.asleep && !egg && !dead,
+                 caption: egg || dead || p.asleep ? null : p.plan?.intention || p.focus?.words || null, thinking: !!p.thinking && !p.asleep && !egg && !dead,
                  say: said ? { key: `${said.tick}${said.text}`, text: said.text, to: said.to_name, song: !!said.song } : null,
-                 mood: egg || dead || p.asleep || (grief && p.emote === "content") ? null : p.emote ?? null, tab: several });
+                 mood: egg || dead || p.asleep || (grief && p.emote === "content") ? null : p.emote ?? null, tab: several,
+                 // what its body is doing by itself (SPEC-v3.3 §5): a small sign over its head; none while it carries out a step it decided
+                 icon: egg || dead || p.asleep || !p.body?.icon ? null : { name: p.body.icon, key: `${p.body.activity}|${p.body.what}|${p.body.who}`, word: p.body.doing ?? "" } });
     }
     const heard = (snap.radio?.said ?? []).filter((h) => h.room === room.id && ago(snap, h.tick) <= 30).at(-1);
     this.words.sync(who, heard ? { key: `${heard.tick}${heard.text}`, text: heard.text, source: heard.source } : null, this.F, (W * this.K) / this.F);
@@ -324,7 +340,8 @@ export class Room {
   /** What has just happened here: each finished step once (never twice, also after a reload), startles, a turn to the window. */
   private happen(sc: Scene, fresh: boolean, now: number) {
     const { snap, room } = sc, house = `${snap.start}|${snap.lineage.id}|${snap.profile}`;
-    const cast = { pets: this.pets, things: this.still!.things, ghosts: this.ghosts, fx: this.fx, now, where: (n: string | null | undefined) => this.where(n), petAt: (n: string | null | undefined) => this.petBy(n) };
+    const cast = { pets: this.pets, things: this.still!.things, ghosts: this.ghosts, fx: this.fx, now, where: (n: string | null | undefined) => this.where(n), petAt: (n: string | null | undefined) => this.petBy(n),
+                   kept: (n: string | null | undefined) => { const on = (room.objects[norm(n)] ?? room.objects[n ?? ""])?.on; return on ? this.still!.things.get(on) : undefined; } };
     const acts = snap.acts ?? [], top = acts.reduce((n, a) => Math.max(n, a.n), 0);
     if (this.seenAct == null) {
       const [h, n] = (recall("pet.acts") ?? "").split("#");
@@ -374,7 +391,7 @@ export class Room {
 
   /** The name of every thing in the room, for the moment a room comes into view (or while the page holds them on):
    *  a made thing by its kind, a fixture and a piece of scenery by its name, bits and scenery once per kind (the one
-   *  nearest the middle), a creature by its kind. A memorial stone keeps its label always. */
+   *  nearest the middle), a creature by its kind, a place the room has grown by its name. */
   private tag(sc: Scene) {
     const still = this.still!, K = this.K, key = `${this.built}|${[...this.beasts.keys()].join()}|${!!this.crate}|${[...this.hatched.keys()].join()}`;
     if (key === this.tagKey) return;
@@ -385,7 +402,7 @@ export class Room {
       if (t.obj.fix?.sun) continue;
       if (t.drawn) { made.push(t); continue; }
       const stone = t.obj.memorial && (sc.snap.pets.find((p) => p.id === t.obj.memorial!.pet)?.label ?? t.name.replace(/^stone for /, ""));
-      tags.push({ key: `t.${t.name}`, text: stone ? `stone for ${stone}` : t.name, rect: px(t.rect), pri: stone ? 0 : 2, always: !!stone });
+      tags.push({ key: `t.${t.name}`, text: stone ? `stone for ${stone}` : t.name, rect: px(t.rect), pri: stone ? 0 : 2 });
     }
     while (made.length) {   // made things of one kind standing together share one name: "wind chimes x3"
       const group = [made.pop()!];
@@ -407,6 +424,7 @@ export class Room {
       for (const it of list) if (!best.has(it.name) || mid(it.rect) < mid(best.get(it.name)!)) best.set(it.name, it.rect);
       for (const [name, rect] of best) tags.push({ key: `${pri}.${name}`, text: name, rect: px(rect), pri });
     };
+    for (const a of still.areas) tags.push({ key: `a.${a.name}`, text: a.name, rect: px(a.rect), pri: 1 });
     once(still.spots.map((s) => ({ name: s.bit, rect: s.rect })), 3);
     once(still.scenery.map((s) => ({ name: sceneryName(s.sprite), rect: s.rect })), 4);
     for (const [id, until] of this.hatched) if (this.heads.has(id)) tags.push({ key: `h.${id}`, text: "just hatched", rect: this.heads.get(id)!, pri: 0, until });
@@ -456,10 +474,11 @@ export class Room {
     for (const b of this.beasts.values()) if (b.cr.id === name || norm(b.cr.name) === n || b.cr.kind === n.replace(/^(the|a) /, "")) return [b.w.x, b.w.y];
     const t = still.things.get(n) ?? still.things.get(name ?? "");
     if (t) return [t.x, t.y - Math.min(8, t.rect.h / 2)];
-    const side = /(north|south|west|east)/.exec(n)?.[1], p = near ?? [W / 2, OY + (FY * TILE) / 2];
+    const sc = this.scene, behind = sc && Object.entries(sc.room.doors).find(([, id]) => norm(sc.snap.rooms.find((r) => r.id === id)?.name) === n)?.[0];   // "the pond room": the door to it
+    const side = behind ?? /(north|south|west|east)/.exec(n)?.[1], p = near ?? [W / 2, OY + (FY * TILE) / 2];
     if (!side) return null;
     const d = still.doors.find((d) => d.dir === side);
-    if (n.includes("door") && d) return [d.rect.x + d.rect.w / 2, d.rect.y + d.rect.h / 2];
+    if ((n.includes("door") || n === side || behind) && d) return [d.rect.x + d.rect.w / 2, d.rect.y + d.rect.h / 2];
     return side === "north" ? [p[0], OY - 10] : side === "south" ? [p[0], OY + FY * TILE + 6] : side === "west" ? [OX - 6, p[1] - 8] : [OX + FX * TILE + 6, p[1] - 8];
   }
 
@@ -486,7 +505,11 @@ export class Room {
       const box = this.beastBox.get(id), r = b.rect();
       if (box) [box.x, box.y, box.w, box.h] = [r.x * K, r.y * K, r.w * K, r.h * K];
     }
-    this.words.naming = this.namesOn || now < this.namesUntil || (!!this.pointer && now - this.restAt > 1000);
+    this.words.naming = this.namesOn || now < this.namesUntil;
+    const at = this.pointer;
+    if (at) { this.aim[0] = at[0] * K; this.aim[1] = at[1] * K; }
+    this.words.pointer = at ? this.aim : null;
+    st.dim = this.light.darkness;
     this.fx.top = still.bounds.y + 1;
     this.alive(sc, still, now);
     this.light.step(now);
@@ -515,7 +538,9 @@ export class Room {
     const { snap, room } = sc, fx = this.fx, K = this.K, n = this.next;
     for (const t of still.things.values()) {
       if (t.s.destroyed) continue;
-      if (t.bob || t.bounce) t.s.y = t.y - Math.round((t.bounce ? Math.abs(Math.sin(now / 190 + t.x)) * 5 : (Math.sin(now / 700 + t.x) + 1) * 1) * K) / K;
+      if (t.bob || t.bounce || t.stir === 1) t.s.y = t.y - Math.round((t.bounce ? Math.abs(Math.sin(now / 190 + t.x)) * 5 : t.stir === 1 ? Math.abs(Math.sin(now / 215)) * 4 : (Math.sin(now / 700 + t.x) + 1) * 1) * K) / K;
+      else if (t.s.y !== t.y) t.s.y = t.y;
+      t.s.x = t.stir === 2 ? t.x + Math.round(Math.sin(now / 70) * K * Math.max(0, Math.sin(now / 450))) / K : t.x;   // fiddled with: it shakes, in fits
     }
     if (now > n.glint) {
       n.glint = now + 700;
@@ -532,7 +557,7 @@ export class Room {
       const up = (x: number, y: number) => fx.spawn("note", x + (Math.random() - 0.5) * 8, y, { vx: (Math.random() - 0.5) * 6, vy: -14, life: 1600, sway: 2 });
       for (const s of snap.sung ?? []) if (s.room === room.id && ago(snap, s.tick) <= 10) {
         const p = this.pets.get(s.by), b = this.beasts.get(s.by), t = still.things.get(s.by);
-        if (p) up(p.w.x, p.w.y - p.box.h - 2); else if (b) up(b.w.x, b.w.y - 12); else if (t) up(t.x, t.rect.y);
+        if (p) up(p.w.x, p.w.y - p.tall - 2); else if (b) up(b.w.x, b.w.y - 12); else if (t) up(t.x, t.rect.y);
       }
       for (const t of still.things.values()) if (t.obj.state === "playing" || (room.sounding && t.obj.fix?.loud)) up(t.x, t.rect.y);
     }
@@ -571,7 +596,7 @@ export class Room {
     let best: Thing | null = null;
     for (const t of still.things.values()) if (inside(grown(t.rect, 1), x, y) && (!best || t.rect.w * t.rect.h < best.rect.w * best.rect.h)) best = t;   // the smallest thing under the pointer: a cup on a rug, not the rug
     const onTile = x >= OX && y >= OY && x < OX + FX * TILE && y < OY + FY * TILE;
-    out.object = best?.name ?? (onTile ? Object.entries(room.objects).reverse().find(([, o]) => !o.fix?.sun && !o.wall && (o.water ?? [o.pos]).some((t) => t[0] === out.tile[0] && t[1] === out.tile[1]))?.[0] : undefined);
+    out.object = best?.name ?? (onTile ? Object.entries(room.objects).reverse().find(([, o]) => !o.fix?.sun && !o.wall && !o.on && (o.water ?? [o.pos]).some((t) => t[0] === out.tile[0] && t[1] === out.tile[1]))?.[0] : undefined);
     out.bit = still.spots.find((s) => inside(grown(s.rect, 2), x, y))?.bit ?? (onTile && !out.object ? room.spots.find((s) => s.pos[0] === out.tile[0] && s.pos[1] === out.tile[1])?.bit : undefined);
     if (!out.object && !out.bit && !out.door) {   // nothing of the house's own there: a piece of the room's scenery, the smallest under the pointer
       let piece: Still["scenery"][number] | null = null;
@@ -598,6 +623,26 @@ export class Room {
       || (t.bit && still?.spots.find((s) => s.bit === t.bit && s.pos[0] === t.tile[0] && s.pos[1] === t.tile[1])?.rect) || (t.door && still?.doors.find((d) => d.dir === t.door)?.rect)
       || (t.decor && still?.scenery.find((s) => s.sprite === t.decor && inside(s.rect, OX + t.tile[0] * TILE + 8, OY + t.tile[1] * TILE + 8))?.rect) || null;
   }
+  /** Order (SPEC-v3.3 §2), as plain lines for a hover card: what a thing that keeps things holds and how much room is
+   *  left, where a thing put away is kept, where its home is when it is not there, and the named place it stands in. */
+  private order(name: string, o: Obj): string[] | undefined {
+    const { snap, room } = this.scene!, out: string[] = [], at = (p: Tile | undefined, q: Tile) => !!p && p[0] === q[0] && p[1] === q[1];
+    const called = (n: string) => { const m = room.objects[n]?.made, d = m && drawnOf(m); return m?.called ? `“${m.called}”` : d ? `a ${d.color ? `${d.color} ` : ""}${d.kind}` : n; };
+    const into = (n: string) => `${room.objects[n]?.store?.inside ? "in" : "on"} the ${n}`, place = (pos: Tile) => room.areas?.find((a) => a.tiles.some((t) => at(t, pos)))?.name;
+    if (o.store) {
+      const left = o.store.cap - o.store.holds.length;
+      out.push(o.store.holds.length ? `holds: ${o.store.holds.map(called).join(", ")}` : "holds nothing yet", left > 0 ? `room for ${left} more` : "full");
+    }
+    if (o.on) out.push(`kept ${into(o.on)}`);
+    const h = o.home, there = h && h.room === room.id && (h.on ? o.on === h.on : !o.on && at(h.pos, o.pos));
+    if (h && !there) {
+      const spot = h.pos && place(h.pos);
+      out.push(`its home is ${h.room !== room.id ? `in ${snap.rooms.find((r) => r.id === h.room)?.name ?? "another room"}` : h.on ? into(h.on) : spot ? `in the ${spot}` : "a place of its own on the floor here"}`);
+    } else if (h) out.push("this is its home");
+    const area = room.areas?.find((a) => (a.on ? a.on === name || a.on === o.on : !o.wall && a.tiles.some((t) => at(t, o.pos))));
+    if (area) out.push(`part of the ${area.name}`);
+    return out.length ? out : undefined;
+  }
   private card(t: Target | null): Card | null {
     const sc = this.scene, still = this.still;
     if (!t || !sc || !still) return null;
@@ -614,11 +659,12 @@ export class Room {
       const m = th.obj.made!, d = th.drawn, a = kind(d.kind)?.a ?? (/^[aeiou]/.test(d.color ?? d.kind) ? "an" : "a");
       return { what: "thing", title: `${d.color ? (/^[aeiou]/.test(d.color) ? "an" : "a") : a} ${d.color ? `${d.color} ` : ""}${d.kind}`, sprite: th.canvas, name: m.called ?? th.name, kind: d.kind, color: d.color, material: d.material,
                maker: snap.pets.find((q) => q.id === m.by)?.label ?? null, owner: m.owner_name, heirloom: !!m.heirloom, worn: m.worn, purpose: m.recipe.purpose,
-               does: m.behavior ? `${m.behavior.do} when ${m.behavior.when}` : null, state: th.obj.state ?? null };
+               does: m.behavior ? `${m.behavior.do} when ${m.behavior.when}` : null, state: th.obj.state ?? null, notes: this.order(th.name, th.obj) };
     }
     if (th) return { what: th.obj.memorial ? "stone" : "fixture", title: th.obj.memorial ? "a memorial stone" : `the ${th.name}`, sprite: th.canvas, name: th.name, text: th.obj.memorial?.text, does: th.obj.says ?? null,
-                     state: th.obj.fix?.light && !snap.power ? "dark: the power is out" : th.obj.state ?? null };
-    if (t.object && room.objects[t.object]) return { what: "fixture", title: `the ${t.object}`, sprite: null, name: t.object, state: room.objects[t.object].state ?? null, does: room.objects[t.object].says ?? null };
+                     state: th.obj.fix?.light && !snap.power ? "dark: the power is out" : th.obj.state ?? null, notes: this.order(th.name, th.obj) };
+    if (t.object && room.objects[t.object]) return { what: "fixture", title: `the ${t.object}`, sprite: null, name: t.object, state: room.objects[t.object].state ?? null, does: room.objects[t.object].says ?? null,
+                                                     notes: this.order(t.object, room.objects[t.object]) };
     if (t.bit) {   // something to gather: what it is, and what a thing made of it can be
       const can = sc.hello?.bits[t.bit]?.can ?? [];
       return { what: "bit", title: `some ${t.bit}`, sprite: canvasOf(`bit.${t.bit}`), kind: t.bit, can, text: `a bit to gather${can.length ? `: something made of it can be ${can.join(" or ")}` : ""}` };

@@ -234,7 +234,8 @@ def finish(mind, now, cut=False):
         if done:
             do, o = now["do"], room["objects"].get(name)
             if do in ACT:   # numbered like any finished step, so the view plays it once (and sounds what sounds: §4)
-                act = story.act_of(h, pet, {"type": ACT[do], "door" if do == "go" else "target": now.get("what"), "to": now.get("who")})
+                onto = now["where"][1] if do == "tidy" and now.get("where") and now["where"][0] == "on" else None   # the shelf it goes on
+                act = story.act_of(h, pet, {"type": ACT[do], "door" if do == "go" else "target": now.get("what"), "to": now.get("who") or onto})
                 act.update(type=ACT[do], body=now["name"], loud=bool(o and ((things.prop(cfg, o).get("loud") if "made" in o else o.get("fix", {}).get("loud")))))
             if do == "inspect" and o is not None:
                 _, fx, key = actions.look(h, cfg, pet, {"target": name})
