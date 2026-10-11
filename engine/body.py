@@ -144,12 +144,12 @@ def score(house, cfg, pet, name, A, t, b, r):
     s += sum(w for k, w in A.get("when", {}).items() if k in now)
     s -= B["variety"] * b["recent"][-8:].count(name) + (B["again"] if b["recent"][-1:] == [name] else 0.0)
     # the longer since it last did this, the more it is due: whatever its mind is about, in five minutes it has done many things (§0)
-    s += B["fresh"] * min(1.0, (house["tick"] - b.get("done", {}).get(name, LONG_AGO)) / ticks(cfg, B["fresh_seconds"]))
+    s += B["fresh"] * (0.5 if A.get("passive") else 1.0) * min(1.0, (house["tick"] - b.get("done", {}).get(name, LONG_AGO)) / ticks(cfg, B["fresh_seconds"]))
     if b.get("last_still") and (not t.get("goal") or t["goal"] == pet["pos"]) and not A.get("rest"):
         s -= B["again"]   # it has just done something on this spot: next it moves (§1.4)
     if A.get("passive"):   # resting, looking and watching stay a small part of the day, unless it is worn out
         share = sum(b["idle"]) / max(1, len(b["idle"]))
-        s -= B["passive"] * max(0.0, share - B["passive_share"]) * (0.3 if feel.level(pet, "energy") >= 3 else 1.0) + (B["again"] if b.get("last_passive") else 0.0)
+        s -= B["passive"] * max(0.0, share - B["passive_share"]) * (0.6 if feel.level(pet, "energy") >= 3 else 1.0) + (B["again"] if b.get("last_passive") else 0.0)
     return s + r.uniform(0, B["chance"])
 
 
@@ -211,6 +211,7 @@ def tick(mind):
     now["left"] -= 1
     if now["left"] <= 0:
         finish(mind, now)
+        b["now"] = dict(choose(mind), startled=urgent)   # and straight on to the next thing: there is no tick on which it is doing nothing (§1.4)
 
 
 def voice(house, pet, kind):

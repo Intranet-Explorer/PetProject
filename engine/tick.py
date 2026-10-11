@@ -467,9 +467,9 @@ class Mind:
             self.adopt()
         if world.busy(pet):
             self.advance()
-        elif self.cfg["body"]["on"]:
+        if self.cfg["body"]["on"] and not world.busy(pet):   # (also on the tick its last decided step ends)
             body.tick(self)   # SPEC-v3.3 §1: between the things it decides, its body is never doing nothing
-        elif pet["following"]:
+        elif pet["following"] and not world.busy(pet):
             self.trail()
         self.notice(before)
         why = None if self.thought else self.wants_thought()
