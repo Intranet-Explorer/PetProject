@@ -15,7 +15,7 @@ import time
 from collections import Counter, deque
 from pathlib import Path
 
-from . import actions, director, feel, genome, life, log, mind, physics, radio, sleep, story, things, world
+from . import actions, body, director, feel, genome, life, log, mind, order, physics, radio, sleep, story, things, world
 from .memory import Memory
 from .world import LONG_AGO, NEEDS, add_event, alive, dist, family, here, hours, label, load_config, moment, new_house, relation, ticks
 
@@ -127,7 +127,7 @@ class Mind:
             return None
         if not self.brain.instant and self.eng.over_budget():
             return None
-        if not pet["plan"]:
+        if not world.busy(pet):
             return "nothing to do"
         if pet["news"]:
             return "something changed"
@@ -160,17 +160,28 @@ class Mind:
             self.note({"pet": pet["id"], "tick": h["tick"], "type": "no_intention", "reason": failed, "why": why})
             return
         if pet["plan"]:
-            self.end_plan("interrupted")
+            self.end_plan("interrupted" if world.busy(pet) else "done")
         thought = life.last_sentence(actions.clean(str(turn.get("thought", "")), 340), 300)   # whole sentences: these are what is read
         pet["meter"] = [pet["meter"][0] + feel.meter_talk(thought), pet["meter"][1] + 1]
         pet["following"] = None
+        focus = turn.get("focus")
+        if isinstance(focus, dict):   # SPEC-v3.3 §1.2: what it wants to be about until it thinks again; its body keeps at it
+            on = actions.find(h, pet, focus.get("target")) if actions.filled(focus.get("target")) else (None, None)
+            pet["focus"] = {"type": focus["type"], "words": actions.clean(focus["words"], 120), "since": h["tick"],
+                            "who": on[1]["id"] if on[0] == "pet" else None, "what": on[1] if on[0] == "thing" else None}
+        now = body.state(pet)["now"]
+        if now and turn["steps"]:   # what it has decided comes first: whatever its body was at is dropped
+            body.finish(self, now, cut=True)
         pet["plan"] = {
-            "thought": thought, "intention": actions.clean(turn["intention"], 120), "steps": turn["steps"][:5],
+            "thought": thought, "intention": actions.clean(turn.get("intention") or focus["words"], 120), "steps": turn["steps"][:5],
             "expect": life.last_sentence(actions.clean(turn["expect"], 230), 200), "why": why, "meter": feel.meter_talk(thought),
             "i": 0, "left": None,                       # the step it is on; ticks left doing it (None while walking there)
             "started": h["tick"], "needs0": dict(pet["needs"]), "tags": [], "tag_need": {}, "room": pet["room"],
             "step_needs0": None, "step_tags": [],
         }
+        if not pet["plan"]["steps"]:   # nothing decided this time but what to be about: its body carries on
+            pet["plan"]["idle"] = True
+        body.state(pet)["last_still"] = True   # whatever it decided was done where it stood: its body moves next
 
     def end_plan(self, ended):
         """The intention is over: score what it expected against what happened across the whole of it."""
@@ -243,7 +254,7 @@ class Mind:
             goal = actions.destination(h, self.cfg, pet, a)
             if goal and pet["pos"] != goal and h["tick"] - plan["step_began"] < ticks(self.cfg, self.cfg["clock"]["walk_seconds"]):   # nobody is chased for ever
                 return self.walk(goal)
-            plan["left"] = ticks(self.cfg, self.cfg["steps"][a["type"]])
+            plan["left"], plan["step_at"] = ticks(self.cfg, self.cfg["steps"][a["type"]]), h["tick"]
             if a["type"] == "follow" and not actions.check(a, h, self.cfg, pet, self.mem):
                 pet["following"] = actions.find(h, pet, a["who"])[1]["id"]
         if a["type"] == "follow":
@@ -338,8 +349,12 @@ class Mind:
                 action=a, kind=t, reason=reason, feedback=told, deltas=deltas, own=own, needs=rec["needs"], tags=",".join(tags), exploit=used)
         plan["i"], plan["left"], plan["step_needs0"] = plan["i"] + 1, None, None
         story.acted(h, cfg, pet, act, not reason)
+        eng.did(pet, plan.get("step_began", h["tick"]), h["tick"], t, t in ("rest", "look", "observe"), "mind", "" if reason else told[:120],
+                still=h["tick"] - plan.get("step_at", h["tick"]), rest=t == "rest")
         if reason:
             self.end_plan("not possible: " + reason)
+        elif plan["i"] == len(plan["steps"]) and cfg["body"]["on"]:
+            plan["idle"] = True   # the thought stays with it, and what it expected is weighed when it next thinks (SPEC-v3.3 §1.2)
         elif plan["i"] == len(plan["steps"]):
             self.end_plan("done")
 
@@ -448,8 +463,10 @@ class Mind:
         self.live()
         if self.thought and self.thought.done():
             self.adopt()
-        if pet["plan"]:
+        if world.busy(pet):
             self.advance()
+        elif self.cfg["body"]["on"]:
+            body.tick(self)   # SPEC-v3.3 §1: between the things it decides, its body is never doing nothing
         elif pet["following"]:
             self.trail()
         self.notice(before)
@@ -462,8 +479,10 @@ class Mind:
         pet, h, cfg = self.pet, self.eng.house, self.cfg
         if not pet["sleep"]:
             if pet["plan"]:
-                self.end_plan("interrupted")
+                self.end_plan("interrupted" if world.busy(pet) else "done")
             pet["sleep"], pet["following"] = {"since": h["tick"], "day": h["clock"]["day"], "done": False}, None
+            if body.state(pet)["now"]:
+                body.finish(self, body.state(pet)["now"], cut=True)
             for other in here(h, pet, awake=True):
                 add_event(h, other, "%s has fallen asleep" % actions.handle(h, other, pet))
         if not pet["sleep"]["done"] and self.night is None:
@@ -488,6 +507,7 @@ class Mind:
             for text in pet.pop("on_wake", []):   # what happened round it while it slept, that it would find on waking
                 add_event(h, pet, text)
             pet["news"].append("woke")
+            self.eng.did(pet, pet["sleep"]["since"], h["tick"], "asleep", True, "sleep", "", still=h["tick"] - pet["sleep"]["since"], rest=True)
             pet["sleep"], pet["phase_seen"], self.night, self.today = None, h["clock"]["phase"], None, []
             N = cfg["novelty"]
             pet["times"] = {k: min(n, N["cap"]) - N["eases"] for k, n in pet["times"].items() if n > N["eases"]}   # a little novelty comes back overnight
@@ -526,6 +546,8 @@ class Engine:
                     pet.setdefault(k, v)
         self.radio_items = radio.items_in(cfg, self.dir / "radio")   # what the box has to say; the server keeps it fresh
         self.to_kinds()
+        if not readonly:
+            self.alive_migration()
         if not readonly and "unstuck_all" not in self.house and self.house.setdefault("unstuck_all", self.house["tick"]) is not None and self.db:
             # once, for doors that came free before anyone was told when they do: every door a draught ever shut that is
             # free now is told to whoever is in the room on either side (Quiet's was shut five world days before this)
@@ -568,6 +590,34 @@ class Engine:
                 # a pet that has already said yes to the name it was offered has it ("Yes, I am Garry" used not to count)
                 if not pet["name"] and self.said_yes(pet) and not actions.name_taken(self.house, pet, pet["called"]) and not self.readonly:
                     actions.named(self.house, pet, self.minds[pet["id"]].mem, pet["called"].strip())
+
+    def did(self, pet, start, end, what, passive, by, text, still=0, rest=False):
+        """What a pet was doing from one tick to another, for whoever measures how alive the house is (SPEC-v3.3 §0, §8):
+        each thing its body did, each thing its mind decided, each sleep."""
+        if self.db and not self.readonly:
+            log.put(self.db, "doing", pet=pet["id"], tick_from=start, tick_to=end, what=what, passive=int(bool(passive)), by=by, text=text,
+                    still=still, rest=int(bool(rest)), room=pet["room"], x=pet["pos"][0], y=pet["pos"][1])
+
+    def alive_migration(self):
+        """SPEC-v3.3 comes to a house already lived in: everyone gets the orderly gene (drawn from the house's seed and
+        its own number, as its other genes were), fixtures that keep things are given their room, and an heirloom gets
+        a home by the stone or the bed."""
+        h, cfg = self.house, self.cfg
+        for pet in h["pets"].values():
+            if "orderly" not in pet.get("temper", {}) and pet["stage"] != "dead":
+                pet["temper"]["orderly"] = round(world.rnd(h, "orderly", pet["id"]).uniform(0.25, 0.75), 2)
+        caps = {f["name"]: f["store"] for r in cfg["house"]["rooms"].values() for f in r["fixtures"] if f.get("store")}
+        inside = {f["name"] for r in cfg["house"]["rooms"].values() for f in r["fixtures"] if f.get("inside")}
+        for room in h["rooms"].values():
+            if not room["type"]:
+                continue
+            for n, o in room["objects"].items():
+                if "fix" in o and n in caps and o["fix"].get("store") != caps[n]:
+                    o["fix"]["store"] = caps[n]
+                    if n in inside:
+                        o["fix"]["inside"] = True
+                if "made" in o and o["made"].get("heirloom") and not o.get("home"):
+                    order.heirloom_home(h, cfg, room, o)
 
     def said_yes(self, pet):
         """Has it lately said yes to the name it was offered? Its last words, and the last few things it said, from the log."""

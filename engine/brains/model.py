@@ -8,7 +8,7 @@ import urllib.request
 from pathlib import Path
 from urllib.parse import urlparse
 
-from ..actions import PLACES as SPOTS
+from ..actions import FOCUS, PLACES as SPOTS
 from ..songs import NOTES, PITCH
 from ..things import COLORS, DO, PLACES, SHAPES, WHEN
 
@@ -48,6 +48,9 @@ WRITTEN = {   # how each action is written, shown only for the actions it can do
     "write_belief": '{"type": "write_belief", "statement": one short sentence of at most 200 characters, "source": how you know it: lived | seen | told by <who>}',
     "revise_belief": '{"type": "revise_belief", "id": belief id, "statement": new text or "discard"}',
     "take_name": '{"type": "take_name"} (take the name the visitor calls you, as your own)',
+    "put_away": '{"type": "put_away", "what": a made thing here that you may move, "where": something here that keeps things}',
+    "take_out": '{"type": "take_out", "what": a thing that is put away here}',
+    "hang": '{"type": "hang", "what": a thing here that can hang on a wall}',
     # SPEC-v3.1
     "write": '{"type": "write", "text": a few words, at most 80 chars, "on": a wall (north wall | south wall | west wall | east wall), a stone here, or a thing of yours}',
     "scrub": '{"type": "scrub", "what": one of the writings here, named by where it is and how it begins}',
@@ -59,10 +62,18 @@ WRITTEN = {   # how each action is written, shown only for the actions it can do
     "name": '{"type": "name", "what": an animal of yours here, or "egg", "name": up to 16 chars}',
     "ask_book": '{"type": "ask_book", "question": what you want to know, at most 80 chars}',
 }
-FORMAT = """
+FORMAT_OLD = """
 Reply with one JSON object and nothing else:
 {"thought": "<short, why>", "intention": "<what you mean to do, in a few words>", "steps": [<2 to 5 of the things you can do, carried out in order>], "expect": "<how you expect to feel once the steps are done, or what you expect to see>"}
 each step is one of:
+%s
+"""
+# SPEC-v3.3 §1.2: it says what it wants to be about, and decides the things that are its to decide. Wandering, resting,
+# eating, tidying and the like happen between thoughts without being asked for.
+FORMAT = """
+Reply with one JSON object and nothing else:
+{"thought": "<short, why>", "focus": {"type": "<%s>", "target": "<who or what it is about, where that applies: someone or something here>", "words": "<what you want to be about for the next while, in a few of your own words>"}, "steps": [<0 to 3 things you decide to do now, carried out in order; leave it empty to simply carry on>], "expect": "<how you expect to feel before long, or what you expect to see>"}
+between thoughts you carry on by yourself with whatever your focus is: moving about, resting, eating, looking at things. A step is for something you decide. Each step is one of:
 %s
 """
 NIGHT = """
@@ -103,6 +114,9 @@ def schema(ctx):
     one = lambda t, **p: obj(type={"const": t}, **p)
     v = {
         "observe": [one("observe")], "rest": [one("rest")], "take_name": [one("take_name")],
+        "put_away": [one("put_away", what={"enum": c["loose"]}, where={"enum": c["stores"]})] if c.get("loose") and c.get("stores") else [],
+        "take_out": [one("take_out", what={"enum": c["stored"]})] if c.get("stored") else [],
+        "hang": [one("hang", what={"enum": c["hangable"]})] if c.get("hangable") else [],
         "look": [one("look", target={"enum": visible + ["visitor"]})],
         "move": [one("move", to={"enum": c["things"] + anyone + list(SPOTS)})],
         "go": [one("go", door={"enum": c["doors"]})],
@@ -143,8 +157,14 @@ def schema(ctx):
     step = {"anyOf": [x for a in c["allowed"] for x in v[a]]}
     if not step["anyOf"]:
         step = {"anyOf": v["observe"]}
-    return obj(thought=text(340, 0), intention=text(120),
-               steps={"type": "array", "items": step, "minItems": 2, "maxItems": 5}, expect=text(230, 0))
+    if not c.get("body"):
+        return obj(thought=text(340, 0), intention=text(120),
+                   steps={"type": "array", "items": step, "minItems": 2, "maxItems": 5}, expect=text(230, 0))
+    plain = obj(type={"enum": ["tidy", "explore", "make", "rest", "project", "play"]}, words=text(120))
+    about = [obj(type={"const": "be with"}, target={"enum": c["pets"]}, words=text(120))] if c["pets"] else []
+    about += [obj(type={"enum": ["tend", "stay near"]}, target={"enum": c["things"]}, words=text(120))] if c["things"] else []
+    return obj(thought=text(340, 0), focus={"anyOf": [plain] + about},
+               steps={"type": "array", "items": step, "minItems": 0, "maxItems": 3}, expect=text(230, 0))
 
 
 def prompt(packet, ctx):
@@ -152,7 +172,9 @@ def prompt(packet, ctx):
     kinds = sorted({k for m in reach for k in ctx["kinds"].get(m, [])})
     written = dict(WRITTEN, make=WRITTEN["make"] % ("|".join(kinds), "|".join(reach), "|".join(SIZES[:max(most, 1)])))
     usable = [a for a in ctx["allowed"] if a != "make" or (reach and most)]
-    return packet + FORMAT % "\n".join("  " + written[a] for a in usable)
+    if not ctx.get("body"):
+        return packet + FORMAT_OLD % "\n".join("  " + written[a] for a in usable)
+    return packet + FORMAT % (" | ".join(FOCUS), "\n".join("  " + written[a] for a in usable))
 
 
 def night_schema(asks, belief_ids, tellers):

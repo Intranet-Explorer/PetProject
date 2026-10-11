@@ -17,8 +17,9 @@ import uvicorn
 from fastapi import FastAPI, HTTPException, Response, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
 
-from . import actions, director, feel, life, metrics, mind, physics, radio, songs, story, things, walls
+from . import actions, body, director, feel, order, life, metrics, mind, physics, radio, songs, story, things, walls
 from .tick import Engine, model_brains, stub_brains
+from . import world
 from .world import ROOT, STAGE_WORD, alive, label, load_config, power_on, relation
 
 cfg = load_config(profile=os.environ.get("PET_PROFILE") or None)
@@ -69,14 +70,17 @@ def pet_view(p):
     if said:
         to = h["pets"].get(said["to"])
         said = dict(said, to_name="the visitor" if said["to"] == "visitor" else label(to) if to else None)
-    step = plan["steps"][min(plan["i"], len(plan["steps"]) - 1)] if plan else None
+    step = plan["steps"][min(plan["i"], len(plan["steps"]) - 1)] if plan and not plan.get("idle") else None
     out.update(
         needs={n: round(v, 1) for n, v in p["needs"].items()}, levels={n: feel.level(p, n) for n in p["needs"]},
         feelings=feel.feelings(p), felt={n: feel.WORDS[n][feel.level(p, n)] for n in p["needs"]}, seems=feel.seems(p), doing=mind.doing(h, p), asleep=bool(p["sleep"]), thinking=p["thinking"],
         carrying=p["carrying"], following=p["following"], weak=p["weak"], said=said, days=round(life.days(h, cfg, p), 1),
         project=p["project"], offers=[{"from": o["from"], "kind": o["kind"]} for o in p["offers"]],
         plan={"intention": plan["intention"], "thought": plan["thought"], "expect": plan["expect"], "i": plan["i"], "why": plan["why"],
-              "steps": [actions.words(s) for s in plan["steps"]], "acting": plan["left"] is not None} if plan else None,
+              "steps": [actions.words(s) for s in plan["steps"]], "acting": plan["left"] is not None and not plan.get("idle"),
+              "idle": bool(plan.get("idle"))} if plan else None,
+        body=body.doing(cfg, h, p) if cfg["body"]["on"] and not p["sleep"] and not world.busy(p) else None,   # SPEC-v3.3 §1, §5.4
+        focus=p.get("focus"), habits=body.habits(h, cfg, p), react=body.state(p).get("react"), orderly=p["temper"].get("orderly"),
         step=step and step.get("type"), last_plan=p["last_plan"], calls_hour=len(p["calls"]), spring=p["spring"] > 0,
         portrait=p["portraits"][-1] if p["portraits"] else None, old=life.span(cfg, p) - life.days(h, cfg, p) <= 1,
         songs=[e["id"] for e in p.get("songs", []) if e["id"] in h.get("songs", {})],   # SPEC-v3.1
@@ -85,7 +89,7 @@ def pet_view(p):
         # SPEC-v3.2 §5, §6: in plain words for the page. `mood`: what is wrong, worst first, at most two; `emote`: one
         # strong feeling, if there is one; `act`: the step it is on.
         stage_word=STAGE_WORD.get(p["stage"], p["stage"]), mood=mood(p), emote=emote(p),
-        act=story.act_of(h, p, plan["steps"][min(plan["i"], len(plan["steps"]) - 1)]) | {"since": plan.get("step_began", plan["started"])} if plan else None,
+        act=story.act_of(h, p, plan["steps"][min(plan["i"], len(plan["steps"]) - 1)]) | {"since": plan.get("step_began", plan["started"])} if world.busy(p) else None,
     )
     return out
 
@@ -117,7 +121,11 @@ def room_view(r):
             v["made"] = {"id": m["id"], "recipe": m["recipe"], "owner": m["owner"], "owner_name": label(owner) if owner else None, "by": m["by"],
                          "heirloom": m.get("heirloom"), "behavior": m.get("behavior"), "active": bool(o.get("active")), "uses": m["uses"],
                          "ups": m["ups"], "useful": things.useful(m, cfg), "called": m.get("called"), "tick": m["tick"],
-                         "worn": [k for k in ("damp", "dusty", "eaten") if m.get(k)]}
+                         "worn": [k for k in ("damp", "dusty", "eaten") if m.get(k)],
+                         "loud": bool(things.prop(cfg, o).get("loud")),                           # it sounds when used (SPEC-v3.3 §4)
+                         "hums": bool(o.get("active") and things.doing(cfg, o).get("loud"))}     # it is making a noise by itself now
+            if o.get("home"):
+                v["home"] = o["home"]   # SPEC-v3.3 §2.3: where it belongs: {room, on} or {room, pos}
         elif "memorial" in o:
             v["memorial"] = o["memorial"]
         else:
@@ -131,11 +139,17 @@ def room_view(r):
                 v["servings"] = o["servings"]
         if o.get("wall"):
             v["wall"] = True
+        if o.get("on"):
+            v["on"] = o["on"]   # SPEC-v3.3 §2.2: put away on (or in) this; it stands on that thing's tile
+        if order.cap(cfg, o):
+            v["store"] = {"cap": order.cap(cfg, o), "holds": order.held(r, n),
+                          "inside": bool(o.get("fix", {}).get("inside") or cfg["kinds"].get(o.get("made", {}).get("recipe", {}).get("kind"), {}).get("inside"))}
         objs[n] = v
     return {"id": r["id"], "cell": r["cell"], "type": r["type"], "name": r["name"], "doors": r["doors"], "paint": r["paint"],
             "shut": [k.split("|")[1] for k, t in h["shut"].items() if k.startswith(r["id"] + "|") and t > h["tick"]],
             "wet": r["wet_until"] > h["tick"], "cold": r["cold_until"] > h["tick"], "lit": things.light_on(h, cfg, r),
             "marks": [dict(m, clarity=round(walls.clarity(cfg, r, m, h["tick"]), 2), by_name=mark_by(m)) for m in r.get("marks", [])],
+            "mess": order.clutter(h, cfg, r), "mess_says": order.MESS[order.clutter(h, cfg, r)], "areas": r.get("areas", []),   # SPEC-v3.3 §2
             "sounding": r.get("sounding_until", 0) > h["tick"], "objects": objs, "found": r["found"], "by": r["by"],
             "spots": [{"bit": s["bit"], "pos": s["pos"]} for s in r["spots"] if s["ready"]]}
 
@@ -156,6 +170,13 @@ def snapshot():
         "radio": {"on": radio.is_on(h), "here": bool(radio.boxes(h)), "said": recent(h.get("radio", {}).get("said", []), 45)},
         "arrived": h.get("v31", {}).get("arrived", {}), "read_glow": (h["tick"] - h.get("read_glow", -10**9)) * cfg["clock"]["tick_seconds"] <= 20,
         "pace": cfg["pace"],
+        # SPEC-v3.3: the visitor's music and radio (§3), the small sounds pets make by themselves (§4: each numbered, to
+        # be played once), and the body's activities with their icons (§1.1, §5.4)
+        "dj": {"music": (h.get("dj") or {}).get("music"), "moods": list(cfg["music"]["tunes"]),
+               "radio": {"on": radio.is_on(h), "plays": h.get("radio", {}).get("plays") or "mix", "theirs": any(n != "little radio" for _, n, _ in radio.boxes(h)),
+                         "rooms": [r["id"] for r, _, _ in radio.boxes(h)]}},
+        "vox": recent(h.get("vox", []), 20),
+        "activities": {n: {"icon": a.get("icon"), "passive": bool(a.get("passive")), "rest": bool(a.get("rest"))} for n, a in cfg["activities"].items()},
         # SPEC-v3.2: the one plain sentence about the house now, and the steps finished in the last world minute or so
         "now": story.now(h, cfg), "acts": recent(h.get("acts", []), 40),
         "tick": h["tick"], "clock": h["clock"], "weather": h["weather"], "power": power_on(h), "size": [cfg["W"], cfg["H"]],

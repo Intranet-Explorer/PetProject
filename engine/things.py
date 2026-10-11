@@ -23,6 +23,11 @@ def made(room):
     return {n: o for n, o in room["objects"].items() if "made" in o}
 
 
+def on_floor(room):
+    """The made things that stand on the floor: not hung up, not put away (SPEC-v3.3 §2: order makes room)."""
+    return {n: o for n, o in made(room).items() if not o.get("wall") and not o.get("on")}
+
+
 def mine(house, pet, room=None):
     """The things in the room that are this pet's."""
     room = room or house["rooms"][pet["room"]]
@@ -102,7 +107,13 @@ def to_kind(cfg, recipe):
 def wall_slot(house, room):
     """A free place on the wall for a thing that hangs (a picture, a mirror, a shelf), or None."""
     used = [o["pos"] for o in room["objects"].values() if o.get("wall")]
-    return next((list(t) for t in room.get("wall_slots", [[2, 0], [5, 0], [9, 0]]) if list(t) not in used), None)
+    free = next((list(t) for t in room.get("wall_slots", [[2, 0], [5, 0], [9, 0]]) if list(t) not in used), None)
+    if free:
+        return free
+    # a wall hook makes room for more (SPEC-v3.3 §2.2): each holds a couple of things, on the tiles beside it
+    hooks = sum(1 for o in room["objects"].values() if o.get("wall") and o.get("made", {}).get("recipe", {}).get("kind") == "wall hook")
+    spare = [[x, 0] for x in range(1, 11) if [x, 0] not in used][:2 * hooks]
+    return spare[0] if spare and sum(1 for o in room["objects"].values() if o.get("wall") and "made" in o) < len(room.get("wall_slots", [0, 0, 0])) + 2 * hooks else None
 
 
 def whose(house, pet, o):
@@ -187,7 +198,7 @@ def check_make(a, house, cfg, pet):
         return "you are not big enough yet to make something that large"
     if not clean_name(r.get("name")) or not isinstance(r.get("purpose"), str):
         return "it needs a name and a purpose"
-    if len(made(room)) >= cfg["make"]["crowded"]:
+    if len(on_floor(room)) >= cfg["make"]["crowded"]:
         return "this room is too crowded for another thing"
     if kind.get("wall") and not wall_slot(house, room):
         return "there is no free place on the wall here to hang it"

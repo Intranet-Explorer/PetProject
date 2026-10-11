@@ -1,7 +1,7 @@
 """What the house does on its own (SPEC-v3 §6.4, §6.5): the day's weather, the seasons, storms and power
 cuts, the events nobody caused, and the small creatures. All of it scripted; no model is ever asked."""
-from . import genome, songs, things, walls
-from .world import (LONG_AGO, add_event, alive, arrived, bit_kinds, clock, dist, family, free_tile, hours, in_room, label, moment,
+from . import genome, order, songs, things, walls
+from .world import (LONG_AGO, moving as on_the_move, add_event, alive, arrived, bit_kinds, clock, dist, family, free_tile, hours, in_room, label, moment,
                     new_pet, power_on, rnd, ticks, weather_of)
 
 SKY = {"clear": "the sky has cleared", "cloudy": "the sky has gone grey", "rain": "it has started to rain",
@@ -47,6 +47,7 @@ def begin(house, cfg):
     if house["tick"] % ticks(cfg, 10) == 0:
         events(house, cfg)
         arrivals(house, cfg)
+        heard_music(house, cfg)
     creatures(house, cfg)
 
 
@@ -104,6 +105,9 @@ def hourly(house, cfg):
                 o["pos"] = [max(1, min(cfg["W"] - 2, round(1 + (cfg["W"] - 3) * (c["hour"] - season["sunrise"]) / span))), o["pos"][1]]
     things.upkeep(house, cfg)
     walls.fade(house, cfg)
+    for room in found(house):   # SPEC-v3.3 §2.3: the places a room has grown are named from what is in them
+        room["areas"] = order.areas(house, cfg, room)
+        room["mess"] = order.clutter(house, cfg, room)
     if house.get("storm_cut") and house["storm_cut"] <= house["tick"]:
         house["storm_cut"] = None
         if house["weather"] == "storm":
@@ -194,6 +198,28 @@ def events(house, cfg):
         things.drop_bits(house, cfg, room, [cfg["W"] // 2, cfg["H"] // 2], [bit])
         tell_all(house, "the visitor left some %s on the floor" % bit, "visitor", room["id"])
         note(house, "surprise", room["id"], bit + " (the director's, in the visitor's name)")
+
+
+def heard_music(house, cfg):
+    """SPEC-v3.3 §3.1: a tune the visitor plays long enough is picked up by ear like any song, and can drift down a
+    family from there. Each mood has one tune (config.toml [music] tunes)."""
+    dj = (house.get("dj") or {}).get("music")
+    if not dj or not dj.get("mood") or dj["mood"] not in cfg["music"]["tunes"]:
+        return
+    name = "the visitor's %s tune" % dj["mood"]
+    need = cfg["music"]["learn_minutes"] * 6   # this is called every ten world seconds
+    for p in awake_pets(house):
+        if dj["scope"] not in ("house", p["room"]):
+            continue
+        got = p.setdefault("tunes_heard", {})
+        got[dj["mood"]] = got.get(dj["mood"], 0) + 1
+        if got[dj["mood"]] == need:
+            sid = next((s["id"] for s in songs.book(house).values() if s["by"] == "visitor" and s["name"] == name), None) \
+                or songs.add(house, name, songs.parse(cfg["music"]["tunes"][dj["mood"]], cfg), "visitor", how="the visitor's music", fam=0)
+            if not songs.known(house, p, of=sid):
+                songs.keep(house, cfg, p, songs.by_ear(house, cfg, p, sid))
+                add_event(house, p, "the tune the visitor has been playing has stayed with you; you could sing it")
+                moment(house, "song", "%s has picked up %s by ear" % (label(p), name), p["id"], p["room"])
 
 
 def unstuck(house, key):
@@ -305,7 +331,7 @@ def creatures(house, cfg):
                     goal = cr["goal"] = [r.randrange(cfg["W"]), r.randrange(cfg["H"])]
         elif kind == "mouse":
             sweet = [(n, o) for n, o in things.made(room).items() if things.prop(cfg, o).get("food") and not o["made"].get("heirloom")]
-            moving = [p for p in pets if p["plan"] and p["plan"]["left"] is None]   # a pet on the move
+            moving = [p for p in pets if on_the_move(p)]   # a pet on the move
             friend = max(pets, key=lambda p: cr["fed"].get(p["id"], 0), default=None)
             shy = C["mouse"]["shy"]
             scared = [p for p in moving if dist(p["pos"], cr["pos"]) <= shy * (0.5 + p["temper"]["bold"]) and cr["fed"].get(p["id"], 0) < C["mouse"]["trust_to_wait"]]
@@ -327,7 +353,7 @@ def creatures(house, cfg):
             elif friend and (cr["fed"].get(friend["id"], 0) >= C["mouse"]["trust_to_wait"] or lingers(cfg, cr, friend)):
                 goal, cr["doing"] = friend["pos"], "waiting near %s" % label(friend)
             elif friend and not moving:
-                still = [p for p in pets if not p["plan"] or p["plan"]["left"] is not None]
+                still = [p for p in pets if not on_the_move(p)]
                 if still:   # it comes closer to pets that stay still
                     p = still[0]
                     goal = p["pos"] if dist(p["pos"], cr["pos"]) > 2 else None
@@ -491,7 +517,7 @@ def trust(house, cfg, cr, pets):
     for p in pets:
         if dist(p["pos"], cr["pos"]) > 3:
             continue
-        moving = bool(p["plan"]) and p["plan"]["left"] is None
+        moving = on_the_move(p)
         if p.get("following") == cr["id"]:
             trusts(cr, p, T["follow_per_minute"] * per)
         elif moving and p.get("spring"):
@@ -703,6 +729,8 @@ def arrive_taming(house, cfg):
 
 
 def arrive_radio(house, cfg):
+    for room in found(house):   # the visitor's own little radio is taken away: they have theirs now (SPEC-v3.3 §3.2)
+        room["objects"].pop("little radio", None)
     room = put_or_wait(house, cfg, "storeroom", "dial box", {"fix": {"radio": True, "movable": True, "states": ["off", "on"]}, "state": "off"},
                        house["rooms"][house["start"]])
     for p in awake_pets(house):

@@ -114,6 +114,17 @@ def effects(house, cfg, pet):
         out.append(effect("draught", "comfort", R["events"]["draught"], "a cold draught runs through the room"))
     if not power_on(house) and night:
         out.append(effect("power", "comfort", 0.0, "every light in the house has gone dark"))
+    # SPEC-v3.3 §2.1, §3.1: a mess wears on an orderly pet and a tidy room eases it; the visitor's music is felt
+    from . import order
+    tidy, mess = (T.get("orderly", 0.5) - 0.5) * 2, order.clutter(house, cfg, room)
+    if tidy > 0 and mess != 1 and things.made(room):
+        out.append(effect("clutter", "comfort", cfg["order"]["mess" if mess == 2 else "tidy"] * tidy, None, False))
+    dj = (house.get("dj") or {}).get("music")
+    if dj and dj.get("mood") and dj["scope"] in ("house", room["id"]):
+        for need, rate in cfg["music"].get(dj["mood"], {}).items():
+            out.append(effect("music", need, rate, "the visitor is playing %s music" % dj["mood"], False))
+        if not cfg["music"].get(dj["mood"]):
+            out.append(effect("music", "comfort", 0.0, "the visitor is playing %s music" % dj["mood"], False))
     return out
 
 
@@ -123,8 +134,12 @@ def senses(house, cfg, pet, acting=None):
     felt = [e["feel"] for e in (acting if acting is not None else effects(house, cfg, pet)) if e["feel"]]
     felt += life.body_feels(house, cfg, pet)
     room = house["rooms"][pet["room"]]
-    if len(things.made(room)) >= cfg["make"]["crowded"]:
-        felt.append("this room is crowded with made things: there is no room to make another here unless one is taken apart")
+    if len(things.on_floor(room)) >= cfg["make"]["crowded"]:
+        felt.append("this room is crowded with made things: there is no room to make another here unless one is taken apart or put away")
+    from . import order
+    mess = order.clutter(house, cfg, room)   # SPEC-v3.3 §2.1: clutter is felt, by those who mind it
+    if mess == 2 or (mess == 0 and pet["temper"].get("orderly", 0.5) > 0.6 and things.made(room)):
+        felt.append(order.MESS[mess])
     if pet["spring"]:
         felt.append("there is a spring in your step")
     felt += drawn(house, cfg, pet, room, felt)

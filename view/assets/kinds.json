@@ -80,7 +80,8 @@
    "sweet"
   ],
   "sprite": "kind.doll",
-  "a": "a"
+  "a": "a",
+  "hangs": true
  },
  "candle": {
   "rank": 1,
@@ -107,7 +108,8 @@
    "sweet"
   ],
   "sprite": "kind.lantern",
-  "a": "a"
+  "a": "a",
+  "hangs": true
  },
  "lamp": {
   "rank": 2,
@@ -130,7 +132,8 @@
    "quiet"
   ],
   "sprite": "kind.bell",
-  "a": "a"
+  "a": "a",
+  "hangs": true
  },
  "drum": {
   "rank": 2,
@@ -165,7 +168,8 @@
    "heavy"
   ],
   "sprite": "kind.wind chime",
-  "a": "a"
+  "a": "a",
+  "hangs": true
  },
  "ball": {
   "rank": 1,
@@ -196,7 +200,8 @@
    "sweet"
   ],
   "sprite": "kind.mobile",
-  "a": "a"
+  "a": "a",
+  "hangs": true
  },
  "jar": {
   "rank": 1,
@@ -252,7 +257,10 @@
    "heavy"
   ],
   "sprite": "kind.basket",
-  "a": "a"
+  "a": "a",
+  "store": 3,
+  "inside": true,
+  "hangs": true
  },
  "box": {
   "rank": 1,
@@ -262,7 +270,9 @@
    "springy"
   ],
   "sprite": "kind.box",
-  "a": "a"
+  "a": "a",
+  "store": 2,
+  "inside": true
  },
  "shelf": {
   "rank": 2,
@@ -274,7 +284,8 @@
    "springy"
   ],
   "sprite": "kind.shelf",
-  "a": "a"
+  "a": "a",
+  "store": 3
  },
  "stool": {
   "rank": 1,
@@ -299,7 +310,8 @@
    "fragrant"
   ],
   "sprite": "kind.mirror",
-  "a": "a"
+  "a": "a",
+  "hangs": true
  },
  "picture": {
   "rank": 2,
@@ -312,7 +324,8 @@
    "heavy"
   ],
   "sprite": "kind.picture",
-  "a": "a"
+  "a": "a",
+  "hangs": true
  },
  "plant pot": {
   "rank": 1,
@@ -336,7 +349,8 @@
    "sweet"
   ],
   "sprite": "kind.garland",
-  "a": "a"
+  "a": "a",
+  "hangs": true
  },
  "charm": {
   "rank": 1,
@@ -346,7 +360,8 @@
    "sweet"
   ],
   "sprite": "kind.charm",
-  "a": "a"
+  "a": "a",
+  "hangs": true
  },
  "stone stack": {
   "rank": 1,
@@ -387,5 +402,50 @@
   ],
   "sprite": "kind.treat",
   "a": "a"
+ },
+ "chest": {
+  "rank": 2,
+  "wall": false,
+  "not": [
+   "soft",
+   "sweet",
+   "bouncy",
+   "springy",
+   "fragrant",
+   "glassy"
+  ],
+  "sprite": "kind.chest",
+  "a": "a",
+  "store": 5,
+  "inside": true
+ },
+ "crate": {
+  "rank": 1,
+  "wall": false,
+  "not": [
+   "soft",
+   "sweet",
+   "bouncy",
+   "springy",
+   "glassy"
+  ],
+  "sprite": "kind.crate",
+  "a": "a",
+  "store": 4,
+  "inside": true
+ },
+ "wall hook": {
+  "rank": 1,
+  "wall": true,
+  "not": [
+   "soft",
+   "sweet",
+   "bouncy",
+   "springy",
+   "fragrant"
+  ],
+  "sprite": "kind.wall hook",
+  "a": "a",
+  "hooks": 2
  }
 }

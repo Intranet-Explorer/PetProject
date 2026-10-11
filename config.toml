@@ -22,10 +22,10 @@ rest = 40
 use = 10
 gather = 8
 drop = 4
-make = 16
+make = 14                 # SPEC-v3.3 §0: nothing decided keeps a pet on one spot past 30 watched seconds (was 16)
 unmake = 8
 arrange = 8
-combine = 16
+combine = 14
 paint = 12
 teach = 12
 give = 6
@@ -36,16 +36,19 @@ accept = 4
 take = 6
 tell = 14
 chase = 8
-lay_egg = 20
+lay_egg = 14
 bequeath = 12
 write_belief = 10
 revise_belief = 10
 take_name = 4
+put_away = 6              # SPEC-v3.3
+take_out = 4
+hang = 8
 write = 12                # SPEC-v3.1
 scrub = 8
-compose = 16
+compose = 14
 sing = 12
-teach_song = 16
+teach_song = 14
 call = 4
 name = 6
 ask_book = 14
@@ -266,3 +269,39 @@ population = 5            # pets and eggs alive at once, once a second family is
 per_family = 3            # ... and at most this many of one family
 familiar_hours = 8        # world hours awake in the same room before a stranger is someone it knows
 nuzzle = 0.4              # how much of a nuzzle's ease there is with a stranger
+
+# ---- SPEC-v3.3: alive ----
+
+[body]                    # §1: what a pet does by itself between thoughts (the activities are in activities.toml)
+on = true
+focus = 1.6               # how strongly what its mind wants to be about weights the activities that serve it
+habit = 0.8               # how much a settled habit adds ...
+habit_full = 10           # ... once it has done that there at that hour this many times
+habit_shown = 4           # a habit is shown on its card from this many
+habit_watched = 0.3       # what a young one picks up each time it watches a parent do something
+variety = 0.7             # each time an activity is among the last eight it scores this much lower ...
+fresh = 1.0               # ... and one it has not done among the last ten scores this much higher
+again = 1.5               # ... and this much lower if it was the very last thing
+chance = 0.6              # a little randomness, so two alike do not move in step
+passive = 6.0             # resting, looking and watching are pushed down as their share of its recent time ...
+passive_share = 0.15      # ... rises past this (a worn-out pet is let off most of it)
+window_ticks = 150        # the recent time that share is taken over
+walk_seconds = 30         # it gives up walking to where an activity is after this long, and does it where it stands
+go_again_seconds = 240    # it does not wander from room to room by itself more often than this
+mess_pull = 0.6           # what each step of a room's mess adds to tidying (times 0.4 to 1.6 by how orderly it is)
+tend_grow = 0.01          # what tending adds to a plant's growth
+sing_again_seconds = 600  # it does not sing by itself more often than this
+
+[order]                   # §2
+tidy_below = 2            # this many loose things or fewer: "everything here has its place"
+mess_above = 6            # more than this: "this room is a mess"
+mess = -0.15              # comfort per 10 s in a mess, for a pet as orderly as can be (none below the middle)
+tidy = 0.05               # ... and in a tidy room
+
+[music]                   # §3.1: the visitor's music, per 10 s to whoever hears it; never said as a number
+calm = { comfort = 0.15 }
+lively = { curiosity = 0.2 }
+mysterious = { curiosity = 0.1 }
+sad = { comfort = 0.05 }
+learn_minutes = 6         # world minutes of hearing a tune before a pet has it by ear, like any song
+tunes = { calm = ["mi long", "so long", "mi long", "re long", "do long"], lively = ["do short", "mi short", "so short", "high do short", "so short", "mi short", "so long"], mysterious = ["low la long", "do short", "low la short", "mi long", "re short", "low la long"], sad = ["la long", "so long", "mi long", "re short", "mi long"] }

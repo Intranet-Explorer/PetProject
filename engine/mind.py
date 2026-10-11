@@ -2,7 +2,7 @@
 No numbers, no coordinates, no counts of anything, and no sentence telling the pet what it is or what it is
 like. Its temperament shows only in what is mentioned and how (§8.1). Alongside the text comes `ctx`: the
 names the packet shows, so a brain's reply can be held to things that are really there."""
-from . import actions, feel, life, physics, songs, things, walls
+from . import actions, body, feel, life, order, physics, songs, things, walls
 from .world import LONG_AGO, dist, family, here, neighbours, room_type
 
 BUSY = {"observe": "watching the room", "look": "looking at something", "move": "walking", "go": "heading for a door",
@@ -12,6 +12,7 @@ BUSY = {"observe": "watching the room", "look": "looking at something", "move": 
         "give": "holding something out", "show": "showing something", "follow": "following someone", "nuzzle": "leaning close",
         "accept": "taking what was offered", "take": "taking something", "chase": "chasing", "tell": "telling something",
         "lay_egg": "laying an egg", "bequeath": "choosing what to leave", "write_belief": "thinking", "revise_belief": "thinking", "take_name": "taking a name",
+        "put_away": "putting something away", "take_out": "taking something down", "hang": "hanging something up",
         "write": "writing on something", "scrub": "rubbing out some words", "compose": "making up a tune", "sing": "singing",
         "teach_song": "teaching a song", "call": "calling", "name": "naming something", "ask_book": "reading the book"}
 RECENT = 6          # how many earlier happenings are shown
@@ -19,15 +20,17 @@ RECENT = 6          # how many earlier happenings are shown
 # it notices, what is here, who is here, what just happened, what was said to it, its parent's words, what it can do.
 # SPEC-v3.1 §8 adds, after v3's own: older inscriptions, older words from the box, songs beyond the last three sung, what
 # it read beyond the last passage. Never cut: anything said or sung to it, the inscription it is standing in front of.
-CUT_ORDER = ["earlier", "rooms", "known", "told", "things", "sounds", "beliefs", "writing", "box", "songs", "read"]
+# SPEC-v3.3 §6 adds what its body has been at, its habits, and where things are kept: habits go early, the rest stay.
+CUT_ORDER = ["habits", "earlier", "rooms", "known", "told", "things", "sounds", "beliefs", "writing", "box", "songs", "read"]
 
 
 def doing(house, pet):
     if pet["sleep"]:
         return "asleep"
     plan = pet["plan"]
-    if not plan:
-        return "standing still"
+    if not plan or plan.get("idle"):   # SPEC-v3.3: between the things it decides, whatever its body is at
+        now = (pet.get("body") or {}).get("now")
+        return now["doing"] if now else "standing still"
     step = plan["steps"][min(plan["i"], len(plan["steps"]) - 1)]
     target = step.get("target") or step.get("what")
     word = BUSY.get(step.get("type"), "busy")
@@ -75,7 +78,7 @@ def perceive(house, cfg, pet, mem):
     room, T, tick = house["rooms"][pet["room"]], pet["temper"], house["tick"]
     objs, me = room["objects"], pet["pos"]
     acting = physics.effects(house, cfg, pet)
-    can = actions.allowed(house, cfg, pet, mem)
+    can = actions.offered_to_mind(house, cfg, pet, mem)
     others = here(house, pet)
     creatures = [c for c in house["creatures"] if c["room"] == room["id"]]
     eggs = [p for p in house["pets"].values() if p["room"] == room["id"] and p["stage"] == "egg"]
@@ -89,6 +92,8 @@ def perceive(house, cfg, pet, mem):
             notes.append(things.whose(house, pet, o))
             if o.get("wall"):
                 notes.append("on the wall")
+            if o.get("on"):
+                notes.append("kept on the " + o["on"])
             if o["made"].get("called"):
                 notes.append("the visitor calls it " + o["made"]["called"])
             if o.get("state") in ("on", "off"):
@@ -104,6 +109,8 @@ def perceive(house, cfg, pet, mem):
                 state = "dark"
             if state and state != "closed":
                 notes.append(state)
+        if order.cap(cfg, o):   # SPEC-v3.3 §2.2
+            notes.append("a place to keep things" + ("; full" if order.stores(cfg, room).get(n, 0) <= 0 else ""))
         notes.append(feel.near_word(me, o["pos"]))
         return "%s (%s)" % (n, "; ".join(notes))
 
@@ -168,7 +175,7 @@ def perceive(house, cfg, pet, mem):
     since = [e for t, e in pet["events"] if t > pet["seen"]]
     earlier = collapse([e for t, e in pet["events"] if t <= pet["seen"]])[-RECENT:]
     plan = pet["plan"]
-    busy = "%s (not finished)" % plan["intention"] if plan else "nothing"
+    busy = "%s (not finished)" % plan["intention"] if plan and not plan.get("idle") else doing(house, pet) if cfg["body"]["on"] else "nothing"
     offers = []
     for off in pet["offers"]:
         giver = house["pets"].get(off["from"])
@@ -183,6 +190,7 @@ def perceive(house, cfg, pet, mem):
     parent_words = [m for m in pet["told"] if m["kind"] in ("message", "last words") and (pet["stage"] in ("hatchling", "child") or (m["kind"] == "last words" and m["tick"] >= fresh))]
     tells = [m for m in pet["told"] if m["kind"] == "tell"][:3]
     beliefs = sorted(mem.active(), key=lambda b: -b["revised"])
+    did = body.since(pet) if cfg["body"]["on"] else ""   # what its body has been at (SPEC-v3.3 §1.2)
     proj = pet["project"]
     project = "%s (started %s)" % (proj["text"], feel.ago(house, cfg, proj["since"])) if proj else "none yet; you can choose one when you sleep"
     mine_here = [n for n in things.mine(house, pet, room)]
@@ -228,7 +236,10 @@ def perceive(house, cfg, pet, mem):
         "doors": "this room's doors: " + doors,
         "sounds": "from next door: " + "; ".join(sounds(house, cfg, pet)),
         "doing": "you are doing: " + busy,
+        "focus": "you have been about: " + ((pet.get("focus") or {}).get("words") or ""),
+        "body": "since you last thought, without thinking about it, you: " + did,
         "since": "since you last thought:" + ("".join("\n  " + e for e in since) or " nothing"),
+        "habits": "your habits: " + "; ".join(body.habits(house, cfg, pet)),
         "earlier": "earlier: " + "  |  ".join(earlier),
         "said": "said to you: " + "; ".join(pet["inbox"]),
         "front": "written right in front of you: " + (front or ""),
@@ -252,7 +263,8 @@ def perceive(house, cfg, pet, mem):
     empty = {"sounds": "from next door: ", "earlier": "earlier: ", "said": "said to you: ", "offers": "offered to you: ", "parent": "",
              "told": "", "things": "your things here: ", "known": "who you know: ", "front": "written right in front of you: ",
              "writing": "written in this room: ", "box": "what you heard the box say: ", "read": "", "songs": "songs you know: ",
-             "animals": "your animals: "}
+             "animals": "your animals: ", "focus": "you have been about: ",
+             "body": "since you last thought, without thinking about it, you: ", "habits": "your habits: "}
     for k, blank in empty.items():
         if sections[k] == blank:
             del sections[k]
@@ -304,6 +316,12 @@ def perceive(house, cfg, pet, mem):
         "surfaces": walls.surfaces(house, pet, room), "writings": handles, "songs": song_names,
         "tame": [c.get("name") or c["kind"] for c in animals], "nameable": actions.nameable(house, pet),
         "asleep": [actions.handle(house, pet, p) for p in others if p["sleep"]],
+        # SPEC-v3.3: where things can be kept, what can be put away, taken out or hung up; who and what a focus can name
+        "stores": [n for n, k in order.stores(cfg, room).items() if k > 0],
+        "loose": [n for n, o in things.made(room).items() if order.may_move(house, pet, o) and not o.get("on") and not order.cap(cfg, o)],
+        "stored": [n for n, o in things.made(room).items() if o.get("on") and order.may_move(house, pet, o)],
+        "hangable": [n for n, o in things.made(room).items() if order.can_hang(cfg, o) and order.may_move(house, pet, o)],
+        "body": cfg["body"]["on"],
     }
     return text, ctx
 

@@ -120,7 +120,9 @@ def tick(house, cfg, items):
         if house["tick"] < st["next"]:
             continue
         st["next"] = house["tick"] + max(1, round(R["every_minutes"] * 60 / (cfg["clock"]["tick_seconds"] * cfg["pace"])))
-        fresh = [i for i in items if i["text"] not in st["told"]] or items
+        plays = st.get("plays") or "mix"   # news, forecast, on this day, or a mix (SPEC-v3.3 §3.2)
+        of = [i for i in items if plays == "mix" or i["source"] == plays] or items
+        fresh = [i for i in of if i["text"] not in st["told"]] or of
         pick = fresh[(house["tick"] // 7) % len(fresh)] if fresh else None   # a different source each time, by the clock
         if pick:
             st["told"] = (st["told"] + [pick["text"]])[-300:]
@@ -134,6 +136,35 @@ def tick(house, cfg, items):
                     del p["box"][R["keep"]:]
                     p["news"].append("heard")
                 p["events"].append([house["tick"], 'the box says: "%s"' % pick["text"] if pick else STATIC])
+
+
+def visitor(house, cfg, room, on, plays):
+    """The Radio control (SPEC-v3.3 §3.2). Once the pets have found their box, this turns THEIR box on or off, wherever
+    it is, and says what it plays. Before that it is the visitor's own little radio, set down in the room being
+    looked at. Returns the room the box is in. Pets can still switch theirs themselves."""
+    from .world import add_event, free_tile
+    st = house.setdefault("radio", {"next": 0, "told": [], "said": []})
+    if plays in ("mix", "news", "forecast", "on this day"):
+        st["plays"] = plays
+    theirs = [(r, n, o) for r, n, o in boxes(house) if n != "little radio"]
+    if not theirs:   # the visitor's own: set down where the visitor is looking while it plays, taken away when it is switched off
+        for r in house["rooms"].values():
+            if r["type"] and (r is not room or not on):
+                r["objects"].pop("little radio", None)
+        if on and "little radio" not in room["objects"]:
+            room["objects"]["little radio"] = {"pos": free_tile(house, cfg, room, [cfg["W"] // 2, 1]), "state": "off",
+                                               "fix": {"radio": True, "movable": True, "states": ["off", "on"], "visitor": True}}
+        theirs = [(room, "little radio", room["objects"]["little radio"])] if "little radio" in room["objects"] else []
+    for r, n, o in theirs:
+        if (o["state"] == "on") != bool(on):
+            o["state"] = "on" if on else "off"
+            if on:
+                st["next"] = house["tick"] + max(1, round(20 / cfg["clock"]["tick_seconds"]))
+            for p in house["pets"].values():
+                if p["room"] == r["id"] and p["stage"] not in ("egg", "dead") and not p["sleep"]:
+                    add_event(house, p, "the visitor turned the box %s" % ("on" if on else "off"))
+                    p["news"].append("visitor")
+    return theirs[0][0]["id"] if theirs else None
 
 
 def off(house):

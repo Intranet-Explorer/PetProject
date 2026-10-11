@@ -1,0 +1,313 @@
+# What a pet's body does by itself between thoughts (SPEC-v3.3 §1.1). No model is asked: each tick a pet that is
+# not carrying out something it decided picks the best of these for the moment and does it. Add an activity here and
+# the body can do it; `do` names the way it is carried out (engine/body.py), and several activities can share one.
+#
+#   doing     what it is doing, as the page says it ("playing with the {what}")
+#   did       what it did, as the pet is told afterwards ("played with the {what}")
+#   icon      the small sign over its head (sprite icon.act.<icon>)
+#   voice     the sound it makes starting it, in its own voice (murmur, hum, chirp, yawn, laugh, greet, grumble, gasp)
+#   seconds   how long it takes once it is there, least and most (world seconds)
+#   base      how likely it is with nothing else to say
+#   needs     which feelings pull toward it: need -> weight, counted by how bad that need is (0 fine to 1 at its worst)
+#   temper    which temperaments lean toward it: gene -> weight, counted from the middle (a gene of 1 adds the weight)
+#   focus     the kinds of thing its mind may want to be about (§1.2) that this serves
+#   when      the hour or the sky that suits it: dusk, night, day, morning, storm, rain, music -> bonus
+#   passive   resting, looking and watching: together kept under a quarter of its waking time
+#   rest      done in a resting pose (lying or sitting down): the only way it stays put for long
+#   stage     the youngest that does it
+#   effects   what it does to the pet when done, in the same units as config.toml [effects] (it wears with repeating)
+#   needs_tool, needs_place   (Phase B) a tool it must be carrying, or a fixture it must be at; unused so far
+
+[wander]
+do = "wander"
+doing = "wandering about"
+did = "wandered about"
+icon = "walk"
+seconds = [3, 6]
+base = 1.0
+temper = { curious = 0.4, bold = 0.2 }
+focus = ["explore"]
+
+["look about"]
+do = "self"
+doing = "looking about"
+did = "looked about"
+icon = "eye"
+seconds = [3, 5]
+base = 0.7
+passive = true
+temper = { curious = 0.2 }
+
+[stretch]
+do = "self"
+doing = "having a stretch"
+did = "stretched"
+icon = "stretch"
+voice = "yawn"
+seconds = [3, 4]
+base = 0.7
+needs = { energy = 0.6 }
+
+[groom]
+do = "self"
+doing = "grooming itself"
+did = "groomed yourself"
+icon = "groom"
+seconds = [4, 7]
+base = 0.8
+needs = { comfort = 0.4 }
+effects = { comfort = 0.3 }
+
+[hum]
+do = "self"
+doing = "humming to itself"
+did = "hummed to yourself"
+icon = "note"
+voice = "hum"
+seconds = [4, 8]
+base = 0.8
+temper = { playful = 0.4 }
+when = { music = 0.6 }
+
+["explore a doorway"]
+do = "doorway"
+doing = "nosing at the {what} door"
+did = "nosed at the {what} door"
+icon = "door"
+voice = "chirp"
+seconds = [4, 7]
+base = 0.8
+temper = { bold = 1.0, curious = 0.5 }
+needs = { curiosity = 0.8 }
+focus = ["explore"]
+effects = { curiosity = 0.6 }
+
+["peek next door"]
+do = "peek"
+doing = "peeking into {what}"
+did = "peeked into {what}"
+icon = "door"
+seconds = [3, 6]
+base = 0.7
+temper = { bold = 0.6, curious = 0.5, sociable = 0.3 }
+needs = { curiosity = 0.6, company = 0.5 }
+focus = ["explore", "be with"]
+effects = { curiosity = 0.4 }
+
+["go next door"]
+do = "go"
+doing = "going through the {what} door"
+did = "went through the {what} door"
+icon = "door"
+seconds = [2, 3]
+base = 0.4                       # into rooms it knows, now and then; sooner to be with someone, or when its mind wants to explore
+temper = { bold = 0.5, curious = 0.3 }
+focus = ["explore", "be with"]
+
+[inspect]
+do = "inspect"
+doing = "looking closely at the {what}"
+did = "looked closely at the {what}"
+icon = "eye"
+voice = "chirp"
+seconds = [4, 8]
+base = 0.9
+temper = { curious = 1.0 }
+needs = { curiosity = 0.9 }
+focus = ["explore", "project", "stay near", "tend"]
+
+[fiddle]
+do = "fiddle"
+doing = "fiddling with the {what}"
+did = "fiddled with the {what}"
+icon = "paws"
+voice = "murmur"
+seconds = [4, 9]
+base = 0.9
+temper = { playful = 0.5, curious = 0.4 }
+needs = { curiosity = 0.6 }
+focus = ["project", "make", "stay near", "tend"]
+effects = { curiosity = 0.4 }
+
+[play]
+do = "play"
+doing = "playing with the {what}"
+did = "played with the {what}"
+icon = "ball"
+voice = "laugh"
+seconds = [5, 10]
+base = 0.9
+temper = { playful = 1.2 }
+needs = { curiosity = 1.0 }
+focus = ["play"]
+when = { music = 0.4 }
+
+["sit by the window"]
+rest = true
+do = "window"
+doing = "sitting by the window"
+did = "sat by the window"
+icon = "window"
+seconds = [6, 10]
+base = 0.5
+passive = true
+temper = { patient = 0.5 }
+needs = { comfort = 0.4 }
+when = { dusk = 1.2, rain = 0.6, storm = 0.4, morning = 0.4 }
+focus = ["rest"]
+effects = { comfort = 0.4 }
+
+[nap]
+rest = true
+do = "nap"
+doing = "having a nap"
+did = "had a short nap"
+icon = "zzz"
+voice = "yawn"
+seconds = [8, 10]
+base = 0.0                       # only pulled by tiredness, or by a mind that wants rest
+passive = true
+needs = { energy = 3.0 }
+focus = ["rest"]
+
+[eat]
+do = "eat"
+doing = "eating from the {what}"
+did = "ate from the {what}"
+icon = "bowl"
+seconds = [4, 6]
+base = 0.0                       # only when tired enough to want it
+needs = { energy = 2.2 }
+
+[tidy]
+do = "tidy"
+doing = "putting the {what} away"
+did = "put the {what} {where}"
+icon = "broom"
+voice = "murmur"
+seconds = [3, 5]
+base = 0.3
+temper = { orderly = 2.4 }
+focus = ["tidy"]
+stage = "child"
+
+[gather]
+do = "gather"
+doing = "picking up some {what}"
+did = "picked up some {what}"
+icon = "paws"
+seconds = [3, 4]
+base = 0.2
+temper = { curious = 0.3, playful = 0.2 }
+focus = ["make", "project"]
+
+[tend]
+do = "tend"
+doing = "tending the {what}"
+did = "tended the {what}"
+icon = "leaf"
+voice = "murmur"
+seconds = [5, 8]
+base = 0.6
+temper = { patient = 0.7, orderly = 0.3 }
+focus = ["tend"]
+effects = { comfort = 0.3 }
+
+["follow kin"]
+do = "follow"
+doing = "tagging along after {who}"
+did = "tagged along after {who}"
+icon = "heart"
+voice = "chirp"
+seconds = [4, 7]
+base = 0.5
+temper = { sociable = 1.0 }
+needs = { company = 1.2 }
+focus = ["be with"]
+
+["sit with kin"]
+rest = true
+do = "sit with"
+doing = "sitting with {who}"
+did = "sat with {who}"
+icon = "heart"
+voice = "murmur"
+seconds = [6, 10]
+base = 0.5
+passive = true
+temper = { sociable = 0.9, patient = 0.3 }
+needs = { company = 1.5 }
+focus = ["be with", "rest"]
+when = { storm = 0.8, night = 0.4 }
+
+["watch a creature"]
+do = "watch"
+doing = "watching the {what}"
+did = "watched the {what}"
+icon = "eye"
+seconds = [5, 9]
+base = 0.8
+passive = true
+temper = { curious = 0.6, patient = 0.5 }
+needs = { curiosity = 0.5, company = 0.4 }
+focus = ["explore", "tend"]
+effects = { curiosity = 0.5 }
+
+["visit the stone"]
+do = "stone"
+doing = "sitting by the stone"
+did = "sat a while by {what}"
+icon = "stone"
+seconds = [5, 8]
+base = 0.4
+temper = { sociable = 0.4, patient = 0.3 }
+needs = { company = 0.6 }
+when = { morning = 0.8 }
+
+[babble]
+do = "babble"
+doing = "babbling to {who}"
+did = "babbled to {who}"
+icon = "speech"
+voice = "greet"
+seconds = [3, 6]
+base = 0.6
+temper = { sociable = 1.0, playful = 0.4 }
+needs = { company = 0.8 }
+focus = ["be with", "play"]
+
+[dance]
+do = "dance"
+doing = "dancing"
+did = "danced"
+icon = "note"
+voice = "laugh"
+seconds = [5, 10]
+base = 0.0                       # only when there is music to dance to
+temper = { playful = 1.0 }
+when = { music = 2.2 }
+focus = ["play"]
+effects = { curiosity = 0.8, energy = -0.3 }
+
+[sing]
+do = "sing"
+doing = "singing \"{what}\""
+did = "sang \"{what}\""
+icon = "note"
+seconds = [6, 10]
+base = 0.3
+temper = { playful = 0.6, sociable = 0.4 }
+when = { music = 0.8 }
+focus = ["play", "be with"]
+
+[listen]
+do = "listen"
+doing = "listening to the {what}"
+did = "listened to the {what}"
+icon = "radio"
+seconds = [6, 10]
+base = 0.7
+passive = true
+temper = { curious = 0.7, patient = 0.3 }
+needs = { curiosity = 1.0 }
+effects = { curiosity = 0.8 }

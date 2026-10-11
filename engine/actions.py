@@ -2,7 +2,7 @@
 world before it happens and again when the pet gets there; what it does is decided here, not by the pet."""
 import re
 
-from . import book, feel, genome, life, songs, things, walls
+from . import book, feel, genome, life, order, songs, things, walls
 from .world import (BACK, LONG_AGO, add_event, arrived, beside, dist, family, free_tile, generate_room, here, knows, label, moment,
                     power_on, relation, ticks, witness)
 
@@ -114,7 +114,7 @@ def allowed(house, cfg, pet, mem):
     pets_of_mine = [c for c in house["creatures"] if c.get("tame") == pet["id"]]
     can = {
         "gather": bits and len(pet["carrying"]) < cfg["make"]["carry"], "drop": bool(pet["carrying"]),
-        "make": (bool(pet["carrying"]) or bits) and len(things.made(room)) < cfg["make"]["crowded"],
+        "make": (bool(pet["carrying"]) or bits) and len(things.on_floor(room)) < cfg["make"]["crowded"],
         "unmake": bool(free), "combine": len(free) > 1, "teach": bool(mine),
         "give": bool(others or crs) and bool(pet["carrying"] or mine or bits),
         "show": bool(others) and bool(room["objects"]), "follow": bool(others or crs),
@@ -131,10 +131,25 @@ def allowed(house, cfg, pet, mem):
         "ask_book": any(o.get("fix", {}).get("book") for o in room["objects"].values()) and book.check_ask({"question": "?"}, house, cfg, pet, filled) is None,
         "write_belief": True, "arrange": any(movable(cfg, o) for o in room["objects"].values()) or eggs,
     }
+    # SPEC-v3.3 §2.2: keeping things. Open to any pet old enough to arrange things.
+    movable_things = [n for n, o in things.made(room).items() if order.may_move(house, pet, o)]
+    can["put_away"] = any(k > 0 for k in order.stores(cfg, room).values()) and any(not room["objects"][n].get("on") and not order.cap(cfg, room["objects"][n]) for n in movable_things)
+    can["take_out"] = any(room["objects"][n].get("on") for n in movable_things)
+    can["hang"] = bool(things.wall_slot(house, room)) and any(order.can_hang(cfg, room["objects"][n]) for n in movable_things)
+    extra = [a for a in ("put_away", "take_out", "hang") if "arrange" in life.unlocked(house, pet["stage"])] + (["take_name"] if offered(pet) else [])
     if offered(pet):   # only while the visitor has offered it a name it has not taken
         can["take_name"] = True
-        return [a for a in life.unlocked(house, pet["stage"]) + ["take_name"] if can.get(a, True)]
-    return [a for a in life.unlocked(house, pet["stage"]) if can.get(a, True)]
+    return [a for a in life.unlocked(house, pet["stage"]) + extra if can.get(a, True)]
+
+
+# SPEC-v3.3 §1: what the body does by itself. The mind is no longer offered these; it sets a focus instead.
+BODY_ONLY = ("observe", "rest", "move", "follow")
+
+
+def offered_to_mind(house, cfg, pet, mem):
+    """What its mind can decide to do now: everything it can do, less what its body does without being asked."""
+    can = allowed(house, cfg, pet, mem)
+    return [a for a in can if a not in BODY_ONLY] if cfg["body"]["on"] else can
 
 
 def nameable(house, pet):
@@ -158,6 +173,8 @@ def words(a):
 def check(a, house, cfg, pet, mem):
     """None if the action can happen now, else why not, in words the pet can use."""
     t, room = a.get("type"), house["rooms"][pet["room"]]
+    if t in ("put_away", "take_out", "hang"):
+        return order.check(a, house, cfg, pet, norm)
     if t == "take_name":
         if not offered(pet):
             return "nobody has offered you a name"
@@ -295,12 +312,20 @@ def check(a, house, cfg, pet, mem):
     return "unknown action"
 
 
+FOCUS = ("tidy", "be with", "explore", "make", "rest", "tend", "project", "play", "stay near")
+
+
 def check_plan(turn, pet):
-    """Shape only: an intention of steps. Whether each step is possible is checked when it is carried out."""
-    if not isinstance(turn, dict) or not filled(turn.get("intention")) or not filled(turn.get("expect")):
+    """Shape only: what it wants to be about (SPEC-v3.3 §1.2: a focus, in its own words and as a kind the body can
+    use) and the things it has decided to do, which may be none. Whether each is possible is checked when it is
+    carried out. A reply with an `intention` and no focus is still taken (the scripted brains of the checks)."""
+    focus = turn.get("focus") if isinstance(turn, dict) else None
+    if isinstance(focus, dict) and (focus.get("type") not in FOCUS or not filled(focus.get("words"))):
+        return "the reply had no usable focus"
+    if not isinstance(turn, dict) or not (filled(turn.get("intention")) or isinstance(focus, dict)) or not filled(turn.get("expect")):
         return "the reply was not an intention"
     steps = turn.get("steps")
-    if not isinstance(steps, list) or not 1 <= len(steps) <= 5 or not all(isinstance(s, dict) and filled(s.get("type")) for s in steps):
+    if not isinstance(steps, list) or not (0 if focus else 1) <= len(steps) <= 5 or not all(isinstance(s, dict) and filled(s.get("type")) for s in steps):
         return "the reply had no usable steps"
     return None
 
@@ -332,7 +357,8 @@ def destination(house, cfg, pet, a):
     t = a["type"]
     name = {"use": "target", "unmake": "target", "teach": "target", "take": "what", "gather": "what", "move": "to",
             "give": "to", "nuzzle": "who", "tell": "to", "chase": "who", "accept": "from", "arrange": "object",
-            "combine": "a", "bequeath": "what", "make": "near", "write": "on", "sing": "to", "teach_song": "to", "name": "what"}.get(t)
+            "combine": "a", "bequeath": "what", "make": "near", "write": "on", "sing": "to", "teach_song": "to", "name": "what",
+            "put_away": "what", "take_out": "what", "hang": "what"}.get(t)
     if t == "ask_book":
         at = next((o["pos"] for o in house["rooms"][pet["room"]]["objects"].values() if o.get("fix", {}).get("book")), None)
         return None if at is None or dist(pet["pos"], at) <= 1 else beside(cfg, at, pet["pos"])
@@ -387,6 +413,8 @@ def apply(house, cfg, pet, a, mem):
     Effects may carry "tags" (hidden physics that fired) and "scale" (a room's rule on what it is worth)."""
     t, room, E = a["type"], house["rooms"][pet["room"]], cfg["effects"]
     name = label(pet)
+    if t in ("put_away", "take_out", "hang"):
+        return order.do(a, house, cfg, pet, norm)
     if t == "take_name":
         named(house, pet, mem, pet["called"].strip())
         return "you took the name %s; it is yours now" % pet["name"], {}, None
@@ -435,6 +463,7 @@ def apply(house, cfg, pet, a, mem):
             o["pos"] = list(min((t for t in water if not any(x["pos"] == t for x in room["objects"].values())), key=lambda t: dist(t, pet["pos"]), default=water[0]))
             return "you set %s on the water" % ref, {}, "arrange"
         o["pos"] = free_tile(house, cfg, room, to, ref)
+        order.moved(o)
         return "you moved %s over by %s" % (ref, norm(a["near"])), {}, "arrange"
     if t == "combine":
         return things.combine(house, cfg, pet, a, clean, norm)
@@ -469,6 +498,7 @@ def apply(house, cfg, pet, a, mem):
         o = room["objects"][what]
         owner = house["pets"][o["made"]["owner"]]
         o["made"]["owner"], o["pos"] = pet["id"], free_tile(house, cfg, room, pet["pos"], what)
+        order.moved(o)
         if owner["room"] == room["id"] and not owner["sleep"]:
             add_event(house, owner, "%s took your %s" % (handle(house, owner, pet), what))
             owner["news"].append("spoken")
@@ -810,6 +840,7 @@ def accept(house, cfg, pet, off):
         if not o or o.get("made", {}).get("owner") != giver["id"]:
             return "the %s is no longer %s's to give" % (what, handle(house, pet, giver)), {}, None
         o["made"]["owner"], o["pos"] = pet["id"], free_tile(house, cfg, room, pet["pos"], what)
+        order.moved(o)
     add_event(house, giver, "%s took the %s you offered" % (handle(house, giver, pet), what))
     giver["news"].append("answer")
     bump(giver, cfg, {"company": E["gift"]})
@@ -911,6 +942,20 @@ def visit(house, cfg, cmd):
     elif t == "radio_off":   # the mute switch (§5.3): off in the house, not just quiet in the view
         from . import radio
         radio.off(house)
+    elif t == "radio":   # SPEC-v3.3 §3.2: their radio once they have one, the visitor's own before that
+        from . import radio
+        radio.visitor(house, cfg, room, bool(cmd.get("on")), cmd.get("plays"))
+    elif t == "music":   # SPEC-v3.3 §3.1: the visitor's music, in this room or through the house, or off
+        mood = cmd.get("mood")
+        if mood in (None, "", "off"):
+            house["dj"] = dict(house.get("dj") or {}, music=None)
+        elif mood in cfg["music"]["tunes"]:
+            house["dj"] = dict(house.get("dj") or {}, music={"mood": mood, "scope": "house" if cmd.get("scope") == "house" else rid, "since": house["tick"]})
+            for p in house["pets"].values():
+                if p["stage"] not in ("egg", "dead") and not p["sleep"] and (cmd.get("scope") == "house" or p["room"] == rid):
+                    add_event(house, p, "the visitor has begun to play %s music" % mood)
+        else:
+            return "no such music"
     else:
         return "unknown visitor action"
     return None

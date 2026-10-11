@@ -10,7 +10,7 @@ from .genome import START
 ROOT = Path(__file__).parent.parent
 NEEDS = ("energy", "comfort", "curiosity", "company")
 STAGES = ("egg", "hatchling", "child", "youngling", "adult", "elder")
-GENES = ("curious", "sensitive", "sociable", "bold", "patient", "playful", "fertile", "hardy")
+GENES = ("curious", "sensitive", "sociable", "bold", "patient", "playful", "fertile", "hardy", "orderly")   # orderly: SPEC-v3.3 §2.4, last so the older draws stay as they were
 DIRS = {"north": (0, -1), "south": (0, 1), "west": (-1, 0), "east": (1, 0)}
 BACK = {"north": "south", "south": "north", "west": "east", "east": "west"}
 LONG_AGO = -10**7
@@ -41,6 +41,7 @@ def load_config(path=ROOT / "config.toml", profile=None):
     read = lambda f, default: json.loads((art / f).read_text()) if (art / f).exists() else default
     cfg["kinds"] = read("kinds.json", {"sculpture": {"rank": 3, "wall": False, "not": [], "a": "a"}})
     cfg["from_parts"] = read("kinds-from-parts.json", {"shape": {}, "material": {}, "many": {"hanging": [], "then": "sculpture", "else": "sculpture"}, "pair": {}})
+    cfg["activities"] = tomllib.loads((path.parent / "activities.toml").read_text())   # SPEC-v3.3 §1.1: what a body does by itself
     cfg["layouts"] = {f.stem: json.loads(f.read_text()) for f in sorted((art / "rooms").glob("*.json"))} if (art / "rooms").exists() else {}
     return derive(cfg)
 
@@ -121,7 +122,7 @@ def in_room(cfg, t):
 
 def taken(house, room, but=None):
     """Tiles with something on them: objects, bits lying about, door thresholds, eggs, water."""
-    tiles = [o["pos"] for n, o in room["objects"].items() if n != but and not o.get("wall")]   # what hangs on a wall takes no floor
+    tiles = [o["pos"] for n, o in room["objects"].items() if n != but and not o.get("wall") and not o.get("on")]   # what hangs on a wall or sits on a shelf takes no floor
     tiles += room.get("blocked", [])   # the layout's furniture (SPEC-v3.2 §4)
     tiles += [s["pos"] for s in room["spots"] if s["ready"]]
     tiles += [p["pos"] for p in house["pets"].values() if p["room"] == room["id"] and p["stage"] == "egg"]
@@ -445,6 +446,18 @@ def witness(house, pet, text):
     """What `pet` just did, as the others awake in the room saw it (§7.1)."""
     for other in here(house, pet, awake=True):
         add_event(house, other, text)
+
+
+def busy(p):
+    """Is it carrying out something it decided? Once the last of that is done its thought stays with it, idle, until
+    it thinks again, and its body carries on (SPEC-v3.3 §1)."""
+    return bool(p.get("plan")) and not p["plan"].get("idle")
+
+
+def moving(p):
+    """Is it on the move right now: walking to something it decided, or to something its body is about?"""
+    now = (p.get("body") or {}).get("now")
+    return p["plan"]["left"] is None if busy(p) else bool(now) and now.get("began") is None
 
 
 def moment(house, kind, text, pet=None, room=None):

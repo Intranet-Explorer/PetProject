@@ -115,7 +115,7 @@ def found(house, cfg, told=None, body=None):
 def temper_of(parent, rng, cfg):
     """A child's temperament: the parent's, each gene nudged a little, and now and then one moved a lot (§5.4)."""
     L = cfg["life"]
-    t = {g: round(min(1.0, max(0.0, parent[g] + rng.gauss(0, L["temper_sigma"]))), 2) for g in GENES}
+    t = {g: round(min(1.0, max(0.0, parent.get(g, 0.5) + rng.gauss(0, L["temper_sigma"]))), 2) for g in GENES}
     if rng.random() < L["temper_jump"]:
         g = rng.choice(GENES)
         t[g] = round(min(1.0, max(0.0, t[g] + rng.choice([-1, 1]) * rng.uniform(0.2, 0.35))), 2)

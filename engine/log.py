@@ -30,6 +30,9 @@ CREATE TABLE IF NOT EXISTS inscriptions (id INT, tick INT, room TEXT, place TEXT
 CREATE TABLE IF NOT EXISTS songs (id TEXT, tick INT, name TEXT, notes TEXT, by TEXT, parent TEXT, how TEXT, family INT);
 CREATE TABLE IF NOT EXISTS radio (tick INT, room TEXT, source TEXT, text TEXT);
 CREATE TABLE IF NOT EXISTS library (pet TEXT, tick INT, question TEXT, title TEXT, text TEXT);
+CREATE TABLE IF NOT EXISTS doing (pet TEXT, tick_from INT, tick_to INT, what TEXT, passive INT, by TEXT, text TEXT,
+                                  still INT, rest INT, room TEXT, x INT, y INT);   -- still: the ticks of it spent in one place; rest: in a resting pose
+CREATE INDEX IF NOT EXISTS doing_pet ON doing (pet, tick_from);
 CREATE INDEX IF NOT EXISTS steps_pet ON steps (pet, tick);
 CREATE INDEX IF NOT EXISTS intentions_pet ON intentions (pet, tick);
 """

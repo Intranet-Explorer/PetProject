@@ -25,6 +25,12 @@ class Stub:
         anyone = c["pets"] + c["creatures"]
         if t in ("observe", "rest", "take_name"):
             return {"type": t}
+        if t == "put_away":   # SPEC-v3.3 §2.2
+            return {"type": t, "what": pick(c["loose"]), "where": pick(c["stores"])}
+        if t == "take_out":
+            return {"type": t, "what": pick(c["stored"])}
+        if t == "hang":
+            return {"type": t, "what": pick(c["hangable"])}
         if t == "look":
             return {"type": t, "target": pick(c["things"] + anyone + c["bits"] + [d + " door" for d in c["doors"]])}
         if t == "move":
@@ -121,7 +127,7 @@ class Stub:
                 "follow": c["pets"] + c["creatures"], "nuzzle": c["awake"] or c["eggs"], "accept": c["offers"], "take": c["theirs"],
                 "chase": c["creatures"], "tell": c["awake"], "bequeath": c["leave"] or c["songs"], "revise_belief": c["beliefs"], "use": c["things"],
                 "write": c["surfaces"], "scrub": c["writings"], "sing": c["songs"], "teach_song": c["songs"] and c["awake"], "call": c["tame"],
-                "name": c["nameable"]}
+                "name": c["nameable"], "put_away": c.get("loose") and c.get("stores"), "take_out": c.get("stored"), "hang": c.get("hangable")}
         return bool(need.get(t, True))
 
     async def act(self, packet, ctx):
@@ -131,18 +137,28 @@ class Stub:
         steps = []
         if "accept" in can and r.random() < 0.8:
             steps.append("accept")
-        elif "exhausted" in feels or ("tired" in feels and "a bit tired" not in feels):
+        elif "rest" in can and ("exhausted" in feels or ("tired" in feels and "a bit tired" not in feels)):
             steps += ["rest", "rest"]
         elif "lay_egg" in can and r.random() < 0.5:
             steps.append("lay_egg")
         elif "make" in can and r.random() < 0.4:
             steps.append("make")
-        while len(steps) < 2:   # otherwise mostly whatever it has done least, so every action gets its turn
+        while len(steps) < 2 and can:   # otherwise mostly whatever it has done least, so every action gets its turn
             rare = sorted(can, key=lambda a: (used.get(a, 0), r.random()))
             steps.append(rare[0] if r.random() < 0.6 else r.choice(can))
         for a in steps:
             used[a] = used.get(a, 0) + 1
-        ease = "more rested" if steps[0] == "rest" else r.choice(["more at ease", "more interested", "less alone", "a little more tired"])
+        ease = "more rested" if steps[:1] == ["rest"] else r.choice(["more at ease", "more interested", "less alone", "a little more tired"])
+        if ctx.get("body"):   # SPEC-v3.3: a focus and the things it decides; fewer of those, its body does the rest
+            kind = r.choice(["tidy", "explore", "make", "rest", "project", "play"] + (["be with"] * 2 if ctx["pets"] else []) + (["tend", "stay near"] if ctx["things"] else []))
+            focus = {"type": kind, "words": "to %s a while" % kind}
+            if kind == "be with":
+                focus["target"] = r.choice(ctx["pets"])
+            elif kind in ("tend", "stay near"):
+                focus["target"] = r.choice(ctx["things"])
+            steps = steps[:r.choice([0, 1, 1, 2])]
+            return {"thought": "I am %s." % (feels.split(";")[0] or "here"), "focus": focus, "steps": [self.step(a, ctx, packet) for a in steps],
+                    "expect": "I will feel " + ease}
         return {"thought": "I am %s; I will %s." % (feels.split(";")[0] or "here", steps[0].replace("_", " ")),
                 "intention": " then ".join(s.replace("_", " ") for s in steps), "steps": [self.step(a, ctx, packet) for a in steps],
                 "expect": "I will feel " + ease}

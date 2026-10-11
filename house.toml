@@ -144,7 +144,7 @@ bits = { clay = 3, moss = 3, soot = 2 }
 rule = "cellar"
 fixtures = [
   { name = "barrel", pos = [2, 2] },
-  { name = "shelf", pos = [9, 1] },
+  { name = "shelf", pos = [9, 1], store = 4 },
   { name = "lantern", pos = [5, 1], light = "off" },
   { name = "old rug", pos = [8, 5], movable = true, soft = 2.5 },
 ]
@@ -159,7 +159,7 @@ bits = { feather = 3, cloth = 2, wood = 2 }
 rule = "attic"
 fixtures = [
   { name = "skylight", pos = [5, 0], window = true },
-  { name = "trunk", pos = [2, 2], states = ["closed", "open"] },
+  { name = "trunk", pos = [2, 2], states = ["closed", "open"], store = 4, inside = true },
   { name = "rocking chair", pos = [9, 5], rest = 2.5, cozy = true },
   { name = "sun shaft", pos = [5, 3], sun = true },
 ]
@@ -187,7 +187,7 @@ regrow_hours = 12
 bits = { wire = 3, wood = 2, metal = 2 }
 rule = "workshop"
 fixtures = [
-  { name = "workbench", pos = [5, 2], bench = true },
+  { name = "workbench", pos = [5, 2], bench = true, store = 3 },
   { name = "work lamp", pos = [2, 1], light = "off" },
   { name = "stool", pos = [8, 5], movable = true },
   { name = "window", pos = [0, 2], window = true },
@@ -231,8 +231,8 @@ regrow_hours = 24
 bits = "any"              # a little of everything: four kinds, picked when the room is first found
 rule = "storeroom"
 fixtures = [
-  { name = "crates", pos = [3, 2] },
-  { name = "shelves", pos = [9, 2] },
+  { name = "crates", pos = [3, 2], store = 4, inside = true },
+  { name = "shelves", pos = [9, 2], store = 6 },
   { name = "old lantern", pos = [6, 1], light = "off" },
 ]
 
