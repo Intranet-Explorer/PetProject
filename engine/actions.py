@@ -34,7 +34,7 @@ def handle(house, me, other):
     if not knows(me, other):   # of the other family, and not yet someone it knows (SPEC-v3.1 §7.2)
         return "a stranger"
     rel = relation(house, me, other)
-    return (other["name"] or ("your " + rel if rel else "the little one")) + (", of the other family" if family(me) != family(other) else "")
+    return (other["name"] or ("your " + rel if rel else label(other))) + (", of the other family" if family(me) != family(other) else "")
 
 
 def place(cfg, name):
@@ -131,6 +131,9 @@ def allowed(house, cfg, pet, mem):
         "ask_book": any(o.get("fix", {}).get("book") for o in room["objects"].values()) and book.check_ask({"question": "?"}, house, cfg, pet, filled) is None,
         "write_belief": True, "arrange": any(movable(cfg, o) for o in room["objects"].values()) or eggs,
     }
+    if offered(pet):   # only while the visitor has offered it a name it has not taken
+        can["take_name"] = True
+        return [a for a in life.unlocked(house, pet["stage"]) + ["take_name"] if can.get(a, True)]
     return [a for a in life.unlocked(house, pet["stage"]) if can.get(a, True)]
 
 
@@ -155,6 +158,10 @@ def words(a):
 def check(a, house, cfg, pet, mem):
     """None if the action can happen now, else why not, in words the pet can use."""
     t, room = a.get("type"), house["rooms"][pet["room"]]
+    if t == "take_name":
+        if not offered(pet):
+            return "nobody has offered you a name"
+        return "there is already one called that in the house" if name_taken(house, pet, pet["called"]) else None
     if t not in life.unlocked(house, pet["stage"]):
         return "you cannot do that yet"
     kind, ref = find(house, pet, a.get("target") or a.get("what") or a.get("who") or a.get("object") or a.get("to"))
@@ -374,6 +381,9 @@ def apply(house, cfg, pet, a, mem):
     Effects may carry "tags" (hidden physics that fired) and "scale" (a room's rule on what it is worth)."""
     t, room, E = a["type"], house["rooms"][pet["room"]], cfg["effects"]
     name = label(pet)
+    if t == "take_name":
+        named(house, pet, mem, pet["called"].strip())
+        return "you took the name %s; it is yours now" % pet["name"], {}, None
     if t == "observe":
         return "you watched the room for a while", dict(E["observe"]), "observe " + room["type"]
     if t == "rest":
@@ -528,6 +538,33 @@ def apply(house, cfg, pet, a, mem):
     raise ValueError(t)
 
 
+def offered(pet):
+    """Has the visitor offered it a name that is not (yet) its own?"""
+    c = (pet.get("called") or "").strip()
+    return bool(c) and c.lower() != (pet["name"] or "").lower()
+
+
+def takes(pet, text):
+    """Does what it just said take the name it was offered? "My name is Garry", "I am Garry", "I'm Garry", "call me
+    Garry", "yes, Garry". Saying the name some other way ("I am not Garry", "who is Garry?") does not."""
+    c = (pet.get("called") or "").strip()
+    return offered(pet) and bool(re.search(r"\b(my name is|name is|i am|i'm|call me|called|yes,?|i will be|i'll be)\s+%s\b" % re.escape(c), str(text), re.I))
+
+
+def name_taken(house, pet, name):
+    return any((p["name"] or "").lower() == name.strip().lower() for p in life.alive(house) if p is not pet)
+
+
+def named(house, pet, mem, new):
+    """A pet has a name from now on: one it took from the visitor, or one it gave itself."""
+    was, took = label(pet), new.lower() == (pet.get("called") or "").strip().lower()
+    pet["name"] = new
+    pet["named"] = {"tick": house["tick"], "by": "visitor" if took else "itself"}   # for the visitor's card: it took the name
+    if mem:
+        mem.update_self(name=new, named_at=house["tick"])
+    moment(house, "named", "%s took the name %s" % (was, new) if took else "%s named itself %s" % (was, new), pet["id"], pet["room"])
+
+
 def keep_parent_word(pet):
     """A parent's message and last words are never pushed out by what others tell it (§5.2: for life)."""
     pet["told"].sort(key=lambda m: m["kind"] == "tell")
@@ -616,12 +653,10 @@ def speak(house, cfg, pet, a, mem):
     if not pet.get("spoke"):
         pet["spoke"] = True
         moment(house, "words", '%s spoke for the first time: "%s"' % (label(pet), text), pet["id"], room["id"])
-    name = re.search(r"\bmy name is ([A-Za-z][\w'-]{0,15})", text, re.I)
-    if name and (not pet["name"] or name.group(1).strip().lower() == pet.get("called", "").lower()) \
-            and not any((p["name"] or "").lower() == name.group(1).strip().lower() for p in life.alive(house) if p is not pet):
-        pet["name"] = name.group(1).strip()
-        mem.update_self(name=pet["name"], named_at=house["tick"])
-        moment(house, "named", "the little one named itself " + pet["name"], pet["id"], room["id"])
+    own = re.search(r"\bmy name is ([A-Za-z][\w'-]{0,15})", text, re.I)
+    new = pet["called"].strip() if takes(pet, text) else own.group(1).strip() if own and not pet["name"] else None
+    if new and not name_taken(house, pet, new):
+        named(house, pet, mem, new)
     fx = dict(cfg["effects"]["speak"])
     if kind == "pet" and not again:
         fx["company"] = cfg["effects"]["said_to"]
@@ -854,8 +889,7 @@ def visit(house, cfg, cmd):
             p["name"] = new
             moment(house, "named", "the visitor named the egg that is nobody's %s" % new, p["id"], rid)
         elif p and p["room"] == rid and p["stage"] not in ("egg", "dead"):
-            p["inbox"].append('the visitor calls you %s (say "my name is %s" if you want the name)' % (new, new) if not p["name"]
-                              else "the visitor calls you %s" % new)
+            p["inbox"].append("the visitor calls you %s; the name is yours if you take it" % new)
             p["news"].append("visitor")
             p["called"] = new
         elif cmd.get("object") in things.made(room):

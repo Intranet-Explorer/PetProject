@@ -134,6 +134,7 @@ def unique_name(house, cfg, name):
     taken = {n for r in house["rooms"].values() if r["type"] for n in r["objects"]}
     taken |= {f["name"] for r in cfg["house"]["rooms"].values() for f in r["fixtures"]} | set(cfg["house"]["bits"])
     taken |= {(p["name"] or "").lower() for p in house["pets"].values()} | {"egg", "visitor", "here", "the little one", "middle"}
+    taken |= {label(p).lower().replace("the ", "", 1) for p in house["pets"].values()}   # nor the label of a pet that has no name
     taken |= {k for c in ("moth", "beetle", "mouse", "bird") for k in (c,)} | {d + " door" for d in ("north", "south", "east", "west")}
     if name.startswith("stone for"):
         name = "a " + name

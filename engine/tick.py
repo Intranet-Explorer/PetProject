@@ -6,6 +6,7 @@ there is a reason to think, and all the pets' calls go through one queue, the mo
 """
 import argparse
 import asyncio
+import hashlib
 import heapq
 import json
 import logging
@@ -535,12 +536,15 @@ class Engine:
             was = things.to_kind(cfg, r)
             if was:
                 mapped[was] += 1
-        for room in h["rooms"].values():
-            if room["type"]:
-                world.layout(cfg, room)
-                world.settle(h, cfg, room)
+        laid = hashlib.sha1(json.dumps(cfg.get("layouts", {}), sort_keys=True).encode()).hexdigest()[:12]
+        if h.setdefault("v32", {"at": h["tick"]}).get("layouts") != laid:   # once, and again only if a layout file has changed
+            h["v32"]["layouts"] = laid
+            for room in h["rooms"].values():
+                if room["type"]:
+                    world.layout(cfg, room)
+                    world.settle(h, cfg, room)
         if mapped:
-            h.setdefault("v32", {"at": h["tick"]})["kinds"] = dict(mapped)
+            h["v32"]["kinds"] = dict(mapped)
             logging.info("v3.2: %d things became kinds: %s", sum(mapped.values()), dict(mapped))
         self.sched, self.minds, self.db, self.narrator, self.present, self.tasks = Scheduler(), {}, None, None, None, set()
         self.sched.most = cfg["model"]["parallel"]
@@ -549,6 +553,16 @@ class Engine:
         for pet in self.house["pets"].values():
             if pet["stage"] not in ("egg", "dead"):
                 self.minds[pet["id"]] = Mind(self, pet)
+                # a pet that has already said yes to the name it was offered has it ("Yes, I am Garry" used not to count)
+                if not pet["name"] and self.said_yes(pet) and not actions.name_taken(self.house, pet, pet["called"]) and not self.readonly:
+                    actions.named(self.house, pet, self.minds[pet["id"]].mem, pet["called"].strip())
+
+    def said_yes(self, pet):
+        """Has it lately said yes to the name it was offered? Its last words, and the last few things it said, from the log."""
+        said = [pet["said"]["text"]] if pet.get("said") else []
+        if self.db and actions.offered(pet):
+            said += [r[0] for r in self.db.execute("SELECT text FROM social WHERE from_pet=? AND kind='speak' ORDER BY tick DESC LIMIT 12", (pet["id"],))]
+        return any(actions.takes(pet, t) for t in said)
 
     def lineage_dir(self, n=None):
         return self.dir / ("lineage-%d" % (n or self.house["lineage"]["id"]))

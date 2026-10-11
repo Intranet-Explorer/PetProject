@@ -378,8 +378,28 @@ def knows(pet, other):
     return family(pet) == family(other) or other["id"] in pet.get("knows", [])
 
 
+ORDINAL = ["", "first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth", "tenth", "eleventh", "twelfth",
+           "thirteenth", "fourteenth", "fifteenth", "sixteenth", "seventeenth", "eighteenth", "nineteenth"]
+TENS = {20: ("twentieth", "twenty"), 30: ("thirtieth", "thirty"), 40: ("fortieth", "forty"), 50: ("fiftieth", "fifty"), 60: ("sixtieth", "sixty"),
+        70: ("seventieth", "seventy"), 80: ("eightieth", "eighty"), 90: ("ninetieth", "ninety")}
+
+
+def ordinal(n):
+    """first, second ... ninety-ninth, in words: nothing a pet is shown has a figure in it."""
+    if n < 20:
+        return ORDINAL[n]
+    if n < 100:
+        whole, part = TENS[n // 10 * 10]
+        return whole if n % 10 == 0 else "%s-%s" % (part, ORDINAL[n % 10])
+    return "latest"
+
+
 def label(pet):
-    return pet["name"] or "the little one"
+    """A pet's name, or for one that has none a label that is its own: "the first one", "the third one", by the order
+    they came into the house. (They were all "the little one", and "the little one told the little one something"
+    said nothing.)"""
+    n = int(pet["id"][1:]) if pet["id"][1:].isdigit() else 0
+    return pet["name"] or ("the %s one" % ordinal(n) if n else "the little one")
 
 
 KIN = {"mother": ("daughter", "sister", "grandmother", "granddaughter"), "father": ("son", "brother", "grandfather", "grandson"),

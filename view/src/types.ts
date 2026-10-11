@@ -40,6 +40,8 @@ export type PetV = {
   project?: { text: string; since: number } | null; plan?: Plan | null; step?: string | null;
   last_plan?: { intention: string; ended: string; score: string } | null; calls_hour?: number; spring?: boolean;
   portrait?: { day: number; parts: Part[] } | null; old?: boolean;
+  // the visitor's naming: the name offered, whether the pet has taken it, and the tick it did
+  naming?: { offered: string; took: boolean; at: number | null } | null;
   // SPEC-v3.2; absent in older recordings. `mood`: at most two plain words, worst first. `emote`: one strong feeling,
   // or null. `act`: the step it is on now (walking to it, or doing it once plan.acting is true).
   stage_word?: string; mood?: string[]; emote?: "tired" | "uneasy" | "lonely" | "bored" | "content" | null;

@@ -224,6 +224,8 @@ def act_of(house, pet, a):
     to = a.get("to") or a.get("who") or a.get("from") or a.get("near") or a.get("on") or a.get("b")
     o = room["objects"].get(norm(what)) if isinstance(what, str) else None
     recipe = o["made"]["recipe"] if o and "made" in o else (a.get("recipe") if t == "make" else None) or {}
+    if t == "use" and o and ("meal" in o.get("fix", {}) or (o.get("fix", {}).get("plant") and o.get("state") == "ripe")):
+        t = "eat"   # for whoever is watching, eating is its own thing to see
     return {"pet": pet["id"], "type": t, "what": what if isinstance(what, str) else None, "to": to if isinstance(to, str) else None, "room": pet["room"],
             "kind": recipe.get("kind"), "color": recipe.get("color"), "from": [norm(a.get("a")), norm(a.get("b"))] if t == "combine" else None,
             "text": a.get("text") if t in ("speak", "tell", "write") else None, "things": house["n"]["thing"]}
@@ -242,7 +244,7 @@ def acted(house, cfg, pet, act, ok):
     del house["acts"][:-40]
 
 
-PAST = {"make": "made {thing}", "unmake": "took apart {thing}", "combine": "joined two things into {thing}", "use": "used the {what}",
+PAST = {"eat": "ate from the {what}", "make": "made {thing}", "unmake": "took apart {thing}", "combine": "joined two things into {thing}", "use": "used the {what}",
         "gather": "picked up some {what}", "drop": "put down some {what}", "give": "held out {what} to {to}", "show": "showed {to} the {what}",
         "nuzzle": "leaned toward {to}", "accept": "took what {to} offered", "speak": "said something", "tell": "told {to} something to keep",
         "go": "came through the {what} door", "write": "wrote on the {to}", "scrub": "rubbed out some writing", "sing": "sang \"{what}\"",
@@ -263,7 +265,7 @@ def now(house, cfg):
     last = recent[-1] if recent else None
     who = house["pets"].get(last["pet"]) if last else None
     pet = who if who in living else max(living, key=lambda p: p["last_call"])
-    name = lambda p, of=None: p["name"] or ("its " + relation(house, of, p) if of and relation(house, of, p) else "the little one")
+    name = lambda p, of=None: p["name"] or ("its " + relation(house, of, p) if of and relation(house, of, p) else label(p))
     cap = lambda t: t[:1].upper() + t[1:]
     room = house["rooms"][pet["room"]]
     near = [p for p in living if p is not pet and p["room"] == pet["room"]]

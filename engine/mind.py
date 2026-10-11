@@ -11,7 +11,7 @@ BUSY = {"observe": "watching the room", "look": "looking at something", "move": 
         "arrange": "moving something", "combine": "putting two things together", "paint": "painting", "teach": "teaching a thing",
         "give": "holding something out", "show": "showing something", "follow": "following someone", "nuzzle": "leaning close",
         "accept": "taking what was offered", "take": "taking something", "chase": "chasing", "tell": "telling something",
-        "lay_egg": "laying an egg", "bequeath": "choosing what to leave", "write_belief": "thinking", "revise_belief": "thinking",
+        "lay_egg": "laying an egg", "bequeath": "choosing what to leave", "write_belief": "thinking", "revise_belief": "thinking", "take_name": "taking a name",
         "write": "writing on something", "scrub": "rubbing out some words", "compose": "making up a tune", "sing": "singing",
         "teach_song": "teaching a song", "call": "calling", "name": "naming something", "ask_book": "reading the book"}
 RECENT = 6          # how many earlier happenings are shown
@@ -155,8 +155,8 @@ def perceive(house, cfg, pet, mem):
     unseen = [d for d, rid in room["doors"].items() if rid not in pet["rooms"]]
     if unseen and feel.level(pet, "curiosity") >= (2 if T["bold"] < 0.4 else 1):   # boredom points at the one thing here not yet tried
         senses.append("you wonder what is through the %s door" % unseen[0])
-    if pet.get("called") and not pet["name"]:
-        senses.append("the visitor calls you " + pet["called"])
+    if actions.offered(pet):
+        senses.append("the visitor calls you %s; you could take the name" % pet["called"])
     if "chalk" in pet["carrying"] and "write" in can:
         senses.append("the chalk leaves a white mark on what it touches; you could write with it")
     elif "write" in can and not walls.marks(room):
