@@ -118,7 +118,8 @@ def allowed(house, cfg, pet, mem):
         "unmake": bool(free), "combine": len(free) > 1, "teach": bool(mine),
         "give": bool(others or crs) and bool(pet["carrying"] or mine or bits),
         "show": bool(others) and bool(room["objects"]), "follow": bool(others or crs),
-        "nuzzle": (bool(others) and feel.level(pet, "company") >= 1) or eggs,   # one already close to someone feels no need to
+        # one already close to someone feels no need to: close by how it feels, or because they leaned together not long ago
+        "nuzzle": (feel.level(pet, "company") >= 1 and any(not leaned(house, cfg, pet, o) for o in others)) or eggs,
         "accept": bool(pet["offers"]), "take": bool(others_things(house, pet, room)), "chase": bool(crs),
         "tell": bool(others), "lay_egg": life.can_lay(house, cfg, pet) is None,
         "bequeath": bool(kids) and bool(mine or heirlooms(house, pet, room) or pet.get("songs")), "revise_belief": bool(mem.active()),
@@ -227,6 +228,8 @@ def check(a, house, cfg, pet, mem):
     if t == "follow":
         return None if kind in ("pet", "creature") else "there is nobody like that here"
     if t == "nuzzle":
+        if kind == "pet" and leaned(house, cfg, pet, ref):
+            return "you leaned together not long ago and are close still"
         return None if kind in ("pet", "egg") else "there is nobody like that here"
     if t == "accept":
         return None if offer_from(house, pet, a.get("from")) else "nothing is being offered to you by them"
@@ -301,6 +304,13 @@ def tame(house, pet, name):
     return next((c for c in house["creatures"] if c.get("tame") == pet["id"] and n in (c["kind"], (c.get("name") or "").lower())), None)
 
 
+def leaned(house, cfg, pet, other):
+    """Have these two leaned together lately? (SPEC-v3.2 §9.) v3 stopped the nuzzle loop by not offering a lean to a
+    pet that already felt close; once closeness was made to settle in the middle (part 12) nobody ever felt close, and
+    accept, lean back, accept came round again. What a lean leaves behind is now remembered between the two of them."""
+    return house["tick"] - pet.get("leaned", {}).get(other["id"], LONG_AGO) < cfg["effects"]["nuzzle_again_hours"] * cfg["ticks_per_hour"]
+
+
 def offer_from(house, pet, name):
     n = norm(name)
     for off in pet["offers"]:
@@ -341,7 +351,7 @@ def describe_thing(house, cfg, pet, name):
         return o["memorial"]["text"]
     if "made" in o:
         m = o["made"]
-        parts = ", ".join("a %s %s %s" % (["small", "medium", "large"][p["size"] - 1], p["color"], p["shape"]) for p in m["recipe"]["parts"])
+        parts = "%s, %s" % (things.a_thing(cfg, m["recipe"]), things.SIZES[things.size(o) - 1])
         worn = "; it is damp" * bool(m.get("damp")) + "; it is dusty" * bool(m.get("dusty")) + "; something has been eating at it" * bool(m.get("eaten"))
         heir = m.get("heirloom")
         return "%s (%s): %s; it is %s; made for: %s%s%s" % (
@@ -448,7 +458,7 @@ def apply(house, cfg, pet, a, mem):
             owner["news"].append("spoken")
         else:
             owner.setdefault("lost", []).append({"name": what, "by": pet["id"], "room": room["id"]})
-        moment(house, "took", "%s took the %s from %s" % (name, what, label(owner)), pet["id"], room["id"])
+        moment(house, "took", "%s took %s, '%s', from %s" % (name, things.a_thing(cfg, o["made"]["recipe"]), what, label(owner)), pet["id"], room["id"])
         return "you took the %s; it is yours now" % what, {}, "take"
     if t == "chase":
         from . import director
@@ -734,6 +744,7 @@ def accept(house, cfg, pet, off):
             gain[a["id"]] = {k: v * near * max(0.1, E["nuzzle_wear"] ** n) for k, v in E["nuzzle"].items()}
             a["times"][key], a["seen_at"][key] = min(cfg["novelty"]["cap"], n + 1), house["tick"]
         bump(giver, cfg, gain[giver["id"]])
+        pet.setdefault("leaned", {})[giver["id"]] = giver.setdefault("leaned", {})[pet["id"]] = house["tick"]
         add_event(house, giver, "%s leaned back against you" % handle(house, giver, pet))
         giver["news"].append("answer")
         house.setdefault("said", []).append(rec)
@@ -762,7 +773,8 @@ def accept(house, cfg, pet, off):
     giver["news"].append("answer")
     bump(giver, cfg, {"company": E["gift"]})
     house.setdefault("said", []).append(rec)
-    moment(house, "gift", "%s gave %s %s" % (label(giver), label(pet), ("some " if off["bit"] else "the ") + what), pet["id"], room["id"])
+    given = "some " + what if off["bit"] else "%s, '%s'" % (things.a_thing(cfg, room["objects"][what]["made"]["recipe"]), what)
+    moment(house, "gift", "%s gave %s %s" % (label(giver), label(pet), given), pet["id"], room["id"])
     return "you took the %s from %s" % (what, handle(house, pet, giver)), {"company": E["gift"]}, "gift"
 
 

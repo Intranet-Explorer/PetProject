@@ -45,10 +45,11 @@ class Stub:
             return {"type": t, "what": pick(c["carrying"])}
         if t == "make":
             most, reach = c["make"]
-            n = r.randint(1, max(1, most))
+            material = pick([m for m in reach if c["kinds"].get(m)])
+            kind = pick(c["kinds"][material])
             return {"type": t, "near": pick(c["things"] + ["here"]), "recipe": {
-                "name": "%s thing %d" % (pick(reach), self.s["n"]), "material": pick(reach), "purpose": "to see what it does",
-                "parts": [{"shape": pick(SHAPES), "size": r.randint(1, 3), "color": pick(COLORS), "at": pick(PLACES)} for _ in range(n)]}}
+                "name": "%s %s %d" % (material, kind, self.s["n"]), "kind": kind, "material": material, "color": pick(COLORS),
+                "size": ["small", "medium", "large"][r.randrange(max(1, most))], "purpose": "to see what it does"}}
         if t == "unmake":
             return {"type": t, "target": pick(c["free"])}
         if t == "arrange":
@@ -114,7 +115,7 @@ class Stub:
 
     def usable(self, t, c):
         """Could it fill in this action from what the packet shows?"""
-        need = {"gather": c["bits"], "drop": c["carrying"], "make": c["carrying"] and c["make"][0] and c["make"][1], "unmake": c["free"],
+        need = {"gather": c["bits"], "drop": c["carrying"], "make": c["carrying"] and c["make"][0] and any(c["kinds"].get(m) for m in c["make"][1]), "unmake": c["free"],
                 "arrange": c["movable"], "combine": len(c["free"]) > 1 and c["materials"], "teach": c["mine"],
                 "give": (c["awake"] or c["creatures"]) and (c["carrying"] or c["bits"]), "show": c["awake"] and c["things"],
                 "follow": c["pets"] + c["creatures"], "nuzzle": c["awake"] or c["eggs"], "accept": c["offers"], "take": c["theirs"],

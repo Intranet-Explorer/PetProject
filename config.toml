@@ -100,6 +100,7 @@ new_song = 3.0            # curiosity from hearing a song it does not know
 lullaby = 2.0             # comfort for an egg or a sleeping child sung to
 read = { curiosity = 4.0 }               # reading a passage in the book
 tame_died = { comfort = -6.0 }           # its animal has died
+nuzzle_again_hours = 8    # SPEC-v3.2 §9: two that have leaned together do not lean again for this many world hours
 nuzzle_wear = 0.7         # each nuzzle with the same one is worth this much of the last, until a night eases it
 
 [novelty]                 # familiarity (SPEC-v2 §4): doing a thing again is worth less each time

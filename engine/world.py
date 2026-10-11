@@ -1,5 +1,6 @@
 """The house (SPEC-v3 §6): one JSON-able dict holding every room, pet, creature and the weather.
 Everything else is functions over it. The world is data; pets act only through the checked action set."""
+import json
 import random
 import tomllib
 from pathlib import Path
@@ -33,6 +34,14 @@ def load_config(path=ROOT / "config.toml", profile=None):
     if profile:
         merge(cfg, tomllib.loads((path.parent / ("config.%s.toml" % profile)).read_text()))
     cfg["profile"] = profile
+    # SPEC-v3.2: the art is data (view/assets/README.md). The engine reads the part of it that is rules: the catalog of
+    # kinds a thing can be, how a thing made before kinds becomes one, and each room type's layout (where its fixtures
+    # stand, which floor tiles furniture takes up, where a thing can hang on the wall).
+    art = path.parent / "view" / "assets"
+    read = lambda f, default: json.loads((art / f).read_text()) if (art / f).exists() else default
+    cfg["kinds"] = read("kinds.json", {"sculpture": {"rank": 3, "wall": False, "not": [], "a": "a"}})
+    cfg["from_parts"] = read("kinds-from-parts.json", {"shape": {}, "material": {}, "many": {"hanging": [], "then": "sculpture", "else": "sculpture"}, "pair": {}})
+    cfg["layouts"] = {f.stem: json.loads(f.read_text()) for f in sorted((art / "rooms").glob("*.json"))} if (art / "rooms").exists() else {}
     return derive(cfg)
 
 
@@ -112,7 +121,8 @@ def in_room(cfg, t):
 
 def taken(house, room, but=None):
     """Tiles with something on them: objects, bits lying about, door thresholds, eggs, water."""
-    tiles = [o["pos"] for n, o in room["objects"].items() if n != but]
+    tiles = [o["pos"] for n, o in room["objects"].items() if n != but and not o.get("wall")]   # what hangs on a wall takes no floor
+    tiles += room.get("blocked", [])   # the layout's furniture (SPEC-v3.2 §4)
     tiles += [s["pos"] for s in room["spots"] if s["ready"]]
     tiles += [p["pos"] for p in house["pets"].values() if p["room"] == room["id"] and p["stage"] == "egg"]
     tiles += [list(house["door_tiles"][d]) for d in room["doors"]]
@@ -242,6 +252,7 @@ def generate_room(house, cfg, rid, kind=None, by=None):
     kinds = spec["bits"]
     if kinds == "any":
         kinds = {b: 1 for b in rng.sample(sorted(b for b, v in cfg["house"]["bits"].items() if not v.get("late")), 4)}
+    layout(cfg, room)
     for bit, n in kinds.items():
         for _ in range(n):
             spot = free_tile(house, cfg, room, [rng.randrange(cfg["W"]), rng.randrange(cfg["H"])])
@@ -257,6 +268,49 @@ def arrived(house, what):
 def bit_kinds(house, cfg):
     """The bits that can turn up by themselves: all of them but the ones whose discovery has not come yet."""
     return sorted(b for b, v in cfg["house"]["bits"].items() if not v.get("late") or arrived(house, v["late"]))
+
+
+def layout(cfg, room):
+    """Lay a room out as its layout file says (SPEC-v3.2 §4): which floor tiles the scenery's furniture takes, where
+    things can hang, and where each fixture stands. A fixture nobody could have moved goes to its tile; one that can
+    be moved is left wherever it has been put. Safe to call again whenever the layouts change."""
+    L = cfg.get("layouts", {}).get(room["type"]) or {}
+    room["blocked"] = [list(t) for t in L.get("blocked", [])]
+    room["wall_slots"] = [list(t) for t in L.get("wall_slots", [[2, 0], [5, 0], [9, 0]])]
+    for name, f in (L.get("fixtures") or {}).items():
+        o = room["objects"].get(name)
+        if o and "fix" in o and "pos" in f and not o["fix"].get("movable") and not o["fix"].get("sun"):
+            o["pos"] = list(f["pos"])
+
+
+def settle(house, cfg, room):
+    """After a layout has been laid over a room that was already lived in: nothing made, lying about or standing
+    is left on a tile the furniture now takes, and bits that have a proper place in this room lie there."""
+    L = cfg.get("layouts", {}).get(room["type"]) or {}
+    fixed = [o["pos"] for o in room["objects"].values() if "fix" in o]
+    bad = lambda pos: list(pos) in room.get("blocked", []) or list(pos) in fixed
+    for n, o in room["objects"].items():
+        if "fix" not in o and not o.get("wall") and bad(o["pos"]):
+            o["pos"] = free_tile(house, cfg, room, o["pos"], n)
+    for s in room["spots"]:
+        places = [list(t) for t in (L.get("bit_spots") or {}).get(s["bit"], [])]
+        if places and not s["loose"] and s["pos"] not in places:
+            s["pos"] = next((t for t in places if t not in taken(house, room)), s["pos"])
+        if bad(s["pos"]):
+            s["pos"] = free_tile(house, cfg, room, s["pos"])
+    for p in house["pets"].values():
+        if p["room"] == room["id"] and p["stage"] != "dead" and bad(p["pos"]) and list(p["pos"]) in room.get("blocked", []):
+            p["pos"] = free_tile(house, cfg, room, p["pos"])
+
+
+# SPEC-v3.2 §6: stages in plain words, for whoever is watching. The pets are told nothing new.
+STAGE_WORD = {"egg": "egg", "hatchling": "little one", "child": "little one", "youngling": "young one", "adult": "grown", "elder": "old one"}
+
+
+def a_stage(stage):
+    """A stage in a sentence: "a little one", "a grown one", "an old one"."""
+    word = STAGE_WORD.get(stage, stage)
+    return "%s %s" % ("an" if word[0] in "aeiou" else "a", word if word.endswith("one") or word == "egg" else word + " one")
 
 
 def neighbours(house, rid):

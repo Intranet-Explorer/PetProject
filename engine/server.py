@@ -19,7 +19,7 @@ from fastapi.staticfiles import StaticFiles
 
 from . import actions, director, feel, life, metrics, mind, physics, radio, songs, story, things, walls
 from .tick import Engine, model_brains, stub_brains
-from .world import ROOT, alive, label, load_config, power_on, relation
+from .world import ROOT, STAGE_WORD, alive, label, load_config, power_on, relation
 
 cfg = load_config(profile=os.environ.get("PET_PROFILE") or None)
 DATA = ROOT / os.environ.get("PET_DATA", "data")
@@ -79,8 +79,26 @@ def pet_view(p):
         songs=[e["id"] for e in p.get("songs", []) if e["id"] in h.get("songs", {})],   # SPEC-v3.1
         animals=[{"id": c["id"], "kind": c["kind"], "name": c.get("name"), "room": c["room"]} for c in h["creatures"] if c.get("tame") == p["id"]],
         read=p.get("read", [])[:3],
+        # SPEC-v3.2 §5, §6: in plain words for the page. `mood`: what is wrong, worst first, at most two; `emote`: one
+        # strong feeling, if there is one; `act`: the step it is on.
+        stage_word=STAGE_WORD.get(p["stage"], p["stage"]), mood=mood(p), emote=emote(p),
+        act=story.act_of(h, p, plan["steps"][min(plan["i"], len(plan["steps"]) - 1)]) | {"since": plan.get("step_began", plan["started"])} if plan else None,
     )
     return out
+
+
+EMOTE = {"energy": "tired", "comfort": "uneasy", "curiosity": "bored", "company": "lonely"}
+
+
+def mood(p):
+    worst = sorted(p["needs"], key=lambda n: -feel.level(p, n))
+    out = [feel.WORDS[n][feel.level(p, n)] for n in worst if feel.level(p, n) >= 2][:2]
+    return out or [feel.WORDS[worst[-1]][feel.level(p, worst[-1])]]
+
+
+def emote(p):
+    worst = max(p["needs"], key=lambda n: feel.level(p, n))
+    return EMOTE[worst] if feel.level(p, worst) >= 3 else "content" if all(feel.level(p, n) <= 1 for n in p["needs"]) else None
 
 
 def room_view(r):
@@ -107,6 +125,8 @@ def room_view(r):
                 v["grow"] = o["grow"]
             if "meal" in o["fix"]:
                 v["servings"] = o["servings"]
+        if o.get("wall"):
+            v["wall"] = True
         objs[n] = v
     return {"id": r["id"], "cell": r["cell"], "type": r["type"], "name": r["name"], "doors": r["doors"], "paint": r["paint"],
             "shut": [k.split("|")[1] for k, t in h["shut"].items() if k.startswith(r["id"] + "|") and t > h["tick"]],
@@ -132,6 +152,8 @@ def snapshot():
         "radio": {"on": radio.is_on(h), "here": bool(radio.boxes(h)), "said": recent(h.get("radio", {}).get("said", []), 45)},
         "arrived": h.get("v31", {}).get("arrived", {}), "read_glow": (h["tick"] - h.get("read_glow", -10**9)) * cfg["clock"]["tick_seconds"] <= 20,
         "pace": cfg["pace"],
+        # SPEC-v3.2: the one plain sentence about the house now, and the steps finished in the last world minute or so
+        "now": story.now(h, cfg), "acts": recent(h.get("acts", []), 40),
         "tick": h["tick"], "clock": h["clock"], "weather": h["weather"], "power": power_on(h), "size": [cfg["W"], cfg["H"]],
         "tick_seconds": cfg["clock"]["tick_seconds"], "day_seconds": cfg["clock"]["day_seconds"], "turbo": cfg["clock"]["turbo"],
         "profile": cfg["profile"], "start": h["start"], "door_tiles": h["door_tiles"], "lineage": h["lineage"],
@@ -407,6 +429,9 @@ def replay_lines(raw):
     return b"\n".join(out) + b"\n" if out else b""
 
 
+# SPEC-v3.2: the art is data (view/assets/README.md): packs, sprite mappings, the kind catalog, room layouts, sounds
+if (ROOT / "view" / "assets").exists():
+    app.mount("/art", StaticFiles(directory=ROOT / "view" / "assets"))
 if (ROOT / "view" / "dist").exists():
     app.mount("/", StaticFiles(directory=ROOT / "view" / "dist", html=True))
 

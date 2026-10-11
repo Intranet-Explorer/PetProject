@@ -45,8 +45,64 @@ def doing(cfg, o):
     return cfg["materials"]["behaviors"][b["do"].split(":")[0]] if b and o.get("active") else {}
 
 
+SIZES = ["small", "medium", "large"]
+
+
 def size(o):
-    return max(p["size"] for p in o["made"]["recipe"]["parts"])
+    r = o["made"]["recipe"]
+    return r.get("size") or max((p["size"] for p in r.get("parts") or []), default=2)
+
+
+def as_size(v):
+    """A recipe's size as 1 to 3, from the word or the number; None if it is neither."""
+    return SIZES.index(v) + 1 if v in SIZES else v if v in (1, 2, 3) else None
+
+
+def kinds_for(cfg, material):
+    """The kinds a thing of this material can be (SPEC-v3.2 §3.1): every kind that does not rule it out."""
+    return [k for k, v in cfg["kinds"].items() if material not in v.get("not", [])]
+
+
+def a_thing(cfg, recipe, material=False):
+    """A made thing in plain words: "a blue cushion", "a soft blue cushion"."""
+    kind = recipe.get("kind") or "thing"
+    words = ([recipe["material"]] if material else []) + ([recipe["color"]] if recipe.get("color") else []) + [kind]
+    return "%s %s" % ("an" if words[0][0] in "aeiou" else "a", " ".join(words))
+
+
+def from_parts(cfg, recipe):
+    """What a thing made before v3.2 is, as a kind (§3.2): (kind, colour, size) from its parts and material, by the
+    table in view/assets/kinds-from-parts.json. Its largest part decides; many parts make a mobile or a sculpture."""
+    T, parts, material = cfg["from_parts"], recipe.get("parts") or [], recipe.get("material")
+    if not parts:
+        return "sculpture", "grey", 2
+    main = max(parts, key=lambda p: p["size"])
+    shapes = {p["shape"] for p in parts}
+    if len(parts) >= 3:
+        kind = T["many"]["then"] if material in T["many"]["hanging"] else T["many"]["else"]
+    elif len(shapes) == 2 and material in T.get("pair", {}):
+        kind = T["pair"][material]
+    else:
+        kind = T["material"].get(material, {}).get(main["shape"]) or T["shape"].get(main["shape"], "sculpture")
+    if kind not in cfg["kinds"] or material in cfg["kinds"][kind].get("not", []) or cfg["kinds"][kind].get("wall"):
+        kind = next((k for k in (T["shape"].get(main["shape"]), "sculpture") if k in cfg["kinds"]), next(iter(cfg["kinds"])))
+    return kind, main["color"], main["size"]
+
+
+def to_kind(cfg, recipe):
+    """Turn an old recipe into a new one in place. Returns the mapping made, for the log, or None if it already has a kind."""
+    if recipe.get("kind"):
+        return None
+    was = "%s %s" % (recipe.get("material"), "+".join(sorted(p["shape"] for p in recipe.get("parts") or [])) or "nothing")
+    recipe["kind"], recipe["color"], recipe["size"] = from_parts(cfg, recipe)
+    recipe.pop("parts", None)
+    return "%s -> %s" % (was, recipe["kind"])
+
+
+def wall_slot(house, room):
+    """A free place on the wall for a thing that hangs (a picture, a mirror, a shelf), or None."""
+    used = [o["pos"] for o in room["objects"].values() if o.get("wall")]
+    return next((list(t) for t in room.get("wall_slots", [[2, 0], [5, 0], [9, 0]]) if list(t) not in used), None)
 
 
 def whose(house, pet, o):
@@ -101,52 +157,39 @@ def spot_for(house, cfg, pet, near):
 
 # ---- making from stuff ----
 
-def can_make(cfg, pet):
-    """How many parts it could make now, and which properties its carried bits allow."""
-    allowed = sorted({p for b in pet["carrying"] for p in cfg["house"]["bits"][b]["can"]})
-    return min(cfg["make"]["parts"].get(pet["stage"], 0), len(pet["carrying"])), allowed
-
-
 def to_pick_up(house, cfg, pet, recipe):
-    """The bits lying here that this recipe still needs: one that can be the material if nothing carried can, and
-    one more per part it is short of, as far as it has room to carry."""
+    """The bit lying here that this recipe still needs: one that can be the material, if nothing carried can."""
     room, bits = house["rooms"][pet["room"]], cfg["house"]["bits"]
-    have, room_left = list(pet["carrying"]), cfg["make"]["carry"] - len(pet["carrying"])
+    if any(recipe.get("material") in bits[b]["can"] for b in pet["carrying"]) or len(pet["carrying"]) >= cfg["make"]["carry"]:
+        return []
     spots = sorted((s for s in room["spots"] if s["ready"]), key=lambda s: dist(s["pos"], pet["pos"]))
-    out = []
-    if not any(recipe.get("material") in bits[b]["can"] for b in have):
-        spot = next((s for s in spots if recipe.get("material") in bits[s["bit"]]["can"]), None)
-        if spot and room_left > 0:
-            out.append(spot)
-    for s in spots:
-        if len(have) + len(out) >= len(recipe.get("parts") or []) or len(out) >= room_left:
-            break
-        if s not in out:
-            out.append(s)
-    return out
+    return [s for s in spots if recipe.get("material") in bits[s["bit"]]["can"]][:1]
 
 
 def check_make(a, house, cfg, pet):
-    r = a.get("recipe")
-    if not isinstance(r, dict) or not isinstance(r.get("parts"), list) or not r["parts"]:
+    """SPEC-v3.2 §3.1: a thing is a kind from the catalog, in a material its bits allow, a colour and a size."""
+    r, room = a.get("recipe"), house["rooms"][pet["room"]]
+    if not isinstance(r, dict) or r.get("kind") not in cfg["kinds"]:
         return "no recipe"
     carrying = pet["carrying"] + [s["bit"] for s in to_pick_up(house, cfg, pet, r)]
-    most = min(cfg["make"]["parts"].get(pet["stage"], 0), len(carrying))
     allowed = {p for b in carrying for p in cfg["house"]["bits"][b]["can"]}
     if not carrying:
         return "you have nothing to make it from"
-    if len(r["parts"]) > most:
-        return "you do not have enough bits for that many parts"
-    for p in r["parts"]:
-        if not (isinstance(p, dict) and p.get("shape") in SHAPES and p.get("size") in (1, 2, 3)
-                and p.get("color") in COLORS and p.get("at", "center") in PLACES):
-            return "bad part"
     if r.get("material") not in allowed:
         return "nothing here can be made %s" % r.get("material")
+    kind = cfg["kinds"][r["kind"]]
+    if r["material"] in kind.get("not", []):
+        return "%s %s cannot be %s" % (kind.get("a", "a"), r["kind"], r["material"])
+    if r.get("color") not in COLORS or not as_size(r.get("size", 2)):
+        return "it needs a colour and a size"
+    if as_size(r.get("size", 2)) > cfg["make"]["parts"].get(pet["stage"], 0):
+        return "you are not big enough yet to make something that large"
     if not clean_name(r.get("name")) or not isinstance(r.get("purpose"), str):
         return "it needs a name and a purpose"
-    if len(made(house["rooms"][pet["room"]])) >= cfg["make"]["crowded"]:
+    if len(made(room)) >= cfg["make"]["crowded"]:
         return "this room is too crowded for another thing"
+    if kind.get("wall") and not wall_slot(house, room):
+        return "there is no free place on the wall here to hang it"
     if pet["needs"]["energy"] < cfg["make"]["tired"]:
         return "you are too tired to make anything"
     return None
@@ -154,7 +197,7 @@ def check_make(a, house, cfg, pet):
 
 def make(house, cfg, pet, a, clean):
     r, room = a["recipe"], house["rooms"][pet["room"]]
-    want, n = r["material"], len(r["parts"])
+    want, n = r["material"], 1   # one bit goes into a thing: the one that gives it its nature
     picked = to_pick_up(house, cfg, pet, r)
     for spot in picked:   # what it was short of, it picks up from the floor on the way
         pet["carrying"].append(spot["bit"])
@@ -166,20 +209,20 @@ def make(house, cfg, pet, a, clean):
     order = sorted(pet["carrying"], key=lambda b: want not in cfg["house"]["bits"][b]["can"])
     used, pet["carrying"] = order[:n], order[n:]
     name = unique_name(house, cfg, clean_name(r["name"]))
-    recipe = {"name": name, "material": want, "purpose": clean(r["purpose"], 80),
-              "parts": [{"shape": p["shape"], "size": p["size"], "color": p["color"], "at": p.get("at", "center")} for p in r["parts"]]}
+    recipe = {"name": name, "kind": r["kind"], "material": want, "color": r["color"], "size": as_size(r.get("size", 2)), "purpose": clean(r["purpose"], 80)}
     house["n"]["thing"] += 1
-    o = {"pos": spot_for(house, cfg, pet, a.get("near")),
+    hangs = cfg["kinds"][r["kind"]].get("wall")
+    o = {"pos": wall_slot(house, room) if hangs else spot_for(house, cfg, pet, a.get("near")), **({"wall": True} if hangs else {}),
          "made": {"id": house["n"]["thing"], "recipe": recipe, "by": pet["id"], "owner": pet["id"], "tick": house["tick"],
                   "bits": used, "uses": 0, "ups": 0, "used_at": house["tick"], "heirloom": None, "behavior": None}}
     if cfg["materials"][want].get("light"):
         o["state"] = "on"
     room["objects"][name] = o
     pet["made"] += 1
-    moment(house, "made", "%s made a %s" % (label(pet), name), pet["id"], room["id"])
+    moment(house, "made", "%s made %s it calls '%s'" % (label(pet), a_thing(cfg, recipe), name), pet["id"], room["id"])   # §6: the kind, then the name
     how = "out of what you carried" if not picked else "from %s" % " and ".join(sorted(set(used)))
     # Novelty goes by kind and wears; a thing like one it made lately is no longer new (§3.3).
-    return "you made %s %s" % (name, how), {"energy": -(cfg["make"]["effort"] + n)}, "make " + want
+    return "you made %s and called it %s, %s%s" % (a_thing(cfg, recipe), name, how, "; it hangs on the wall" if hangs else ""), {"energy": -(cfg["make"]["effort"] + n)}, "make " + want
 
 
 def drop_bits(house, cfg, room, pos, bits):
@@ -194,14 +237,21 @@ def drop_bits(house, cfg, room, pos, bits):
 def unmake(house, cfg, pet, name):
     room = house["rooms"][pet["room"]]
     o = room["objects"].pop(name)
-    drop_bits(house, cfg, room, o["pos"], o["made"]["bits"])   # the stuff comes back; no energy does (§6.3)
-    gone(house, o, name, "taken apart")
-    moment(house, "unmade", "%s took apart the %s" % (label(pet), name), pet["id"], room["id"])
+    drop_bits(house, cfg, room, pet["pos"] if o.get("wall") else o["pos"], o["made"]["bits"])   # the stuff comes back; no energy does (§6.3)
+    gone(house, o, name, "taken apart", room)
+    whose = "its" if o["made"]["owner"] == pet["id"] else "a"
+    moment(house, "unmade", "%s took apart %s %s, '%s'" % (label(pet), whose, o["made"]["recipe"].get("kind", "thing"), name), pet["id"], room["id"])
     return "you took apart %s; what it was made of lies where it stood" % name, {}, None
 
 
-def gone(house, o, name, how):
-    """Keep a short note of a thing that no longer exists, for the Things tab and the life records."""
+def gone(house, o, name, how, room=None):
+    """Keep a short note of a thing that no longer exists, for the Things tab and the life records. What was written
+    on it goes with it (SPEC-v3.1 §2: an inscription on a thing is the thing's)."""
+    for r in [room] if room else [x for x in house["rooms"].values() if x["type"]]:
+        for m in [m for m in r.get("marks", []) if m["on"] == name]:
+            r["marks"].remove(m)
+            house.setdefault("fresh_marks", []).append({"id": m["id"], "tick": house["tick"], "room": r["id"], "place": m["on"], "text": m["text"],
+                                                        "by": m["by"], "medium": m["medium"], "what": "gone with the thing", "actor": None})
     house.setdefault("gone_things", []).append(
         {"name": name, "recipe": o["made"]["recipe"], "by": o["made"]["by"], "owner": o["made"]["owner"],
          "uses": o["made"]["uses"], "ups": o["made"]["ups"], "made": o["made"]["tick"], "gone": [house["tick"], how]})
@@ -232,12 +282,16 @@ def combine(house, cfg, pet, a, clean, norm):
     x, y, r = norm(a["a"]), norm(a["b"]), a["recipe"]
     olds = [room["objects"].pop(n) for n in (x, y)]
     for n, o in zip((x, y), olds):
-        gone(house, o, n, "combined")
+        gone(house, o, n, "combined", room)
     name = unique_name(house, cfg, clean_name(r["name"]))
-    recipe = {"name": name, "material": r["material"], "purpose": clean(r["purpose"], 80),
-              "parts": [dict(p) for o in olds for p in o["made"]["recipe"]["parts"]][:6]}
+    kept = next(o for o in olds if o["made"]["recipe"]["material"] == r["material"])["made"]["recipe"]   # the one whose nature it keeps
+    kind = joined(cfg, [o["made"]["recipe"] for o in olds], r["material"])
+    recipe = {"name": name, "kind": kind, "material": r["material"], "color": kept.get("color", "grey"), "size": max(size(o) for o in olds),
+              "purpose": clean(r["purpose"], 80)}
     house["n"]["thing"] += 1
-    o = {"pos": olds[0]["pos"],
+    hangs = cfg["kinds"][kind].get("wall")
+    o = {"pos": (wall_slot(house, room) or olds[0]["pos"]) if hangs else next((x["pos"] for x in olds if not x.get("wall")), pet["pos"]),
+         **({"wall": True} if hangs and wall_slot(house, room) else {}),
          "made": {"id": house["n"]["thing"], "recipe": recipe, "by": pet["id"], "owner": pet["id"], "tick": house["tick"],
                   "bits": [b for old in olds for b in old["made"]["bits"]][:6], "uses": 0, "ups": 0, "used_at": house["tick"],
                   "heirloom": None, "behavior": None, "from": [x, y]}}
@@ -246,8 +300,25 @@ def combine(house, cfg, pet, a, clean, norm):
     room["objects"][name] = o
     pet["made"] += 1
     effort = (cfg["make"]["effort"] + 1) * (room_rule(cfg, room, "combine", 1.0) if room["type"] == "workshop" else 1.0)   # easier at a bench (§6.1)
-    moment(house, "made", "%s combined the %s and the %s into a %s" % (label(pet), x, y, name), pet["id"], room["id"])
-    return "you combined %s and %s into %s" % (x, y, name), {"energy": -effort}, "combine " + r["material"]
+    was = [a_thing(cfg, {"kind": old["made"]["recipe"].get("kind")}) for old in olds]
+    moment(house, "made", "%s joined %s and %s into %s it calls '%s'" % (label(pet), was[0], was[1], a_thing(cfg, {"kind": kind}), name), pet["id"], room["id"])
+    return "you joined %s and %s into %s and called it %s" % (x, y, a_thing(cfg, recipe), name), {"energy": -effort}, "combine " + r["material"]
+
+
+def joined(cfg, recipes, material):
+    """What two things make together (SPEC-v3.2 §3.1): two of a kind stay that kind; otherwise the more complex of the
+    two kinds, and for two different kinds as complex as each other a mobile (of stuff that hangs and moves) or a
+    sculpture. If the kind that comes out cannot be of the material kept, a sculpture: anything can be one."""
+    K, a, b = cfg["kinds"], recipes[0].get("kind"), recipes[1].get("kind")
+    rank = lambda k: K.get(k, {}).get("rank", 1)
+    if a == b:
+        kind = a
+    elif rank(a) != rank(b):
+        kind = max((a, b), key=rank)
+    else:
+        many = cfg["from_parts"]["many"]
+        kind = many["then"] if material in many["hanging"] else many["else"]
+    return kind if kind in K and material not in K[kind].get("not", []) else "sculpture" if "sculpture" in K else kind
 
 
 def room_rule(cfg, room, key, default=None):
@@ -286,7 +357,7 @@ def use(house, cfg, pet, name):
         del room["objects"][name]
         pet["prev_eat"], pet["last_eat"] = pet.get("last_eat", LONG_AGO), house["tick"]
         gone(house, o, name, "eaten")
-        moment(house, "ate", "%s ate the %s" % (label(pet), name), pet["id"], room["id"])
+        moment(house, "ate", "%s ate %s, '%s'" % (label(pet), a_thing(cfg, o["made"]["recipe"]), name), pet["id"], room["id"])
         return "you ate " + name, fx, kind
     if m.get("spring_steps"):
         pet["spring"] = m["spring_steps"]

@@ -166,7 +166,7 @@ def events(house, cfg):
     elif kind == "lost_thing":
         owned = [(x, n) for x in rooms for n, o in things.made(x).items()
                  if o["made"]["owner"] in house["pets"] and house["pets"][o["made"]["owner"]]["stage"] != "dead"
-                 and not things.prop(cfg, o).get("fixed")]
+                 and not things.prop(cfg, o).get("fixed") and not o.get("wall")]
         others = lambda x: [y for y in rooms if y["id"] != x["id"]]
         owned = [(x, n) for x, n in owned if others(x)]
         if owned:
@@ -175,13 +175,16 @@ def events(house, cfg):
             o = frm["objects"].pop(n)
             o["pos"] = free_tile(house, cfg, to, [r.randrange(cfg["W"]), r.randrange(cfg["H"])])
             to["objects"][n] = o
+            for m in [m for m in frm.get("marks", []) if m["on"] == n]:   # what is written on a thing goes where the thing goes
+                frm["marks"].remove(m)
+                to.setdefault("marks", []).append(m)
             owner = house["pets"][o["made"]["owner"]]
             owner["lost"].append({"name": n, "by": None, "room": frm["id"]})
             if owner["room"] == frm["id"] and not owner["sleep"]:
                 add_event(house, owner, "your %s is not where it was" % n)
                 owner["news"].append("event")
                 owner["lost"].pop()
-            moment(house, "lost", "%s's %s went missing from %s and is in %s" % (label(owner), n, frm["name"], to["name"]), owner["id"], to["id"])
+            moment(house, "lost", "%s's %s, '%s', went missing from %s and is in %s" % (label(owner), o["made"]["recipe"].get("kind", "thing"), n, frm["name"], to["name"]), owner["id"], to["id"])
             note(house, "lost thing", to["id"], n)
     elif kind == "surprise":
         bit = r.choice(bit_kinds(house, cfg))
@@ -302,7 +305,7 @@ def creatures(house, cfg):
                     owner = house["pets"].get(o["made"]["owner"])
                     if owner and owner["stage"] != "dead":
                         owner["lost"].append({"name": n, "by": None, "room": room["id"]})
-                    moment(house, "mouse", "the mouse made off with the %s" % n, None, room["id"])
+                    moment(house, "mouse", "the mouse made off with %s, '%s'" % (things.a_thing(cfg, o["made"]["recipe"]), n), None, room["id"])
                     house.setdefault("fresh_creatures", []).append({"tick": tick, "kind": "mouse", "room": room["id"], "pet": None, "what": "stole " + n})
             elif friend and (cr["fed"].get(friend["id"], 0) >= C["mouse"]["trust_to_wait"] or lingers(cfg, cr, friend)):
                 goal, cr["doing"] = friend["pos"], "waiting near %s" % label(friend)

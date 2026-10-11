@@ -85,7 +85,10 @@ def perceive(house, cfg, pet, mem):
     def thing_line(n, o):
         notes = []
         if "made" in o:
+            notes.append(things.a_thing(cfg, o["made"]["recipe"]))   # what it is, beside the name its maker gave it (SPEC-v3.2 §3)
             notes.append(things.whose(house, pet, o))
+            if o.get("wall"):
+                notes.append("on the wall")
             if o["made"].get("called"):
                 notes.append("the visitor calls it " + o["made"]["called"])
             if o.get("state") in ("on", "off"):
@@ -289,7 +292,8 @@ def perceive(house, cfg, pet, mem):
         "theirs": [n for n in actions.others_things(house, pet, room) if not objs[n]["made"].get("heirloom")],
         "leave": list(dict.fromkeys(mine_here + heirs)),
         "movable": [n for n, o in objs.items() if actions.movable(cfg, o)] + (["egg"] if any(e["parent"] == pet["id"] for e in eggs) else []),
-        "beliefs": [b["id"] for b in beliefs], "make": [most, reach],
+        "beliefs": [b["id"] for b in beliefs], "make": [most, reach],   # the largest size its stage can make; the materials in reach
+        "kinds": {m: things.kinds_for(cfg, m) for m in reach},
         "materials": sorted({objs[n]["made"]["recipe"]["material"] for n in free}),
         "offers": [actions.handle(house, pet, house["pets"][o["from"]]) for o in pet["offers"]
                    if o["from"] in house["pets"] and house["pets"][o["from"]]["room"] == pet["room"]],

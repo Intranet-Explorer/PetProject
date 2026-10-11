@@ -193,7 +193,9 @@ def grow(house, cfg, pet):
         else "you feel bigger; you can do new things: "
     add_event(house, pet, feel + ", ".join(new))
     pet["news"].append("event")
-    moment(house, "stage", "%s is now %s %s" % (label(pet), "an" if stage[0] in "ae" else "a", stage.capitalize()), pet["id"], pet["room"])
+    from .world import STAGE_WORD, a_stage   # SPEC-v3.2 §6: stages in plain words, on the page; the pet is told as before
+    moment(house, "stage", "%s has grown: %s now" % (label(pet), a_stage(stage)) if STAGE_WORD[stage] != STAGE_WORD[old]
+           else "%s has grown a little" % label(pet), pet["id"], pet["room"])
     return stage
 
 
@@ -299,5 +301,6 @@ def bequeath(house, cfg, pet, a, norm):
     for k in kids:
         if k["stage"] != "egg":
             add_event(house, k, "your %s has left you the %s" % (pet["word"], name))
-    moment(house, "heirloom", "%s left the %s to %s" % (label(pet), name, " and ".join(label(k) for k in kids)), pet["id"], pet["room"])
+    moment(house, "heirloom", "%s left %s, '%s', to %s" % (label(pet), things.a_thing(cfg, o["made"]["recipe"]).replace("a ", "its ", 1).replace("an ", "its ", 1),
+                                                         name, " and ".join(label(k) for k in kids)), pet["id"], pet["room"])
     return "you marked %s to be left to %s" % (name, "your children" if len(kids) > 1 else label(kids[0])), {}, "bequeath"

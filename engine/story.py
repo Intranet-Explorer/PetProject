@@ -211,3 +211,72 @@ def meter_share(db, pet_id, after_tick=0):
 def meter_beliefs(mem):
     held = mem.beliefs
     return round(100 * sum(meter_talk(b["statement"]) for b in held) / len(held), 1) if held else None
+
+
+# ---- SPEC-v3.2 §5: what a pet is doing, for whoever is watching. None of this is ever shown to a pet. ----
+
+def act_of(house, pet, a):
+    """A step as the view needs it to animate: what it is about and whom or where it is toward, taken before the step
+    happens (afterwards the thing may be gone)."""
+    from .actions import norm
+    t, room = a.get("type"), house["rooms"][pet["room"]]
+    what = a.get("target") or a.get("what") or a.get("object") or a.get("a") or a.get("song") or a.get("door") or (a.get("recipe") or {}).get("name")
+    to = a.get("to") or a.get("who") or a.get("from") or a.get("near") or a.get("on") or a.get("b")
+    o = room["objects"].get(norm(what)) if isinstance(what, str) else None
+    recipe = o["made"]["recipe"] if o and "made" in o else (a.get("recipe") if t == "make" else None) or {}
+    return {"pet": pet["id"], "type": t, "what": what if isinstance(what, str) else None, "to": to if isinstance(to, str) else None, "room": pet["room"],
+            "kind": recipe.get("kind"), "color": recipe.get("color"), "from": [norm(a.get("a")), norm(a.get("b"))] if t == "combine" else None,
+            "text": a.get("text") if t in ("speak", "tell", "write") else None, "things": house["n"]["thing"]}
+
+
+def acted(house, cfg, pet, act, ok):
+    """The step is over. Keep it a little while, numbered, so the view can play it once."""
+    room = house["rooms"].get(act["room"], {})
+    if ok and act["type"] in ("make", "combine") and house["n"]["thing"] > act["things"]:   # the thing that came of it, under the name it got
+        name, o = next(((n, o) for n, o in room.get("objects", {}).items() if o.get("made", {}).get("id") == house["n"]["thing"]), (act["what"], None))
+        if o:
+            act.update(what=name, kind=o["made"]["recipe"].get("kind"), color=o["made"]["recipe"].get("color"))
+    house["n"]["act"] = house["n"].get("act", 0) + 1
+    act.pop("things", None)
+    house.setdefault("acts", []).append(dict(act, n=house["n"]["act"], tick=house["tick"], ok=bool(ok), room=pet["room"] if act["type"] == "go" else act["room"]))
+    del house["acts"][:-40]
+
+
+PAST = {"make": "made {thing}", "unmake": "took apart {thing}", "combine": "joined two things into {thing}", "use": "used the {what}",
+        "gather": "picked up some {what}", "drop": "put down some {what}", "give": "held out {what} to {to}", "show": "showed {to} the {what}",
+        "nuzzle": "leaned toward {to}", "accept": "took what {to} offered", "speak": "said something", "tell": "told {to} something to keep",
+        "go": "came through the {what} door", "write": "wrote on the {to}", "scrub": "rubbed out some writing", "sing": "sang \"{what}\"",
+        "compose": "made up a song", "teach_song": "taught {to} a song", "ask_book": "asked the book a question", "call": "called its {what}",
+        "name": "gave a name to something", "lay_egg": "laid an egg", "bequeath": "chose something to leave behind", "arrange": "moved the {what}",
+        "take": "took the {what}", "chase": "chased the {to}", "paint": "painted the room", "teach": "taught the {what} a trick"}
+
+
+def now(house, cfg):
+    """The one plain sentence at the top of the page (§5.4), rewritten whenever something changes. No model is asked."""
+    from . import mind, things
+    from .world import a_stage, dist, relation
+    living = [p for p in house["pets"].values() if p["stage"] not in ("egg", "dead")]
+    eggs = [p for p in house["pets"].values() if p["stage"] == "egg"]
+    if not living:
+        return "An egg is waiting in %s." % house["rooms"][eggs[0]["room"]]["name"] if eggs else "The house is quiet. Nobody lives here now."
+    recent = [a for a in house.get("acts", []) if a["ok"] and a["type"] in PAST and house["tick"] - a["tick"] <= cfg["ticks_per_hour"]]
+    last = recent[-1] if recent else None
+    who = house["pets"].get(last["pet"]) if last else None
+    pet = who if who in living else max(living, key=lambda p: p["last_call"])
+    name = lambda p, of=None: p["name"] or ("its " + relation(house, of, p) if of and relation(house, of, p) else "the little one")
+    cap = lambda t: t[:1].upper() + t[1:]
+    room = house["rooms"][pet["room"]]
+    near = [p for p in living if p is not pet and p["room"] == pet["room"]]
+    beside = next((p for p in near if dist(p["pos"], pet["pos"]) <= 2), None)
+    doing = mind.doing(house, pet).split(" (")[0]
+    first = "%s, %s, is %s%s in %s." % (cap(name(pet)), a_stage(pet["stage"]), doing, " by " + name(beside, pet) if beside else "", room["name"])
+    others = [p for p in living if p is not pet and p is not beside]
+    if others and len(first) < 90:
+        o = others[0]
+        first += " %s is %s%s." % (cap(name(o)), mind.doing(house, o).split(" (")[0], "" if o["room"] == pet["room"] else " in " + house["rooms"][o["room"]]["name"])
+    if not last or who not in living:
+        return first
+    to = next((p for p in living if last.get("to") and (p["name"] or "").lower() == str(last["to"]).lower()), None)
+    told = {"thing": things.a_thing(cfg, {"kind": last.get("kind") or "thing", "color": last.get("color")}), "what": last.get("what") or "something",
+            "to": name(to, who) if to else (last.get("to") or "someone")}
+    return "%s %s just %s." % (first, cap(name(who)), PAST[last["type"]].format(**told))

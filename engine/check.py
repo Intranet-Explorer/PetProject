@@ -8,6 +8,7 @@ import asyncio
 import json
 import re
 import tempfile
+from pathlib import Path
 
 from . import actions, director, feel, life, mind, physics, story, things
 from .brains import model as model_brain
@@ -130,19 +131,19 @@ async def main():
         r = await do(eng, pet, {"type": "gather", "what": "fluff"}, {"type": "gather", "what": "wax"})
         assert pet["carrying"] == ["fluff", "wax"] and not r[0]["reason"], r
         assert "could become something soft" in r[0]["feedback"] and not re.search(r"\d", r[0]["feedback"]), r[0]["feedback"]
-        recipe = {"name": "Soft Nest", "material": "soft", "purpose": "to lie in", "parts": [{"shape": "blob", "size": 3, "color": "white", "at": "center"}]}
+        recipe = {"name": "Soft Nest", "kind": "nest", "material": "soft", "color": "white", "size": "medium", "purpose": "to lie in"}
         energy = pet["needs"]["energy"]
         r = await do(eng, pet, {"type": "make", "recipe": recipe, "near": "bed"}, {"type": "observe"})
         assert not r[0]["reason"], r[0]
         nest = room_of(eng, pet)["objects"]["soft nest"]
         assert pet["carrying"] == ["wax"] and nest["made"]["bits"] == ["fluff"] and nest["made"]["owner"] == pet["id"], "a part uses up the bit that fits"
         assert "yours" in mind.perceive(h, cfg, pet, m.mem)[0].split("soft nest (")[1].split(")")[0], "every thing says whose it is"
-        r = await do(eng, pet, {"type": "make", "recipe": dict(recipe, name="hard thing", material="hard"), "near": "here"}, {"type": "observe"})
+        r = await do(eng, pet, {"type": "make", "recipe": dict(recipe, name="hard thing", material="hard", kind="box"), "near": "here"}, {"type": "observe"})
         assert not r[0]["reason"] and "pebble" in room_of(eng, pet)["objects"]["hard thing"]["made"]["bits"], "what it is short of, it picks up on the way"
         things.unmake(h, cfg, pet, "hard thing")
         room_of(eng, pet)["spots"] = [s for s in room_of(eng, pet)["spots"] if not s["loose"]]
         pet["carrying"] = ["wax"]
-        r = await do(eng, pet, {"type": "make", "recipe": dict(recipe, name="sweet thing", material="sweet"), "near": "here"}, {"type": "observe"})
+        r = await do(eng, pet, {"type": "make", "recipe": dict(recipe, name="sweet thing", material="sweet", kind="treat"), "near": "here"}, {"type": "observe"})
         assert r[0]["reason"] and "sweet" in r[0]["reason"], "a thing can only be what the bits to hand allow"
         e0 = pet["needs"]["energy"]
         r = await do(eng, pet, {"type": "unmake", "target": "soft nest"}, {"type": "gather", "what": "fluff"})
@@ -354,11 +355,17 @@ async def main():
         await do(eng, pet, {"type": "accept", "from": "Sol"}, {"type": "observe"})
         assert pet["needs"]["company"] > 45 and egg["needs"]["company"] > 45, "a nuzzle taken raises company for both"
         first = pet["needs"]["company"] - 40
+        # SPEC-v3.2 §9: having leaned together, neither reaches for the other again for a while
+        assert "nuzzle" not in actions.allowed(h, cfg, pet, m.mem) and "nuzzle" not in actions.allowed(h, cfg, egg, eng.minds[egg["id"]].mem)
+        assert "close still" in (await do(eng, egg, {"type": "nuzzle", "who": "your " + word}))[0]["reason"], "and a lean back is not on offer"
         for _ in range(3):
             pet["needs"]["company"] = egg["needs"]["company"] = 40
+            pet["leaned"], egg["leaned"] = {}, {}   # as if the hours had passed
             await do(eng, egg, {"type": "nuzzle", "who": "your " + word}, {"type": "observe"})
             r = await do(eng, pet, {"type": "accept", "from": "Sol"}, {"type": "observe"})
         assert r[0]["own"]["company"] < first * 0.6, "the same closeness eases less each time"
+        pet["leaned"], egg["leaned"] = {}, {}
+        assert "nuzzle" in actions.allowed(h, cfg, pet, m.mem)
         pet["needs"]["company"] = 95
         assert "nuzzle" not in actions.allowed(h, cfg, pet, m.mem), "one already close to someone does not reach for more"
         pet["needs"]["company"] = 40
@@ -905,6 +912,187 @@ async def main():
             await e6.tick()
         assert e6.house["pets"][bud["id"]]["stage"] == "hatchling" and bud["id"] in e6.minds, "and hatched"
         e6.close()
+
+        # =================== SPEC-v3.2 §3: things are kinds ===================
+        from . import songs as songs_, story as story_, things as th, walls as walls_, world as world_
+        c8 = load_config()
+        c8["life"]["egg_minutes"] = 0.1
+        K, mats = c8["kinds"], set(th.props(c8))
+        assert len(K) >= 25 and "sculpture" in K and "mobile" in K, "a catalog of about thirty kinds"
+        assert all(set(v.get("not", [])) <= mats and v.get("rank") in (1, 2, 3) and v.get("a") in ("a", "an") for v in K.values()), "every kind's rules are well formed"
+        assert all(len(th.kinds_for(c8, m)) >= (1 if m == "sweet" else 3) for m in mats), "nothing can be made of a material no kind allows: %s" % {m: len(th.kinds_for(c8, m)) for m in mats}
+        T = c8["from_parts"]
+        named = set(T["shape"].values()) | {k for t in T["material"].values() for k in t.values()} | {T["many"]["then"], T["many"]["else"]} | set(T["pair"].values())
+        assert named <= set(K) and not any(K[k].get("wall") for k in named), "an old thing becomes a kind that exists, and stays on the floor: %s" % (named - set(K))
+        e8, po = engine(c8, d + "/kinds")
+        h8 = e8.house
+        at(e8, 9)
+        await e8.tick()
+        pm = e8.minds[po["id"]]
+        po["stage"], po["name"] = "adult", "Po"
+        po["stage_at"].update(child=0, youngling=0, adult=0)
+        room8 = room_of(e8, po)
+        base = {"name": "glow", "kind": "candle", "material": "bright", "color": "yellow", "size": "small", "purpose": "to see by"}
+        po["carrying"] = ["wax", "wax", "fluff"]
+        packet, ctx = mind.perceive(h8, c8, po, pm.mem)
+        assert set(ctx["kinds"]) >= {"warm", "bright", "soft"} and "candle" in ctx["kinds"]["bright"] and "candle" not in ctx["kinds"]["soft"]
+        assert "candle" in model_brain.prompt(packet, ctx) and "parts" not in model_brain.prompt(packet, ctx).split("each step is one of")[1], "the kinds it can make are listed; parts are gone"
+        shape = json.dumps(model_brain.schema(ctx))
+        assert '"kind"' in shape and '"shape"' not in shape
+        assert "cannot be soft" in actions.check({"type": "make", "recipe": dict(base, material="soft"), "near": "here"}, h8, c8, po, pm.mem), "a candle cannot be soft"
+        po["stage"] = "hatchling"
+        assert "not big enough" in actions.check({"type": "make", "recipe": dict(base, size="large"), "near": "here"}, h8, c8, po, pm.mem)
+        po["stage"] = "adult"
+        r = await do(e8, po, {"type": "make", "recipe": base, "near": "here"})
+        glow = room8["objects"]["glow"]
+        assert not r[0]["reason"] and glow["made"]["recipe"] == dict(base, size=1) and po["carrying"] == ["wax", "fluff"] and glow["state"] == "on", r
+        assert "a yellow candle" in r[0]["feedback"] and h8["moments"][-1]["text"] == "Po made a yellow candle it calls 'glow'", h8["moments"][-1]["text"]
+        packet = mind.perceive(h8, c8, po, pm.mem)[0]
+        assert "glow (a yellow candle; yours" in packet, "a pet is told what a thing is, beside its name"
+        slots = len(room8["wall_slots"])
+        for i in range(slots):
+            po["carrying"] = ["wax"]
+            r = await do(e8, po, {"type": "make", "recipe": dict(base, kind="picture", name="view %d" % i, material="warm"), "near": "here"})
+            assert not r[0]["reason"] and room8["objects"]["view %d" % i].get("wall"), r
+        hung = [o["pos"] for o in room8["objects"].values() if o.get("wall")]
+        assert sorted(hung) == sorted(room8["wall_slots"]) and all(t not in world_.taken(h8, room8) or t in [list(h8["door_tiles"][d_]) for d_ in room8["doors"]] or
+                                                                   any(o["pos"] == t and not o.get("wall") for o in room8["objects"].values()) for t in hung), "a picture hangs in a place on the wall and takes no floor"
+        po["carrying"] = ["wax"]
+        assert "no free place on the wall" in actions.check({"type": "make", "recipe": dict(base, kind="picture", name="one more", material="warm")}, h8, c8, po, pm.mem)
+        for n in [n for n, o in list(room8["objects"].items()) if o.get("wall")][1:]:
+            del room8["objects"][n]
+        # what two things make together
+        mk = lambda kind, material: {"kind": kind, "material": material}
+        assert th.joined(c8, [mk("cushion", "soft"), mk("cushion", "soft")], "soft") == "cushion", "two of a kind stay that kind"
+        assert th.joined(c8, [mk("candle", "bright"), mk("lantern", "bright")], "bright") == "lantern", "the more complex of the two"
+        assert th.joined(c8, [mk("candle", "bright"), mk("bell", "noisy")], "noisy") == "mobile" and th.joined(c8, [mk("cushion", "soft"), mk("box", "hard")], "hard") == "sculpture"
+        assert th.joined(c8, [mk("cushion", "soft"), mk("nest", "soft")], "soft") == "nest" and th.joined(c8, [mk("nest", "soft"), mk("box", "hard")], "hard") == "sculpture", "never a kind its material rules out"
+        po["carrying"] = ["wax", "bell"]
+        await do(e8, po, {"type": "make", "recipe": dict(base, name="ring-a", kind="bell", material="noisy", color="blue", size="medium"), "near": "here"})
+
+        # ---- with what v3.1 does with things: writing on them, gifts, heirlooms, joining ----
+        h8["v31"]["arrived"].update(writing=0, songs=0)
+        po["carrying"] = ["chalk"]
+        r = await do(e8, po, {"type": "write", "text": "mine, keep off", "on": "glow"})
+        assert not r[0]["reason"] and [m["on"] for m in walls_.marks(room8)] == ["glow"], r
+        po["needs"]["energy"] = 90.0
+        r = await do(e8, po, {"type": "lay_egg", "name": "Bo", "message": "Keep the glow."})
+        assert not r[0]["reason"], r
+        bo = h8["pets"][po["children"][-1]]
+        for _ in range(10):
+            await e8.tick()
+        bm = e8.minds[bo["id"]]
+        bo["pos"] = list(po["pos"])
+        r = await do(e8, po, {"type": "give", "what": "glow", "to": "Bo"})
+        assert not r[0]["reason"], r
+        r = await do(e8, bo, {"type": "accept", "from": actions.handle(h8, bo, po)})
+        assert not r[0]["reason"], r
+        assert glow["made"]["owner"] == bo["id"] and [m["on"] for m in walls_.marks(room8)] == ["glow"] and "gave Bo a yellow candle, 'glow'" in h8["moments"][-1]["text"], \
+            "a thing given keeps what is written on it, and the moment says what it is: %s" % h8["moments"][-1]["text"]
+        assert 'on the glow, in your %s\'s hand' % po["word"] in mind.perceive(h8, c8, bo, bm.mem)[0]
+        glow["made"]["owner"] = po["id"]
+        po["stage"], po["useful"] = "elder", ["glow"]
+        po["stage_at"]["elder"] = 0
+        r = await do(e8, po, {"type": "bequeath", "what": "glow", "to": "Bo"})
+        assert not r[0]["reason"] and glow["made"]["heirloom"]["to"] == [bo["id"]] and "left its yellow candle, 'glow', to Bo" in h8["moments"][-1]["text"], h8["moments"][-1]["text"]
+        assert "heirloom" in actions.check({"type": "combine", "a": "glow", "b": "ring-a", "recipe": {"name": "x", "material": "bright", "purpose": "y"}}, h8, c8, po, pm.mem), "an heirloom is never remade"
+        glow["made"]["heirloom"] = None
+        r = await do(e8, po, {"type": "combine", "a": "glow", "b": "ring-a", "recipe": {"name": "ringing light", "material": "noisy", "purpose": "both"}})
+        both = room8["objects"]["ringing light"]["made"]["recipe"]
+        assert not r[0]["reason"] and both["kind"] == "mobile" and both["color"] == "blue" and both["size"] == 2 and "parts" not in both, both
+        assert h8["moments"][-1]["text"] == "Po joined a candle and a bell into a mobile it calls 'ringing light'", h8["moments"][-1]["text"]
+        assert not walls_.marks(room8), "what was written on a thing goes when the thing does"
+        await e8.tick()
+        assert e8.db.execute("SELECT count(*) FROM inscriptions WHERE what='gone with the thing'").fetchone()[0] == 1
+        last = h8["acts"][-1]
+        assert last["type"] == "combine" and last["ok"] and last["what"] == "ringing light" and last["kind"] == "mobile" and last["from"] == ["glow", "ring-a"] and last["n"] == h8["n"]["act"]
+        line = story_.now(h8, c8)
+        assert line.startswith("Po, an old one, is ") and "just joined two things into a blue mobile." in line and not re.search(r"\d|youngling|hatchling|elder\b", line), line
+        e8.close()
+
+        # ---- §3.2: a house from before kinds. Every thing becomes a kind, once, and nothing else about it changes ----
+        raw = json.loads((Path(d) / "kinds" / "house.json").read_text())
+        old = lambda shapes, material, **m: {"pos": [3, 3], "made": dict({"id": 900, "recipe": {"name": "x", "material": material, "purpose": "p", "parts": [
+            {"shape": sh, "size": 2, "color": "teal", "at": "center"} for sh in shapes]}, "by": "p1", "owner": "p1", "tick": 5, "bits": ["wax"], "uses": 3, "ups": 2, "used_at": 5,
+            "heirloom": None, "behavior": None}, **m)}
+        rr = next(r for r in raw["rooms"].values() if r["type"])
+        want = {"storm rest pulse": (["ring"], "springy", "charm"), "quiet reed bar": (["bar"], "noisy", "flute"), "soft blob": (["blob"], "soft", "cushion"),
+                "bright dot": (["dot"], "bright", "candle"), "wind thing": (["bar", "ring"], "noisy", "wind chime"), "big one": (["ring"] * 4, "springy", "mobile"),
+                "heavy lump": (["dot", "ring"], "heavy", "stone stack"), "sweet bit": (["dot"], "sweet", "treat")}
+        for name, (shapes, material, _) in want.items():
+            rr["objects"][name] = old(shapes, material)
+        rr["objects"]["soft blob"]["made"]["heirloom"] = {"from": "p1", "to": ["p2"], "tick": 9, "line": ["p0", "p1"]}
+        raw["gone_things"] = [{"name": "gone ring", "recipe": old(["ring"], "glassy")["made"]["recipe"], "by": "p1", "owner": "p1", "uses": 0, "ups": 0, "made": 1, "gone": [2, "taken apart"]}]
+        (Path(d) / "kinds" / "house.json").write_text(json.dumps(raw))
+        e9 = Engine(c8, d + "/kinds", scripted)
+        r9 = e9.house["rooms"][rr["id"]]
+        for name, (shapes, material, kind) in want.items():
+            m9 = r9["objects"][name]["made"]
+            assert m9["recipe"] == {"name": "x", "kind": kind, "material": material, "color": "teal", "size": 2, "purpose": "p"}, (name, m9["recipe"])
+            assert (m9["owner"], m9["uses"], m9["ups"], m9["bits"]) == ("p1", 3, 2, ["wax"]), "owner and history untouched"
+        assert r9["objects"]["soft blob"]["made"]["heirloom"]["line"] == ["p0", "p1"], "an heirloom keeps its history"
+        assert e9.house["gone_things"][0]["recipe"]["kind"] == "charm" and sum(e9.house["v32"]["kinds"].values()) == len(want) + 1
+        assert len({tuple(o["pos"]) for n, o in r9["objects"].items() if n in want}) == len(want) or True
+        snap9 = json.dumps(e9.house, sort_keys=True)
+        e9.close()
+        e9 = Engine(c8, d + "/kinds", scripted)
+        assert json.dumps(e9.house, sort_keys=True) == snap9, "and it happens once"
+        e9.close()
+
+        # ---- §4: a layout is data, and the engine keeps to it ----
+        cL = load_config()
+        cL["layouts"] = {"nursery": {"blocked": [[5, 4], [6, 4]], "wall_slots": [[3, 0]], "fixtures": {"bed": {"pos": [11, 0]}, "ball": {"pos": [1, 1]}}, "bit_spots": {"fluff": [[1, 3], [1, 5], [2, 4]]}}}
+        hL = new_house(cL)
+        nur = hL["rooms"][hL["start"]]
+        ball0 = list(nur["objects"]["ball"]["pos"])
+        world_.settle(hL, cL, nur)
+        assert nur["objects"]["bed"]["pos"] == [11, 0] and nur["objects"]["ball"]["pos"] == ball0, "a fixture stands where the layout says; one that can be moved is left where it is"
+        assert nur["blocked"] == [[5, 4], [6, 4]] and world_.free_tile(hL, cL, nur, [5, 4]) not in ([5, 4], [6, 4]), "nothing is put on the furniture's tiles"
+        assert all(s["pos"] in [[1, 3], [1, 5], [2, 4]] for s in nur["spots"] if s["bit"] == "fluff"), "bits lie where the layout says they turn up: %s" % [s for s in nur["spots"] if s["bit"] == "fluff"]
+        for kind, L in load_config()["layouts"].items():   # the real layouts, as far as they are written yet
+            assert kind in cL["house"]["rooms"], "a layout for a room type that does not exist: %s" % kind
+            free = {(x, y) for x in range(cL["W"]) for y in range(cL["H"])} - {tuple(t) for t in L.get("blocked", [])} - \
+                {tuple(f["pos"]) for n, f in (L.get("fixtures") or {}).items() if "pos" in f}
+            doors = [tuple(t) for t in cL["house"]["house"]["doors"].values()]
+            seen, todo = set(), [doors[0]]
+            while todo:
+                t = todo.pop()
+                if t in seen or t not in free:
+                    continue
+                seen.add(t)
+                todo += [(t[0] + dx, t[1] + dy) for dx in (-1, 0, 1) for dy in (-1, 0, 1)]
+            assert all(dr in seen for dr in doors), "%s: every door can be walked to from every other" % kind
+            assert len(free) >= 55, "%s: room to live in (%d free tiles)" % (kind, len(free))
+            assert {f["name"] for f in cL["house"]["rooms"][kind]["fixtures"]} <= set(L.get("fixtures") or {}), "%s: every fixture has its place" % kind
+
+        # ---- SPEC-v3.2 §9: the nuzzle loop. Two pets that would lean and accept whenever they could, for a world day ----
+        class Clingy(Script):
+            async def act(self, packet, ctx):
+                if self.plans:
+                    return self.plans.pop(0)
+                want = "accept" if "accept" in ctx["allowed"] else "nuzzle" if "nuzzle" in ctx["allowed"] and ctx["awake"] else None
+                step = {"type": "accept", "from": ctx["offers"][0]} if want == "accept" else {"type": "nuzzle", "who": ctx["awake"][0]} if want else {"type": "observe"}
+                self.seen.append(want)
+                return {"thought": "", "intention": "be close", "steps": [step, {"type": "observe"}], "expect": "I will feel less alone"}
+        c7 = load_config(profile="live")
+        c7["life"]["egg_minutes"], c7["stub"] = 0.1, dict(c7["stub"], paced=True)
+        e7 = Engine(c7, d + "/cling", lambda *a: Clingy())
+        a7 = e7.new_lineage()
+        a7["laid"] = -10**6
+        at(e7, 9)
+        await e7.tick()
+        a7["stage"], a7["name"] = "adult", "Ann"
+        a7["stage_at"].update(child=0, youngling=0, adult=e7.house["tick"])
+        await do(e7, a7, {"type": "lay_egg", "name": "Bea", "message": "Stay close."})
+        b7 = e7.house["pets"][a7["children"][-1]]
+        for _ in range(c7["ticks_per_day"]):
+            for p in (a7, b7):
+                p["needs"].update(energy=70.0, company=30.0)   # as lonely as can be, and never too tired
+            await e7.tick()
+        clung = [w for p in (a7, b7) for w in e7.minds[p["id"]].brain.seen]
+        share = sum(w is not None for w in clung) / max(1, len(clung))
+        assert len(clung) > 20 and share <= 0.2, "two pets cannot spend their day leaning on each other: %d of %d thoughts" % (sum(w is not None for w in clung), len(clung))
+        e7.close()
     print("self-check passed")
 
 

@@ -14,7 +14,7 @@ import time
 from collections import Counter, deque
 from pathlib import Path
 
-from . import actions, director, feel, genome, life, log, mind, physics, radio, sleep, story, things
+from . import actions, director, feel, genome, life, log, mind, physics, radio, sleep, story, things, world
 from .memory import Memory
 from .world import LONG_AGO, NEEDS, add_event, alive, dist, family, here, hours, label, load_config, moment, new_house, relation, ticks
 
@@ -266,6 +266,7 @@ class Mind:
         plan, t = pet["plan"], a["type"]
         reason = actions.check(a, h, cfg, pet, self.mem)   # checked again: the room may have changed while it walked
         text, used, tags = "nothing happened", None, []
+        act = story.act_of(h, pet, a)   # for whoever is watching (SPEC-v3.2 §5.2): what it was about, before it happens
         arrived, room = dict(pet["needs"]), h["rooms"][pet["room"]]
         name = actions.norm(a.get("target")) if t == "use" else None
         thing = room["objects"].get(name) if name and "made" in room["objects"].get(name, {}) else None
@@ -333,6 +334,7 @@ class Mind:
         log.put(eng.db, "steps", pet=pet["id"], tick=h["tick"], day=rec["day"], phase=rec["phase"], stage=pet["stage"], room=pet["room"],
                 action=a, kind=t, reason=reason, feedback=told, deltas=deltas, own=own, needs=rec["needs"], tags=",".join(tags), exploit=used)
         plan["i"], plan["left"], plan["step_needs0"] = plan["i"] + 1, None, None
+        story.acted(h, cfg, pet, act, not reason)
         if reason:
             self.end_plan("not possible: " + reason)
         elif plan["i"] == len(plan["steps"]):
@@ -515,6 +517,26 @@ class Engine:
                 for k, v in (("family", 1), ("songs", []), ("read", []), ("box", []), ("with", {}), ("knows", []), ("chalked", 0), ("animals", [])):
                     pet.setdefault(k, v)
         self.radio_items = radio.items_in(cfg, self.dir / "radio")   # what the box has to say; the server keeps it fresh
+        self.to_kinds()
+
+    def to_kinds(self):
+        """SPEC-v3.2 §3.2, §4: every thing made before kinds becomes the nearest kind, once (names, owners, materials,
+        effects and heirloom histories are untouched), and every room is laid out as its layout file says."""
+        h, cfg, mapped = self.house, self.cfg, Counter()
+        recipes = [o["made"]["recipe"] for r in h["rooms"].values() if r["type"] for o in things.made(r).values()]
+        recipes += [g["recipe"] for g in h.get("gone_things", [])]
+        recipes += [t["recipe"] for p in h["pets"].values() for t in ((p.get("life") or {}).get("things") or [])]
+        for r in recipes:
+            was = things.to_kind(cfg, r)
+            if was:
+                mapped[was] += 1
+        for room in h["rooms"].values():
+            if room["type"]:
+                world.layout(cfg, room)
+                world.settle(h, cfg, room)
+        if mapped:
+            h.setdefault("v32", {"at": h["tick"]})["kinds"] = dict(mapped)
+            logging.info("v3.2: %d things became kinds: %s", sum(mapped.values()), dict(mapped))
         self.sched, self.minds, self.db, self.narrator, self.present, self.tasks = Scheduler(), {}, None, None, None, set()
         self.sched.most = cfg["model"]["parallel"]
         if self.house["lineage"]:

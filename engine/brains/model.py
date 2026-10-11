@@ -12,7 +12,8 @@ from ..actions import PLACES as SPOTS
 from ..songs import NOTES, PITCH
 from ..things import COLORS, DO, PLACES, SHAPES, WHEN
 
-PART = '{"shape": %s, "size": 1 to 3, "color": %s, "at": %s}' % ("|".join(SHAPES), "|".join(COLORS), "|".join(PLACES))
+from ..things import SIZES
+PART = '{"shape": %s, "size": 1 to 3, "color": %s, "at": %s}' % ("|".join(SHAPES), "|".join(COLORS), "|".join(PLACES))   # a picture of itself, at night
 WRITTEN = {   # how each action is written, shown only for the actions it can do right now
     "observe": '{"type": "observe"}',
     "look": '{"type": "look", "target": anything or anyone here, or a door}',
@@ -23,12 +24,13 @@ WRITTEN = {   # how each action is written, shown only for the actions it can do
     "use": '{"type": "use", "target": a thing here}',
     "gather": '{"type": "gather", "what": something lying about}',
     "drop": '{"type": "drop", "what": something you carry}',
-    "make": ('{"type": "make", "recipe": {"name": up to 24 chars, "parts": [1 to %%d of %s] (each part uses up one bit you carry), '
-             '"material": what it will be like, one of %%s, "purpose": what it is for, up to 80 chars}, "near": a thing here, or "here"}' % PART),
+    "make": ('{"type": "make", "recipe": {"kind": what it is, one of %%s, "material": what it will be like, one of %%s (it uses up one bit that can be that), '
+             '"color": %s, "size": %%s, "name": your own name for it, up to 24 chars, "purpose": what it is for, up to 80 chars}, '
+             '"near": a thing here, or "here"}' % "|".join(COLORS)),
     "unmake": '{"type": "unmake", "target": a made thing that is yours to take apart}',
     "arrange": '{"type": "arrange", "object": something that can be moved, "near": a thing here, or "here"}',
     "combine": ('{"type": "combine", "a": a made thing, "b": another, "recipe": {"name": up to 24 chars, '
-                '"material": what either of them is like, "purpose": what it is for, up to 80 chars}}'),
+                '"material": what either of them is like, "purpose": what it is for, up to 80 chars}} (the two become one thing; what kind it is follows from what they were)'),
     "paint": '{"type": "paint", "wall": %s, "floor": one of the same}' % "|".join(COLORS),
     "teach": ('{"type": "teach", "target": one of your things, "behavior": {"when": %s, "do": %s|change_color:<a color>}}'
               % ("|".join(WHEN), "|".join(d for d in DO if ":" not in d))),
@@ -93,9 +95,9 @@ def schema(ctx):
     anyone, awake = c["pets"] + c["creatures"], c["awake"]
     visible = c["things"] + c["pets"] + c["creatures"] + c["bits"] + [d + " door" for d in c["doors"]] + (["egg"] if c["eggs"] else [])
     most, reach = c["make"]
-    part = obj(shape={"enum": SHAPES}, size={"enum": [1, 2, 3]}, color={"enum": COLORS}, at={"enum": PLACES})
-    recipe = obj(name=text(24), parts={"type": "array", "items": part, "minItems": 1, "maxItems": max(most, 1)},
-                 material={"enum": reach}, purpose=text(80))
+    # one variant per material in reach, so a kind is only ever offered in a material it can be (SPEC-v3.2 §3.1)
+    recipes = [obj(kind={"enum": c["kinds"][m]}, material={"const": m}, color={"enum": COLORS}, size={"enum": SIZES[:max(most, 1)]},
+                   name=text(24), purpose=text(80)) for m in reach if c["kinds"].get(m)]
     near = {"enum": c["things"] + ["here"]}
     one = lambda t, **p: obj(type={"const": t}, **p)
     v = {
@@ -107,7 +109,7 @@ def schema(ctx):
         "use": [one("use", target={"enum": c["things"]})],
         "gather": [one("gather", what={"enum": c["bits"]})] if c["bits"] else [],
         "drop": [one("drop", what={"enum": c["carrying"]})] if c["carrying"] else [],
-        "make": [one("make", recipe=recipe, near=near)] if reach and most else [],
+        "make": [one("make", recipe=r, near=near) for r in recipes] if most else [],
         "unmake": [one("unmake", target={"enum": c["free"]})] if c["free"] else [],
         "arrange": [one("arrange", object={"enum": c["movable"]}, near=near)] if c["movable"] else [],
         "combine": [one("combine", a={"enum": c["free"]}, b={"enum": c["free"]},
@@ -146,7 +148,8 @@ def schema(ctx):
 
 def prompt(packet, ctx):
     most, reach = ctx["make"]
-    written = dict(WRITTEN, make=WRITTEN["make"] % (max(most, 1), "|".join(reach)))
+    kinds = sorted({k for m in reach for k in ctx["kinds"].get(m, [])})
+    written = dict(WRITTEN, make=WRITTEN["make"] % ("|".join(kinds), "|".join(reach), "|".join(SIZES[:max(most, 1)])))
     usable = [a for a in ctx["allowed"] if a != "make" or (reach and most)]
     return packet + FORMAT % "\n".join("  " + written[a] for a in usable)
 
