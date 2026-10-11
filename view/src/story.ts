@@ -99,14 +99,14 @@ function drift(pets: { gen: number; temper: Record<string, number> }[]) {
   const [L, W, RH] = [70, 300, 30], x = (g: number) => L + 14 + (gens.length > 1 ? (gens.indexOf(g) / (gens.length - 1)) * (W - 28) : (W - 28) / 2);
   const out = svg("svg", { viewBox: `0 0 ${L + W} ${GENES.length * RH + 18}`, class: "drift", role: "img", "aria-label": "Temperament by generation" });
   GENES.forEach((gene, i) => {
-    const y = (v: number) => i * RH + RH - 5 - v * (RH - 10);
+    const y = (v: number) => i * RH + RH - 5 - v * (RH - 10), has = pets.filter((p) => gene in p.temper);   // a pet from before a gene was added (orderly, SPEC-v3.3) is left out of its row
     out.append(svg("text", { x: L - 8, y: i * RH + RH / 2 + 4, "text-anchor": "end" }, gene), svg("line", { x1: L, x2: L + W, y1: y(0.5), y2: y(0.5), class: "ring" }));
     const means = gens.map((g) => {
-      const vs = pets.filter((p) => p.gen === g).map((p) => p.temper[gene] ?? 0);
-      return `${x(g).toFixed(1)},${y(vs.reduce((a, b) => a + b, 0) / vs.length).toFixed(1)}`;
+      const vs = has.filter((p) => p.gen === g).map((p) => p.temper[gene]);
+      return vs.length ? `${x(g).toFixed(1)},${y(vs.reduce((a, b) => a + b, 0) / vs.length).toFixed(1)}` : "";
     });
     out.append(svg("polyline", { points: means.join(" "), class: "shape" }));
-    for (const p of pets) out.append(svg("circle", { cx: x(p.gen), cy: y(p.temper[gene] ?? 0), r: 2.6, class: "dot" }));
+    for (const p of has) out.append(svg("circle", { cx: x(p.gen), cy: y(p.temper[gene]), r: 2.6, class: "dot" }));
   });
   for (const g of gens) out.append(svg("text", { x: x(g), y: GENES.length * RH + 13, "text-anchor": "middle" }, `gen ${g}`));
   return out;

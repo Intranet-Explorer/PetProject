@@ -50,17 +50,19 @@ export function about(seconds: number) {
 /** Words the engine had to cut short end on a dash or a comma; shown, they trail off instead. */
 export const whole = (text: string) => text.replace(/\s*[,;:—–-]\s*$/, "…");
 
-export const GENES = ["curious", "sensitive", "sociable", "bold", "patient", "playful", "fertile", "hardy"];
+export const GENES = ["curious", "sensitive", "sociable", "bold", "patient", "playful", "fertile", "hardy", "orderly"];
 
-/** Temperament as a small radial chart (§8.1): eight genes round a circle, each 0 to 1. */
+/** Temperament as a small radial chart (§8.1): the genes round a circle, each 0 to 1. (`orderly` came with SPEC-v3.3:
+ *  a pet from before it has none, and is drawn without it.) */
 export function radial(temper: Record<string, number>, size = 120, names = true) {
+  const genes = GENES.filter((g) => g !== "orderly" || g in temper);
   const side = names ? 40 : 0, r = size / 2 - (names ? 16 : 2), cx = size / 2 + side, cy = size / 2;   // room at the sides for the long names
-  const at = (i: number, k: number) => [cx + Math.sin((i / GENES.length) * 2 * Math.PI) * r * k, cy - Math.cos((i / GENES.length) * 2 * Math.PI) * r * k];
-  const ring = (k: number) => GENES.map((_, i) => at(i, k).map((v) => v.toFixed(1)).join(",")).join(" ");
+  const at = (i: number, k: number) => [cx + Math.sin((i / genes.length) * 2 * Math.PI) * r * k, cy - Math.cos((i / genes.length) * 2 * Math.PI) * r * k];
+  const ring = (k: number) => genes.map((_, i) => at(i, k).map((v) => v.toFixed(1)).join(",")).join(" ");
   const out = svg("svg", { viewBox: `0 0 ${size + 2 * side} ${size}`, width: size + 2 * side, height: size, class: "radial", role: "img",
-                           "aria-label": "Temperament: " + GENES.map((g) => `${g} ${Math.round((temper[g] ?? 0) * 100)}`).join(", ") });
+                           "aria-label": "Temperament: " + genes.map((g) => `${g} ${Math.round((temper[g] ?? 0) * 100)}`).join(", ") });
   out.append(svg("polygon", { points: ring(1), class: "ring" }), svg("polygon", { points: ring(0.5), class: "ring" }));
-  GENES.forEach((g, i) => {
+  genes.forEach((g, i) => {
     const [x, y] = at(i, 1);
     out.append(svg("line", { x1: cx, y1: cy, x2: x, y2: y, class: "ring" }));
     if (names) {
@@ -68,7 +70,7 @@ export function radial(temper: Record<string, number>, size = 120, names = true)
       out.append(svg("text", { x: lx, y: ly + (ly < cy - 4 ? 0 : ly > cy + 4 ? 8 : 3), "text-anchor": Math.abs(lx - cx) < 4 ? "middle" : lx > cx ? "start" : "end" }, g));
     }
   });
-  out.append(svg("polygon", { points: GENES.map((g, i) => at(i, Math.max(0.04, temper[g] ?? 0)).map((v) => v.toFixed(1)).join(",")).join(" "), class: "shape" }));
+  out.append(svg("polygon", { points: genes.map((g, i) => at(i, Math.max(0.04, temper[g] ?? 0)).map((v) => v.toFixed(1)).join(",")).join(" "), class: "shape" }));
   return out;
 }
 

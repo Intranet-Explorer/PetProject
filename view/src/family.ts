@@ -151,6 +151,7 @@ export function record(c: Ctx, r: Record<string, any>): Kid[] {
       el("figure", t.gone ? "gone" : "", thingSprite(t.recipe, 3), el("figcaption", "hint", `“${t.name}” · ${plural(t.uses, "use")}`))))) : null,
     el("p", "hint", [r.heirlooms_given?.length ? `Left behind: ${r.heirlooms_given.join(", ")}.` : "", r.heirlooms_received?.length ? `Was left: ${r.heirlooms_received.join(", ")}.` : "",
       r.rooms?.length ? `Knew ${r.rooms.join(", ")}.` : "", Object.keys(r.creatures ?? {}).length ? `Met ${Object.entries(r.creatures).map(([k, n]) => `the ${k} (${n})`).join(", ")}.` : ""].join(" ")),
+    r.habits?.length ? el("section", "", el("h3", "", "Habits"), el("ul", "plain", ...(r.habits as string[]).map((h) => el("li", "", h)))) : null,   // SPEC-v3.3 §1.3
     r.projects?.length ? el("section", "", el("h3", "", "Projects"), ...(r.projects as { text: string; how: string }[]).map((p) => el("p", "", `“${whole(p.text)}” `, el("span", "hint", p.how)))) : null,
     r.beliefs?.length ? fold(`beliefs-${r.id}`, `What it believed at the end (${r.beliefs.length})`,
       el("ul", "beliefs", ...(r.beliefs as { statement: string; source: string }[]).map((b) => el("li", "", el("div", "", b.statement), el("span", "tag", b.source))))) : null,

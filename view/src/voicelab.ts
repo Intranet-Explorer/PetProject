@@ -1,14 +1,15 @@
 // The header's sound controls and the Lab tab's voice lab (VOICE.md). Nothing here touches a pet or the engine.
 import { $, el } from "./dom";
-import { effect, schedule, Voice, voiceInput } from "./voice";
-import { planSound, planSpeech } from "./voice-plan";
+import { ambient, effect, schedule, Voice, voiceInput } from "./voice";
+import { planSound, planSpeech, planVox, VOX } from "./voice-plan";
 import type { VoiceInput } from "./voice-plan";
 import type { PetV, Snap } from "./types";
 
 const STAGES = ["as it is", "hatchling", "child", "youngling", "adult", "elder"];
 const SOUNDS: [Parameters<Voice["sample"]>[0], string][] = [
   ["heartbeat", "Heartbeat (egg)"], ["cry", "First cry"], ["chirp", "Made a thing"], ["blip", "Took one apart"], ["trill", "A nuzzle taken"],
-  ["stageup", "New stage"], ["hm", "“Hm?”"], ["whimper", "Whimper"], ["last", "A death"], ["breath", "A breath (asleep)"], ["hum", "A taught thing's hum"],
+  ["stageup", "New stage"], ["hm", "“Hm?”"], ["whimper", "Whimper"], ["last", "A death"], ["breath", "A breath (asleep)"], ["hum", "A thing humming"],
+  ...VOX.map((k): [`vox ${typeof k}`, string] => [`vox ${k}`, `By itself: ${k}`]),   // SPEC-v3.3 §4: the small sounds its body makes
   ["moth", "Moth"], ["beetle", "Beetle"], ["mouse", "Mouse"], ["bird", "Bird"], ["rain", "Rain"], ["thunder", "Thunder"],
   ["powerdown", "Power cut"], ["drip", "Leak"], ["whoosh", "Draught"], ["thud", "Delivery"],
   ["chalk", "Writing arrives"], ["chime", "Songs arrive"], ["patter", "Taming arrives"], ["tuning", "The radio arrives"], ["pages", "The book arrives"], ["knock", "A stranger arrives"],
@@ -45,7 +46,7 @@ export function initVoice(who: () => { pet: PetV; snap: Snap } | null) {
     hint, el("h4", "", "Heard lately"), heard);
 
   $("soundBtn").onclick = () => voice.setOn(!voice.on);
-  $("musicBtn").onclick = () => voice.setMusic(!voice.music);
+  $("ambBtn").onclick = () => voice.setAmbience(!(voice.on && voice.ambience));
   const volume = $<HTMLInputElement>("volume");
   volume.oninput = () => voice.setVolume(Number(volume.value) / 100);
   volume.value = String(Math.round(voice.volume * 100));
@@ -56,8 +57,8 @@ export function initVoice(who: () => { pet: PetV; snap: Snap } | null) {
     $("soundBtn").textContent = !voice.on ? "Sound off" : waiting ? "Sound on (click)" : "Sound on";
     $("soundBtn").setAttribute("aria-pressed", String(voice.on));
     $("soundBtn").title = waiting ? "Sound was left on. A browser plays nothing until the page has been clicked: click anywhere." : "";
-    $("musicBtn").textContent = voice.music ? "Music on" : "Music off";
-    $("musicBtn").setAttribute("aria-pressed", String(voice.music && voice.on));
+    $("ambBtn").textContent = voice.on && voice.ambience ? "Ambience on" : "Ambience off";
+    $("ambBtn").setAttribute("aria-pressed", String(voice.on && voice.ambience));
     const latest = voice.heard[0];   // say what just played, so silence and "nothing happening" can be told apart
     $("playing").textContent = voice.on && latest && Date.now() - latest.at < 8000 ? `♪ ${latest.what}` : "";
     clearTimeout(fade);
@@ -69,6 +70,6 @@ export function initVoice(who: () => { pet: PetV; snap: Snap } | null) {
   show();
 
   // For checking from the console or a headless browser: render a plan without playing it.
-  Object.assign(window, { petVoice: { voice, schedule, effect, planSpeech, planSound, input } });
+  Object.assign(window, { petVoice: { voice, schedule, effect, ambient, planSpeech, planSound, planVox, input } });
   return { voice, lab };
 }

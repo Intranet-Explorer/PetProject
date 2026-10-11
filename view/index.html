@@ -11,14 +11,24 @@
   <header>
     <h1>Pet</h1>
     <p id="now" role="status" aria-label="What is happening now"><span></span></p>
-    <span class="sound">
-      <button id="soundBtn" aria-pressed="false">Sound off</button>
-      <button id="musicBtn" aria-pressed="false" title="A quiet tune for the room you are looking at">Music off</button>
-      <input id="volume" type="range" min="0" max="100" value="80" aria-label="Volume">
-    </span>
-    <button id="themeBtn" aria-label="Switch between light and dark">Dark</button>
-    <button id="replayBtn">Replay</button>
-    <button id="drawerBtn" aria-expanded="false" aria-controls="drawer">Family, story, things</button>
+    <div class="switches">
+      <span class="sound">
+        <button id="soundBtn" aria-pressed="false">Sound off</button>
+        <button id="ambBtn" aria-pressed="false" title="The room's own sound: its clock, its wind, its water, and the weather. Quiet, under everything else.">Ambience off</button>
+        <input id="volume" type="range" min="0" max="100" value="80" aria-label="Volume">
+        <button id="themeBtn" aria-label="Switch between light and dark">Dark</button>
+        <button id="replayBtn">Replay</button>
+        <button id="drawerBtn" aria-expanded="false" aria-controls="drawer">Family, story, things</button>
+      </span>
+      <!-- SPEC-v3.3 §3: what the visitor plays for the pets. They hear it whether or not this page's sound is on. -->
+      <span id="dj" class="sound" hidden>
+        <label title="Music for the pets. They hear it; so do you, with Sound on.">Music <select id="musicMood" aria-label="Music for the pets"></select></label>
+        <select id="musicScope" aria-label="Where the music plays"></select>
+        <label><span id="radioWho">Your little radio</span> <select id="radioPlays" aria-label="What the radio plays">
+          <option value="off">off</option><option value="mix">a mix</option><option value="news">news</option><option value="forecast">the forecast</option><option value="on this day">on this day</option>
+        </select></label>
+      </span>
+    </div>
   </header>
   <section id="replayBar" aria-label="Replay" hidden>
     <span class="chip on">Replay</span>
@@ -84,7 +94,6 @@
         <form id="nameForm"><input id="nameText" maxlength="16" placeholder="a name" aria-label="A name"><button id="nameBtn">Name</button></form>
         <button id="chosenDone" aria-label="Let go" hidden>×</button>
       </span>
-      <button id="radioBtn" hidden>Mute radio</button>
     </section>
     <section id="ended" hidden>
       <p>The house is quiet. Nobody is left of this family; their stones and their things are still here.</p>

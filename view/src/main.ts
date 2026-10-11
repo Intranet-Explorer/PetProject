@@ -291,6 +291,7 @@ function header(s: Snap) {
     now.classList.toggle("long", line.offsetHeight > now.clientHeight);   // more than the box holds: set smaller
     if (line.offsetHeight > now.clientHeight) line.querySelector(".here")?.remove();   // still more: the engine's sentence alone
   }
+  dj(s);
   const pick = $<HTMLSelectElement>("follow"), options = s.pets.filter((p) => p.stage !== "dead");
   const key = options.map((p) => p.id + p.label + p.stage).join();
   if (pick.dataset.key !== key) {
@@ -304,6 +305,8 @@ function header(s: Snap) {
 function side(s: Snap, here: RoomV) {
   const c = s.clock, name = (id: string | null) => s.rooms.find((r) => r.id === id)?.name ?? "the house";
   $("sky").replaceChildren(el("h2", "", cap(here.name)),
+    // SPEC-v3.3 §2: how the room is kept, in the pets' own words, when things lie about in it
+    ...(here.mess != null ? [el("p", `hint mess${here.mess === 2 ? " much" : ""}`, here.mess && here.mess_says ? `${cap(here.mess_says)}.` : "")] : []),
     el("p", "", icon(c.phase === "night" && s.weather === "clear" ? "moon" : s.weather, 18), ` ${cap(c.season)}, ${s.weather}`),
     el("p", "hint", `day ${c.day}, ${hhmm(c.hour)}${c.phase === "day" ? "" : ` · ${c.phase}`} · year ${c.year}`));
   const line = (cls: string, pic: string, text: string, to: string | null) => {
@@ -343,14 +346,18 @@ function cards(s: Snap) {
   // the visitor's naming: what was offered, and whether the pet has taken it (said for a quarter of a day after it does)
   const naming = (p: PetV) => !p.naming ? null : !p.naming.took ? `you called it ${p.naming.offered}; waiting to hear`
     : p.naming.at != null && (s.tick - p.naming.at) * s.tick_seconds < s.day_seconds / 4 ? `it took the name ${p.naming.offered}` : null;
-  const key = JSON.stringify(who.map((p) => [naming(p), p.id, p.label, p.stage, p.room, p.stage === "egg" ? hatchWords(p.hatches_in ?? 0) : [moodWords(p), goodWord(p), emoteOf(p), doingOf(p), wishOf(p)], p.genome, p.id === view.sel, p.family, p.animals]));
+  const key = JSON.stringify(who.map((p) => [naming(p), p.id, p.label, p.stage, p.room, p.stage === "egg" ? hatchWords(p.hatches_in ?? 0) : [moodWords(p), goodWord(p), emoteOf(p), doingOf(p), wishOf(p), p.body?.icon, p.asleep || p.focus?.words, p.habits], p.genome, p.id === view.sel, p.family, p.animals]));
   const box = $("cards");
   if (box.dataset.key === key) return;
   box.dataset.key = key;
   box.replaceChildren(...(who.length ? who.map((p) => {
-    const egg = p.stage === "egg", emote = egg ? null : emoteOf(p), doing = doingOf(p), wish = wishOf(p), good = goodWord(p), type = s.rooms.find((r) => r.id === p.room)?.type;
+    const egg = p.stage === "egg", emote = egg ? null : emoteOf(p), doing = doingOf(p), good = goodWord(p), type = s.rooms.find((r) => r.id === p.room)?.type;
     const animals = (p.animals ?? []).map((a) => a.name ?? `a ${a.kind}`).join(", ");   // SPEC-v3.1 §4.4
     const feels = emote ? sprite(`emote.${emote}`, 2) : null, place = type ? sprite(`icon.room.${type}`, 1) : null;
+    // SPEC-v3.3 §1: the sign of what its body is doing by itself (the one over its head in the room), what its mind is on, and its habits
+    const sign = !egg && p.body?.icon && hasSprite(`icon.act.${p.body.icon}`) ? sprite(`icon.act.${p.body.icon}`, 1) : null;
+    const focus = egg || p.asleep ? "" : p.focus?.words ?? "", habits = egg ? [] : p.habits ?? [];
+    const wish = wishOf(p) === focus ? "" : wishOf(p);   // since v3.3 what it means to do is what its mind is on, in the same words: said once
     if (feels) feels.title = `feeling ${emote}`;
     if (place) place.title = `in ${where(p)}`;
     const mind = el("button", "mind", "mind") as HTMLButtonElement;
@@ -362,13 +369,16 @@ function cards(s: Snap) {
         egg ? el("span", "mood", hatchWords(p.hatches_in ?? 0)) : el("span", "mood", moodWords(p).join(", "), good ? el("i", "good", ` · ${good}`) : null),
         naming(p) ? el("span", "naming", naming(p)!) : null,
         // what it is doing now, then what it wants: the second is a wish and is marked as one, never shown as the deed
-        doing ? el("span", "doing", el("i", "", "now "), doing) : null,
+        doing ? el("span", "doing", el("i", "", "now "), sign, doing) : null,
+        focus ? el("span", "focus", el("i", "", "mind on "), focus) : null,
         wish ? el("span", "wish", el("i", "", "wants "), el("q", "", wish)) : null,
+        habits.length ? el("span", "habits", el("i", "", habits.length > 1 ? "habits " : "habit "), habits.join("; ")) : null,
         animals ? el("span", "", icon("paw", 12), ` ${animals}`) : null));
     // the whole card is the button that follows this pet; "mind" inside it is a button of its own
     li.tabIndex = 0;
     li.setAttribute("role", "button");
-    li.title = `${egg ? "Look at this egg" : `Follow ${p.label}`}: it is in ${where(p)}` + (wish && !egg ? `\nIt wants: ${wish}` : "");   // the whole thought: the card shows two lines of it
+    li.title = `${egg ? "Look at this egg" : `Follow ${p.label}`}: it is in ${where(p)}` + (wish && !egg ? `\nIt wants: ${wish}` : "")   // in full: the card shows a line or two of each
+      + (focus ? `\nIts mind is on: ${focus}` : "") + (habits.length ? `\nIts habits: ${habits.join("; ")}` : "");
     li.onclick = () => jump({ pet: p.id, room: p.room });
     li.onkeydown = (e) => { if (e.target === li && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); li.click(); } };
     return li;
@@ -403,13 +413,38 @@ function controls(s: Snap, here: RoomV) {
   $<HTMLInputElement>("nameText").title = $("nameBtn").title;
   $("chosenDone").hidden = !thing;
   $("room").classList.toggle("placing", !!thing);
-  // SPEC-v3.1 §5.3: this turns the box off in the house, not only its sound here; only a pet can turn it on again
-  const radio = $<HTMLButtonElement>("radioBtn"), on = !!s.radio?.on;
-  radio.hidden = !s.radio?.here;
-  radio.disabled = !on;
-  radio.textContent = on ? "Mute radio" : "Radio is off";
-  radio.title = on ? "Switch the box off in the house. A pet can switch it on again." : "The box is switched off. Only a pet can switch it on.";
 }
+
+/** The visitor's music and radio (SPEC-v3.3 §3), in the header. They show what the engine says is playing, so a
+ *  reload or a second window agrees, and send what is chosen. Music plays in one room or through the house; the radio
+ *  is the visitor's own little one, set down in the room on screen, until the pets have found theirs. */
+let musicIn = recall("musicIn") ?? "room";   // where the music is to play when it is next turned on
+function dj(s: Snap) {
+  const d = s.dj, m = d?.music, box = $("dj"), key = JSON.stringify([d, view.room]);
+  box.hidden = !d || !!replayId || s.lineage.ended != null;
+  if (!d || box.hidden || box.dataset.key === key) return;
+  box.dataset.key = key;
+  const there = m && m.scope !== "house" && m.scope !== view.room ? s.rooms.find((r) => r.id === m.scope)?.name ?? "another room" : null;   // it plays in a room that is not the one on screen
+  const [mood, scope] = [$<HTMLSelectElement>("musicMood"), $<HTMLSelectElement>("musicScope")];
+  mood.replaceChildren(new Option("off"), ...d.moods.map((x) => new Option(x)));
+  mood.value = m?.mood ?? "off";
+  scope.replaceChildren(new Option("in this room", "room"), new Option("through the house", "house"), ...(there ? [new Option(`in ${there}`, "there")] : []));
+  scope.value = !m ? musicIn : m.scope === "house" ? "house" : there ? "there" : "room";
+  $("radioWho").textContent = d.radio.theirs ? "Their radio" : "Your little radio";
+  $("radioWho").parentElement!.title = d.radio.theirs ? "The pets' own radio: this switches it on or off and says what it plays, wherever it is. They can still switch it themselves."
+    : "Your own little radio, set down in the room you are looking at while it is on. Once the pets have found a radio of their own, this switches theirs.";
+  $<HTMLSelectElement>("radioPlays").value = d.radio.on ? d.radio.plays : "off";
+}
+$("musicMood").onchange = $("musicScope").onchange = () => {
+  const scope = $<HTMLSelectElement>("musicScope").value, at = snap?.dj?.music?.scope;
+  if (scope !== "there") remember("musicIn", (musicIn = scope));
+  // "there": it goes on playing in the room it is in, whatever is on screen
+  send({ type: "music", mood: $<HTMLSelectElement>("musicMood").value, scope: scope === "house" ? "house" : "room", room: scope === "there" && at ? at : view.room });
+};
+$("radioPlays").onchange = () => {
+  const plays = $<HTMLSelectElement>("radioPlays").value;
+  act({ type: "radio", on: plays !== "off", plays: plays === "off" ? snap?.dj?.radio.plays : plays });
+};
 
 room.onClick = (t: Target) => {
   if (!snap) return;
@@ -442,7 +477,7 @@ const FIX: Record<string, string> = {
   radio: "when it is on it speaks scraps of the real world outside", book: "it answers a question put to it, out of an encyclopedia",
 };
 
-function fixture(name: string, o: Obj, here: RoomV, s: Snap, shown: HTMLCanvasElement | null): Kid[] {
+function fixture(name: string, o: Obj, here: RoomV, s: Snap, shown: HTMLCanvasElement | null, notes: Kid[]): Kid[] {
   const pic = [`fix.${name}.${o.state}`, `fix.${name}`].find(hasSprite), fix = o.fix ?? {};
   const state = o.state === "ripe" ? "ripe" : o.grow != null ? (o.grow > 0.7 ? "nearly ripe" : "growing") : o.servings != null ? (o.servings ? `${o.servings} left in it` : "empty") : o.state ?? "";
   const does = Object.keys(FIX).filter((k) => k in fix && fix[k]).map((k) => FIX[k]);
@@ -452,6 +487,7 @@ function fixture(name: string, o: Obj, here: RoomV, s: Snap, shown: HTMLCanvasEl
     o.says ? el("p", "", `${cap(o.says)}.`) : null,
     said ? el("p", "", said.text ? `It just said: “${said.text}”` : "Only static just now.") : null,
     fix.book && s.read_glow ? el("p", "", "Someone is reading it.") : null,
+    ...notes,
     does.length ? el("p", "truth", el("b", "", "What it really does: "), `${does.join("; ")}.`) : null,
     fix.movable && !replayId ? el("p", "hint", "Click to move it.") : null,
     ...(here.marks ?? []).filter((m) => m.on === name).flatMap(written))];
@@ -459,7 +495,9 @@ function fixture(name: string, o: Obj, here: RoomV, s: Snap, shown: HTMLCanvasEl
 
 /** The room's own picture of what is under the pointer, exactly as it is drawn there (its colour, its wear), three
  *  screen pixels to one. The room offers it through `describe`; without that, the card looks the picture up itself. */
-const told = (t: Target) => (room as unknown as { describe?: (t: Target) => { title: string; sprite?: HTMLCanvasElement | null; text?: string; rect?: Box | null } | null }).describe?.(t) ?? null;
+const told = (t: Target) => room.describe(t);
+/** SPEC-v3.3 §2: the room's own lines about how a thing is kept (what it holds, where it is put away, its home, the corner it stands in), as they are. */
+const kept = (t: Target) => (told(t)?.notes ?? []).map((n) => el("p", "", n));
 function drawn(t: Target): HTMLCanvasElement | null {
   const src = told(t)?.sprite;
   if (!src?.width) return null;
@@ -499,13 +537,14 @@ function tipFor(t: Target): Kid[] | null {
       el("b", "", aThing(m.recipe)), el("p", "", `“${m.called ?? t.object}”`),
       el("p", "hint", [`made by ${maker}`, m.owner_name && m.owner_name !== maker ? `${m.owner_name}'s now` : !m.owner_name ? "nobody's now" : null, m.heirloom ? "an heirloom" : null].filter(Boolean).join(" · ")),
       el("p", "hint", `${m.recipe.material}${m.recipe.purpose ? ` · for “${m.recipe.purpose}”` : ""}`),
+      ...kept(t),
       el("p", "truth", el("b", "", "What it really does: "), `${truthOf({ hello }, m).join("; ")}.`),
       replayId ? null : el("p", "hint", "Click to move or name it."),
       ...(here.marks ?? []).filter((x) => x.on === t.object).flatMap(written))];
   }
-  if (o?.memorial) return [drawn(t) ?? (hasSprite("stone") ? sprite("stone", 3) : null), el("div", "", el("b", "", "a stone"), el("p", "", o.memorial.text),
+  if (o?.memorial) return [drawn(t) ?? (hasSprite("stone") ? sprite("stone", 3) : null), el("div", "", el("b", "", "a stone"), el("p", "", o.memorial.text), ...kept(t),
     ...(here.marks ?? []).filter((x) => x.on === t.object).flatMap(written))];
-  if (o && t.object) return fixture(t.object, o, here, s, drawn(t));
+  if (o && t.object) return fixture(t.object, o, here, s, drawn(t), kept(t));
   if (t.bit) {
     const can = hello?.bits[t.bit]?.can ?? [];
     return [drawn(t) ?? (hasSprite(`bit.${t.bit}`) ? sprite(`bit.${t.bit}`, 3) : null), el("div", "", el("b", "", `some ${t.bit}`), el("p", "hint", "Something to gather and make things from."),
@@ -571,7 +610,6 @@ $("writeBtn").onclick = () => {   // SPEC-v3.1 §2.3: the visitor's hand, in cha
   else input.focus();
   input.value = "";
 };
-$("radioBtn").onclick = () => act({ type: "radio_off" });
 $("nameForm").onsubmit = (e) => {
   e.preventDefault();
   const input = $<HTMLInputElement>("nameText");
@@ -684,6 +722,7 @@ const clipped = () => [...document.querySelectorAll<HTMLElement>("header *, #now
   if (!e.offsetParent || e.closest("#room") || e instanceof HTMLSelectElement || e instanceof HTMLInputElement || e instanceof SVGElement) return false;
   const o = getComputedStyle(e);
   if (e.id === "moments" || e.id === "happening") return false;   // these two show whole lines only: what does not fit is wrapped out of sight on purpose
+  if (e.closest(".card .txt")) return false;   // so does a card, which is one height always (SPEC-v3.2, v3.3): the whole of every line is in its hover and in the pet's mind
   return (o.overflowX !== "visible" && o.overflowX !== "auto" && e.scrollWidth > e.clientWidth + 1) || (o.overflowY !== "visible" && o.overflowY !== "auto" && e.scrollHeight > e.clientHeight + 1);
 }).map((e) => `${e.tagName.toLowerCase()}${e.id ? "#" + e.id : ""}.${e.className}: ${e.textContent?.slice(0, 40)}`);
 Object.assign(window, { petView: {
@@ -698,6 +737,8 @@ Object.assign(window, { petView: {
   hover: (t: Target | null) => (t ? card(t, (t.tile[0] + 1.5) / ((snap?.size[0] ?? 12) + 2), (t.tile[1] + 2.5) / ((snap?.size[1] ?? 8) + 3)) : card(null, 0, 0)),
   replay: () => replay,
   snap: () => raw,
+  /** SPEC-v3.3 §4: every sound the page has begun (the last 500), for checking without ears. */
+  audioLog: voice.log,
   state: () => snap && {
     tick: snap.tick, clock: snap.clock, weather: snap.weather, power: snap.power, room: view.room, roomType: snap.rooms.find((r) => r.id === view.room)?.type,
     follow: view.follow, selected: view.sel, tab: view.drawer ? view.tab : null, theme: document.documentElement.dataset.theme ?? "system",

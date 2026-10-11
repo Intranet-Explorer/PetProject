@@ -4,7 +4,7 @@
 import { bar, dayOf, el, face, fold, link, plural, radial, refill, when, whole } from "./dom";
 import type { Ctx, Kid } from "./dom";
 import { family, record } from "./family";
-import { aThing, thingSprite } from "./sprite";
+import { aThing, hasSprite, sprite, thingSprite } from "./sprite";
 import { lab, story } from "./story";
 import { thingPicture } from "./things";
 import { NEEDS } from "./types";
@@ -76,7 +76,12 @@ function mind(c: Ctx): Kid[] {
     el("div", "", el("h2", "", p.stage === "egg" ? p.name ?? "An egg" : p.label),
       el("p", "hint", `${stage} · generation ${p.gen}${p.days != null ? ` · ${plural(Math.round(p.days * 10) / 10, "day")}` : ""}`),
       el("p", "hint", `in ${where}${parent ? ` · ${parent.label}'s child` : ""}${c.snap.pets.some((q) => (q.family ?? 1) !== (p.family ?? 1)) ? ` · of the ${p.family === 2 ? "second" : "first"} family` : ""}`),
-      p.seems ? el("p", "", `Seems ${p.seems}; ${p.asleep ? "asleep" : p.doing}.`) : null,
+      p.seems ? el("p", "", `Seems ${p.seems}${p.body ? "" : `; ${p.asleep ? "asleep" : p.doing}`}.`) : null,   // what its body is at has the next line to itself
+      // SPEC-v3.3 §1: what its body is at by itself just now (with the sign it wears in the room), and what its mind wants to be about
+      p.body ? el("p", "", p.body.icon && hasSprite(`icon.act.${p.body.icon}`) ? sprite(`icon.act.${p.body.icon}`, 1) : null,
+        `Its body, by itself: ${p.body.doing}${p.body.walking ? " (on its way there)" : ""}.`) : null,
+      p.focus && !p.asleep ? el("p", "", "Its mind is on: ", el("q", "", p.focus.words),
+        el("span", "hint", ` (${[p.focus.type, c.snap.pets.find((q) => q.id === p.focus!.who)?.label ?? p.focus.who ?? p.focus.what].filter(Boolean).join(": ")})`)) : null,
       p.animals?.length ? el("p", "hint", `Its ${p.animals.length > 1 ? "animals" : "animal"}: ${p.animals.map((a) => (a.name ? `${a.name} the ${a.kind}` : `a ${a.kind}`)).join(", ")}.`) : null,
       p.weak ? el("p", "bad", "It has grown weak.") : null));
   const told = (d.told ?? []) as { who: string; kind: string; text: string }[];
@@ -122,7 +127,10 @@ function mind(c: Ctx): Kid[] {
   return [
     head, needs,
     senses.length ? section("What it notices", list("plain", senses.map((s) => el("li", "", s)), "")) : null,
-    now, project, read, sings, toldBy,
+    now, project,
+    p.habits ? section("Habits", p.habits.length ? list("plain", p.habits.map((h) => el("li", "", h)), "")
+      : el("p", "empty", "None yet. A habit is something it has done again and again, in the same place at the same time of day.")) : null,
+    read, sings, toldBy,
     section("What others told it", ...tells.map((t) => el("div", "", el("p", "hint", t.who), quote(t.text)))),
     own.length ? section("Its message for its children", quote(own.at(-1)!.text), own.length > 1 ? el("p", "hint", `Rewritten ${plural(own.length - 1, "time")}.`) : null) : null,
     section(`Beliefs (${held.length})`, list("beliefs", held.map(belief), d.beliefs ? "None yet." : "…"),

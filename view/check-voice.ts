@@ -1,6 +1,6 @@
 // Self-check for the voice's plans: node check-voice.ts   (no browser, no sound)
 import assert from "node:assert/strict";
-import { hash, news, planSong, planSound, planSpeech, semitone, syllables, voiceOf } from "./src/voice-plan.ts";
+import { hash, news, planSong, planSound, planSpeech, planVox, semitone, syllables, voiceOf, VOX } from "./src/voice-plan.ts";
 import type { Seen, VoiceInput } from "./src/voice-plan.ts";
 
 const genome = { roundness: 0.72, stretch: 1.075, wobble: 0.2, hue: 31, saturation: 0.6, pattern: "speckle",
@@ -96,7 +96,7 @@ assert.deepEqual(spoke.speak, [{ pet: "p2", text: "hello mother" }]);           
 const more = news(first.seen, snap({ moments: [{ n: 1, kind: "made", pet: "p1", room: "r11" }, { n: 2, kind: "hatched", pet: "p2", room: "r10" },
   { n: 3, kind: "power", pet: null, room: null }, { n: 4, kind: "death", pet: "p1", room: "r11" }, { n: 5, kind: "season", pet: null, room: null }] }));
 assert.deepEqual(more.sounds.map((x) => [x.kind, x.pet, x.room]), [["cry", "p2", "r10"], ["last", "p1", "r11"]]);
-assert.deepEqual(more.house, [{ kind: "powerdown", room: null }]);
+assert.deepEqual(more.house, [{ kind: "powerdown", room: null, moment: "power" }]);
 
 // SPEC-v3.1 §3.4: a song is the singer's own voice holding the notes of a five-note scale; each one sung is heard once
 assert.deepEqual(["low do", "low la", "do", "re", "mi", "so", "la", "high do", "high la"].map(semitone), [-12, -3, 0, 2, 4, 7, 9, 12, 21]);
@@ -115,5 +115,20 @@ const heard = news(quiet.seen, later);
 assert.deepEqual([heard.sing.map((x) => x.by), heard.heard.map((x) => x.text), heard.speak], [["p2", "music box"], [""], []]);   // each once, static too; a song is not also babbled
 assert.ok(news(heard.seen, later).sing.length === 0 && news(first.seen, snap()).sing.length === 0);            // not again; and a recording without the new fields is fine
 assert.equal(news(first.seen, snap({ moments: [{ n: 2, kind: "arrival radio", pet: null, room: "r00" }] })).house[0].kind, "tuning");   // a discovery has its own sound
+
+// SPEC-v3.3 §4: the small sounds a pet makes by itself: its own voice, short, quieter than talk, each its own shape, each played once
+const shapes = VOX.map((kind) => {
+  const child = planVox(kind, pet({ stage: "child" })), adult = planVox(kind, pet({ stage: "adult" }));
+  assert.ok(child.length >= 0.2 && child.length <= 1.2 && child.tones.every((n) => n.gain < 0.5), kind);       // short, and under the 0.5 of talk
+  assert.ok(near(child.tones[0].f0 / adult.tones[0].f0, 520 / 330) && child.timbre.wave === voiceOf(pet()).timbre.wave, kind);   // the same creature
+  return child.tones.map((n) => `${n.dur}:${(n.f0 / 520).toFixed(2)}>${(n.f1 / 520).toFixed(2)}`).join(" ");
+});
+assert.equal(new Set(shapes).size, VOX.length);                                                                 // no two alike
+const [yawn, laugh, grumble, gasp] = (["yawn", "laugh", "grumble", "gasp"] as const).map((k) => planVox(k, pet()).tones);
+assert.ok(yawn[0].f1 > yawn[0].f0 && yawn[1].f1 < yawn[0].f0 && yawn[1].dur > 0.5);                              // up, then a long way down
+assert.ok(laugh.length >= 4 && laugh.every((n, i) => n.dur < 0.1 && (i === 0 || n.f0 < laugh[i - 1].f0)));       // short bounces going down
+assert.ok(grumble.every((n) => n.f0 < 520 && n.f1 < n.f0) && gasp[0].f1 > gasp[0].f0 * 2);                       // low and sinking; a sharp swoop up
+const vox = [{ n: 3, pet: "p1", room: "r11", kind: "yawn" as const }], hum = news(first.seen, snap({ vox }));
+assert.deepEqual([news(null, snap({ vox })).vox.length, hum.vox.map((x) => x.kind), news(hum.seen, snap({ vox })).vox.length], [0, ["yawn"], 0]);
 
 console.log("voice check ok");

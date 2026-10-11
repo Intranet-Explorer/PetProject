@@ -12,6 +12,9 @@ export type Tone = { at: number; dur: number; f0: number; f1: number; gain: numb
 export type Timbre = { wave: "sine" | "triangle" | "square"; cutoff: number; vibratoCents: number; vibratoHz: number; tremolo: number };
 export type Plan = { tones: Tone[]; timbre: Timbre; length: number; words?: { at: number; word: string }[] };
 export type SoundKind = "cry" | "chirp" | "blip" | "trill" | "stageup" | "hm" | "whimper" | "last";
+/** The small sounds a pet makes by itself (SPEC-v3.3 §4), as the engine names them in `snap.vox`. */
+export type VoxKind = "murmur" | "hum" | "chirp" | "yawn" | "laugh" | "greet" | "grumble" | "gasp";
+export const VOX: VoxKind[] = ["murmur", "hum", "chirp", "yawn", "laugh", "greet", "grumble", "gasp"];
 
 const BASE: Record<string, number> = { egg: 700, hatchling: 700, child: 520, youngling: 420, adult: 330, elder: 290 };
 const TALKS = ["youngling", "adult", "elder"];   // the stages at which real words come through the babble
@@ -123,13 +126,15 @@ export function planSpeech(text: string, v: VoiceInput): Plan {
   return { tones, timbre: voice.timbre, length: Math.max(0, t - voice.syllable * 3), words };
 }
 
+/** Notes as [at, dur, from, to], the pitches in multiples of the voice's own, all as loud as each other. */
+const notesOf = (b: number, timbre: Timbre) => (notes: number[][], gain: number): Plan => {
+  const tones = notes.map(([at, dur, from, to]) => ({ at, dur, f0: b * from, f1: b * to, gain }));
+  return { tones, timbre, length: Math.max(...tones.map((n) => n.at + n.dur)) };
+};
+
 /** The sounds without words, made from the same voice so they are the same creature. */
 export function planSound(kind: SoundKind, v: VoiceInput): Plan {
-  const voice = voiceOf(v), b = voice.base, timbre = { ...voice.timbre };
-  const seq = (notes: [number, number, number, number][], gain: number): Plan => {   // [at, dur, from, to] in multiples of the base
-    const tones = notes.map(([at, dur, from, to]) => ({ at, dur, f0: b * from, f1: b * to, gain }));
-    return { tones, timbre, length: Math.max(...tones.map((n) => n.at + n.dur)) };
-  };
+  const voice = voiceOf(v), b = voice.base, timbre = { ...voice.timbre }, seq = notesOf(b, timbre);
   switch (kind) {
     case "cry": return seq([[0, 0.3, 0.9, 2.1], [0.33, 0.12, 2.1, 1.8]], 0.55);                  // a first cry: a short rising squeak
     case "chirp": return seq([[0, 0.07, 1.5, 1.6], [0.085, 0.09, 2, 2.12]], 0.45);                 // made a thing
@@ -141,6 +146,29 @@ export function planSound(kind: SoundKind, v: VoiceInput): Plan {
       timbre.tremolo = 0.5;
       return seq([[0, 0.35, 1.3, 1.05], [0.45, 0.4, 1.15, 0.88]], 0.28);
     case "last": return seq([[0, 0.5, 1, 0.8], [0.6, 0.9, 0.8, 0.5]], 0.3);                          // a death: two long notes going down and out
+  }
+}
+
+/** The small sounds a pet makes by itself while its body is busy (SPEC-v3.3 §4): the same voice again, quieter than
+ *  talk (five pets at it must not be a din), each 0.2 to 1.2 s long and each its own shape, so that with eyes shut a
+ *  yawn is not a laugh. A kind the engine invents later is a murmur. */
+export function planVox(kind: VoxKind, v: VoiceInput): Plan {
+  const voice = voiceOf(v), timbre = { ...voice.timbre }, seq = notesOf(voice.base, timbre);
+  switch (kind) {
+    case "hum":                                                                                   // three held notes of a little tune, with a wobble
+      timbre.vibratoCents = Math.max(25, timbre.vibratoCents);
+      return seq([[0, 0.3, 1, 1], [0.33, 0.3, 1.26, 1.26], [0.66, 0.45, 1.12, 1.12]], 0.2);
+    case "chirp": return seq([[0, 0.05, 2, 2.2], [0.1, 0.05, 2, 2.2], [0.2, 0.08, 2.4, 2.7]], 0.22);   // interest: three quick high peeps, the last one up
+    case "yawn": return seq([[0, 0.35, 0.85, 1.3], [0.35, 0.75, 1.3, 0.62]], 0.2);                 // a long slide up, and a longer one down and out
+    case "laugh": return seq([0, 1, 2, 3, 4].map((i) => [i * 0.1, 0.055, 1.7 - 0.12 * i, 1.55 - 0.12 * i]), 0.24);   // five short bounces, going down
+    case "greet": return seq([[0, 0.11, 1, 1.02], [0.14, 0.24, 1.34, 1.5]], 0.26);                 // two notes, the second a fourth up and still rising
+    case "grumble":                                                                               // low, rough and sinking
+      [timbre.tremolo, timbre.cutoff] = [0.7, timbre.cutoff * 0.5];
+      return seq([[0, 0.22, 0.72, 0.62], [0.27, 0.16, 0.66, 0.6], [0.47, 0.3, 0.62, 0.5]], 0.26);
+    case "gasp": return seq([[0, 0.14, 1.1, 2.6], [0.15, 0.1, 2.6, 2.5]], 0.3);                    // one sharp swoop up, and held there a moment
+    default:                                                                                      // murmur: four soft low syllables, mouth nearly shut
+      timbre.cutoff *= 0.6;
+      return seq([[0, 0.1, 0.84, 0.8], [0.13, 0.12, 0.9, 0.86], [0.29, 0.09, 0.8, 0.8], [0.41, 0.16, 0.86, 0.75]], 0.18);
   }
 }
 
@@ -172,9 +200,11 @@ export type Ears = {
   moments: { n: number; kind: string; pet: string | null; room: string | null }[];
   sung?: { tick: number; by: string; song: string; room: string }[];
   radio?: { said: { tick: number; room: string | null; source: string; text: string }[] };
-  acts?: { n: number; type: string; pet: string; what?: string | null; room: string; ok: boolean }[];   // SPEC-v3.2: steps just finished, numbered
+  // SPEC-v3.2: steps just finished, numbered. SPEC-v3.3: `kind` of a made thing, `loud` if what was used sounds
+  acts?: { n: number; type: string; pet: string; what?: string | null; room: string; ok: boolean; kind?: string | null; loud?: boolean }[];
+  vox?: { n: number; pet: string; room: string; kind: VoxKind }[];   // SPEC-v3.3 §4: the small sounds, numbered
 };
-export type Seen = { tick: number; said: Record<string, number>; moment: number; sung: number; radio: number; act: number };
+export type Seen = { tick: number; said: Record<string, number>; moment: number; sung: number; radio: number; act: number; vox: number };
 export type HouseSound = "powerdown" | "powerup" | "thunder" | "drip" | "whoosh" | "thud" | "chalk" | "chime" | "patter" | "tuning" | "pages" | "knock";
 const BY_PET: Record<string, SoundKind> = { hatched: "cry", stage: "stageup", made: "chirp", unmade: "blip", nuzzle: "trill", gift: "trill",
                                             named: "hm", death: "last", befriended: "trill", tamed: "trill" };
@@ -184,10 +214,10 @@ const BY_HOUSE: Record<string, HouseSound> = { power: "powerdown", storm: "thund
 
 /** Compare what was heard before with what is here now. On the first look nothing plays: old news is not announced. */
 export function news(seen: Seen | null, s: Ears) {
-  const sung = s.sung ?? [], said = s.radio?.said ?? [], acts = s.acts ?? [];
+  const sung = s.sung ?? [], said = s.radio?.said ?? [], acts = s.acts ?? [], vox = s.vox ?? [];
   // a replay wound back or scrubbed far ahead, or a tab left asleep: start listening afresh, announce nothing old
   if (seen && (s.tick < seen.tick || (s.tick - seen.tick) * (s.tick_seconds ?? 0) > 120)) seen = null;
-  const now: Seen = { tick: s.tick, act: Math.max(seen?.act ?? 0, ...acts.map((a) => a.n)), said: Object.fromEntries(s.pets.filter((p) => p.said).map((p) => [p.id, p.said!.tick])), moment: Math.max(0, ...s.moments.map((m) => m.n)),
+  const now: Seen = { tick: s.tick, act: Math.max(seen?.act ?? 0, ...acts.map((a) => a.n)), vox: Math.max(seen?.vox ?? 0, ...vox.map((x) => x.n)), said: Object.fromEntries(s.pets.filter((p) => p.said).map((p) => [p.id, p.said!.tick])), moment: Math.max(0, ...s.moments.map((m) => m.n)),
                       sung: Math.max(seen?.sung ?? 0, ...sung.map((x) => x.tick)), radio: Math.max(seen?.radio ?? 0, ...said.map((x) => x.tick)) };
   const speak: { pet: string; text: string }[] = [], sounds: { kind: SoundKind; pet: string; room: string | null }[] = [], house: { kind: HouseSound; room: string | null; moment: string }[] = [];
   if (seen) {
@@ -201,7 +231,5 @@ export function news(seen: Seen | null, s: Ears) {
   // and each step a pet finishes (SPEC-v3.2 §8), by its running number
   const [was, old] = [seen?.sung ?? 0, seen?.radio ?? 0], done = seen?.act ?? 0;
   return { seen: now, speak, sounds, house, sing: seen ? sung.filter((x) => x.tick > was) : [], heard: seen ? said.filter((x) => x.tick > old) : [],
-           acts: seen ? acts.filter((a) => a.n > done && a.ok) : [] };
+           acts: seen ? acts.filter((a) => a.n > done && a.ok) : [], vox: seen ? vox.filter((x) => x.n > seen.vox) : [] };
 }
-
-

@@ -1,14 +1,21 @@
 // The house's sound (VOICE.md, SPEC-v3 §10.6). Web Audio only: no libraries, no audio files; from youngling on, a
 // word a pet really knows is said with the browser's own speech voice, pitched to its body.
 // View-only: it listens to what the view already receives and nothing here goes back to the engine.
-import { hash, news, planSong, planSound, planSpeech, semitone, voiceOf } from "./voice-plan";
-import type { HouseSound, Plan, Seen, SoundKind, VoiceInput } from "./voice-plan";
-import { sound } from "./sprite";
+import { hash, news, planSong, planSound, planSpeech, planVox, semitone, voiceOf } from "./voice-plan";
+import type { HouseSound, Plan, Seen, SoundKind, VoiceInput, VoxKind } from "./voice-plan";
+import { clip, sound, sounds } from "./sprite";
+import type { Layer } from "./sprite";
 import { bodyStage } from "./types";
 import type { Heard, Note, PetV, Snap } from "./types";
 
 const STORE = "sound";
-const AHEAD = 6;   // seconds of heartbeat or breathing kept scheduled on the audio clock; a snapshot tops it up every 2 s
+const AHEAD = 6;   // seconds of heartbeat, breathing or a room's ticks kept scheduled on the audio clock; a snapshot tops it up
+// SPEC-v3.3 §4, distance: next door is heard this much quieter and only under this many Hz; `FADE` is how fast one
+// thing gives way to another (the time constant of a cross-fade, in seconds)
+const [FAR, MUFFLE, FADE] = [0.22, 700, 0.6];
+/** What the page has sounded, for checking without ears (window.petView.audioLog): `t` is ms since the page loaded. */
+export type Logged = { t: number; what: "speech" | "vox" | "instrument" | "song" | "ambience" | "music" | "radio" | "sfx"; name: string; pet?: string; room?: string;
+  where: "here" | "next door"; gain: number };
 const LABEL: Record<SoundKind, string> = {
   cry: "first cry (hatched)", chirp: "chirp (made a thing)", blip: "falling blip (took a thing apart)",
   trill: "content trill (a nuzzle or a gift taken)", stageup: "three rising notes (a new stage)",
@@ -24,7 +31,8 @@ export type Creature = "moth" | "beetle" | "mouse" | "bird";
 /** SPEC-v3.2 §8: the step a pet has just finished, as the name of a sound effect in the art data (sounds.json). */
 const SFX: Record<string, string> = { gather: "pickup", take: "pickup", accept: "pickup", drop: "drop", give: "drop", arrange: "drop", make: "make", unmake: "unmake",
   combine: "combine", go: "door", eat: "eat", write: "write", scrub: "write", ask_book: "book", call: "call", nuzzle: "heart" };
-const WET = ["rain", "storm"], OPEN = ["garden", "greenhouse", "attic", "pond"], SHUT_IN = ["cellar", "storeroom"];
+// how much of the sky a kind of room hears: all of it, none of it, or (every other room) some, through the roof
+const OPEN = ["garden", "greenhouse", "attic", "pond"], SHUT_IN = ["cellar", "storeroom"];
 
 /** Put a plan's notes on an audio clock. Works on a live context and on an offline one, which is how it is checked. */
 export function schedule(ctx: BaseAudioContext, dest: AudioNode, plan: Plan, at: number) {
@@ -91,38 +99,28 @@ function breath(air: GainNode, at: number) {   // in for a second and a half, ou
   return at + 5.4;
 }
 
-/** A taught thing's hum: a low filtered sawtooth, which no pet's voice ever is, pitched by the thing's name. */
-function drone(ctx: BaseAudioContext, dest: AudioNode, name: string) {
-  const osc = new OscillatorNode(ctx, { type: "sawtooth", frequency: 110 + (hash(name) % 80) }), gain = new GainNode(ctx, { gain: 0 });
-  const sway = new OscillatorNode(ctx, { frequency: 0.6 }), depth = new GainNode(ctx, { gain: 0.012 });
-  sway.connect(depth).connect(gain.gain);
-  osc.connect(new BiquadFilterNode(ctx, { type: "lowpass", frequency: 480 })).connect(gain).connect(dest);
-  osc.start();
-  sway.start();
-  return { osc, sway, gain };
-}
-
-
 function hiss(ctx: BaseAudioContext, seconds = 2) {   // white noise, the stuff of rain, wind, wings and thunder
   const buffer = new AudioBuffer({ length: Math.ceil(ctx.sampleRate * seconds), sampleRate: ctx.sampleRate }), data = buffer.getChannelData(0);
   for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
   return buffer;
 }
 
+/** One note that is nobody's voice: a wave sliding from `f0` to `f1`, struck and dying away. */
+function blip(ctx: BaseAudioContext, dest: AudioNode, at: number, type: OscillatorType, f0: number, f1: number, dur: number, gain: number, cutoff = 6000) {
+  const osc = new OscillatorNode(ctx, { type, frequency: f0 }), env = new GainNode(ctx, { gain: 0 });
+  osc.frequency.setValueAtTime(f0, at);
+  osc.frequency.exponentialRampToValueAtTime(f1, at + dur);
+  env.gain.setValueAtTime(0, at);
+  env.gain.linearRampToValueAtTime(gain, at + Math.min(0.02, dur / 3));
+  env.gain.exponentialRampToValueAtTime(0.001, at + dur);
+  osc.connect(new BiquadFilterNode(ctx, { type: "lowpass", frequency: cutoff })).connect(env).connect(dest);
+  osc.start(at);
+  osc.stop(at + dur + 0.05);
+}
+
 /** A sound of the house or of a small creature: none of them is anyone's voice. Returns when it ends. */
 export function effect(ctx: BaseAudioContext, dest: AudioNode, kind: HouseSound | Creature, at: number) {
-  const tone = (type: OscillatorType, f0: number, f1: number, t: number, dur: number, gain: number, cutoff = 6000) => {
-    const osc = new OscillatorNode(ctx, { type, frequency: f0 }), env = new GainNode(ctx, { gain: 0 });
-    osc.frequency.setValueAtTime(f0, at + t);
-    osc.frequency.exponentialRampToValueAtTime(f1, at + t + dur);
-    env.gain.setValueAtTime(0, at + t);
-    env.gain.linearRampToValueAtTime(gain, at + t + Math.min(0.02, dur / 3));
-    env.gain.exponentialRampToValueAtTime(0.001, at + t + dur);
-    osc.connect(new BiquadFilterNode(ctx, { type: "lowpass", frequency: cutoff })).connect(env).connect(dest);
-    osc.start(at + t);
-    osc.stop(at + t + dur + 0.05);
-    return t + dur;
-  };
+  const tone = (type: OscillatorType, f0: number, f1: number, t: number, dur: number, gain: number, cutoff = 6000) => (blip(ctx, dest, at + t, type, f0, f1, dur, gain, cutoff), t + dur);
   const burst = (type: BiquadFilterType, f0: number, f1: number, t: number, dur: number, gain: number, attack = 0.02) => {
     const src = new AudioBufferSourceNode(ctx, { buffer: hiss(ctx, dur + 0.1) }), env = new GainNode(ctx, { gain: 0 });
     const filter = new BiquadFilterNode(ctx, { type, frequency: f0, Q: 0.9 });
@@ -179,6 +177,92 @@ export function tune(ctx: BaseAudioContext, dest: AudioNode, notes: Note[], at: 
   return t + (bird ? 0 : 0.6);
 }
 
+/** A sound file made to go round without a seam: its last second is faded into its first (a recording of rain ends
+ *  quieter than it begins). */
+function seamless(b: AudioBuffer) {
+  const n = Math.floor(Math.min(1, b.duration / 4) * b.sampleRate), out = new AudioBuffer({ length: b.length - n, numberOfChannels: b.numberOfChannels, sampleRate: b.sampleRate });
+  for (let c = 0; c < b.numberOfChannels; c++) {
+    const from = b.getChannelData(c), to = out.getChannelData(c);
+    to.set(from.subarray(0, b.length - n));
+    for (let i = 0; i < n; i++) to[i] = from[i] * (i / n) + from[b.length - n + i] * (1 - i / n);
+  }
+  return out;
+}
+
+type Clip = { buffer: AudioBuffer; gain: number };
+/** One layer of what a place sounds like (assets/README.md, "ambience"): a file going round, or one of the sounds made
+ *  here (wind, water, hum, and the ones made of separate events: drips, birds, creak, crackle, crickets). It keeps
+ *  going until it is stopped. `out` is its own volume, silent to begin with, for fading it in and out; `tick` puts
+ *  the events up to a moment on the audio clock, and is called again and again. `gain` in the data is how loud the
+ *  layer's loudest moment is; `load` fetches a sound file of the data (an effect by name, or the layer's own file). */
+export function ambient(ctx: BaseAudioContext, dest: AudioNode, L: Layer, load: (what: string | Layer) => Promise<Clip | null> = async () => null) {
+  const out = new GainNode(ctx, { gain: 0 }), into = new GainNode(ctx, { gain: L.gain ?? 0.03 }), live: AudioScheduledSourceNode[] = [];
+  const g = into.gain.value, rate = L.rate ?? 0.2, f = L.pitch ?? 400, r = Math.random;
+  let until = Infinity, tick = (_until: number) => {}, drop: Clip | null = null;
+  into.connect(out).connect(dest);
+  if (L.echo) {   // a drip in a cellar rings on
+    const delay = new DelayNode(ctx, { delayTime: 0.33 }), back = new GainNode(ctx, { gain: 0.65 * L.echo });
+    into.connect(delay).connect(back).connect(delay);
+    back.connect(out);
+  }
+  const run = <T extends AudioScheduledSourceNode>(n: T) => { n.start(); live.push(n); return n; };
+  /** Hiss through a filter, made up to the loudness asked for whatever the filter leaves of it (`width`, in Hz). */
+  const noise = (filter: BiquadFilterNode, width: number) => {
+    const vol = new GainNode(ctx, { gain: (0.3 * g) / (0.577 * Math.sqrt((Math.PI * width) / ctx.sampleRate)) });
+    run(new AudioBufferSourceNode(ctx, { buffer: hiss(ctx, 3), loop: true })).connect(filter).connect(vol).connect(out);
+    return vol;
+  };
+  const sway = (to: AudioParam, hz: number, depth: number) => { run(new OscillatorNode(ctx, { frequency: hz })).connect(new GainNode(ctx, { gain: depth })).connect(to); };
+  /** Something that happens now and then: `rate` times a second, evenly (a clock) or scattered. The data may name a
+   *  recorded effect to use for it; an effect's own gain is what evens the recordings out, so ten times it is full size. */
+  const every = (make: (t: number, n: number) => void) => {
+    const gap = () => (L.steady ? 1 : -Math.log(1 - r())) / rate;
+    let next = ctx.currentTime + (L.steady ? 0.1 : gap()), n = 0;
+    tick = (until) => {
+      for (next = Math.max(next, ctx.currentTime); next < until; next += gap()) {
+        if (!drop) { make(next, n++); continue; }
+        const src = new AudioBufferSourceNode(ctx, { buffer: drop.buffer, playbackRate: 0.85 + 0.4 * r() });
+        src.connect(new GainNode(ctx, { gain: 10 * drop.gain })).connect(into);
+        src.start(next);
+      }
+    };
+  };
+  if (L.sfx) void load(L.sfx).then((c) => (drop = c));
+  switch (L.synth) {
+    case "wind": {   // hiss in a band round its pitch, swelling and sinking, the band sliding a little as it does
+      const band = new BiquadFilterNode(ctx, { type: "bandpass", frequency: f, Q: 1.5 }), vol = noise(band, f / 1.5);
+      sway(vol.gain, rate, vol.gain.value * 0.6);
+      sway(band.frequency, rate * 0.37, f * 0.2);
+      break;
+    }
+    case "water": {   // low hiss, lapping: a slow swell and a quicker one over it
+      const vol = noise(new BiquadFilterNode(ctx, { type: "lowpass", frequency: 500 }), 500);
+      sway(vol.gain, rate, vol.gain.value * 0.5);
+      sway(vol.gain, rate * 2.7, vol.gain.value * 0.25);
+      break;
+    }
+    case "hum": {   // one steady note and a little of the two above it, with a slow wobble
+      const vol = new GainNode(ctx, { gain: g });
+      for (const [k, a] of [[1, 0.8], [2, 0.15], [3, 0.05]]) run(new OscillatorNode(ctx, { frequency: f * k })).connect(new GainNode(ctx, { gain: a })).connect(vol);
+      vol.connect(out);
+      sway(vol.gain, 0.13, g * 0.35);
+      break;
+    }
+    case "drips": every((t) => blip(ctx, into, t, "sine", 1200 + 500 * r(), 600, 0.09, 1)); break;
+    case "birds": every((t) => { const hi = 2300 + 900 * r(); [0, 0.13, 0.26].forEach((d, i) => blip(ctx, into, t + d, "sine", hi * (i % 2 ? 1.25 : 1), hi * (i % 2 ? 1 : 1.25), 0.1, 1)); }); break;
+    case "creak": every((t) => { const lo = 60 + 40 * r(); blip(ctx, into, t, "sawtooth", lo, lo * (1.3 + 0.5 * r()), 0.25 + 0.3 * r(), 1, 700); }); break;
+    case "crackle": every((t, n) => { const hi = L.steady ? (n % 2 ? 1500 : 2000) : 1500 + 2500 * r(); blip(ctx, into, t, "sine", hi, hi * 0.6, 0.03, L.steady ? 1 : 0.4 + 0.6 * r()); }); break;   // tick, tock
+    case "crickets": every((t) => [0, 0.045, 0.09].forEach((d) => blip(ctx, into, t + d, "sine", 4300, 4300, 0.03, 1))); break;
+    default: if (L.file) void load(L).then((c) => {   // a recording, going round; it may arrive after the layer was told when to stop
+      if (!c || ctx.currentTime >= until) return;
+      const src = run(new AudioBufferSourceNode(ctx, { buffer: seamless(c.buffer), loop: true }));
+      src.connect(new GainNode(ctx, { gain: c.gain })).connect(out);
+      if (until < Infinity) src.stop(until);
+    });
+  }
+  return { out, tick: (to: number) => tick(to), stop: (at: number) => { until = at; for (const n of live) n.stop(at); } };
+}
+
 /** An old radio's crackle (SPEC-v3.1 §5.3): the same noise as the rain, through a narrow band, jumping about. */
 function crackle(ctx: BaseAudioContext, dest: AudioNode, at: number, seconds: number, level: number) {
   const src = new AudioBufferSourceNode(ctx, { buffer: hiss(ctx, 2), loop: true }), env = new GainNode(ctx, { gain: 0 });
@@ -201,21 +285,24 @@ export function voiceInput(p: PetV, s?: Snap): VoiceInput {
 
 export class Voice {
   on = false;
-  music = false;                                 // a quiet tune for the room being looked at: its own switch, off unless turned on
+  ambience = true;                               // the room's own sound has its own switch; it is on whenever sound is turned on
   volume = 0.8;
   heard: { at: number; what: string }[] = [];   // what has played lately, for the voice lab
+  log: Logged[] = [];                            // the same for a check without ears: the last 500 sounds begun
   onchange: () => void = () => {};
   private ctx: AudioContext | null = null;
   private master!: GainNode;
   private near!: GainNode;                       // the room being looked at: full volume
-  private far!: GainNode;                        // the rooms next door: quiet and muffled (§10.6); further off is silent
+  private far!: GainNode;                        // the rooms next door: quiet and muffled (§4); further off is silent
+  private roof!: AudioNode;                      // the weather, as it is heard from indoors
   private talkFree = 0;                          // when the last speech ends: pets take turns, with a short gap
   private sfxFree = 0;
   private beatAt = 0;
   private breathAt = 0;
   private air: ReturnType<typeof lungs> | null = null;
-  private rain: { src: AudioBufferSourceNode; gain: GainNode } | null = null;
-  private hums = new Map<string, ReturnType<typeof drone>>();
+  private kept = new Map<string, ReturnType<typeof ambient>>();   // what keeps going by itself: the room's layers, the weather's, things that hum
+  private band: { mood: string; el: HTMLAudioElement; name: string; gain: number; here: GainNode; far: GainNode; where: string } | null = null;   // the visitor's music
+  private voxAt = new Map<string, number>();     // pet -> when it last made a small sound
   private seen: Seen | null = null;
   private power = true;
   private nextCall: Record<string, number> = {};
@@ -223,15 +310,12 @@ export class Voice {
   private low = new Map<string, number>();       // pet -> since when it has been miserable
   private whimpered = 0;
   private last: VoiceInput | null = null;        // the voice of whoever is selected, for answering when sound is turned on
-  private clips = new Map<string, Promise<AudioBuffer | null>>();   // sound effects from the art data, fetched when first wanted
-  private band: { el: HTMLAudioElement; url: string; gain: number } | null = null;
-  private roomType: string | null = null;
+  private clips = new Map<string, Promise<AudioBuffer | null>>();   // sound files from the art data, fetched when first wanted
 
   constructor() {
     try {
       const saved = JSON.parse(localStorage.getItem(STORE) ?? "{}");
       this.on = saved.on === true;
-      this.music = saved.music === true;
       if (typeof saved.volume === "number") this.volume = Math.min(1, Math.max(0, saved.volume));
     } catch { /* private window: it just starts off */ }
     // A browser plays nothing until the page has been clicked. If sound was left on, the first click starts it.
@@ -241,7 +325,7 @@ export class Voice {
   get live() { return this.on && this.ctx?.state === "running"; }
 
   private save() {
-    try { localStorage.setItem(STORE, JSON.stringify({ on: this.on, volume: this.volume, music: this.music })); } catch { /* not remembered */ }
+    try { localStorage.setItem(STORE, JSON.stringify({ on: this.on, volume: this.volume })); } catch { /* not remembered */ }
     this.onchange();
   }
 
@@ -252,8 +336,10 @@ export class Voice {
       this.master.connect(ctx.destination);
       this.near = new GainNode(ctx);
       this.near.connect(this.master);
-      this.far = new GainNode(ctx, { gain: 0.22 });
-      this.far.connect(new BiquadFilterNode(ctx, { type: "lowpass", frequency: 700 })).connect(this.master);
+      this.far = new GainNode(ctx, { gain: FAR });
+      this.far.connect(new BiquadFilterNode(ctx, { type: "lowpass", frequency: MUFFLE })).connect(this.master);
+      this.roof = new BiquadFilterNode(ctx, { type: "lowpass", frequency: 1200 });
+      this.roof.connect(this.near);
       ctx.onstatechange = () => this.onchange();
     }
     return this.ctx.resume();
@@ -262,10 +348,8 @@ export class Voice {
   setOn(on: boolean) {   // called from a click, which is what lets the browser start the audio
     this.on = on;
     if (on) {   // answer at once in a pet's own voice, so it is plain that sound works even when nothing is happening
-      void this.start().then(() => {
-        if (this.last && this.sample("hm", this.last)) this.note("sound is on: this is its voice");
-        this.retune();
-      });
+      this.ambience = true;
+      void this.start().then(() => { if (this.last && this.sample("hm", this.last)) this.note("sound is on: this is its voice"); });
     } else if (this.ctx) {
       this.quiet();
       void this.ctx.suspend();
@@ -276,44 +360,46 @@ export class Voice {
   setVolume(volume: number) {
     this.volume = Math.min(1, Math.max(0, volume));
     if (this.ctx) this.master.gain.setTargetAtTime(this.volume, this.ctx.currentTime, 0.03);
-    if (this.band) this.band.el.volume = this.band.gain * this.volume;
     this.save();
   }
 
-  /** Music (SPEC-v3.2 §8) has its own switch. Turning it on turns sound on too: it is a click, which is what a browser wants. */
-  setMusic(on: boolean) {
-    this.music = on;
-    if (on && !this.live) return this.setOn(true);
-    this.retune();
-    this.save();
+  /** The room's own sound (SPEC-v3.3 §4). Turning it on turns sound on too: it is a click, which is what a browser wants. */
+  setAmbience(on: boolean) {
+    this.ambience = on;
+    if (on && !this.on) return this.setOn(true);
+    this.onchange();
   }
 
-  /** Keep the right tune going, very quietly: the one the art data gives for the kind of room being looked at, or none. */
-  private retune() {
-    const want = this.music && this.live && this.roomType ? sound("music", this.roomType) : null;
-    if (want?.url === this.band?.url) return;
-    this.band?.el.pause();
-    this.band = null;
-    if (!want) return;
-    const el = new Audio(want.url);
-    [el.loop, el.volume] = [true, want.gain * this.volume];
-    void el.play().catch(() => {});
-    this.band = { el, ...want };
-    this.note(`music for ${this.roomType === "pond" ? "the pond room" : `the ${this.roomType}`}, quietly`);
+  /** Every sound begins here. It is written in the audio log, so that what played can be checked without ears, and
+   *  (`said`) among what the voice lab has heard lately. The answer is whether the audio clock is running, which is
+   *  whether to really play it: on a clock that stands still everything would pile up on one moment. */
+  private begin(what: Logged["what"], name: string, dest: AudioNode | null, gain: number, from: { pet?: string; room?: string | null } = {}, said = "") {
+    const far = dest === this.far;
+    this.log.push({ t: Math.round(performance.now()), what, name, ...(from.pet ? { pet: from.pet } : {}), ...(from.room ? { room: from.room } : {}),
+      where: far ? "next door" : "here", gain: Math.round(gain * (far ? FAR : 1) * 1000) / 1000 });
+    if (this.log.length > 500) this.log.splice(0, this.log.length - 500);
+    if (said) this.note(said);
+    return this.ctx?.state === "running";
   }
+
+  /** A sound file of the art data: an effect by our name, or a layer's own file. Null if the data has none. */
+  private load = (what: string | Layer) => {
+    const s = typeof what === "string" ? sound(what) : clip(what), ctx = this.ctx!;
+    if (!s) return Promise.resolve(null);
+    if (!this.clips.has(s.url)) this.clips.set(s.url, fetch(s.url).then((r) => r.arrayBuffer()).then((b) => ctx.decodeAudioData(b)).catch(() => null));
+    return this.clips.get(s.url)!.then((buffer) => (buffer ? { buffer, gain: s.gain } : null));
+  };
 
   /** A sound effect by our name, from the art data: quiet, under the voices. False if the data has none. */
-  private sfx(name: string, dest: GainNode, what: string) {
-    const s = sound("sfx", name), ctx = this.ctx!;
+  private sfx(name: string, dest: GainNode, said: string, what: Logged["what"] = "sfx", from: { pet?: string; room?: string | null } = {}) {
+    const s = sound(name), ctx = this.ctx!;
     if (!s) return false;
-    if (!this.clips.has(s.url)) this.clips.set(s.url, fetch(s.url).then((r) => r.arrayBuffer()).then((b) => ctx.decodeAudioData(b)).catch(() => null));
-    void this.clips.get(s.url)!.then((buffer) => {
-      if (!buffer || !this.live) return;
-      const src = new AudioBufferSourceNode(ctx, { buffer });
-      src.connect(new GainNode(ctx, { gain: s.gain })).connect(dest);
+    if (this.begin(what, name, dest, s.gain, from, said)) void this.load(name).then((c) => {
+      if (!c || !this.live) return;
+      const src = new AudioBufferSourceNode(ctx, { buffer: c.buffer });
+      src.connect(new GainNode(ctx, { gain: c.gain })).connect(dest);
       src.start();
     });
-    this.note(what);
     return true;
   }
 
@@ -322,7 +408,8 @@ export class Voice {
     this.onchange();
   }
 
-  /** Where a sound from this room should go: here, next door, or nowhere. */
+  /** Distance (SPEC-v3.3 §4), for everything that sounds: what happens in the room being looked at is heard as it is
+   *  (`near`); in a room next door, through a door, it is quiet and muffled (`far`); further off it is not heard (null). */
   private bus(room: string | null, s: Snap, here: string) {
     if (room === null || room === here) return this.near;
     return Object.values(s.rooms.find((r) => r.id === here)?.doors ?? {}).includes(room) ? this.far : null;
@@ -336,38 +423,36 @@ export class Voice {
       const u = new SpeechSynthesisUtterance(w.word), base = voiceOf(v).base;
       u.pitch = Math.min(2, Math.max(0.3, base / 300));
       u.rate = v.stage === "elder" ? 0.8 : 1.15;
-      u.volume = this.volume * (quiet ? 0.2 : 0.9);
+      u.volume = this.volume * (quiet ? FAR : 0.9);
       setTimeout(() => this.live && speechSynthesis.speak(u), Math.max(0, (at + w.at - ctx.currentTime) * 1000));
     }
     return end;
   }
 
   /** Speech takes turns: each waits for the one before, with a breath between, as two pets talking would. */
-  private say(name: string, text: string, v: VoiceInput, dest: GainNode) {
+  private say(p: PetV, text: string, v: VoiceInput, dest: GainNode) {
     const ctx = this.ctx!, now = ctx.currentTime, at = Math.max(now + 0.03, this.talkFree + 0.35);
     if (at - now > 8) return;   // too far behind to still mean anything (a replay at speed)
+    if (!this.begin("speech", text, dest, 0.5, { pet: p.label, room: p.room }, `${p.label}${dest === this.far ? ", next door" : ""}: “${text}”`)) return;
     this.talkFree = this.utter(planSpeech(text, v), v, dest, at, dest === this.far);
     this.sfxFree = Math.max(this.sfxFree, this.talkFree + 0.15);
-    this.note(`${name}${dest === this.far ? ", next door" : ""}: “${text}”`);
   }
 
   /** A sound without words: queued on the audio clock behind whatever is playing, at most one a second. */
-  private sound(name: string, kind: SoundKind, v: VoiceInput, dest: GainNode) {
-    const ctx = this.ctx!, now = ctx.currentTime, at = Math.max(now + 0.03, this.sfxFree);
-    if (at - now > 10) return;
-    schedule(ctx, dest, planSound(kind, v), at);
+  private sound(p: PetV, kind: SoundKind, v: VoiceInput, dest: GainNode) {
+    const ctx = this.ctx!, now = ctx.currentTime, at = Math.max(now + 0.03, this.sfxFree), plan = planSound(kind, v);
+    if (at - now > 10 || !this.begin("vox", LABEL[kind], dest, plan.tones[0].gain, { pet: p.label, room: p.room }, `${p.label}: ${LABEL[kind]}`)) return;
+    schedule(ctx, dest, plan, at);
     this.sfxFree = at + 1;
-    this.note(`${name}: ${LABEL[kind]}`);
   }
 
   /** A song (SPEC-v3.1 §3.4), in the singer's own voice, or the music box's or a bird's. It waits its turn like
    *  speech, so two singing at once take turns. */
-  private sing(name: string, title: string, notes: Note[], v: VoiceInput | "box" | "bird", dest: GainNode) {
+  private sing(name: string, title: string, notes: Note[], v: VoiceInput | "box" | "bird", dest: GainNode, room: string) {
     const ctx = this.ctx!, now = ctx.currentTime, at = Math.max(now + 0.03, this.talkFree + 0.35);
-    if (at - now > 14) return;
+    if (at - now > 14 || !this.begin("song", title, dest, 0.42, { pet: name, room }, `${name}${dest === this.far ? ", next door" : ""} sings “${title}”`)) return;
     this.talkFree = typeof v === "string" ? tune(ctx, dest, notes, at, v === "bird") : schedule(ctx, dest, planSong(notes, v), at);
     this.sfxFree = Math.max(this.sfxFree, this.talkFree + 0.15);
-    this.note(`${name}${dest === this.far ? ", next door" : ""} sings “${title}”`);
   }
 
   /** For the Songbook: hear one version now, outside the queue. False if sound is off. */
@@ -379,51 +464,102 @@ export class Voice {
   }
 
   /** The box speaks (SPEC-v3.1 §5.3): quietly, in the browser's own voice made slow and low, under a crackle. Next
-   *  door it is only the crackle, muffled. Nothing to say is static. */
+   *  door it is the same, muffled, and the voice only quieter still (a browser's voice cannot be muffled). Nothing
+   *  to say is static. */
   private wireless(h: Heard, dest: GainNode) {
-    const ctx = this.ctx!, at = ctx.currentTime + 0.05, words = dest === this.near && h.text && typeof speechSynthesis !== "undefined";
-    if (dest === this.near && h.text) this.sfx("radio", dest, "the box clicks");   // the pack's own sound for the box, if the data has one
+    const ctx = this.ctx!, at = ctx.currentTime + 0.05, far = dest === this.far;
+    if (!this.begin("radio", h.text || "static", dest, 0.35, { room: h.room }, h.text ? `the box${far ? ", next door" : ""}: “${h.text}”` : "static from the box")) return;
+    if (!far && h.text) this.sfx("radio", dest, "the box clicks");   // the pack's own sound for the box, if the data has one
     crackle(ctx, dest, at, h.text ? Math.min(14, 0.6 + h.text.length * 0.07) : 1.8, h.text ? 0.035 : 0.12);
-    if (words) {
-      const u = new SpeechSynthesisUtterance(h.text);
-      [u.rate, u.pitch, u.volume] = [0.9, 0.7, this.volume * 0.35];
-      speechSynthesis.speak(u);
-    }
-    this.note(h.text ? `the box${words ? "" : ", next door"}: “${h.text}”` : "static from the box");
+    if (!h.text || typeof speechSynthesis === "undefined") return;
+    const u = new SpeechSynthesisUtterance(h.text);
+    [u.rate, u.pitch, u.volume] = [0.9, 0.7, this.volume * 0.35 * (far ? FAR : 1)];
+    speechSynthesis.speak(u);
+  }
+
+  /** A thing humming by itself (README, instruments.hum): the data's layer, each thing on a note of its own. */
+  private humOf(name: string, quiet = 1): Layer {
+    const h = sounds().instruments?.hum, L: Layer = (typeof h === "string" ? sounds().sfx?.[h] : h) ?? { synth: "hum", gain: 0.04, pitch: 180 };
+    return { ...L, gain: (L.gain ?? 0.04) * quiet, pitch: (L.pitch ?? 180) * (0.8 + (hash(name) % 40) / 100) };
   }
 
   /** For the voice lab: play one thing now, outside the queue. */
-  sample(what: SoundKind | HouseSound | Creature | "say" | "heartbeat" | "breath" | "hum" | "rain", v: VoiceInput, text = "") {
+  sample(what: SoundKind | HouseSound | Creature | `vox ${VoxKind}` | "say" | "heartbeat" | "breath" | "hum" | "rain", v: VoiceInput, text = "") {
     if (!this.live || !this.ctx) return false;
     const ctx = this.ctx, at = ctx.currentTime + 0.03;
+    const taste = (L: Layer) => {   // a few seconds of something that would keep going
+      const k = ambient(ctx, this.master, L, this.load);
+      k.tick(at + 3);
+      k.out.gain.setTargetAtTime(1, at, 0.3);
+      k.out.gain.setTargetAtTime(0, at + 2.6, 0.3);
+      k.stop(at + 4.5);
+    };
     if (what === "say") this.utter(planSpeech(text, v), v, this.master, at, false);
     else if (what === "heartbeat") [0, 0.26, 1.4, 1.66, 2.8, 3.06].forEach((t, i) => thump(ctx, this.master, at + t, i % 2 ? 0.6 : 1));
     else if (what === "breath") {
       const { noise, air } = lungs(ctx, this.master, voiceOf(v).base);
       noise.stop(breath(air, at));
-    } else if (what === "hum") {
-      const { osc, sway, gain } = drone(ctx, this.master, "sample");
-      gain.gain.setTargetAtTime(0.03, at, 0.3);
-      gain.gain.setTargetAtTime(0, at + 2.2, 0.3);
-      osc.stop(at + 3.5);
-      sway.stop(at + 3.5);
-    } else if (what === "rain") {
-      const r = this.rainNode(ctx);
-      r.gain.gain.setTargetAtTime(0.06, at, 0.3);
-      r.gain.gain.setTargetAtTime(0, at + 3, 0.4);
-    } else if (what in HOUSE) effect(ctx, this.master, what as HouseSound, at);
+    } else if (what === "hum") taste(this.humOf("sample"));
+    else if (what === "rain") taste(sounds().ambience?.weather?.rain?.[0] ?? { synth: "wind", pitch: 3000, gain: 0.05 });
+    else if (what.startsWith("vox ")) schedule(ctx, this.master, planVox(what.slice(4) as VoxKind, v), at);
+    else if (what in HOUSE) effect(ctx, this.master, what as HouseSound, at);
     else schedule(ctx, this.master, planSound(what as SoundKind, v), at);
     return true;
   }
 
-  private rainNode(ctx: AudioContext) {
-    if (!this.rain) {
-      const src = new AudioBufferSourceNode(ctx, { buffer: hiss(ctx, 3), loop: true }), gain = new GainNode(ctx, { gain: 0 });
-      src.connect(new BiquadFilterNode(ctx, { type: "highpass", frequency: 1800 })).connect(gain).connect(this.master);
-      src.start();
-      this.rain = { src, gain };
+  /** Keep exactly these going: whatever is new fades in, whatever is no longer wanted fades out, the rest carries on. */
+  private keep(want: Map<string, { L: Layer; dest: AudioNode; level: number; what: Logged["what"]; name: string; room?: string }>) {
+    const ctx = this.ctx!, now = ctx.currentTime;
+    for (const [key, w] of want) {
+      let k = this.kept.get(key);
+      if (!k) {
+        this.kept.set(key, k = ambient(ctx, w.dest, w.L, this.load));
+        this.begin(w.what, w.name, w.dest, (w.L.gain ?? 0.03) * w.level, { room: w.room }, w.L.says ? `${w.name} (${w.L.says})` : w.name);
+      }
+      k.out.gain.setTargetAtTime(w.level, now, FADE);
+      k.tick(now + AHEAD);
     }
-    return this.rain;
+    for (const [key, k] of this.kept) {
+      if (want.has(key)) continue;
+      k.out.gain.setTargetAtTime(0, now, FADE);
+      k.stop(now + 6 * FADE);
+      this.kept.delete(key);
+    }
+  }
+
+  /** The visitor's music (SPEC-v3.3 §3.1): the data's tracks for the mood, one after another and round again, as
+   *  loud as the room it plays in is from here (through the whole house, it is here). A change of mood cross-fades. */
+  private retune(s: Snap, here: string) {
+    const ctx = this.ctx!, m = s.dj?.music, dest = m ? (m.scope === "house" ? this.near : this.bus(m.scope, s, here)) : null;
+    const tracks = m && dest ? (sounds().moods?.[m.mood] ?? []).map(clip).filter((c) => !!c) : [];
+    if (!m || !tracks.length) return this.hush();
+    if (this.band?.mood !== m.mood) {
+      this.hush();
+      this.spin(m.mood, tracks, m.since % tracks.length);
+    }
+    const b = this.band!, where = dest === this.far ? "next door" : "here";
+    if (b.where !== where) {   // a track has begun, or the room it plays in is now somewhere else from here
+      b.where = where;
+      this.begin("music", b.name, dest, b.gain, { room: m.scope }, `the visitor's music${dest === this.far ? ", next door" : ""}: ${b.name}`);
+    }
+    b.here.gain.setTargetAtTime(dest === this.near ? b.gain : 0, ctx.currentTime, FADE);
+    b.far.gain.setTargetAtTime(dest === this.far ? b.gain : 0, ctx.currentTime, FADE);
+  }
+
+  private spin(mood: string, tracks: { url: string; gain: number }[], i: number) {
+    const ctx = this.ctx!, t = tracks[i % tracks.length], el = new Audio(t.url), src = ctx.createMediaElementSource(el);
+    const send = (to: AudioNode) => { const g = new GainNode(ctx, { gain: 0 }); src.connect(g).connect(to); return g; };
+    const b = this.band = { mood, el, gain: t.gain, here: send(this.near), far: send(this.far), where: "", name: `${mood}: ${decodeURI(t.url).split("/").pop()!.replace(/\.\w+$/, "")}` };
+    el.onended = () => { if (this.band === b) { this.hush(); this.spin(mood, tracks, i + 1); } };   // the next update lets it be heard, and says so
+    void el.play().catch(() => {});
+  }
+
+  private hush() {
+    const b = this.band;
+    if (!b) return;
+    this.band = null;
+    for (const g of [b.here, b.far]) g.gain.setTargetAtTime(0, this.ctx!.currentTime, FADE);
+    setTimeout(() => b.el.pause(), 5000 * FADE);
   }
 
   private quiet() {   // stop everything that keeps going by itself
@@ -431,16 +567,9 @@ export class Voice {
     this.beatAt = this.breathAt = 0;
     this.air?.air.gain.cancelScheduledValues(now);
     this.air?.air.gain.setTargetAtTime(0, now, 0.1);
-    this.rain?.gain.gain.setTargetAtTime(0, now, 0.1);
     if (typeof speechSynthesis !== "undefined") speechSynthesis.cancel();
-    this.band?.el.pause();
-    this.band = null;
-    for (const [name, h] of this.hums) {
-      h.gain.gain.setTargetAtTime(0, now, 0.2);
-      h.osc.stop(now + 1.5);
-      h.sway.stop(now + 1.5);
-      this.hums.delete(name);
-    }
+    this.hush();
+    this.keep(new Map());
   }
 
   /** Called with every snapshot that reaches the screen, live or replayed, sound on or off (so that turning sound
@@ -455,50 +584,81 @@ export class Voice {
     const inRoom = s.pets.filter((p) => p.room === here), awake = inRoom.filter((p) => p.needs && !p.asleep);
     for (const p of awake) (p.levels?.comfort === 4) ? this.low.set(p.id, this.low.get(p.id) ?? Date.now()) : this.low.delete(p.id);
     const room = s.rooms.find((r) => r.id === here);
-    this.roomType = room?.type ?? null;
-    if (!this.live || !ctx) return;
-    const now = ctx.currentTime;
-    this.retune();
-    for (const a of t.acts.filter((a) => a.room === here)) {   // SPEC-v3.2 §8: a step just finished in this room, each heard once
-      const fix = room?.objects[a.what ?? ""]?.fix, name = a.type === "use" ? (fix && "meal" in fix ? "eat" : "") : SFX[a.type];
-      if (name) this.sfx(name, this.near, `${name} (${pets.get(a.pet)?.label ?? "someone"})`);
+    if (!this.on || !ctx) return;
+    const now = ctx.currentTime, label = (id: string) => pets.get(id)?.label ?? "someone";
+    this.retune(s, here);
+
+    const tools = sounds().instruments ?? {};
+    for (const a of t.acts) {   // a step just finished, each heard once
+      const dest = this.bus(a.room, s, here), o = s.rooms.find((r) => r.id === a.room)?.objects[(a.what ?? "").toLowerCase().replace(/^(the|my|your|an?) /, "")], used = a.type === "use" || a.type === "fiddle";
+      // SPEC-v3.3 §4: a thing that sounds, sounded: its own sound by its kind or (a fixture) its name, from wherever it is
+      const loud = a.loud || (used && !!(o?.made?.loud || o?.fix?.loud));
+      const rings = [a.kind ?? o?.made?.recipe.kind, a.what, loud ? "default" : null].map((k) => (k ? tools[k] : null)).find((x) => typeof x === "string");
+      if (dest && rings && (loud || used)) this.sfx(rings, dest, `${label(a.pet)} sounds the ${a.what}`, "instrument", { pet: label(a.pet), room: a.room });
+      else if (dest === this.near) {   // SPEC-v3.2 §8: the small sounds of a step, in this room only
+        const fix = o?.fix, name = a.type === "use" ? (fix && "meal" in fix ? "eat" : "") : SFX[a.type];
+        if (name) this.sfx(name, dest, `${name} (${label(a.pet)})`, "sfx", { pet: label(a.pet), room: a.room });
+      }
     }
 
     for (const say of t.speak) {
       const p = pets.get(say.pet), dest = p && this.bus(p.room, s, here);
-      if (p && dest) this.say(p.label, say.text, voiceInput(p, s), dest);
+      if (p && dest) this.say(p, say.text, voiceInput(p, s), dest);
+    }
+    for (const x of t.vox) {   // SPEC-v3.3 §4: the small sounds a pet makes by itself, no more than one every couple of seconds from each
+      const p = pets.get(x.pet), dest = p && this.bus(x.room, s, here), plan = p && planVox(x.kind, voiceInput(p, s));
+      if (!p || !dest || !plan || performance.now() - (this.voxAt.get(p.id) ?? -1e9) < 2000) continue;
+      this.voxAt.set(p.id, performance.now());
+      if (this.begin("vox", x.kind, dest, plan.tones[0].gain, { pet: p.label, room: x.room }, `${p.label}${dest === this.far ? ", next door" : ""}: ${x.kind}`)) schedule(ctx, dest, plan, now + 0.05);
     }
     for (const m of t.sounds) {
       const p = pets.get(m.pet), dest = p && this.bus(m.room ?? p.room, s, here);
-      if (p && dest) this.sound(p.label, m.kind, voiceInput(p, s), dest);
+      if (p && dest) this.sound(p, m.kind, voiceInput(p, s), dest);
     }
     for (const x of t.sing) {   // SPEC-v3.1 §3.4: whoever sang, in their own voice, as loud as their room is from here
       const song = s.songs?.[x.song], p = pets.get(x.by), dest = song && this.bus(x.room, s, here);
       const beast = s.creatures.find((c) => c.id === x.by), who = p?.label ?? (x.by === "music box" ? "the music box" : beast?.name ?? `a ${beast?.kind ?? "bird"}`);
-      if (dest) this.sing(who, song!.name, song!.notes, p ? voiceInput(p, s) : x.by === "music box" ? "box" : "bird", dest);
+      if (dest) this.sing(who, song!.name, song!.notes, p ? voiceInput(p, s) : x.by === "music box" ? "box" : "bird", dest, x.room);
     }
     for (const h of t.heard) {
       const dest = this.bus(h.room, s, here);
       if (dest) this.wireless(h, dest);
     }
+    const house = (kind: HouseSound | Creature, dest: GainNode, room?: string | null) => { if (this.begin("sfx", kind, dest, 1, { room }, HOUSE[kind])) effect(ctx, dest, kind, now + 0.05); };
     for (const h of t.house.filter((h) => h.kind !== "powerdown")) {   // weather and events have sounds of their own
       // a discovery (SPEC-v3.1 §1) is heard all through the house: the pack's jingle for it if the data has one, else the sound made here
       const found = h.moment.startsWith("arrival ") ? h.moment.slice(8) : null;
       if (found && (this.sfx(`arrival.${found}`, this.near, `${found} has come`) || this.sfx("arrival", this.near, `${found} has come`))) continue;
       const dest = found || h.kind === "thunder" ? this.near : this.bus(h.room, s, here);
-      if (dest) { effect(ctx, dest, h.kind, now + 0.05); this.note(HOUSE[h.kind]); }
+      if (dest) house(h.kind, dest, h.room);
     }
-    if (was !== s.power) { effect(ctx, this.near, s.power ? "powerup" : "powerdown", now + 0.05); this.note(HOUSE[s.power ? "powerup" : "powerdown"]); }
+    if (was !== s.power) house(s.power ? "powerup" : "powerdown", this.near);
     for (const [id, since] of this.low) {   // at most one whimper every 5 minutes, after 3 minutes of misery
       if (Date.now() - since >= 180_000 && Date.now() - this.whimpered >= 300_000 && pets.has(id)) {
         this.whimpered = Date.now();
-        this.sound(pets.get(id)!.label, "whimper", voiceInput(pets.get(id)!, s), this.near);
+        this.sound(pets.get(id)!, "whimper", voiceInput(pets.get(id)!, s), this.near);
       }
     }
 
-    // ---- what keeps going by itself in the room being looked at ----
+    // ---- what keeps going by itself ----
+    const want: Parameters<Voice["keep"]>[0] = new Map(), type = room?.type ?? "", called = (L: Layer) => L.synth ?? L.file?.split("/").pop()?.replace(/\.\w+$/, "") ?? "?";
+    if (this.ambience && type) {   // SPEC-v3.3 §4: the room's own soundscape, and the weather over it as far as this room hears the sky
+      const A = sounds().ambience, night = s.clock.phase === "night", sky = OPEN.includes(type) ? 1 : SHUT_IN.includes(type) ? 0 : 0.4;
+      for (const L of A?.rooms?.[type] ?? []) if (!L.when || (L.when === "night") === night) want.set(`${type}|${JSON.stringify(L)}`, { L, dest: this.near, level: 1, what: "ambience", name: `${type}: ${called(L)}`, room: here });
+      for (const L of sky ? A?.weather?.[s.weather] ?? [] : []) want.set(`${sky}|${JSON.stringify(L)}`, { L, dest: sky < 1 ? this.roof : this.near, level: sky, what: "ambience", name: `${s.weather}: ${called(L)}`, room: here });
+    }
+    for (const r of s.rooms) {   // a thing humming by itself, and the box while it is on (between the things it says): from where it is
+      const dest = r.type ? this.bus(r.id, s, here) : null;
+      for (const [name, o] of dest ? Object.entries(r.objects) : []) {
+        const box = !!o.fix?.radio && o.state === "on";
+        if (box || (o.made && (o.made.hums ?? (o.made.active && o.made.behavior?.do === "hum"))))
+          want.set(`hum|${r.id}|${name}|${dest === this.far}`, { L: this.humOf(name, box ? 0.3 : 1), dest: dest!, level: 1, what: box ? "radio" : "instrument", name: `hum: ${name}`, room: r.id });
+      }
+    }
+    this.keep(want);
+
     if (inRoom.some((p) => p.stage === "egg")) {   // an egg: a faint slow heartbeat, a little faster while someone is watching
-      if (!this.beatAt) this.note("heartbeat (an egg)");
+      if (!this.beatAt) this.begin("sfx", "heartbeat", this.near, 0.35, { room: here }, "heartbeat (an egg)");
       for (this.beatAt = Math.max(this.beatAt, now + 0.1); this.beatAt < now + AHEAD; this.beatAt += s.visitor === here ? 0.9 : 1.4) {
         thump(ctx, this.near, this.beatAt, 0.7);
         thump(ctx, this.near, this.beatAt + 0.26, 0.42);
@@ -508,7 +668,7 @@ export class Voice {
     const sleeper = inRoom.find((p) => p.asleep);
     if (sleeper) {   // slow, quiet breathing, at the sleeper's own pitch
       this.air ??= lungs(ctx, this.master, voiceOf(voiceInput(sleeper)).base);
-      if (!this.breathAt) this.note(`${sleeper.label} breathing, asleep`);
+      if (!this.breathAt) this.begin("sfx", "breathing", this.near, 0.2, { pet: sleeper.label, room: here }, `${sleeper.label} breathing, asleep`);
       for (this.breathAt = Math.max(this.breathAt, now + 0.1); this.breathAt < now + AHEAD;) this.breathAt = breath(this.air.air, this.breathAt);
     } else if (this.breathAt) {
       this.air!.air.gain.cancelScheduledValues(now);
@@ -518,36 +678,16 @@ export class Voice {
       this.air = null;
     }
 
-    const wet = WET.includes(s.weather) ? (OPEN.includes(room?.type ?? "") ? 0.07 : SHUT_IN.includes(room?.type ?? "") ? 0 : 0.03) : 0;
-    if (wet || this.rain) this.rainNode(ctx).gain.gain.setTargetAtTime(wet, now, 0.8);   // rain on the glass, loud under open sky, absent underground
     if (s.weather === "storm" && now >= this.thunderAt) {
-      if (this.thunderAt) { effect(ctx, this.near, "thunder", now + 0.1); this.note(HOUSE.thunder); }
+      if (this.thunderAt) house("thunder", this.near);
       this.thunderAt = now + 14 + (hash(String(s.tick)) % 16);
     } else if (s.weather !== "storm") this.thunderAt = 0;
 
     for (const c of s.creatures.filter((c) => c.room === here)) {   // small creatures make small sounds now and then
       const kind = c.kind as Creature, singing = c.doing.startsWith("singing");
       if (now < (this.nextCall[kind] ?? 0) || /asleep/.test(c.doing)) continue;
-      if (this.nextCall[kind] !== undefined) { effect(ctx, this.near, kind, now + 0.05); this.note(HOUSE[kind]); }
+      if (this.nextCall[kind] !== undefined) house(kind, this.near, here);
       this.nextCall[kind] = now + (singing ? 4 : 9) + (hash(c.id + s.tick) % 6);
-    }
-
-    // a thing taught to hum has its own sound, not a pet's; so has the box while it is on, between the things it says
-    const humming = Object.entries(room?.objects ?? {}).filter(([, o]) => (o.made?.active && o.made.behavior?.do === "hum") || (o.fix?.radio && o.state === "on")).map(([name]) => name);
-    for (const name of humming) {
-      if (this.hums.has(name)) continue;
-      const h = drone(ctx, this.near, name);
-      const box = !!room?.objects[name]?.fix?.radio;
-      h.gain.gain.setTargetAtTime(box ? 0.012 : 0.03, now, 0.5);
-      this.hums.set(name, h);
-      this.note(box ? "the box hums, switched on" : `a hum from the ${name} (it was taught to)`);
-    }
-    for (const [name, h] of this.hums) {
-      if (humming.includes(name)) continue;
-      h.gain.gain.setTargetAtTime(0, now, 0.3);
-      h.osc.stop(now + 2);
-      h.sway.stop(now + 2);
-      this.hums.delete(name);
     }
   }
 }

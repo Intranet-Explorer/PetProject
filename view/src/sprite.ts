@@ -8,13 +8,17 @@ type Pack = { dir: string; local?: boolean; font?: string };
 type Sprite = { pack: string; file: string; rect?: number[]; tint?: string; fallback?: string };
 type Kind = { sprite?: string; a?: string; wall?: boolean; not?: string[] };
 export type Sound = { pack: string; file: string; gain?: number };
+/** One layer of a soundscape (README, "ambience"): a file that loops, or a sound the page makes itself (`synth`). */
+export type Layer = Partial<Sound> & { synth?: string; rate?: number; pitch?: number; echo?: number; steady?: boolean; when?: "day" | "night"; sfx?: string; says?: string };
+type Sounds = { sfx?: Record<string, Sound>; moods?: Record<string, Sound[]>; ambience?: { rooms?: Record<string, Layer[]>; weather?: Record<string, Layer[]> };
+  instruments?: Record<string, string | Layer> };
 type FromParts = { shape: Record<string, string>; material: Record<string, Record<string, string>>; many: { hanging: string[]; then: string; else: string }; pair?: Record<string, string> };
 /** What a made thing is, whichever way it was written down: see kindOf. */
 export type Thing = { kind?: string; color?: string; size?: number; material?: string; parts?: Part[] };
 
 const art = {
   packs: {} as Record<string, Pack>, sprites: {} as Record<string, Sprite>, kinds: {} as Record<string, Kind>,
-  fromParts: null as FromParts | null, sounds: {} as { sfx?: Record<string, Sound>; music?: Record<string, Sound> },
+  fromParts: null as FromParts | null, sounds: {} as Sounds,
 };
 const BASE = "/art/";
 const get = async (file: string) => { try { const r = await fetch(BASE + file); return r.ok ? await r.json() : null; } catch { return null; } };
@@ -32,11 +36,15 @@ function fileUrl(x: { pack: string; file: string }) {
   const pack = art.packs[x.pack];
   return pack && !pack.local ? BASE + encodeURI(`${pack.dir}/${x.file}`) : null;
 }
-/** A sound by our name ("sfx" pickup, door …; "music" by room type): its address and how loud, or null. */
-export function sound(group: "sfx" | "music", name: string) {
-  const s = art.sounds[group]?.[name], url = s && fileUrl(s);
-  return url ? { url, gain: s.gain ?? 0.3 } : null;
+/** A sound file the data names, as its address and how loud; null if it names none, or one that cannot be reached. */
+export function clip(s: Partial<Sound> | null | undefined) {
+  const url = s?.pack && s.file ? fileUrl({ pack: s.pack, file: s.file }) : null;
+  return url ? { url, gain: s!.gain ?? 0.3 } : null;
 }
+/** A sound effect by our name (pickup, door, bell …), or null. */
+export const sound = (name: string) => clip(art.sounds.sfx?.[name]);
+/** Everything else the data says the house sounds like (README, "sounds.json"): moods, ambience, instruments. */
+export const sounds = () => art.sounds;
 
 const resolve = (name: string, hops = 3): Sprite | null => {
   const s = art.sprites[name];
