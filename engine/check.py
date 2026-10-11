@@ -13,7 +13,17 @@ from pathlib import Path
 from . import actions, director, feel, life, mind, physics, story, things
 from .brains import model as model_brain
 from .tick import Engine, stub_brains
-from .world import LONG_AGO, alive, clock, derive, hours, load_config, new_house, ticks
+from . import world
+from .world import LONG_AGO, alive, clock, derive, hours, new_house, ticks
+
+
+def load_config(*a, body=False, **k):
+    """The checks of the rules a mind acts through are made with the body still (it would wander off in the middle of
+    them); the body has its own checks at the end (SPEC-v3.3)."""
+    cfg = world.load_config(*a, **k)
+    cfg["body"]["on"] = body
+    return cfg
+
 
 IDLE = {"thought": "", "intention": "wait", "steps": [{"type": "observe"}, {"type": "observe"}], "expect": "nothing changes"}
 
@@ -63,7 +73,8 @@ async def do(eng, pet, *steps, expect="I will feel more at ease", limit=600):
     try:
         for _ in range(limit):
             await eng.tick()
-            if any(r["type"] == "intention" and r["intention"] == "check" for r in recs) or pet["stage"] == "dead":
+            idle = pet["plan"] and pet["plan"].get("idle") and pet["plan"]["intention"] == "check"   # (with the body on, a finished thought stays)
+            if idle or any(r["type"] == "intention" and r["intention"] == "check" for r in recs) or pet["stage"] == "dead":
                 return [r for r in recs if r["type"] == "step" and r["intention"] == "check"]
     finally:
         m.note = note
@@ -1178,6 +1189,123 @@ async def main():
         eN = Engine(cN, d + "/name", scripted)
         assert eN.house["pets"][ga["id"]]["name"] == "Garry", "a pet that had already said yes has its name when the house is next started"
         eN.close()
+        # ---- SPEC-v3.3: alive. The body acts between thoughts and asks no brain; a focus steers it; tidying is real and
+        # ends; things are kept on shelves and have homes; the visitor's music and radio reach the pets ----
+        from . import alive, body, order, radio, songs
+        cA = load_config(body=True)
+        cA["life"]["egg_minutes"], cA["stub"] = 0.1, dict(cA["stub"], paced=True)
+        cB = load_config()
+        cB["life"]["egg_minutes"], cB["stub"] = 0.1, dict(cB["stub"], paced=True)
+        (eA, pa), (eB, pb) = engine(cA, d + "/alive"), engine(cB, d + "/still")
+        hA = eA.house
+        for e in (eA, eB):
+            at(e, 9)
+        for _ in range(300):
+            await eA.tick()
+            await eB.tick()
+        mA, roomA = eA.minds[pa["id"]], room_of(eA, pa)
+        did = [r[0] for r in eA.db.execute("SELECT what FROM doing WHERE by = 'body' AND text != ''")]
+        assert len(did) > 25 and len(set(did)) >= 6, "left to itself a pet is always doing something, and many different things: %s" % sorted(set(did))
+        assert not eB.db.execute("SELECT count(*) FROM doing WHERE by = 'body'").fetchone()[0], "(and with the body off, nothing)"
+        asked = [e.db.execute("SELECT count(*) FROM calls WHERE kind = 'act'").fetchone()[0] for e in (eA, eB)]
+        assert asked[0] <= asked[1] + 1, "the body asks no brain: as many thoughts with it as without: %s" % asked
+        assert hA["vox"] and [v["n"] for v in hA["vox"]] == sorted({v["n"] for v in hA["vox"]}), "the small sounds it makes are numbered, to be played once"
+        body.state(pa)["since"] = ["played with the ball", "stretched", "played with the ball"]
+        packet, ctx = mind.perceive(hA, cA, pa, mA.mem)
+        assert "without thinking about it, you: played with the ball (two times), stretched" in packet and not body.state(pa)["since"], "its mind is told what its body has been doing, once"
+        pa["stage"], pa["stage_at"]["adult"] = "adult", hA["tick"]
+        packet, ctx = mind.perceive(hA, cA, pa, mA.mem)
+        assert not set(actions.BODY_ONLY) & set(ctx["allowed"]) and '"focus"' in model_brain.prompt(packet, ctx), "its mind is asked for a focus, not for wandering and resting"
+        model_brain.schema(ctx)
+        assert body.state(pa)["habits"], "what it does again and again in a place at an hour is kept as habit"
+        del pa["temper"]["orderly"]
+        eA.alive_migration()
+        assert 0.25 <= pa["temper"]["orderly"] <= 0.75 and "orderly" in world.GENES, "a pet from before v3.3 is given the orderly gene"
+        # a mess is felt by the orderly, and a focus on tidying clears it: each loose thing put away once, then no more
+        roomA["spots"], body.state(pa)["now"] = [], None
+        for i in range(6):
+            pa["carrying"] = ["fluff"]
+            r = await do(eA, pa, {"type": "make", "recipe": dict(recipe, name="loose %d" % i), "near": "here"})
+            assert not r[0]["reason"], r
+        loose = lambda: order.loose(hA, cA, roomA)
+        roomA["objects"]["shelf"] = {"pos": [9, 1], "state": None, "fix": {"store": 4}}   # (the nursery starts with nowhere to keep things)
+        assert len(loose()) == 6 and order.clutter(hA, cA, roomA) >= 1 and order.stores(cA, roomA), "six things lie about a room that has somewhere to keep them: %s" % [
+            loose(), order.clutter(hA, cA, roomA), order.stores(cA, roomA), roomA["type"], {n: {k: v for k, v in o.items() if k in ("on", "tidy", "wall", "home")} for n, o in things.made(roomA).items()}]
+        pa["temper"]["orderly"] = 0.95
+        roomA["objects"].update({"x%d" % i: dict(roomA["objects"]["loose 0"], pos=[i, 5]) for i in range(3)})
+        felt = physics.senses(hA, cA, pa)
+        assert order.clutter(hA, cA, roomA) == 2 and "this room is a mess" in felt and any(e["tag"] == "clutter" and e["rate"] < 0 for e in physics.effects(hA, cA, pa)), felt
+        for i in range(3):
+            del roomA["objects"]["x%d" % i]
+        n0 = eA.db.execute("SELECT count(*) FROM doing WHERE what = 'tidy' AND text != ''").fetchone()[0]
+        mA.brain.plans.append({"thought": "what a mess", "focus": {"type": "tidy", "words": "put things straight"}, "steps": [], "expect": "I will feel more at ease"})
+        pa["last_call"] = LONG_AGO
+        for _ in range(500):
+            pa["needs"].update(energy=80.0, comfort=80.0)
+            await eA.tick()
+            if not loose():
+                break
+        tidied = eA.db.execute("SELECT count(*) FROM doing WHERE what = 'tidy' AND text != ''").fetchone()[0] - n0
+        assert pa["focus"]["type"] == "tidy" and pa["plan"]["idle"] and not loose() and order.clutter(hA, cA, roomA) == 0, "a pet about tidying tidies: %s still loose" % loose()
+        assert 6 <= tidied <= 8 and any(o.get("on") for o in roomA["objects"].values()), "each thing is put away once, some of them on the shelf: %d" % tidied
+        for _ in range(150):
+            await eA.tick()
+        assert eA.db.execute("SELECT count(*) FROM doing WHERE what = 'tidy' AND text != ''").fetchone()[0] - n0 == tidied, "and a tidy room is left alone: no tidying for ever"
+        # keeping things: on a shelf, down again, a home after twice, no more than it holds, and a shelf that goes drops what it held
+        store, name = "shelf", "loose 0"
+        for o2 in things.made(roomA).values():
+            order.moved(o2)
+        body.state(pa)["now"] = None
+        r = await do(eA, pa, {"type": "put_away", "what": name, "where": store}, {"type": "take_out", "what": name}, {"type": "put_away", "what": name, "where": store})
+        o = roomA["objects"][name]
+        assert not any(x["reason"] for x in r) and o["on"] == store and o["home"] == {"room": roomA["id"], "on": store}, "put in the same place twice, a thing has its home there: %s" % r
+        for n2, o2 in roomA["objects"].items():
+            if "made" in o2 and order.stores(cA, roomA)[store] > 0:
+                o2["on"] = store
+        other = next(n for n, o2 in roomA["objects"].items() if "made" in o2 and o2.get("on") != store)
+        r = await do(eA, pa, {"type": "put_away", "what": other, "where": store})
+        assert "full" in (r[0]["reason"] or ""), "a shelf holds only so much: %s" % r
+        o["on"] = "a shelf that was taken apart"
+        await eA.tick()
+        assert "on" not in o, "what was on a shelf that is gone lies on the floor again"
+        pa["carrying"] = ["fluff"]
+        r = await do(eA, pa, {"type": "make", "recipe": dict(recipe, name="wall charm", kind="charm"), "near": "here"}, {"type": "hang", "what": "wall charm"})
+        assert not any(x["reason"] for x in r) and roomA["objects"]["wall charm"].get("wall"), "a thing that hangs can be hung on the wall: %s" % r
+        # the visitor's music: felt, danced to, and (once songs have come) picked up by ear
+        assert not body.targets(hA, cA, pa, mA.mem, "dance", cA["activities"]["dance"]), "nobody dances without music"
+        assert actions.visit(hA, cA, {"room": pa["room"], "type": "music", "mood": "lively", "scope": "room"}) is None
+        assert "the visitor is playing lively music" in physics.senses(hA, cA, pa) and body.targets(hA, cA, pa, mA.mem, "dance", cA["activities"]["dance"])
+        pa["tunes_heard"] = {"lively": cA["music"]["learn_minutes"] * 6 - 1}
+        director.heard_music(hA, cA)
+        assert not songs.known(hA, pa, "the visitor's lively tune"), "a tune is not kept before songs have come to the house"
+        hA.setdefault("v31", {}).setdefault("arrived", {})["songs"] = hA["tick"]
+        pa["tunes_heard"] = {"lively": cA["music"]["learn_minutes"] * 6 - 1}
+        director.heard_music(hA, cA)
+        assert songs.known(hA, pa, "the visitor's lively tune"), "a tune the visitor plays long enough is picked up by ear"
+        assert actions.visit(hA, cA, {"room": pa["room"], "type": "music", "mood": "off"}) is None and not hA["dj"]["music"]
+        # the visitor's radio: its own little one until the pets have theirs, then theirs
+        assert actions.visit(hA, cA, {"room": pa["room"], "type": "radio", "on": True, "plays": "news"}) is None
+        assert roomA["objects"]["little radio"]["state"] == "on" and any(e == "the visitor turned the box on" for _, e in pa["events"]), "before they have found theirs, the visitor sets its own down"
+        hA["radio"]["next"] = 0
+        radio.tick(hA, cA, [{"source": "forecast", "text": "rain later"}, {"source": "news", "text": "a bridge opened"}])
+        assert hA["radio"]["said"][-1]["source"] == "news", "it plays what the visitor chose"
+        assert actions.visit(hA, cA, {"room": pa["room"], "type": "radio", "on": False}) is None and "little radio" not in roomA["objects"], "switched off, it is taken away"
+        roomA["objects"]["dial box"] = {"pos": [6, 5], "state": "off", "fix": {"radio": True, "movable": True, "states": ["off", "on"]}}
+        assert actions.visit(hA, cA, {"room": pa["room"], "type": "radio", "on": True}) is None
+        assert roomA["objects"]["dial box"]["state"] == "on" and "little radio" not in roomA["objects"], "once they have theirs, the control switches theirs"
+        eA.close()
+        eB.close()
+        # a world day with stub brains meets §0's numbers (engine/alive.py measures them in watching time on the live clock)
+        cS = world.load_config(profile="v31check")
+        cS["life"]["egg_minutes"], cS["stub"] = 0.1, dict(cS["stub"], paced=True)
+        eS = Engine(cS, d + "/day", stub_brains)
+        eS.new_lineage()
+        for _ in range(round(1.3 * cS["ticks_per_day"])):
+            await eS.tick()
+        eS.save()
+        eS.close()
+        out, _, _ = alive.measure(d + "/day", show=False)
+        assert alive.passes(out), "at least five different things in any five minutes, never still for thirty seconds, resting under a quarter: %s" % out
     print("self-check passed")
 
 

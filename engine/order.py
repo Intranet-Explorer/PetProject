@@ -152,6 +152,19 @@ def moved(o):
     o.pop("tidy", None)
 
 
+def upkeep(house, cfg):
+    """Whatever happens to a shelf happens to what is on it: moved, its things go with it; gone (taken apart, joined
+    into something, carried off), they are on the floor again. Run every tick, so nothing else has to remember."""
+    for room in house["rooms"].values():
+        for n, o in room["objects"].items() if room["type"] else ():
+            store = room["objects"].get(o.get("on"))
+            if "on" in o and (store is None or not cap(cfg, store)):
+                del o["on"]
+                o["pos"] = free_tile(house, cfg, room, o["pos"], n)
+            elif "on" in o and o["pos"] != store["pos"]:
+                o["pos"] = list(store["pos"])
+
+
 KEEP = {"sleeping corner": ("cushion", "blanket", "nest", "bed-mat", "rug", "doll"), "music corner": ("bell", "drum", "flute", "wind chime"),
         "lamp corner": ("candle", "lantern", "lamp"), "keepsake shelf": ()}
 

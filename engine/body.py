@@ -119,7 +119,9 @@ def targets(house, cfg, pet, mem, name, A):
         if not known or (house["tick"] - max((e.get("last", LONG_AGO) for e in known), default=LONG_AGO)) < ticks(cfg, cfg["body"]["sing_again_seconds"]):
             return []
         e = min(known, key=lambda e: e.get("last", LONG_AGO))
-        return [{"what": songs.book(house)[e["id"]]["name"]}]
+        dj = (house.get("dj") or {}).get("music") or {}   # the visitor's tune, if it knows it and it is playing: it sings along (§3.1)
+        along = next((x for x in known if dj.get("mood") and songs.book(house)[x["id"]]["name"] == "the visitor's %s tune" % dj["mood"] and music(house, pet)), None)
+        return [{"what": songs.book(house)[(along or e)["id"]]["name"], "bonus": 1.0 if along else 0.0}]
     return []
 
 

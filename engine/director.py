@@ -204,8 +204,8 @@ def heard_music(house, cfg):
     """SPEC-v3.3 §3.1: a tune the visitor plays long enough is picked up by ear like any song, and can drift down a
     family from there. Each mood has one tune (config.toml [music] tunes)."""
     dj = (house.get("dj") or {}).get("music")
-    if not dj or not dj.get("mood") or dj["mood"] not in cfg["music"]["tunes"]:
-        return
+    if not dj or not dj.get("mood") or dj["mood"] not in cfg["music"]["tunes"] or not arrived(house, "songs"):
+        return   # (a tune is kept the way a song is: not before songs have come to the house)
     name = "the visitor's %s tune" % dj["mood"]
     need = cfg["music"]["learn_minutes"] * 6   # this is called every ten world seconds
     for p in awake_pets(house):

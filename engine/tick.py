@@ -753,6 +753,7 @@ class Engine:
         h, cfg, self.present = self.house, self.cfg, present
         if present:
             h["visitor_last"], h["visitor_room"] = h["tick"], present
+        order.upkeep(h, cfg)
         director.begin(h, cfg)
         things.behave(h, cfg)
         radio.tick(h, cfg, self.radio_items)

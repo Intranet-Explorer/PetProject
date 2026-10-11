@@ -31,7 +31,7 @@ def measure(data, since=0, show=True):
         first, last = max(since, min(r[1] for r in rs)), max(r[2] for r in rs)
         what, passive, asleep = {}, set(), set()
         for _, a, b, w, pas, by, still, rest, x, y in rs:
-            for t in range(max(a, first), b):
+            for t in range(max(a, first), b + 1):   # (the tick it finished on is part of it)
                 what[t] = w if by != "body" or still else "(on its way)"   # a thing it set out to do and never began is only walking
                 (asleep if by == "sleep" else passive if pas else set()).add(t)
         for day in range(first // per_day, last // per_day + 1):
@@ -41,6 +41,8 @@ def measure(data, since=0, show=True):
                 continue
             counts = [len({what.get(t) for t in range(s, s + win)} - {None}) for s in range(lo, hi - win, 5)
                       if not any(t in asleep for t in (s, s + win // 2, s + win - 1))]
+            if not counts:
+                continue   # never five minutes awake together that day: nothing to measure
             # standing still: one thing done on one spot, not in a resting pose; and the longest it kept to one tile
             # (several things in a row without a step between) while not resting
             mine = [r for r in rs if lo <= r[2] <= hi and r[5] != "sleep"]
