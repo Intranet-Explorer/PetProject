@@ -509,8 +509,8 @@ The first run is kept as `data.showcase-1`. Diagnosis from its log, and the chan
   whether this settles a grown family in a known house, which a fresh run would not show for five hours;
   then it is archived and a third run starts clean on the design as it then stands.
 - **The second run was stopped at world day 28.5 and archived as `data.showcase-2`** (seven pets, four
-  generations, three deaths of old age). In its last two days, under the proportional fade, the three adults'
-  curiosity climbed from 6, 17 and 27 to 29, 57 and 39 and was still rising, in the order of what each earned
+  generations, three deaths of old age). In its last two days, under the proportional fade, the curiosity of the
+  three pets awake through it climbed from 6, 17 and 27 to 29, 57 and 39 and was still rising, in the order of what each earned
   (28, 45 and 23 a day); nobody was "too miserable to take much interest" again; comfort began to come back.
   So the fade does what it was meant to. What the run is otherwise worth is in FINDINGS.md.
 - **Closeness fades the same way from the third run on.** Having written that a flat rate has no middle, I
@@ -519,7 +519,7 @@ The first run is kept as `data.showcase-1`. Diagnosis from its log, and the chan
   at 65. By the second run's figures a pet whose kin give it 40 points of words and leans a day sits near
   80, one given 15 near 70, and only one given 80 or more stays near the top.
 - **The second run's founder and its first child fail criterion 1 on one inherited word**: 14.0% and 10.5%
-  of their thoughts, and 53 of the 57 flags are "cost" or "costs". It comes from the v2.5 mother's message
+  of their thoughts, and 63 of the 67 flags are "cost" or "costs". It comes from the v2.5 mother's message
   to the first v3 egg ("it costs less than either alone"), which the founder made a belief of and its child
   a habit ("without the cost of making"). §3.4 names "costs", the pets mean by it what §3.4 means, and I have
   not touched the pattern. It is noted here because the same message starts the third run.
