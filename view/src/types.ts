@@ -13,7 +13,7 @@ export type Made = {
   called: string | null; tick: number; worn: string[];
 };
 export type Obj = {
-  pos: Tile; state?: string | null; made?: Made; memorial?: { pet: string; text: string }; wall?: boolean;   // wall: it hangs on the north wall above `pos`
+  pos: Tile; state?: string | null; made?: Made; memorial?: { pet: string; text: string }; wall?: boolean; says?: string;   // wall: it hangs on the north wall above `pos`
   fix?: Record<string, unknown>; water?: Tile[]; grow?: number; servings?: number;
 };
 /** An inscription (SPEC-v3.1 §2): `on` is a wall or the name of a thing, `at` how far along the wall, `clarity` 1 new to 0 gone. */

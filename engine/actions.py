@@ -365,15 +365,21 @@ def describe_thing(house, cfg, pet, name):
             name, things.whose(house, pet, o), parts, m["recipe"]["material"], m["recipe"]["purpose"], worn,
             "; it is an heirloom" if heir else "")
     fix, state = o.get("fix", {}), o.get("state")
-    hint = ("its pages are full of small writing; it could be asked a question" if fix.get("book") else "a light" if "light" in fix else "something to eat from" if "meal" in fix else "a place to rest" if "rest" in fix
+    hint = fixture_says(fix)
+    if fix.get("plant"):
+        state = "ripe" if o["state"] == "ripe" else "nearly ripe" if o["grow"] > 0.7 else "growing"
+    return "%s%s: %s" % (name, " (%s)" % state if state else "", hint)
+
+
+def fixture_says(fix):
+    """What a piece of the house is, in a few words: said to a pet that looks at it, and to the visitor who points at it."""
+    return ("its pages are full of small writing; it could be asked a question" if fix.get("book") else "a small box with a dial; it can be turned on or off" if fix.get("radio")
+            else "a light" if "light" in fix else "something to eat from" if "meal" in fix else "a place to rest" if "rest" in fix
             else "soft to lie on" if "soft" in fix else "something to play with" if "toy" in fix
             else "something growing" if fix.get("plant") else "you could see yourself in it" if fix.get("mirror")
             else "you can see outside through it" if fix.get("window") else "water; things put in it drift off" if "water" in fix
             else "a warm patch of light on the floor" if fix.get("sun")
             else "it can be set " + " or ".join(fix["states"]) if "states" in fix else "a bench to work at" if fix.get("bench") else "it is just there")
-    if fix.get("plant"):
-        state = "ripe" if o["state"] == "ripe" else "nearly ripe" if o["grow"] > 0.7 else "growing"
-    return "%s%s: %s" % (name, " (%s)" % state if state else "", hint)
 
 
 def apply(house, cfg, pet, a, mem):

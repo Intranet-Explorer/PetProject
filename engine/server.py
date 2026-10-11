@@ -122,6 +122,7 @@ def room_view(r):
             v["memorial"] = o["memorial"]
         else:
             v["fix"] = {k: (True if k == "water" else x) for k, x in o["fix"].items() if k != "states"}
+            v["says"] = actions.fixture_says(o["fix"])   # what it is, for the visitor's hover card
             if "water" in o["fix"]:
                 v["water"] = o["fix"]["water"]
             if o["fix"].get("plant"):

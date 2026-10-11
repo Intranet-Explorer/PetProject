@@ -337,7 +337,11 @@ def music():
 
 
 def greenhouse():
-    f = grid("tile.grass.light"); floor9(f, "tile.floor.brick.orange")   # glass all round: the grass outside shows through
+    f = grid("tile.grass.light"); floor9(f, "tile.floor.brick.orange")   # glass on the north side: the grass outside shows through it
+    for y in range(len(f)):   # ... and nothing beyond the side and south walls: a band of grass there read as a mistake
+        for x in range(len(f[y])):
+            if x in (0, len(f[y]) - 1) and y >= 2 or y == len(f) - 1:
+                f[y][x] = None
     floor9(f, "tile.soil.light", 1, 1, 3, 2)
     floor9(f, "tile.soil.light", 7, 5, 9, 6)
     floor9(f, "tile.soil.light", 1, 5, 3, 6)
