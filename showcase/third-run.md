@@ -37,7 +37,7 @@ days. It named its own egg Sweet Cushion.
 | 2 the lineage changed | passes | curious 0.34 → 0.31 → 0.28 → 0.08 → 0.04 down one line; sociable 0.65 → 0.75 → 1.00 → 1.00 down the other; every body differs. Voices not listened to. |
 | 3 passed down and mattered | passes | Quiet Pulse was told "Keep the seed, feather, and wood. They are the ingredients for your first shape." With cloth, moss and pebble also lying about it gathered those three and made its first thing. The twins, hatched together with different messages, lived differently from their first day. |
 | 4 a myth or a correction | passes on a saying that held; not on the lamp | below |
-| 5 with each other | passes | 154 things said, 27 told, 19 gifts and 262 leans taken, 63 things said in answer; the visitor in the room for 0 of 1,512 thoughts. |
+| 5 with each other | passes | 131 things said to another pet (154 in all), 27 told, 19 gifts and 262 leans taken, 63 things said in answer; the visitor in the room for 0 of 1,512 thoughts. |
 | 6 the world mattered | passes for generations 1 to 4 | nine room types; pets were in 4, 6, 8, 9, 6, 2 and 7 rooms; a door stuck shut by a draught turned Calm Seed from "go to the music room" to listening through the wall; the founder fed the beetle four times. |
 | 7 no two lives the same | passes, weakly | Sweet Cushion repeats its parent: the same two rooms for all of its steps, an inherited project, one door in 8.8 days. |
 

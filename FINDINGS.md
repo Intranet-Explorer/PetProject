@@ -1,10 +1,13 @@
 # Findings
 
-What has been learned, newest first. v3 (a family in a house) is at the top and was written on 10 October 2026
-after the showcase run; the v1 and v2 findings below it were written on 8 and 9 October and are left as they
-were. [SHOWCASE.md](SHOWCASE.md) tells the v3 run as a story with its evidence, [NOTES.md](NOTES.md) has the
-account of each v1 and v2 life as it happened, and [DECISIONS.md](DECISIONS.md) lists every place the build
-reads a spec its own way.
+What has been learned, newest first. v3 (a family in a house) is at the top: written on 10 October 2026 after
+the first showcase run and rewritten on 11 October after the third. The v1 and v2 findings below it were
+written on 8 and 9 October and are left as they were. The three runs are told in
+[showcase/first-run.md](showcase/first-run.md), [second-run.md](showcase/second-run.md) and
+[third-run.md](showcase/third-run.md); none of them passed SPEC-v3 §12's bar, and a fourth was running as
+this was written. [NOTES.md](NOTES.md) has the account of each v1 and v2 life as it happened, and
+[DECISIONS.md](DECISIONS.md) lists every place the build reads a spec its own way and every change made
+between runs.
 
 The project is small creatures in a browser house, each driven by a local language model (`qwen3.8:27b-mlx`
 through Ollama, on one Mac). v1 ([SPEC.md](SPEC.md)) was a rule-discovery experiment with a scripted twin as a
@@ -14,73 +17,131 @@ body, a temperament, a message and a few things, in a house of nine rooms.
 
 ## v3: the short version
 
-From two real-model runs in turbo time: a smoke run of 26 world days and four generations on 9 October, and
-the showcase of 30 world days and five generations on 10 October (7 pets, 1,259 thoughts, 1,429 model calls,
-none failed). Each finding is from one family; nothing here has been repeated.
+From four real-model runs in turbo time: a smoke run of 26 world days and four generations on 9 October, and
+three attempts at the showcase on 10 and 11 October (30, 28.5 and 31.1 world days; 7, 7 and 8 pets; 1,259,
+1,288 and 1,512 thoughts; 4,632 model calls, none failed). Every founder hatched with the same message, the
+last v2 pet's. The house's rules were changed between runs, and under the second while it ran, so the three
+families did not live in the same house. Where a thing was seen in all three it says so; the rest is from one
+family.
 
-1. **Telling a pet how it feels, and never a number, ended the meter-talk.** The last v2 pet talked mechanics
-   in 43.0% of its thoughts (25.2% by the narrower pattern of the time). Every showcase pet is under 5% by
-   the same pattern. What replaced it is a different register, not a creature's: "my project requires" is in
-   38% of thoughts.
-2. **A message from a parent is taken as a job.** Every pet acted on its message on its first day (25
-   first-day thoughts cite a particular sentence of it). The founder was told "Make the shape. Unmake it. Make
-   another" and made 71 things in 16 days.
-3. **A family makes its own language in two generations and then stops.** Counting only words the engine
-   never says and another family did not use: the founder coined 37% of what it used and its child 44%; the
-   three after them 22%, 8% and 5%. "Pulse", from the v2 pet's message, is in 64 to 85% of every pet's
-   thoughts; "southward", coined in generation 2, is in 85% of a generation-5 pet's.
-4. **A told belief was corrected when the pet's own doing contradicted it, and not otherwise.** Pulse Shard
-   spent two days making things as told, got "nothing came of it" from each, and rewrote "the pulse asking
-   for a new shape" as "the direction, not a new shape"; things made per life then fell from 71 to 33, 24 and 12. But
-   "the lamp keeps the dark from hurting" is false, every pet who held it was told on many nights that the
-   light was harsh, and none connected the two. It left the message by accident and stayed a belief. This is
-   v2's finding again: the blocker is attribution.
-5. **Doctrine explains experience away.** One pet noticed a thing "leaves me less at ease at night" and
-   later revised that to "the less ease is the pulse asking for movement". Predictions were 54% right for the
-   founder and 30 to 37% for every pet after it.
-6. **A family arrived at a true saying against the words it was given.** A bug left the cellar's sense line
-   saying its cold "gets into you" after that room's rule had drifted to mild. The family that lived there
-   held that "the cold is the rest", and by the numbers their nights there were easier than anywhere else.
-7. **Left to it, two pets nuzzle and say nothing.** The smoke run had 359 nuzzles and 8 things said: each
-   nuzzle was an urgent offer, accepted, and returned. With closeness wearing off like any other ease and an
-   offer no longer an alarm, the showcase had 130 things said, 33 told, 21 gifts and 34 nuzzles, 117 of them
-   answered, with no visitor present for any thought.
-8. **Comfort has to be winnable to matter.** In the first smoke life it only ever fell: nothing a pet did
-   was felt to help. Once a snug place, a soft thing and a dark night's sleep each said what they did, pets
-   used them, and "rest on the anchor" became part of a family's message.
-9. **The house shrinks down a line.** Rooms entered: 7, 8, 4, 4, 3. Children hatch where the parent is and
-   stay. An unopened door needed a hint of what was behind it before the first pet went through one; the
-   ninth room was never found.
-10. **Two of the four needs hardly move.** Company was at 95 or more for 44 to 95% of each pet's steps and
-    curiosity for 48 to 90%, after one round of retuning. The pets' days run on comfort, energy and belief.
+1. **The same message made three different families.** "Combine before you create … Make the shape. Unmake
+   it. Make another." The first founder took it as a job and made 71 things. The second did it for six days,
+   wrote "All making is a drain … the answer is not a better kind of making but the choice to stay", and named
+   its egg Stay. The third made lights for three days and then spent its life on a question it wrote on a
+   thing it made: "To test if sweet persists in softness."
+2. **A message from a parent is taken as a job, in all three.** In the first run 25 first-day thoughts cite a
+   particular sentence of the message. Stay was told "Lay your own egg and let it be enough" and its first
+   project began "Lay my own egg and let it be enough." A pet told "Keep the seed, feather, and wood" gathered those three with cloth, moss and pebble lying beside
+   them. Twins hatched ten ticks apart with different messages lived differently from their first day.
+3. **Telling a pet how it feels, and never a number, ended most of the meter-talk, and one word brought some
+   back.** The last v2 pet talked mechanics in 43.0% of its thoughts. Every pet of the first run is under
+   5%. Two pets of the second (14.0%, 10.5%) and one of the third (11.3%) are over 10%, all on "cost": pets
+   choosing by what a deed costs or returns, in felt words in place of numbers.
+4. **"Cost" is a rare seed and a strong amplifier.** The seeds: the v2 pet's "it costs less than either
+   alone", in every founder's message; and a line of the journal, "apart from that, while it lasted you grew
+   a little less at ease", which was read as the price of the deed beside it. The amplifier: a pet rereads
+   its beliefs in every prompt. Of 165 nights in the second and third runs, 60 began with no "cost" belief in
+   front of the pet and 2 of those wrote one; 105 began with one and 53 wrote it again. Replaying the two
+   nights the word was first coined on: 6 of 24 produced a "cost" belief with the old journal line and 1 of
+   24 with "not from that but from the hour and the place".
+5. **A family's words are the founder's, in all three.** Counting only words the engine never says and
+   another family did not use: the founder coined about four in five of the ones it used (81%, 83%, 78%) and
+   the fourth generation inherited most of theirs (77%; 60%; 75% and 77%). No word coined after the second
+   generation was used by a descendant in any run (the later pets had few descendants, and young ones, to
+   use them). What survives differs: the v2 pet's "pulse" is in 64 to 85% of each pet's thoughts in the first
+   family and 7% of the third founder's; "below thirty" was copied from message to message as far as the
+   first family's third generation, in no thought of any of them, and is in nothing a pet of the other two
+   wrote.
+6. **A told belief was corrected when the pet's own doing contradicted it, and not otherwise.** In the first
+   run Pulse Shard spent two days making things as told, got "nothing came of it" from each, and rewrote "the
+   pulse asking for a new shape" as "the direction, not a new shape"; things made per life then fell from 71
+   to 33, 24 and 12. In the third the founder held "it costs less than either alone" on day 0.6 and "costs
+   more than either alone, but it opens a small interest that the parts did not have" on day 1.6, after a day
+   of making, and both its children kept the corrected form for life.
+7. **Nobody found out the lamp, in three families.** "The lamp keeps the dark from hurting" is false in this
+   house: a light left on at night is harsh, and the pets are told so. The first family kept it as a belief
+   after it left the message by accident. The second founder never wrote a belief about the lamp or the dark
+   at all. The third kept the words and moved them: it made a soft thing, named it Cloth Wax Lamp, and wrote
+   "resting in it holds the dark from hurting"; two generations on the line was gone. None wrote that the
+   room's lamp hurts and none switched it off. This is v2's finding again: the blocker is attribution.
+8. **What cannot be tested lasts longest.** "The storm chime is the brother's voice", said by one pet to its
+   child, was a belief of the third generation within the hour, was at the head of the message to the fourth,
+   and was written into the fifth's egg. The first family's was "You are new, but the pulse is old."
+9. **A thing can carry what a message does not.** The third founder's question was in none of its messages.
+   Its grandchild read it on the label of a thing the founder had made, on the day it hatched, took "my
+   grandmother's question, still open" as its project for ten days, and put it in two more eggs.
+10. **What the house says wrongly becomes what the family knows.** A gift to a creature was refused for a
+    reason that was not the reason, and one line of the third family built "things made in the attic are
+    rooted" on it. In the first run a stale line said the cellar's cold "gets into you" after its rule had
+    drifted to mild; that family held that "the cold is the rest", which by the numbers was true of their
+    nights there.
+11. **A need that is filled by deeds and emptied at a fixed rate has no middle.** A pet that earns a little
+    more than the rate is always full and one that earns a little less is always empty: curiosity sat at the
+    top in the first run (95 or more for 48 to 90% of steps) and at the bottom in the second (by day 26 every
+    adult at 0 to 5). A rate in proportion to the level gives a middle, and then the rate decides where everyone sits:
+    in the third run every pet read "interested" or "fascinated" in 76 to 100% of its prompts and "bored" in
+    7 of 1,515, and the pet that used one door in 8.8 days was about as interested as the one that found seven rooms.
+12. **A creed that costs nothing is kept.** Stay sat in one room for three days at energy 96, comfort 98,
+    company 100 and curiosity 27, saying "staying is the final making". The founder went through the door
+    it had sat beside only after boredom was made to wear on comfort, and wrote "following a clean pull can
+    also rest you". Stay carried that sentence in its own last words and never acted on it.
+13. **Left to it, two pets nuzzle and say nothing, and talk thins down a line.** The smoke run had 359 nuzzles
+    and 8 things said. With closeness wearing off and an offer no longer an alarm, the first run had 130
+    things said to another pet and 62 said in answer, and the third 131 and 63, with no visitor present for
+    any thought of either. In the third, things said per pet, eldest first: 17, 47, 29, 31, 17, 11, 2.
+14. **The dead crowd out the living.** Rooms hold ten made things and fill with what the dead made; "make"
+    was missing from 40 to 74% of what four of the third run's later pets were offered. Nobody made as much
+    as its founder in any run (things made by generation: 71, 33, 24, 12; 40, 9 and 22, 14 and 7, 4; 56, 36
+    and 21, 24 and 23, 25 and 10; the last of each were still alive when the run stopped).
+15. **The house shrank down a line in one family and not in another.** Rooms entered in the first run: 7, 8,
+    4, 4, 3, and the ninth room never found. In the third: 4, 6, 8, 9, 6, 2, 7, and all nine found. Boredom
+    was made to cost something between the two (part 11 of DECISIONS.md); whether that is why was not tested.
+16. **Doctrine explains experience away.** One pet of the first run noticed a thing "leaves me less at ease at
+    night" and later revised that to "the less ease is the pulse asking for movement". Its family's
+    predictions were 54% right for the founder and 30 to 37% for every pet after it.
+17. **I graded my own runs too kindly, each time.** A second reader, grading from the logs before reading my
+    account, disagreed on two criteria of the first run. On the third it showed that three things I had
+    written about the second run's fixes were not so (pets were still miserable for 27 to 41% of their steps
+    after the fix that "stopped" it), and that the lamp had been moved, not corrected as I had it.
 
 ## v3: the engine
 
 - **Turbo time works.** The world waits while any model call is in flight and otherwise runs without
-  sleeping. Thirty world days with up to four pets awake took 6 h 56 min. A waking thought took about 16 s
-  (median 13 to 17 s by pet), a night's thinking about 55 s, with thinking set low and 3,000 tokens.
+  sleeping. Thirty world days with up to four pets awake took 6 h 56 min, and 31.1 took 8 h. A waking thought
+  took about 16 s (median 13 to 17 s by pet), a night's thinking about 55 s, with thinking set low and 3,000
+  tokens.
 - **Two calls at once is no faster** on this Mac (7.4 against 7.3 ms a character with
   `OLLAMA_NUM_PARALLEL=2`), so calls are made one at a time and Ollama is left at its default.
-- **The call budget held**: 136 calls in the run's last world hour, with four pets, against a budget of 150.
-- **The constrained output shape held**: 3,012 steps, 1 to 5% of each pet's not possible, no malformed reply.
+- **The call budget held**: 136 calls in the first run's last world hour, with four pets, against a budget
+  of 150.
+- **The constrained output shape held**: in the first run 3,012 steps, 1 to 5% of each pet's not possible,
+  and no malformed reply in any run.
+- **What is stored was shorter than what the model was told it could write.** 82 of the third run's 274
+  beliefs ended cut off, and a pet rereads its beliefs at every thought.
 - **Third-person self-talk was the model's own.** The smoke pets sometimes wrote of themselves as "the
   character" or "the agent". Neither word was in any of the 812 prompts checked.
 - **One pet's error used to freeze the house** and a made thing could take a fixture's name and replace it.
   Both were found by a fresh reader of the code, not by a run.
+- **A run whose rules change under it cannot be judged**, and neither can a generation that hatches as the
+  run stops. The second run had four numbers changed while it ran; the third stopped with its fifth
+  generation 23 ticks old. The rule for when a run stops is now written down before it starts.
 
 ## v3: what has not been verified
 
-- The real clock. Both runs were turbo. The first lineage on the real clock starts with this handover.
+- The real clock. Every run was turbo.
 - Nobody has listened to a v3 voice or clicked a v3 visitor control. Both were driven by scripts and looked
   at in a headless browser.
-- A model-driven pet has never been in the garden, never died of neglect, and never met the visitor.
+- A model-driven pet has never died of neglect and never met the visitor.
 - Real weather through the window (§6.6) is built and switched off.
-- Every number is from one family.
+- Whether the changes made after the third run do what they are for: interest that can run low, one rule
+  for company, the journal line reworded, three false statements put right. The fourth run is the test.
+- The vocabulary baseline (what counts as a word "another family did not use") is one smoke run.
 
 ## v3: open questions
 
-- Whether a child given less of its parent's words at first would still coin its own by generation 4.
 - Whether any family finds the lamp rule, and what would make a told belief get weighed against a sense.
+- Whether a founder that did not inherit "costs less than either alone" would ever count costs.
+- Whether a child given less of its parent's words at first would still coin its own by generation 4.
 - Whether "the cold is the rest" came from how the cellar felt or from the argument that produced it. The log
   cannot say.
 - Whether the lab register ("test", "requires", "stabilize") is the model, the word "project", or the first
