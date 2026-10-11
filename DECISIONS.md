@@ -956,3 +956,37 @@ The spec asks for one reading and one repeat; the third was to check the fixes m
   labelled and nothing is drawn over it; a death, a birth, an arrival or a storm is in the headline for a
   while; a storm shows on window glass in every room that has any; cards say what a pet is doing and what it
   wants on separate lines.
+- **Third reading** (24 views, after those changes): doing 14 of 18; feeling about 14 of 18 from the cards
+  and still about 0 from the room alone; every object about 5 of 12 while the names were showing and 0 of 7
+  after they had faded. "The page does not pass the ten-second test. It nearly passes for what pets are
+  doing, and fails for feelings and for objects." Its reasons: with up to 28 labels they piled on each other;
+  once they fade, furniture is recognised and small made things and loose bits are not; the mood signs were
+  misread (a storm cloud as "bothered by the storm", a heart as affection); and a long thought on a card
+  could make the whole room drop a scale. Changed after it, and **not read cold again**: labels are kept
+  apart with leader lines and grouped by kind; a mood's word shows beside its sign when it appears; a
+  hatching leaves shell and a tag; cards are one fixed height.
+- **Where that leaves §0's test.** A stranger can say what room this is at once, and who is doing what and
+  how each feels from the sentence at the top and the cards. They cannot name every small object in a room
+  at a glance unless the names are showing (on entering a room, on resting the pointer over it, or with the
+  Names button). Thirty-two kinds in sixteen pixels, recoloured, do not all read by shape alone. This is the
+  part of v3.2 that is short of its own test.
+
+### What the check on a copy showed (§10.2)
+
+A copy of the living house, on the real model, in turbo, every arrival forced, 2.7 world days and two world
+days past the last arrival: 184 model calls, none failed, no errors. Kept as `data.v3.2-check` (the earlier,
+v3.1-only copy as `data.v3.1-check`).
+
+- **Every existing thing became a kind**: all 37 in the house (and those in the dead's records), by the
+  table below; none without a kind.
+- **The nuzzle loop did not recur**: 5 of 55, 7 of 54 and 7 of 52 thoughts in the three world days had a lean
+  or an accept in them (it was 15 of 34 on the live clock before the fix), and three leans were refused as
+  "you leaned together not long ago and are close still".
+- **Things made by kind** by real pets: charms, wind chimes, cushions, sculptures, treats, a bowl, a blanket,
+  a bell. The foundling's first words, to a pet of the first family: "I made this. It listens to the wind,
+  just like yours."
+- **Not shown by a real pet in any check run**: the radio switched on, the book asked, a creature tamed,
+  called or named. In the copies nobody happened to go where the box and the book were; in a fresh house
+  with everything in one room two hatchlings learned the music box's tune and sang it four times, and were
+  too young for the rest when the deploy came. These are covered by the scripted checks only, and are worth
+  watching for in the living house.
