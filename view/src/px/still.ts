@@ -8,6 +8,7 @@ import type { Part, Recipe } from "../things";
 import type { Made, Obj, RoomV, Snap, Tile } from "../types";
 import { canvasOf, def, fromParts, has, kind, pick, size, tex } from "./assets";
 import type { Layout } from "./assets";
+import { FAMILY } from "./bubbles";
 import { fxTexture } from "./fx";
 import { COLS, corner, FX, FY, H, idx, OX, OY, onFloor, ROWS, seeded, TILE, W } from "./geom";
 import type { Rect } from "./geom";
@@ -79,7 +80,7 @@ export class Still {
     for (const [name, o] of Object.entries(room.objects).sort(([, a], [, b]) => flatFirst(a) - flatFirst(b) || a.pos[1] - b.pos[1])) {
       const lf = L.fixtures?.[name];
       if (o.made) {
-        const t = this.made(name, o, snap.power);
+        const t = this.made(name, o, snap.power, FAMILY[snap.pets.find((p) => p.id === o.made!.by)?.family ?? 1] ?? FAMILY[1]);
         if (!t.wall && !kind(t.drawn!.kind)?.flat) blocked.push(o.pos);
       } else if (o.memorial) {
         this.put(name, o, "stone", "sorted");
@@ -90,13 +91,20 @@ export class Still {
         const base = lf ? lf.sprite : pick(`fix.${name}`, `fix.${name.replace(/ /g, "_")}`, `fix.${name.replace(/ /g, "-")}`);
         if (!base || ((o.fix?.sun || o.water) && !has(base))) continue;   // light and water may be part of the floor's own picture
         // how it looks just now: a bowl by what is left in it, a plant by how far it has grown, anything else by its state
-        const dead = !!o.fix?.light && !snap.power;   // in a power cut no lamp is lit, whatever its switch says
+        const dead = !!o.fix?.light && o.state === "on" && !snap.power;   // in a power cut no lamp is lit, whatever its switch says
         const state = dead ? "off" : o.servings != null ? (o.servings <= 0 ? "empty" : o.servings < 2 ? "half" : "full") : o.state === "ripe" ? "ripe" : o.grow != null ? (o.grow >= 0.4 ? "growing" : null) : o.state;
         const sprite = pick(state ? `${base}.${state}` : null, base), sz = size(sprite);
         const flat = !!o.fix?.soft || !!o.fix?.sun || !!o.water || lf?.walk || lf?.layer === "floor", onWall = !!o.wall || !!lf?.wall || lf?.layer === "wall";   // (a recording from before the layouts has its window on a floor tile: it is hung on the wall above all the same)
         const t = this.put(name, o, sprite, flat ? "ground" : onWall ? "wall" : lf?.layer === "top" ? "top" : "sorted");
         if (o.fix?.window) this.windows.push({ name, rect: this.glass(sprite, t), open: o.state === "open" });
         else if (!flat && !onWall && !o.fix?.sun && !o.water) blocked.push(o.pos);
+        if (dead) {   // a lamp that should be lit and is not: a small grey bolt over it, so a cut shows by day too
+          const out = new Sprite(fxTexture("out"));
+          out.anchor.set(0.5, 1);
+          out.position.set(Math.round(t.x) + 5, Math.round(t.rect.y) + 5);
+          out.zIndex = t.s.zIndex + 0.2;
+          (onWall ? this.wallLayer : this.top).addChild(out);
+        }
         if (o.fix?.light && o.state === "on" && snap.power) this.lamps.push({ x: t.x, y: t.y - sz.h / 2, r: 50, color: [255, 226, 170], made: false });
         if (o.fix?.radio && o.state === "on" && snap.power) this.lamps.push({ x: t.x, y: t.y - 6, r: 12, color: [255, 214, 130], made: true });
         t.on = (o.state === "on" && snap.power) || o.state === "playing";
@@ -140,11 +148,13 @@ export class Still {
       for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
         const name = rows?.[y]?.[x];
         if (!name) continue;
-        const s = new Sprite(color && has(name) ? tinted(name, color, {}, 0.7).texture : tex(name)), sz = size(name);
+        // paint is a light wash (walls more than floors), and never on grass, soil, water, sky or glass: a painted room must not look flooded or dark
+        const wash = color && has(name) && !/grass|soil|water|sky|glass|fence|path|hedge/.test(name) ? tinted(name, color, {}, rows === L.walls ? 0.3 : 0.2) : null;
+        const s = new Sprite(wash ? wash.texture : tex(name)), sz = size(name);
         s.position.set(x * TILE - sz.ax, y * TILE - sz.ay);
         if (has(name)) sx?.drawImage(canvasOf(name), x * TILE - sz.ax, y * TILE - sz.ay);
         this.ground.addChild(s);
-        if (rows === L.walls && y < 2 && has(name)) { light += lightness(color ? tinted(name, color, {}, 0.7).canvas : canvasOf(name)); n++; }
+        if (rows === L.walls && y < 2 && has(name)) { light += lightness(wash ? wash.canvas : canvasOf(name)); n++; }
       }
     }
     if (n) this.wallShade = light / n;
@@ -238,7 +248,7 @@ export class Still {
   }
 
   /** Something a pet made (§3): its kind's sprite in its colour, a little smaller or larger, looking like what it is made of. */
-  private made(name: string, o: Obj, power: boolean): Thing {
+  private made(name: string, o: Obj, power: boolean, maker: string): Thing {
     const m = o.made!, d = drawnOf(m), doing = m.active ? m.behavior?.do ?? "" : "", mat = d.material;
     const color = doing.startsWith("change_color:") ? doing.split(":")[1] : d.color;
     const look = { soft: mat === "soft" || undefined, dark: mat === "dark" || undefined, damp: m.worn.includes("damp") || undefined, dusty: m.worn.includes("dusty") || undefined,
@@ -252,6 +262,13 @@ export class Still {
       const hw = Math.max(3, Math.round(t.rect.w / 2) - 1), g = new Graphics();
       g.rect(Math.round(t.x) - hw, Math.round(t.y) - 2, 2 * hw, 3).rect(Math.round(t.x) - hw + 2, Math.round(t.y) - 3, 2 * hw - 4, 1).rect(Math.round(t.x) - hw + 2, Math.round(t.y) + 1, 2 * hw - 4, 1).fill({ color: 0x1a1420, alpha: 0.22 });
       this.flat.addChild(g);
+      // and a small pip at its foot in its maker's plate colour: the pets made these, and this is whose
+      const pip = new Sprite(fxTexture("pip"));
+      pip.tint = parseInt(maker.slice(1), 16);
+      pip.anchor.set(0.5, 1);
+      pip.position.set(Math.round(t.x - t.rect.w / 2) + 1, Math.round(t.y) + 1);
+      pip.zIndex = t.s.zIndex + 0.2;
+      this.standing.push(pip);
     }
     t.glassy = mat === "glassy";
     t.bob = mat === "springy";

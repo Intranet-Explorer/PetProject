@@ -33,3 +33,6 @@ think = "low"             # the night's thinking, capped (amendment): a short ni
 
 [model]
 night_tokens = 3000
+
+[weather]
+real = false

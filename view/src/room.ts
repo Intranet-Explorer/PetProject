@@ -2,7 +2,7 @@
 // engine's; this only draws it. The pieces are in px/ (see px/README.md): the art and its recolouring, the still parts
 // of a room, light and weather, the pets and creatures and how they move, the small effects, the lettering.
 // Whole pixels only: the 14 x 11 tile canvas is shown at the largest whole-number scale that fits its element.
-import { Application, Container, Graphics } from "pixi.js";
+import { Application, Container, Graphics, Sprite } from "pixi.js";
 import type { Genome, Look } from "./pet";
 import { petPortrait } from "./petsprite";
 import { ago, bodyStage, tickMs } from "./types";
@@ -11,10 +11,10 @@ import { play } from "./px/acts";
 import type { Ghost } from "./px/acts";
 import { CreatureActor, doing, PetActor } from "./px/actors";
 import type { Stage } from "./px/actors";
-import { canvasOf, kind, layout, loadArt } from "./px/assets";
+import { canvasOf, kind, layout, loadArt, pick, size, tex } from "./px/assets";
 import type { Layout } from "./px/assets";
 import { Labels } from "./px/bubbles";
-import type { Who } from "./px/bubbles";
+import type { Tag, Who } from "./px/bubbles";
 import { Fx } from "./px/fx";
 import { clamp, FX, FY, H, idx, inside, OX, OY, onFloor, tileAt, TILE, W } from "./px/geom";
 import { Marks } from "./px/marks";
@@ -32,7 +32,9 @@ export type Scene = { snap: Snap; room: RoomV; hello: Hello | null; selected: st
 /** What a hover card can show about a Target (§3.3): see `Room.describe`. Every field but `title` may be missing. */
 export type Card = { what: "pet" | "creature" | "thing" | "fixture" | "stone" | "bit" | "door" | "writing" | "scenery"; title: string; sprite: HTMLCanvasElement | null;
   name?: string | null; kind?: string; color?: string | null; material?: string; maker?: string | null; owner?: string | null; heirloom?: boolean; worn?: string[];
-  purpose?: string; does?: string | null; state?: string | null; text?: string; can?: string[] };
+  purpose?: string; does?: string | null; state?: string | null; text?: string; can?: string[];
+  /** Where it is drawn, in CSS pixels from the top-left of the element given to `init`: a card can be put right by it. */
+  rect?: Rect };
 
 const norm = (s: string | null | undefined) => (s ?? "").trim().toLowerCase();
 const recall = (k: string) => { try { return localStorage.getItem(k); } catch { return null; } };
@@ -98,6 +100,14 @@ export class Room {
   private avoid: Rect[] = [];
   private avoidAt = -1e9;
   private flashing = false;
+  private namesUntil = 0;               // the names of things show until then (a room has just come into view)
+  private namesOn = false;              // or for as long as the page holds them on
+  private restAt = 0;                   // when the pointer last moved
+  private tagKey = "";
+  private beastBox = new Map<string, Rect>();
+  private crate: Sprite | null = null;  // what a delivery came in, for a while after it
+  private shakeUntil = 0;
+  private crateFor = "";
   private box: Thing | null = null;     // the box with a dial, if it is in this room
   private boxAt = [0, 0];
   private roomBox: Rect = { x: 0, y: 0, w: W, h: H };
@@ -106,6 +116,7 @@ export class Room {
     this.stage = { now: 0, dt: 16, fx: this.fx, blocked: new Uint8Array(FX * FY), K: 1,
       free: (t, me) => onFloor(t) && !this.stage.blocked[idx(t)] && ![...this.pets.values()].some((a) => a.pet.id !== me && ((a.home[0] === t[0] && Math.abs(a.home[1] - t[1]) <= 1) || (a.w.tile()[0] === t[0] && a.w.tile()[1] === t[1]))),
       where: (name, near) => this.where(name, near),
+      held: false,
       book: () => { const t = this.still && [...this.still.things.values()].find((t) => t.obj.fix?.book); return t ? [t.x, t.y - 4] : null; },
       others: () => [...[...this.pets.values()].map((a) => [a.w.x, a.w.y]), ...[...this.beasts.values()].map((b) => [b.w.x, b.w.y])] };
   }
@@ -125,7 +136,7 @@ export class Room {
     this.app.stage.addChild(this.world, this.words.c);
     const at = (e: PointerEvent) => { const r = cv.getBoundingClientRect(); return [((e.clientX - r.left) / r.width) * W, ((e.clientY - r.top) / r.height) * H]; };
     cv.addEventListener("pointerdown", (e) => { this.point(at(e)); const p = at(e); this.onClick(this.under(p[0], p[1])); });   // a tap shows what a hover would
-    cv.addEventListener("pointermove", (e) => this.point(at(e)));
+    cv.addEventListener("pointermove", (e) => { this.restAt = performance.now(); this.point(at(e)); });
     cv.addEventListener("pointerleave", () => this.point(null));
     new ResizeObserver(() => this.fit()).observe(el);
     addEventListener("resize", () => this.fit());   // a change of zoom or screen changes the pixel ratio without changing the element
@@ -152,6 +163,12 @@ export class Room {
     if (this.scene && this.ready) this.update(this.scene);
   }
 
+  /** Hold the names of the things in the room on (true), or let them go (false). They also show by themselves for a
+   *  few seconds whenever a room comes into view, and while the pointer rests over the room. */
+  names(on: boolean) {
+    this.namesOn = on;
+  }
+
   /** A still picture of a body, for cards, the family tree and the life records (kept for the page; petsprite.ts has more). */
   picture(genome: Genome, stage: string, look: Look = {}): string {
     return petPortrait(genome, stage, 2, { grey: look.grey }).toDataURL();
@@ -169,12 +186,13 @@ export class Room {
     this.scene = sc;
     if (!this.ready) return;
     const now = performance.now(), { snap, room } = sc, fresh = room.id !== this.roomId;
+    if (fresh || this.tick < 0 || snap.tick < this.tick || snap.tick - this.tick > 60) this.namesUntil = now + 8000;   // a room has come into view (or a replay has jumped): what everything is, for a moment
     if (snap.tick !== this.tick) {   // a new moment of the house: how long since the last one sets the walking pace, so a walk is a glide and not a step and a wait
       this.pace = this.tick < 0 || fresh ? tickMs(snap) : clamp(now - this.lastUpdate, 120, Math.max(2600, tickMs(snap) * 1.25));
       [this.tick, this.lastUpdate] = [snap.tick, now];
     }
     this.roomId = room.id;
-    if (fresh) { this.fx.clear(); this.ghosts.clear(); }
+    if (fresh) { this.fx.clear(); this.ghosts.clear(); this.crate?.destroy(); this.crate = null; }
 
     const lay = layout(room.type, () => { this.built = ""; if (this.scene) this.update(this.scene); });
     const keep = this.keep();
@@ -193,12 +211,15 @@ export class Room {
     // light and weather
     const reading = snap.read_glow ? [...still.things.values()].filter((t) => t.obj.fix?.book).map((t) => ({ x: t.x, y: t.y - 6, r: 24, color: [255, 236, 150], made: true })) : [];
     const env = { phase: snap.clock.phase, weather: snap.weather, season: snap.clock.season, power: snap.power, lit: room.lit, cold: room.cold, night: lay?.light?.night ?? 0.45, day: lay?.light?.day ?? 0,
-                  sky: skyOf(lay ?? null), windowTiles: lay?.light?.window ?? [], windows: still.windows.map((w) => w.rect), lamps: snap.power ? [...still.lamps, ...reading] : [], sun: still.sun };   // in a power cut nothing glows
+                  sky: skyOf(lay ?? null), windowTiles: lay?.light?.window ?? [], windows: still.windows.map((w) => w.rect), lamps: snap.power ? [...still.lamps, ...reading] : [], sun: still.sun,   // in a power cut nothing glows
+                  panes: skyOf(lay ?? null) === "glass" ? (lay?.light?.window ?? []).map(([tx]) => ({ x: OX + tx * TILE + 1, y: 4, w: TILE - 2, h: OY - 10 })) : [] };
     const lit = JSON.stringify(env);
     if (lit !== this.lit) { this.lit = lit; this.light.set(env); }
 
     this.cast(sc, fresh, now);
+    this.arrived(sc);
     this.say(sc);
+    this.tag(sc);
     this.happen(sc, fresh, now);
     if (this.pointer) this.point();
   }
@@ -320,10 +341,59 @@ export class Room {
     this.weather = snap.weather;
   }
 
+  /** A delivery or a discovery that came in a crate (SPEC-v3.1 §1): the crate stands open where it landed for a couple of
+   *  world hours, then fades. */
+  private arrived(sc: Scene) {
+    const { snap, room } = sc, hour = snap.day_seconds / snap.tick_seconds / 24, still = this.still!;
+    const m = snap.moments.filter((m) => m.room === room.id && (m.kind === "delivery" || m.kind === "arrival writing" || m.kind === "arrival radio") && snap.tick >= m.tick && snap.tick - m.tick <= 2 * hour).at(-1);
+    if (!m || this.crateFor !== this.built) { this.crate?.destroy(); this.crate = null; }   // (the room has changed under it: it is set down again)
+    if (!m) return;
+    this.crateFor = this.built;
+    if (!this.crate) {
+      const name = pick("crate.open", "crate"), sz = size(name), s = (this.crate = new Sprite(tex(name)));
+      const at = nearestFree([6, 4], still.blocked, (t) => !room.spots.some((p) => p.pos[0] === t[0] && p.pos[1] === t[1]) && ![...this.pets.values()].some((a) => a.home[0] === t[0] && a.home[1] === t[1]));
+      s.position.set(OX + at[0] * TILE - sz.ax, OY + at[1] * TILE - sz.ay);
+      s.zIndex = OY + at[1] * TILE + TILE - 5;
+      this.sorted.addChild(s);
+      this.fx.spawn("dust", s.x + sz.w / 2, s.y + sz.h - 2, { life: 450 });
+    }
+    this.crate.alpha = Math.min(1, (2 * hour - (snap.tick - m.tick)) / (0.4 * hour));
+  }
+
+  /** The name of every thing in the room, for the moment a room comes into view (or while the page holds them on):
+   *  a made thing by its kind, a fixture and a piece of scenery by its name, bits and scenery once per kind (the one
+   *  nearest the middle), a creature by its kind. A memorial stone keeps its label always. */
+  private tag(sc: Scene) {
+    const still = this.still!, K = this.K, key = `${this.built}|${[...this.beasts.keys()].join()}|${!!this.crate}`;
+    if (key === this.tagKey) return;
+    this.tagKey = key;
+    const px = (r: Rect): Rect => ({ x: r.x * K, y: r.y * K, w: r.w * K, h: r.h * K }), tags: Tag[] = [], mid = (r: Rect) => Math.hypot(r.x + r.w / 2 - W / 2, r.y + r.h / 2 - (OY + (FY * TILE) / 2));
+    for (const t of still.things.values()) {
+      if (t.obj.fix?.sun) continue;
+      const stone = t.obj.memorial && (sc.snap.pets.find((p) => p.id === t.obj.memorial!.pet)?.label ?? t.name.replace(/^stone for /, ""));
+      tags.push({ key: `t.${t.name}`, text: stone ? `stone for ${stone}` : t.drawn ? t.drawn.kind : t.name, rect: px(t.rect), pri: t.drawn || stone ? 0 : 1, always: !!stone });
+    }
+    for (const [id, b] of this.beasts) {
+      const box = this.beastBox.get(id) ?? { x: 0, y: 0, w: 0, h: 0 };
+      this.beastBox.set(id, box);
+      tags.push({ key: `c.${id}`, text: b.cr.kind, rect: box, pri: 1 });
+    }
+    if (this.crate) tags.push({ key: "crate", text: "crate", rect: px({ x: this.crate.x, y: this.crate.y, w: this.crate.width, h: this.crate.height }), pri: 1 });
+    const once = (list: { name: string; rect: Rect }[], pri: number) => {   // one of each kind: the one nearest the middle of the room
+      const best = new Map<string, Rect>();
+      for (const it of list) if (!best.has(it.name) || mid(it.rect) < mid(best.get(it.name)!)) best.set(it.name, it.rect);
+      for (const [name, rect] of best) tags.push({ key: `${pri}.${name}`, text: name, rect: px(rect), pri });
+    };
+    once(still.spots.map((s) => ({ name: s.bit, rect: s.rect })), 3);
+    once(still.scenery.map((s) => ({ name: sceneryName(s.sprite), rect: s.rect })), 4);
+    this.words.name(tags);
+    this.words.keepOff = [...still.things.values()].filter((t) => t.obj.memorial).map((t) => px({ x: t.rect.x - 1, y: t.rect.y - 1, w: t.rect.w + 2, h: t.rect.h + 2 }));
+    this.words.things = [...still.things.values()].filter((t) => !t.obj.fix?.soft && !t.obj.fix?.sun).map((t) => px(t.rect));
+  }
+
   private startle(now: number, chance: number) {
     for (const a of this.pets.values()) if (Math.random() < chance && !a.pet.asleep && a.pet.stage !== "egg" && a.pet.stage !== "dead") {
       a.react("startled", now, 750);
-      this.fx.spawn("bang", a.w.x + 6, a.w.y - a.box.h - 4, { vy: -4, life: 800 });
     }
   }
 
@@ -366,10 +436,18 @@ export class Room {
       this.heads.set(a.pet.id, h);
       pools.push(r.x + r.w / 2, r.y + r.h / 2);
     }
-    for (const b of this.beasts.values()) b.step(st);
+    st.held = now - this.lastUpdate > Math.max(6000, this.pace * 3);   // the house has stopped (a replay paused): nobody wanders
+    for (const [id, b] of this.beasts) {
+      b.step(st);
+      const box = this.beastBox.get(id), r = b.rect();
+      if (box) [box.x, box.y, box.w, box.h] = [r.x * K, r.y * K, r.w * K, r.h * K];
+    }
+    this.words.naming = this.namesOn || now < this.namesUntil || (!!this.pointer && now - this.restAt > 1000);
+    this.fx.top = still.bounds.y + 1;
     this.alive(sc, still, now);
     this.light.step(now);
-    if (this.light.flashing && !this.flashing) this.startle(now, 0.3);   // thunder: some of them jump
+    if (this.light.flashing && !this.flashing) { this.startle(now, 0.3); this.shakeUntil = now + 130; }   // thunder: some of them jump, and every room feels it
+    this.world.y = now < this.shakeUntil ? K : 0;
     this.flashing = this.light.flashing;
     const tip = this.marks.step(now);
     if (tip && Math.random() < 0.3) this.fx.spawn("grit", tip[0] / K, tip[1] / K, { vx: (Math.random() - 0.5) * 10, vy: 8, g: 30, life: 500 });
@@ -384,7 +462,7 @@ export class Room {
     const box = this.box;
     if (box) [this.boxAt[0], this.boxAt[1]] = [box.x * K, (box.y - box.rect.h / 2) * K];
     const b = still.bounds, rm = this.roomBox;
-    [rm.x, rm.y, rm.w, rm.h] = [b.x * K, b.y * K, b.w * K, b.h * K];
+    [rm.x, rm.y, rm.w, rm.h] = [(b.x + 2) * K, (b.y + 1) * K, (b.w - 4) * K, (b.h - 3) * K];   // a little inside the room's edge: nothing hangs over its border
     this.words.step(now, dt, this.heads, K, rm, this.avoid, box ? this.boxAt : null);
   }
 
@@ -404,10 +482,6 @@ export class Room {
         if (t.obj.water && Math.random() < 0.5) { const w = t.obj.water[Math.floor(Math.random() * t.obj.water.length)]; fx.spawn("glint", OX + w[0] * TILE + 3 + Math.random() * 10, OY + w[1] * TILE + 3 + Math.random() * 10, { life: 600, alpha: 0.7 }); }
         if (t.obj.fix?.book && snap.read_glow) fx.spawn("sparkle", t.x + (Math.random() - 0.5) * 10, t.y - 8, { vy: -10, life: 800 });
       }
-    }
-    if (now > n.air) {   // every bit lying loose winks, all alike and all together: that is how a thing to gather is told from a thing made
-      n.air = now + 3600;
-      still.spots.forEach((s, i) => fx.after(i * 70, () => fx.spawn("glint", s.rect.x + s.rect.w * 0.7, s.rect.y + s.rect.h * 0.35, { life: 520 })));
     }
     if (now > n.note) {   // notes over whoever is singing, whatever is playing, and the instruments while the room still rings
       n.note = now + 480;
@@ -458,7 +532,7 @@ export class Room {
     if (!out.object && !out.bit && !out.door) {   // nothing of the house's own there: a piece of the room's scenery, the smallest under the pointer
       let piece: Still["scenery"][number] | null = null;
       for (const s of still.scenery) if (inside(s.rect, x, y) && (!piece || s.rect.w * s.rect.h <= piece.rect.w * piece.rect.h)) piece = s;
-      out.decor = piece?.sprite;
+      out.decor = piece?.sprite ?? (!out.pet && !out.creature && !out.mark ? (onTile ? room.paint?.floor && "room.floor" : room.paint?.wall && "room.wall") || undefined : undefined);   // a painted wall or floor says so
     }
     return out;
   }
@@ -466,6 +540,21 @@ export class Room {
   /** What a hover card can show about what is under the pointer (SPEC-v3.2 §3.3): its picture as a canvas (16 pixels
    *  or so: scale it up with `image-rendering: pixelated`), and in plain words what it is. Null if there is nothing to say. */
   describe(t: Target | null): Card | null {
+    const card = this.card(t), at = card && t ? this.rectOf(t) : null;
+    if (card && at) {   // where it is drawn, for whoever puts a card beside it
+      const view = this.app.canvas.getBoundingClientRect(), box = (this.el ?? this.app.canvas).getBoundingClientRect(), k = view.width / W;
+      card.rect = { x: view.left - box.left + at.x * k, y: view.top - box.top + at.y * k, w: at.w * k, h: at.h * k };
+    }
+    return card;
+  }
+  /** What a Target is drawn as, in the room's pixels. */
+  private rectOf(t: Target): Rect | null {
+    const still = this.still;
+    return (t.pet && this.pets.get(t.pet)?.rect()) || (t.creature && this.beasts.get(t.creature)?.rect()) || (t.mark && this.marks.rects.find((m) => m.m === t.mark)?.rect) || (t.object && still?.things.get(t.object)?.rect)
+      || (t.bit && still?.spots.find((s) => s.bit === t.bit && s.pos[0] === t.tile[0] && s.pos[1] === t.tile[1])?.rect) || (t.door && still?.doors.find((d) => d.dir === t.door)?.rect)
+      || (t.decor && still?.scenery.find((s) => s.sprite === t.decor && inside(s.rect, OX + t.tile[0] * TILE + 8, OY + t.tile[1] * TILE + 8))?.rect) || null;
+  }
+  private card(t: Target | null): Card | null {
     const sc = this.scene, still = this.still;
     if (!t || !sc || !still) return null;
     const { snap, room } = sc;
@@ -483,8 +572,8 @@ export class Room {
                maker: snap.pets.find((q) => q.id === m.by)?.label ?? null, owner: m.owner_name, heirloom: !!m.heirloom, worn: m.worn, purpose: m.recipe.purpose,
                does: m.behavior ? `${m.behavior.do} when ${m.behavior.when}` : null, state: th.obj.state ?? null };
     }
-    if (th) return { what: th.obj.memorial ? "stone" : "fixture", title: th.obj.memorial ? "a memorial stone" : `the ${th.name}`, sprite: th.canvas, name: th.name, state: th.obj.state ?? null, text: th.obj.memorial?.text,
-                     does: th.obj.says ?? null };
+    if (th) return { what: th.obj.memorial ? "stone" : "fixture", title: th.obj.memorial ? "a memorial stone" : `the ${th.name}`, sprite: th.canvas, name: th.name, text: th.obj.memorial?.text, does: th.obj.says ?? null,
+                     state: th.obj.fix?.light && !snap.power ? "dark: the power is out" : th.obj.state ?? null };
     if (t.object && room.objects[t.object]) return { what: "fixture", title: `the ${t.object}`, sprite: null, name: t.object, state: room.objects[t.object].state ?? null, does: room.objects[t.object].says ?? null };
     if (t.bit) {   // something to gather: what it is, and what a thing made of it can be
       const can = sc.hello?.bits[t.bit]?.can ?? [];
@@ -495,6 +584,7 @@ export class Room {
       return { what: "door", title: to?.type ? `the door to ${to.name}` : "a door nobody has been through", sprite: null, state: room.shut.includes(t.door) ? "stuck shut" : to?.type ? "open" : "shut",
                text: to?.type ? `it leads to ${to.name}` : "nobody knows yet what is behind it" };
     }
+    if (t.decor === "room.wall" || t.decor === "room.floor") { const wall = t.decor === "room.wall"; return { what: "scenery", title: wall ? "the wall" : "the floor", sprite: null, text: `painted ${wall ? room.paint.wall : room.paint.floor}` }; }
     if (t.decor) return { what: "scenery", title: sceneryName(t.decor), sprite: canvasOf(t.decor), text: "part of the room" };
     return null;
   }

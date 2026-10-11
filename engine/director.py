@@ -104,7 +104,6 @@ def hourly(house, cfg):
                 o["pos"] = [max(1, min(cfg["W"] - 2, round(1 + (cfg["W"] - 3) * (c["hour"] - season["sunrise"]) / span))), o["pos"][1]]
     things.upkeep(house, cfg)
     walls.fade(house, cfg)
-    house["shut"] = {k: t for k, t in house["shut"].items() if t > house["tick"]}
     if house.get("storm_cut") and house["storm_cut"] <= house["tick"]:
         house["storm_cut"] = None
         if house["weather"] == "storm":
@@ -115,6 +114,9 @@ def hourly(house, cfg):
 
 def events(house, cfg):
     E, tick = cfg["house"]["events"], house["tick"]
+    for key in [k for k, t in house["shut"].items() if t <= tick]:   # a draught lets go of a door
+        del house["shut"][key]
+        unstuck(house, key)
     if house.get("leak_due") and house["leak_due"]["at"] <= tick:
         leak(house, cfg, house["rooms"][house.pop("leak_due")["room"]])
     if house["next_event"] is None:
@@ -192,6 +194,20 @@ def events(house, cfg):
         things.drop_bits(house, cfg, room, [cfg["W"] // 2, cfg["H"] // 2], [bit])
         tell_all(house, "the visitor left some %s on the floor" % bit, "visitor", room["id"])
         note(house, "surprise", room["id"], bit + " (the director's, in the visitor's name)")
+
+
+def unstuck(house, key):
+    """A door that a draught held shut has come free. The pets in the room on each side are told (a key is one side:
+    "room|direction"): nobody was, and a pet shut in a room with one door stayed there for hours believing it shut.
+    One that is asleep hears of it when it wakes. What it believes about the door is its own business."""
+    rid, d = key.split("|")
+    for p in house["pets"].values():
+        if p["room"] == rid and p["stage"] not in ("egg", "dead"):
+            if p["sleep"]:
+                p.setdefault("on_wake", []).append("the %s door has come unstuck" % d)
+            else:
+                add_event(house, p, "the %s door has come unstuck" % d)
+                p["news"].append("event")
 
 
 def leak(house, cfg, room):

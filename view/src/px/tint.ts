@@ -49,15 +49,15 @@ export function recolor(src: HTMLCanvasElement, hex: string | null, look: Look =
     const outline = l < 0.2, shine = l > 0.9 && s < 0.35;
     if (hex && !outline && !(shine && !look.soft)) {
       // a white or black thing must end up pale or dark, so the target's own lightness pulls a little
-      [h, s, l] = [th, ts * strength + s * (1 - strength), Math.max(0.08, Math.min(0.96, l + (tl - 0.5) * 0.55 * strength))];
+      [h, s, l] = [th, ts, Math.max(0.08, Math.min(0.96, l + (tl - 0.5) * 0.55))];
     }
     if (look.soft && l > 0.78) l = 0.78 + (l - 0.78) * 0.3;          // nothing soft has a hard highlight
     if (look.dark && !outline) [s, l] = [s * 0.7, l * 0.62];           // shadowed
     const row = Math.floor(i / 4 / c.width) / c.height;
     if (look.damp && row > 0.55 && !outline) [h, s, l] = [h * 0.5 + 105, Math.min(1, s * 0.8 + 0.1), l * 0.72];   // dark and bluish where it sat in the wet
     if (look.dusty && !outline) [s, l] = [s * 0.55, l * 0.9 + 0.07];
-    const [r, g, b] = toRgb(((h % 360) + 360) % 360, Math.max(0, Math.min(1, s)), l);
-    [p[i], p[i + 1], p[i + 2]] = [r, g, b];
+    const [r, g, b] = toRgb(((h % 360) + 360) % 360, Math.max(0, Math.min(1, s)), l), k = strength;   // below full strength the colour is a wash over the thing's own
+    [p[i], p[i + 1], p[i + 2]] = [Math.round(p[i] + (r - p[i]) * k), Math.round(p[i + 1] + (g - p[i + 1]) * k), Math.round(p[i + 2] + (b - p[i + 2]) * k)];
     if (look.dusty && row < 0.6 && rnd() < 0.16) [p[i], p[i + 1], p[i + 2]] = [214, 208, 194];   // specks of dust on top
     if (look.faint != null) p[i + 3] = Math.round(p[i + 3] * look.faint);
   }

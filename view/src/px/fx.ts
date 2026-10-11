@@ -24,6 +24,9 @@ const SHAPES: Record<string, [string[], string, boolean]> = {   // rows, colour,
   bang: [["##", "##", "##", "##", "..", "##"], "#ffd24a", true],
   page: [["####", "####", "####"], "#fffbe8", true],
   ribbon: [[".#.", "###", "#.#"], "#ffcf4a", true],
+  plus: [[".#.", "###", ".#."], "#ffffff", true],
+  pip: [["##", "##"], "#ffffff", true],
+  out: [["..##.", ".##..", "####.", "..##.", ".##..", "#...."], "#aab0c6", true],
   flag: [["###", "###", "#..", "#.."], "#ffffff", true],
 };
 /** Our names here -> the art's, where they differ. */
@@ -63,6 +66,8 @@ export class Fx {
   private pool: Sprite[] = [];
   private tweens: Tween[] = [];
   private now = 0;
+  /** Nothing rises past this (the top of the room, in its pixels): a note at the ceiling is gone, not cut in half. */
+  top = 0;
 
   /** One mote at (x, y), in the room's pixels; speeds are pixels a second. */
   spawn(name: string, x: number, y: number, o: MoteOpts = {}) {
@@ -119,7 +124,7 @@ export class Fx {
     for (let i = this.live.length - 1; i >= 0; i--) {
       const m = this.live[i];
       m.age += dt;
-      if (m.age >= m.life) { this.free(m.s); this.live[i] = this.live[this.live.length - 1]; this.live.pop(); continue; }
+      if (m.age >= m.life || m.y - m.s.height / 2 < this.top) { this.free(m.s); this.live[i] = this.live[this.live.length - 1]; this.live.pop(); continue; }
       const k = m.age / m.life, sec = dt / 1000;
       m.vy += m.g * sec;
       m.x += m.vx * sec;

@@ -100,7 +100,7 @@ export function play(a: Act, c: Cast) {
       break;
     case "call":   // the creature comes trotting (the engine moves it); the caller hops
       me?.react("happy", now, 1000);
-      if (at) { fx.spawn("bang", at[0] + 7, at[1] - 22, { vy: -5, life: 900 }); fx.spawn("note", at[0] - 6, at[1] - 18, { vy: -12, life: 1100, sway: 2 }); }
+      if (at) { fx.spawn("note", at[0] - 6, at[1] - 18, { vy: -12, life: 1100, sway: 2 }); }
       break;
     case "write": {
       const p = there ?? (at && [at[0], Math.max(OY - 10, at[1] - 30)]);
@@ -124,9 +124,6 @@ export function play(a: Act, c: Cast) {
       break;
     case "lay_egg": case "paint":
       if (at) fx.burst("sparkle", at[0], at[1] - 6, 8, 28);
-      break;
-    case "chase":
-      if (at) fx.spawn("bang", at[0] + 7, at[1] - 22, { vy: -5, life: 800 });
       break;
   }
 }

@@ -16,8 +16,13 @@ export type Label = Rect & { kind: string };
 export type Who = { id: string; name: string; family: number; selected: boolean; faded: boolean; caption: string | null; thinking: boolean;
   say: { key: string; text: string; to: string | null; song: boolean } | null; mood: string | null; tab: boolean };
 
+/** A short plain name for a thing in the room, shown for a moment when the room comes into view (or held on).
+ *  `rect`: the thing on screen (kept up to date by the room). `pri`: lower is kept first when there is no room for all.
+ *  `always`: it stays, faintly, when the others have gone (a memorial stone). */
+export type Tag = { key: string; text: string; rect: Rect; pri: number; always?: boolean };
+
 const INK = "#2b2233", PAPER = "#fffdf2", ACCENT = "#ffb347";
-const FAMILY: Record<number, string> = { 1: "#1f7a8c", 2: "#a8468a" };   // each family's colour (SPEC-v3.1 §7.4); the page's style has the same two
+export const FAMILY: Record<number, string> = { 1: "#1f7a8c", 2: "#a8468a" };   // each family's colour (SPEC-v3.1 §7.4); the page's style has the same two
 
 function canvas(w: number, h: number) {
   const c = document.createElement("canvas");
@@ -48,6 +53,12 @@ function plateCanvas(name: string, color: string, ring: boolean) {
   return c;
 }
 /** `tab`: the owner's name on a small plate of its colour, set into the bubble's top edge. */
+function tagCanvas(text: string) {
+  const t = plain(text), [c, x] = canvas(measure(t) + 6, 11);
+  frame(x, c.width, c.height, "#2b2233", "#2b2233");
+  draw(x, [t], 3, 1, { color: "#f4f0e0" });
+  return c;
+}
 function bubbleCanvas(lines: string[], o: { fill: string; ink: string; text: string; head?: string; headColor?: string; static?: string; art?: string; tab?: { name: string; color: string } }) {
   const head = o.head ? plain(o.head) : null, art = o.art && def(o.art)?.slice ? o.art : null, px = art ? 6 : 4, tab = o.tab ? plateCanvas(o.tab.name, o.tab.color, false) : null;
   const top = tab ? 7 : 0, py = (art ? 4 : 3) + (tab ? 2 : 0);
@@ -128,7 +139,7 @@ class Card {
     this.s.destroy();
   }
 }
-type Entry = { who: Who; plate: Card; cap: Card; dots: Card; say: Card; link: Graphics; linkFor: Card | null; mood: Sprite; face: Rect };
+type Entry = { who: Who; plate: Card; cap: Card; dots: Card; say: Card; link: Graphics; linkFor: Card | null; mood: Sprite; face: Rect; nub: Graphics };
 type Body = Rect & { id: string };
 
 export class Labels {
@@ -139,6 +150,13 @@ export class Labels {
   private entries = new Map<string, Entry>();
   private box: { card: Card; link: Graphics; key: string } | null = null;
   private tip: { card: Card; at: number[] } | null = null;
+  private tags = new Map<string, { tag: Tag; card: Card; fits: boolean }>();
+  /** Are the things' names showing just now (the room says so every frame). */
+  naming = false;
+  /** Places on screen that plates, bubbles and faces keep off (memorial stones). */
+  keepOff: Rect[] = [];
+  /** The things in the room, on screen: a face by a pet's head sits over bare floor where it can, not on one of these. */
+  things: Rect[] = [];
   private F = 2;
   private laid = -1e9;
 
@@ -152,16 +170,17 @@ export class Labels {
     for (const [id, e] of this.entries) if (!who.some((w) => w.id === id)) {
       for (const k of [e.plate, e.cap, e.dots, e.say]) k.destroy();
       e.link.destroy();
+      e.nub.destroy();
       e.mood.destroy();
       this.entries.delete(id);
     }
     for (const w of who) {
       let e = this.entries.get(w.id);
       if (!e) {
-        e = { who: w, plate: new Card(), cap: new Card(), dots: new Card(), say: new Card(), link: new Graphics(), linkFor: null, mood: new Sprite(), face: { x: 0, y: 0, w: 0, h: 0 } };
+        e = { who: w, plate: new Card(), cap: new Card(), dots: new Card(), say: new Card(), link: new Graphics(), linkFor: null, mood: new Sprite(), face: { x: 0, y: 0, w: 0, h: 0 }, nub: new Graphics() };
         this.entries.set(w.id, e);
         this.cards.addChild(e.mood, e.plate.s, e.dots.s, e.cap.s, e.say.s);
-        this.links.addChild(e.link);
+        this.links.addChild(e.link, e.nub);
         e.dots.set("dots" + F, F, dotsCanvas);
       }
       e.who = w;
@@ -193,6 +212,18 @@ export class Labels {
     this.laid = -1e9;
   }
 
+  /** The names of the things in the room (see Tag). Call again whenever the set of things changes. */
+  name(list: Tag[]) {
+    for (const [key, t] of this.tags) if (!list.some((n) => n.key === key)) { t.card.destroy(); this.tags.delete(key); }
+    for (const tag of list) {
+      let t = this.tags.get(tag.key);
+      if (!t) { this.tags.set(tag.key, (t = { tag, card: new Card(), fits: false })); this.cards.addChildAt(t.card.s, 0); }
+      t.tag = tag;
+      t.card.set(tag.text + this.F, this.F, () => tagCanvas(tag.text));
+    }
+    this.laid = -1e9;
+  }
+
   /** A small plate for what the pointer is on (a creature's name), at a point on screen; null takes it away. */
   hover(text: string | null, x = 0, y = 0) {
     if (!text) { if (this.tip) this.tip.card.want = 0; return; }
@@ -208,19 +239,27 @@ export class Labels {
     // the face by its head: to one side or above, wherever it covers nobody (its own body included); if nowhere, its
     // bearing has to say it alone. It nods a little.
     for (const [id, e] of this.entries) {
-      const b = bodies.get(id), w = (e.mood.texture.width || 16) * K, h = (e.mood.texture.height || 15) * K;
+      const b = bodies.get(id), w = (e.mood.texture.width || 16) * K, h = (e.mood.texture.height || 15) * K, nub = e.nub.clear();
       e.face.w = 0;
-      if (b && e.who.mood) for (const [x, y] of [[b.x + b.w - K, b.y - 7 * K], [b.x + K - w, b.y - 7 * K], [b.x + b.w / 2 - w / 2, b.y - h - K], [b.x + b.w, b.y + b.h - h], [b.x - w, b.y + b.h - h]]) {
-        const r = { x, y: Math.max(room.y, y), w, h };
-        if (r.x < room.x || r.x + w > room.x + room.w || hit(r, { x: b.x + K, y: b.y + K, w: b.w - 2 * K, h: b.h - 2 * K })) continue;
-        let free = true;
-        for (const [other, ob] of bodies) if (other !== id && hit(r, ob)) free = false;
-        for (const o of this.entries.values()) if (o !== e && o.face.w && hit(r, o.face)) free = false;
-        if (free) { [e.face.x, e.face.y, e.face.w, e.face.h] = [r.x, r.y, w, h]; break; }
+      if (b && e.who.mood) for (const bare of [true, false]) {   // over bare floor if there is such a place; else over a thing rather than not at all
+        for (const [x, y] of [[b.x + b.w - K, b.y - 7 * K], [b.x + K - w, b.y - 7 * K], [b.x + b.w / 2 - w / 2, b.y - h - K], [b.x + b.w, b.y + b.h - h], [b.x - w, b.y + b.h - h]]) {
+          const r = { x, y: Math.max(room.y, y), w, h };
+          if (r.x < room.x || r.x + w > room.x + room.w || hit(r, { x: b.x + K, y: b.y + K, w: b.w - 2 * K, h: b.h - 2 * K }) || this.keepOff.some((k) => hit(k, r))) continue;
+          let free = !bare || !this.things.some((t) => hit(t, r));
+          for (const [other, ob] of bodies) if (other !== id && hit(r, ob)) free = false;
+          for (const o of this.entries.values()) if (o !== e && o.face.w && hit(r, o.face)) free = false;
+          if (free) { [e.face.x, e.face.y, e.face.w, e.face.h] = [r.x, r.y, w, h]; break; }
+        }
+        if (e.face.w) break;
       }
       e.mood.visible = e.face.w > 0;
       e.mood.scale.set(K);
-      e.mood.position.set(Math.round(e.face.x), Math.round(e.face.y) + (Math.floor(now / 700 + (b?.x ?? 0)) % 2) * K);
+      e.mood.position.set(Math.round(e.face.x), Math.round(e.face.y));
+      if (b && e.face.w) {   // a small tail from the face to the head it belongs to
+        const hx = b.x + b.w / 2, hy = b.y + 2 * K, fx = clamp(hx, e.face.x + 2 * K, e.face.x + w - 2 * K), fy = clamp(hy, e.face.y + 2 * K, e.face.y + h - K);
+        for (const k of [0.45, 0.8]) nub.rect(Math.round((fx + (hx - fx) * k) / K) * K - K, Math.round((fy + (hy - fy) * k) / K) * K - K, 2 * K, 2 * K);
+        nub.fill(0x2b2233);
+      }
     }
     if (now - this.laid > 140) {
       this.laid = now;
@@ -241,6 +280,12 @@ export class Labels {
       const k = this.box.card, g = this.box.link.clear();
       k.ease(dt);
       if (boxAt && k.alpha > 0.5) this.tail(g, { x: k.s.x, y: k.s.y, w: k.w, h: k.h }, { x: boxAt[0] - 5 * K, y: boxAt[1] - 6 * K, w: 10 * K, h: 10 * K }, true, 0xfbf0cf);
+    }
+    for (const t of this.tags.values()) {   // names: on for a moment, or held; a stone keeps its own, faintly
+      const k = t.card, r = t.tag.rect;
+      k.want = !t.fits ? 0 : this.naming ? 1 : t.tag.always ? 0.72 : 0;
+      k.ease(dt);
+      k.s.position.set(Math.round(clamp(r.x + r.w / 2 + k.dx, room.x, Math.max(room.x, room.x + room.w - k.w))), Math.round(clamp(r.y + k.dy, room.y, Math.max(room.y, room.y + room.h - k.h))));
     }
     if (this.tip) {
       const k = this.tip.card;
@@ -275,7 +320,8 @@ export class Labels {
     const list = [...this.entries.values()].filter((e) => bodies.has(e.who.id)).sort((a, b) => bodies.get(a.who.id)!.y - bodies.get(b.who.id)!.y);
     const solid: Body[] = list.flatMap((e) => [{ ...bodies.get(e.who.id)!, id: e.who.id }, ...(e.face.w ? [{ ...e.face, id: e.who.id }] : [])]);   // bodies, and the faces by their heads
     const inside = (r: Rect) => r.x >= room.x && r.y >= room.y && r.x + r.w <= room.x + room.w && r.y + r.h <= room.y + room.h;
-    const clear = (r: Rect) => inside(r) && !placed.some((q) => hit(q, r)) && !solid.some((f) => hit(f, r));
+    const clear = (r: Rect) => inside(r) && !placed.some((q) => hit(q, r)) && !solid.some((f) => hit(f, r)) && !this.keepOff.some((k) => hit(k, r));
+    const plates = new Map<string, Rect>();
     /** Is this place plainly its owner's: no other pet's body is nearer to it. */
     const own = (r: Rect, id: string) => { const mine = gap(r, bodies.get(id)!); return !list.some((e) => e.who.id !== id && gap(r, bodies.get(e.who.id)!) < mine * 0.75 - F); };
     const put = (k: Card, b: Rect, r: Rect, kind: string) => {
@@ -290,6 +336,8 @@ export class Labels {
     };
     const reach = (r: Rect, b: Rect, id: string) => {
       const line = rope(r, b);
+      const mine = this.entries.get(id)?.who.tab ? plates.get(id) : null;   // a bubble that carries its owner's name is not stacked right against the name plate
+      if (mine && hit({ x: mine.x - 2 * F, y: mine.y - 6 * F, w: mine.w + 4 * F, h: mine.h + 12 * F }, r)) return false;
       return !ropes.some((q) => q.id !== id && hit(q, r)) && !placed.some((q) => (q.kind === "bubble" || q.kind === "caption") && hit(q, line)) && !solid.some((f) => f.id !== id && hit(f, line));
     };
     const fitter = (w: number, h: number) => (x: number, y: number) => ({ x: Math.round(clamp(x, room.x, room.x + room.w - w)), y: Math.round(clamp(y, room.y, room.y + room.h - h)), w, h });
@@ -300,7 +348,14 @@ export class Labels {
       const tries = [fit(cx - w / 2, under), fit(cx - w / 2, over), fit(cx - w, under), fit(cx, under), fit(cx - w, over), fit(cx, over), fit(b.x - w - F, b.y + b.h - h), fit(b.x + b.w + F, b.y + b.h - h),
                      fit(cx - w / 2, under + h + F), fit(cx - w / 2, over - h - F), fit(b.x - w - F, b.y), fit(b.x + b.w + F, b.y), fit(cx - w / 2, under + 2 * (h + F)), fit(cx - w / 2, over - 2 * (h + F))];
       const cost = (r: Rect) => placed.reduce((n, q) => n + shared(q, r) * 3, 0) + solid.reduce((n, f) => n + shared(f, r) * 2, 0) + gap(r, b);
-      put(e.plate, b, tries.find((r) => clear(r)) ?? tries.reduce((best, r) => (cost(r) < cost(best) ? r : best)), "pet");
+      let at = tries.find((r) => clear(r)) ?? null;
+      if (!at) for (let gy = 0, far = Infinity; gy < 10; gy++) for (let gx = 0; gx < 10; gx++) {   // nowhere near: the nearest clear place in the room (two plates never lie on each other)
+        const r = fit(room.x + (gx / 9) * (room.w - w), room.y + (gy / 9) * (room.h - h)), d = gap(r, b);
+        if (d < far && clear(r)) [at, far] = [r, d];
+      }
+      at ??= tries.reduce((best, r) => (cost(r) < cost(best) ? r : best));
+      put(e.plate, b, at, "pet");
+      plates.set(e.who.id, at);
     }
     /** The clear spot for a bubble nearest its owner: over it, to a side, higher, under its plate; `anywhere`: failing those, wherever in the room is clear. */
     const spot = (b: Rect, w: number, h: number, id: string, anywhere: boolean): Rect | null => {
@@ -355,6 +410,23 @@ export class Labels {
       if (small) put(e.dots, b, small, "caption");
       if (full ?? small) ropes.push({ ...rope((full ?? small)!, b), id: e.who.id });
       e.linkFor = full ? e.cap : small ? e.dots : null;
+    }
+    // the names of things, the most worth knowing first; what finds no clear place by its thing goes without
+    for (const t of [...this.tags.values()].sort((a, b) => a.tag.pri - b.tag.pri)) {
+      t.fits = false;
+      if (!this.naming && !t.tag.always) continue;
+      const r = t.tag.rect, { w, h } = t.card, cx = r.x + r.w / 2, fit = fitter(w, h);
+      const free = (q: Rect) => inside(q) && !placed.some((p) => hit(p, q)) && !solid.some((f) => hit(f, q));
+      let at = [fit(cx - w / 2, r.y + r.h + F), fit(cx - w / 2, r.y - h - F), fit(r.x + r.w + F, r.y + r.h - h), fit(r.x - w - F, r.y + r.h - h), fit(r.x, r.y + r.h + F), fit(r.x + r.w - w, r.y + r.h + F), fit(r.x, r.y - h - F),
+                fit(r.x + r.w - w, r.y - h - F), fit(r.x + r.w + F, r.y), fit(r.x - w - F, r.y), fit(cx - w / 2, r.y + r.h + h + 2 * F)].find(free) ?? null;
+      if (!at && t.tag.always) for (let gy = 0, far = Infinity; gy < 10; gy++) for (let gx = 0; gx < 10; gx++) {   // the one label that must not go missing: the nearest clear place
+        const q = fit(room.x + (gx / 9) * (room.w - w), room.y + (gy / 9) * (room.h - h)), d = gap(q, r);
+        if (d < far && d < 30 * F && free(q)) [at, far] = [q, d];
+      }
+      if (!at) continue;
+      t.fits = true;
+      [t.card.dx, t.card.dy] = [at.x - cx, at.y - r.y];
+      placed.push({ ...at, kind: "name" });
     }
     this.placed = placed;
   }

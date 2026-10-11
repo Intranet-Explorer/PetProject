@@ -19,7 +19,9 @@ import type { Grid } from "./path";
 /** What an actor may know of the room each frame. `free`: could a pet stand on this tile just now. `where`: the
  *  place of a pet, creature, thing or wall by its name, in the room's pixels. */
 export type Stage = { now: number; dt: number; fx: Fx; blocked: Grid; K: number; free: (t: Tile, me: string) => boolean; where: (name: string | null | undefined, near?: number[]) => number[] | null;
-  others: () => number[][]; book: () => number[] | null };
+  others: () => number[][]; book: () => number[] | null;
+  /** The house is not moving on just now (a replay stopped): nobody shifts or looks about. */
+  held: boolean };
 /** The step a pet is on, whether the engine says so (`act`) or an older recording only names it (`step`). */
 export type Doing = { type: string; what?: string | null; to?: string | null; acting: boolean };
 export function doing(p: PetV): Doing | null {
@@ -109,7 +111,7 @@ export class PetActor {
   /** Set by the room: a pose for a moment (a startle, a lean, a hop), over at `until`. */
   pose: { anim: PetAnim; until: number } | null = null;
   private body = new Sprite();
-  private held = new Sprite();
+  private held = [new Sprite(), new Sprite(), new Sprite(fxTexture("plus"))];   // what it carries: two bits at most, and a "+" for more
   private ring = new Graphics();
   private lean = { x: 0, y: 0, t0: 0, until: 0 };
   private turned: Dir | null = null;
@@ -123,8 +125,8 @@ export class PetActor {
 
   constructor() {
     this.body.anchor.set(0.5, 1);
-    this.held.anchor.set(0.5, 1);
-    this.c.addChild(this.ring, this.body, this.held);
+    for (const h of this.held) h.anchor.set(0.5, 1);
+    this.c.addChild(this.ring, this.body, ...this.held);
   }
 
   /** A snapshot: who it is now, and the tile it should stand on. `ms`: how long a tick takes. */
@@ -144,7 +146,7 @@ export class PetActor {
       this.away = false;
       this.idle.until = 0;
     }
-    const key = `${selected}|${this.box.w}|${(p.carrying ?? [])[0] ?? ""}|${p.emote ?? ""}|${st.K}|${p.stage}`;
+    const key = `${selected}|${this.box.w}|${(p.carrying ?? []).join()}|${p.emote ?? ""}|${st.K}|${p.stage}`;
     if (key !== this.seen) {
       this.seen = key;
       const r = this.ring.clear(), hw = Math.ceil(this.box.w / 2) + 2, sw = Math.max(3, Math.floor(this.box.w / 2) - 1);
@@ -152,9 +154,11 @@ export class PetActor {
       if (selected) {   // who the page has chosen: a ring on the floor under it, in whole pixels
         r.rect(-hw + 2, -3, 2 * hw - 4, 1).rect(-hw + 2, 2, 2 * hw - 4, 1).rect(-hw, -1, 1, 2).rect(hw - 1, -1, 1, 2).rect(-hw + 1, -2, 1, 1).rect(hw - 2, -2, 1, 1).rect(-hw + 1, 1, 1, 1).rect(hw - 2, 1, 1, 1).fill(0xffb347);
       }
-      const bit = (p.carrying ?? [])[0];
-      this.held.visible = !!bit;
-      if (bit) this.held.texture = tex(`bit.${bit}`);
+      const bits = p.carrying ?? [], small = Math.max(1, Math.round(st.K * 0.55)) / st.K;
+      this.held.forEach((h, i) => {
+        h.visible = i < 2 ? !!bits[i] : bits.length > 2;
+        if (i < 2 && bits[i]) { h.texture = tex(`bit.${bits[i]}`); h.scale.set(small); }
+      });
     }
   }
 
@@ -195,7 +199,7 @@ export class PetActor {
       this.body.x = rock ? Math.round(Math.sin(now / 90)) : 0;
       this.c.position.set(this.w.x, this.w.y);
       this.c.zIndex = this.w.y;
-      this.held.visible = false;
+      for (const h of this.held) h.visible = false;
       return;
     }
     this.c.alpha = 1;
@@ -236,8 +240,12 @@ export class PetActor {
     this.c.zIndex = this.w.y;
     const side = a === "walk.left" ? -1 : a === "walk.right" ? 1 : 0;
     // what it carries, at its side by its paws (never over its face)
-    this.held.position.set((side || 1) * (Math.ceil(this.box.w / 2) - 1), -1 - (a === "make" ? Math.floor(now / 250) % 2 : 0));
-    this.held.visible = !!(p.carrying ?? []).length && a !== "walk.up";
+    // small, down at its paws beside its body, never across its face; behind it when it walks away from us
+    const hx = (side || 1) * (Math.ceil(this.box.w / 2) + 1), hy = -(a === "make" ? Math.floor(now / 250) % 2 : 0), n = (p.carrying ?? []).length;
+    this.held[0].position.set(hx, hy);
+    this.held[1].position.set(hx + (side || 1) * 5, hy);
+    this.held[2].position.set(hx + (side || 1) * (n > 1 ? 9 : 5), hy - 3);
+    this.held.forEach((h, i) => (h.visible = a !== "walk.up" && (i < 2 ? i < n : n > 2)));
   }
 
   /** Between thoughts (§5.1): look about, glance at someone, sit a while, shift a tile if nothing holds it there. How
@@ -246,7 +254,7 @@ export class PetActor {
   private pass(st: Stage, mayShift: boolean): PetAnim {
     const now = st.now, p = this.pet, low = p.emote === "uneasy" || p.emote === "lonely", rest: PetAnim = low ? "sad" : p.emote === "tired" ? "sit" : "idle";
     if (now < this.idle.until) return this.idle.kind === "sit" ? "sit" : this.idle.kind === "mood" ? "happy" : rest;
-    if (now < this.nextIdle) return rest;
+    if (now < this.nextIdle || st.held) return rest;
     this.nextIdle = now + 2600 + Math.random() * 4200;
     const r = Math.random(), others = st.others();
     if (p.emote === "content" && r < 0.45) this.idle = { kind: "mood", until: now + 1100 };

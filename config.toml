@@ -188,7 +188,7 @@ enabled = false
 surprises = false         # let the director drop a gift in the visitor's name now and then (§6.5)
 
 [weather]
-real = false              # §6.6: fetch the Twin Cities' current weather once an hour from one fixed host
+real = true               # §6.6: fetch the Twin Cities' current weather once an hour from one fixed host (on since 11 October 2026; the turbo and test profiles turn it off)
 real_url = "https://api.open-meteo.com/v1/forecast?latitude=44.98&longitude=-93.27&current=temperature_2m,precipitation,weather_code,cloud_cover"
 
 [replay]                  # what the view was shown, kept so a run can be played back (a turbo run is replayed, not watched)

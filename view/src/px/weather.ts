@@ -12,7 +12,9 @@ import type { Rect } from "./geom";
 import type { Lamp } from "./still";
 
 export type Env = { phase: string; weather: string; season: string; power: boolean; lit: boolean; cold: boolean; night: number; day: number; sky: string | null;
-  windowTiles: Tile[]; windows: Rect[]; lamps: Lamp[]; sun: number[] | null };
+  windowTiles: Tile[]; windows: Rect[]; lamps: Lamp[]; sun: number[] | null;
+  /** Glass that is part of the walls (a glass-roofed room): weather shows on it as drops and runs, never as rain in the room. */
+  panes: Rect[] };
 
 type RGB = number[];
 const WHITE: RGB = [255, 255, 255], DEEP: RGB = [22, 34, 112], FLOOR: RGB = [84, 92, 148];
@@ -61,6 +63,9 @@ export class Light {
   private drawn = -1e9;
   private dirty = true;
   private wasFlashing = false;
+  private glassy: Rect[] = [];
+  private dip = 0;
+  private dipped = false;
   private drops: Sprite[] = [];
 
   constructor() {
@@ -80,6 +85,7 @@ export class Light {
   set(env: Env) {
     this.env = env;
     this.dirty = true;
+    this.glassy = [...env.windows, ...env.panes];
     const night = env.phase === "night", dusk = env.phase === "dusk", d = Math.max(0, Math.min(1, env.night));
     let a: RGB = WHITE;
     if (dusk) a = mix(mix(a, [255, 176, 128], 0.32), DEEP, 0.12 + d * 0.2);
@@ -111,7 +117,9 @@ export class Light {
     if (!e) return;
     const storm = e.weather === "storm", slot = Math.floor(now / 5200), at = slot * 5200 + ((slot * 7919) % 3800);
     this.flashing = storm && ((now > at && now < at + 90) || (now > at + 170 && now < at + 250));
-    if (this.dirty || this.flashing !== this.wasFlashing || now - this.drawn > (this.pools.length && this.darkness > 0.25 ? 70 : 160)) this.map(now);
+    if (this.flashing && !this.wasFlashing) this.dip = now + 260;   // the lamps flicker once at a flash
+    this.glow.alpha = now < this.dip ? 0.3 : 1;
+    if (this.dirty || this.flashing !== this.wasFlashing || (now < this.dip) !== this.dipped || now - this.drawn > (this.pools.length && this.darkness > 0.25 ? 70 : 160)) this.map(now);
     this.wasFlashing = this.flashing;
     this.fall(now);
     this.glass(now);
@@ -137,10 +145,10 @@ export class Light {
       x.fillRect(e.sun[0] - 14, e.sun[1] - 9, 28, 18);
     }
     for (const l of e.lamps) {
-      const flick = Math.round(Math.sin(now / 190 + l.x) * 0.8), dim = l.color[0] < 128;
+      const flick = Math.round(Math.sin(now / 190 + l.x) * 0.8), dim = l.color[0] < 128, weak = now < this.dip && !dim ? 0.35 : 1;
       if (dim) x.globalCompositeOperation = "darken";
       [[1, 0.22], [0.76, 0.45], [0.52, 0.7], [0.3, 0.92]].forEach(([k, t]) => {
-        x.fillStyle = css(mix(a, dim ? mul(a, [150, 150, 190]) : mix(l.color, WHITE, 0.2), t * (dim ? 1 : Math.min(1, this.darkness * 2.4))));
+        x.fillStyle = css(mix(a, dim ? mul(a, [150, 150, 190]) : mix(l.color, WHITE, 0.2), t * weak * (dim ? 1 : Math.min(1, this.darkness * 2.4))));
         disc(x, l.x, l.y, Math.round(l.r * k) + flick);
       });
       x.globalCompositeOperation = "lighten";
@@ -156,6 +164,7 @@ export class Light {
       x.drawImage(this.shape, 0, 0);
       x.globalCompositeOperation = "source-over";
     }
+    this.dipped = now < this.dip;
     this.dark.texture.source.update();
     this.drawn = now;
     this.dirty = false;
@@ -164,7 +173,7 @@ export class Light {
   /** Rain, snow or heat in a room that has sky over it: all of it in the open, a little of it on a glass roof. */
   private fall(now: number) {
     const e = this.env!, wet = e.weather === "rain" || e.weather === "storm", snow = e.weather === "snow", heat = e.weather === "heat" && e.phase === "day";
-    const n = !e.sky || !(wet || snow || heat) ? 0 : Math.round((e.sky === "open" ? 60 : 26) * (e.weather === "storm" ? 1.4 : heat ? 0.3 : 1));
+    const n = e.sky !== "open" || !(wet || snow || heat) ? 0 : Math.round(60 * (e.weather === "storm" ? 1.4 : heat ? 0.3 : 1));   // only under the open sky: under glass it would read as raining indoors
     const [x0, y0, w, h] = e.sky === "open" ? [0, 0, W, H] : [OX, 0, FX * TILE, OY + FY * TILE];
     const rain = anim("fx.rain", "kinds")?.frames.length ?? 0, snowy = anim("fx.snow", "kinds")?.frames.length ?? 0;   // the art's own drops and flakes, if it has them
     for (let i = 0; i < this.drops.length; i++) {
@@ -195,10 +204,10 @@ export class Light {
   /** On the window glass: stars and a moon on a clear night, rain running down, snow passing. */
   private glass(now: number) {
     const e = this.env!, g = this.panes.clear(), wet = e.weather === "rain" || e.weather === "storm";
-    for (const w of e.windows) {
-      const [x, y, ww, hh] = [Math.round(w.x), Math.round(w.y), Math.round(w.w), Math.round(w.h)];
+    for (const [i, w] of this.glassy.entries()) {
+      const [x, y, ww, hh] = [Math.round(w.x), Math.round(w.y), Math.round(w.w), Math.round(w.h)], wall = i >= e.windows.length;   // a pane of a glass wall keeps its own picture of the sky
       if (ww < 3 || hh < 3) continue;
-      const [color, alpha] = this.flashing ? [0xffffff, 0.9] : SKY[e.phase] ?? DULL[e.weather] ?? [0, 0];
+      const [color, alpha] = this.flashing ? [0xffffff, wall ? 0.5 : 0.9] : wall ? [0, 0] : SKY[e.phase] ?? DULL[e.weather] ?? [0, 0];
       if (alpha) g.rect(x, y, ww, hh).fill({ color, alpha });
       if (wet) {
         for (let i = 0; i < Math.max(2, ww >> 2); i++) {

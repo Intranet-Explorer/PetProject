@@ -27,3 +27,6 @@ think = "low"             # the night's thinking, capped (amendment): a short ni
 
 [model]
 night_tokens = 3000
+
+[weather]
+real = false           # a turbo run's clock is not the real one: its weather is the house's own

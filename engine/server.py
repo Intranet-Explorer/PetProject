@@ -239,7 +239,7 @@ async def sky():
     Only when `weather.real` is on. Any failure leaves the house's own weather alone."""
     import urllib.request
     from . import director
-    while cfg["weather"]["real"]:
+    while cfg["weather"]["real"] and not PAUSED:
         try:
             raw = await asyncio.to_thread(lambda: urllib.request.urlopen(cfg["weather"]["real_url"], timeout=20).read())
             director.real_weather(eng.house, director.real_kind(json.loads(raw)["current"]))

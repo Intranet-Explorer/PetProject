@@ -490,7 +490,9 @@ async def main():
         h["power_out_until"] = LONG_AGO
         assert director.real_kind({"weather_code": 95}) == "storm" and director.real_kind({"weather_code": 0, "temperature_2m": 31}) == "heat"
         director.real_weather(h, "snow")
-        assert h["weather"] == "snow" and weather_of(h, cfg, h["clock"]["day"]) == "snow" and not cfg["weather"]["real"], "the real sky is off unless asked for"
+        assert h["weather"] == "snow" and weather_of(h, cfg, h["clock"]["day"]) == "snow"
+        assert load_config()["weather"]["real"] and load_config(profile="live")["weather"]["real"] and not any(
+            load_config(profile=p_)["weather"]["real"] for p_ in ("showcase", "viewdev", "v31check")), "the real sky is on for a house on a real clock, and off in every turbo and test profile"
 
         # ---- §5.5 claims travel ----
         assert story.alike(story.content("The lamp is harsh at night."), story.content("lamps at night are harsh on you")) >= 0.5
@@ -1093,6 +1095,31 @@ async def main():
             assert set(load_config()["layouts"]) == set(cL["house"]["rooms"]), "a layout for every room type: %s" % sorted(set(cL["house"]["rooms"]) - set(load_config()["layouts"]))
         else:
             print("  (view/assets/sprites.json is not written yet: the art's own checks were skipped)")
+
+        # ---- a door a draught held shut comes free, and the pets on both sides are told ----
+        cD = load_config()
+        cD["life"]["egg_minutes"] = 0.1
+        eD, pd = engine(cD, d + "/door")
+        hD = eD.house
+        at(eD, 9)
+        await eD.tick()
+        roomD = room_of(eD, pd)
+        way = next(iter(roomD["doors"]))
+        far = hD["rooms"][roomD["doors"][way]]
+        from .world import generate_room, new_pet as new_pet_
+        generate_room(hD, cD, far["id"])
+        other = new_pet_(hD, cD, far["id"], [5, 5])
+        other.update(stage="child", born=hD["tick"], sleep={"since": hD["tick"], "day": 1, "done": True})
+        other["stage_at"].update(hatchling=0, child=0)
+        back_ = {"north": "south", "south": "north", "west": "east", "east": "west"}[way]
+        hD["shut"] = {"%s|%s" % (roomD["id"], way): hD["tick"] + 3, "%s|%s" % (far["id"], back_): hD["tick"] + 3}
+        hD["next_event"] = 10**9
+        for _ in range(12):
+            director.events(hD, cD)
+            hD["tick"] += 1
+        assert not hD["shut"] and any(e == "the %s door has come unstuck" % way for _, e in pd["events"]) and "event" in pd["news"], "the pet in the room is told: %s" % pd["events"][-2:]
+        assert other["on_wake"] == ["the %s door has come unstuck" % back_] and not any("unstuck" in e for _, e in other["events"]), "one asleep on the far side hears of it on waking"
+        eD.close()
 
         # ---- SPEC-v3.2 §9: the nuzzle loop. Two pets that would lean and accept whenever they could, for a world day ----
         class Clingy(Script):
