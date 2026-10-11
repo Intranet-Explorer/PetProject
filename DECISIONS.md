@@ -991,3 +991,38 @@ v3.1-only copy as `data.v3.1-check`).
   with everything in one room two hatchlings learned the music box's tune and sang it four times, and were
   too young for the rest when the deploy came. These are covered by the scripted checks only, and are worth
   watching for in the living house.
+
+### The deploy (11 October 2026, 16:03)
+
+`data/` was copied to `data.backup-v3.0-2026-10-11` at tick 14,190; the engine was stopped, the branch merged
+into main, the view built, and the house started again with `./run.sh start live`: about a minute and a half
+down. A second restart followed four minutes later, at night with all three pets asleep, to widen the
+look-back for doors (above). The arrivals count from tick 14,192.
+
+**What the 124 things made before kinds became** (§3.2: the standing ones, the ones that are gone, and those
+in the dead's records), by the table in `view/assets/kinds-from-parts.json`:
+
+| became | how many | from (material and the shapes of its parts) |
+|---|---|---|
+| charm | 31 | springy ring (15); springy ring+ring (4); quiet dot (3); hard ring (2); glassy ring (2); glassy dot (2); springy dot (1); springy bar+ring (1); glassy dot+ring (1) |
+| nest | 28 | soft ring (10); soft blob+ring (9); quiet ring (4); soft blob+dot (2); quiet blob+ring (2); soft blob+circle (1) |
+| cushion | 16 | soft blob (14); springy blob+ring (1); soft circle (1) |
+| candle | 9 | bright dot (5); warm dot (2); warm blob+dot (2) |
+| blanket | 9 | warm blob (7); warm blob+ring (2) |
+| bell | 8 | noisy ring (6); noisy ring+ring (1); noisy dot (1) |
+| wind chime | 5 | noisy bar+ring (4); noisy dot+ring (1) |
+| mobile | 4 | springy ring+ring+ring+ring (1); springy dot+ring+ring (1); glassy star (1); bright bar+dot+dot (1) |
+| stool | 3 | springy bar+ring (1); springy bar (1); quiet bar+dot (1) |
+| doll | 3 | soft star (2); soft dot (1) |
+| lantern | 2 | bright ring (2) |
+| stone stack | 2 | heavy ring (1); heavy dot+ring (1) |
+| vase | 2 | glassy blob+ring (1); glassy blob (1) |
+| bowl | 1 | hard circle (1) |
+| flute | 1 | noisy bar (1) |
+
+"Storm rest pulse", the small teal ring of the spec's first paragraph, is a teal charm; "quiet reed bar" is a
+green stool. Forty-two things were standing in the house and none is without a kind.
+
+**Screens of the living house** just after: `showcase/v32/live-1.png` (the workshop at night, Quiet and Chet
+asleep by a candle), `live-2.png` and `live-3.png` (the nursery and the music room), `live-4.png` (the family
+tree).
