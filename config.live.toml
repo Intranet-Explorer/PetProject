@@ -1,0 +1,31 @@
+# The live profile (11 October 2026): the family that began as the fourth showcase run, carried on where anyone
+# can watch it. Its world is the showcase profile's, unchanged (a world day is 900 ticks, a life about 16 world
+# days); only the speed it is shown at differs: off turbo, one world day to the real hour. Started with
+# ./run.sh start live. Everything below [clock] is config.showcase.toml's and must stay the same as it.
+
+[clock]
+day_seconds = 1800        # the world's own day, as the family has always lived it
+real_day_seconds = 3600   # what a visitor sees: one world day an hour, so a tick is 4 real seconds
+turbo = false
+
+[life]
+egg_minutes = 5
+lifespan_days = 13
+adult_days = 4
+egg_pull_days = 1
+neglect_days = 0.5
+
+[growth]
+child = 1.5
+youngling = 3
+adult = 5
+
+[house.events]            # merged over house.toml: a short life should still meet a few events
+every_hours = 7
+drift_after_days = 6
+
+[sleep]
+think = "low"             # the night's thinking, capped (amendment): a short night must not cost minutes of model time
+
+[model]
+night_tokens = 3000

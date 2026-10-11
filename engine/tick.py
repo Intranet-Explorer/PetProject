@@ -491,7 +491,10 @@ class Engine:
         self.path = self.dir / "house.json"
         self.house = json.loads(self.path.read_text()) if self.path.exists() else new_house(cfg)
         if "profile" in self.house and self.house["profile"] != cfg.get("profile"):
-            raise ValueError("this house was made with profile %r; start it with PET_PROFILE=%s" % (self.house["profile"], self.house["profile"] or ""))
+            # a house may move to a profile that keeps its world clock (turbo to live): its logs still read the same
+            was = load_config(profile=self.house["profile"])
+            if (was["ticks_per_day"], was["clock"]["tick_seconds"]) != (cfg["ticks_per_day"], cfg["clock"]["tick_seconds"]):
+                raise ValueError("this house was made with profile %r; start it with PET_PROFILE=%s" % (self.house["profile"], self.house["profile"] or ""))
         self.house["profile"] = cfg.get("profile")   # so the Lab and the showcase script read the logs on the same clock
         self.sched, self.minds, self.db, self.narrator, self.present, self.tasks = Scheduler(), {}, None, None, None, set()
         self.sched.most = cfg["model"]["parallel"]
@@ -537,7 +540,7 @@ class Engine:
         """Is the house at its budget of model calls (§11.1)? Counted over the last hour and the last tenth of
         one, so a burst does not starve the rest of the hour."""
         h, per_hour = self.house, self.cfg["model"]["calls_per_hour"]
-        hour = ticks(self.cfg, 3600)
+        hour = ticks(self.cfg, 3600 / self.cfg["pace"])   # a real hour: the budget is the Mac's, not the world's
         h["calls"] = [t for t in h["calls"] if t > h["tick"] - hour]
         waiting = len(self.sched.queue) + self.sched.active   # asked for but not yet answered: they will count too
         return len(h["calls"]) + waiting >= per_hour or sum(t > h["tick"] - hour // 10 for t in h["calls"]) + waiting >= per_hour / 10
@@ -554,7 +557,7 @@ class Engine:
                 failed = repr(e)[:200]
                 raise
             finally:
-                self.house["calls"] = [t for t in self.house["calls"] if t > self.house["tick"] - ticks(self.cfg, 3600)] + [self.house["tick"]]
+                self.house["calls"] = [t for t in self.house["calls"] if t > self.house["tick"] - ticks(self.cfg, 3600 / self.cfg["pace"])] + [self.house["tick"]]
                 log.put(self.db, "calls", pet=pet_id, tick=self.house["tick"], kind=kind, why=why,
                         seconds=round(time.monotonic() - t0, 2), failed=failed, chars=chars)
         return self.sched.submit(priority, run)

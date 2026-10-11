@@ -538,6 +538,25 @@ async def main():
         show = load_config(profile="showcase")
         assert show["clock"]["turbo"] and show["ticks_per_day"] * show["clock"]["tick_seconds"] * 0.7 / show["clock"]["min_think_seconds"] >= 15, \
             "at least about 15 thoughts per world day"
+
+        # ---- the live profile: the showcase's world, one world day to the real hour; a house can move to it ----
+        live = load_config(profile="live")
+        assert not live["clock"]["turbo"] and live["pace"] == 2 and show["pace"] == cfg["pace"] == 1
+        assert live["clock"]["tick_seconds"] * live["pace"] * live["ticks_per_day"] == 3600, "a world day is a real hour"
+        assert {k: live[k] for k in ("life", "growth", "sleep", "ticks_per_day")} == {k: show[k] for k in ("life", "growth", "sleep", "ticks_per_day")}, \
+            "nothing in the world differs from the showcase's"
+        moved, _ = engine(show, d + "/moved")
+        tick, pets = moved.house["tick"], json.dumps(moved.house["pets"], sort_keys=True)
+        moved.close()
+        again = Engine(live, d + "/moved", scripted)
+        assert again.house["profile"] == "live" and again.house["tick"] == tick and json.dumps(again.house["pets"], sort_keys=True) == pets, \
+            "the same family on the live clock"
+        again.close()
+        try:
+            Engine(cfg, d + "/moved", scripted)
+            raise AssertionError("a house must not be started on another world clock")
+        except ValueError:
+            pass
     print("self-check passed")
 
 

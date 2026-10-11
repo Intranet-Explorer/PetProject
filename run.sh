@@ -1,6 +1,6 @@
 #!/bin/sh
 # Run the engine as a per-user launchd agent, so a two-week run survives a closed terminal, a crash or a reboot.
-#   ./run.sh start [profile] | stop | status      (profile: showcase, for the short-life turbo run of SPEC-v3 §12)
+#   ./run.sh start [profile] | stop | status      (profile: live, the family on a one-hour world day; showcase, the same lives in turbo)
 set -e
 cd "$(dirname "$0")"
 LABEL=com.pet.engine

@@ -59,7 +59,7 @@ def pet_view(p):
         out["fade"] = min(1.0, (h["tick"] - p["died"]) * cfg["clock"]["tick_seconds"] / (cfg["life"]["fade_minutes"] * 60))
         return out
     if p["stage"] == "egg":
-        out["hatches_in"] = max(0, cfg["life"]["egg_minutes"] * 60 - (h["tick"] - p["laid"]) * cfg["clock"]["tick_seconds"])
+        out["hatches_in"] = max(0, cfg["life"]["egg_minutes"] * 60 - (h["tick"] - p["laid"]) * cfg["clock"]["tick_seconds"]) * cfg["pace"]   # in real seconds: it is read by the visitor
         return out
     plan = p["plan"]
     said = p["said"] if p["said"] and (h["tick"] - p["said"]["tick"]) * cfg["clock"]["tick_seconds"] <= 30 else None
@@ -188,7 +188,7 @@ async def loop():
         except Exception:   # one bad tick must not end a long run
             logging.exception("tick failed")
             await asyncio.sleep(0.5)
-        await asyncio.sleep(0 if turbo else max(0.0, cfg["clock"]["tick_seconds"] - (time.monotonic() - started)))
+        await asyncio.sleep(0 if turbo else max(0.0, cfg["clock"]["tick_seconds"] * cfg["pace"] - (time.monotonic() - started)))
 
 
 async def sky():

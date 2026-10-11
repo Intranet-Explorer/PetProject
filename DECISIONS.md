@@ -647,3 +647,33 @@ Given before the run's result was known, and recorded here in his words as I rea
 What this does not change: the fourth run is still left alone until it stops by the rule above, a reader
 who has not seen my account still grades it against the eight criteria before I write anything, and
 SHOWCASE.md reports each criterion as it measured, with no figure rounded toward the bar.
+
+### Tyler's second decision: the fourth family is the real family (11 October, 11:20)
+
+Replacing the one above, forty minutes into it. No more showcase runs and no fresh start: the house the
+fourth run was living in carries on as the real lineage, on a live clock with a world day of one real hour,
+and SHOWCASE.md is written from the four runs as they stand. SPEC-v3.1 is then built into the living house.
+
+- **The fourth run ends as a showcase run at world day 12.2** (tick 10,101; 11:23), by this decision and not
+  by the stopping rule set for it: two generations, the founder an elder, its one child a child, no death,
+  no errors, nothing changed under it. That state is kept as `data.showcase-4`. It cannot be judged against
+  §12.2 as a whole (criteria 2, 4, 6 and 7 need generations it had not had), and SHOWCASE.md says so. The
+  blind review of the fourth run that part 12 promised is not done as a grading of it; a reader who has not
+  seen my account checks SHOWCASE.md against the logs instead.
+- **The live clock is the showcase's world shown at another speed, not a new world.** A world day stays 900
+  ticks of 2 world seconds, so every age, lifespan, rate and logged day reads as it did. `real_day_seconds =
+  3600` in the new profile `config.live.toml` makes a tick take 4 real seconds (`cfg["pace"]` = 2), and
+  `turbo` is off, so the world no longer waits for a thought. The other way to get an hour's day, 1,800
+  ticks to the day, would have halved every pet's age and doubled what each need loses in a day. The cost of
+  this way: pets walk a tile every 4 seconds and think at most every 140 real seconds or so, half the pace
+  of the default clock.
+- **The call budget is counted over a real hour** (it is the Mac's budget), which under a pace of 2 is half
+  as many ticks as before. In turbo and on the default clock nothing changes.
+- **A house may be started under another profile if its world clock is the same** (ticks to the day and
+  seconds to the tick). It used to refuse any other profile, so that the logs were always read on the clock
+  they were written on; that is still what is checked. The engine re-stamped this house `live`; nothing in
+  `data/` was edited by hand.
+- **An egg's "hatches in" is shown to the visitor in real time** (world seconds times the pace).
+- Tried on a copy of the house for 100 seconds with the real model before the house itself was started: 24
+  ticks, three steps taken, no errors.
+- **Not verified:** a night, a birth and a death on the live clock. Every run before this was turbo.

@@ -41,6 +41,9 @@ def derive(cfg):
     cfg["ticks_per_day"] = round(cfg["clock"]["day_seconds"] / cfg["clock"]["tick_seconds"])
     cfg["ticks_per_hour"] = cfg["ticks_per_day"] / 24
     cfg["dt"] = cfg["clock"]["tick_seconds"] / 10   # standing rates are written per 10 s
+    # real seconds per world second on a live clock: a house whose world day is `day_seconds` can be watched at
+    # another speed (`real_day_seconds`) without anything in the world changing length
+    cfg["pace"] = cfg["clock"].get("real_day_seconds", cfg["clock"]["day_seconds"]) / cfg["clock"]["day_seconds"]
     cfg["W"], cfg["H"] = cfg["house"]["house"]["room_size"]
     from . import feel   # the words module keeps its thresholds as plain names; they come from here
     feel.STEPS, feel.SHIFT, feel.TREND = cfg["feel"]["steps"], cfg["feel"]["gene_shift"], cfg["feel"]["trend"]
