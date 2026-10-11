@@ -336,3 +336,11 @@ pre.packet { white-space: pre-wrap; font: 12px/1.5 var(--mono); margin: 6px 0 0;
 .arrivals li.come .icon { color: var(--good); }
 
 .card .naming { color: var(--accent); }
+
+/* A card is one height, always: a long thought used to wrap one more line and make the whole room step down a scale.
+   What does not fit is cut at a whole line; the whole of it is in the card's hover and in the pet's mind. */
+.card { height: 96px; overflow: hidden; }
+.card .txt .mood, .card .txt .wish, .card .txt .naming { display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; }
+.card .txt .mood { -webkit-line-clamp: 2; }
+.card .txt .wish { -webkit-line-clamp: 2; }
+.card .txt .naming { -webkit-line-clamp: 1; }

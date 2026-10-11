@@ -368,7 +368,7 @@ function cards(s: Snap) {
     // the whole card is the button that follows this pet; "mind" inside it is a button of its own
     li.tabIndex = 0;
     li.setAttribute("role", "button");
-    li.title = `${egg ? "Look at this egg" : `Follow ${p.label}`}: it is in ${where(p)}`;
+    li.title = `${egg ? "Look at this egg" : `Follow ${p.label}`}: it is in ${where(p)}` + (wish && !egg ? `\nIt wants: ${wish}` : "");   // the whole thought: the card shows two lines of it
     li.onclick = () => jump({ pet: p.id, room: p.room });
     li.onkeydown = (e) => { if (e.target === li && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); li.click(); } };
     return li;
