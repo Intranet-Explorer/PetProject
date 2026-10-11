@@ -1026,3 +1026,84 @@ green stool. Forty-two things were standing in the house and none is without a k
 **Screens of the living house** just after: `showcase/v32/live-1.png` (the workshop at night, Quiet and Chet
 asleep by a candle), `live-2.png` and `live-3.png` (the nursery and the music room), `live-4.png` (the family
 tree).
+
+## Part 15: v3.3, alive
+
+SPEC-v3.3, Phase A, built in a worktree on branch `v3.3` and checked on a copy of the live house before
+the one restart. Phase B is outlined only (the last section here).
+
+### Two layers (§1)
+
+- **The body is `engine/body.py`, its menu `activities.toml`.** Each tick a pet that is not carrying out a
+  step it decided picks the best-scoring activity for the moment and does it: 3 to 10 world seconds once it
+  is there, which is 6 to 20 seconds of watching on the live clock. An activity names how it is carried out
+  (`do`), and several share one, so a new activity is a few lines of data.
+- **What the body really does goes through the same code a decided step uses** (`use`, `look`, `gather`,
+  `go`, the songs), with the same wearing-off of doing a thing again. So the tuned economy is the one the
+  body lives in; it is not a second, easier one. The small effects an activity adds of its own (grooming's
+  comfort, dancing's lift) are in `activities.toml`, in the units of `config.toml [effects]`.
+- **The body is never news.** Nothing it does asks anyone to think: a body singing or babbling at another pet
+  leaves that pet's "something happened" untouched. That is what keeps the model calls where they were.
+- **The mind's reply changed shape**: `{thought, focus: {type, target, words}, steps: 0 to 3, expect}`. It
+  is no longer offered `observe`, `rest`, `move` or `follow` (the body does those); everything else it could
+  do it still can, and those stay the mind's alone. An empty `steps` means "carry on".
+- **A thought stays with the pet until the next one.** Before, an intention ended with its last step and what
+  it expected was scored then. Now the steps finish, the thought goes idle, the body carries on, and the
+  expectation is scored when the pet next thinks, over everything that happened in between. Otherwise a reply
+  with no steps would be scored over no time at all.
+- **How often a pet thinks is unchanged** (`min_think_seconds` and the rest of `[clock]`). Measured in the live
+  house before this, a pet asked about every 70 world seconds; that was already the floor, so shorter lists
+  of steps do not make it ask more often.
+- **The body never goes into a room it has not been in, never makes, speaks words, writes, gives, lays an egg
+  or opens a door that has not been opened.** It does walk into rooms it knows, at most every four world
+  minutes unless its focus sends it.
+- **Five decided steps were shortened** (make, combine, compose and teach_song from 16 world seconds to 14,
+  lay_egg from 20 to 14) so that nothing a pet does keeps it on one spot for more than 30 watched seconds.
+  This is the only change to the older tuning.
+- **Habits** are counts of activity, kind of room and time of day. A settled habit adds to that activity's
+  score there and then; a young pet watching a parent gains a fraction of a count each time; the card and the
+  life record show the strongest in words.
+- **How §0 is measured** (`engine/alive.py`, from a new log table `doing`): in watching time on the live
+  clock, whatever clock the copy ran on. "Different things" are different activities or decided steps;
+  setting out for something and never beginning it counts only as walking. "Standing still" is the longest a
+  pet spent on one spot doing one thing outside a resting pose (nap, sitting by the window, sitting with kin).
+  The script also prints the longest a pet kept to one tile across several things in a row, which §0 does not
+  ask for and decided steps (making three things at a bench) can stretch.
+
+### Order (§2)
+
+- **A thing put away is still in the room**, still itself, still doing what it does; it has `on` (the name of
+  what holds it) and takes no floor. Whatever happens to the shelf happens to what is on it: moved, they move;
+  taken apart or carried off, they are on the floor again.
+- **Where storage is**: the storeroom's crates and shelves, the workshop's bench, the cellar's shelf and the
+  attic's trunk hold things from the start; the nursery, garden, pond, greenhouse and music room have nowhere
+  until someone makes a shelf, box, basket, chest or crate (chest, crate and wall hook are new kinds). In a
+  room with nowhere, tidying sets a thing against the wall beside others of its kind.
+- **Clutter** counts what lies loose: made things not on something, not on the wall, not in their home and not
+  set straight, and half for each dropped bit. Two or fewer is tidy, more than six a mess. Only a pet more
+  orderly than the middle feels it (a small ease in a tidy room, a small wear in a mess); everyone is told
+  when a room is a mess.
+- **Tidying is not taking**: a pet moves its own things, nobody's, the dead's, and its young children's.
+- **The crowded-room limit now counts things standing on the floor.** Putting things away makes room to make
+  more, which is the point of a shelf.
+- **Areas** are named from what stands together (three cushions and blankets: a sleeping corner; a bench in
+  use: a making bench; a shelf with an heirloom on it: a keepsake shelf), once a world hour.
+- **Everyone alive at the deploy gets an `orderly` gene**, drawn from the house's seed and its own number the
+  way its other genes were, between 0.25 and 0.75.
+
+### The visitor's music and radio (§3)
+
+- **Music has four moods and each mood has one tune** (`config.toml [music] tunes`) that a pet who hears it
+  for six world minutes picks up by ear, as "the visitor's lively tune". The pack's tracks are what the
+  visitor hears; the tune is what the pets can come to sing. It is not kept before songs have come to the
+  house, because a tune is kept the way a song is.
+- **The radio control** before the pets have their box sets down a fixture, "little radio", in the room being
+  looked at while it is on, and takes it away when switched off or when their own arrives. Afterwards it
+  switches theirs. It uses the v3.1 sources and blocklist; nothing new is asked of the network.
+
+### Phase B, outlined (§7)
+
+Nothing of Phase B is built. What is there for it: activities, storage kinds and their effects are data
+(`activities.toml`, `view/assets/kinds.json`, `house.toml`); an activity may carry `needs_tool` or
+`needs_place`, which the body reads and, for now, treats as "cannot be done"; the kinds of focus are one
+tuple (`actions.FOCUS`) with the activities that serve each listed per activity.

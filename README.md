@@ -75,7 +75,9 @@ was made on the showcase's, so it is started with `live` (or `showcase`), never 
   life records, family sayings and heirlooms), **Story** (the chronicle and each day's moments), **Lab** (the
   numbers the pets never see, and the voice lab).
 - **You are the visitor**, in whichever room you are looking at: feed, talk, give a bit, move things, poke,
-  open the window, name a pet or a thing.
+  open the window, name a pet or a thing. **Music** in the header plays calm, lively, mysterious or sad music
+  to the room or the whole house (the pets feel it, may dance, and can pick the tune up); **Radio** switches
+  the pets' radio on and chooses what it plays, or sets down your own little one until they have found theirs.
 - **Replay** plays back any recorded day of any family at up to 60×.
 - **Sound** is off until you click "Sound off". Every voice is made in the browser from the pet's body, so
   families sound alike; no pet ever hears it.
@@ -86,19 +88,27 @@ was made on the showcase's, so it is started with `live` (or `showcase`), never 
 uv run python -m engine.check               # the engine's self-check (about two minutes, no model)
 uv run python -m engine.tick --days 40      # a headless lineage with scripted brains
 uv run python -m engine.metrics [data dir]  # the Lab's numbers for a run
+uv run python -m engine.alive <data dir>    # SPEC-v3.3 §0: how alive each pet was, per world day, from the log
 uv run python -m engine.showcase [data dir] # the evidence for SPEC-v3 §12's bar, from a run's logs
 cd view && npm install && npm run build     # rebuild the view; the running engine serves it as is
 node view/check-voice.ts                    # the voice's self-check (no browser, no sound)
 ```
 
-Everything tunable is in `config.toml` (the engine), `house.toml` (rooms, bits, weather, events, creatures)
-and `materials.toml` (what each property of a made thing does). The pets are told none of the numbers in any
+Everything tunable is in `config.toml` (the engine), `house.toml` (rooms, bits, weather, events, creatures),
+`materials.toml` (what each property of a made thing does) and `activities.toml` (what a pet's body does by
+itself: add an activity there and the body can do it). The pets are told none of the numbers in any
 of them.
 
 ## What a pet is given
 
 A page of plain words, a few times a minute at most: the time and weather, how it feels (four needs as
 feelings, never numbers), what it notices, what and who is in the room, what just happened, what was said to
-it, its project, what its parent told it, its beliefs, and what it can do. It answers with a thought, an
-intention of two to five steps, and what it expects to feel afterwards; the engine carries the steps out and
-scores the expectation. Nothing tells it what it is. `Mind` in the drawer shows the page as the pet saw it.
+it, its project, what its parent told it, its beliefs, and what it can do. It answers with a thought, a
+focus (what it wants to be about for the next while), up to three things it decides to do now, and what it
+expects to feel; the engine carries those out and scores the expectation when the pet next thinks.
+
+Between thoughts the pet's **body** carries on by itself, with no model asked (SPEC-v3.3): it wanders, plays,
+naps, eats, tidies, peeks through doors, sits with kin, dances when there is music, each for a few seconds, in
+character (its needs, its temperament, its habits and its mind's focus weigh the choice). The body never
+makes, speaks words, writes, gives or lays an egg: what belongs to a pet's story is still its mind's. The mind
+is told, in a line, what the body did since it last thought. Nothing tells it what it is. `Mind` in the drawer shows the page as the pet saw it.
