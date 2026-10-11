@@ -1065,6 +1065,23 @@ async def main():
             assert len(free) >= 55, "%s: room to live in (%d free tiles)" % (kind, len(free))
             assert {f["name"] for f in cL["house"]["rooms"][kind]["fixtures"]} <= set(L.get("fixtures") or {}), "%s: every fixture has its place" % kind
 
+        # ---- §1: the art is data, and the data holds together (view/assets/README.md) ----
+        art = Path(__file__).parent.parent / "view" / "assets"
+        if (art / "sprites.json").exists() and (art / "packs.json").exists():
+            sprites, packs = json.loads((art / "sprites.json").read_text()), json.loads((art / "packs.json").read_text())
+            for name, sp in sprites.items():
+                assert sp.get("pack") in packs and len(sp.get("rect", [])) == 4, "a sprite names its pack and its rectangle: %s" % name
+                assert packs[sp["pack"]].get("local") or (art / packs[sp["pack"]]["dir"] / sp["file"]).exists(), "its file is there: %s -> %s" % (name, sp["file"])
+            need = ["kind." + k for k in cL["kinds"]] + ["bit." + b for b in cL["house"]["bits"]] + ["creature." + k for k in cL["house"]["creatures"]] + \
+                ["emote." + m for m in ("tired", "uneasy", "lonely", "bored", "content")] + ["fix.dial box", "fix.heavy book", "egg", "stone"] + \
+                ["fix." + f["name"] for r in cL["house"]["rooms"].values() for f in r["fixtures"]]
+            missing = sorted({n for n in need if n not in sprites and not any(k.startswith(n + ".") for k in sprites)})
+            assert not missing, "everything the house can hold has a picture: %s" % missing
+            assert all(v.get("sprite") in sprites for v in cL["kinds"].values()), "every kind's sprite exists"
+            assert set(load_config()["layouts"]) == set(cL["house"]["rooms"]), "a layout for every room type: %s" % sorted(set(cL["house"]["rooms"]) - set(load_config()["layouts"]))
+        else:
+            print("  (view/assets/sprites.json is not written yet: the art's own checks were skipped)")
+
         # ---- SPEC-v3.2 §9: the nuzzle loop. Two pets that would lean and accept whenever they could, for a world day ----
         class Clingy(Script):
             async def act(self, packet, ctx):

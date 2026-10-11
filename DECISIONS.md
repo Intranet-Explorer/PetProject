@@ -793,3 +793,96 @@ the edition with pictures, `wikipedia_en-simple_all_maxi_2026-09.zim`, 2.9 GB, f
   inscription, the box's last words, the three songs last sung, the last passage read. The inscription a pet
   stands in front of has a line of its own that is never cut; what is sung to a pet arrives with what is said
   to it, which is never cut.
+
+### What the v3.1 check on a copy showed (§9.2), before v3.2 was laid over it
+
+A copy of the living house, on the real model, in turbo, every arrival forced: about four world days, 157
+model calls, none failed, no errors. All six discoveries came once, in order, each with its moment. The
+founder scratched "dusk" on a wall within a quarter of a day and read it back later ("The west wall says
+'dusk'…"). Quiet made up a song, "Rain Delay"; it was sung five times and taught once, and the new child Hush
+has it. The foundling hatched. A mouse had come to trust the foundling most of anyone (4.8 of the 6 that
+makes it tame). Nobody switched the box on and nobody asked the book, so "each ability used at least once by
+a real pet" was not yet met when v3.2 replaced the plan; the two are checked together (part 14). The founder
+died of old age in the copy at fifteen days.
+
+## Part 14: v3.2, a house you can read at a glance
+
+SPEC-v3.2, built in the worktree beside v3.1 and deployed with it in one restart.
+
+### How it was built
+
+- **Tyler's addition, 11 October: the art is data.** "The kind catalog, sprite mappings and room layouts should
+  live in data files, so I can add more asset packs later just by dropping them into assets-incoming and asking
+  you to map them." So `view/assets/` holds `packs.json`, `sprites.json`, `kinds.json`, `rooms/<type>.json`
+  and `sounds.json`, documented in `view/assets/README.md`; the view's code names no tile, file or pack; the
+  engine reads the part that is rules (kinds, layouts) from the same files and serves the folder at `/art/`.
+- **The pack came by Tyler's hand.** itch.io's page serves Ninja Adventure free, but the last step of the
+  download was refused on my side, so he put the zip in `assets-incoming/` (§1.3).
+- **The v3.1 view was stopped part-way** when this spec replaced it. Its lists and sound (Walls, Songbook,
+  Library, the radio's voice, song playback) compiled and were kept as the base; its drawing of the room was
+  replaced.
+- **Four builders worked at once** on parts that share no file (the art data, the room, the pets' sprites, the
+  page), against written formats, while I did the engine. A reader who had seen none of it then judged the
+  page cold (§10.3).
+
+### Things are kinds (§3)
+
+- **A recipe is `{kind, material, color, size, name, purpose}`.** The spec's list has no size. It is kept
+  because size is how "a bigger one gives more" works (materials.toml), and a pet could always choose it: it
+  was each part's size.
+- **A thing uses one bit**, the one that gives it its material. Before, it used one per part, and nearly every
+  thing had one part. Stages still limit how large a thing a pet can make (the old limit on parts: a hatchling
+  up to medium).
+- **One kind was added to the spec's list: a "treat"**, the only thing a sweet (eaten) material can
+  sensibly be.
+- **A kind rules materials out (`not`)**, and the model is only ever offered a kind in a material it can be:
+  the reply's shape has one variant per material in reach.
+- **Things that hang** (picture, mirror, shelf) go to a free place on the north wall (`wall_slots` in the
+  room's layout), take no floor, and are refused when the wall is full.
+- **Joining two things**: two of a kind stay that kind; otherwise the more complex kind of the two (each kind
+  has a rank, 1 to 3); two different kinds of the same rank make a mobile (of stuff that hangs and moves) or a
+  sculpture; and anything whose kind cannot be of the material kept is a sculpture. The spec's sentence can be
+  read more than one way; this is the reading in which "the more complex of the two" is ever used.
+- **The migration** (§3.2) is `view/assets/kinds-from-parts.json`: a thing's material and the shape of its
+  largest part decide its kind; three or more parts make a mobile or a sculpture; two parts of different
+  shapes that are noisy make a wind chime, soft a nest. Colour and size are the largest part's. It never
+  yields a kind that hangs, so nothing in the house jumps to a wall. Names, owners, materials, uses and
+  heirloom histories are untouched, and the parts are dropped. The table as it applied to the living house is
+  at the end of this part.
+- **What is written on a thing is the thing's** (v3.1 with v3.2): it is kept when the thing is given or
+  taken, moves with the thing if the thing turns up in another room, and goes when the thing is taken apart,
+  joined into another, eaten or stolen (logged as "gone with the thing").
+- A pet's picture of itself at night is still made of shapes. That is its drawing, not a thing.
+
+### Rooms (§4)
+
+- **A layout decides where fixtures stand.** An unmovable fixture is moved to its layout tile when the house
+  is loaded; one that can be moved is left where pets or the visitor put it. Tiles the scenery's furniture
+  takes are blocked for the engine too, and anything made, lying or standing there is shifted to the nearest
+  free tile once.
+- The engine still walks a pet in a straight line a tile a tick. The view draws the walk around the
+  furniture (§4: "the engine's position stays authoritative").
+
+### Life on screen, and plain words (§5, §6)
+
+- **The "now" line** is put together by the engine from who acted last, what it is doing, who is beside it
+  and the last thing anyone finished, with no model call.
+- **Every finished step is kept for about a world minute, numbered**, so the view can play it once and not
+  again after a reload.
+- **Stage words**: hatchling and child are both "little one", youngling "young one", adult "grown", elder
+  "old one". The spec gives four words for five stages. Pets are told nothing new: their own packets still
+  say what they said.
+- **Moments name what a thing is**: "Po made a yellow candle it calls 'glow'", "Po joined a candle and a bell
+  into a mobile it calls 'ringing light'", "… gave Bo a yellow candle, 'glow'".
+
+### The nuzzle loop (§9)
+
+- **Cause.** v3 stopped the loop by not offering a lean to a pet that already felt close. Part 12 made
+  closeness settle in the middle of its range, so no pet ever felt close again, and offer, accept, lean back,
+  accept came round for as long as two pets were in a room: 15 of the 34 thoughts on the live clock before
+  this was found, and 30 of 133 in the v3.1 check.
+- **Fix.** What a lean leaves is remembered between the two pets: having leaned together, neither can offer
+  the other a lean for eight world hours (`nuzzle_again_hours`), and the action is not in its list. An egg can
+  still be leaned on. Nothing else about company was touched.
+- **Check.** Two pets that lean and accept whenever they can, kept as lonely as can be for a world day, may
+  not spend more than a fifth of their thoughts on it.
