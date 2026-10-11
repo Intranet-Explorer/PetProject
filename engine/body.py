@@ -185,8 +185,8 @@ def choose(mind):
     for name, A in cfg["activities"].items():
         if STAGES.index(pet["stage"]) < STAGES.index(A.get("stage", "hatchling")) or A.get("needs_tool") or A.get("needs_place"):
             continue   # (Phase B: a tool it must carry, a place it must be at; nothing has either yet)
-        if A.get("passive") and rested >= cfg["body"]["passive_max"] and not (A["do"] == "nap" and feel.level(pet, "energy") >= 3):
-            continue   # it has sat and looked enough for now, whatever its mind is on (§0); a worn-out pet may still nap
+        if A.get("passive") and rested >= cfg["body"]["passive_max"]:
+            continue   # it has sat and looked enough for now, however tired and whatever its mind is on (§0); the night is for sleeping
         for t in targets(h, cfg, pet, mind.mem, name, A):
             s = score(h, cfg, pet, name, A, t, b, r)
             if best is None or s > best[0]:
