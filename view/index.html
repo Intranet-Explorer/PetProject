@@ -9,21 +9,16 @@
 </head>
 <body>
   <header>
-    <div class="brand">
-      <h1>Pet</h1>
-      <span id="family"></span>
-    </div>
-    <div id="status" class="chips"><span class="chip">connecting…</span></div>
-    <label class="follow">Follow <select id="follow" aria-label="Follow"></select></label>
-    <button id="replayBtn">Replay</button>
-    <button id="themeBtn" aria-label="Switch between light and dark">Dark</button>
+    <h1>Pet</h1>
+    <p id="now" role="status" aria-label="What is happening now"><span></span></p>
     <span class="sound">
-      <span id="playing" role="status"></span>
-      <button id="radioBtn" hidden>Mute radio</button>
       <button id="soundBtn" aria-pressed="false">Sound off</button>
+      <button id="musicBtn" aria-pressed="false" title="A quiet tune for the room you are looking at">Music off</button>
       <input id="volume" type="range" min="0" max="100" value="80" aria-label="Volume">
     </span>
-    <button id="drawerBtn" aria-expanded="false" aria-controls="drawer">Mind and lab</button>
+    <button id="themeBtn" aria-label="Switch between light and dark">Dark</button>
+    <button id="replayBtn">Replay</button>
+    <button id="drawerBtn" aria-expanded="false" aria-controls="drawer">Family, story, things</button>
   </header>
   <section id="replayBar" aria-label="Replay" hidden>
     <span class="chip on">Replay</span>
@@ -38,62 +33,72 @@
     <div class="top">
       <div id="stage">
         <div id="room" aria-label="The room"></div>
-        <p id="roomName"></p>
         <p id="banner" role="status" hidden></p>
         <div id="tip" hidden></div>
       </div>
       <aside id="side" aria-label="The house">
-        <div id="sky"></div>
-        <div id="map" role="group" aria-label="Rooms of the house"></div>
+        <div class="where">
+          <div id="map" role="group" aria-label="Rooms of the house"></div>
+          <div class="here">
+            <div id="sky"></div>
+            <p id="family" class="hint"></p>
+            <label class="follow">Follow <select id="follow" aria-label="Follow"></select></label>
+            <div id="status" class="chips"><span class="chip">connecting…</span></div>
+          </div>
+        </div>
         <ul id="happening"></ul>
         <h2>Lately</h2>
         <ol id="moments" aria-label="Moments"></ol>
+        <p id="playing" role="status"></p>
       </aside>
     </div>
     <ul id="cards" aria-label="Everyone in the house"></ul>
+  </main>
+  <footer>
     <section id="controls" class="controls" aria-label="Visitor controls">
-      <button id="feed">Feed</button>
-      <button id="window">Open window</button>
-      <span class="place">
+      <span class="group">
+        <button id="feed">Feed</button>
+        <button id="window">Open window</button>
+      </span>
+      <span class="group">
         <select id="giveBit" aria-label="What to give"></select>
         <button id="giveBtn">Give</button>
       </span>
-      <form id="talkForm">
-        <input id="talkText" maxlength="200" placeholder="Say or write something" aria-label="Something to say or to write">
+      <form id="talkForm" class="group">
+        <input id="talkText" maxlength="200" placeholder="Something to say, or to write on a wall" aria-label="Something to say or to write">
         <button>Say</button>
         <select id="writeOn" aria-label="Which wall to write on">
-          <option value="north wall">on the north wall</option>
-          <option value="south wall">on the south wall</option>
-          <option value="west wall">on the west wall</option>
-          <option value="east wall">on the east wall</option>
+          <option value="north wall">north wall</option>
+          <option value="south wall">south wall</option>
+          <option value="west wall">west wall</option>
+          <option value="east wall">east wall</option>
         </select>
         <button id="writeBtn" type="button">Write</button>
       </form>
-      <span id="chosen" class="place" hidden>
+      <span id="chosen" class="group">
         <span id="chosenWhat"></span>
         <button id="poke">Poke</button>
-        <form id="nameForm"><input id="nameText" maxlength="16" placeholder="a name" aria-label="A name"><button>Name it</button></form>
-        <button id="chosenDone" aria-label="Let go">×</button>
+        <form id="nameForm"><input id="nameText" maxlength="16" placeholder="a name" aria-label="A name"><button>Name</button></form>
+        <button id="chosenDone" aria-label="Let go" hidden>×</button>
       </span>
+      <button id="radioBtn" hidden>Mute radio</button>
     </section>
     <section id="ended" hidden>
       <p>The house is quiet. Nobody is left of this family; their stones and their things are still here.</p>
       <button id="newLineage">Start a new family</button>
     </section>
-  </main>
-  <aside id="drawer" hidden aria-label="Mind and lab">
+  </footer>
+  <aside id="drawer" hidden aria-label="Family, story, things and the lab">
     <div class="tabs" role="tablist">
-      <button role="tab" data-tab="mind">Mind</button>
-      <button role="tab" data-tab="things">Things</button>
       <button role="tab" data-tab="family">Family</button>
       <button role="tab" data-tab="story">Story</button>
+      <button role="tab" data-tab="things">Things</button>
       <button role="tab" data-tab="lab">Lab</button>
       <button id="drawerClose" aria-label="Close">×</button>
     </div>
-    <section class="panel" data-panel="mind"></section>
-    <section class="panel" data-panel="things" hidden></section>
-    <section class="panel" data-panel="family" hidden></section>
+    <section class="panel" data-panel="family"></section>
     <section class="panel" data-panel="story" hidden></section>
+    <section class="panel" data-panel="things" hidden></section>
     <section class="panel" data-panel="lab" hidden></section>
   </aside>
   <script type="module" src="/src/main.ts"></script>

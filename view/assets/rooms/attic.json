@@ -1,0 +1,35 @@
+{
+ "type": "attic",
+ "floor": [
+  [null, null, null, null, null, null, null, null, null, null, null, null, null, null],
+  [null, null, null, null, null, null, null, null, null, null, null, null, null, null],
+  [null, "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", null],
+  [null, "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", null],
+  [null, "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", null],
+  [null, "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", null],
+  [null, "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", null],
+  [null, "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", null],
+  [null, "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", null],
+  [null, "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", "tile.floor.boards.old", null],
+  [null, null, null, null, null, null, null, null, null, null, null, null, null, null]
+ ],
+ "walls": [
+  ["tile.wall.attic.nw", "tile.wall.attic.n0", "tile.wall.attic.n0", "tile.wall.attic.n0", "tile.wall.attic.n0", "tile.wall.attic.n0", "tile.wall.attic.n0", "tile.wall.attic.n0", "tile.wall.attic.n0", "tile.wall.attic.n0", "tile.wall.attic.n0", "tile.wall.attic.n0", "tile.wall.attic.n0", "tile.wall.attic.ne"],
+  ["tile.wall.attic.w", "tile.wall.attic.n1", "tile.wall.attic.n1", "tile.wall.attic.n1", "tile.wall.attic.n1", "tile.wall.attic.n1", "tile.wall.attic.n1", "tile.wall.attic.n1", "tile.wall.attic.n1", "tile.wall.attic.n1", "tile.wall.attic.n1", "tile.wall.attic.n1", "tile.wall.attic.n1", "tile.wall.attic.e"],
+  ["tile.wall.attic.w", null, null, null, null, null, null, null, null, null, null, null, null, "tile.wall.attic.e"],
+  ["tile.wall.attic.w", null, null, null, null, null, null, null, null, null, null, null, null, "tile.wall.attic.e"],
+  ["tile.wall.attic.w", null, null, null, null, null, null, null, null, null, null, null, null, "tile.wall.attic.e"],
+  ["tile.wall.attic.w", null, null, null, null, null, null, null, null, null, null, null, null, "tile.wall.attic.e"],
+  ["tile.wall.attic.w", null, null, null, null, null, null, null, null, null, null, null, null, "tile.wall.attic.e"],
+  ["tile.wall.attic.w", null, null, null, null, null, null, null, null, null, null, null, null, "tile.wall.attic.e"],
+  ["tile.wall.attic.w", null, null, null, null, null, null, null, null, null, null, null, null, "tile.wall.attic.e"],
+  ["tile.wall.attic.w", null, null, null, null, null, null, null, null, null, null, null, null, "tile.wall.attic.e"],
+  ["tile.wall.attic.sw", "tile.wall.attic.s", "tile.wall.attic.s", "tile.wall.attic.s", "tile.wall.attic.s", "tile.wall.attic.s", "tile.wall.attic.s", "tile.wall.attic.s", "tile.wall.attic.s", "tile.wall.attic.s", "tile.wall.attic.s", "tile.wall.attic.s", "tile.wall.attic.s", "tile.wall.attic.se"]
+ ],
+ "decor": [{"sprite": "decor.roof.left", "at": [0, -1], "layer": "wall"}, {"sprite": "decor.roof.right", "at": [11, -1], "layer": "wall"}, {"sprite": "decor.cobweb", "at": [3, -2], "layer": "wall"}, {"sprite": "decor.cobweb.right", "at": [8, -2], "layer": "wall"}, {"sprite": "decor.crate", "at": [0, 0], "layer": "floor"}, {"sprite": "decor.crate", "at": [0, 1], "layer": "floor"}, {"sprite": "decor.dresser.wide", "at": [2, 0], "layer": "floor"}, {"sprite": "decor.drawers", "at": [11, 0], "layer": "floor"}, {"sprite": "decor.basket", "at": [11, 1], "layer": "floor"}, {"sprite": "decor.sack", "at": [0, 7], "layer": "floor"}, {"sprite": "decor.barrel.small", "at": [11, 7], "layer": "floor"}],
+ "fixtures": {"skylight": {"pos": [5, 0], "sprite": "fix.skylight", "wall": true}, "trunk": {"pos": [1, 0], "sprite": "fix.trunk"}, "rocking chair": {"pos": [10, 6], "sprite": "fix.rocking chair"}, "sun shaft": {"pos": [5, 3], "sprite": "fix.sun shaft"}, "heavy book": {"pos": [9, 0], "sprite": "fix.heavy book"}},
+ "blocked": [[0, 0], [0, 1], [2, 0], [3, 0], [11, 0], [11, 1], [0, 7], [11, 7]],
+ "wall_slots": [[4, 0], [6, 0], [8, 0]],
+ "bit_spots": {"feather": [[2, 2], [3, 5], [8, 6], [6, 6]], "cloth": [[1, 2], [2, 1], [9, 2]], "wood": [[10, 2], [4, 6], [1, 6]]},
+ "light": {"window": [[5, 0]], "night": 0.6}
+}

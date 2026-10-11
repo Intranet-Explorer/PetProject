@@ -1,0 +1,113 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Pet art preview</title>
+<!-- A look at the art data by itself: every room layout, every kind in every colour, and the small pieces.
+     Serve this folder (python3 -m http.server, then /preview.html) or open /art/preview.html on a running house.
+     #rooms, #kinds, #bits or one room's type such as #pond (nothing: everything); ?k=4 for another scale.
+     Not part of the view. -->
+<style>
+  body { margin: 12px; background: #2a2f33; color: #e8e2d6; font: 12px/1.3 ui-monospace, Menlo, monospace; }
+  h2 { font-size: 13px; margin: 14px 0 6px; } canvas { image-rendering: pixelated; display: block; }
+  .grid { display: flex; flex-wrap: wrap; gap: 10px; } figure { margin: 0; } figcaption { margin-bottom: 2px; }
+  .sand { background: #cbb28c; color: #222; padding: 6px; } .cell { width: 104px; overflow: hidden; }
+</style>
+<body>
+<script type="module">
+const K = +new URLSearchParams(location.search).get("k") || 3, want = location.hash.slice(1);
+const J = async (f) => (await fetch(f)).json();
+const [packs, sprites, kinds] = await Promise.all(["packs.json", "sprites.json", "kinds.json"].map(J));
+const COLOURS = { red: "#d9483b", orange: "#f08a2e", yellow: "#f2c94c", green: "#3f9b63", teal: "#2f8f8a", blue: "#4a7fc1",
+  purple: "#8a6fb0", pink: "#e58fb1", brown: "#8a5a36", white: "#f3f1e8", grey: "#8d9793", black: "#26302c" };   // view/src/things.ts
+const DOORS = { north: [7, 0], south: [7, 7], west: [0, 5], east: [11, 4] };   // house.toml
+const images = {};
+const image = (s) => images[s.pack + s.file] ??= new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = encodeURI(`${packs[s.pack].dir}/${s.file}`); });
+
+// the recolouring of view/src/sprite.ts, so that what is judged here is what the house shows
+const hsl = (r, g, b) => { const max = Math.max(r, g, b), min = Math.min(r, g, b), l = (max + min) / 510, d = (max - min) / 255; if (!d) return [0, 0, l];
+  const h = max === r ? ((g - b) / (max - min) + 6) % 6 : max === g ? (b - r) / (max - min) + 2 : (r - g) / (max - min) + 4; return [h / 6, d / (1 - Math.abs(2 * l - 1)), l]; };
+const rgb = (h, s, l) => { const a = s * Math.min(l, 1 - l), f = (n) => { const k = (n + h * 12) % 12; return Math.round(255 * (l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1)))); }; return [f(0), f(8), f(4)]; };
+function recolor(px, hex) {
+  const [h, s, tl] = hsl(parseInt(hex.slice(1, 3), 16), parseInt(hex.slice(3, 5), 16), parseInt(hex.slice(5, 7), 16)), lift = s < 0.15 ? (tl - 0.5) * 0.6 : (tl - 0.5) * 0.15, d = px.data;
+  for (let i = 0; i < d.length; i += 4) { if (!d[i + 3]) continue; const l = hsl(d[i], d[i + 1], d[i + 2])[2]; if (l < 0.2 || l > 0.9) continue;
+    [d[i], d[i + 1], d[i + 2]] = rgb(h, s, Math.max(0.2, Math.min(0.9, l + lift))); }
+  return px;
+}
+/** One frame of a sprite as a small canvas, recoloured if it may be. */
+async function frame(name, { colour, cell = [0, 0], flip } = {}) {
+  const s = sprites[name], c = document.createElement("canvas"); if (!s) { c.width = c.height = 16; return c; }
+  const [x, y, w, h] = s.rect, g = c.getContext("2d", { willReadFrequently: true }); c.width = w; c.height = h;
+  if (flip) { g.translate(w, 0); g.scale(-1, 1); }
+  g.drawImage(await image(s), x + cell[0] * w, y + cell[1] * h, w, h, 0, 0, w, h);
+  if (colour && s.tint === "hue") g.putImageData(recolor(g.getImageData(0, 0, w, h), COLOURS[colour]), 0, 0);
+  return c;
+}
+/** Draw a sprite for floor tile (x, y) of a room canvas: its anchor pixel on the tile's top-left corner. */
+async function put(g, name, x, y, opt) {
+  const s = sprites[name]; if (!s) { g.strokeStyle = "#f0f"; g.strokeRect((x + 1) * 16 + .5, (y + 2) * 16 + .5, 15, 15); console.warn("no sprite", name); return; }
+  const [ax, ay] = s.anchor ?? [0, s.rect[3] - 16]; g.drawImage(await frame(name, opt), (x + 1) * 16 - ax, (y + 2) * 16 - ay);
+}
+const big = (small, k = K) => { const c = document.createElement("canvas"); c.width = small.width * k; c.height = small.height * k; const g = c.getContext("2d"); g.imageSmoothingEnabled = false; g.drawImage(small, 0, 0, c.width, c.height); return c; };
+const section = (title, cls = "grid") => { const h = document.createElement("h2"); h.textContent = title; const d = document.createElement("div"); d.className = cls; document.body.append(h, d); return d; };
+const figure = (to, caption, canvas, cls = "") => { const f = document.createElement("figure"); f.className = cls; f.innerHTML = `<figcaption>${caption}</figcaption>`; f.append(canvas); to.append(f); };
+
+async function room(type, n) {
+  const L = await J(`rooms/${type}.json`), c = document.createElement("canvas"), g = c.getContext("2d"); c.width = 224; c.height = 176;
+  g.fillStyle = "#141b1b"; g.fillRect(0, 0, 224, 176);
+  for (const grid of [L.floor, L.walls]) for (let y = 0; y < 11; y++) for (let x = 0; x < 14; x++) if (grid[y][x]) await put(g, grid[y][x], x - 1, y - 2);
+  for (const d of L.decor.filter((d) => d.layer === "wall")) await put(g, d.sprite, ...d.at);
+  for (const [i, wall] of Object.keys(DOORS).entries()) await put(g, `door.${L.doors ? L.doors + "." : ""}${wall}.${["shut", "open", "stuck", "shut"][(i + n) % 4]}`, ...DOORS[wall]);
+  for (const d of L.decor.filter((d) => d.layer === "floor")) await put(g, d.sprite, ...d.at);
+  const things = Object.values(L.fixtures).map((f) => ({ at: f.pos, sprite: f.sprite }));   // then a few made things and bits, to see them in place
+  const taken = new Set([...L.blocked, ...things.map((t) => t.at), ...Object.values(DOORS)].map(String));
+  for (const row of L.floor) for (const [x, name] of row.entries()) if (name?.startsWith("tile.pond")) taken.add(String([x - 1, L.floor.indexOf(row) - 2]));
+  const free = []; for (let y = 2; y < 7; y++) for (let x = 1; x < 11; x++) if (!taken.has(String([x, y]))) free.push([x, y]);
+  const names = Object.keys(kinds).filter((k) => !kinds[k].wall), cols = Object.keys(COLOURS);
+  for (let i = 0; i < 4; i++) things.push({ at: free[(i * 11 + 5 + n) % free.length], sprite: kinds[names[(n * 4 + i) % names.length]].sprite, colour: cols[(n * 5 + i * 7) % 12] });
+  for (const [i, slot] of L.wall_slots.entries()) things.push({ at: slot, sprite: kinds[["picture", "mirror", "shelf", "picture"][i]].sprite, colour: cols[(n + i * 3) % 12] });
+  for (const [bit, spots] of Object.entries(L.bit_spots ?? {})) for (const at of spots.slice(0, 2)) things.push({ at, sprite: "bit." + bit });
+  for (const t of things.sort((a, b) => a.at[1] - b.at[1] || a.at[0] - b.at[0])) await put(g, t.sprite, ...t.at, t);
+  for (const d of L.decor.filter((d) => d.layer === "top")) await put(g, d.sprite, ...d.at);
+  return big(c);
+}
+/** A nine-slice sprite stretched to w x h source pixels, with its tail under it. */
+async function bubble(name, w, h, text) {
+  const s = sprites[name], src = await frame(name), [l, t, r, b] = s.slice, c = document.createElement("canvas"), g = c.getContext("2d"), [sw, sh] = [s.rect[2], s.rect[3]];
+  c.width = w; c.height = h + 10; g.imageSmoothingEnabled = false;
+  const xs = [[0, l, 0, l], [l, sw - l - r, l, w - l - r], [sw - r, r, w - r, r]], ys = [[0, t, 0, t], [t, sh - t - b, t, h - t - b], [sh - b, b, h - b, b]];
+  for (const [sx, swd, dx, dw] of xs) for (const [sy, shd, dy, dh] of ys) g.drawImage(src, sx, sy, swd, shd, dx, dy, dw, dh);
+  if (sprites[name + ".tail"]) g.drawImage(await frame(name + ".tail"), 8, name.endsWith("say") ? h - 1 : h + 1);
+  const out = big(c), og = out.getContext("2d"); og.fillStyle = "#141b1b"; og.font = `${4 * K}px ui-monospace, Menlo, monospace`; og.fillText(text, 5 * K, (h / 2 + 2) * K);
+  return out;
+}
+
+const types = Object.keys(sprites).filter((n) => n.startsWith("icon.room.") && n !== "icon.room.unknown").map((n) => n.slice(10));
+if (!want || want === "rooms" || types.includes(want)) {
+  const to = section("rooms (floor, walls, wall decor, doors shut/open/stuck, floor decor, then fixtures with a few made things and bits)");
+  for (const [n, type] of types.entries()) if (!types.includes(want) || want === type) figure(to, type, await room(type, n));
+}
+if (!want || want === "kinds") {
+  const to = section("every kind in every colour", "sand"), names = Object.keys(kinds), cols = Object.keys(COLOURS), cw = 16 * K + 6;
+  const c = document.createElement("canvas"), g = c.getContext("2d"); c.width = 100 + cols.length * cw; c.height = 16 + names.length * cw; g.imageSmoothingEnabled = false; g.font = "11px ui-monospace, Menlo, monospace"; g.fillStyle = "#222";
+  cols.forEach((col, j) => g.fillText(col, 100 + j * cw, 11));
+  for (const [i, name] of names.entries()) { g.fillText(name, 2, 16 + i * cw + cw / 2 + 4); for (const [j, col] of cols.entries()) g.drawImage(big(await frame(kinds[name].sprite, { colour: col })), 100 + j * cw, 16 + i * cw); }
+  to.append(c);
+}
+if (!want || want === "bits") {
+  for (const [title, test] of [["fixtures and their states", /^fix\./], ["scenery", /^decor\./], ["doors", /^door\./], ["bits", /^bit\./], ["small creatures, the egg, a stone, a crate (every animation frame)", /^(creature\.|egg|stone|crate)/],
+    ["feelings", /^emote\./], ["effects (every frame)", /^fx\./], ["room icons", /^icon\./]]) {
+    const to = section(title, "grid sand");
+    for (const name of Object.keys(sprites).filter((n) => test.test(n))) {
+      const s = sprites[name], row = document.createElement("canvas"), cells = s.anims ? Object.entries(s.anims).flatMap(([a, v]) => v.frames.map((cell) => ({ cell, flip: v.flip }))) : [{}];
+      const k = Math.max(1, Math.min(K, Math.floor(96 / s.rect[3]))), g = row.getContext("2d"); row.width = cells.length * (s.rect[2] * k + 2); row.height = s.rect[3] * k;
+      for (const [i, opt] of cells.entries()) g.drawImage(big(await frame(name, { ...opt, colour: s.tint ? "teal" : null }), k), i * (s.rect[2] * k + 2), 0);
+      figure(to, name + (s.anims ? " · " + Object.keys(s.anims).join(" ") : ""), row, s.anims ? "" : "cell");
+    }
+  }
+  const to = section("bubbles and frames (nine-slice)", "grid sand");
+  figure(to, "ui.bubble.say", await bubble("ui.bubble.say", 96, 22, "wants to show Mother the bead"));
+  figure(to, "ui.bubble.think", await bubble("ui.bubble.think", 80, 22, "where did it go?"));
+  figure(to, "ui.plate", await bubble("ui.plate", 44, 14, ""));
+  figure(to, "ui.panel", await bubble("ui.panel", 90, 44, ""));
+}
+document.title = "ready";
+</script>

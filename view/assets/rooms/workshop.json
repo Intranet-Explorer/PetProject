@@ -1,0 +1,35 @@
+{
+ "type": "workshop",
+ "floor": [
+  [null, null, null, null, null, null, null, null, null, null, null, null, null, null],
+  [null, null, null, null, null, null, null, null, null, null, null, null, null, null],
+  [null, "tile.floor.cobble.nw", "tile.floor.cobble.n", "tile.floor.cobble.n", "tile.floor.cobble.n", "tile.floor.cobble.n", "tile.floor.cobble.n", "tile.floor.cobble.n", "tile.floor.cobble.n", "tile.floor.cobble.n", "tile.floor.cobble.n", "tile.floor.cobble.n", "tile.floor.cobble.ne", null],
+  [null, "tile.floor.cobble.w", "tile.floor.cobble.c", "tile.floor.cobble.c", "tile.floor.cobble.c", "tile.floor.cobble.c", "tile.floor.cobble.c", "tile.floor.cobble.c", "tile.floor.cobble.c", "tile.floor.cobble.c", "tile.floor.cobble.c", "tile.floor.cobble.c", "tile.floor.cobble.e", null],
+  [null, "tile.floor.cobble.w", "tile.floor.cobble.c", "tile.floor.cobble.c", "tile.floor.cobble.c", "tile.floor.cobble.c", "tile.floor.cobble.c", "tile.floor.cobble.c", "tile.floor.cobble.c", "tile.floor.cobble.c", "tile.floor.cobble.c", "tile.floor.cobble.c", "tile.floor.cobble.e", null],
+  [null, "tile.floor.cobble.w", "tile.floor.cobble.c", "tile.floor.cobble.c", "tile.floor.cobble.c", "tile.floor.cobble.c", "tile.floor.cobble.c", "tile.floor.cobble.c", "tile.floor.cobble.c", "tile.floor.cobble.c", "tile.floor.cobble.c", "tile.floor.cobble.c", "tile.floor.cobble.e", null],
+  [null, "tile.floor.cobble.w", "tile.floor.cobble.c", "tile.floor.cobble.c", "tile.floor.cobble.c", "tile.floor.cobble.c", "tile.floor.cobble.c", "tile.floor.cobble.c", "tile.floor.cobble.c", "tile.floor.cobble.c", "tile.floor.cobble.c", "tile.floor.cobble.c", "tile.floor.cobble.e", null],
+  [null, "tile.floor.cobble.w", "tile.floor.cobble.c", "tile.floor.cobble.c", "tile.floor.cobble.c", "tile.floor.cobble.c", "tile.floor.cobble.c", "tile.floor.cobble.c", "tile.floor.cobble.c", "tile.floor.cobble.c", "tile.floor.cobble.c", "tile.floor.cobble.c", "tile.floor.cobble.e", null],
+  [null, "tile.floor.cobble.w", "tile.floor.cobble.c", "tile.floor.cobble.c", "tile.floor.cobble.c", "tile.floor.cobble.c", "tile.floor.cobble.c", "tile.floor.cobble.c", "tile.floor.cobble.c", "tile.floor.cobble.c", "tile.floor.cobble.c", "tile.floor.cobble.c", "tile.floor.cobble.e", null],
+  [null, "tile.floor.cobble.sw", "tile.floor.cobble.s", "tile.floor.cobble.s", "tile.floor.cobble.s", "tile.floor.cobble.s", "tile.floor.cobble.s", "tile.floor.cobble.s", "tile.floor.cobble.s", "tile.floor.cobble.s", "tile.floor.cobble.s", "tile.floor.cobble.s", "tile.floor.cobble.se", null],
+  [null, null, null, null, null, null, null, null, null, null, null, null, null, null]
+ ],
+ "walls": [
+  ["tile.wall.panel.nw", "tile.wall.panel.n0", "tile.wall.panel.n0", "tile.wall.panel.n0", "tile.wall.panel.n0", "tile.wall.panel.n0", "tile.wall.panel.n0", "tile.wall.panel.n0", "tile.wall.panel.n0", "tile.wall.panel.n0", "tile.wall.panel.n0", "tile.wall.panel.n0", "tile.wall.panel.n0", "tile.wall.panel.ne"],
+  ["tile.wall.panel.w", "tile.wall.panel.n1", "tile.wall.panel.n1", "tile.wall.panel.n1", "tile.wall.panel.n1", "tile.wall.panel.n1", "tile.wall.panel.n1", "tile.wall.panel.n1", "tile.wall.panel.n1", "tile.wall.panel.n1", "tile.wall.panel.n1", "tile.wall.panel.n1", "tile.wall.panel.n1", "tile.wall.panel.e"],
+  ["tile.wall.panel.w", null, null, null, null, null, null, null, null, null, null, null, null, "tile.wall.panel.e"],
+  ["tile.wall.panel.w", null, null, null, null, null, null, null, null, null, null, null, null, "tile.wall.panel.e"],
+  ["tile.wall.panel.w", null, null, null, null, null, null, null, null, null, null, null, null, "tile.wall.panel.e"],
+  ["tile.wall.panel.w", null, null, null, null, null, null, null, null, null, null, null, null, "tile.wall.panel.e"],
+  ["tile.wall.panel.w", null, null, null, null, null, null, null, null, null, null, null, null, "tile.wall.panel.e"],
+  ["tile.wall.panel.w", null, null, null, null, null, null, null, null, null, null, null, null, "tile.wall.panel.e"],
+  ["tile.wall.panel.w", null, null, null, null, null, null, null, null, null, null, null, null, "tile.wall.panel.e"],
+  ["tile.wall.panel.w", null, null, null, null, null, null, null, null, null, null, null, null, "tile.wall.panel.e"],
+  ["tile.wall.panel.sw", "tile.wall.panel.s", "tile.wall.panel.s", "tile.wall.panel.s", "tile.wall.panel.s", "tile.wall.panel.s", "tile.wall.panel.s", "tile.wall.panel.s", "tile.wall.panel.s", "tile.wall.panel.s", "tile.wall.panel.s", "tile.wall.panel.s", "tile.wall.panel.s", "tile.wall.panel.se"]
+ ],
+ "decor": [{"sprite": "decor.tool.hammer", "at": [4, -1], "layer": "wall"}, {"sprite": "decor.tool.sickle", "at": [5, -1], "layer": "wall"}, {"sprite": "decor.tool.pickaxe", "at": [9, -1], "layer": "wall"}, {"sprite": "decor.tool.shovel", "at": [10, -1], "layer": "wall"}, {"sprite": "decor.tool.axe", "at": [11, -1], "layer": "wall"}, {"sprite": "decor.counter", "at": [9, 0], "layer": "floor"}, {"sprite": "decor.anvil", "at": [9, 2], "layer": "floor"}, {"sprite": "decor.plank.tall", "at": [0, 0], "layer": "floor"}, {"sprite": "decor.planks", "at": [0, 1], "layer": "floor"}, {"sprite": "decor.logs", "at": [0, 7], "layer": "floor"}, {"sprite": "decor.crate", "at": [11, 7], "layer": "floor"}, {"sprite": "decor.bucket", "at": [10, 7], "layer": "floor"}, {"sprite": "decor.barrel.small", "at": [11, 6], "layer": "floor"}, {"sprite": "decor.twigs", "at": [5, 2], "layer": "floor"}, {"sprite": "decor.twigs.small", "at": [6, 3], "layer": "floor"}, {"sprite": "decor.twigs.small", "at": [3, 2], "layer": "floor"}, {"sprite": "decor.twigs", "at": [8, 3], "layer": "floor"}, {"sprite": "decor.twigs.small", "at": [4, 4], "layer": "floor"}, {"sprite": "decor.twigs.small", "at": [10, 3], "layer": "floor"}],
+ "fixtures": {"workbench": {"pos": [4, 0], "sprite": "fix.workbench"}, "work lamp": {"pos": [6, 0], "sprite": "fix.work lamp"}, "stool": {"pos": [5, 1], "sprite": "fix.stool"}, "window": {"pos": [1, 0], "sprite": "fix.window", "wall": true}},
+ "blocked": [[5, 0], [9, 0], [10, 0], [11, 0], [9, 2], [0, 0], [0, 1], [1, 1], [0, 7], [11, 7], [10, 7], [11, 6]],
+ "wall_slots": [[2, 0], [3, 0], [8, 0]],
+ "bit_spots": {"wire": [[8, 1], [10, 2], [7, 2], [3, 1]], "wood": [[1, 2], [2, 3], [2, 1]], "metal": [[10, 3], [8, 2], [9, 3]]},
+ "light": {"window": [[1, 0]], "night": 0.55}
+}

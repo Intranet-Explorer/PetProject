@@ -702,6 +702,8 @@ def arrive_book(house, cfg):
         return False
     attic = next((x for x in found(house) if x["type"] == "attic"), None)
     room = put_or_wait(house, cfg, "attic", "heavy book", {"fix": {"book": True}}, None if attic else storeroom(house) or house["rooms"][house["start"]])
+    from .world import layout
+    layout(cfg, room)   # it stands where that room's layout has a place for it
     for p in awake_pets(house, room["id"]):
         add_event(house, p, "there is a heavy book here that was not here before, too heavy to move; its pages are full of small writing")
         p["news"].append("event")

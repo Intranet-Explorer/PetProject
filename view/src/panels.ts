@@ -1,22 +1,31 @@
-// The drawer (SPEC-v3 §10.1): Mind and Things here; Family, Story and Lab in their own files.
-// The numbers shown here are for the visitor. No pet ever sees them.
+// The drawer (SPEC-v3.2 §6): Family, Story, Things and Lab. Things is here, and the part of the Lab that is one
+// pet's mind; Family, Story and the rest of the Lab are in their own files.
+// The numbers shown in the Lab are for the visitor. No pet ever sees them.
 import { bar, dayOf, el, face, fold, link, plural, radial, refill, when, whole } from "./dom";
 import type { Ctx, Kid } from "./dom";
 import { family, record } from "./family";
+import { aThing, thingSprite } from "./sprite";
 import { lab, story } from "./story";
 import { thingPicture } from "./things";
 import { NEEDS } from "./types";
 import type { Made } from "./types";
 
 const MARK: Record<string, string> = { correct: "✓ as it expected", wrong: "✗ not as it expected", unscorable: "no way to tell" };
-const TABS: Record<string, (c: Ctx) => Kid[]> = { mind, things, family, story, lab };
-/** Where each tab's extra facts come from. They are asked for only while the tab is open. */
-export const SOURCE: Record<string, (c: Ctx) => string | null> = {
-  mind: (c) => (c.sel ? `/api/pet/${c.sel}` : null), things: () => "/api/things", family: () => "/api/family", story: () => "/api/story", lab: () => "/api/lab",
-};
+const TABS: Record<string, (c: Ctx) => Kid[]> = { family, story, things, lab: labTab };
+const recall = (key: string, or: string) => { try { return localStorage.getItem(key) ?? or; } catch { return or; } };
+const remember = (key: string, v: string) => { try { localStorage.setItem(key, v); } catch { /* not remembered */ } };
+let labView = recall("lab", "mind");       // the Lab opens on one pet's mind, or on the whole house's numbers
+let thingsBy = recall("things", "room");   // the Things tab: by room, or by who made them
+/** The Lab, turned to one pet's mind: what a pet's card opens. */
+export const showMind = () => { labView = "mind"; remember("lab", labView); };
 
-/** The tabs that also show what SPEC-v3.1 added: the walls, the songbook, the library, the radio, the discoveries. */
-export const MORE: Record<string, string> = { family: "/api/v31", story: "/api/v31" };
+/** Where each tab's facts come from, by the name they are kept under. Asked for only while the tab is open. */
+export function sources(tab: string, c: Ctx): Record<string, string | null> {
+  if (tab === "family") return { family: "/api/family", v31: "/api/v31" };   // v31: the walls, the songbook, the library, the radio, the discoveries
+  if (tab === "story") return { story: "/api/story", v31: "/api/v31" };
+  if (tab === "things") return { things: "/api/things" };
+  return labView === "mind" ? { mind: c.sel ? `/api/pet/${c.sel}` : null } : { lab: "/api/lab" };
+}
 
 export function renderDrawer(tab: string, c: Ctx) {
   const panel = document.querySelector<HTMLElement>(`[data-panel="${tab}"]`);
@@ -28,12 +37,33 @@ export function renderDrawer(tab: string, c: Ctx) {
 const quote = (text: string, cls = "") => el("blockquote", cls, text);
 const section = (title: string, ...kids: Kid[]) => (kids.some((k) => k) ? el("section", "", el("h3", "", title), ...kids) : null);
 const list = (cls: string, items: Kid[], none: string) => el("ul", cls, ...(items.length ? items : [el("li", "empty", none)]));
+/** Two or three choices side by side, one of them pressed. */
+function choice(label: string, now: string, options: [string, string][], pick: (v: string) => void) {
+  const box = el("div", "choice", ...options.map(([v, text]) => {
+    const b = link(text, () => pick(v), "");
+    b.setAttribute("aria-pressed", String(v === now));
+    return b;
+  }));
+  box.setAttribute("role", "group");
+  box.setAttribute("aria-label", label);
+  return box;
+}
 
 function clock(sec: number) {
   return `${Math.floor(sec / 60)}:${String(Math.floor(sec % 60)).padStart(2, "0")}`;
 }
 
-// ---- Mind: the chosen pet ----
+// ---- Lab: one pet's mind, or the whole house's numbers ----
+
+function labTab(c: Ctx): Kid[] {
+  const pick = choice("What the Lab shows", labView, [["mind", "One pet's mind"], ["house", "The whole house"]], (v) => { labView = v; remember("lab", v); c.redraw(); });
+  if (labView !== "mind") return [pick, ...lab(c)];
+  const who = el("select", "") as HTMLSelectElement, pets = c.snap.pets.filter((p) => !(p.stage === "dead" && p.buried) || p.id === c.sel);
+  who.setAttribute("aria-label", "Whose mind");
+  who.append(...pets.map((p) => new Option(p.stage === "egg" ? `${p.name ?? "an egg"} (egg)` : p.stage === "dead" ? `${p.label} (gone)` : p.label, p.id, false, p.id === c.sel)));
+  who.onchange = () => c.show("mind", who.value);
+  return [el("div", "labhead", pick, pets.length > 1 ? who : null), ...mind(c)];
+}
 
 function mind(c: Ctx): Kid[] {
   const p = c.snap.pets.find((p) => p.id === c.sel);
@@ -42,7 +72,7 @@ function mind(c: Ctx): Kid[] {
   const where = c.snap.rooms.find((r) => r.id === p.room)?.name ?? "the house";
   const parent = c.snap.pets.find((q) => q.id === p.parent);
   const stage = p.stage === "dead" ? `died of ${p.cause}` : p.stage;
-  const head = el("div", "who", face(c, p),
+  const head = el("div", "who", face(p, 96),
     el("div", "", el("h2", "", p.stage === "egg" ? p.name ?? "An egg" : p.label),
       el("p", "hint", `${stage} · generation ${p.gen}${p.days != null ? ` · ${plural(Math.round(p.days * 10) / 10, "day")}` : ""}`),
       el("p", "hint", `in ${where}${parent ? ` · ${parent.label}'s child` : ""}${c.snap.pets.some((q) => (q.family ?? 1) !== (p.family ?? 1)) ? ` · of the ${p.family === 2 ? "second" : "first"} family` : ""}`),
@@ -116,39 +146,59 @@ function mind(c: Ctx): Kid[] {
   ];
 }
 
-// ---- Things: what has been made, here and through the house ----
+// ---- Things: everything that has been made, by room or by maker, and what became of the ones that are gone ----
 
-export function thingCard(c: Ctx, name: string, m: Pick<Made, "recipe" | "uses"> & Partial<Made>, extra: Kid[] = []) {
-  const names = (ids: string[]) => ids.map((id) => c.snap.pets.find((p) => p.id === id)?.label ?? "someone gone").join(" → ");
-  const maker = c.snap.pets.find((p) => p.id === m.by)?.label;
-  const whose = m.owner_name ? `${m.owner_name}'s` : m.owner === "visitor" ? "a gift from the visitor" : null;
+/** What a made thing really does (SPEC-v3.2 §3.3), for whoever is looking at the page: the pets are never told. */
+export function truthOf(c: Pick<Ctx, "hello">, m: Pick<Made, "recipe"> & Partial<Made>): string[] {
   const b = m.behavior;
-  return el("li", "thing", thingPicture(m.recipe),
-    el("div", "", el("b", "", m.called ? `${m.called} ` : name), m.called ? el("span", "hint", `(${name}) `) : null,
-      m.useful ? el("span", "badge", "useful") : null, m.heirloom ? el("span", "badge gold", "heirloom") : null),
-    el("div", "hint", [whose, maker && maker !== m.owner_name ? `made by ${maker}` : null, plural(m.uses, "use")].filter(Boolean).join(" · ")),
-    m.recipe.purpose ? el("div", "", `“${m.recipe.purpose}”`) : null,
-    el("div", "truth", `${m.recipe.material}: ${c.hello?.properties[m.recipe.material] ?? "nobody knows yet"}.`),
-    b ? el("div", "truth", `Taught: when ${b.when.replace("_", " ")}, ${b.do.replace(/_/g, " ").replace(":", " to ")}.`) : null,
-    m.worn?.length ? el("div", "truth", `It is ${m.worn.join(" and ").replace("eaten", "moth-eaten")}.`) : null,
+  return [`${m.recipe.material}: ${c.hello?.properties[m.recipe.material] ?? "nobody knows yet what it does"}`,
+    ...(b ? [`taught: when ${b.when.replace(/_/g, " ")}, ${b.do.replace(/_/g, " ").replace(":", " to ")}`] : []),
+    ...(m.worn?.length ? [`it is ${m.worn.join(" and ").replace("eaten", "moth-eaten")}`] : [])];
+}
+
+type Shown = { name: string; m: Pick<Made, "recipe" | "uses"> & Partial<Made>; room?: string; gone?: string };
+
+function thingCard(c: Ctx, t: Shown, where: boolean) {
+  const m = t.m, label = (id: string | undefined) => c.snap.pets.find((p) => p.id === id)?.label;
+  const names = (ids: string[]) => ids.map((id) => label(id) ?? "someone gone").join(" → ");
+  const maker = m.by === "visitor" ? "the visitor" : label(m.by) ?? (m.by ? "someone gone" : null);
+  const whose = m.owner_name && m.owner_name !== maker ? `${m.owner_name}'s now` : m.owner === "visitor" ? "a gift from the visitor" : null;
+  const room = where && t.room ? c.snap.rooms.find((r) => r.id === t.room) : null;
+  return el("li", `thing${t.gone ? " gone" : ""}`, thingSprite(m.recipe, 3),
+    el("div", "what", el("b", "", aThing(m.recipe)), ` “${m.called ?? t.name}” `,
+      m.heirloom ? el("span", "badge gold", "heirloom") : null, m.useful ? el("span", "badge", "proved useful") : null),
+    el("div", "hint", [maker ? `made by ${maker}` : null, whose, room ? `in ${room.name}` : null, plural(m.uses, "use")].filter(Boolean).join(" · ")),
+    m.recipe.purpose ? el("div", "", "for: ", el("i", "", `“${m.recipe.purpose}”`)) : null,
+    el("div", "truth", el("b", "", "What it really does: "), truthOf(c, m).join("; ") + "."),
     m.heirloom ? el("div", "truth", `Handed down: ${names(m.heirloom.line)} → ${names(m.heirloom.to) || "nobody living"}.`) : null,
-    ...extra);
+    t.gone ? el("div", "truth", `Gone: ${t.gone}.`) : null);
 }
 
 function things(c: Ctx): Kid[] {
   const rooms = c.snap.rooms.filter((r) => r.type);
-  const made = (id: string) => Object.entries(rooms.find((r) => r.id === id)?.objects ?? {}).filter(([, o]) => o.made);
-  const here = made(c.room), there = rooms.filter((r) => r.id !== c.room && made(r.id).length);
-  const gone = (c.api.things?.gone ?? []) as { name: string; recipe: Made["recipe"]; by: string; uses: number; gone: [number, string] }[];
-  const name = rooms.find((r) => r.id === c.room)?.name ?? "this room";
-  return [
-    el("p", "hint", "What the pets have made, with the name and purpose they gave. The grey line under each is for you, not for them: what the stuff it is made of really does."),
-    el("h3", "", `In ${name} (${here.length})`),
-    list("shelf", here.map(([n, o]) => thingCard(c, n, o.made!)), "Nothing made is in this room."),
-    ...there.flatMap((r) => [
-      el("h3", "", `In ${r.name} (${made(r.id).length}) `, link("look", () => c.jump({ room: r.id }))),
-      el("ul", "shelf", ...made(r.id).map(([n, o]) => thingCard(c, n, o.made!)))]),
-    gone.length ? fold("gone", `Gone (${gone.length})`, el("ul", "shelf gone", ...gone.map((g) =>
-      thingCard(c, g.name, { recipe: g.recipe, uses: g.uses, by: g.by }, [el("div", "truth", `${g.gone[1]}, day ${dayOf(c.snap, g.gone[0])}.`)])))) : null,
+  const there: Shown[] = rooms.flatMap((r) => Object.entries(r.objects).filter(([, o]) => o.made).map(([name, o]) => ({ name, m: o.made!, room: r.id })));
+  const gone: Shown[] = ((c.api.things?.gone ?? []) as { name: string; recipe: Made["recipe"]; by: string; uses: number; gone: [number, string] }[])
+    .map((g) => ({ name: g.name, m: { recipe: g.recipe, uses: g.uses, by: g.by }, gone: `${g.gone[1]}, day ${dayOf(c.snap, g.gone[0])}` }));
+  const shelf = (items: Shown[], where: boolean) => el("ul", "shelf", ...items.map((t) => thingCard(c, t, where)));
+  const pick = choice("How the things are grouped", thingsBy, [["room", "By room"], ["maker", "By who made them"]], (v) => { thingsBy = v; remember("things", v); c.redraw(); });
+  const intro = el("p", "hint", "Everything the pets have made: what it is, the name and the purpose its maker gave it, and what it really does, which they are never told.");
+  if (!there.length && !gone.length) return [intro, el("p", "empty", "Nobody has made anything yet.")];
+  if (thingsBy === "maker") {
+    const makers = [...new Set([...there, ...gone].map((t) => t.m.by ?? ""))];
+    const name = (id: string) => (id === "visitor" ? "the visitor" : c.snap.pets.find((p) => p.id === id)?.label ?? "someone gone");
+    return [intro, pick, ...makers.flatMap((id) => {
+      const mine = [...there, ...gone].filter((t) => (t.m.by ?? "") === id), p = c.snap.pets.find((q) => q.id === id);
+      return [el("h3", "maker", p ? face(p, 32) : null, `Made by ${name(id)} (${mine.length})`), shelf(mine, true)];
+    })];
+  }
+  const sorted = [...rooms].sort((a, b) => Number(b.id === c.room) - Number(a.id === c.room)).filter((r) => r.id === c.room || there.some((t) => t.room === r.id));
+  return [intro, pick,
+    ...sorted.flatMap((r) => {
+      const here = there.filter((t) => t.room === r.id);
+      return [el("h3", "", `In ${r.name} (${here.length}) `, r.id === c.room ? el("span", "hint", "the room you are looking at") : link("look", () => c.jump({ room: r.id }))),
+        here.length ? shelf(here, false) : el("p", "empty", "Nothing made is in this room.")];
+    }),
+    gone.length ? el("h3", "", `Gone (${gone.length})`) : null,
+    gone.length ? shelf(gone, false) : null,
   ];
 }

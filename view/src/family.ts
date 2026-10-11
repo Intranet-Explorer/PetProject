@@ -1,10 +1,11 @@
 // The Family tab (SPEC-v3 §10.4): the tree, a life record for whoever is clicked, the family's sayings and heirlooms.
 // SPEC-v3.1 adds what a family leaves behind that is not a thing: its animals, its walls and its songs, and a
 // second family beside the first, with a line wherever something crossed from one to the other.
-import { dayOf, el, face, fold, link, plural, radial, scroller, when, whole } from "./dom";
+import { dayOf, el, face, fold, link, plural, radial, scroller, stageName, stageWord, when, whole } from "./dom";
 import type { Ctx, Kid } from "./dom";
 import { icon, svg } from "./icons";
 import type { Genome } from "./pet";
+import { aThing, thingSprite } from "./sprite";
 import { thingPicture } from "./things";
 import type { Part, Recipe } from "./things";
 import { fam } from "./types";
@@ -21,7 +22,7 @@ export function showRecord(id: string | null) {
 }
 
 const TRUTH: Record<string, [string, string]> = { true: ["✓ true of this house", "correct"], false: ["✗ not so", "wrong"] };
-const [CW, CH] = [96, 148];
+const [CW, CH] = [96, 124];
 
 /** Something that went from one family to the other: who had it, who has it now, and what it was. */
 type Crossing = { from: string; to: string; what: string };
@@ -33,7 +34,7 @@ function tree(c: Ctx, pets: PetV[], crossings: Crossing[], sayings: number, redr
   const kids = (id: string) => pets.filter((p) => p.parent === id).sort((a, b) => a.laid - b.laid);
   const of = (p: PetV) => p.family ?? 1;
   const roots = pets.filter((p) => !pets.some((q) => q.id === p.parent)).sort((a, b) => of(a) - of(b) || a.laid - b.laid);
-  const X = new Map<string, number>(), two = new Set(pets.map(of)).size > 1, span = new Map<number, number[]>(), TOP = two ? 26 : 0;
+  const X = new Map<string, number>(), two = new Set(pets.map(of)).size > 1, span = new Map<number, number[]>(), TOP = two ? 44 : 0;
   let next = 0;
   const place = (p: PetV) => {   // leaves side by side, each parent over the middle of its children
     const ch = kids(p.id);
@@ -53,9 +54,11 @@ function tree(c: Ctx, pets: PetV[], crossings: Crossing[], sayings: number, redr
   const box = el("div", "tree", lines);
   box.style.width = `${W}px`;
   box.style.height = `${H}px`;
-  // drawn smaller to fit the drawer and most of its height, but never so small that a name cannot be read
+  // drawn smaller to fit the drawer's width, but never so small that a name cannot be read; past that it scrolls in its
+  // own box, which is a whole number of generations high, so no row of faces is ever cut through
   const room = (document.querySelector<HTMLElement>('[data-panel="family"]')?.clientWidth ?? 440) - 40;
-  box.style.zoom = String(Math.max(0.78, Math.min(1, room / W, (innerHeight * 0.62) / H)));
+  const zoom = Math.max(0.8, Math.min(1, room / W)), rows = Math.max(2, Math.floor((innerHeight * 0.68 - TOP) / (CH * zoom)));
+  box.style.zoom = String(zoom);
   if (two) for (const [n, [a, b]] of span) {
     const name = el("span", `treename ${fam(n)}`, NAMES[n] ?? `Family ${n}`);
     name.style.left = `${a * CW}px`;
@@ -66,12 +69,12 @@ function tree(c: Ctx, pets: PetV[], crossings: Crossing[], sayings: number, redr
     const [x, y] = at(p), parent = pets.find((q) => q.id === p.parent);
     if (parent) {
       const [px, py] = at(parent), mid = y - 8;
-      lines.append(svg("path", { d: `M${px + CW / 2} ${py + CH - 22}V${mid}H${x + CW / 2}V${y + 2}` }));
+      lines.append(svg("path", { d: `M${px + CW / 2} ${py + CH - 12}V${mid}H${x + CW / 2}V${y + 2}` }));
     }
     const dead = p.stage === "dead", egg = p.stage === "egg";
-    const life = dead ? `lived ${plural(Math.round(p.days ?? 0), "day")}` : egg ? "not hatched" : `${p.stage}, day ${Math.floor(p.days ?? 0) + 1}`;
-    const node = el("button", `node ${fam(of(p))} ${dead ? "dead" : "alive"}${chosen === p.id ? " chosen" : ""}`, face(c, p),
-      el("b", "", egg ? p.name ?? "an egg" : p.label), el("span", "", life), p.eggs ? el("span", "", plural(p.eggs, "egg")) : null) as HTMLButtonElement;
+    const life = dead ? `lived ${plural(Math.round(p.days ?? 0), "day")}` : egg ? "not hatched" : `day ${Math.floor(p.days ?? 0) + 1}`;
+    const node = el("button", `node ${fam(of(p))} ${dead ? "dead" : "alive"}${chosen === p.id ? " chosen" : ""}`, face(p, 48),
+      el("b", "", egg ? p.name ?? "an egg" : p.label), dead || egg ? null : el("span", "", stageWord(p)), el("span", "", `${life}${p.eggs ? ` · ${plural(p.eggs, "egg")}` : ""}`)) as HTMLButtonElement;
     node.style.left = `${x}px`;
     node.style.top = `${y}px`;
     node.title = `${p.label}, generation ${p.gen}${two ? `, of the ${(NAMES[of(p)] ?? "other family").toLowerCase()}` : ""}`;
@@ -99,15 +102,12 @@ function tree(c: Ctx, pets: PetV[], crossings: Crossing[], sayings: number, redr
     box.append(mark);
   }
   box.append(over);
-  return scroller("tree", "treebox", box);
+  const frame = scroller("tree", "treebox", box), more = gens.length - rows;
+  if (more > 0) frame.style.maxHeight = `${Math.round((TOP + rows * CH) * zoom) + 14}px`;
+  return el("div", "", more > 0 ? el("p", "hint", `The tree shows the last ${rows} of ${gens.length} generations. Scroll up inside it for the ${more === 1 ? "first one" : `${more} before them`}.`) : null, frame);
 }
 
-const bodyOf = (c: Ctx, g: Genome, stage: string, caption: string) => {
-  const img = el("img", "face") as HTMLImageElement;
-  img.src = c.picture(g, stage, { grey: stage === "elder" ? 0.55 : 0 });
-  img.alt = "";
-  return el("figure", "", img, el("figcaption", "hint", caption));
-};
+const bodyOf = (g: Genome, stage: string, caption: string) => el("figure", "", face({ genome: g, stage }, 48), el("figcaption", "hint", caption));
 
 /** A whole life (§9.3), as the engine put it together when the pet died. */
 export function record(c: Ctx, r: Record<string, any>): Kid[] {
@@ -118,12 +118,11 @@ export function record(c: Ctx, r: Record<string, any>): Kid[] {
   return [
     el("section", "", el("h3", "", "My life"), el("blockquote", "thought", r.my_life),
       r.my_life_by === "the engine" ? el("p", "hint", "It died before it wrote its own; this is the engine's plain account.") : null),
-    el("p", "", `${r.name} lived ${r.days} of a possible ${r.span} days, as far as ${r.reached}, and died of ${r.cause}. ` +
+    el("p", "", `${r.name} lived ${r.days} of a possible ${r.span} days, as far as ${stageName(r.reached)}, and died of ${r.cause}. ` +
       `It made ${plural(r.made, "thing")}, ${r.useful} of them useful, and laid ${plural(r.eggs, "egg")}.`),
-    el("p", "hint", [r.parent ? `Child of ${name(r.parent)}.` : "The first of its family.", r.children?.length ? `Parent of ${r.children.map(name).join(", ")}.` : "",
-      `Wellbeing over its life ${r.wellbeing} of 100.`, r.meter_talk != null ? `Talked like a meter in ${r.meter_talk}% of its thoughts.` : ""].join(" ")),
+    el("p", "hint", [r.parent ? `Child of ${name(r.parent)}.` : "The first of its family.", r.children?.length ? `Parent of ${r.children.map(name).join(", ")}.` : ""].join(" ")),
     el("div", "row", ...Object.entries((r.bodies ?? {}) as Record<string, Genome>).map(([s, g]) =>
-      bodyOf(c, g, s, `${s}${stages.find(([k]) => k === s) ? `, day ${stages.find(([k]) => k === s)![1]}` : ""}`))),
+      bodyOf(g, s, `${stageName(s)}${stages.find(([k]) => k === s) ? `, day ${stages.find(([k]) => k === s)![1]}` : ""}`))),
     radial(r.temper ?? {}, 130),
     r.portraits?.length ? el("section", "", el("h3", "", "How it drew itself"),
       el("div", "row", ...(r.portraits as { day: number; parts: Part[] }[]).map((p) => el("figure", "", thingPicture(p), el("figcaption", "hint", `day ${p.day}`))))) : null,
@@ -131,7 +130,7 @@ export function record(c: Ctx, r: Record<string, any>): Kid[] {
     text("Its message to its children, as it changed", r.messages),
     r.last_words ? el("section", "", el("h3", "", "Last words"), el("blockquote", "", r.last_words)) : null,
     things.length ? el("section", "", el("h3", "", "What it used most"), el("div", "row", ...things.map((t) =>
-      el("figure", t.gone ? "gone" : "", thingPicture(t.recipe), el("figcaption", "hint", `${t.name} · ${t.uses}`))))) : null,
+      el("figure", t.gone ? "gone" : "", thingSprite(t.recipe, 3), el("figcaption", "hint", `“${t.name}” · ${plural(t.uses, "use")}`))))) : null,
     el("p", "hint", [r.heirlooms_given?.length ? `Left behind: ${r.heirlooms_given.join(", ")}.` : "", r.heirlooms_received?.length ? `Was left: ${r.heirlooms_received.join(", ")}.` : "",
       r.rooms?.length ? `Knew ${r.rooms.join(", ")}.` : "", Object.keys(r.creatures ?? {}).length ? `Met ${Object.entries(r.creatures).map(([k, n]) => `the ${k} (${n})`).join(", ")}.` : ""].join(" ")),
     r.projects?.length ? el("section", "", el("h3", "", "Projects"), ...(r.projects as { text: string; how: string }[]).map((p) => el("p", "", `“${whole(p.text)}” `, el("span", "hint", p.how)))) : null,
@@ -228,8 +227,8 @@ export function family(c: Ctx): Kid[] {
     el("p", "hint", `${plural(pets.length, "life", "lives")} over ${plural(new Set(pets.map((p) => p.gen)).size, "generation")}${families > 1 ? `, in ${families} families` : ""}. The living are outlined. Click anyone for their life.`),
     lines.length > 1 ? pick : null,
     tree(c, pets, crossings, crossed.length, redraw),
-    who ? el("section", "life", el("div", "who", face(c, who), el("div", "", el("h2", "", who.label),
-        el("p", "hint", who.stage === "dead" ? `generation ${who.gen}` : `${who.stage} · generation ${who.gen} · alive`),
+    who ? el("section", "life", el("div", "who", face(who, 96), el("div", "", el("h2", "", who.label),
+        el("p", "hint", who.stage === "dead" ? `generation ${who.gen}` : `${stageWord(who)} · generation ${who.gen} · alive`),
         who.stage !== "dead" ? link("See its mind", () => c.show("mind", who.id)) : null)),
       rec ? null : radial(who.temper, 130),
       ...(rec ? record(c, rec) : [])) : null,
@@ -247,7 +246,7 @@ export function family(c: Ctx): Kid[] {
       s.forms.length ? fold(`forms-${s.text}`, `Said differently ${plural(s.forms.length, "time")}`, ...s.forms.map(([id, t]) => el("p", "", `${name(id)}: “${t}”`))) : null)))
       : el("p", "empty", "Nothing has been handed down a second time yet."),
     el("h3", "", "Heirlooms"),
-    heir.length ? el("ul", "shelf", ...heir.map((h) => el("li", "thing", thingPicture(h.recipe), el("div", "", el("b", "", h.name), el("span", "badge gold", "heirloom")),
+    heir.length ? el("ul", "shelf", ...heir.map((h) => el("li", "thing", thingSprite(h.recipe, 3), el("div", "what", el("b", "", aThing(h.recipe)), ` “${h.name}” `, el("span", "badge gold", "heirloom")),
       el("div", "hint", `in ${h.room}`), el("div", "truth", `${h.line.join(" → ")} → ${h.to.join(", ") || "nobody living"}`))))
       : el("p", "empty", "Nothing has been left to anyone yet."),
     ...(which === now ? [...songbook(c, songs), ...walls(c, v.walls ?? [])] : []),

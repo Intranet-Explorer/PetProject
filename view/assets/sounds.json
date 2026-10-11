@@ -1,0 +1,171 @@
+{
+ "sfx": {
+  "pickup": {
+   "pack": "ninja",
+   "file": "Audio/Sounds/Bonus/Bonus2.wav",
+   "gain": 0.35
+  },
+  "drop": {
+   "pack": "ninja",
+   "file": "Audio/Sounds/Jump & Bounce/Bounce4.wav",
+   "gain": 0.35
+  },
+  "make": {
+   "pack": "ninja",
+   "file": "Audio/Sounds/Magic & Skill/Heal3.wav",
+   "gain": 0.2
+  },
+  "unmake": {
+   "pack": "ninja",
+   "file": "Audio/Sounds/Whoosh & Slash/Whoosh.wav",
+   "gain": 0.35
+  },
+  "combine": {
+   "pack": "ninja",
+   "file": "Audio/Sounds/Magic & Skill/Magic2.wav",
+   "gain": 0.19
+  },
+  "door": {
+   "pack": "ninja",
+   "file": "Audio/Sounds/Hit & Impact/Impact2.wav",
+   "gain": 0.19
+  },
+  "step": {
+   "pack": "ninja",
+   "file": "Audio/Sounds/Menu/Move2.wav",
+   "gain": 0.23
+  },
+  "eat": {
+   "pack": "ninja",
+   "file": "Audio/Sounds/Elemental/Bubble2.wav",
+   "gain": 0.17
+  },
+  "write": {
+   "pack": "ninja",
+   "file": "Audio/Sounds/Elemental/Grass.wav",
+   "gain": 0.35
+  },
+  "book": {
+   "pack": "ninja",
+   "file": "Audio/Sounds/Whoosh & Slash/Launch.wav",
+   "gain": 0.35
+  },
+  "call": {
+   "pack": "ninja",
+   "file": "Audio/Sounds/Creature/Bird.wav",
+   "gain": 0.29
+  },
+  "heart": {
+   "pack": "ninja",
+   "file": "Audio/Sounds/Bonus/Bonus3.wav",
+   "gain": 0.35
+  },
+  "radio": {
+   "pack": "ninja",
+   "file": "Audio/Sounds/Magic & Skill/Fx.wav",
+   "gain": 0.35
+  },
+  "arrival": {
+   "pack": "ninja",
+   "file": "Audio/Sounds/Bonus/PowerUp1.wav",
+   "gain": 0.18
+  },
+  "arrival.writing": {
+   "pack": "ninja",
+   "file": "Audio/Sounds/Menu/Accept3.wav",
+   "gain": 0.28
+  },
+  "arrival.songs": {
+   "pack": "ninja",
+   "file": "Audio/Sounds/Menu/Accept.wav",
+   "gain": 0.31
+  },
+  "arrival.taming": {
+   "pack": "ninja",
+   "file": "Audio/Sounds/Creature/Wings.wav",
+   "gain": 0.27
+  },
+  "arrival.radio": {
+   "pack": "ninja",
+   "file": "Audio/Sounds/Magic & Skill/Spirit.wav",
+   "gain": 0.19
+  },
+  "arrival.book": {
+   "pack": "ninja",
+   "file": "Audio/Sounds/Menu/Accept8.wav",
+   "gain": 0.17
+  },
+  "arrival.strangers": {
+   "pack": "ninja",
+   "file": "Audio/Sounds/Bonus/Bonus.wav",
+   "gain": 0.25
+  },
+  "drip": {
+   "pack": "ninja",
+   "file": "Audio/Sounds/Elemental/WaterDrop.wav",
+   "gain": 0.35
+  },
+  "rain": {
+   "pack": "ninja",
+   "file": "Audio/Sounds/Ambient/Rain.wav",
+   "gain": 0.35
+  },
+  "splash": {
+   "pack": "ninja",
+   "file": "Audio/Sounds/Elemental/Water6.wav",
+   "gain": 0.21
+  },
+  "bounce": {
+   "pack": "ninja",
+   "file": "Audio/Sounds/Jump & Bounce/Bounce.wav",
+   "gain": 0.35
+  }
+ },
+ "music": {
+  "nursery": {
+   "pack": "ninja",
+   "file": "Audio/Musics/5 - Peaceful.ogg",
+   "gain": 0.1
+  },
+  "garden": {
+   "pack": "ninja",
+   "file": "Audio/Musics/11 - Clearing.ogg",
+   "gain": 0.1
+  },
+  "cellar": {
+   "pack": "ninja",
+   "file": "Audio/Musics/2 - The Cave.ogg",
+   "gain": 0.1
+  },
+  "attic": {
+   "pack": "ninja",
+   "file": "Audio/Musics/9 - Quiet.ogg",
+   "gain": 0.1
+  },
+  "pond": {
+   "pack": "ninja",
+   "file": "Audio/Musics/18 - Aquatic.ogg",
+   "gain": 0.1
+  },
+  "workshop": {
+   "pack": "ninja",
+   "file": "Audio/Musics/4 - Village.ogg",
+   "gain": 0.1
+  },
+  "music": {
+   "pack": "ninja",
+   "file": "Audio/Musics/27 - Chill.ogg",
+   "gain": 0.1
+  },
+  "greenhouse": {
+   "pack": "ninja",
+   "file": "Audio/Musics/13 - Mystical.ogg",
+   "gain": 0.1
+  },
+  "storeroom": {
+   "pack": "ninja",
+   "file": "Audio/Musics/26 - Lost Village.ogg",
+   "gain": 0.1
+  }
+ }
+}

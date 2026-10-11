@@ -3,6 +3,7 @@
 // View-only: it listens to what the view already receives and nothing here goes back to the engine.
 import { hash, news, planSong, planSound, planSpeech, semitone, voiceOf } from "./voice-plan";
 import type { HouseSound, Plan, Seen, SoundKind, VoiceInput } from "./voice-plan";
+import { sound } from "./sprite";
 import { bodyStage } from "./types";
 import type { Heard, Note, PetV, Snap } from "./types";
 
@@ -20,6 +21,9 @@ const HOUSE: Record<HouseSound | Creature, string> = {
   tuning: "a dial finding a voice (the radio has come)", pages: "a heavy book set down (the book has come)", knock: "a knock from inside an egg (a stranger has come)",
 };
 export type Creature = "moth" | "beetle" | "mouse" | "bird";
+/** SPEC-v3.2 §8: the step a pet has just finished, as the name of a sound effect in the art data (sounds.json). */
+const SFX: Record<string, string> = { gather: "pickup", take: "pickup", accept: "pickup", drop: "drop", give: "drop", arrange: "drop", make: "make", unmake: "unmake",
+  combine: "combine", go: "door", eat: "eat", write: "write", scrub: "write", ask_book: "book", call: "call", nuzzle: "heart" };
 const WET = ["rain", "storm"], OPEN = ["garden", "greenhouse", "attic", "pond"], SHUT_IN = ["cellar", "storeroom"];
 
 /** Put a plan's notes on an audio clock. Works on a live context and on an offline one, which is how it is checked. */
@@ -197,6 +201,7 @@ export function voiceInput(p: PetV, s?: Snap): VoiceInput {
 
 export class Voice {
   on = false;
+  music = false;                                 // a quiet tune for the room being looked at: its own switch, off unless turned on
   volume = 0.8;
   heard: { at: number; what: string }[] = [];   // what has played lately, for the voice lab
   onchange: () => void = () => {};
@@ -218,11 +223,15 @@ export class Voice {
   private low = new Map<string, number>();       // pet -> since when it has been miserable
   private whimpered = 0;
   private last: VoiceInput | null = null;        // the voice of whoever is selected, for answering when sound is turned on
+  private clips = new Map<string, Promise<AudioBuffer | null>>();   // sound effects from the art data, fetched when first wanted
+  private band: { el: HTMLAudioElement; url: string; gain: number } | null = null;
+  private roomType: string | null = null;
 
   constructor() {
     try {
       const saved = JSON.parse(localStorage.getItem(STORE) ?? "{}");
       this.on = saved.on === true;
+      this.music = saved.music === true;
       if (typeof saved.volume === "number") this.volume = Math.min(1, Math.max(0, saved.volume));
     } catch { /* private window: it just starts off */ }
     // A browser plays nothing until the page has been clicked. If sound was left on, the first click starts it.
@@ -232,7 +241,7 @@ export class Voice {
   get live() { return this.on && this.ctx?.state === "running"; }
 
   private save() {
-    try { localStorage.setItem(STORE, JSON.stringify({ on: this.on, volume: this.volume })); } catch { /* not remembered */ }
+    try { localStorage.setItem(STORE, JSON.stringify({ on: this.on, volume: this.volume, music: this.music })); } catch { /* not remembered */ }
     this.onchange();
   }
 
@@ -255,6 +264,7 @@ export class Voice {
     if (on) {   // answer at once in a pet's own voice, so it is plain that sound works even when nothing is happening
       void this.start().then(() => {
         if (this.last && this.sample("hm", this.last)) this.note("sound is on: this is its voice");
+        this.retune();
       });
     } else if (this.ctx) {
       this.quiet();
@@ -266,7 +276,45 @@ export class Voice {
   setVolume(volume: number) {
     this.volume = Math.min(1, Math.max(0, volume));
     if (this.ctx) this.master.gain.setTargetAtTime(this.volume, this.ctx.currentTime, 0.03);
+    if (this.band) this.band.el.volume = this.band.gain * this.volume;
     this.save();
+  }
+
+  /** Music (SPEC-v3.2 §8) has its own switch. Turning it on turns sound on too: it is a click, which is what a browser wants. */
+  setMusic(on: boolean) {
+    this.music = on;
+    if (on && !this.live) return this.setOn(true);
+    this.retune();
+    this.save();
+  }
+
+  /** Keep the right tune going, very quietly: the one the art data gives for the kind of room being looked at, or none. */
+  private retune() {
+    const want = this.music && this.live && this.roomType ? sound("music", this.roomType) : null;
+    if (want?.url === this.band?.url) return;
+    this.band?.el.pause();
+    this.band = null;
+    if (!want) return;
+    const el = new Audio(want.url);
+    [el.loop, el.volume] = [true, want.gain * this.volume];
+    void el.play().catch(() => {});
+    this.band = { el, ...want };
+    this.note(`music for ${this.roomType === "pond" ? "the pond room" : `the ${this.roomType}`}, quietly`);
+  }
+
+  /** A sound effect by our name, from the art data: quiet, under the voices. False if the data has none. */
+  private sfx(name: string, dest: GainNode, what: string) {
+    const s = sound("sfx", name), ctx = this.ctx!;
+    if (!s) return false;
+    if (!this.clips.has(s.url)) this.clips.set(s.url, fetch(s.url).then((r) => r.arrayBuffer()).then((b) => ctx.decodeAudioData(b)).catch(() => null));
+    void this.clips.get(s.url)!.then((buffer) => {
+      if (!buffer || !this.live) return;
+      const src = new AudioBufferSourceNode(ctx, { buffer });
+      src.connect(new GainNode(ctx, { gain: s.gain })).connect(dest);
+      src.start();
+    });
+    this.note(what);
+    return true;
   }
 
   private note(what: string) {
@@ -334,6 +382,7 @@ export class Voice {
    *  door it is only the crackle, muffled. Nothing to say is static. */
   private wireless(h: Heard, dest: GainNode) {
     const ctx = this.ctx!, at = ctx.currentTime + 0.05, words = dest === this.near && h.text && typeof speechSynthesis !== "undefined";
+    if (dest === this.near && h.text) this.sfx("radio", dest, "the box clicks");   // the pack's own sound for the box, if the data has one
     crackle(ctx, dest, at, h.text ? Math.min(14, 0.6 + h.text.length * 0.07) : 1.8, h.text ? 0.035 : 0.12);
     if (words) {
       const u = new SpeechSynthesisUtterance(h.text);
@@ -384,6 +433,8 @@ export class Voice {
     this.air?.air.gain.setTargetAtTime(0, now, 0.1);
     this.rain?.gain.gain.setTargetAtTime(0, now, 0.1);
     if (typeof speechSynthesis !== "undefined") speechSynthesis.cancel();
+    this.band?.el.pause();
+    this.band = null;
     for (const [name, h] of this.hums) {
       h.gain.gain.setTargetAtTime(0, now, 0.2);
       h.osc.stop(now + 1.5);
@@ -403,8 +454,15 @@ export class Voice {
     this.last = chosen ? voiceInput(chosen, s) : this.last;
     const inRoom = s.pets.filter((p) => p.room === here), awake = inRoom.filter((p) => p.needs && !p.asleep);
     for (const p of awake) (p.levels?.comfort === 4) ? this.low.set(p.id, this.low.get(p.id) ?? Date.now()) : this.low.delete(p.id);
+    const room = s.rooms.find((r) => r.id === here);
+    this.roomType = room?.type ?? null;
     if (!this.live || !ctx) return;
-    const now = ctx.currentTime, room = s.rooms.find((r) => r.id === here);
+    const now = ctx.currentTime;
+    this.retune();
+    for (const a of t.acts.filter((a) => a.room === here)) {   // SPEC-v3.2 §8: a step just finished in this room, each heard once
+      const fix = room?.objects[a.what ?? ""]?.fix, name = a.type === "use" ? (fix && "meal" in fix ? "eat" : "") : SFX[a.type];
+      if (name) this.sfx(name, this.near, `${name} (${pets.get(a.pet)?.label ?? "someone"})`);
+    }
 
     for (const say of t.speak) {
       const p = pets.get(say.pet), dest = p && this.bus(p.room, s, here);
@@ -424,7 +482,10 @@ export class Voice {
       if (dest) this.wireless(h, dest);
     }
     for (const h of t.house.filter((h) => h.kind !== "powerdown")) {   // weather and events have sounds of their own
-      const dest = h.kind === "thunder" ? this.near : this.bus(h.room, s, here);
+      // a discovery (SPEC-v3.1 §1) is heard all through the house: the pack's jingle for it if the data has one, else the sound made here
+      const found = h.moment.startsWith("arrival ") ? h.moment.slice(8) : null;
+      if (found && (this.sfx(`arrival.${found}`, this.near, `${found} has come`) || this.sfx("arrival", this.near, `${found} has come`))) continue;
+      const dest = found || h.kind === "thunder" ? this.near : this.bus(h.room, s, here);
       if (dest) { effect(ctx, dest, h.kind, now + 0.05); this.note(HOUSE[h.kind]); }
     }
     if (was !== s.power) { effect(ctx, this.near, s.power ? "powerup" : "powerdown", now + 0.05); this.note(HOUSE[s.power ? "powerup" : "powerdown"]); }

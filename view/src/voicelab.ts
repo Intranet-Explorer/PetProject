@@ -45,6 +45,7 @@ export function initVoice(who: () => { pet: PetV; snap: Snap } | null) {
     hint, el("h4", "", "Heard lately"), heard);
 
   $("soundBtn").onclick = () => voice.setOn(!voice.on);
+  $("musicBtn").onclick = () => voice.setMusic(!voice.music);
   const volume = $<HTMLInputElement>("volume");
   volume.oninput = () => voice.setVolume(Number(volume.value) / 100);
   volume.value = String(Math.round(voice.volume * 100));
@@ -52,8 +53,11 @@ export function initVoice(who: () => { pet: PetV; snap: Snap } | null) {
   let fade: ReturnType<typeof setTimeout> | undefined;
   const show = () => {
     const waiting = voice.on && !voice.live;   // left on from last time; the browser wants a click first
-    $("soundBtn").textContent = !voice.on ? "Sound off" : waiting ? "Sound on (click anywhere)" : "Sound on";
+    $("soundBtn").textContent = !voice.on ? "Sound off" : waiting ? "Sound on (click)" : "Sound on";
     $("soundBtn").setAttribute("aria-pressed", String(voice.on));
+    $("soundBtn").title = waiting ? "Sound was left on. A browser plays nothing until the page has been clicked: click anywhere." : "";
+    $("musicBtn").textContent = voice.music ? "Music on" : "Music off";
+    $("musicBtn").setAttribute("aria-pressed", String(voice.music && voice.on));
     const latest = voice.heard[0];   // say what just played, so silence and "nothing happening" can be told apart
     $("playing").textContent = voice.on && latest && Date.now() - latest.at < 8000 ? `♪ ${latest.what}` : "";
     clearTimeout(fade);

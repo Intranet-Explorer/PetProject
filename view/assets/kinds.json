@@ -1,0 +1,388 @@
+{
+ "cushion": {
+  "rank": 1,
+  "wall": false,
+  "not": [
+   "hard",
+   "heavy",
+   "glassy",
+   "noisy",
+   "sweet",
+   "bright"
+  ],
+  "sprite": "kind.cushion",
+  "a": "a"
+ },
+ "rug": {
+  "rank": 1,
+  "wall": false,
+  "not": [
+   "hard",
+   "heavy",
+   "glassy",
+   "noisy",
+   "sweet",
+   "bright"
+  ],
+  "sprite": "kind.rug",
+  "a": "a"
+ },
+ "blanket": {
+  "rank": 1,
+  "wall": false,
+  "not": [
+   "hard",
+   "heavy",
+   "glassy",
+   "noisy",
+   "sweet",
+   "bright"
+  ],
+  "sprite": "kind.blanket",
+  "a": "a"
+ },
+ "nest": {
+  "rank": 2,
+  "wall": false,
+  "not": [
+   "hard",
+   "heavy",
+   "glassy",
+   "noisy",
+   "sweet"
+  ],
+  "sprite": "kind.nest",
+  "a": "a"
+ },
+ "bed-mat": {
+  "rank": 2,
+  "wall": false,
+  "not": [
+   "hard",
+   "heavy",
+   "glassy",
+   "noisy",
+   "sweet",
+   "bright"
+  ],
+  "sprite": "kind.bed-mat",
+  "a": "a"
+ },
+ "doll": {
+  "rank": 2,
+  "wall": false,
+  "not": [
+   "heavy",
+   "glassy",
+   "sweet"
+  ],
+  "sprite": "kind.doll",
+  "a": "a"
+ },
+ "candle": {
+  "rank": 1,
+  "wall": false,
+  "not": [
+   "soft",
+   "springy",
+   "bouncy",
+   "noisy",
+   "sweet",
+   "dark",
+   "quiet"
+  ],
+  "sprite": "kind.candle",
+  "a": "a"
+ },
+ "lantern": {
+  "rank": 2,
+  "wall": false,
+  "not": [
+   "soft",
+   "springy",
+   "bouncy",
+   "sweet"
+  ],
+  "sprite": "kind.lantern",
+  "a": "a"
+ },
+ "lamp": {
+  "rank": 2,
+  "wall": false,
+  "not": [
+   "soft",
+   "springy",
+   "bouncy",
+   "sweet"
+  ],
+  "sprite": "kind.lamp",
+  "a": "a"
+ },
+ "bell": {
+  "rank": 1,
+  "wall": false,
+  "not": [
+   "soft",
+   "sweet",
+   "quiet"
+  ],
+  "sprite": "kind.bell",
+  "a": "a"
+ },
+ "drum": {
+  "rank": 2,
+  "wall": false,
+  "not": [
+   "sweet",
+   "quiet",
+   "glassy"
+  ],
+  "sprite": "kind.drum",
+  "a": "a"
+ },
+ "flute": {
+  "rank": 2,
+  "wall": false,
+  "not": [
+   "soft",
+   "sweet",
+   "quiet",
+   "heavy"
+  ],
+  "sprite": "kind.flute",
+  "a": "a"
+ },
+ "wind chime": {
+  "rank": 3,
+  "wall": false,
+  "not": [
+   "soft",
+   "sweet",
+   "quiet",
+   "heavy"
+  ],
+  "sprite": "kind.wind chime",
+  "a": "a"
+ },
+ "ball": {
+  "rank": 1,
+  "wall": false,
+  "not": [
+   "sweet",
+   "heavy"
+  ],
+  "sprite": "kind.ball",
+  "a": "a"
+ },
+ "spinning top": {
+  "rank": 2,
+  "wall": false,
+  "not": [
+   "soft",
+   "sweet",
+   "heavy"
+  ],
+  "sprite": "kind.spinning top",
+  "a": "a"
+ },
+ "mobile": {
+  "rank": 3,
+  "wall": false,
+  "not": [
+   "heavy",
+   "sweet"
+  ],
+  "sprite": "kind.mobile",
+  "a": "a"
+ },
+ "jar": {
+  "rank": 1,
+  "wall": false,
+  "not": [
+   "bouncy",
+   "springy",
+   "soft"
+  ],
+  "sprite": "kind.jar",
+  "a": "a"
+ },
+ "bowl": {
+  "rank": 1,
+  "wall": false,
+  "not": [
+   "bouncy",
+   "springy",
+   "soft"
+  ],
+  "sprite": "kind.bowl",
+  "a": "a"
+ },
+ "cup": {
+  "rank": 1,
+  "wall": false,
+  "not": [
+   "bouncy",
+   "springy",
+   "soft"
+  ],
+  "sprite": "kind.cup",
+  "a": "a"
+ },
+ "vase": {
+  "rank": 2,
+  "wall": false,
+  "not": [
+   "bouncy",
+   "springy",
+   "soft",
+   "sweet"
+  ],
+  "sprite": "kind.vase",
+  "a": "a"
+ },
+ "basket": {
+  "rank": 2,
+  "wall": false,
+  "not": [
+   "bouncy",
+   "glassy",
+   "heavy"
+  ],
+  "sprite": "kind.basket",
+  "a": "a"
+ },
+ "box": {
+  "rank": 1,
+  "wall": false,
+  "not": [
+   "bouncy",
+   "springy"
+  ],
+  "sprite": "kind.box",
+  "a": "a"
+ },
+ "shelf": {
+  "rank": 2,
+  "wall": true,
+  "not": [
+   "soft",
+   "sweet",
+   "bouncy",
+   "springy"
+  ],
+  "sprite": "kind.shelf",
+  "a": "a"
+ },
+ "stool": {
+  "rank": 1,
+  "wall": false,
+  "not": [
+   "sweet",
+   "glassy"
+  ],
+  "sprite": "kind.stool",
+  "a": "a"
+ },
+ "mirror": {
+  "rank": 2,
+  "wall": true,
+  "not": [
+   "soft",
+   "sweet",
+   "noisy",
+   "dark",
+   "bouncy",
+   "springy",
+   "fragrant"
+  ],
+  "sprite": "kind.mirror",
+  "a": "a"
+ },
+ "picture": {
+  "rank": 2,
+  "wall": true,
+  "not": [
+   "sweet",
+   "noisy",
+   "bouncy",
+   "springy",
+   "heavy"
+  ],
+  "sprite": "kind.picture",
+  "a": "a"
+ },
+ "plant pot": {
+  "rank": 1,
+  "wall": false,
+  "not": [
+   "bouncy",
+   "springy",
+   "noisy",
+   "sweet"
+  ],
+  "sprite": "kind.plant pot",
+  "a": "a"
+ },
+ "garland": {
+  "rank": 2,
+  "wall": false,
+  "not": [
+   "hard",
+   "heavy",
+   "noisy",
+   "sweet"
+  ],
+  "sprite": "kind.garland",
+  "a": "a"
+ },
+ "charm": {
+  "rank": 1,
+  "wall": false,
+  "not": [
+   "heavy",
+   "sweet"
+  ],
+  "sprite": "kind.charm",
+  "a": "a"
+ },
+ "stone stack": {
+  "rank": 1,
+  "wall": false,
+  "not": [
+   "soft",
+   "bouncy",
+   "springy",
+   "sweet",
+   "fragrant"
+  ],
+  "sprite": "kind.stone stack",
+  "a": "a"
+ },
+ "sculpture": {
+  "rank": 3,
+  "wall": false,
+  "not": [],
+  "sprite": "kind.sculpture",
+  "a": "a"
+ },
+ "treat": {
+  "rank": 1,
+  "wall": false,
+  "not": [
+   "soft",
+   "hard",
+   "warm",
+   "bright",
+   "cool",
+   "dark",
+   "noisy",
+   "quiet",
+   "bouncy",
+   "heavy",
+   "glassy",
+   "springy"
+  ],
+  "sprite": "kind.treat",
+  "a": "a"
+ }
+}

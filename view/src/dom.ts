@@ -1,8 +1,7 @@
 // Small helpers for the DOM around the room. Everything from the engine is set as text, never as HTML.
 import { svg } from "./icons";
-import type { Genome, Look } from "./pet";
-import { bodyStage } from "./types";
-import { hhmm } from "./types";
+import { petPortrait, petSheet } from "./petsprite";
+import { bodyStage, hhmm, NEEDS } from "./types";
 import type { Hello, Note, PetV, Snap } from "./types";
 
 export const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -28,9 +27,9 @@ export type Ctx = {
   snap: Snap; hello: Hello | null; sel: string | null; room: string; replay: boolean;
   api: Record<string, any>;
   voiceLab: Node;   // the voice lab, one node kept across redraws of the Lab tab
-  picture: (g: Genome, stage: string, look?: Look) => string;
   jump: (to: { pet?: string | null; room?: string | null }) => void;
-  show: (tab: string, pet?: string) => void;   // open a tab of the drawer, on a pet if one is given
+  show: (tab: string, pet?: string) => void;   // open a tab of the drawer ("mind": the Lab, on a pet's mind), on a pet if one is given
+  redraw: () => void;                          // draw the open tab again, after a choice made inside it
   hear: (notes: Note[], by: string) => void;   // play a song as its singer would sing it
 };
 
@@ -110,10 +109,44 @@ export function scroller(key: string, cls: string, ...kids: Kid[]) {
   return box;
 }
 
-/** A pet's body as a small still picture: as it is now, or as it was when it died. */
-export function face(c: Ctx, p: PetV, cls = "face") {
-  const img = el("img", cls) as HTMLImageElement, stage = bodyStage(p);
-  img.src = c.picture(p.genome, stage, { grey: stage === "elder" ? 0.55 : 0, dead: p.stage === "dead" });
-  img.alt = "";
-  return img;
+/** A pet's body as a small still picture, pixel for pixel: as it is now, or as it was when it died. It is drawn at
+ *  the largest whole-number scale that fits a square of `box` screen pixels. */
+export function face(p: Pick<PetV, "genome" | "stage" | "stage_before">, box = 48, stage = bodyStage(p)) {
+  const look = { grey: stage === "elder" ? 0.55 : 0 };
+  const c = petPortrait(p.genome, stage, Math.max(1, Math.floor(box / petSheet(p.genome, stage, look).size)), look);
+  c.classList.add("px", "face");
+  if (p.stage === "dead") c.classList.add("dead");
+  c.setAttribute("aria-hidden", "true");
+  return c;
+}
+
+// ---- plain words (SPEC-v3.2 §6): the engine sends them; a recording made before it did has to be read into them ----
+
+const STAGE: Record<string, string> = { egg: "egg", hatchling: "little one", child: "little one", youngling: "young one", adult: "grown", elder: "old one" };
+/** A stage in plain words: little one, young one, grown, old one. */
+export const stageWord = (p: Pick<PetV, "stage" | "stage_word" | "stage_before">) =>
+  p.stage === "dead" ? "gone" : p.stage_word ?? STAGE[p.stage] ?? p.stage;
+/** The same for a stage's name on its own (a life record says "as far as elder"). */
+export const stageName = (stage: string) => STAGE[stage] ?? stage;
+
+/** How a pet feels, in at most two plain words, the worst first. Never a number. */
+export function moodWords(p: PetV): string[] {
+  if (p.mood) return p.mood.slice(0, 2);
+  if (!p.levels || !p.felt) return [];
+  const low = NEEDS.filter((n) => p.levels![n] >= 2).sort((a, b) => p.levels![b] - p.levels![a]).slice(0, 2).map((n) => p.felt![n]);
+  return low.length ? low : [p.felt[[...NEEDS].sort((a, b) => p.levels![a] - p.levels![b])[0]]];   // nothing lacking: the best of how it feels
+}
+const EMOTE: Record<string, string> = { energy: "tired", comfort: "uneasy", curiosity: "bored", company: "lonely" };
+/** The one strong feeling that shows as a small picture beside a pet (§5.3), or null. */
+export function emoteOf(p: PetV): string | null {
+  if (p.emote !== undefined) return p.emote;
+  if (!p.levels || p.asleep) return null;
+  const worst = [...NEEDS].sort((a, b) => p.levels![b] - p.levels![a])[0];
+  return p.levels[worst] >= 3 ? EMOTE[worst] : NEEDS.every((n) => p.levels![n] <= 1) ? "content" : null;
+}
+/** What a pet is doing or means to do, in a few plain words: its thought, for its card and its hover card. */
+export function thoughtOf(p: PetV): string {
+  if (p.stage === "egg") return "";
+  if (p.stage === "dead") return "has died";
+  return p.asleep ? "asleep" : p.plan?.intention || p.doing || (p.thinking ? "thinking what to do" : "");
 }

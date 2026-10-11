@@ -1,24 +1,27 @@
-/* The house is the screen (SPEC-v3 §10.1): the room being looked at, a map of the rest, and a card for everyone
-   alive. Everything else waits in a drawer. Colours are variables, once for light and once for dark. */
+/* The page round the room (SPEC-v3.2 §7): a header, one sentence about now, the room as big as whole pixels allow
+   with the map and the latest moments beside it, a card for everyone alive, and the visitor's controls in one bar.
+   Everything else waits in a drawer. The page dresses to go with pixel art: square corners, hard edges, a pixel
+   face for headings. Colours are variables, once for light and once for dark; the room itself has no theme. */
 :root {
-  --bg: #f3f5f4; --surface: #ffffff; --ink: #17231f; --muted: #5d6c66; --line: #dde5e1;
-  --accent: #b9590a; --good: #2c7a58; --bad: #b23c2b; --gold: #96700f; --shadow: rgb(23 35 31 / 10%);
-  --fam1: #1f7a8c; --fam2: #a8468a;   /* each family's colour (SPEC-v3.1 §7.4): name plates, cards, the tree */
+  --bg: #efe9dc; --surface: #fbf7ee; --ink: #2a2433; --muted: #686172; --line: #cdc3b1; --edge: #2a2433;
+  --accent: #b24a18; --good: #2b7549; --bad: #b3372e; --gold: #8a6508; --shadow: rgb(42 36 51 / 22%);
+  --fam1: #1f7a8c; --fam2: #a8468a;   /* each family's colour (SPEC-v3.1 §7.4): cards, the tree, the songbook */
   --mono: ui-monospace, "SF Mono", Menlo, monospace;
-  --drawer: 440px; --side: clamp(236px, 17vw, 400px); --chrome: 238px;
+  --pixel: "PetPixel", ui-monospace, "SF Mono", Menlo, monospace;   /* the art data may name a pixel face (sprite.ts); until then, a plain monospace */
+  --drawer: 440px;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #131917; --surface: #1c2421; --ink: #e7edea; --muted: #97a7a0; --line: #2e3935;
-    --accent: #f09a4a; --good: #62c096; --bad: #f08573; --gold: #e2b33c; --shadow: rgb(0 0 0 / 40%);
+    --bg: #191724; --surface: #242134; --ink: #ece7dc; --muted: #a8a2b5; --line: #3d3954; --edge: #0c0b12;
+    --accent: #f2a65a; --good: #6cc48f; --bad: #f08573; --gold: #e2b33c; --shadow: rgb(0 0 0 / 45%);
     --fam1: #5cc3d6; --fam2: #e58fc8;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #131917; --surface: #1c2421; --ink: #e7edea; --muted: #97a7a0; --line: #2e3935;
-  --accent: #f09a4a; --good: #62c096; --bad: #f08573; --gold: #e2b33c; --shadow: rgb(0 0 0 / 40%);
+  --bg: #191724; --surface: #242134; --ink: #ece7dc; --muted: #a8a2b5; --line: #3d3954; --edge: #0c0b12;
+  --accent: #f2a65a; --good: #6cc48f; --bad: #f08573; --gold: #e2b33c; --shadow: rgb(0 0 0 / 45%);
   --fam1: #5cc3d6; --fam2: #e58fc8;
   color-scheme: dark;
 }
@@ -27,168 +30,189 @@
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 html, body { height: 100%; }
-body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 system-ui, -apple-system, sans-serif;
-       display: flex; flex-direction: column; }
-p, ul, ol, dl, figure, blockquote { margin: 0; padding: 0; list-style: none; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.45 system-ui, -apple-system, sans-serif;
+       display: flex; flex-direction: column; height: 100dvh; overflow: hidden; }
+p, ul, ol, dl, dd, figure, blockquote { margin: 0; padding: 0; list-style: none; }
 .icon { flex: none; vertical-align: -3px; }
+.px { image-rendering: pixelated; flex: none; display: block; }
+.face.dead { filter: grayscale(0.7); opacity: 0.8; }
 
-header, #replayBar { display: flex; align-items: center; gap: 8px 12px; padding: 10px 20px 8px; }   /* one row at every width: a chip appearing must not move the room */
-header > *, #replayBar > * { flex: none; }
+/* ---- the top of the page: the name, one sentence about now (§5.4), and the switches. One row when there is the
+   width; when there is not, the sentence takes a row of its own. Nothing in it is ever cut. ---- */
+header, #replayBar { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; padding: 3px 16px; flex: none; }
 #replayBar { padding-top: 0; }
-.brand { display: flex; align-items: baseline; gap: 10px; }
-h1 { margin: 0; font-size: 22px; font-weight: 650; letter-spacing: -0.01em; }
-#family { color: var(--muted); font-size: 14px; white-space: nowrap; }
-header .chips { display: flex; flex-wrap: nowrap; gap: 6px; font-size: 13px; color: var(--muted); margin-right: auto; flex: 1 1 0; min-width: 0; overflow: hidden; }
-.chips { display: flex; gap: 6px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
-.chip { background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px; white-space: nowrap; display: inline-flex; gap: 5px; align-items: center; }
+h1 { margin: 0; font: 24px/1 var(--pixel); }
+h1, h2, h3, .tabs button, .treename { word-spacing: 0.1em; }   /* a pixel face sets its words close */
+/* a box two lines high that is always there, so the sentence never moves the room */
+#now { flex: 1 1 520px; min-width: 0; min-height: 36px; padding: 0 10px; display: flex; align-items: center;
+       background: var(--surface); border: 2px solid var(--edge); box-shadow: 2px 2px 0 var(--shadow); }
+#now span { display: block; font-size: 14px; line-height: 16px; overflow-wrap: anywhere; }
+#now.long span { font-size: 12px; line-height: 14px; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+.chip { background: var(--surface); border: 1px solid var(--line); padding: 0 6px; white-space: nowrap; display: inline-flex; gap: 5px; align-items: center; }
 .chip.on { color: var(--good); }
 .chip.down, .chip.warn { color: var(--bad); }
-.follow { font-size: 14px; color: var(--muted); display: flex; gap: 6px; align-items: center; }
-.sound { display: flex; align-items: center; gap: 8px; }
+.follow { font-size: 13px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 2px 6px; align-items: center; }
+.follow select { max-width: 100%; }
+.sound { display: flex; align-items: center; gap: 6px; }
+/* too narrow for one row (a small window, or the drawer open): the sentence has the first row, the switches the second */
+@media (max-width: 1040px) { #now { flex-basis: calc(100% - 80px); } }
+@media (max-width: 1480px) { body.open #now { flex-basis: calc(100% - 80px); } }
 .sound input { width: 64px; accent-color: var(--accent); }
-.follow select { max-width: 240px; }
-body.open .sound input, body.open #playing, body.open #family { display: none; }
-/* beside the open drawer there is not width for one row: always two, the name and the chips over the buttons, so nothing is squeezed or cut */
-@media (min-width: 1100px) {
-  body.open { --chrome: 280px; }
-  body.open header { flex-wrap: wrap; }
-  body.open header .chips { flex-basis: calc(100% - 90px); }
-  body.open #map svg { max-height: 150px; }   /* the room is smaller here, and so is the column beside it: leave some of it for what just happened */
-}
-@media (max-width: 1400px) {
-  #playing { display: none; }
-  header:has(#radioBtn:not([hidden])) #family { display: none; }   /* once there is a radio to mute, its switch needs the room; the cards say who is alive */
-}
 #replayScrub { flex: 1; min-width: 160px; accent-color: var(--accent); }
 #replayWhen { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; min-width: 150px; }
 
 button, select, input[type="text"], input:not([type]) {
-  font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 5px 11px;
+  font: 13px/1.3 system-ui, -apple-system, sans-serif; color: var(--ink); background: var(--surface); border: 2px solid var(--edge); border-radius: 0; padding: 1px 8px; min-height: 26px;
 }
-button { cursor: pointer; }
-button:hover:not(:disabled) { border-color: var(--muted); }
-button:disabled { color: var(--muted); cursor: default; opacity: 0.6; }
-button[aria-pressed="true"], button[aria-expanded="true"] { border-color: var(--accent); color: var(--accent); }
+button { cursor: pointer; box-shadow: 2px 2px 0 var(--shadow); white-space: nowrap; }
+button:hover:not(:disabled) { background: color-mix(in srgb, var(--accent) 12%, var(--surface)); }
+button:active:not(:disabled) { transform: translate(1px, 1px); box-shadow: 1px 1px 0 var(--shadow); }
+button:disabled, input:disabled { color: var(--muted); cursor: default; border-color: var(--line); box-shadow: none; }
+button[aria-pressed="true"], button[aria-expanded="true"] { background: var(--accent); color: var(--surface); }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-.link { border: 0; background: none; padding: 0; color: var(--accent); text-decoration: underline; font-size: inherit; }
+.link { border: 0; background: none; padding: 0; min-height: 0; box-shadow: none; color: var(--accent); text-decoration: underline; font-size: inherit; }
+.link:hover:not(:disabled) { background: none; }
 
-main { flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 0 20px 12px; }
-.top { display: flex; gap: 16px; justify-content: center; width: 100%; }
-/* as big as the window allows while keeping the room's shape (740 x 516) */
-#stage { position: relative; flex: none; width: min(100% - var(--side) - 16px, (100dvh - var(--chrome)) * 740 / 516); min-width: 300px; }
-#room canvas { display: block; width: 100% !important; height: auto !important; border-radius: 12px; box-shadow: 0 2px 14px var(--shadow); }
+/* ---- the room, and the house beside it ---- */
+main { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 2px 16px 3px; }
+.top { display: flex; gap: 6px; justify-content: center; flex: none; max-width: 100%; }
+main.stacked .top { flex-direction: column; align-items: center; }
+#stage { position: relative; flex: none; background: #14121c; outline: 2px solid var(--edge); box-shadow: 4px 4px 0 var(--shadow); }
+#room { width: 100%; height: 100%; overflow: hidden; }
+#room canvas { display: block; image-rendering: pixelated; }
 #room.placing canvas { cursor: crosshair !important; }
-#roomName { position: absolute; left: 12px; bottom: 8px; padding: 1px 10px; border-radius: 999px; background: rgb(255 253 246 / 85%); color: #17231f;
-            font-size: 13px; font-weight: 600; pointer-events: none; }
-#banner { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); padding: 5px 16px; max-width: 86%; cursor: pointer;
-          background: #17231f; color: #fff; border-radius: 999px; font-weight: 600; font-size: 14px; text-align: center; box-shadow: 0 2px 10px var(--shadow); }
-#banner.error { background: var(--bad); color: #fff; }
-#banner.arrival { background: #6f4e06; padding: 7px 18px; font-size: 15px; box-shadow: 0 0 0 2px #f2c94c, 0 2px 12px var(--shadow); }   /* a discovery (SPEC-v3.1 §1) */
+#banner { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); padding: 4px 14px; width: max-content; max-width: 90%; cursor: pointer;
+          background: #2a2433; color: #fff; border: 2px solid #fff; font-weight: 600; font-size: 14px; text-align: center; box-shadow: 3px 3px 0 rgb(0 0 0 / 40%); z-index: 1; }
+#banner.error { background: #b3372e; }
+#banner.arrival { background: #6f4e06; border-color: #f2c94c; padding: 6px 16px; font-size: 15px; }   /* a discovery (SPEC-v3.1 §1) */
 #banner .icon { margin-right: 8px; color: #f2c94c; }
-#tip { position: absolute; z-index: 2; max-width: 260px; padding: 5px 10px; border-radius: 8px; background: #17231f; color: #fff; font-size: 13px;
-       line-height: 1.35; pointer-events: none; transform: translate(14px, 14px); white-space: pre-line; }
-#tip.left { transform: translate(calc(-100% - 14px), 14px); }
-#tip.up { transform: translate(14px, calc(-100% - 10px)); }
-#tip.left.up { transform: translate(calc(-100% - 14px), calc(-100% - 10px)); }
 
-/* the house beside the room: sky, map, what is going on, what just happened. It takes its height from the room. */
-#side { width: var(--side); flex: none; display: flex; flex-direction: column; gap: 8px; contain: size; min-height: 0; overflow: hidden; }
-#sky { display: flex; gap: 8px; align-items: center; font-size: 14px; }
-#sky b { font-weight: 650; }
-#sky span { color: var(--muted); font-size: 13px; display: block; line-height: 1.3; }
-#map svg { display: block; width: 100%; height: auto; }
-#map .room { cursor: pointer; }
-#map .room rect { stroke: var(--ink); stroke-opacity: 0.35; stroke-width: 1; }
-#map .room.viewed rect:first-of-type { stroke: var(--accent); stroke-opacity: 1; stroke-width: 3; }
-#map .unfound rect { fill: none; stroke: var(--muted); stroke-dasharray: 3 3; stroke-opacity: 0.7; }
-#map .unfound text { fill: var(--muted); font-size: 13px; }
-#map .way { stroke: var(--ink); stroke-width: 4; stroke-linecap: round; opacity: 0.55; }
-#map .way.unknown { stroke-dasharray: 2 4; opacity: 0.4; }
-#map .way.shut { stroke: var(--bad); opacity: 1; }
-#map .glyph { fill: none; stroke: #17231f; stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; opacity: 0.75; }
-#map .mark { fill: none; stroke: #0d3c5c; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
-#map .dim { fill: #0b1030; pointer-events: none; }
-#map .pet { stroke: #17231f; stroke-width: 1.3; }
-#map .pet.chosen { stroke: #fff; stroke-width: 2; paint-order: stroke; filter: drop-shadow(0 0 2px #17231f); }
-/* whole lines only, here and under Lately: one that would be cut wraps into a second column, which is out of sight */
+/* the hover card (§3.3) */
+#tip { position: absolute; z-index: 2; width: max-content; max-width: min(310px, 60%); display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px;
+       background: var(--surface); color: var(--ink); border: 2px solid var(--edge); box-shadow: 3px 3px 0 var(--shadow); font-size: 13px; line-height: 1.35;
+       pointer-events: none; transform: translate(16px, 16px); overflow-wrap: anywhere; }
+#tip.left { transform: translate(calc(-100% - 16px), 16px); }
+#tip.up { transform: translate(16px, calc(-100% - 12px)); }
+#tip.left.up { transform: translate(calc(-100% - 16px), calc(-100% - 12px)); }
+#tip > div { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+#tip b { font-size: 14px; }
+#tip blockquote { padding-left: 8px; }
+.thought { font-style: italic; }
+.thought::before { content: "“"; }
+.thought::after { content: "”"; }
+#family { font-size: 12px; }
+
+#side { flex: none; display: flex; flex-direction: column; gap: 8px; min-height: 0; overflow: hidden; }
+.where { display: flex; gap: 10px; align-items: flex-start; flex: none; padding: 2px 0 0 2px; }
+#side.slim .where { flex-direction: column; }
+.here { min-width: 0; display: flex; flex-direction: column; gap: 4px; font-size: 13px; overflow-wrap: anywhere; }
+#sky { display: flex; flex-direction: column; gap: 2px; }
+#side h2 { margin: 0; font: 16px/1.2 var(--pixel); text-transform: uppercase; }
+#side > h2 { color: var(--muted); border-top: 2px solid var(--line); padding-top: 6px; }
+.map { position: relative; flex: none; }
+.maproom { position: absolute; width: var(--cell); height: var(--cell); padding: 0; min-height: 0; border: 2px solid var(--edge); background: var(--surface); box-shadow: none;
+           display: flex; align-items: center; justify-content: center; }
+button.maproom:active:not(:disabled) { transform: none; box-shadow: none; }
+.maproom.viewed { border-color: var(--accent); outline: 2px solid var(--accent); z-index: 1; }
+.maproom.unfound { border: 2px dashed var(--muted); background: none; color: var(--muted); font: 16px var(--pixel); }
+.map .way { position: absolute; width: 8px; height: 4px; margin: -2px 0 0 -4px; background: var(--ink); opacity: 0.6; }
+.map .way.down { width: 4px; height: 8px; margin: -4px 0 0 -2px; }
+.map .way.unknown { opacity: 0.25; }
+.map .way.shut { background: var(--bad); opacity: 1; z-index: 2; }
+.maproom .dots { position: absolute; left: 0; right: 0; bottom: 0; display: flex; flex-wrap: wrap-reverse; justify-content: center; gap: 1px; pointer-events: none; }
+.dot { width: 10px; height: 10px; border: 1px solid #14121c; box-shadow: 0 0 0 1px #fff; margin: 1px; background: #b9c0bd; }
+.dot.egg { background: #fbfaf4; border-radius: 50%; }
+.dot.beast { width: 7px; height: 7px; background: #14121c; border-color: #fff; box-shadow: none; transform: rotate(45deg); margin: 2px; }
+.dot.chosen { box-shadow: 0 0 0 2px var(--accent); z-index: 1; }
+.maproom .signs { position: absolute; top: 0; right: 0; display: flex; background: rgb(255 255 255 / 85%); color: #0d3c5c; line-height: 0; pointer-events: none; }
+/* whole lines only, here and under Lately: one that would not fit wraps into a second column, which is out of sight */
 #happening { display: flex; flex-flow: column wrap; align-content: flex-start; gap: 2px 0; font-size: 13px; flex: 0 1 auto; min-height: 0; overflow: hidden; }
-#happening li { display: flex; gap: 6px; align-items: center; color: var(--muted); width: 100%; }
+#happening li { display: flex; gap: 6px; align-items: flex-start; color: var(--muted); width: 100%; }
+#happening li .icon { margin-top: 2px; }
 #happening li.warn { color: var(--bad); }
-#side h2 { margin: 2px 0 0; font-size: 13px; font-weight: 650; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
 #moments { flex: 1; min-height: 0; display: flex; flex-flow: column wrap; align-content: flex-start; overflow: hidden; }   /* the Story tab has them all */
 #moments li { width: 100%; }
+#side.slim { overflow-y: auto; scrollbar-width: thin; }   /* a narrow column may be taller than the room: it scrolls in its own box */
+#side.slim #happening { display: block; flex: none; }
+#side.slim > h2, #side.slim #moments, #side.slim #playing { display: none; }   /* too narrow to read a sentence in: the Story tab has them */
+main.stacked #side { overflow: visible; }
+main.stacked #moments { flex: none; height: 168px; }
+#playing { flex: none; min-height: 18px; font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
 .moment { display: grid; grid-template-columns: 16px auto minmax(0, 1fr); gap: 6px; align-items: baseline; width: 100%; text-align: left; border: 0; background: none;
-          padding: 3px 4px; border-radius: 6px; font-size: 13px; line-height: 1.35; color: var(--ink); }
-.moment:hover { background: var(--surface); }
+          padding: 3px 4px; min-height: 0; box-shadow: none; white-space: normal; font-size: 13px; line-height: 1.35; color: var(--ink); overflow-wrap: anywhere; }
+button.moment:hover:not(:disabled) { background: var(--surface); }
+button.moment:active:not(:disabled) { transform: none; box-shadow: none; }
 .moment .icon { align-self: center; color: var(--accent); }
 .moment .t { font: 12px var(--mono); color: var(--muted); white-space: nowrap; }
+div.moment { cursor: default; }
 
-/* a card for everyone alive, and every egg (§10.1) */
-#cards { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; justify-content: center; }   /* one row while they fit, each narrower; then a second, before a card is cut */
-#cards li { flex: 1 1 192px; max-width: 320px; display: flex; container-type: inline-size; }
-.card { flex: 1; min-width: 0; display: grid; grid-template-columns: 46px minmax(0, 1fr) 34px; gap: 0 8px; align-items: center; text-align: left;
-        padding: 4px 8px 4px 6px; border-radius: 10px; line-height: 1.25; height: 86px; border-left: 4px solid var(--fam, var(--line)); }
-.card.chosen { border-color: var(--accent); border-left-color: var(--fam, var(--accent)); box-shadow: inset 0 0 0 1px var(--accent); }
-.card span .icon { vertical-align: -2px; }
-.card .face { width: 46px; height: 54px; }
-.card b { display: block; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.card b small { font-weight: 400; color: var(--muted); font-size: 12px; }
-.card span { display: block; font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.card span.seems { color: var(--ink); }
-.card .radial { width: 34px; height: 34px; }
-.face { object-fit: contain; }
-@container (max-width: 252px) {   /* many in the house, or the drawer open: a narrower card drops its chart rather than cut what it says */
-  .card { grid-template-columns: 38px minmax(0, 1fr); gap: 0 6px; }
-  .card .face { width: 38px; height: 46px; }
-  .card .radial { display: none; }
-}
-.empty-house { color: var(--muted); font-size: 14px; padding: 8px; }
+/* ---- a card for everyone alive, and every egg: one row while they fit, then a second; every line wraps ---- */
+#cards { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; justify-content: center; flex: none; }
+.card { flex: 1 1 220px; max-width: 340px; min-width: 0; min-height: 96px; display: flex; gap: 8px; align-items: flex-start; padding: 3px 5px; cursor: pointer;
+        background: var(--surface); border: 2px solid var(--edge); border-left: 6px solid var(--fam, var(--edge)); box-shadow: 2px 2px 0 var(--shadow); }
+.card.egg { flex: 1 1 150px; max-width: 220px; }
+.card:hover { background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
+.card.chosen { outline: 2px solid var(--accent); outline-offset: 1px; }
+.card .pic { flex: none; width: 48px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.card .pic span { display: flex; gap: 3px; align-items: flex-end; justify-content: center; min-height: 26px; }
+.card .txt { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow-wrap: break-word; font-size: 12px; line-height: 15px; }
+.card .txt > span { color: var(--muted); }
+.card b { font-weight: 650; font-size: 14px; line-height: 17px; color: var(--ink); }
+.card .txt .mood, .card .txt .doing { color: var(--ink); }
+.card .txt .thought { color: var(--ink); font-size: 11.5px; line-height: 13.5px; }
+.card .mind { font-size: 11px; line-height: 1; padding: 0 4px; min-height: 15px; box-shadow: none; vertical-align: 1px; border-width: 1px; color: var(--muted); }
+.empty-house { color: var(--muted); padding: 8px; }
 
-.controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center; width: 100%; max-width: 1240px; min-height: 36px; }
-.place { display: flex; gap: 6px; align-items: center; }
-#chosenWhat { font-size: 14px; color: var(--accent); font-weight: 600; }
-#talkForm { display: flex; gap: 6px; flex: 1 1 400px; max-width: 600px; }
-#talkText { flex: 1; min-width: 60px; }
+/* ---- the visitor's controls: one bar ---- */
+footer { flex: none; padding: 3px 16px; border-top: 2px solid var(--edge); background: var(--surface); }
+.controls { display: flex; flex-wrap: wrap; gap: 4px 16px; align-items: center; justify-content: center; }
+.group { display: flex; gap: 6px; align-items: center; }
+#talkForm { flex: 1 1 400px; max-width: 600px; }
+#talkText { flex: 1; min-width: 100px; }
 #nameForm { display: flex; gap: 6px; }
-#nameText { width: 110px; }
-#ended { width: 100%; max-width: 1040px; display: flex; gap: 16px; align-items: center; justify-content: center; padding: 10px 20px; border-radius: 12px;
-         background: var(--surface); border: 1px solid var(--line); color: var(--muted); }
-#ended button { color: var(--ink); white-space: nowrap; }
+#nameText { width: 96px; }
+#chosenWhat { font-size: 13px; color: var(--accent); font-weight: 600; }
+#chosenWhat.none { color: var(--muted); font-weight: 400; }
+#ended { display: flex; gap: 16px; align-items: center; justify-content: center; color: var(--muted); }
+#ended button { color: var(--ink); }
 
-/* drawer: closed by default; pushes the house aside on a wide window, covers it on a narrow one */
+/* ---- the drawer: closed by default; pushes the house aside on a wide window, covers it on a narrow one ---- */
 #drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(var(--drawer), 100vw); background: var(--surface); z-index: 3;
-          border-left: 1px solid var(--line); box-shadow: -8px 0 24px var(--shadow); display: flex; flex-direction: column; }
-@media (min-width: 1100px) { body.open header, body.open main, body.open #replayBar { margin-right: var(--drawer); } }
-@media (max-width: 760px) {
-  .top { flex-direction: column; align-items: center; }
-  #stage { width: 100%; }
-  #side { contain: none; width: 100%; max-width: 420px; }
-  #moments { max-height: 120px; }
-}
-.tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line); padding: 8px 12px 0; }
-.tabs button { border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: none; padding: 8px 10px; color: var(--muted); white-space: nowrap; font-size: 14px; }
-.tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); font-weight: 600; }
-#drawerClose { margin-left: auto; font-size: 20px; line-height: 1; padding: 4px 10px; }
-.panel { padding: 14px 18px 28px; overflow-y: auto; flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 12px; overflow-wrap: anywhere; }
+          border-left: 2px solid var(--edge); box-shadow: -6px 0 0 var(--shadow); display: flex; flex-direction: column; }
+@media (min-width: 1100px) { body.open { padding-right: var(--drawer); } }
+.tabs { display: flex; gap: 4px; border-bottom: 2px solid var(--edge); padding: 8px 12px 0; flex: none; }
+.tabs button { border: 2px solid var(--edge); border-bottom: 0; background: var(--bg); padding: 4px 12px; color: var(--muted); box-shadow: none; font: 16px var(--pixel); min-height: 30px; }
+.tabs button[aria-selected="true"] { color: var(--ink); background: var(--surface); margin-bottom: -2px; padding-bottom: 6px; }
+#drawerClose { margin-left: auto; border: 0; background: none; font-size: 18px; line-height: 1; padding: 2px 8px; }
+.panel { padding: 14px 16px 28px; overflow-y: auto; flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 12px; overflow-wrap: anywhere; }
 .panel > * { flex: none; }
-h2 { margin: 0; font-size: 18px; font-weight: 650; }
-h3 { margin: 6px 0 4px; font-size: 15px; font-weight: 650; }
+h2 { margin: 0; font: 16px/1.3 var(--pixel); }
+h3 { margin: 8px 0 2px; font: 16px/1.3 var(--pixel); }
+h3 .hint, h3 .link { font: 13px/1.3 system-ui, -apple-system, sans-serif; word-spacing: normal; }
+h3.maker { display: flex; align-items: center; gap: 8px; }
 h4 { margin: 4px 0 0; font-size: 13px; font-weight: 650; color: var(--muted); }
 .hint, .empty, details > summary { color: var(--muted); font-size: 13px; }
-.note { padding: 6px 10px; border: 1px dashed var(--line); border-radius: 8px; }
+.note { padding: 6px 10px; border: 2px dashed var(--line); }
 .bad { color: var(--bad); }
 details > summary { cursor: pointer; padding: 3px 0; }
 details[open] > summary { color: var(--ink); margin-bottom: 6px; }
 .panel section { display: flex; flex-direction: column; gap: 5px; }
 blockquote { padding-left: 12px; border-left: 3px solid var(--line); font-size: 14px; }
-blockquote.thought { border-left-color: var(--accent); }
-.who { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 12px; align-items: center; }
-.who > .face { width: 76px; height: 92px; }
+blockquote.thought { border-left-color: var(--accent); font-style: normal; }
+blockquote.thought::before, blockquote.thought::after { content: none; }
+blockquote.chalk { font-family: "Chalkboard SE", "Comic Sans MS", cursive; }
+blockquote.scratch { font-style: italic; color: var(--muted); }
+.who { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; align-items: center; }
 .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; }
-.row figure { text-align: center; width: 62px; }
-.row figure img, .row figure svg { width: 56px; height: 62px; object-fit: contain; }
+.row figure { text-align: center; width: 66px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.row figure svg { width: 56px; height: 62px; }
 .row figure.gone { opacity: 0.5; }
 .row figcaption { line-height: 1.2; font-size: 11px; }
+.choice { display: inline-flex; flex-wrap: wrap; }
+.choice button { box-shadow: none; }
+.choice button + button { margin-left: -2px; }
+.labhead { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 
 .radial { align-self: center; max-width: 100%; }
 .radial .ring, .drift .ring { fill: none; stroke: var(--line); stroke-width: 1; }
@@ -196,12 +220,12 @@ blockquote.thought { border-left-color: var(--accent); }
 .radial text, .drift text { font-size: 10px; fill: var(--muted); }
 .drift { width: 100%; height: auto; }
 .drift .shape { fill: none; stroke: var(--accent); stroke-width: 1.5; }
-.drift .dot { fill: var(--surface); stroke: var(--accent); stroke-width: 1.5; }
+.drift .dot { fill: var(--surface); stroke: var(--accent); stroke-width: 1.5; width: auto; height: auto; }
 
 .need { display: grid; grid-template-columns: 66px minmax(0, 1.3fr) minmax(0, 1fr) 30px; gap: 8px; align-items: center; font-size: 13px; color: var(--muted); padding: 2px 0; }
 .need b { color: var(--ink); font-weight: 600; }
 .num { text-align: right; font-variant-numeric: tabular-nums; }
-.bar { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.bar { height: 6px; background: var(--line); overflow: hidden; }
 .bar b { display: block; height: 100%; background: var(--good); }
 .need.low b { color: var(--bad); }
 .need.low .bar b { background: var(--bad); }
@@ -211,8 +235,8 @@ blockquote.thought { border-left-color: var(--accent); }
 .correct { color: var(--good); }
 .wrong, .rejected { color: var(--bad); }
 .unscorable { color: var(--muted); }
-.tag, .badge { font: 11px var(--mono); border: 1px solid var(--line); color: var(--muted); border-radius: 999px; padding: 0 7px; white-space: nowrap; align-self: start; }
-.badge { margin-left: 8px; color: var(--good); border-color: var(--good); font-family: inherit; font-size: 12px; }
+.tag, .badge { font: 11px var(--mono); border: 1px solid var(--line); color: var(--muted); padding: 0 6px; white-space: nowrap; align-self: start; }
+.badge { color: var(--good); border-color: var(--good); font-family: inherit; font-size: 12px; }
 .badge.gold { color: var(--gold); border-color: var(--gold); }
 .plain li { padding: 2px 0; font-size: 14px; }
 .beliefs li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
@@ -221,17 +245,19 @@ blockquote.thought { border-left-color: var(--accent); }
 .journal li.plan { color: var(--ink); font-weight: 600; }
 .night { padding: 6px 0 10px; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 3px; font-size: 14px; }
 
+/* Things: a picture, what it is, and under that what its maker meant and what it really does */
 .shelf { display: flex; flex-direction: column; }
-.thing { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 2px 12px; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
-.thing > svg { width: 56px; height: 56px; grid-row: 1 / span 6; }
-.thing > :not(svg) { grid-column: 2; }
+.thing { display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 2px 12px; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 14px; align-items: start; }
+.thing > canvas { grid-row: 1 / span 7; justify-self: center; max-width: 48px; height: auto; }
+.thing > :not(canvas) { grid-column: 2; }
 .thing b { font-weight: 650; }
 .truth { font-size: 13px; color: var(--muted); }
-.shelf.gone .thing { opacity: 0.6; }
+.truth b { font-weight: 600; }
+.thing.gone > canvas { opacity: 0.55; }
 
-/* the family tree: generations top to bottom, the living outlined */
-/* it scrolls in its own box, both ways, however many generations there are; it opens on the living, at its foot */
-.treebox { overflow: auto; max-height: 66vh; padding: 8px 6px; border: 1px solid var(--line); border-radius: 12px; scrollbar-width: thin; }
+/* the family tree: generations top to bottom, the living outlined. It is as tall as it needs to be up to a whole
+   number of generations, then it scrolls in its own box, both ways; it opens on the living, at its foot */
+.treebox { overflow: auto; padding: 6px; border: 2px solid var(--line); scrollbar-width: thin; }
 .tree { position: relative; margin: 0 auto; }
 .tree .lines { position: absolute; inset: 0; }
 .tree .lines path { fill: none; stroke: var(--line); stroke-width: 2; }
@@ -240,59 +266,52 @@ blockquote.thought { border-left-color: var(--accent); }
 .crossmark { pointer-events: auto; }
 .crossmark circle { fill: var(--surface); stroke: var(--accent); stroke-width: 1.5; }
 .crossmark text { fill: var(--accent); font-size: 12px; }
-.treename { position: absolute; top: 0; text-align: center; font-size: 12px; font-weight: 650; color: var(--fam); white-space: nowrap; }
-.treecross { position: absolute; top: 0; transform: translateX(-50%); font-size: 11px; line-height: 16px; color: var(--accent); border: 1px solid var(--accent); border-radius: 999px;
+.treename { position: absolute; top: 0; text-align: center; font: 16px/1 var(--pixel); color: var(--fam); white-space: nowrap; }
+.treecross { position: absolute; top: 20px; transform: translateX(-50%); font-size: 11px; line-height: 16px; color: var(--accent); border: 1px solid var(--accent);
              padding: 0 6px; background: var(--surface); white-space: nowrap; }
-.node b::before, .owner b::before { content: ""; display: inline-block; width: 8px; height: 8px; margin-right: 4px; border-radius: 50%; background: var(--fam, var(--muted)); }
-.node { position: absolute; width: 88px; margin: 0 4px; height: 126px; padding: 4px 2px; display: flex; flex-direction: column; align-items: center; line-height: 1.2;
-        border-radius: 10px; border-color: transparent; background: var(--surface); }
-.node .face { width: 52px; height: 56px; }
-.node b { font-size: 13px; font-weight: 650; max-width: 100%; text-align: center; overflow-wrap: anywhere; }   /* a long name takes a second line */
-.node span { font-size: 11px; color: var(--muted); white-space: nowrap; }
-.node.alive { border-color: var(--good); background: color-mix(in srgb, var(--good) 8%, var(--surface)); }
-.node.dead .face { filter: grayscale(0.6); opacity: 0.8; }
-.node.chosen { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
-.life { padding: 12px; border: 1px solid var(--line); border-radius: 12px; gap: 10px; }
+.node b::before, .owner b::before { content: ""; display: inline-block; width: 8px; height: 8px; margin-right: 4px; background: var(--fam, var(--muted)); }
+.node { position: absolute; width: 88px; margin: 0 4px; height: 112px; min-height: 0; padding: 3px 2px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+        line-height: 1.15; white-space: normal; border-color: transparent; background: var(--surface); box-shadow: none; }
+.node b { font-size: 12px; font-weight: 650; max-width: 100%; text-align: center; overflow-wrap: anywhere; }   /* a long name takes a second line */
+.node span { font-size: 11px; color: var(--muted); text-align: center; }
+.node.alive { border-color: var(--good); background: color-mix(in srgb, var(--good) 10%, var(--surface)); }
+.node.chosen { border-color: var(--accent); outline: 1px solid var(--accent); }
+.life { padding: 12px; border: 2px solid var(--line); gap: 10px; }
 .sayings li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 3px; font-size: 14px; }
-.chronicle { padding: 12px 14px; border-radius: 12px; background: var(--bg); }
+.chronicle { padding: 10px 12px; background: var(--bg); border: 2px solid var(--line); }
 .moments { display: flex; flex-direction: column; }
 
 .meters { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 6px 10px; align-items: center; font-size: 13px; }
-.meter { position: relative; height: 10px; border-radius: 5px; background: var(--line); }
-.meter b { display: block; height: 100%; border-radius: 5px; background: var(--good); min-width: 2px; }
+.meter { position: relative; height: 10px; background: var(--line); }
+.meter b { display: block; height: 100%; background: var(--good); min-width: 2px; }
 .meter b.over { background: var(--bad); }
 .meter i { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--ink); }
 .meter i.old { background: var(--muted); width: 0; border-left: 2px dotted var(--muted); }
-.scroll { overflow-x: auto; scrollbar-width: thin; border: 1px solid var(--line); border-radius: 10px; padding: 0 0 4px 8px; }
-.compare { border-collapse: collapse; font-size: 13px; min-width: 100%; }
-.compare th, .compare td { padding: 5px 12px 5px 0; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; font-weight: 400;
-                           font-variant-numeric: tabular-nums; min-width: 84px; max-width: 170px; }
-.compare th:first-child, .compare td:first-child { color: var(--muted); position: sticky; left: 0; background: var(--surface); min-width: 118px; max-width: 118px; }
-.compare thead th { font-weight: 650; }
+.each details { border-bottom: 1px solid var(--line); padding: 3px 0; }
+.each summary { color: var(--ink); }
+.facts { display: grid; grid-template-columns: minmax(0, 12em) minmax(0, 1fr); gap: 3px 10px; font-size: 13px; padding: 2px 0 8px 14px; }
+.facts dt { color: var(--muted); }
+.facts dd { font-variant-numeric: tabular-nums; }
 
 /* the voice lab, at the foot of the Lab tab */
-.voicelab { margin-top: 20px; padding-top: 12px; border-top: 1px solid var(--line, rgba(128,128,128,.25)); }
+.voicelab { margin-top: 20px; padding-top: 12px; border-top: 2px solid var(--line); }
 .voicelab .row { display: flex; gap: 6px; margin: 8px 0; }
 .voicelab .row input { flex: 1; min-width: 0; }
 .voicelab .sounds { display: flex; flex-wrap: wrap; gap: 6px; }
-.voicelab .sounds button { font-size: 12px; padding: 3px 8px; }
+.voicelab .sounds button { font-size: 12px; padding: 1px 8px; }
 .voicelab .heard { list-style: none; padding: 0; margin: 6px 0 0; font-size: 12px; max-height: 180px; overflow: auto; }
 .voicelab .heard span { opacity: .6; font-variant-numeric: tabular-nums; }
-#playing { font-size: 12px; opacity: .8; max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-pre.packet { white-space: pre-wrap; font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; margin: 6px 0 0; }
+pre.packet { white-space: pre-wrap; font: 12px/1.5 var(--mono); margin: 6px 0 0; }
 
 /* SPEC-v3.1: the songbook, the walls, the discoveries */
 .songtree, .songtree ul { display: flex; flex-direction: column; gap: 8px; }
 .songtree ul { margin: 8px 0 0 12px; padding-left: 12px; border-left: 2px solid var(--line); }   /* a version sits in under the one it came from */
 .version { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 8px; font-size: 14px; padding-left: 8px; border-left: 3px solid var(--fam, var(--line)); }
-.play { width: 26px; height: 26px; padding: 0 0 0 2px; border-radius: 50%; color: var(--accent); font-size: 11px; line-height: 1; vertical-align: 1px; }
+.play { width: 26px; height: 26px; min-height: 0; padding: 0 0 0 2px; color: var(--accent); font-size: 11px; line-height: 1; vertical-align: 1px; }
 .staff { display: block; margin: 3px 0; max-width: 100%; border-block: 1px solid var(--line); }
 .staff rect { fill: var(--ink); }
 .staff rect.changed { fill: var(--accent); }
-.walls blockquote.chalk { font-family: "Chalkboard SE", "Comic Sans MS", cursive; }
-.walls blockquote.scratch { font-style: italic; color: var(--muted); }
 .walls li.gone blockquote { text-decoration: line-through; text-decoration-color: var(--muted); color: var(--muted); }
 .arrivals li { display: grid; grid-template-columns: 18px 80px minmax(0, 1fr); gap: 8px; align-items: baseline; padding: 3px 0; font-size: 14px; }
 .arrivals .icon { align-self: center; color: var(--muted); }
 .arrivals li.come .icon { color: var(--good); }
-div.moment { cursor: default; }

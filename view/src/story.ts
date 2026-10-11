@@ -1,5 +1,5 @@
 // The Story tab (SPEC-v3 §10.5) and the Lab tab (§11.4): what happened, and what it measured out to.
-import { about, dayOf, el, fold, GENES, plural, scroller, when, whole } from "./dom";
+import { about, dayOf, el, fold, GENES, plural, when, whole } from "./dom";
 import type { Ctx, Kid } from "./dom";
 import { record } from "./family";
 import { icon, svg } from "./icons";
@@ -29,9 +29,10 @@ function discoveries(c: Ctx, v: V31) {
     return `in ${s.turbo && v.ticks_per_day ? plural(Math.max(1, Math.round(left / v.ticks_per_day)), "day") + " of the house" : about((left * tickMs(s)) / 1000)}${third}`;
   };
   const next = all.find(([, a]) => a.arrived == null), come = all.filter(([, a]) => a.arrived != null).length;
-  return fold("discoveries", `Discoveries: ${come} of ${all.length} have come${next ? `. Next, ${FOUND[next[0]].toLowerCase()}, ${wait(next[0], next[1].due).split(",")[0]}` : ""}`,
-    el("ul", "arrivals", ...all.map(([n, a]) => el("li", a.arrived == null ? "" : "come", icon(`arrival ${n}`), el("b", "", FOUND[n]),
-      el("span", "hint", a.arrived == null ? wait(n, a.due) : `came on ${when(s, a.arrived)}`)))));
+  const list = el("ul", "arrivals", ...all.map(([n, a]) => el("li", a.arrived == null ? "" : "come", icon(`arrival ${n}`), el("b", "", FOUND[n]),
+    el("span", "hint", a.arrived == null ? wait(n, a.due) : `came on ${when(s, a.arrived)}`))));
+  // while something is still to come the list is in plain sight; once all six are here it folds away
+  return next ? el("section", "", el("h3", "", `Discoveries (${come} of ${all.length} have come)`), list) : fold("discoveries", `Discoveries: all ${all.length} have come`, list);
 }
 
 export function story(c: Ctx): Kid[] {
@@ -47,7 +48,7 @@ export function story(c: Ctx): Kid[] {
   const read = (b: (typeof lib)[number]) => el("li", "", el("p", "", el("b", "", b.name), ` asked the book: “${b.question}” `, el("span", "hint", when(c.snap, b.tick))),
     b.text ? el("blockquote", "", el("b", "", `${b.title}. `), b.text) : el("p", "hint", "The book had nothing to say to that."));
   return [
-    latest ? el("section", "chronicle", el("h3", "", `Day ${latest.day}, ${latest.season}`), el("p", "", told(latest)), el("p", "hint", latest.summary))
+    latest ? el("section", "chronicle", el("h3", "", `Day ${latest.day}, ${latest.season}`), el("p", "", told(latest)))
       : el("p", "empty", "The first day is not over yet; the chronicle is written each night."),
     discoveries(c, v),
     el("h3", "", `Today, day ${today}`),
@@ -129,8 +130,9 @@ export function lab(c: Ctx): Kid[] {
     ["What it does most", (p) => Object.entries(p.actions as Record<string, number>).slice(0, 5).map(([k, n]) => `${k} ${n}`).join(", ")],
     ["Why it thought", (p) => pairs(p.why)],
   ];
-  const table = el("table", "compare", el("thead", "", el("tr", "", el("th"), ...pets.map((p) => el("th", "", p.name)))),
-    el("tbody", "", ...rows.map(([label, cell]) => el("tr", "", el("td", "", label), ...pets.map((p) => el("td", "", cell(p)))))));
+  // one block a pet, its headline numbers always in sight and the rest a click away: however many pets, nothing is off to the side
+  const each = pets.map((p) => fold(`lab-${p.id ?? p.name}`, el("span", "", el("b", "", p.name), ` · generation ${p.gen}, ${p.stage} · ${p.days} days · wellbeing ${p.wellbeing ?? "–"} · ${p.intentions} thoughts`),
+    el("dl", "facts", ...rows.flatMap(([label, cell]) => [el("dt", "", label), el("dd", "", cell(p))]))));
   const claims = d.claims as { text: string; first: string; pets: string[]; gens: number[]; forms: [string, string][]; truth: string | null }[];
   return [
     el("h3", "", "Does it read like a creature?"),
@@ -143,8 +145,8 @@ export function lab(c: Ctx): Kid[] {
       el("span", "num", `${d.calls_last_hour} of ${d.budget}`)),
     el("p", "hint", `By kind, over the whole family: ${pairs(d.calls_by_kind)}.`),
     el("h3", "", "Each pet"),
-    pets.length > 2 ? el("p", "hint", `${plural(pets.length, "pet")}: the table scrolls sideways.`) : null,
-    scroller("lab-pets", "scroll", table),
+    el("p", "hint", "Click a pet for all its numbers."),
+    el("div", "each", ...each),
     el("h3", "", "Temperament over the generations"),
     drift(d.temper),
     el("h3", "", `What they have claimed (${claims.length})`),

@@ -172,8 +172,9 @@ export type Ears = {
   moments: { n: number; kind: string; pet: string | null; room: string | null }[];
   sung?: { tick: number; by: string; song: string; room: string }[];
   radio?: { said: { tick: number; room: string | null; source: string; text: string }[] };
+  acts?: { n: number; type: string; pet: string; what?: string | null; room: string; ok: boolean }[];   // SPEC-v3.2: steps just finished, numbered
 };
-export type Seen = { said: Record<string, number>; moment: number; sung: number; radio: number };
+export type Seen = { tick: number; said: Record<string, number>; moment: number; sung: number; radio: number; act: number };
 export type HouseSound = "powerdown" | "powerup" | "thunder" | "drip" | "whoosh" | "thud" | "chalk" | "chime" | "patter" | "tuning" | "pages" | "knock";
 const BY_PET: Record<string, SoundKind> = { hatched: "cry", stage: "stageup", made: "chirp", unmade: "blip", nuzzle: "trill", gift: "trill",
                                             named: "hm", death: "last", befriended: "trill", tamed: "trill" };
@@ -183,19 +184,23 @@ const BY_HOUSE: Record<string, HouseSound> = { power: "powerdown", storm: "thund
 
 /** Compare what was heard before with what is here now. On the first look nothing plays: old news is not announced. */
 export function news(seen: Seen | null, s: Ears) {
-  const sung = s.sung ?? [], said = s.radio?.said ?? [];
-  const now: Seen = { said: Object.fromEntries(s.pets.filter((p) => p.said).map((p) => [p.id, p.said!.tick])), moment: Math.max(0, ...s.moments.map((m) => m.n)),
+  const sung = s.sung ?? [], said = s.radio?.said ?? [], acts = s.acts ?? [];
+  if (seen && s.tick < seen.tick) seen = null;   // a replay wound back: start listening afresh, announce nothing
+  const now: Seen = { tick: s.tick, act: Math.max(seen?.act ?? 0, ...acts.map((a) => a.n)), said: Object.fromEntries(s.pets.filter((p) => p.said).map((p) => [p.id, p.said!.tick])), moment: Math.max(0, ...s.moments.map((m) => m.n)),
                       sung: Math.max(seen?.sung ?? 0, ...sung.map((x) => x.tick)), radio: Math.max(seen?.radio ?? 0, ...said.map((x) => x.tick)) };
-  const speak: { pet: string; text: string }[] = [], sounds: { kind: SoundKind; pet: string; room: string | null }[] = [], house: { kind: HouseSound; room: string | null }[] = [];
+  const speak: { pet: string; text: string }[] = [], sounds: { kind: SoundKind; pet: string; room: string | null }[] = [], house: { kind: HouseSound; room: string | null; moment: string }[] = [];
   if (seen) {
     for (const p of s.pets) if (p.said && p.said.tick !== seen.said[p.id] && !p.said.song) speak.push({ pet: p.id, text: p.said.text });   // a song is played, not said
     for (const m of s.moments.filter((m) => m.n > seen.moment)) {
       if (BY_PET[m.kind] && m.pet) sounds.push({ kind: BY_PET[m.kind], pet: m.pet, room: m.room });
-      if (BY_HOUSE[m.kind]) house.push({ kind: BY_HOUSE[m.kind], room: m.room });
+      if (BY_HOUSE[m.kind]) house.push({ kind: BY_HOUSE[m.kind], room: m.room, moment: m.kind });
     }
   }
   // songs sung and words from the box (SPEC-v3.1): each is heard once
-  return { seen: now, speak, sounds, house, sing: seen ? sung.filter((x) => x.tick > seen.sung) : [], heard: seen ? said.filter((x) => x.tick > seen.radio) : [] };
+  // and each step a pet finishes (SPEC-v3.2 §8), by its running number
+  const [was, old] = [seen?.sung ?? 0, seen?.radio ?? 0], done = seen?.act ?? 0;
+  return { seen: now, speak, sounds, house, sing: seen ? sung.filter((x) => x.tick > was) : [], heard: seen ? said.filter((x) => x.tick > old) : [],
+           acts: seen ? acts.filter((a) => a.n > done && a.ok) : [] };
 }
 
 

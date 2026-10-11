@@ -24,8 +24,8 @@ view/assets/
 - A room is drawn on a **canvas of 14 × 11 tiles** (224 × 176 source pixels). Floor tile `[0, 0]` is canvas tile
   `[1, 2]`: there are two rows of north wall above the floor (windows, pictures, shelves and writing go there), one
   column of wall on each side, and one row of south wall below.
-- Doors are in the engine's `door_tiles` (sent in every snapshot): `north [6, 0]`, `south [6, 7]`, `west [0, 4]`,
-  `east [11, 4]` unless house.toml says otherwise. A door is drawn in the wall beside its tile.
+- Doors are in the engine's `door_tiles` (sent in every snapshot; house.toml sets them): `north [7, 0]`,
+  `south [7, 7]`, `west [0, 5]`, `east [11, 4]`. A door is drawn in the wall beside its tile.
 
 ## packs.json
 
@@ -33,6 +33,8 @@ view/assets/
 { "ninja": { "dir": "third_party/ninja_adventure", "tile": 16, "licence": "CC0", "by": "Pixel-boy and AAA" },
   "own":   { "dir": "own", "tile": 16, "licence": "CC0", "by": "this project" } }
 ```
+
+`"font": "<file in the pack>"` on a pack entry names a pixel font the page uses for its headings.
 
 A pack whose licence forbids redistribution lives outside the repository: give it `"dir": "/absolute/path"` and
 `"local": true`. The view must work without it (every sprite from a local pack needs a `"fallback"` sprite id).
@@ -51,6 +53,9 @@ A pack whose licence forbids redistribution lives outside the repository: give i
 - `anchor` is the pixel of the sprite that sits on the top-left corner of its floor tile (default `[0, h - 16]`: a
   tall sprite stands on its tile and rises above it).
 - `anims`: named animations as lists of `[col, row]` cells of `rect`'s size counted from `rect`'s origin, with `fps`.
+- `anims` entries may carry `"flip": true`: draw the frames mirrored left to right (a sheet that only faces right).
+- `slice`: `[left, top, right, bottom]` marks a nine-slice piece (bubbles, plates, panels): the corners keep their
+  size and the middle stretches. A bubble's tail is a sprite of its own (`ui.bubble.say.tail`).
 - `tint`: `"hue"` means the view recolours it to a made thing's colour (hue and saturation replaced, lightness
   kept, outline and highlights left alone); absent means draw as is.
 - Names of ours, by prefix: `tile.*` floors and walls · `decor.*` furniture that is only scenery · `fix.<fixture
@@ -90,7 +95,17 @@ A pack whose licence forbids redistribution lives outside the repository: give i
 ```
 
 - `fixtures`: every fixture the engine has for this room type (house.toml lists them) must be here. `pos` is
-  where it stands; the engine moves an unmoved, unmovable fixture to this tile, so the layout decides.
+  where it stands; the engine moves an unmovable fixture to this tile, so the layout decides. `"wall": true`
+  means it hangs on the north wall above `pos` (a window, a mirror, a lantern on a hook) and takes no floor.
+  A fixture that arrives later (the heavy book) can be given its place here too.
+- `"doors": "gate"` draws this room's doors from `door.gate.<wall>.<state>` instead of `door.<wall>.<state>`.
+- `light.day` is how dark the room is even by day (a cellar), `light.night` by night.
+- Draw order: the floor grid, the walls grid, wall decor (`at: [x, -1]` or `[x, -2]`), doors, floor decor, then
+  fixtures, made things, bits and pets sorted by `y`, then `top` decor. A sprite is drawn with its `anchor` pixel
+  on the top-left corner of its floor tile; things on walls lift themselves by their anchor.
+- A fixture's sprite by state: the bare name is its resting look (`fix.lamp` is off), `fix.<name>.<state>` the
+  others (`.on`, `.off`; a bowl's `.full`, `.half`, `.empty`; `.silent`, `.playing`; `.closed`, `.open`;
+  `.growing`, `.ripe`).
 - `blocked` plus the fixtures' tiles plus the `wall` things is what the engine and the view both treat as not
   walkable. Keep every door tile, and a path between all doors, free.
 

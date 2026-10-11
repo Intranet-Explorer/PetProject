@@ -954,12 +954,12 @@ async def main():
             po["carrying"] = ["wax"]
             r = await do(e8, po, {"type": "make", "recipe": dict(base, kind="picture", name="view %d" % i, material="warm"), "near": "here"})
             assert not r[0]["reason"] and room8["objects"]["view %d" % i].get("wall"), r
-        hung = [o["pos"] for o in room8["objects"].values() if o.get("wall")]
+        hung = [o["pos"] for o in room8["objects"].values() if o.get("wall") and "made" in o]
         assert sorted(hung) == sorted(room8["wall_slots"]) and all(t not in world_.taken(h8, room8) or t in [list(h8["door_tiles"][d_]) for d_ in room8["doors"]] or
                                                                    any(o["pos"] == t and not o.get("wall") for o in room8["objects"].values()) for t in hung), "a picture hangs in a place on the wall and takes no floor"
         po["carrying"] = ["wax"]
         assert "no free place on the wall" in actions.check({"type": "make", "recipe": dict(base, kind="picture", name="one more", material="warm")}, h8, c8, po, pm.mem)
-        for n in [n for n, o in list(room8["objects"].items()) if o.get("wall")][1:]:
+        for n in [n for n, o in list(room8["objects"].items()) if o.get("wall") and "made" in o][1:]:
             del room8["objects"][n]
         # what two things make together
         mk = lambda kind, material: {"kind": kind, "material": material}

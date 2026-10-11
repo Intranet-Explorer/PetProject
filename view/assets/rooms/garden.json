@@ -1,0 +1,36 @@
+{
+ "type": "garden",
+ "floor": [
+  ["tile.sky", "tile.sky", "tile.sky.cloud", "tile.sky.cloud", "tile.sky", "tile.sky", "tile.sky", "tile.sky", "tile.sky", "tile.sky.cloud", "tile.sky", "tile.sky", "tile.sky", "tile.sky"],
+  ["tile.sky.hedge", "tile.sky.hedge", "tile.sky.hedge", "tile.sky.hedge", "tile.sky.hedge", "tile.sky.hedge", "tile.sky.hedge", "tile.sky.hedge", "tile.sky.hedge", "tile.sky.hedge", "tile.sky.hedge", "tile.sky.hedge", "tile.sky.hedge", "tile.sky.hedge"],
+  ["tile.grass", "tile.grass.1", "tile.grass", "tile.grass", "tile.grass", "tile.grass", "tile.grass.3", "tile.grass", "tile.path", "tile.grass.2", "tile.grass", "tile.grass", "tile.grass.1", "tile.grass"],
+  ["tile.grass", "tile.grass.3", "tile.soil.nw", "tile.soil.n", "tile.soil.n", "tile.soil.ne", "tile.grass", "tile.grass", "tile.path", "tile.grass.1", "tile.grass", "tile.grass", "tile.grass.3", "tile.grass"],
+  ["tile.grass", "tile.grass", "tile.soil.sw", "tile.soil.s", "tile.soil.s", "tile.soil.se", "tile.grass", "tile.grass", "tile.path", "tile.grass", "tile.grass", "tile.grass", "tile.grass", "tile.grass"],
+  ["tile.grass", "tile.grass", "tile.grass", "tile.grass", "tile.grass", "tile.grass.3", "tile.grass.2", "tile.grass.1", "tile.path", "tile.grass", "tile.grass", "tile.grass", "tile.grass", "tile.grass"],
+  ["tile.grass", "tile.grass", "tile.grass", "tile.grass", "tile.grass", "tile.grass", "tile.grass", "tile.grass", "tile.path", "tile.grass", "tile.grass", "tile.grass", "tile.grass", "tile.grass"],
+  ["tile.grass", "tile.grass", "tile.grass.1", "tile.grass.2", "tile.grass.3", "tile.grass", "tile.grass", "tile.grass", "tile.path", "tile.grass", "tile.grass", "tile.grass", "tile.grass", "tile.grass"],
+  ["tile.grass", "tile.grass.2", "tile.grass", "tile.soil.nw", "tile.soil.n", "tile.soil.ne", "tile.grass.1", "tile.grass.3", "tile.path", "tile.grass", "tile.grass", "tile.grass", "tile.grass.2", "tile.grass"],
+  ["tile.grass", "tile.grass", "tile.grass", "tile.soil.sw", "tile.soil.s", "tile.soil.se", "tile.grass", "tile.grass", "tile.path", "tile.grass", "tile.grass", "tile.grass.1", "tile.grass", "tile.grass"],
+  ["tile.grass", "tile.grass", "tile.grass", "tile.grass", "tile.grass", "tile.grass", "tile.grass", "tile.grass", "tile.path", "tile.grass", "tile.grass", "tile.grass", "tile.grass", "tile.grass"]
+ ],
+ "walls": [
+  [null, null, null, null, null, null, null, null, null, null, null, null, null, null],
+  ["tile.fence.nw", "tile.fence", "tile.fence", "tile.fence", "tile.fence", "tile.fence", "tile.fence", "tile.fence", "tile.fence", "tile.fence", "tile.fence", "tile.fence", "tile.fence", "tile.fence.ne"],
+  ["tile.fence.w", null, null, null, null, null, null, null, null, null, null, null, null, "tile.fence.e"],
+  ["tile.fence.w", null, null, null, null, null, null, null, null, null, null, null, null, "tile.fence.e"],
+  ["tile.fence.w", null, null, null, null, null, null, null, null, null, null, null, null, "tile.fence.e"],
+  ["tile.fence.w", null, null, null, null, null, null, null, null, null, null, null, null, "tile.fence.e"],
+  ["tile.fence.w", null, null, null, null, null, null, null, null, null, null, null, null, "tile.fence.e"],
+  ["tile.fence.w", null, null, null, null, null, null, null, null, null, null, null, null, "tile.fence.e"],
+  ["tile.fence.w", null, null, null, null, null, null, null, null, null, null, null, null, "tile.fence.e"],
+  ["tile.fence.w", null, null, null, null, null, null, null, null, null, null, null, null, "tile.fence.e"],
+  ["tile.fence.sw", "tile.fence", "tile.fence", "tile.fence", "tile.fence", "tile.fence", "tile.fence", "tile.fence", "tile.fence", "tile.fence", "tile.fence", "tile.fence", "tile.fence", "tile.fence.se"]
+ ],
+ "doors": "gate",
+ "decor": [{"sprite": "decor.sprout", "at": [1, 1], "layer": "floor"}, {"sprite": "decor.sprout", "at": [3, 1], "layer": "floor"}, {"sprite": "decor.sprout", "at": [4, 1], "layer": "floor"}, {"sprite": "decor.sprout", "at": [1, 2], "layer": "floor"}, {"sprite": "decor.sprout", "at": [3, 2], "layer": "floor"}, {"sprite": "decor.sprout", "at": [2, 6], "layer": "floor"}, {"sprite": "decor.sprout", "at": [4, 6], "layer": "floor"}, {"sprite": "decor.sprout", "at": [2, 7], "layer": "floor"}, {"sprite": "decor.sprout", "at": [4, 7], "layer": "floor"}, {"sprite": "decor.flower.sun", "at": [0, 0], "layer": "floor"}, {"sprite": "decor.flower.red", "at": [5, 0], "layer": "floor"}, {"sprite": "decor.flower.white", "at": [6, 0], "layer": "floor"}, {"sprite": "decor.flower.sun", "at": [11, 7], "layer": "floor"}, {"sprite": "decor.flower.red", "at": [0, 7], "layer": "floor"}, {"sprite": "decor.bush", "at": [0, 3], "layer": "floor"}, {"sprite": "decor.bush", "at": [11, 2], "layer": "floor"}, {"sprite": "decor.stepping stone", "at": [1, 5], "layer": "floor"}, {"sprite": "decor.stepping stone", "at": [3, 5], "layer": "floor"}, {"sprite": "decor.stepping stone", "at": [5, 5], "layer": "floor"}, {"sprite": "decor.stepping stone", "at": [10, 4], "layer": "floor"}, {"sprite": "decor.stepping stone", "at": [8, 4], "layer": "floor"}],
+ "fixtures": {"bean row": {"pos": [2, 1], "sprite": "fix.bean row"}, "herb patch": {"pos": [3, 6], "sprite": "fix.herb patch"}, "berry bush": {"pos": [10, 6], "sprite": "fix.berry bush"}, "old bench": {"pos": [10, 0], "sprite": "fix.old bench"}, "bird bath": {"pos": [10, 2], "sprite": "fix.bird bath"}},
+ "blocked": [[9, 0], [11, 0], [0, 0], [5, 0], [6, 0], [11, 7], [0, 7], [0, 3], [11, 2]],
+ "wall_slots": [[2, 0], [4, 0]],
+ "bit_spots": {"seed": [[1, 2], [3, 2], [4, 2], [2, 7]], "leaf": [[8, 6], [9, 6], [11, 5], [6, 1]], "petal": [[1, 0], [4, 0], [1, 7], [10, 7]]},
+ "light": {"window": [], "night": 0.55}
+}

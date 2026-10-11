@@ -281,6 +281,8 @@ def layout(cfg, room):
         o = room["objects"].get(name)
         if o and "fix" in o and "pos" in f and not o["fix"].get("movable") and not o["fix"].get("sun"):
             o["pos"] = list(f["pos"])
+        if o and "fix" in o and f.get("wall"):   # a window, a mirror, a lantern on its hook: it hangs, and takes no floor
+            o["wall"] = True
 
 
 def settle(house, cfg, room):
