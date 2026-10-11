@@ -4,8 +4,8 @@ A family of small creatures living in a house in the browser, each driven by a l
 hatch, grow, grow old and die; they lay eggs and leave their children a body, a temperament, a message and a
 thing or two. The house has nine rooms behind doors, weather, seasons, power cuts and a few small animals.
 
-- **[SHOWCASE.md](SHOWCASE.md)**: one family's story over five generations, with screenshots and the evidence
-  for each thing it was built to show.
+- **[SHOWCASE.md](SHOWCASE.md)**: four families from one message, with screenshots and the evidence for each
+  thing it was built to show, and what it did not show. The fourth family is the one living in `data/` now.
 - **[FINDINGS.md](FINDINGS.md)**: what has been learned, from the first model test to v3.
 - **[SPEC-v3.md](SPEC-v3.md)** is the working spec; [SPEC-v2.md](SPEC-v2.md) and [SPEC.md](SPEC.md) are kept for
   history. **[DECISIONS.md](DECISIONS.md)** lists every place the build reads the spec its own way, and why.
@@ -14,7 +14,7 @@ thing or two. The house has nine rooms behind doors, weather, seasons, power cut
 ## Run
 
 ```sh
-./run.sh start          # the real clock: a world day is two hours, a life about two days
+./run.sh start live     # the family living in data/: a world day is one real hour, a life about sixteen
 ./run.sh status
 ./run.sh stop
 ```
@@ -30,13 +30,16 @@ folder beside it with its journal, beliefs, life record and every prompt it was 
 When a family dies out the view offers to start another in the same house. To start a new house, archive
 `data/` under another name.
 
-**Profiles** are laid over `config.toml`:
+**Profiles** are laid over `config.toml`. A house keeps to the world clock it was made on: the living family
+was made on the showcase's, so it is started with `live` (or `showcase`), never with no profile.
 
 | | |
 |---|---|
-| `./run.sh start showcase` | `config.showcase.toml`: short lives in turbo time (the world waits while the model thinks and otherwise runs straight on). About seven real hours for five generations. Watch it afterwards with Replay. |
+| `./run.sh start live` | `config.live.toml`: the showcase's lives (a world day is 900 ticks, a life about 16 days) shown at one world day to the real hour. The house in `data/`. |
+| `./run.sh start` | `config.toml` alone, for a new house: a world day is two real hours, a life about two days. |
+| `./run.sh start showcase` | `config.showcase.toml`: short lives in turbo time (the world waits while the model thinks and otherwise runs straight on). About seven or eight real hours for five generations. Watch it afterwards with Replay. |
 | `PET_PROFILE=viewdev PET_DATA=data.viewdev PET_PORT=8002 uv run python -m engine.server` | scripted brains on a quick clock, for working on the view |
-| `PET_PROFILE=showcase PET_DATA=data.showcase PET_PAUSED=1 PET_PORT=8001 uv run python -m engine.server` | open an archived run to look at and replay (http://localhost:8001/?replay=1); nothing in it moves |
+| `PET_PROFILE=showcase PET_DATA=data.showcase-3 PET_PAUSED=1 PET_PORT=8001 uv run python -m engine.server` | open an archived run (`data.showcase-1` to `-4`) to look at and replay (http://localhost:8001/?replay=1); nothing in it moves |
 
 ## Look at it
 

@@ -48,8 +48,8 @@ family.
    another family did not use: the founder coined about four in five of the ones it used (81%, 83%, 78%) and
    the fourth generation inherited most of theirs (77%; 60%; 75% and 77%). No word coined after the second
    generation was used by a descendant in any run (the later pets had few descendants, and young ones, to
-   use them). What survives differs: the v2 pet's "pulse" is in 64 to 85% of each pet's thoughts in the first
-   family and 7% of the third founder's; "below thirty" was copied from message to message as far as the
+   use them). What survives differs: the v2 pet's "pulse" is in 47 to 70% of the thoughts of each of the
+   first family's first five pets (not counting it in a name) and 7% of the third founder's; "below thirty" was copied from message to message as far as the
    first family's third generation, in no thought of any of them, and is in nothing a pet of the other two
    wrote.
 6. **A told belief was corrected when the pet's own doing contradicted it, and not otherwise.** In the first
