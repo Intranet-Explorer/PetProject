@@ -4,10 +4,15 @@ A family of small creatures living in a house in the browser, each driven by a l
 hatch, grow, grow old and die; they lay eggs and leave their children a body, a temperament, a message and a
 thing or two. The house has nine rooms behind doors, weather, seasons, power cuts and a few small animals.
 
+Since v3.1 there are six more things in the house for a family to find, each arriving once, days apart: chalk to
+**write** on the walls with, **songs** that drift as they are passed on by ear, creatures that can be **tamed**,
+a **radio** that speaks scraps of the real world, a **book** that answers questions from an offline encyclopedia,
+and a foundling egg that starts a second family of **strangers**.
+
 - **[SHOWCASE.md](SHOWCASE.md)**: four families from one message, with screenshots and the evidence for each
   thing it was built to show, and what it did not show. The fourth family is the one living in `data/` now.
 - **[FINDINGS.md](FINDINGS.md)**: what has been learned, from the first model test to v3.
-- **[SPEC-v3.md](SPEC-v3.md)** is the working spec; [SPEC-v2.md](SPEC-v2.md) and [SPEC.md](SPEC.md) are kept for
+- **[SPEC-v3.1.md](SPEC-v3.1.md)** is the latest spec (the six discoveries), built on **[SPEC-v3.md](SPEC-v3.md)**; [SPEC-v2.md](SPEC-v2.md) and [SPEC.md](SPEC.md) are kept for
   history. **[DECISIONS.md](DECISIONS.md)** lists every place the build reads the spec its own way, and why.
   [NOTES.md](NOTES.md) is the account of the v1 and v2 lives as they happened; [VOICE.md](VOICE.md) is the voice.
 
@@ -30,6 +35,12 @@ folder beside it with its journal, beliefs, life record and every prompt it was 
 When a family dies out the view offers to start another in the same house. To start a new house, archive
 `data/` under another name.
 
+**The book** reads `book/wikipedia_en-simple_all_maxi_2026-09.zim` (Simple English Wikipedia from
+download.kiwix.org, 2.9 GB, not in the repository). Without it the book never arrives and nothing else minds.
+**The radio** asks three fixed hosts, at most once an hour each and only once there is a radio in the house:
+the list and the allowlist are `[radio]` in `config.toml`, and everything it was ever sent is in
+`data/radio/fetched.log`. No pet action reaches the network.
+
 **Profiles** are laid over `config.toml`. A house keeps to the world clock it was made on: the living family
 was made on the showcase's, so it is started with `live` (or `showcase`), never with no profile.
 
@@ -38,7 +49,8 @@ was made on the showcase's, so it is started with `live` (or `showcase`), never 
 | `./run.sh start live` | `config.live.toml`: the showcase's lives (a world day is 900 ticks, a life about 16 days) shown at one world day to the real hour. The house in `data/`. |
 | `./run.sh start` | `config.toml` alone, for a new house: a world day is two real hours, a life about two days. |
 | `./run.sh start showcase` | `config.showcase.toml`: short lives in turbo time (the world waits while the model thinks and otherwise runs straight on). About seven or eight real hours for five generations. Watch it afterwards with Replay. |
-| `PET_PROFILE=viewdev PET_DATA=data.viewdev PET_PORT=8002 uv run python -m engine.server` | scripted brains on a quick clock, for working on the view |
+| `PET_PROFILE=viewdev PET_DATA=data.viewdev PET_PORT=8002 uv run python -m engine.server` | scripted brains on a quick clock, every v3.1 discovery within minutes, for working on the view |
+| `PET_PROFILE=v31check PET_DATA=<a copy of data/> PET_PORT=8001 uv run python -m engine.server` | SPEC-v3.1 §9.2: v3.1 on a copy of the live house, in turbo, arrivals forced early. Never on `data/` itself. |
 | `PET_PROFILE=showcase PET_DATA=data.showcase-3 PET_PAUSED=1 PET_PORT=8001 uv run python -m engine.server` | open an archived run (`data.showcase-1` to `-4`) to look at and replay (http://localhost:8001/?replay=1); nothing in it moves |
 
 ## Look at it
