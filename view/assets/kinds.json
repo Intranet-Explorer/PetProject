@@ -25,7 +25,8 @@
    "bright"
   ],
   "sprite": "kind.rug",
-  "a": "a"
+  "a": "a",
+  "flat": true
  },
  "blanket": {
   "rank": 1,
@@ -39,7 +40,8 @@
    "bright"
   ],
   "sprite": "kind.blanket",
-  "a": "a"
+  "a": "a",
+  "flat": true
  },
  "nest": {
   "rank": 2,
@@ -66,7 +68,8 @@
    "bright"
   ],
   "sprite": "kind.bed-mat",
-  "a": "a"
+  "a": "a",
+  "flat": true
  },
  "doll": {
   "rank": 2,

@@ -77,6 +77,7 @@ A pack whose licence forbids redistribution lives outside the repository: give i
 - `wall`: it hangs on a wall instead of standing on the floor.
 - `not`: materials this kind cannot be made of (a candle cannot be springy). Everything else is allowed.
 - `a`: the article, for sentences ("a cushion", "an urn").
+- `flat`: it lies flat on the floor (a rug, a blanket) and can be walked over; the view's pets walk round anything else.
 - The engine reads `rank`, `wall`, `not`, `a`. The view reads `sprite`.
 
 ## rooms/<type>.json
@@ -99,7 +100,8 @@ A pack whose licence forbids redistribution lives outside the repository: give i
   means it hangs on the north wall above `pos` (a window, a mirror, a lantern on a hook) and takes no floor.
   A fixture that arrives later (the heavy book) can be given its place here too.
 - `"doors": "gate"` draws this room's doors from `door.gate.<wall>.<state>` instead of `door.<wall>.<state>`.
-- `light.day` is how dark the room is even by day (a cellar), `light.night` by night.
+- `light.day` is how dark the room is even by day (a cellar), `light.night` by night. `light.sky`: `"open"` (weather
+  falls in the room: the garden) or `"glass"` (it shows on a glass roof: the greenhouse).
 - Draw order: the floor grid, the walls grid, wall decor (`at: [x, -1]` or `[x, -2]`), doors, floor decor, then
   fixtures, made things, bits and pets sorted by `y`, then `top` decor. A sprite is drawn with its `anchor` pixel
   on the top-left corner of its floor tile; things on walls lift themselves by their anchor.
