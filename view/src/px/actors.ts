@@ -11,7 +11,7 @@ import type { Creature, PetV, Tile } from "../types";
 import { anim, fromCanvas, has, tex } from "./assets";
 import { fxTexture } from "./fx";
 import type { Fx } from "./fx";
-import { foot, tileAt } from "./geom";
+import { clamp, foot, FX, OX, TILE, tileAt } from "./geom";
 import type { Dir, Rect } from "./geom";
 import { path } from "./path";
 import type { Grid } from "./path";
@@ -33,15 +33,15 @@ const texOf = (c: HTMLCanvasElement) => {
   if (!t) textures.set(c, (t = fromCanvas(c)));
   return t;
 };
-const boxes = new WeakMap<PetSheet, Rect>();
-/** The part of a pet's frame that is body (from its first idle frame), so plates and bubbles sit close to it. */
-function bodyBox(sheet: PetSheet): Rect {
-  let b = boxes.get(sheet);
+const boxes = new WeakMap<HTMLCanvasElement, Rect>();
+/** The part of a frame that is body, so plates and bubbles sit close to it and never on it. */
+function bodyBox(c: HTMLCanvasElement): Rect {
+  let b = boxes.get(c);
   if (b) return b;
-  const c = sheet.frames.idle[0] ?? sheet.egg[0], n = sheet.size, p = c.getContext("2d")!.getImageData(0, 0, n, n).data;
-  let [x0, y0, x1, y1] = [n, n, 0, 0];
-  for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) if (p[(y * n + x) * 4 + 3] > 40) [x0, y0, x1, y1] = [Math.min(x0, x), Math.min(y0, y), Math.max(x1, x), Math.max(y1, y)];
-  boxes.set(sheet, (b = x1 < x0 ? { x: n / 4, y: n / 4, w: n / 2, h: (n * 3) / 4 } : { x: x0, y: y0, w: x1 - x0 + 1, h: y1 - y0 + 1 }));
+  const [w, h] = [c.width, c.height], p = c.getContext("2d")!.getImageData(0, 0, w, h).data;
+  let [x0, y0, x1, y1] = [w, h, 0, 0];
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (p[(y * w + x) * 4 + 3] > 40) [x0, y0, x1, y1] = [Math.min(x0, x), Math.min(y0, y), Math.max(x1, x), Math.max(y1, y)];
+  boxes.set(c, (b = x1 < x0 ? { x: w / 4, y: h / 4, w: w / 2, h: (h * 3) / 4 } : { x: x0, y: y0, w: x1 - x0 + 1, h: y1 - y0 + 1 }));
   return b;
 }
 
@@ -110,7 +110,6 @@ export class PetActor {
   pose: { anim: PetAnim; until: number } | null = null;
   private body = new Sprite();
   private held = new Sprite();
-  private mood = new Sprite();
   private ring = new Graphics();
   private lean = { x: 0, y: 0, t0: 0, until: 0 };
   private turned: Dir | null = null;
@@ -125,8 +124,7 @@ export class PetActor {
   constructor() {
     this.body.anchor.set(0.5, 1);
     this.held.anchor.set(0.5, 1);
-    this.mood.anchor.set(0, 1);
-    this.c.addChild(this.ring, this.body, this.held, this.mood);
+    this.c.addChild(this.ring, this.body, this.held);
   }
 
   /** A snapshot: who it is now, and the tile it should stand on. `ms`: how long a tick takes. */
@@ -134,7 +132,8 @@ export class PetActor {
     const stage = bodyStage(p);
     this.pet = p;
     this.sheet = petSheet(p.genome, p.stage === "egg" ? "egg" : stage, { grey: stage === "elder" ? (p.old ? 0.85 : 0.55) : 0 });
-    this.box = bodyBox(this.sheet);
+    // its body as it is drawn just now: lying asleep or dead it takes other room than standing
+    this.box = bodyBox(p.stage === "egg" ? this.sheet.egg[0] : p.stage === "dead" ? this.sheet.dead : p.asleep ? this.sheet.frames.sleep[0] ?? this.sheet.frames.idle[0] : this.sheet.frames.idle[0]);
     const busy = !!doing(p), moved = home[0] !== this.home[0] || home[1] !== this.home[1];
     this.home = home;
     if (first || p.stage === "egg" || p.stage === "dead") this.w.place(home);
@@ -156,8 +155,6 @@ export class PetActor {
       const bit = (p.carrying ?? [])[0];
       this.held.visible = !!bit;
       if (bit) this.held.texture = tex(`bit.${bit}`);
-      this.mood.visible = !!p.emote;
-      if (p.emote) this.mood.texture = tex(`emote.${p.emote}`);
     }
   }
 
@@ -183,6 +180,8 @@ export class PetActor {
     const n = this.sheet.size, b = this.box;
     return { x: this.c.x - n / 2 + b.x, y: this.c.y - n + b.y, w: b.w, h: b.h };
   }
+  /** Where the top of its head is, above its feet. */
+  get tall() { return this.sheet.size - this.box.y; }
 
   step(st: Stage) {
     const p = this.pet, now = st.now, egg = p.stage === "egg", dead = p.stage === "dead", elder = p.stage === "elder";
@@ -196,7 +195,7 @@ export class PetActor {
       this.body.x = rock ? Math.round(Math.sin(now / 90)) : 0;
       this.c.position.set(this.w.x, this.w.y);
       this.c.zIndex = this.w.y;
-      this.held.visible = this.mood.visible = false;
+      this.held.visible = false;
       return;
     }
     this.c.alpha = 1;
@@ -232,33 +231,35 @@ export class PetActor {
     const frames = this.sheet.frames[a]?.length ? this.sheet.frames[a] : this.sheet.frames.idle, fps = (this.sheet.fps[a] ?? 2) * (elder ? 0.75 : 1);
     this.body.texture = texOf(frames[frozen ? 0 : Math.floor(((now + this.t0) / 1000) * fps) % frames.length]);
     const k = now < this.lean.until ? Math.sin(Math.min(1, (now - this.lean.t0) / (this.lean.until - this.lean.t0)) * Math.PI) : 0;
-    this.c.position.set(this.w.x + this.lean.x * k, this.w.y + this.lean.y * k);
+    const half = Math.ceil(this.box.w / 2) + 1;   // in a doorway too it stays inside the walls
+    this.c.position.set(clamp(this.w.x + this.lean.x * k, OX + half, OX + FX * TILE - half), this.w.y + this.lean.y * k);
     this.c.zIndex = this.w.y;
     const side = a === "walk.left" ? -1 : a === "walk.right" ? 1 : 0;
-    // what it carries, at its side by its paws (never over its face); how it feels, by its head
+    // what it carries, at its side by its paws (never over its face)
     this.held.position.set((side || 1) * (Math.ceil(this.box.w / 2) - 1), -1 - (a === "make" ? Math.floor(now / 250) % 2 : 0));
     this.held.visible = !!(p.carrying ?? []).length && a !== "walk.up";
-    this.mood.position.set(Math.ceil(this.box.w / 2) - 3, -this.box.h + 9 + Math.round(Math.sin(now / 420 + this.t0)));
   }
 
-  /** Between thoughts (§5.1): look about, glance at someone, sit a while, shift a tile if nothing holds it there. */
+  /** Between thoughts (§5.1): look about, glance at someone, sit a while, shift a tile if nothing holds it there. How
+   *  it feels shows in how it holds itself (§5.3): drooping when uneasy or lonely, sat down when tired, a hop now and
+   *  then when content. */
   private pass(st: Stage, mayShift: boolean): PetAnim {
-    const now = st.now, p = this.pet;
-    if (now < this.idle.until) return this.idle.kind === "sit" ? "sit" : this.idle.kind === "mood" ? (p.emote === "content" ? "happy" : "sad") : "idle";
-    if (now < this.nextIdle) return "idle";
+    const now = st.now, p = this.pet, low = p.emote === "uneasy" || p.emote === "lonely", rest: PetAnim = low ? "sad" : p.emote === "tired" ? "sit" : "idle";
+    if (now < this.idle.until) return this.idle.kind === "sit" ? "sit" : this.idle.kind === "mood" ? "happy" : rest;
+    if (now < this.nextIdle) return rest;
     this.nextIdle = now + 2600 + Math.random() * 4200;
     const r = Math.random(), others = st.others();
-    if (r < 0.34) {
+    if (p.emote === "content" && r < 0.45) this.idle = { kind: "mood", until: now + 1100 };
+    else if (r < 0.34 && !low) {
       const o = others.length && Math.random() < 0.7 ? others[Math.floor(Math.random() * others.length)] : [this.w.x + (Math.random() < 0.5 ? -20 : 20), this.w.y];
       this.turn(o[0], o[1], now, 900 + Math.random() * 1300);
-    } else if (r < 0.52 && mayShift) {
+    } else if (r < 0.52 && mayShift && rest === "idle") {
       const h = this.home, back = this.away && Math.random() < 0.6;
       const spots: Tile[] = back ? [h] : ([[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, 1]] as Tile[]).map(([dx, dy]): Tile => [h[0] + dx, h[1] + dy]).filter((t) => st.free(t, p.id));
       const to = spots[Math.floor(Math.random() * spots.length)];
       if (to) { this.w.go(to, st.blocked, 1100, 1); this.away = !back; }
-    } else if (r < 0.66) this.idle = { kind: "sit", until: now + 2500 + Math.random() * 3000 };
-    else if (r < 0.76 && p.emote) this.idle = { kind: "mood", until: now + 1600 };
-    return "idle";
+    } else if (r < 0.66 && rest === "idle") this.idle = { kind: "sit", until: now + 2500 + Math.random() * 3000 };
+    return rest;
   }
 }
 
@@ -286,14 +287,15 @@ export class CreatureActor {
     this.cr = cr;
     if (first) this.w.place(cr.pos);
     else if (moved) this.w.go(cr.pos, st.blocked, ms, 4);
+    this.c.scale.set(Math.max(1, Math.round(st.K * 0.7)) / st.K);   // small beside a pet, on whole pixels
     this.flag.visible = color != null;
     if (color != null) this.flag.tint = color;
     this.carry.visible = !!cr.carry;
     if (cr.carry) this.carry.texture = tex(`bit.${cr.carry}`);
   }
   rect(): Rect {
-    const t = this.body.texture;
-    return { x: this.c.x - t.width / 2, y: this.c.y + this.body.y - t.height, w: t.width, h: t.height };
+    const t = this.body.texture, k = this.c.scale.x;
+    return { x: this.c.x - (t.width * k) / 2, y: this.c.y + (this.body.y - t.height) * k, w: t.width * k, h: t.height * k };
   }
   step(st: Stage) {
     this.w.step(st.dt);

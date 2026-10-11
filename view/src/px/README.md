@@ -42,14 +42,20 @@ number of screen pixels to an art pixel that fits, and is centred in the element
 is under the pointer). `room.describe(target)` turns that into a `Card`, or null:
 
 ```ts
-type Card = { what: "pet" | "creature" | "thing" | "fixture" | "stone" | "bit" | "door" | "writing";
+type Card = { what: "pet" | "creature" | "thing" | "fixture" | "stone" | "bit" | "door" | "writing" | "scenery";
   title: string;                       // "a blue cushion", "the lamp", "some moss", "Pip", "the door to the pond room"
   sprite: HTMLCanvasElement | null;    // its picture at the art's own size: show it with CSS `image-rendering: pixelated`, scaled by a whole number
   name?, kind?, color?, material?,     // a made thing: the name its maker gave it, its kind, colour and material
   maker?, owner?, heirloom?, worn?, purpose?,
   does?,                               // what it has been taught to do (for the owner's eyes only: the page decides whether to show it)
-  state?, text? };                     // a fixture's state; an inscription's or a stone's words
+  state?, text?,                       // a fixture's state; one plain line (an inscription's words, what a creature is doing and whose it is,
+                                       //   where a door leads, what a bit can become, "part of the room" for scenery)
+  can? };                              // a bit: the properties a thing made of it can have (hello.bits[bit].can)
 ```
+
+Everything drawn answers: pets, creatures, made things, fixtures (`does` is the engine's `obj.says`), bits, doors,
+writing, and the room's own scenery (`target.decor`, the sprite's name; its title comes from that name). A creature
+shows a small name plate in the room while it is pointed at.
 
 The canvas in `sprite` is shared: draw it into the card (`ctx.drawImage`) or append a copy, do not paint on it.
 

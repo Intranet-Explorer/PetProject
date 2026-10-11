@@ -15,7 +15,7 @@ export type Env = { phase: string; weather: string; season: string; power: boole
   windowTiles: Tile[]; windows: Rect[]; lamps: Lamp[]; sun: number[] | null };
 
 type RGB = number[];
-const WHITE: RGB = [255, 255, 255], DEEP: RGB = [22, 34, 112];
+const WHITE: RGB = [255, 255, 255], DEEP: RGB = [22, 34, 112], FLOOR: RGB = [84, 92, 148];
 const mix = (a: RGB, b: RGB, k: number): RGB => a.map((v, i) => v + (b[i] - v) * k);
 const mul = (a: RGB, b: RGB): RGB => a.map((v, i) => (v * b[i]) / 255);
 const css = (c: RGB) => `rgb(${c.map((v) => Math.round(Math.max(0, Math.min(255, v)))).join(",")})`;
@@ -53,7 +53,10 @@ export class Light {
   private cv = document.createElement("canvas");
   private x: CanvasRenderingContext2D;
   private env: Env | null = null;
-  shape: HTMLCanvasElement | null = null;   // the room's own silhouette (Still.shape), set by the room
+  shape: HTMLCanvasElement | null = null;
+  /** Where each pet is (x, y of its middle, in the room's pixels), set by the room every frame: in the dark each
+   *  carries a little light of its own, so that a sleeper at night can still be found. */
+  pools: number[] = [];   // the room's own silhouette (Still.shape), set by the room
   private ambient: RGB = WHITE;
   private drawn = -1e9;
   private dirty = true;
@@ -87,6 +90,7 @@ export class Light {
     if (!env.power) a = night || dusk ? mix(a, [8, 10, 34], 0.5) : mul(a, [226, 226, 238]);
     else if (env.lit && (night || dusk)) a = mix(a, [255, 236, 200], 0.14);
     if (env.cold) a = mul(a, [224, 238, 255]);
+    a = a.map((v, i) => Math.max(v, FLOOR[i]));   // however dark the room, what lies on its floor can still be made out
     this.ambient = a;
     this.darkness = 1 - (a[0] * 0.3 + a[1] * 0.59 + a[2] * 0.11) / 255;
 
@@ -107,7 +111,7 @@ export class Light {
     if (!e) return;
     const storm = e.weather === "storm", slot = Math.floor(now / 5200), at = slot * 5200 + ((slot * 7919) % 3800);
     this.flashing = storm && ((now > at && now < at + 90) || (now > at + 170 && now < at + 250));
-    if (this.dirty || this.flashing !== this.wasFlashing || now - this.drawn > 160) this.map(now);
+    if (this.dirty || this.flashing !== this.wasFlashing || now - this.drawn > (this.pools.length && this.darkness > 0.25 ? 70 : 160)) this.map(now);
     this.wasFlashing = this.flashing;
     this.fall(now);
     this.glass(now);
@@ -140,6 +144,9 @@ export class Light {
         disc(x, l.x, l.y, Math.round(l.r * k) + flick);
       });
       x.globalCompositeOperation = "lighten";
+    }
+    if (this.darkness > 0.25) for (let i = 0; i < this.pools.length; i += 2) {   // a pet is never lost in the dark
+      [[12, 0.22], [8, 0.42], [5, 0.62]].forEach(([r, k]) => { x.fillStyle = css(mix(a, [226, 232, 255], k)); disc(x, this.pools[i], this.pools[i + 1], r); });
     }
     x.globalCompositeOperation = "source-over";
     x.fillStyle = "#ffffff";

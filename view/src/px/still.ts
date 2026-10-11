@@ -62,6 +62,10 @@ export class Still {
   sun: number[] | null = null;  // the attic's shaft of sun, if there is one: where it falls
   /** What the room's floor and walls actually paint, as one picture: light and dark fall only there, never on the page beyond the walls. */
   shape: HTMLCanvasElement | null = null;
+  /** The part of the canvas the room is drawn in (the art may leave a margin): lettering stays inside it. */
+  bounds: Rect = { x: 0, y: 0, w: W, h: H };
+  /** The room's scenery (the layout's decor), for the pointer: what each piece is and where. */
+  scenery: { sprite: string; rect: Rect }[] = [];
 
   constructor(snap: Snap, room: RoomV, readonly layout: Layout | null, readonly K: number) {
     const L = layout ?? {};
@@ -75,7 +79,7 @@ export class Still {
     for (const [name, o] of Object.entries(room.objects).sort(([, a], [, b]) => flatFirst(a) - flatFirst(b) || a.pos[1] - b.pos[1])) {
       const lf = L.fixtures?.[name];
       if (o.made) {
-        const t = this.made(name, o);
+        const t = this.made(name, o, snap.power);
         if (!t.wall && !kind(t.drawn!.kind)?.flat) blocked.push(o.pos);
       } else if (o.memorial) {
         this.put(name, o, "stone", "sorted");
@@ -86,19 +90,21 @@ export class Still {
         const base = lf ? lf.sprite : pick(`fix.${name}`, `fix.${name.replace(/ /g, "_")}`, `fix.${name.replace(/ /g, "-")}`);
         if (!base || ((o.fix?.sun || o.water) && !has(base))) continue;   // light and water may be part of the floor's own picture
         // how it looks just now: a bowl by what is left in it, a plant by how far it has grown, anything else by its state
-        const state = o.servings != null ? (o.servings <= 0 ? "empty" : o.servings < 2 ? "half" : "full") : o.state === "ripe" ? "ripe" : o.grow != null ? (o.grow >= 0.4 ? "growing" : null) : o.state;
+        const dead = !!o.fix?.light && !snap.power;   // in a power cut no lamp is lit, whatever its switch says
+        const state = dead ? "off" : o.servings != null ? (o.servings <= 0 ? "empty" : o.servings < 2 ? "half" : "full") : o.state === "ripe" ? "ripe" : o.grow != null ? (o.grow >= 0.4 ? "growing" : null) : o.state;
         const sprite = pick(state ? `${base}.${state}` : null, base), sz = size(sprite);
         const flat = !!o.fix?.soft || !!o.fix?.sun || !!o.water || lf?.walk || lf?.layer === "floor", onWall = !!o.wall || !!lf?.wall || lf?.layer === "wall";   // (a recording from before the layouts has its window on a floor tile: it is hung on the wall above all the same)
         const t = this.put(name, o, sprite, flat ? "ground" : onWall ? "wall" : lf?.layer === "top" ? "top" : "sorted");
         if (o.fix?.window) this.windows.push({ name, rect: this.glass(sprite, t), open: o.state === "open" });
         else if (!flat && !onWall && !o.fix?.sun && !o.water) blocked.push(o.pos);
         if (o.fix?.light && o.state === "on" && snap.power) this.lamps.push({ x: t.x, y: t.y - sz.h / 2, r: 50, color: [255, 226, 170], made: false });
-        if (o.fix?.radio && o.state === "on") this.lamps.push({ x: t.x, y: t.y - 6, r: 12, color: [255, 214, 130], made: true });
-        t.on = o.state === "on" || o.state === "playing";
+        if (o.fix?.radio && o.state === "on" && snap.power) this.lamps.push({ x: t.x, y: t.y - 6, r: 12, color: [255, 214, 130], made: true });
+        t.on = (o.state === "on" && snap.power) || o.state === "playing";
       }
     }
     for (const s of room.spots) {
-      const sprite = `bit.${s.bit}`, f = 1, sp = new Sprite(tex(sprite));
+      // a bit to gather is a small pickup: drawn smaller than anything made, where that keeps its pixels whole
+      const sprite = `bit.${s.bit}`, f = K >= 2 ? (K - 1) / K : 1, sp = new Sprite(tex(sprite));
       const [cx, cy] = corner(s.pos);
       sp.anchor.set(0.5, 1);
       sp.scale.set(f);
@@ -142,6 +148,12 @@ export class Still {
       }
     }
     if (n) this.wallShade = light / n;
+    if (shape && sx) {   // how far the room's own picture reaches
+      const p = sx.getImageData(0, 0, W, H).data;
+      let [x0, y0, x1, y1] = [W, H, -1, -1];
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (p[(y * W + x) * 4 + 3] > 127) [x0, y0, x1, y1] = [Math.min(x0, x), Math.min(y0, y), Math.max(x1, x), Math.max(y1, y)];
+      if (x1 >= x0) this.bounds = { x: x0, y: y0, w: x1 - x0 + 1, h: y1 - y0 + 1 };
+    }
     if (L.walls) {   // the face of each wall: what its tiles actually paint along the middle of that side
       const span = (name: string | null | undefined, across: boolean): [number, number] | null => {
         if (!name || !has(name)) return null;
@@ -168,6 +180,7 @@ export class Still {
     else if (layer === "wall" || at[1] < 0) this.wallLayer.addChild(s);
     else { s.zIndex = cy + TILE - 4; this.standing.push(s); }
     if (layer === "wall" || s.y < OY - 4) this.wallBusy.push({ x: s.x, y: s.y, w: sz.w, h: sz.h });   // on the wall, or tall enough to stand in front of it
+    this.scenery.push({ sprite, rect: { x: s.x, y: s.y, w: sz.w, h: sz.h } });
   }
 
   /** Water standing on the floor after a leak. */
@@ -225,7 +238,7 @@ export class Still {
   }
 
   /** Something a pet made (§3): its kind's sprite in its colour, a little smaller or larger, looking like what it is made of. */
-  private made(name: string, o: Obj): Thing {
+  private made(name: string, o: Obj, power: boolean): Thing {
     const m = o.made!, d = drawnOf(m), doing = m.active ? m.behavior?.do ?? "" : "", mat = d.material;
     const color = doing.startsWith("change_color:") ? doing.split(":")[1] : d.color;
     const look = { soft: mat === "soft" || undefined, dark: mat === "dark" || undefined, damp: m.worn.includes("damp") || undefined, dusty: m.worn.includes("dusty") || undefined,
@@ -234,7 +247,12 @@ export class Still {
     const scale = Math.max(1, Math.round(this.K * (SIZES[Math.round(d.size) - 1] ?? 1))) / this.K;
     const t = this.put(name, o, d.sprite, "sorted", pic.texture, pic.canvas, scale);
     t.drawn = { ...d, color };
-    t.on = o.state === "on" || doing === "glow" || ((mat === "bright" || mat === "warm") && m.active);
+    t.on = power && (o.state === "on" || doing === "glow" || ((mat === "bright" || mat === "warm") && m.active));   // a power cut is dark for made lights too
+    if (!t.wall) {   // a made thing sits on a small soft shadow: that, and its size, tell it from a bit lying loose
+      const hw = Math.max(3, Math.round(t.rect.w / 2) - 1), g = new Graphics();
+      g.rect(Math.round(t.x) - hw, Math.round(t.y) - 2, 2 * hw, 3).rect(Math.round(t.x) - hw + 2, Math.round(t.y) - 3, 2 * hw - 4, 1).rect(Math.round(t.x) - hw + 2, Math.round(t.y) + 1, 2 * hw - 4, 1).fill({ color: 0x1a1420, alpha: 0.22 });
+      this.flat.addChild(g);
+    }
     t.glassy = mat === "glassy";
     t.bob = mat === "springy";
     t.bounce = doing === "bounce" || (mat === "bouncy" && m.active);

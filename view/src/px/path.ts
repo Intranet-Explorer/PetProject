@@ -40,11 +40,11 @@ export function path(from: Tile, to: Tile, g: Grid): Tile[] {
   return out;
 }
 
-/** The free tile nearest to `want` (itself, if it is free); among equals, the one nearest `prefer`. */
-export function nearestFree(want: Tile, g: Grid, taken: Set<number>, prefer: Tile = want): Tile {
+/** The free tile nearest to `want` (itself, if it is free); among equals, the one nearest `prefer`. `ok`: may it stand there (nobody else in the way). */
+export function nearestFree(want: Tile, g: Grid, ok: (t: Tile) => boolean, prefer: Tile = want): Tile {
   let best: Tile | null = null, score = Infinity;
   for (let y = 0; y < FY; y++) for (let x = 0; x < FX; x++) {
-    if (g[idx([x, y])] || taken.has(idx([x, y]))) continue;
+    if (g[idx([x, y])] || !ok([x, y])) continue;
     const s = Math.hypot(x - want[0], y - want[1]) * 100 + Math.hypot(x - prefer[0], y - prefer[1]) + (y < want[1] ? 0.5 : 0);   // rather in front of a thing than behind it
     if (s < score) [best, score] = [[x, y], s];
   }
@@ -58,7 +58,7 @@ export function selfCheck() {
   console.assert(p.every((t) => !g[idx(t)]), "path crosses a blocked tile");
   console.assert(p.some((t) => t[1] >= 4), "path did not go round");
   console.assert(p.every((t, i) => !i || Math.max(Math.abs(t[0] - p[i - 1][0]), Math.abs(t[1] - p[i - 1][1])) === 1), "path jumps");
-  const n = nearestFree([3, 1], g, new Set());
+  const n = nearestFree([3, 1], g, () => true);
   console.assert(!g[idx(n)] && Math.abs(n[0] - 3) === 1, "nearestFree is not beside the blocked tile");
   console.assert(path([0, 0], [0, 0], g).length === 2, "standing still");
 }

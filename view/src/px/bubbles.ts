@@ -1,17 +1,20 @@
 // Words over the room (SPEC-v3.2 §5.3): each pet's name plate in its family's colour, a thought caption with what it
-// means to do, speech bubbles, what the box says. Lettering is the room's pixel face at a finer scale than the art, so
-// it stays readable. Nothing here may cover a pet's face or another bubble: each is placed in the nearest clear spot,
-// and when the room is crowded the captions that do not fit shrink to three dots and take turns.
-import { Container, Sprite, Texture } from "pixi.js";
-import { canvasOf, def, fromCanvas, has } from "./assets";
+// means to do, speech bubbles, the face that shows how it feels, what the box says. Lettering is the room's pixel face
+// at a finer scale than the art, so it stays readable. Whose a bubble is must never be in doubt: its tail runs all the
+// way to its owner, it carries its owner's name in the plate's colour when there is more than one pet, and it is never
+// put nearer to another pet than to its own. Nothing here may cover a pet's body or another bubble, and all of it stays
+// inside the room. When the room is crowded the captions that do not fit shrink to three dots and take turns.
+import { Container, Graphics, Sprite, Texture } from "pixi.js";
+import { canvasOf, def, fromCanvas } from "./assets";
 import { draw, LINE, measure, plain, wrap } from "./font";
 import { clamp, hit, seeded } from "./geom";
 import type { Rect } from "./geom";
 
 export type Label = Rect & { kind: string };
 /** What the room wants said about one pet. `caption`: its intention, or null. `say`: its words, with whom they are for. */
+/** `mood`: the strong feeling to show as a face by its head (not while it sleeps). `tab`: its name goes on its bubbles (there are others here). */
 export type Who = { id: string; name: string; family: number; selected: boolean; faded: boolean; caption: string | null; thinking: boolean;
-  say: { key: string; text: string; to: string | null; song: boolean } | null };
+  say: { key: string; text: string; to: string | null; song: boolean } | null; mood: string | null; tab: boolean };
 
 const INK = "#2b2233", PAPER = "#fffdf2", ACCENT = "#ffb347";
 const FAMILY: Record<number, string> = { 1: "#1f7a8c", 2: "#a8468a" };   // each family's colour (SPEC-v3.1 §7.4); the page's style has the same two
@@ -44,11 +47,15 @@ function plateCanvas(name: string, color: string, ring: boolean) {
   draw(x, [text], 3, 2, { color: "#ffffff" });
   return c;
 }
-function bubbleCanvas(lines: string[], o: { fill: string; ink: string; text: string; head?: string; headColor?: string; static?: string; art?: string }) {
-  const head = o.head ? plain(o.head) : null, art = o.art && def(o.art)?.slice ? o.art : null, px = art ? 6 : 4, py = art ? 4 : 3;
-  const w = Math.max(...lines.map(measure), head ? measure(head) : 0, o.static != null ? 46 : 0) + 2 * px;
-  const rows = lines.length + (head ? 1 : 0) + (o.static != null ? 1 : 0), [c, x] = canvas(w, rows * LINE + 2 * py - 1 + (art ? 1 : 0));
-  if (!art || !nine(x, art, c.width, c.height)) frame(x, c.width, c.height, o.fill, o.ink);
+/** `tab`: the owner's name on a small plate of its colour, set into the bubble's top edge. */
+function bubbleCanvas(lines: string[], o: { fill: string; ink: string; text: string; head?: string; headColor?: string; static?: string; art?: string; tab?: { name: string; color: string } }) {
+  const head = o.head ? plain(o.head) : null, art = o.art && def(o.art)?.slice ? o.art : null, px = art ? 6 : 4, tab = o.tab ? plateCanvas(o.tab.name, o.tab.color, false) : null;
+  const top = tab ? 7 : 0, py = (art ? 4 : 3) + (tab ? 2 : 0);
+  const w = Math.max(...lines.map(measure), head ? measure(head) : 0, o.static != null ? 46 : 0, tab ? tab.width - 2 : 0) + 2 * px;
+  const rows = lines.length + (head ? 1 : 0) + (o.static != null ? 1 : 0), high = rows * LINE + 2 * py - 1 + (art ? 1 : 0) - (tab ? 2 : 0), [c, x] = canvas(w, top + high);
+  x.translate(0, top);
+  if (!art || !nine(x, art, c.width, high)) frame(x, c.width, high, o.fill, o.ink);
+  if (tab) x.drawImage(tab, 5, -top);
   if (head) draw(x, [head], px, py, { color: o.headColor ?? o.ink });
   const y = py + (head ? LINE : 0);
   draw(x, lines, px, y, { color: o.text });
@@ -66,17 +73,31 @@ function dotsCanvas() {
   for (const i of [4, 7, 10]) x.fillRect(i, 4, 1, 2);
   return c;
 }
-let tails: { say: Texture; think: Texture } | null = null;
-function tailTextures() {
-  if (tails) return tails;
-  const [s, sx] = canvas(7, 4), [t, tx] = canvas(5, 6);
-  sx.fillStyle = INK; sx.fillRect(0, 0, 7, 1); sx.fillRect(1, 1, 5, 1); sx.fillRect(2, 2, 3, 1); sx.fillRect(3, 3, 1, 1);
-  sx.fillStyle = "#ffffff"; sx.fillRect(1, 0, 5, 1); sx.fillRect(2, 1, 3, 1); sx.fillRect(3, 2, 1, 1);
-  tx.fillStyle = INK; tx.fillRect(1, 0, 4, 4); tx.fillRect(0, 4, 2, 2);
-  tx.fillStyle = PAPER; tx.fillRect(2, 1, 2, 2);
-  // the art's own tails, where it has them
-  return (tails = { say: fromCanvas(has("ui.bubble.say.tail") ? canvasOf("ui.bubble.say.tail") : s), think: fromCanvas(has("ui.bubble.think.tail") ? canvasOf("ui.bubble.think.tail") : t) });
+/** The colour inside a bubble of the art's, for the tail that runs from it. */
+const fills = new Map<string, number>();
+function fillOf(art: string, or: number) {
+  if (!fills.has(art)) {
+    const d = def(art), c = d ? canvasOf(art) : null, p = c?.getContext("2d")!.getImageData(c.width >> 1, c.height >> 1, 1, 1).data;
+    fills.set(art, p && p[3] ? (p[0] << 16) | (p[1] << 8) | p[2] : or);
+  }
+  return fills.get(art)!;
 }
+/** A face from the art with a dark edge round it, so it shows on any floor by day or night. */
+const faces = new Map<string, Texture>();
+function faceTexture(mood: string) {
+  let t = faces.get(mood);
+  if (t) return t;
+  const src = canvasOf(`emote.${mood}`), [c, x] = canvas(src.width + 2, src.height + 2);
+  for (const [dx, dy] of [[0, 1], [2, 1], [1, 0], [1, 2], [0, 0], [2, 0], [0, 2], [2, 2]]) x.drawImage(src, dx, dy);
+  x.globalCompositeOperation = "source-in";
+  x.fillStyle = INK;
+  x.fillRect(0, 0, c.width, c.height);
+  x.globalCompositeOperation = "source-over";
+  x.drawImage(src, 1, 1);
+  faces.set(mood, (t = fromCanvas(c)));
+  return t;
+}
+const gap = (a: Rect, b: Rect) => Math.hypot(Math.max(0, a.x - b.x - b.w, b.x - a.x - a.w), Math.max(0, a.y - b.y - b.h, b.y - a.y - a.h));
 
 /** One piece of lettering as a sprite; its texture is made again only when what it says changes. */
 class Card {
@@ -107,22 +128,22 @@ class Card {
     this.s.destroy();
   }
 }
-/** `side`: where the bubble is from its pet: 0 over or under it, -1 to its left, 1 to its right (the tail goes on that edge). */
-type Entry = { who: Who; plate: Card; cap: Card; dots: Card; say: Card; tail: Sprite; tailFor: Card | null; tailUp: boolean; side: number; capText: string };
-type Spot = Rect & { up: boolean; side: number };
+type Entry = { who: Who; plate: Card; cap: Card; dots: Card; say: Card; link: Graphics; linkFor: Card | null; mood: Sprite; face: Rect };
+type Body = Rect & { id: string };
 
 export class Labels {
   c = new Container();
   placed: Label[] = [];
-  private tailLayer = new Container();
+  private links = new Container();   // tails, under the bubbles they come from
   private cards = new Container();
   private entries = new Map<string, Entry>();
-  private box: { card: Card; tail: Sprite; key: string } | null = null;
+  private box: { card: Card; link: Graphics; key: string } | null = null;
+  private tip: { card: Card; at: number[] } | null = null;
   private F = 2;
   private laid = -1e9;
 
   constructor() {
-    this.c.addChild(this.cards, this.tailLayer);
+    this.c.addChild(this.links, this.cards);
   }
 
   /** What to say about whom, from a snapshot. `F`: screen pixels to a pixel of lettering. `wide`: the room's width in lettering pixels. */
@@ -130,158 +151,210 @@ export class Labels {
     this.F = F;
     for (const [id, e] of this.entries) if (!who.some((w) => w.id === id)) {
       for (const k of [e.plate, e.cap, e.dots, e.say]) k.destroy();
-      e.tail.destroy();
+      e.link.destroy();
+      e.mood.destroy();
       this.entries.delete(id);
     }
     for (const w of who) {
       let e = this.entries.get(w.id);
       if (!e) {
-        e = { who: w, plate: new Card(), cap: new Card(), dots: new Card(), say: new Card(), tail: new Sprite(), tailFor: null, tailUp: false, side: 0, capText: "" };
+        e = { who: w, plate: new Card(), cap: new Card(), dots: new Card(), say: new Card(), link: new Graphics(), linkFor: null, mood: new Sprite(), face: { x: 0, y: 0, w: 0, h: 0 } };
         this.entries.set(w.id, e);
-        this.cards.addChild(e.plate.s, e.dots.s, e.cap.s, e.say.s);
-        this.tailLayer.addChild(e.tail);
+        this.cards.addChild(e.mood, e.plate.s, e.dots.s, e.cap.s, e.say.s);
+        this.links.addChild(e.link);
         e.dots.set("dots" + F, F, dotsCanvas);
       }
       e.who = w;
-      e.plate.set(`${w.name}|${w.family}|${w.selected}|${w.faded}|${F}`, F, () => plateCanvas(w.name, w.faded ? "#6d6875" : FAMILY[w.family] ?? FAMILY[1], w.selected));
+      const color = w.faded ? "#6d6875" : FAMILY[w.family] ?? FAMILY[1], tab = w.tab ? { name: w.name, color } : undefined;
+      e.plate.set(`${w.name}|${w.family}|${w.selected}|${w.faded}|${F}`, F, () => plateCanvas(w.name, color, w.selected));
       e.plate.want = 1;
-      if (w.caption) {   // an intention that has ended keeps its words while it fades
-        e.capText = w.caption;
-        e.cap.set(`${w.caption}|${F}|${wide}`, F, () => bubbleCanvas(wrap(w.caption!, Math.round(wide * 0.32), 2), { fill: PAPER, ink: INK, text: "#3a3350", art: "ui.bubble.think" }));
-      }
+      if (w.caption) e.cap.set(`${w.caption}|${F}|${wide}|${w.tab && w.name}`, F, () => bubbleCanvas(wrap(w.caption!, Math.round(wide * 0.32), 2), { fill: PAPER, ink: INK, text: "#3a3350", art: "ui.bubble.think", tab }));
       if (w.say) {
         const s = w.say, text = s.song ? `♪ ${s.text} ♪` : s.text;
-        e.say.set(`${s.key}|${F}|${wide}`, F, () => bubbleCanvas(wrap(text, Math.round(wide * 0.3), 3), { fill: "#ffffff", ink: INK, text: INK, head: s.to ? `→ ${s.to}` : undefined, headColor: "#b3541e", art: "ui.bubble.say" }));
+        e.say.set(`${s.key}|${F}|${wide}|${w.tab && w.name}`, F, () => bubbleCanvas(wrap(text, Math.round(wide * 0.3), 3), { fill: "#ffffff", ink: INK, text: INK, head: s.to ? `→ ${s.to}` : undefined, headColor: "#b3541e", art: "ui.bubble.say", tab }));
       }
+      if (w.mood) e.mood.texture = faceTexture(w.mood);
+      else e.mood.visible = false;
     }
     if (radio?.key !== this.box?.key) {
       this.box?.card.destroy();
-      this.box?.tail.destroy();
+      this.box?.link.destroy();
       this.box = null;
       if (radio) {
-        const card = new Card(), tail = new Sprite(tailTextures().say);
+        const card = new Card(), link = new Graphics();
         card.set(radio.key + F, F, () => bubbleCanvas(radio.text ? wrap(`"${radio.text}"`, Math.round(wide * 0.34), 3) : ["only static"],
           { fill: "#fbf0cf", ink: "#7a4a1e", text: radio.text ? INK : "#6b5a48", head: radio.text ? `the box - ${radio.source}` : "the box", headColor: "#7a4a1e", static: radio.text ? undefined : radio.key }));
         card.want = 1;
-        tail.scale.set(F);
-        tail.tint = 0xfbf0cf;
         this.cards.addChild(card.s);
-        this.tailLayer.addChild(tail);
-        this.box = { card, tail, key: radio.key };
+        this.links.addChild(link);
+        this.box = { card, link, key: radio.key };
       }
     }
     this.laid = -1e9;
   }
 
-  /** Every frame: put each card by its pet (`heads`: each pet's body on screen), and every so often work out again
-   *  where everything goes. `avoid`: parts of the room the page has covered. `boxAt`: where the box stands. */
-  step(now: number, dt: number, heads: Map<string, Rect>, W: number, H: number, avoid: Rect[], boxAt: number[] | null) {
+  /** A small plate for what the pointer is on (a creature's name), at a point on screen; null takes it away. */
+  hover(text: string | null, x = 0, y = 0) {
+    if (!text) { if (this.tip) this.tip.card.want = 0; return; }
+    if (!this.tip) { this.tip = { card: new Card(), at: [0, 0] }; this.cards.addChild(this.tip.card.s); }
+    this.tip.card.set(text + this.F, this.F, () => plateCanvas(text, "#4a4458", false));
+    [this.tip.card.want, this.tip.at] = [1, [x, y]];
+  }
+
+  /** Every frame: put each card by its pet (`bodies`: each pet's body on screen), and every so often work out again
+   *  where everything goes. `K`: screen pixels to a pixel of the art. `room`: the part of the canvas the room is drawn
+   *  in. `avoid`: parts of it the page has covered. `boxAt`: where the box stands. */
+  step(now: number, dt: number, bodies: Map<string, Rect>, K: number, room: Rect, avoid: Rect[], boxAt: number[] | null) {
+    // the face by its head: to one side or above, wherever it covers nobody (its own body included); if nowhere, its
+    // bearing has to say it alone. It nods a little.
+    for (const [id, e] of this.entries) {
+      const b = bodies.get(id), w = (e.mood.texture.width || 16) * K, h = (e.mood.texture.height || 15) * K;
+      e.face.w = 0;
+      if (b && e.who.mood) for (const [x, y] of [[b.x + b.w - K, b.y - 7 * K], [b.x + K - w, b.y - 7 * K], [b.x + b.w / 2 - w / 2, b.y - h - K], [b.x + b.w, b.y + b.h - h], [b.x - w, b.y + b.h - h]]) {
+        const r = { x, y: Math.max(room.y, y), w, h };
+        if (r.x < room.x || r.x + w > room.x + room.w || hit(r, { x: b.x + K, y: b.y + K, w: b.w - 2 * K, h: b.h - 2 * K })) continue;
+        let free = true;
+        for (const [other, ob] of bodies) if (other !== id && hit(r, ob)) free = false;
+        for (const o of this.entries.values()) if (o !== e && o.face.w && hit(r, o.face)) free = false;
+        if (free) { [e.face.x, e.face.y, e.face.w, e.face.h] = [r.x, r.y, w, h]; break; }
+      }
+      e.mood.visible = e.face.w > 0;
+      e.mood.scale.set(K);
+      e.mood.position.set(Math.round(e.face.x), Math.round(e.face.y) + (Math.floor(now / 700 + (b?.x ?? 0)) % 2) * K);
+    }
     if (now - this.laid > 140) {
       this.laid = now;
-      this.lay(now, heads, W, H, avoid, boxAt);
+      this.lay(now, bodies, room, avoid, boxAt);
     }
-    const F = this.F;
     for (const [id, e] of this.entries) {
-      const b = heads.get(id);
+      const b = bodies.get(id);
       if (!b) continue;
       const cx = b.x + b.w / 2;
       for (const k of [e.plate, e.cap, e.dots, e.say]) {
         k.ease(dt);
-        k.s.position.set(Math.round(clamp(cx + k.dx, 1, Math.max(1, W - k.w - 1))), Math.round(clamp(b.y + k.dy, 1, Math.max(1, H - k.h - 1))));
+        k.s.position.set(Math.round(clamp(cx + k.dx, room.x, Math.max(room.x, room.x + room.w - k.w))), Math.round(clamp(b.y + k.dy, room.y, Math.max(room.y, room.y + room.h - k.h))));
       }
-      const t = e.tailFor, tail = e.tail;
-      tail.visible = !!t && t.alpha > 0.5 && (!!e.side || !e.tailUp);   // under its pet the name plate lies between: no tail
-      if (t && tail.visible) {
-        tail.texture = t === e.say ? tailTextures().say : tailTextures().think;
-        if (e.side) {   // beside its pet: the tail on the near edge, turned a quarter
-          tail.rotation = (e.side * Math.PI) / 2;
-          tail.scale.set(F, F);
-          tail.position.set(e.side < 0 ? t.s.x + t.w - F : t.s.x + F, Math.round(clamp(b.y + 2 * F, t.s.y + 2 * F, t.s.y + t.h - 8 * F)) + (e.side < 0 ? 0 : 6 * F));
-        } else {
-          tail.rotation = 0;
-          tail.scale.set(F, e.tailUp ? -F : F);
-          // a speech tail's top row lies on the bubble's outline; a thought's dots hang a pixel clear of it
-          const lap = t === e.say ? -F : F;
-          tail.position.set(Math.round(clamp(cx - 3 * F, t.s.x + 4 * F, t.s.x + t.w - 11 * F)), e.tailUp ? t.s.y - lap : t.s.y + t.h + lap);
-        }
-      }
+      const t = e.linkFor, g = e.link.clear();
+      if (t && t.alpha > 0.5) this.tail(g, { x: t.s.x, y: t.s.y, w: t.w, h: t.h }, b, t === e.say, t === e.say ? fillOf("ui.bubble.say", 0xffffff) : fillOf("ui.bubble.think", 0xfffdf2));
     }
-    if (this.box) this.box.card.ease(dt);
+    if (this.box) {
+      const k = this.box.card, g = this.box.link.clear();
+      k.ease(dt);
+      if (boxAt && k.alpha > 0.5) this.tail(g, { x: k.s.x, y: k.s.y, w: k.w, h: k.h }, { x: boxAt[0] - 5 * K, y: boxAt[1] - 6 * K, w: 10 * K, h: 10 * K }, true, 0xfbf0cf);
+    }
+    if (this.tip) {
+      const k = this.tip.card;
+      k.ease(dt);
+      k.s.position.set(Math.round(clamp(this.tip.at[0] - k.w / 2, room.x, room.x + room.w - k.w)), Math.round(clamp(this.tip.at[1], room.y, room.y + room.h - k.h)));
+    }
   }
 
-  /** Decide where everything goes (§10.7: no plate, caption or bubble on another, none over a face). */
-  private lay(now: number, heads: Map<string, Rect>, W: number, H: number, avoid: Rect[], boxAt: number[] | null) {
+  /** A bubble's tail, all the way to its owner: a wedge for speech, a string of dots for a thought, in lettering pixels. */
+  private tail(g: Graphics, r: Rect, b: Rect, speech: boolean, fill: number) {
+    const F = this.F, snap = (v: number) => Math.round(v / F) * F;
+    const tx = clamp(r.x + r.w / 2, b.x + b.w * 0.3, b.x + b.w * 0.7), ty = clamp(r.y + r.h / 2, b.y + 2 * F, b.y + b.h - 2 * F);   // a point on the owner
+    const ax = clamp(tx, r.x + 6 * F, r.x + r.w - 6 * F), ay = clamp(ty, r.y + 4 * F, r.y + r.h - 4 * F);                           // and one just inside the bubble
+    const d = Math.hypot(tx - ax, ty - ay);
+    if (d < 5 * F) return;
+    const blocks: number[] = [];   // x, y, half a side
+    if (speech) for (let i = 0, n = Math.ceil(d / F); i <= n; i++) blocks.push(snap(ax + ((tx - ax) * i) / n), snap(ay + ((ty - ay) * i) / n), Math.max(F / 2, (3 - (2.5 * i) / n) * F));
+    else for (let k0 = Math.min(0.6, (7 * F) / d), m = Math.max(2, Math.round((d * (1 - k0)) / (7 * F))), j = 0; j < m; j++) {
+      const k = k0 + ((1 - k0) * (j + 0.5)) / m;
+      blocks.push(snap(ax + (tx - ax) * k), snap(ay + (ty - ay) * k), j < m / 2 ? 1.5 * F : F);
+    }
+    for (let i = 0; i < blocks.length; i += 3) g.rect(blocks[i] - blocks[i + 2] - F, blocks[i + 1] - blocks[i + 2] - F, 2 * blocks[i + 2] + 2 * F, 2 * blocks[i + 2] + 2 * F);
+    g.fill(0x2b2233);
+    for (let i = 0; i < blocks.length; i += 3) g.rect(blocks[i] - blocks[i + 2], blocks[i + 1] - blocks[i + 2], 2 * blocks[i + 2], 2 * blocks[i + 2]);
+    g.fill(fill);
+  }
+
+  /** Decide where everything goes (§10.7): no plate, caption or bubble on another or on anybody's body or face, all of
+   *  it inside the room, and no bubble nearer to another pet than to its own. */
+  private lay(now: number, bodies: Map<string, Rect>, room: Rect, avoid: Rect[], boxAt: number[] | null) {
     const F = this.F, placed: Label[] = avoid.map((r) => ({ ...r, kind: "page" }));
-    const list = [...this.entries.values()].filter((e) => heads.has(e.who.id)).sort((a, b) => heads.get(a.who.id)!.y - heads.get(b.who.id)!.y);
-    const faces = list.map((e) => ({ ...heads.get(e.who.id)!, id: e.who.id }));
-    const clear = (r: Rect, but?: string) => r.x >= 0 && r.y >= 0 && r.x + r.w <= W && r.y + r.h <= H && !placed.some((q) => hit(q, r)) && !faces.some((f) => f.id !== but && hit(f, r));
+    const list = [...this.entries.values()].filter((e) => bodies.has(e.who.id)).sort((a, b) => bodies.get(a.who.id)!.y - bodies.get(b.who.id)!.y);
+    const solid: Body[] = list.flatMap((e) => [{ ...bodies.get(e.who.id)!, id: e.who.id }, ...(e.face.w ? [{ ...e.face, id: e.who.id }] : [])]);   // bodies, and the faces by their heads
+    const inside = (r: Rect) => r.x >= room.x && r.y >= room.y && r.x + r.w <= room.x + room.w && r.y + r.h <= room.y + room.h;
+    const clear = (r: Rect) => inside(r) && !placed.some((q) => hit(q, r)) && !solid.some((f) => hit(f, r));
+    /** Is this place plainly its owner's: no other pet's body is nearer to it. */
+    const own = (r: Rect, id: string) => { const mine = gap(r, bodies.get(id)!); return !list.some((e) => e.who.id !== id && gap(r, bodies.get(e.who.id)!) < mine * 0.75 - F); };
     const put = (k: Card, b: Rect, r: Rect, kind: string) => {
       [k.dx, k.dy] = [r.x - (b.x + b.w / 2), r.y - b.y];
       placed.push({ ...r, kind });
     };
-    // name plates: under the feet; else over the head or to a side; never on a face if there is any way round
+    // a tail runs from its bubble to its owner: it may not cross another pet or pass under another bubble, or it would seem to be theirs
+    const ropes: Body[] = [];
+    const rope = (r: Rect, b: Rect): Rect => {
+      const tx = clamp(r.x + r.w / 2, b.x + b.w * 0.3, b.x + b.w * 0.7), ty = clamp(r.y + r.h / 2, b.y + 2 * F, b.y + b.h - 2 * F), ax = clamp(tx, r.x, r.x + r.w), ay = clamp(ty, r.y, r.y + r.h);
+      return { x: Math.min(ax, tx) - 2 * F, y: Math.min(ay, ty) - 2 * F, w: Math.abs(ax - tx) + 4 * F, h: Math.abs(ay - ty) + 4 * F };
+    };
+    const reach = (r: Rect, b: Rect, id: string) => {
+      const line = rope(r, b);
+      return !ropes.some((q) => q.id !== id && hit(q, r)) && !placed.some((q) => (q.kind === "bubble" || q.kind === "caption") && hit(q, line)) && !solid.some((f) => f.id !== id && hit(f, line));
+    };
+    const fitter = (w: number, h: number) => (x: number, y: number) => ({ x: Math.round(clamp(x, room.x, room.x + room.w - w)), y: Math.round(clamp(y, room.y, room.y + room.h - h)), w, h });
+    // name plates: under the feet; else over the head, to a side, or further off; never on a body, its own included
     const shared = (a: Rect, b: Rect) => Math.max(0, Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x)) * Math.max(0, Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y));
     for (const e of list) {
-      const b = heads.get(e.who.id)!, { w, h } = e.plate, cx = b.x + b.w / 2, under = b.y + b.h + F, over = b.y - h - F;
-      const fit = (x: number, y: number) => ({ x: Math.round(clamp(x, 1, W - w - 1)), y: Math.round(clamp(y, 1, H - h - 1)), w, h });
-      const tries = [fit(cx - w / 2, under), fit(cx - w / 2, over), fit(cx - w, under), fit(cx, under), fit(cx - w, over), fit(cx, over), fit(cx - w / 2, under + h + F), fit(b.x - w - F, b.y + b.h - h), fit(b.x + b.w + F, b.y + b.h - h),
-                     fit(cx - w / 2, under + 2 * (h + F)), fit(cx - w / 2, over - h - F)];
-      const cost = (r: Rect) => placed.reduce((n, q) => n + shared(q, r) * 3, 0) + faces.reduce((n, f) => n + (f.id === e.who.id ? 0 : shared(f, r)), 0);
-      put(e.plate, b, tries.find((r) => clear(r, e.who.id)) ?? tries.reduce((best, r) => (cost(r) < cost(best) ? r : best)), "pet");
+      const b = bodies.get(e.who.id)!, { w, h } = e.plate, cx = b.x + b.w / 2, under = b.y + b.h + F, over = b.y - h - F, fit = fitter(w, h);
+      const tries = [fit(cx - w / 2, under), fit(cx - w / 2, over), fit(cx - w, under), fit(cx, under), fit(cx - w, over), fit(cx, over), fit(b.x - w - F, b.y + b.h - h), fit(b.x + b.w + F, b.y + b.h - h),
+                     fit(cx - w / 2, under + h + F), fit(cx - w / 2, over - h - F), fit(b.x - w - F, b.y), fit(b.x + b.w + F, b.y), fit(cx - w / 2, under + 2 * (h + F)), fit(cx - w / 2, over - 2 * (h + F))];
+      const cost = (r: Rect) => placed.reduce((n, q) => n + shared(q, r) * 3, 0) + solid.reduce((n, f) => n + shared(f, r) * 2, 0) + gap(r, b);
+      put(e.plate, b, tries.find((r) => clear(r)) ?? tries.reduce((best, r) => (cost(r) < cost(best) ? r : best)), "pet");
     }
-    /** The clear spot for a bubble nearest its pet: over it, to a side, higher, under its plate; `anywhere`: failing those, wherever in the room is clear. */
-    const spot = (b: Rect, w: number, h: number, anywhere: boolean): Spot | null => {
-      const cx = b.x + b.w / 2, gap = 4 * F, over = b.y - gap - h, fit = (x: number, y: number) => ({ x: Math.round(clamp(x, 1, W - w - 1)), y: Math.round(clamp(y, 1, H - h - 1)), w, h });
-      const tries = [fit(cx - w / 2, over), fit(cx - w * 0.25, over), fit(cx - w * 0.75, over), fit(cx - w / 2, over - h - F), fit(cx - w * 0.2, over - h - F), fit(cx - w * 0.8, over - h - F),
-                     fit(cx - w / 2, b.y + b.h + 14 * F), fit(cx - w * 0.25, b.y + b.h + 14 * F), fit(cx - w * 0.75, b.y + b.h + 14 * F), fit(cx - w / 2, over - 2 * (h + F)),
-                     fit(b.x - gap - w, b.y - h / 4), fit(b.x + b.w + gap, b.y - h / 4), fit(b.x - gap - w, b.y - h), fit(b.x + b.w + gap, b.y - h), fit(b.x - gap - w, b.y + b.h - h), fit(b.x + b.w + gap, b.y + b.h - h)];
-      const near = tries.length;
-      if (anywhere) for (let gy = 0; gy < 7; gy++) for (let gx = 0; gx < 7; gx++) tries.push(fit((gx / 6) * (W - w), (gy / 6) * (H - h)));
-      let best: Rect | null = null, far = Infinity;
-      for (const [i, r] of tries.entries()) {
-        if (!clear(r)) continue;
-        if (i < near) { best = r; break; }
-        const d = Math.hypot(r.x + w / 2 - cx, r.y + h / 2 - b.y);
-        if (d < far) [best, far] = [r, d];
+    /** The clear spot for a bubble nearest its owner: over it, to a side, higher, under its plate; `anywhere`: failing those, wherever in the room is clear. */
+    const spot = (b: Rect, w: number, h: number, id: string, anywhere: boolean): Rect | null => {
+      const cx = b.x + b.w / 2, g = 5 * F, over = b.y - g - h, fit = fitter(w, h);
+      const tries = [fit(cx - w / 2, over), fit(cx - w * 0.25, over), fit(cx - w * 0.75, over), fit(b.x - g - w, b.y - h / 2), fit(b.x + b.w + g, b.y - h / 2), fit(b.x - g - w, b.y - h), fit(b.x + b.w + g, b.y - h),
+                     fit(cx - w / 2, over - h - F), fit(cx - w * 0.2, over - h - F), fit(cx - w * 0.8, over - h - F), fit(b.x - g - w, b.y + b.h - h), fit(b.x + b.w + g, b.y + b.h - h), fit(cx - w / 2, over - 2 * (h + F)),
+                     fit(cx - w / 2, b.y + b.h + 14 * F), fit(cx - w * 0.25, b.y + b.h + 14 * F), fit(cx - w * 0.75, b.y + b.h + 14 * F)];
+      const near = tries.find((r) => clear(r) && (!id || (own(r, id) && reach(r, b, id))));
+      if (near || !anywhere) return near ?? null;
+      let best: Rect | null = null, far = Infinity;   // wherever is clear: its owner's side of the room first
+      for (const strict of [true, false]) {
+        for (let gy = 0; gy < 8; gy++) for (let gx = 0; gx < 8; gx++) {
+          const r = fit(room.x + (gx / 7) * (room.w - w), room.y + (gy / 7) * (room.h - h)), d = gap(r, b);
+          if (d < far && clear(r) && (!strict || !id || (own(r, id) && reach(r, b, id)))) [best, far] = [r, d];
+        }
+        if (best) break;
       }
-      return best && { ...best, up: best.y > b.y + b.h / 2, side: best.x + w <= b.x ? -1 : best.x >= b.x + b.w ? 1 : 0 };
+      return best;
+    };
+    /** A caption that found no room by its owner may sit a little way off, if it is still plainly its owner's (its tail and its name say so). */
+    const far = (b: Rect, w: number, h: number, id: string): Rect | null => {
+      const r = spot(b, w, h, id, true);
+      return r && own(r, id) && gap(r, b) < 40 * F ? r : null;
     };
     for (const e of list) {   // speech first: it is the thing most worth reading, and it does not last
-      const b = heads.get(e.who.id)!;
-      e.tailFor = null;
+      const b = bodies.get(e.who.id)!;
+      e.linkFor = null;
       e.say.want = 0;
       if (!e.who.say) continue;
-      const r = spot(b, e.say.w, e.say.h, true);
+      const r = spot(b, e.say.w, e.say.h, e.who.id, true);
       if (!r) continue;
       put(e.say, b, r, "bubble");
-      const close = r.side ? r.y < b.y + b.h && r.y + r.h > b.y && Math.min(Math.abs(r.x - b.x - b.w), Math.abs(b.x - r.x - r.w)) < 8 * F : Math.abs(r.x + r.w / 2 - (b.x + b.w / 2)) < r.w / 2 + 8 * F;
-      [e.say.want, e.tailFor, e.tailUp, e.side] = [1, close ? e.say : null, r.up, r.side];
+      ropes.push({ ...rope(r, b), id: e.who.id });
+      [e.say.want, e.linkFor] = [1, e.say];
     }
     // the box speaks from where it stands
     if (this.box) {
-      const k = this.box.card, [x, y] = boxAt ?? [W / 2, H / 2], b = { x: x - 6 * F, y: y - 10 * F, w: 12 * F, h: 12 * F }, r = spot(b, k.w, k.h, true);
+      const k = this.box.card, [x, y] = boxAt ?? [room.x + room.w / 2, room.y + room.h / 2], r = spot({ x: x - 6 * F, y: y - 10 * F, w: 12 * F, h: 12 * F }, k.w, k.h, "", true);
       k.want = r ? 1 : 0;
-      this.box.tail.visible = !!r && !!boxAt && !r.side && Math.abs(r.x + r.w / 2 - x) < r.w / 2 && Math.min(Math.abs(r.y + r.h - b.y), Math.abs(r.y - b.y - b.h)) < 10 * F;   // only when it is right by the box
-      if (r) {
-        k.s.position.set(r.x, r.y);
-        placed.push({ ...r, kind: "bubble" });
-        this.box.tail.scale.set(F, r.up ? -F : F);
-        this.box.tail.position.set(Math.round(clamp(x - 3 * F, r.x + 2 * F, r.x + r.w - 9 * F)), r.up ? r.y + F : r.y + r.h - F);
-      }
+      if (r) { k.s.position.set(r.x, r.y); placed.push({ ...r, kind: "bubble" }); }
     }
     // thoughts: whoever is chosen first, the rest in turn, so that in a crowd each gets its time in full
     const turn = Math.floor(now / 5000), thinkers = list.filter((e) => !e.who.say);
     const order = [...thinkers].sort((a, b) => Number(b.who.selected) - Number(a.who.selected) || ((thinkers.indexOf(a) + turn) % thinkers.length) - ((thinkers.indexOf(b) + turn) % thinkers.length));
     for (const e of list) if (e.who.say) e.cap.want = e.dots.want = 0;
     for (const e of order) {
-      const b = heads.get(e.who.id)!, has = !!e.who.caption;
-      const full = has ? spot(b, e.cap.w, e.cap.h, false) : null;
-      const small = !full && (has || e.who.thinking) ? spot(b, e.dots.w, e.dots.h, false) : null;
+      const b = bodies.get(e.who.id)!, has = !!e.who.caption;
+      const full = has ? spot(b, e.cap.w, e.cap.h, e.who.id, false) ?? far(b, e.cap.w, e.cap.h, e.who.id) : null;
+      const small = !full && (has || e.who.thinking) ? spot(b, e.dots.w, e.dots.h, e.who.id, false) : null;
       [e.cap.want, e.dots.want] = [full ? 1 : 0, small ? 1 : 0];
       if (full) put(e.cap, b, full, "caption");
       if (small) put(e.dots, b, small, "caption");
-      const r = full ?? small;
-      if (r) [e.tailFor, e.tailUp, e.side] = [full ? e.cap : e.dots, r.up, r.side];
+      if (full ?? small) ropes.push({ ...rope((full ?? small)!, b), id: e.who.id });
+      e.linkFor = full ? e.cap : small ? e.dots : null;
     }
     this.placed = placed;
   }
