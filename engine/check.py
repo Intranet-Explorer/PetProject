@@ -288,6 +288,9 @@ async def main():
         egg["needs"]["curiosity"] = 0
         assert next(e["rate"] for e in physics.effects(h, cfg, egg) if e["tag"] == "restless") == 2 * cfg["effects"]["restless"]
         assert "too long to be easy" in " ".join(physics.senses(h, cfg, egg))
+        egg["needs"]["comfort"] = cfg["effects"]["restless_to"] - 1
+        assert not any(e["tag"] == "restless" for e in physics.effects(h, cfg, egg)), "boredom alone never makes it miserable"
+        egg["needs"]["comfort"] = was["comfort"]
         egg["needs"]["curiosity"] = 90
         assert not any(e["tag"] == "restless" for e in physics.effects(h, cfg, egg))
         egg["needs"]["curiosity"] = keen

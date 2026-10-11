@@ -25,7 +25,7 @@ def effects(house, cfg, pet):
     out.append(effect("drift", "comfort", D["comfort"], None, False))
     out.append(effect("drift", "curiosity", D["curiosity"], None, False))
     bored = feel_level(pet, "curiosity") - 2   # boredom is the one lack a snug room cannot answer, so it has to cost something
-    if bored > 0:
+    if bored > 0 and pet["needs"]["comfort"] > E["restless_to"]:   # it makes a pet uncomfortable, never miserable: misery dulls interest, and that would be a trap
         out.append(effect("restless", "comfort", E["restless"] * bored, "you have sat with the same things too long to be easy", False))
     snug = next((n for n, o in objs.items() if o.get("fix", {}).get("cozy") and dist(pet["pos"], o["pos"]) <= 1), None)
     if snug:

@@ -55,6 +55,7 @@ drift = { energy = -0.2, comfort = -0.1, curiosity = -0.3 }   # per 10 s, just f
 miserable = 0.4           # how much of the interest in a thing is left to a pet that is miserable
 cozy = 0.35                # comfort per 10 s beside a bed, a blanket, a rug
 restless = -0.3           # comfort per 10 s while bored, twice it while restless: staying put is not free
+restless_to = 35          # ... and no lower than this by boredom alone
 open_window = -0.5        # comfort per 10 s at night in a room with the window open
 yours = 0.1               # comfort per 10 s beside a thing of its own that it has kept a world day (§3.3)
 rest_per_10s = 2.0        # energy while resting; a bed or bench has its own figure in house.toml

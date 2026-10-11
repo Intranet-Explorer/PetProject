@@ -487,3 +487,10 @@ The first run is kept as `data.showcase-1`. Diagnosis from its log, and the chan
   slow slide while restless. The family can keep the creed and pay for it, or break it; either is theirs.
   This is the second number changed inside this run, so generations one and two lived their first days under
   a different house than the later ones. SHOWCASE.md has to say so wherever it compares them.
+- **Boredom's cost stops at uncomfortable, fixed at world day 17.5 of the same run.** Three world days after
+  the change above, Stay (curiosity 2 on average, still refusing every untried door) was at comfort 0 and
+  the others were calling it miserable. That exposed a trap of mine, not a choice of Stay's: a miserable pet
+  takes only 0.4 of the interest in anything (v2's rule), so boredom made it miserable and misery kept it
+  bored. Boredom now wears comfort no lower than 35, which is uncomfortable and not miserable. It matters
+  more for the real lineage than for the showcase: a pet that has been through every door has no cheap
+  novelty left, and without the stop it would spend the rest of its life at the bottom.
