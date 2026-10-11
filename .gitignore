@@ -4,3 +4,5 @@ __pycache__/
 data*/
 node_modules/
 view/dist/
+book/*.zim
+book/*.part
