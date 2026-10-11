@@ -54,9 +54,7 @@ PACK.update({
 # ---- fixtures the pack has ----
 PACK.update({
     "fix.plant": px("E", 0, 120, 15, 24),
-    "fix.rock": cell("N", 18, 9),
     "fix.bed": px("B", 192, 48, 16, 32, anchor=[0, 0]),                     # a bed lies on its own tile and the one south of it
-    "fix.berry bush": cell("N", 6, 14), "fix.berry bush.growing": cell("N", 6, 14), "fix.berry bush.ripe": cell("N", 4, 14),
     "fix.herb patch": cell("N", 8, 10), "fix.herb patch.growing": cell("N", 8, 10), "fix.herb patch.ripe": cell("N", 6, 11),
     "fix.old bench": px("C", 2, 113, 44, 14, anchor=[14, -2]),               # three tiles wide, its tile in the middle
     "fix.barrel": px("H", 288, 234, 16, 22),
@@ -68,11 +66,8 @@ PACK.update({
     "fix.workbench": px("H", 466, 132, 28, 23, anchor=[-2, 7]),              # two tiles wide
     "fix.stool": px("E", 80, 119, 16, 9, anchor=[0, -6]),
     "fix.rug": cell("I", 14, 5),                                              # the middle of the music room's carpet
-    "fix.hot pipe": cell("P", 5, 0, 1, 3, anchor=[0, 16]),                    # three tiles tall, its tile in the middle
     "fix.crates": px("E", 67, 60, 27, 20, anchor=[-2, 4]),                    # two tiles wide
     "fix.shelves": px("E", 160, 113, 32, 29),                                 # two tiles wide
-    "fix.heavy book": px("E", 161, 2, 14, 14, anchor=[-1, -2]),
-    "stone": px("E", 66, 32, 12, 15, anchor=[-2, -1]),
     "crate": px("E", 1, 1, 14, 15, anchor=[-1, -1]),
 })
 
@@ -115,9 +110,6 @@ side = lambda fps: {"idle": {"frames": [[0, 0]], "fps": 1}, "walk.right": {"fram
                     "walk.left": {"frames": [[0, 0], [1, 0]], "fps": fps, "flip": True}, "walk.up": {"frames": [[0, 0], [1, 0]], "fps": fps, "flip": True}}
 strip = lambda n, fps, name="play": {name: {"frames": [[i, 0] for i in range(n)], "fps": fps}}
 PACK.update({
-    "bit.leaf": px("FX/Particle/Leaf.png", 0, 0, 12, 7, anchor=[-2, -6]), "bit.petal": px("FX/Particle/LeafPink.png", 0, 0, 12, 7, anchor=[-2, -6]),
-    "bit.feather": cell("Items/Resource/feather.png", 0, 0), "bit.wood": px("C", 129, 130, 14, 12, anchor=[-1, -3]),
-    "bit.shell": px("E", 130, 50, 13, 12, anchor=[-1, -3]),
     "creature.mouse": px(ACT + "Hamster/SpriteSheetGray.png", 0, 0, 15, 15, anims=side(8), anchor=[0, -1]),
     "creature.bird": px(ACT + "Parrot/SpriteSheetBlue.png", 0, 0, 16, 16, anims=side(6)),
     "fx.sparkle": px("FX/Particle/Spark.png", 0, 0, 10, 8, anims=strip(7, 12), anchor=[-3, -4]),
@@ -132,7 +124,7 @@ PACK.update({
     "ui.plate": px("Ui/Theme/Theme Wood/nine_path_bg.png", 0, 0, 16, 16, slice=[5, 5, 5, 5]),
     "ui.panel": px("Ui/Dialog/ChoiceBox.png", 0, 0, 64, 20, slice=[5, 5, 5, 5]),
 })
-EMOTES = {"tired": 10, "uneasy": 12, "lonely": 13, "bored": 20, "content": 18, "happy": 6, "sleepy": 28, "scared": 1, "curious": 23,
+EMOTES = {"happy": 6, "sleepy": 28, "scared": 1, "curious": 23,
           "sad": 16, "love": 27, "heartbroken": 26, "surprised": 21, "alarm": 22, "proud": 29, "sick": 15, "cross": 9, "calm": 11}
 for mood, n in EMOTES.items():
     PACK["emote." + mood] = px("Ui/Emote/emote%d.png" % n, 0, 0, 14, 13, anchor=[-1, -2])
@@ -340,7 +332,7 @@ def greenhouse():
     f = grid("tile.grass.light"); floor9(f, "tile.floor.brick.orange")   # glass on the north side: the grass outside shows through it
     for y in range(len(f)):   # ... and nothing beyond the side and south walls: a band of grass there read as a mistake
         for x in range(len(f[y])):
-            if x in (0, len(f[y]) - 1) and y >= 2 or y == len(f) - 1:
+            if x in (0, len(f[y]) - 1) or y == len(f) - 1:
                 f[y][x] = None
     floor9(f, "tile.soil.light", 1, 1, 3, 2)
     floor9(f, "tile.soil.light", 7, 5, 9, 6)

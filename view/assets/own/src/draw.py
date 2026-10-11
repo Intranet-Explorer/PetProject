@@ -64,20 +64,33 @@ def fixtures():
     put("old lantern", F["lantern"], UNLIT["old lantern"]); put("old lantern.off", F["lantern"], UNLIT["old lantern"])
     put("old lantern.on", F["lantern"], {"k": "B"})
     for name in ("bowl.full", "bowl.half", "bowl.empty", "ball", "blanket", "music box.silent", "music box.playing", "window", "window.open",
-                 "mirror", "bird bath", "old rug", "skylight", "rocking chair", "drum", "chimes", "pond"):
+                 "mirror", "bird bath", "old rug", "skylight", "rocking chair", "drum", "chimes", "pond", "heavy book", "rock"):
         put(name, F[name])
     put("bowl", F["bowl.full"]); put("music box", F["music box.silent"]); put("window.closed", F["window"])
+    s.add("fix.hot pipe", pic(F["hot pipe"]), anchor=[0, 16])   # three tiles tall, its tile in the middle
+    for st, swap in (("", {"x": "G"}), (".growing", {"x": "G"}), (".ripe", None)):
+        put("berry bush" + st, F["berry bush"], swap)
+    s.add("stone", pic(F["stone"]))   # a memorial: a headstone with a flower at its foot
     put("bean row", F["bean row.growing"]); put("bean row.growing", F["bean row.growing"]); put("bean row.ripe", F["bean row"])
     put("tomato vine", F["tomato vine"], {"x": "G"}); put("tomato vine.growing", F["tomato vine"], {"x": "G"}); put("tomato vine.ripe", F["tomato vine"])
     put("melon bed", F["melon bed"], {"h": "G", "Y": "H"}); put("melon bed.growing", F["melon bed"], {"h": "G", "Y": "H"}); put("melon bed.ripe", F["melon bed"])
 
-    shaft = Image.new("RGBA", (16, 16), (0, 0, 0, 0))   # the patch of sun under the skylight: light, not a thing
-    for y in range(2, 15):
-        for x in range(1, 15):
-            if (x, y) in ((1, 2), (14, 2), (1, 14), (14, 14)) or x == 7 or y == 8:
-                continue
-            shaft.putpixel((x, y), rgba("ffe18d", 190 if 3 < x < 12 and 3 < y < 13 else 125))
-    s.add("fix.sun shaft", shaft)
+    shaft = Image.new("RGBA", (24, 59), (0, 0, 0, 0))   # sun from the skylight: a slanting beam down to a soft pool on the floor. Light, not a thing
+    light = {}
+    for y in range(48):   # the beam, fainter the higher it goes
+        cx = 13 - (47 - y) // 9
+        for x in range(cx - (5 if y > 30 else 4), cx + (5 if y > 30 else 4) + 1):
+            light[(x, y)] = (24, 36, 50, 66, 84)[min(4, y // 10)]
+    for y in range(44, 59):   # the pool
+        for x in range(24):
+            d = ((x - 11.5) / 11) ** 2 + ((y - 51) / 6.5) ** 2
+            if d < 1:
+                light[(x, y)] = max(light.get((x, y), 0), 175 if d < 0.4 else 120)
+    for xy, a in light.items():
+        shaft.putpixel(xy, rgba("ffe18d", a))
+    for xy in ((9, 14), (13, 25), (10, 33), (14, 40)):   # dust in the beam
+        shaft.putpixel(xy, rgba("ffffff", 200))
+    s.add("fix.sun shaft", shaft, anchor=[4, 43])
 
     for name in ("cobweb", "blocks", "harp", "gong", "stepping stone"):   # a cobweb goes on the top wall row, just under the wall's cap
         s.add("decor." + name, pic(art.DECOR[name]), **({"anchor": [0, -4]} if name == "cobweb" else {}))
@@ -114,7 +127,17 @@ def fixtures():
     gate = {"shut": D["gate"], "open": rows_with(D["gate"], {i: "#b#..........#b#" for i in range(2, 14)}),
             "stuck": rows_with(D["gate"], {5: "#b#G#o#oo#o#o#b#", 6: "#b#GG##oo#o#G#b#", 7: "#b#oGG#oo#GGo#b#", 8: "#b#o#GGooGG#o#b#", 9: "#b#o#oGGGG#o##b#", 10: "#b#o#o#GG#o#o#b#"})}
     side_gate = {st: [r.replace("m", ".").replace("k", ".").replace("o", "b") for r in west[st]] for st in west}
-    for st in ("shut", "open", "stuck"):
+
+    def unknown(rows, x, y):
+        """A door nobody has been through yet: the shut door, darker, with a small question mark at (x, y)."""
+        dark = [r.translate(str.maketrans("bBYon", "KkkEe")) for r in rows]
+        for dy, mark in enumerate(("vvv", "..v", ".v.", "...", ".v.")):
+            dark[y + dy] = dark[y + dy][:x] + "".join(m if m != "." else c for m, c in zip(mark, dark[y + dy][x:])) + dark[y + dy][x + 3:]
+        return dark
+    north["unknown"], south["unknown"], west["unknown"] = unknown(D["north"], 6, 7), unknown(D["south"], 6, 2), unknown(D["west"], 3, 5)
+    gate["unknown"] = unknown(D["gate"], 6, 5)
+    side_gate["unknown"] = west["unknown"]
+    for st in ("shut", "open", "stuck", "unknown"):
         n, so, w = pic(north[st]), pic(south[st]), pic(west[st])
         s.add("door.north." + st, n, anchor=[0, 20]); s.add("door.south." + st, so, anchor=[0, -16])
         s.add("door.west." + st, w, anchor=[9, 0]); s.add("door.east." + st, w.transpose(Image.FLIP_LEFT_RIGHT), anchor=[-16, 0])
@@ -181,6 +204,11 @@ def ui():
     s.add("ui.bubble.think", pic(art.UI["think"]), slice=[5, 5, 5, 6])
     s.add("ui.bubble.think.tail", pic(art.UI["think.tail"]))
     s.add("ui.bubble.say.tail", pic(art.UI["say.tail"]))
+    for name, sign in art.MOOD.items():   # the five moods: a bold sign on an outlined plate, readable at a glance by day and by night
+        plate = [r for r in art.UI["mood"]]
+        for dy, row in enumerate(sign):
+            plate[2 + dy] = plate[2 + dy][:3] + "".join(m if m != "." else c for m, c in zip(row, plate[2 + dy][3:13])) + plate[2 + dy][13:]
+        s.add("emote." + name, pic(plate), anchor=[0, -1])
     for name, rows in art.EMOTE.items():
         s.add("emote." + name, pic(rows))
     for name, rows in art.ICON.items():
