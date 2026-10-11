@@ -30,7 +30,7 @@ def doing(house, pet):
     plan = pet["plan"]
     if not plan or plan.get("idle"):   # SPEC-v3.3: between the things it decides, whatever its body is at
         now = (pet.get("body") or {}).get("now")
-        return now["doing"] if now else "standing still"
+        return body.words(house, pet, now) if now else "standing still"
     step = plan["steps"][min(plan["i"], len(plan["steps"]) - 1)]
     target = step.get("target") or step.get("what")
     word = BUSY.get(step.get("type"), "busy")

@@ -27,6 +27,21 @@ def music(house, pet):
     return bool(dj and dj.get("mood") and dj["scope"] in ("house", pet["room"])) or house["rooms"][pet["room"]].get("sounding_until", 0) > house["tick"]
 
 
+def anchor(house, pet):
+    """Where its mind wants it to be near, if anywhere: the thing or the one its focus names, when they are in this room."""
+    f = pet.get("focus") or {}
+    if f.get("type") not in ("stay near", "tend", "be with"):
+        return None
+    o, who = house["rooms"][pet["room"]]["objects"].get(f.get("what") or ""), house["pets"].get(f.get("who") or "")
+    return o["pos"] if o else who["pos"] if who and who["room"] == pet["room"] and who["stage"] not in ("egg", "dead") else None
+
+
+def out_of_sight(cfg, room, o):
+    """Put away inside something (a chest, a crate): not a thing to play with or look at until it is taken out."""
+    store = room["objects"].get(o.get("on") or "")
+    return bool(store) and bool(store.get("fix", {}).get("inside") or cfg["kinds"].get(store.get("made", {}).get("recipe", {}).get("kind"), {}).get("inside"))
+
+
 def kin_here(house, pet):
     return [p for p in here(house, pet) if relation(house, pet, p)]
 
@@ -38,8 +53,11 @@ def targets(house, cfg, pet, mem, name, A):
     near = lambda pos: None if dist(me, pos) <= 1 else beside(cfg, pos, me)
     if do == "self":
         return [{}]
-    if do == "wander":
-        return [{"goal": free_tile(house, cfg, room, [min(cfg["W"] - 1, max(0, me[0] + r.randint(-4, 4))), min(cfg["H"] - 1, max(0, me[1] + r.randint(-3, 3)))])}]
+    if do == "wander":   # somewhere a few steps off: the farthest of a few tries (or near what its mind is on)
+        at = anchor(house, pet)
+        tries = [[r.randrange(1, cfg["W"] - 1), r.randrange(1, cfg["H"] - 1)] for _ in range(4)] if not at else \
+            [[min(cfg["W"] - 2, max(1, at[0] + r.randint(-2, 2))), min(cfg["H"] - 2, max(1, at[1] + r.randint(-2, 2)))] for _ in range(4)]
+        return [{"goal": free_tile(house, cfg, room, max(tries, key=lambda t: min(dist(me, t), 6)))}]
     if do in ("doorway", "peek", "go"):
         out = []
         for d, rid in room["doors"].items():
@@ -63,15 +81,16 @@ def targets(house, cfg, pet, mem, name, A):
         return out
     if do == "inspect":
         seen = lambda n: pet["times"].get("look " + n, 0)
-        names = sorted(objs, key=lambda n: (seen(n), dist(me, objs[n]["pos"])))[:3]
+        names = sorted((n for n in objs if not out_of_sight(cfg, room, objs[n])), key=lambda n: (seen(n), dist(me, objs[n]["pos"])))[:3]
         return [{"what": n, "goal": near(objs[n]["pos"]), "bonus": 0.4 if not seen(n) else 0.0} for n in names]
     if do == "fiddle":
-        mine = [n for n, o in things.made(room).items() if things.free_to_change(house, pet, o)] + [n for n, o in objs.items() if o.get("fix", {}).get("movable")]
+        mine = [n for n, o in things.made(room).items() if things.free_to_change(house, pet, o) and not out_of_sight(cfg, room, o)] \
+            + [n for n, o in objs.items() if o.get("fix", {}).get("movable")]
         return [{"what": n, "goal": near(objs[n]["pos"])} for n in sorted(mine, key=lambda n: dist(me, objs[n]["pos"]))[:2]]
     if do == "play":
         toys = [n for n, o in objs.items() if "toy" in o.get("fix", {})]
         toys += [n for n, o in things.made(room).items() if things.prop(cfg, o).get("use", {}).get("curiosity") and not things.prop(cfg, o).get("food")
-                 and things.free_to_change(house, pet, o)]
+                 and things.free_to_change(house, pet, o) and not out_of_sight(cfg, room, o)]
         return [{"what": n, "goal": near(objs[n]["pos"])} for n in sorted(toys, key=lambda n: (pet["times"].get("body play " + n, 0), dist(me, objs[n]["pos"])))[:2]]
     if do == "window":
         return [{"what": n, "goal": near([o["pos"][0], max(o["pos"][1], 0)])} for n, o in objs.items() if o.get("fix", {}).get("window")][:1]
@@ -146,7 +165,10 @@ def score(house, cfg, pet, name, A, t, b, r):
     # the longer since it last did this, the more it is due: whatever its mind is about, in five minutes it has done many things (§0)
     s += B["fresh"] * (0.5 if A.get("passive") else 1.0) * min(1.0, (house["tick"] - b.get("done", {}).get(name, LONG_AGO)) / ticks(cfg, B["fresh_seconds"]))
     if b.get("last_still") and (not t.get("goal") or t["goal"] == pet["pos"]) and not A.get("rest"):
-        s -= B["again"]   # it has just done something on this spot: next it moves (§1.4)
+        s -= B["stay"]   # it has just done something on this spot: next it moves (§1.4)
+    at = anchor(house, pet)
+    if at and dist(t.get("goal") or pet["pos"], at) > 3:
+        s -= B["leash"]   # its mind is on staying near something: its body does not drift off from it
     if A.get("passive"):   # resting, looking and watching stay a small part of the day, unless it is worn out
         share = sum(b["idle"]) / max(1, len(b["idle"]))
         s -= B["passive"] * max(0.0, share - B["passive_share"]) * (0.6 if feel.level(pet, "energy") >= 3 else 1.0) + (B["again"] if b.get("last_passive") else 0.0)
@@ -339,10 +361,30 @@ def habits(house, cfg, pet, n=3):
     return out
 
 
+def going(house, pet, now):
+    """While it is still on its way: where it is off to, so nobody reads "nosing at the east door" from across the room."""
+    who = house["pets"].get(now.get("who") or "")
+    if now["do"] in ("doorway", "peek", "go"):
+        return "going over to the %s door" % (now.get("door") or now.get("what"))
+    if now["do"] in ("nap", "window"):
+        return "going to %s" % {"nap": "lie down", "window": "sit by the window"}[now["do"]]
+    return "going over to %s" % (label(who) if who else "the " + now["what"]) if who or now.get("what") else now["doing"]
+
+
+def on_its_way(pet, now):
+    return now["began"] is None and bool(now.get("goal")) and dist(pet["pos"], now["goal"]) > 1
+
+
+def words(house, pet, now):
+    """What its body is at, in words, right now."""
+    return going(house, pet, now) if on_its_way(pet, now) else now["doing"]
+
+
 def doing(cfg, house, pet):
     """What its body is doing right now, for the page: {activity, doing, icon, what, who, since, passive, walking} or None."""
     now = state(pet)["now"]
     if not now:
         return None
-    return {"activity": now["name"], "doing": now["doing"], "icon": now["icon"], "what": now.get("what"), "who": now.get("who"),
+    walking = on_its_way(pet, now)
+    return {"activity": now["name"], "doing": words(house, pet, now), "icon": "walk" if walking and now["do"] in ("nap", "window") else now["icon"], "what": now.get("what"), "who": now.get("who"),
             "since": now["since"], "passive": now["passive"], "walking": now["began"] is None, "goal": now.get("goal")}

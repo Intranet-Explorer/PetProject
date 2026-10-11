@@ -80,7 +80,7 @@ def pet_view(p):
               "steps": [actions.words(s) for s in plan["steps"]], "acting": plan["left"] is not None and not plan.get("idle"),
               "idle": bool(plan.get("idle"))} if plan else None,
         body=body.doing(cfg, h, p) if cfg["body"]["on"] and not p["sleep"] and not world.busy(p) else None,   # SPEC-v3.3 §1, §5.4
-        focus=p.get("focus"), habits=body.habits(h, cfg, p), react=body.state(p).get("react"), orderly=p["temper"].get("orderly"),
+        focus=focus_view(p), sign=sign_view(p), habits=body.habits(h, cfg, p), react=body.state(p).get("react"), orderly=p["temper"].get("orderly"),
         step=step and step.get("type"), last_plan=p["last_plan"], calls_hour=len(p["calls"]), spring=p["spring"] > 0,
         portrait=p["portraits"][-1] if p["portraits"] else None, old=life.span(cfg, p) - life.days(h, cfg, p) <= 1,
         songs=[e["id"] for e in p.get("songs", []) if e["id"] in h.get("songs", {})],   # SPEC-v3.1
@@ -106,6 +106,25 @@ def mood(p):
 def emote(p):
     worst = max(p["needs"], key=lambda n: feel.level(p, n))
     return EMOTE[worst] if feel.level(p, worst) >= 3 else "content" if all(feel.level(p, n) <= 1 for n in p["needs"]) else None
+
+
+def focus_view(p):
+    """What its mind is about, with the plain words for it (SPEC-v3.3 §0: a stranger can say roughly why)."""
+    f = p.get("focus")
+    if not f:
+        return None
+    who, what = eng.house["pets"].get(f.get("who") or ""), f.get("what")
+    on = label(who) if who else "the " + what if what else {"be with": "someone", "tend": "something", "stay near": "something"}.get(f["type"], "")
+    return dict(f, says=actions.FOCUS_SAYS[f["type"]].format(on=on))
+
+
+def sign_view(p):
+    """The sign over its head while it carries out a step it decided (§5.4): what it is at, and the icon for it."""
+    if not world.busy(p):
+        return None
+    plan = p["plan"]
+    t = plan["steps"][min(plan["i"], len(plan["steps"]) - 1)].get("type")
+    return {"icon": "walk" if plan["left"] is None and t not in ("go",) else cfg["signs"].get(t), "word": mind.doing(eng.house, p), "step": t, "walking": plan["left"] is None}
 
 
 def room_view(r):

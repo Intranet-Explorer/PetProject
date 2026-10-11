@@ -313,6 +313,10 @@ def check(a, house, cfg, pet, mem):
 
 
 FOCUS = ("tidy", "be with", "explore", "make", "rest", "tend", "project", "play", "stay near")
+# each kind of focus in plain words, for whoever is watching ({on}: who or what it names, if anything)
+FOCUS_SAYS = {"tidy": "wants to tidy up", "be with": "wants to be with {on}", "explore": "wants to explore", "make": "wants to make something",
+              "rest": "wants to rest", "tend": "wants to look after {on}", "project": "is on its project", "play": "wants to play",
+              "stay near": "wants to stay near {on}"}
 
 
 def check_plan(turn, pet):

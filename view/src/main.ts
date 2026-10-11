@@ -283,7 +283,7 @@ function header(s: Snap) {
   // and is not named in it gets a short second line: who is here and what each is doing.
   const now = $("now"), line = now.firstElementChild as HTMLElement, text = nowLine(s);
   const unsaid = s.pets.filter((p) => p.room === view.room && p.needs && !text.toLowerCase().includes(p.label.toLowerCase()));
-  const here = unsaid.length ? `Here: ${unsaid.map((p) => `${p.label} is ${doingOf(p) || "here"}`).join("; ")}.` : "";
+  const here = unsaid.length ? `Here: ${unsaid.map((p) => `${p.label} is ${doingOf(p) || "here"}`).join("; ")}.` : s.pets.some((p) => p.room === view.room && p.stage !== "dead" && p.stage !== "egg") ? "" : "Here: nobody just now.";
   if (now.dataset.key !== text + here) {
     now.dataset.key = text + here;
     line.replaceChildren(text, ...(here ? [el("span", "here", here)] : []));

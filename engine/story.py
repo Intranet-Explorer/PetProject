@@ -278,7 +278,8 @@ def now(house, cfg):
     near = [p for p in living if p is not pet and p["room"] == pet["room"]]
     beside = next((p for p in near if dist(p["pos"], pet["pos"]) <= 2), None)
     doing = mind.doing(house, pet).split(" (")[0]
-    first = "%s, %s, is %s%s in %s." % (cap(name(pet)), a_stage(pet["stage"]), doing, " by " + name(beside, pet) if beside else "", room["name"])
+    by = " by " + name(beside, pet) if beside and label(beside) not in doing else ""   # ("sitting with Quiet" needs no "by Quiet")
+    first = "%s, %s, is %s%s in %s." % (cap(name(pet)), a_stage(pet["stage"]), doing, by, room["name"])
     others = [p for p in living if p is not pet and p is not beside]
     if others and len(first) < 90:
         o = others[0]

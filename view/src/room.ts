@@ -327,11 +327,12 @@ export class Room {
       const p = a.pet, egg = p.stage === "egg", dead = p.stage === "dead";
       const said = p.said && ago(snap, p.said.tick) <= (sc.replay ? 30 : 16) ? p.said : null;
       who.push({ id: p.id, name: egg ? p.name ?? "egg" : p.label, family: p.family ?? 1, selected: sc.selected === p.id, faded: dead,
-                 caption: egg || dead || p.asleep ? null : p.plan?.intention || p.focus?.words || null, thinking: !!p.thinking && !p.asleep && !egg && !dead,
+                 caption: egg || dead || p.asleep ? null : p.focus?.says || p.plan?.intention || p.focus?.words || null, thinking: !!p.thinking && !p.asleep && !egg && !dead,
                  say: said ? { key: `${said.tick}${said.text}`, text: said.text, to: said.to_name, song: !!said.song } : null,
                  mood: egg || dead || p.asleep || (grief && p.emote === "content") ? null : p.emote ?? null, tab: several,
                  // what its body is doing by itself (SPEC-v3.3 §5): a small sign over its head; none while it carries out a step it decided
-                 icon: egg || dead || p.asleep || !p.body?.icon ? null : { name: p.body.icon, key: `${p.body.activity}|${p.body.what}|${p.body.who}`, word: p.body.doing ?? "" } });
+                 icon: egg || dead || p.asleep ? null : p.body?.icon ? { name: p.body.icon, key: `${p.body.activity}|${p.body.what}|${p.body.who}|${p.body.walking}`, word: p.body.doing ?? "" }
+                   : p.sign?.icon ? { name: p.sign.icon, key: `${p.sign.step}|${p.sign.walking}|${p.plan?.i}`, word: p.sign.word } : null });
     }
     const heard = (snap.radio?.said ?? []).filter((h) => h.room === room.id && ago(snap, h.tick) <= 30).at(-1);
     this.words.sync(who, heard ? { key: `${heard.tick}${heard.text}`, text: heard.text, source: heard.source } : null, this.F, (W * this.K) / this.F);

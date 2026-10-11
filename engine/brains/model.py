@@ -72,7 +72,7 @@ each step is one of:
 # eating, tidying and the like happen between thoughts without being asked for.
 FORMAT = """
 Reply with one JSON object and nothing else:
-{"thought": "<short, why>", "focus": {"type": "<%s>", "target": "<who or what it is about, where that applies: someone or something here>", "words": "<what you want to be about for the next while, in a few of your own words>"}, "steps": [<0 to 3 things you decide to do now, carried out in order; leave it empty to simply carry on>], "expect": "<how you expect to feel before long, or what you expect to see>"}
+{"thought": "<short, why>", "focus": {"type": "<%s>", "target": "<who or what it is about, where that applies: someone or something here>", "words": "<what you want to be about for the next while, in a few plain words of your own>"}, "steps": [<0 to 3 things you decide to do now, carried out in order; leave it empty to simply carry on>], "expect": "<how you expect to feel before long, or what you expect to see>"}
 between thoughts you carry on by yourself with whatever your focus is: moving about, resting, eating, looking at things. A step is for something you decide. Each step is one of:
 %s
 """
@@ -160,9 +160,9 @@ def schema(ctx):
     if not c.get("body"):
         return obj(thought=text(340, 0), intention=text(120),
                    steps={"type": "array", "items": step, "minItems": 2, "maxItems": 5}, expect=text(230, 0))
-    plain = obj(type={"enum": ["tidy", "explore", "make", "rest", "project", "play"]}, words=text(120))
-    about = [obj(type={"const": "be with"}, target={"enum": c["pets"]}, words=text(120))] if c["pets"] else []
-    about += [obj(type={"enum": ["tend", "stay near"]}, target={"enum": c["things"]}, words=text(120))] if c["things"] else []
+    plain = obj(type={"enum": ["tidy", "explore", "make", "rest", "project", "play"]}, words=text(70))
+    about = [obj(type={"const": "be with"}, target={"enum": c["pets"]}, words=text(70))] if c["pets"] else []
+    about += [obj(type={"enum": ["tend", "stay near"]}, target={"enum": c["things"]}, words=text(70))] if c["things"] else []
     return obj(thought=text(340, 0), focus={"anyOf": [plain] + about},
                steps={"type": "array", "items": step, "minItems": 0, "maxItems": 3}, expect=text(230, 0))
 

@@ -72,7 +72,10 @@ export type PetV = {
   // SPEC-v3.3; absent in older recordings. `body`: what it is doing by itself (null while it carries out a step it
   // decided, and while asleep). `focus`: what its mind wants to be about. `habits`: up to three, in plain words.
   // `react`: it was last stopped in its tracks at this tick ("startle" at an event, "turn" when spoken to).
-  body?: Body | null; focus?: { type: string; words: string; who: string | null; what: string | null; since: number } | null;
+  body?: Body | null; focus?: { type: string; words: string; says?: string; who: string | null; what: string | null; since: number } | null;
+  // `focus.says`: the focus in plain words ("wants to be with Quiet"). `sign`: while it carries out a step it decided,
+  // the icon for it (sprite icon.act.<icon>) and what it is doing in words.
+  sign?: { icon: string | null; word: string; step: string; walking: boolean } | null;
   habits?: string[]; react?: { tick: number; kind: "startle" | "turn" } | null; orderly?: number;
 };
 /** `tame` is the pet it belongs to. (The engine also sends its trust in each pet; that is hidden and never shown.) */
