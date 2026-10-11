@@ -1,7 +1,9 @@
 // drawThing: a made thing drawn from its recipe (SPEC-v2 §9). One renderer, as SVG shapes, used both by the
 // room (PixiJS reads the SVG) and by the Things shelf (the browser does). Only recipe enums reach the markup.
 export type Part = { shape: string; size: number; color: string; at: string };
-export type Recipe = { name: string; material: string; purpose: string; parts: Part[] };
+/** SPEC-v3.2 §3: a made thing is a `kind` from the catalog (view/assets/kinds.json) in a material, a colour and a size
+ *  (1 small to 3 large). A recording made before v3.2 has `parts` and no kind: see kindOf. */
+export type Recipe = { name: string; material: string; purpose: string; kind?: string; color?: string; size?: number; parts?: Part[] };
 
 export const PALETTE: Record<string, string> = {
   red: "#d9483b", orange: "#f08a2e", yellow: "#f2c94c", green: "#3f9b63", teal: "#2f8f8a", blue: "#4a7fc1",
@@ -11,8 +13,8 @@ const OFFSET: Record<string, [number, number]> = { center: [0, 0], top: [0, -11]
 const n = (v: number) => v.toFixed(1);
 
 /** The parts as SVG elements, centred on (cx, cy), fitting a box of about 60. `recolor` paints every part one colour. */
-export function thingSvg(recipe: { parts: Part[] }, cx = 0, cy = 0, recolor?: string): string {
-  return recipe.parts.map((part) => {
+export function thingSvg(recipe: { parts?: Part[] }, cx = 0, cy = 0, recolor?: string): string {
+  return (recipe.parts ?? []).map((part) => {
     const p = recolor ? { ...part, color: recolor } : part;
     const r = 6 + Math.min(3, Math.max(1, p.size)) * 4.5, [dx, dy] = OFFSET[p.at] ?? [0, 0], [x, y] = [cx + dx, cy + dy];
     const fill = PALETTE[p.color] ?? PALETTE.grey, ink = `fill="${fill}" stroke="#16241f" stroke-width="1.5"`;
@@ -36,7 +38,7 @@ export function thingSvg(recipe: { parts: Part[] }, cx = 0, cy = 0, recolor?: st
 }
 
 /** A small standalone picture of a thing, for the shelf. */
-export function thingPicture(recipe: { parts: Part[] }): SVGSVGElement {
+export function thingPicture(recipe: { parts?: Part[] }): SVGSVGElement {
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   svg.setAttribute("viewBox", "-32 -32 64 64");
   svg.setAttribute("aria-hidden", "true");

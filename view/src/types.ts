@@ -13,7 +13,7 @@ export type Made = {
   called: string | null; tick: number; worn: string[];
 };
 export type Obj = {
-  pos: Tile; state?: string | null; made?: Made; memorial?: { pet: string; text: string };
+  pos: Tile; state?: string | null; made?: Made; memorial?: { pet: string; text: string }; wall?: boolean;   // wall: it hangs on the north wall above `pos`
   fix?: Record<string, unknown>; water?: Tile[]; grow?: number; servings?: number;
 };
 /** An inscription (SPEC-v3.1 §2): `on` is a wall or the name of a thing, `at` how far along the wall, `clarity` 1 new to 0 gone. */
@@ -40,11 +40,19 @@ export type PetV = {
   project?: { text: string; since: number } | null; plan?: Plan | null; step?: string | null;
   last_plan?: { intention: string; ended: string; score: string } | null; calls_hour?: number; spring?: boolean;
   portrait?: { day: number; parts: Part[] } | null; old?: boolean;
+  // SPEC-v3.2; absent in older recordings. `mood`: at most two plain words, worst first. `emote`: one strong feeling,
+  // or null. `act`: the step it is on now (walking to it, or doing it once plan.acting is true).
+  stage_word?: string; mood?: string[]; emote?: "tired" | "uneasy" | "lonely" | "bored" | "content" | null;
+  act?: { type: string; what?: string | null; to?: string | null; since: number } | null;
   // SPEC-v3.1; a recording made before it has none of these
   family?: number; songs?: string[]; animals?: { id: string; kind: string; name: string | null; room: string }[];
   read?: { tick: number; question: string; title: string; text: string }[];
 };
 /** `tame` is the pet it belongs to. (The engine also sends its trust in each pet; that is hidden and never shown.) */
+/** A step a pet has just finished (SPEC-v3.2 §5.2). `what` is the thing, bit or song it was about, `to` whom or
+ *  where; `kind`/`color` describe a thing that was made, unmade or combined; `ok` false means it turned out not possible. */
+export type Act = { n: number; tick: number; pet: string; type: string; what?: string | null; to?: string | null; room: string; ok: boolean;
+  kind?: string | null; color?: string | null; from?: string[] | null };
 export type Creature = { id: string; kind: string; room: string; pos: Tile; doing: string; carry: string | null; tame?: string | null; name?: string | null };
 export type Moment = { n: number; tick: number; day: number; hour: number; kind: string; text: string; pet: string | null; room: string | null };
 export type HouseEvent = { tick: number; day: number; kind: string; room: string | null; detail: string };
@@ -59,6 +67,9 @@ export type Snap = {
   turbo: boolean; profile: string | null; start: string; door_tiles: Record<string, Tile>; lineage: Lineage;
   rooms: RoomV[]; pets: PetV[]; creatures: Creature[]; moments: Moment[]; events: HouseEvent[]; chronicle: Chronicle[];
   visitor: string | null; population: number; sayings: { text: string; gens: number; truth: string | null }[];
+  // SPEC-v3.2: the one plain sentence about the house right now, and the steps finished in the last few world seconds
+  // (each with a running number `n`, so an animation plays once)
+  now?: string; acts?: Act[];
   // SPEC-v3.1
   arrived?: Record<string, number>; pace?: number; songs?: Record<string, Song>; sung?: Sung[]; read_glow?: boolean;
   radio?: { here: boolean; on: boolean; said: Heard[] };
