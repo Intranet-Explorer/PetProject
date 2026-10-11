@@ -58,22 +58,28 @@ function tree(c: Ctx, pets: PetV[], crossings: Crossing[], sayings: number, redr
     span.set(of(r), [span.get(of(r))?.[0] ?? from, next]);
   }
   const gens = [...new Set(pets.map((p) => p.gen))].sort((a, b) => a - b);
-  const at = (p: PetV) => [X.get(p.id)! * CW, TOP + gens.indexOf(p.gen) * CH];
-  const [W, H] = [next * CW, TOP + gens.length * CH];
+  const at = (p: PetV) => [X.get(p.id)! * CW, gens.indexOf(p.gen) * CH];
+  const [W, H] = [next * CW, gens.length * CH];
   const lines = svg("svg", { class: "lines", width: W, height: H }), over = svg("svg", { class: "lines over", width: W, height: H });
   const box = el("div", "tree", lines);
   box.style.width = `${W}px`;
   box.style.height = `${H}px`;
-  // drawn smaller to fit the drawer's width, but never so small that a name cannot be read; past that it scrolls in its
-  // own box, which is a whole number of generations high, so no row of faces is ever cut through
-  const panel = document.querySelector<HTMLElement>('[data-panel="family"]'), room = (panel?.clientWidth ?? 440) - 40;
-  const zoom = Math.max(0.8, Math.min(1, room / W)), rows = Math.max(2, Math.floor(((panel?.clientHeight ?? innerHeight) - 120 - TOP) / (CH * zoom)));
+  // The tree has all the height the drawer can give it. It is drawn smaller (never so small that a name cannot be read)
+  // when that lets every generation, or one more, be seen whole; past that it scrolls inside its own box, which is a
+  // whole number of generations high and stops only on whole rows, so no row of faces is ever cut through. The families'
+  // names stand above the box and stay put.
+  const panel = document.querySelector<HTMLElement>('[data-panel="family"]'), room = (panel?.clientWidth || 440) - 36, tall = (panel?.clientHeight || innerHeight - 60) - 130;
+  let rows = gens.length, zoom = Math.min(1, room / W);
+  while (rows > 1 && tall / (TOP + rows * CH) < 0.8) rows--;
+  zoom = Math.max(0.8, Math.min(zoom, tall / (TOP + rows * CH)));
   box.style.zoom = String(zoom);
+  const head = el("div", "tree");
+  head.style.cssText = `width:${W}px;height:${TOP}px;zoom:${zoom}`;
   if (two) for (const [n, [a, b]] of span) {
     const name = el("span", `treename ${fam(n)}`, NAMES[n] ?? `Family ${n}`);
     name.style.left = `${a * CW}px`;
     name.style.width = `${(b - a) * CW}px`;
-    box.append(name);
+    head.append(name);
   }
   for (const p of pets) {
     const [x, y] = at(p), parent = pets.find((q) => q.id === p.parent);
@@ -82,9 +88,10 @@ function tree(c: Ctx, pets: PetV[], crossings: Crossing[], sayings: number, redr
       lines.append(svg("path", { d: `M${px + CW / 2} ${py + CH - 12}V${mid}H${x + CW / 2}V${y + 2}` }));
     }
     const dead = p.stage === "dead", egg = p.stage === "egg";
-    const life = dead ? `lived ${plural(Math.round(p.days ?? 0), "day")}` : egg ? "not hatched" : `day ${Math.floor(p.days ?? 0) + 1}`;
+    const life = dead ? `lived ${plural(Math.round(p.days ?? 0), "day")}` : egg ? "not hatched" : (p.days ?? 0) < 1 ? "born today" : `${plural(Math.floor(p.days ?? 0), "day")} old`;
     const node = el("button", `node ${fam(of(p))} ${dead ? "dead" : "alive"}${chosen === p.id ? " chosen" : ""}`, face(p, 48),
-      el("b", "", egg ? p.name ?? "an egg" : p.label), dead || egg ? null : el("span", "", stageWord(p)), el("span", "", `${life}${p.eggs ? ` · ${plural(p.eggs, "egg")}` : ""}`)) as HTMLButtonElement;
+      el("b", "", egg ? p.name ?? "an egg" : p.label),
+      dead || egg ? (p.eggs ? el("span", "", plural(p.eggs, "egg")) : null) : el("span", "", `${stageWord(p)}${p.eggs ? ` · ${plural(p.eggs, "egg")}` : ""}`), el("span", "", life)) as HTMLButtonElement;
     node.style.left = `${x}px`;
     node.style.top = `${y}px`;
     node.title = `${p.label}, generation ${p.gen}${two ? `, of the ${(NAMES[of(p)] ?? "other family").toLowerCase()}` : ""}`;
@@ -105,16 +112,17 @@ function tree(c: Ctx, pets: PetV[], crossings: Crossing[], sayings: number, redr
     over.append(svg("g", { class: "crossmark" }, svg("circle", { cx: gap, cy: my, r: 9 }), svg("text", { x: gap, y: my + 4, "text-anchor": "middle" }, "♪"),
       svg("title", {}, crossings.filter((y) => y.from === x.from && y.to === x.to).map((y) => y.what).join("; "))));
   }
-  if (two && sayings && span.size > 1) {   // sayings cross too, but the house does not say between whom: a mark between the trees
-    const mark = el("span", "treecross", `⇄ ${sayings}`);
+  if (two && sayings && span.size > 1) {   // sayings cross too, but the house does not say between whom: a mark between the trees' names
+    const mark = el("span", "treecross", `⇄ ${plural(sayings, "saying")} crossed`);
     mark.style.left = `${gap}px`;
-    mark.title = `${plural(sayings, "saying")} said in both families; they are listed under the trees`;
-    box.append(mark);
+    mark.title = `${plural(sayings, "saying")} crossed between the families: said first in one, now said in both. They are listed under the tree.`;
+    head.append(mark);
   }
   box.append(over);
-  const frame = scroller("tree", "treebox", box), more = gens.length - rows;
-  if (more > 0) frame.style.maxHeight = `${Math.round((TOP + rows * CH) * zoom) + 14}px`;
-  return el("div", "", more > 0 ? el("p", "hint", `The tree shows the last ${rows} of ${gens.length} generations. Scroll up inside it for the ${more === 1 ? "first one" : `${more} before them`}.`) : null, frame);
+  const frame = scroller("tree", "treebox", box), more = gens.length - rows, names = el("div", "treehead", head);
+  frame.style.maxHeight = `${rows * CH * zoom}px`;
+  frame.onscroll = () => (names.scrollLeft = frame.scrollLeft);   // the names keep over their own trees when the box is moved sideways
+  return el("div", "treewrap", more > 0 ? el("p", "hint", `The tree shows ${rows} of ${gens.length} generations at a time, the latest first. Scroll up inside it for the ${more === 1 ? "one" : more} before.`) : null, two ? names : null, frame);
 }
 
 const bodyOf = (g: Genome, stage: string, caption: string) => el("figure", "", face({ genome: g, stage }, 48), el("figcaption", "hint", caption));

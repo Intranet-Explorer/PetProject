@@ -160,9 +160,19 @@ export function emoteOf(p: PetV): string | null {
   const worst = [...NEEDS].sort((a, b) => p.levels![b] - p.levels![a])[0];
   return p.levels[worst] >= 3 ? EMOTE[worst] : NEEDS.every((n) => p.levels![n] <= 1) ? "content" : null;
 }
-/** What a pet is doing or means to do, in a few plain words: its thought, for its card and its hover card. */
-export function thoughtOf(p: PetV): string {
-  if (p.stage === "egg") return "";
-  if (p.stage === "dead") return "has died";
-  return p.asleep ? "asleep" : p.plan?.intention || p.doing || (p.thinking ? "thinking what to do" : "");
+/** What a pet is doing this moment, as plain words: "asleep", "resting", "walking", "using the lamp". Never its plan. */
+export function doingOf(p: PetV): string {
+  if (p.stage === "egg" || p.stage === "dead") return "";
+  if (p.asleep) return "asleep";
+  const d = p.doing ?? "", about = / \((the .+)\)$/.exec(d);   // the engine says "using something (the lamp)"
+  return about ? (d.includes("something") ? d.replace(about[0], "").replace("something", about[1]) : d.replace(about[0], ` ${about[1]}`)) : d || (p.thinking ? "thinking what to do" : "");
 }
+/** What a pet means to do: the intention it is on, which is a wish, not what it is doing. None while it sleeps. */
+export const wishOf = (p: PetV): string => (p.stage === "egg" || p.stage === "dead" || p.asleep ? "" : p.plan?.intention ?? "");
+/** One clearly good feeling (a need at its best), to say beside whatever is wrong; "" if there is none or it is already said. */
+export function goodWord(p: PetV): string {
+  const said = moodWords(p);
+  return (p.levels && p.felt ? NEEDS.filter((n) => p.levels![n] === 0).map((n) => p.felt![n]) : []).find((w) => !said.includes(w)) ?? "";
+}
+/** How long until an egg hatches, for whoever is watching: the minutes are the watcher's own, not the house's. */
+export const hatchWords = (sec: number) => (sec < 90 ? "about to hatch" : `hatches in about ${Math.round(sec / 60)} of your minutes`);

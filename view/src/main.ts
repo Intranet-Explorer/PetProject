@@ -1,7 +1,7 @@
 // Wiring (SPEC-v3 §10, SPEC-v3.2 §7): one websocket to the engine (or a recorded run played back), snapshots in, the
 // visitor's actions out. Lays the page out round the room, decides which room is on screen, and keeps that choice
 // across a reload.
-import { $, el, emoteOf, face, moodWords, ownLabel, stageWord, thoughtOf, when } from "./dom";
+import { $, doingOf, el, emoteOf, face, goodWord, hatchWords, moodWords, ownLabel, stageWord, when, wishOf } from "./dom";
 import type { Ctx, Kid } from "./dom";
 import { showRecord } from "./family";
 import { icon } from "./icons";
@@ -58,7 +58,7 @@ function hear(notes: Note[], by: string) {
 
 // ---- the page round the room (SPEC-v3.2 §7) ----
 
-const [SIDE_MIN, SIDE_MAX, GAP, CARD_ROW] = [150, 420, 6, 96];
+const [SIDE_MIN, SIDE_MAX, GAP, CARD_ROW] = [150, 420, 5, 96];
 const BASIS = (p: PetV) => (p.stage === "egg" ? 150 : 220);   // style.css: the least width a card is given before the strip takes another row
 let sideWidth = 0;
 let tall = 0, tallAt = 0;   // how tall the cards have really been lately, when that is more than a row of them is allowed for
@@ -184,7 +184,8 @@ function render() {
 
   voice.update(s, view.room, view.sel);
   header(s);
-  room.update({ snap: s, room: here, hello, selected: view.sel, picked, replay: !!replayId });
+  try { room.update({ snap: s, room: here, hello, selected: view.sel, picked, replay: !!replayId }); }
+  catch (e) { console.error(e); }   // whatever goes wrong in the room, the page round it still says what is happening
   drawMap($("map"), s, view.room, view.sel, (id) => jump({ room: id }), mapWidth());
   side(s, here);
   cards(s);
@@ -195,18 +196,26 @@ function render() {
   // Nor after a jump in time (a replay scrubbed, a tab left asleep): a banner is only ever for a moment that belongs
   // to what is on screen, so whatever was up is taken down and nothing old is announced.
   const newest = s.moments.at(-1), jumped = shownTick >= 0 && (s.tick < shownTick || (s.tick - shownTick) * s.tick_seconds > 120);
+  const BIG = (m: Moment) => m.kind === "death" || m.kind === "ended" || m.kind === "hatched" || m.kind === "storm" || m.kind.startsWith("arrival");
+  // which of several to announce: a death before anything; then a birth, an arrival or a storm before a project or a
+  // thing made; then what is about the room on screen, or about the whole house, before another room's news; then the newest
+  const rank = (m: Moment) => (m.kind === "death" || m.kind === "ended" ? 100 : 0) + (BIG(m) ? 20 : 0) + (m.room === view.room || !m.room ? 10 : 0) + m.n / 1e9;
+  const say = (m: Moment) => flash(m.kind === "project" ? m.text.split(":")[0] : m.text, false, () => jump(m), m.kind);   // a project's own words are long, and are in the list beside the room
   if (jumped) { $("banner").hidden = true; bannerN = newest?.n ?? 0; }
   else if (newest && newest.n !== bannerN) {
-    // a discovery (SPEC-v3.1 §1) is never passed over for whatever came just after it
-    const fresh = bannerN >= 0 ? s.moments.filter((m) => m.n > bannerN && m.tick > shownTick) : [], m = fresh.find((m) => m.kind.startsWith("arrival")) ?? fresh.at(-1);
-    // a project's own words are long and are in the list beside the room; the banner says whose it is
-    if (m) flash(m.kind === "project" ? m.text.split(":")[0] : m.text, false, () => jump(m), m.kind);
+    const fresh = bannerN >= 0 ? s.moments.filter((m) => m.n > bannerN) : [];
+    // a death is never old news: one from the last few minutes of the watcher's time is announced even on first load
+    const died = bannerN < 0 && !replayId ? [...s.moments].reverse().find((m) => m.kind === "death" && ago(s, m.tick) < 600) : undefined;
+    const m = [...fresh].sort((a, b) => rank(b) - rank(a))[0] ?? died;
+    // a lesser moment does not push a death, a birth or an arrival off the screen while it is still up
+    if (m && !(bannerBig && !$("banner").hidden && !BIG(m))) { say(m); bannerBig = BIG(m); }
     bannerN = newest.n;
   } else if (!newest) bannerN = 0;
   shownTick = s.tick;
 }
 let sent = "";
 let bannerN = -1;
+let bannerBig = false;   // the banner that is up is for a death, a birth, an arrival or a storm
 let shownTick = -1;   // the tick of the snapshot last drawn
 let bannerTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -225,9 +234,9 @@ function roomBoxes() {
 }
 
 function flash(text: string, error = false, go: (() => void) | null = null, kind = "") {
-  const b = $("banner"), arrival = kind.startsWith("arrival");   // a discovery has its own picture and stays up longer
-  b.replaceChildren(...(arrival ? [icon(kind, 18)] : []), text);
-  b.className = error ? "error" : arrival ? "arrival" : "";
+  const b = $("banner"), arrival = kind.startsWith("arrival"), death = kind === "death" || kind === "ended";   // a discovery has its own picture and stays up longer; a death longer still
+  b.replaceChildren(...(arrival || death ? [icon(kind, 18)] : []), text);
+  b.className = error ? "error" : arrival ? "arrival" : death ? "death" : "";
   b.hidden = false;
   b.onclick = () => { b.hidden = true; go?.(); };
   // inside the room's walls, wrapped if it is long; along the foot of the room, or along the top when someone is standing at the foot
@@ -238,7 +247,7 @@ function flash(text: string, error = false, go: (() => void) | null = null, kind
   b.style.left = `${x}px`;
   b.style.top = `${over(head) < over(foot) ? head : foot}px`;
   clearTimeout(bannerTimer);
-  bannerTimer = setTimeout(() => (b.hidden = true), arrival ? 10_000 : error ? 5000 : 4500);
+  bannerTimer = setTimeout(() => (b.hidden = true), death ? 20_000 : arrival ? 10_000 : error ? 5000 : 4500);
 }
 
 /** The one plain sentence about the house (SPEC-v3.2 §5.4). The engine writes it; a recording made before it did
@@ -270,11 +279,17 @@ function header(s: Snap) {
     ...(s.turbo && !replayId ? [chip("chip", "turbo time")] : []),
   );
   // the sentence sits in the header, in a box two lines high that is always there, so it never moves the room; an unusually long one is set smaller
+  // The engine's sentence is about whoever acted last, which may be in another room. Whoever is in the room on screen
+  // and is not named in it gets a short second line: who is here and what each is doing.
   const now = $("now"), line = now.firstElementChild as HTMLElement, text = nowLine(s);
-  if (line.textContent !== text) {
-    line.textContent = text;
+  const unsaid = s.pets.filter((p) => p.room === view.room && p.needs && !text.toLowerCase().includes(p.label.toLowerCase()));
+  const here = unsaid.length ? `Here: ${unsaid.map((p) => `${p.label} is ${doingOf(p) || "here"}`).join("; ")}.` : "";
+  if (now.dataset.key !== text + here) {
+    now.dataset.key = text + here;
+    line.replaceChildren(text, ...(here ? [el("span", "here", here)] : []));
     now.classList.remove("long");
-    now.classList.toggle("long", line.offsetHeight > 2.5 * parseFloat(getComputedStyle(line).lineHeight));
+    now.classList.toggle("long", line.offsetHeight > now.clientHeight);   // more than the box holds: set smaller
+    if (line.offsetHeight > now.clientHeight) line.querySelector(".here")?.remove();   // still more: the engine's sentence alone
   }
   const pick = $<HTMLSelectElement>("follow"), options = s.pets.filter((p) => p.stage !== "dead");
   const key = options.map((p) => p.id + p.label + p.stage).join();
@@ -319,10 +334,6 @@ function beast(c: Creature) {
   return c.name ? `${c.name}${owner ? `, ${owner}'s ${c.kind},` : ` the ${c.kind}`}` : `a ${c.kind}${owner ? `, tame to ${owner},` : ""}`;
 }
 
-function clockLeft(sec: number) {
-  return sec < 60 ? "under a minute" : `about ${Math.round(sec / 60)} min`;
-}
-
 /** A card for every living pet and every egg (SPEC-v3.2 §7): its picture, name, stage in a plain word, a small
  *  picture of how it feels when that is strong, at most two feelings in words, and what it is thinking of doing.
  *  Every line wraps; nothing is cut. Rebuilt only when what they show changes. */
@@ -332,12 +343,12 @@ function cards(s: Snap) {
   // the visitor's naming: what was offered, and whether the pet has taken it (said for a quarter of a day after it does)
   const naming = (p: PetV) => !p.naming ? null : !p.naming.took ? `you called it ${p.naming.offered}; waiting to hear`
     : p.naming.at != null && (s.tick - p.naming.at) * s.tick_seconds < s.day_seconds / 4 ? `it took the name ${p.naming.offered}` : null;
-  const key = JSON.stringify(who.map((p) => [naming(p), p.id, p.label, p.stage, p.room, p.stage === "egg" ? clockLeft(p.hatches_in ?? 0) : [moodWords(p), emoteOf(p), thoughtOf(p)], p.genome, p.id === view.sel, p.family, p.animals]));
+  const key = JSON.stringify(who.map((p) => [naming(p), p.id, p.label, p.stage, p.room, p.stage === "egg" ? hatchWords(p.hatches_in ?? 0) : [moodWords(p), goodWord(p), emoteOf(p), doingOf(p), wishOf(p)], p.genome, p.id === view.sel, p.family, p.animals]));
   const box = $("cards");
   if (box.dataset.key === key) return;
   box.dataset.key = key;
   box.replaceChildren(...(who.length ? who.map((p) => {
-    const egg = p.stage === "egg", emote = egg ? null : emoteOf(p), thought = thoughtOf(p), type = s.rooms.find((r) => r.id === p.room)?.type;
+    const egg = p.stage === "egg", emote = egg ? null : emoteOf(p), doing = doingOf(p), wish = wishOf(p), good = goodWord(p), type = s.rooms.find((r) => r.id === p.room)?.type;
     const animals = (p.animals ?? []).map((a) => a.name ?? `a ${a.kind}`).join(", ");   // SPEC-v3.1 §4.4
     const feels = emote ? sprite(`emote.${emote}`, 2) : null, place = type ? sprite(`icon.room.${type}`, 1) : null;
     if (feels) feels.title = `feeling ${emote}`;
@@ -347,9 +358,12 @@ function cards(s: Snap) {
     mind.onclick = (e) => { e.stopPropagation(); openTab("mind", p.id); };
     const li = el("li", `card ${fam(p.family)}${p.id === view.sel ? " chosen" : ""}${egg ? " egg" : ""}`, el("span", "pic", face(p, 48), el("span", "", feels ? el("span", "plate", feels) : null, place)),
       el("span", "txt", el("span", "name", el("b", "", egg ? p.name ?? "An egg" : p.label), ` ${stageWord(p)} `, mind),
-        egg ? el("span", "mood", `hatches in ${clockLeft(p.hatches_in ?? 0).replace("about ", "")}`) : el("span", "mood", moodWords(p).join(", ")),
+        // how it feels: what is wrong, worst first, and after that one thing that is clearly good, in another tone
+        egg ? el("span", "mood", hatchWords(p.hatches_in ?? 0)) : el("span", "mood", moodWords(p).join(", "), good ? el("i", "good", ` · ${good}`) : null),
         naming(p) ? el("span", "naming", naming(p)!) : null,
-        thought ? el("span", p.plan && !p.asleep ? "thought" : "doing", thought) : null,
+        // what it is doing now, then what it wants: the second is a wish and is marked as one, never shown as the deed
+        doing ? el("span", "doing", el("i", "", "now "), doing) : null,
+        wish ? el("span", "wish", el("i", "", "wants "), el("q", "", wish)) : null,
         animals ? el("span", "", icon("paw", 12), ` ${animals}`) : null));
     // the whole card is the button that follows this pet; "mind" inside it is a button of its own
     li.tabIndex = 0;
@@ -445,7 +459,7 @@ function fixture(name: string, o: Obj, here: RoomV, s: Snap, shown: HTMLCanvasEl
 
 /** The room's own picture of what is under the pointer, exactly as it is drawn there (its colour, its wear), three
  *  screen pixels to one. The room offers it through `describe`; without that, the card looks the picture up itself. */
-const told = (t: Target) => (room as unknown as { describe?: (t: Target) => { title: string; sprite?: HTMLCanvasElement | null; text?: string } | null }).describe?.(t) ?? null;
+const told = (t: Target) => (room as unknown as { describe?: (t: Target) => { title: string; sprite?: HTMLCanvasElement | null; text?: string; rect?: Box | null } | null }).describe?.(t) ?? null;
 function drawn(t: Target): HTMLCanvasElement | null {
   const src = told(t)?.sprite;
   if (!src?.width) return null;
@@ -461,12 +475,13 @@ function tipFor(t: Target): Kid[] | null {
   if (!s || !here) return null;
   const p = pet(t.pet), c = s.creatures.find((c) => c.id === t.creature), o = t.object ? here.objects[t.object] : null;
   if (p) {
-    const egg = p.stage === "egg", gone = p.stage === "dead", thought = thoughtOf(p), mood = egg || gone ? "" : moodWords(p).join(", ");
+    const egg = p.stage === "egg", gone = p.stage === "dead", doing = doingOf(p), wish = wishOf(p), good = goodWord(p), mood = egg || gone ? "" : moodWords(p).join(", ");
     return [face(p, 64), el("div", "",
       el("p", "", el("b", "", egg ? p.name ?? "an egg" : p.label), el("span", "hint", ` · ${stageWord(p)}`)),
-      egg ? el("p", "", `It will hatch in ${clockLeft(p.hatches_in ?? 0)}.`) : gone ? el("p", "", `${cap(p.label)} has died.`) : null,
-      mood ? el("p", "", `Feeling ${mood}.`) : null,
-      thought && !egg && !gone ? el("p", p.plan && !p.asleep ? "thought" : "", p.plan && !p.asleep ? thought : `${cap(thought)}.`) : null,
+      egg ? el("p", "", `${cap(hatchWords(p.hatches_in ?? 0))}.`) : gone ? el("p", "", `${cap(p.label)} has died.`) : null,
+      mood ? el("p", "", `Feeling ${mood}${good ? `; and ${good}` : ""}.`) : null,
+      doing ? el("p", "", `Now: ${doing}.`) : null,
+      wish ? el("p", "", "Wants: ", el("q", "", wish)) : null,
       p.carrying?.length ? el("p", "hint", `Carrying ${p.carrying.join(", ")}.`) : null,
       pet(p.following) ? el("p", "hint", `Following ${pet(p.following)!.label}.`) : null)];
   }
@@ -512,8 +527,11 @@ function card(t: Target | null, fx: number, fy: number, forMs = 0) {
   if (!kids) return;
   const key = JSON.stringify([t, snap?.tick]), nib = el("i", "nib");
   if (tip.dataset.key !== key) { tip.dataset.key = key; tip.replaceChildren(...kids.filter((k): k is Node => k instanceof Node), nib); }
-  const stage = $("stage"), { tile, busy, inner } = roomBoxes(), [px, py] = [fx * stage.clientWidth, fy * stage.clientHeight];
-  const target = { x: px - tile * 0.8, y: py - tile * 0.9, w: tile * 1.6, h: tile * 1.7 }, [w, h] = [tip.offsetWidth, tip.offsetHeight], gap = 12;
+  // beside the thing itself where the room says where it is drawn; otherwise beside the pointer
+  const stage = $("stage"), { tile, busy, inner } = roomBoxes(), drawnAt = t ? told(t)?.rect : null;
+  const at = drawnAt && drawnAt.w <= 5 * tile && drawnAt.h <= 4 * tile ? drawnAt : null;   // a wall, a floor or a big rug is everywhere: the pointer says which part is meant
+  const [px, py] = at ? [at.x + at.w / 2, at.y + at.h / 2] : [fx * stage.clientWidth, fy * stage.clientHeight];
+  const target = at ? { x: at.x - 2, y: at.y - 2, w: at.w + 4, h: at.h + 4 } : { x: px - tile * 0.8, y: py - tile * 0.9, w: tile * 1.6, h: tile * 1.7 }, [w, h] = [tip.offsetWidth, tip.offsetHeight], gap = 12;
   const within = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(Math.max(lo, hi), v));
   const spots = ([["right", target.x + target.w + gap, py - h / 2], ["left", target.x - gap - w, py - h / 2], ["below", px - w / 2, target.y + target.h + gap], ["above", px - w / 2, target.y - gap - h]] as [string, number, number][])
     .map(([side, x, y]) => ({ side, x: within(x, inner.x, inner.x + inner.w - w), y: within(y, inner.y, inner.y + inner.h - h) }))
@@ -528,6 +546,13 @@ function card(t: Target | null, fx: number, fy: number, forMs = 0) {
 }
 room.onHover = (t, fx, fy) => card(t, fx, fy);
 
+// "Names": the room's own short labels of what every thing in it is, held on while this is pressed (the room shows
+// them by itself for a few seconds when it comes into view). Off by default, and not remembered.
+$("namesBtn").onclick = () => {
+  const on = $("namesBtn").getAttribute("aria-pressed") !== "true";
+  $("namesBtn").setAttribute("aria-pressed", String(on));
+  (room as unknown as { names?: (on: boolean) => void }).names?.(on);
+};
 $("feed").onclick = () => act({ type: "feed" });
 $("window").onclick = () => act({ type: "window" });
 $("giveBtn").onclick = () => act({ type: "give", bit: $<HTMLSelectElement>("giveBit").value });
