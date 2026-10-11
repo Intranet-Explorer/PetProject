@@ -395,6 +395,7 @@ def fed(house, cfg, cr, pet, bit):
     cr["fed"][pet["id"]] = cr["fed"].get(pet["id"], 0) + (1 if liked else 0)
     if liked and arrived(house, "taming"):
         trusts(cr, pet, cfg["taming"]["fed"])
+        tameness(house, cfg, cr)
     pet["trust"][cr["kind"]] = pet["trust"].get(cr["kind"], 0) + (1 if liked else 0)
     pet["met"][cr["kind"]] = pet["met"].get(cr["kind"], 0) + 1
     cr["until"] = max(cr["until"], house["tick"] + hours(cfg, 24))   # a fed creature stays about
@@ -418,6 +419,9 @@ def chased(house, cfg, cr, pet):
         trusts(cr, pet, cfg["taming"]["chased"])
         tameness(house, cfg, cr)
     house.setdefault("fresh_creatures", []).append({"tick": house["tick"], "kind": cr["kind"], "room": cr["room"], "pet": pet["id"], "what": "chased"})
+    if cr.get("tame"):   # one's own animal does not leave the house for it; it only thinks the worse of whoever ran at it
+        cr["pos"] = [cfg["W"] - 1 if pet["pos"][0] < cfg["W"] // 2 else 0, cfg["H"] - 1 if pet["pos"][1] < cfg["H"] // 2 else 0]
+        return "you ran at %s; it shot away to the far corner and watches you from there" % called(cr, True)
     room = house["rooms"][cr["room"]]
     ways = [rid for rid in room["doors"].values() if house["rooms"][rid]["type"]]
     if cr["kind"] in ("moth", "bird") or not ways:

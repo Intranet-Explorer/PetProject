@@ -17,7 +17,7 @@ import uvicorn
 from fastapi import FastAPI, HTTPException, Response, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
 
-from . import actions, feel, life, metrics, mind, physics, story, things
+from . import actions, director, feel, life, metrics, mind, physics, radio, songs, story, things, walls
 from .tick import Engine, model_brains, stub_brains
 from .world import ROOT, alive, label, load_config, power_on, relation
 
@@ -52,7 +52,7 @@ def pet_view(p):
     h = eng.house
     out = {k: p.get(k) for k in ("id", "name", "stage", "room", "pos", "gen", "parent", "children", "word", "genome", "temper", "eggs",
                                  "laid", "born", "died", "cause", "lineage", "stage_before")}
-    out.update(label=label(p), buried=bool(p.get("buried")), made=p.get("made", 0), useful=len(p.get("useful", [])))
+    out.update(label=label(p), buried=bool(p.get("buried")), made=p.get("made", 0), useful=len(p.get("useful", [])), family=p.get("family", 1))
     if p["stage"] == "dead":
         out["days"] = (p.get("life") or {}).get("days")
         # view only: how far it has faded towards its stone, 0 to 1
@@ -76,6 +76,9 @@ def pet_view(p):
               "steps": [actions.words(s) for s in plan["steps"]], "acting": plan["left"] is not None} if plan else None,
         step=step and step.get("type"), last_plan=p["last_plan"], calls_hour=len(p["calls"]), spring=p["spring"] > 0,
         portrait=p["portraits"][-1] if p["portraits"] else None, old=life.span(cfg, p) - life.days(h, cfg, p) <= 1,
+        songs=[e["id"] for e in p.get("songs", []) if e["id"] in h.get("songs", {})],   # SPEC-v3.1
+        animals=[{"id": c["id"], "kind": c["kind"], "name": c.get("name"), "room": c["room"]} for c in h["creatures"] if c.get("tame") == p["id"]],
+        read=p.get("read", [])[:3],
     )
     return out
 
@@ -108,13 +111,27 @@ def room_view(r):
     return {"id": r["id"], "cell": r["cell"], "type": r["type"], "name": r["name"], "doors": r["doors"], "paint": r["paint"],
             "shut": [k.split("|")[1] for k, t in h["shut"].items() if k.startswith(r["id"] + "|") and t > h["tick"]],
             "wet": r["wet_until"] > h["tick"], "cold": r["cold_until"] > h["tick"], "lit": things.light_on(h, cfg, r),
+            "marks": [dict(m, clarity=round(walls.clarity(cfg, r, m, h["tick"]), 2), by_name=mark_by(m)) for m in r.get("marks", [])],
             "sounding": r.get("sounding_until", 0) > h["tick"], "objects": objs, "found": r["found"], "by": r["by"],
             "spots": [{"bit": s["bit"], "pos": s["pos"]} for s in r["spots"] if s["ready"]]}
 
 
+def mark_by(m):
+    p = eng.house["pets"].get(m["by"])
+    return "the visitor" if m["by"] == "visitor" else label(p) if p else "someone long gone"
+
+
 def snapshot():
     h = eng.house
+    recent = lambda rows, secs: [x for x in rows if (h["tick"] - x["tick"]) * cfg["clock"]["tick_seconds"] <= secs]
     return {
+        # SPEC-v3.1: songs lately sung (the view plays them), every version the living know, what the box just said, and
+        # which discoveries have come
+        "sung": recent(h.get("sung", []), 30), "songs": {e: h["songs"][e] for p in h["pets"].values() for e in [x["id"] for x in p.get("songs", [])] if e in h.get("songs", {})}
+        | {s["song"]: h["songs"][s["song"]] for s in recent(h.get("sung", []), 30)},
+        "radio": {"on": radio.is_on(h), "here": bool(radio.boxes(h)), "said": recent(h.get("radio", {}).get("said", []), 45)},
+        "arrived": h.get("v31", {}).get("arrived", {}), "read_glow": (h["tick"] - h.get("read_glow", -10**9)) * cfg["clock"]["tick_seconds"] <= 20,
+        "pace": cfg["pace"],
         "tick": h["tick"], "clock": h["clock"], "weather": h["weather"], "power": power_on(h), "size": [cfg["W"], cfg["H"]],
         "tick_seconds": cfg["clock"]["tick_seconds"], "day_seconds": cfg["clock"]["day_seconds"], "turbo": cfg["clock"]["turbo"],
         "profile": cfg["profile"], "start": h["start"], "door_tiles": h["door_tiles"], "lineage": h["lineage"],
@@ -205,12 +222,25 @@ async def sky():
         await asyncio.sleep(3600)
 
 
+async def wireless():
+    """SPEC-v3.1 §5.2: the engine (never a pet) asks the radio's few fixed sources what is new, each at most once an hour,
+    and only once there is a box in the house. Any failure leaves the box with what it had; with nothing, it plays static."""
+    while True:
+        if radio.boxes(eng.house) and not PAUSED:
+            try:
+                eng.radio_items = await asyncio.to_thread(radio.refresh, cfg, DATA / "radio")
+            except Exception as e:
+                logging.warning("radio not refreshed: %r", e)
+        await asyncio.sleep(300)
+
+
 @asynccontextmanager
 async def lifespan(app):
-    task, window = asyncio.create_task(loop()), asyncio.create_task(sky())
+    task, window, air = asyncio.create_task(loop()), asyncio.create_task(sky()), asyncio.create_task(wireless())
     yield
     task.cancel()
     window.cancel()
+    air.cancel()
     eng.close()
     recorder.close()
 
@@ -298,6 +328,35 @@ async def api_story():
     dead = sorted((p for p in h["pets"].values() if p.get("life")), key=lambda p: -p["died"])
     return {"chronicle": h["chronicle"][::-1], "moments": [dict(zip(keys, r)) for r in rows], "day": h["clock"]["day"],
             "records": [p["life"] for p in dead][:20], "lineage": h["lineage"], "nobody": not alive(h)}
+
+
+@app.get("/api/v31")
+async def api_v31():
+    """SPEC-v3.1: the Walls (every inscription ever written), the Songbook (every version of every song and what it came
+    from), the Library (every question put to the book), and what the box has said, from the lineage's log."""
+    h, db = eng.house, eng.db
+    if not db:
+        return {"walls": [], "songs": [], "library": [], "radio": [], "arrivals": {}}
+    rows = lambda sql, keys: [dict(zip(keys, r)) for r in db.execute(sql).fetchall()]
+    name = lambda pid: (label(h["pets"][pid]) if pid in h["pets"] else {"visitor": "the visitor", "music box": "the music box", "bird": "a bird"}.get(pid, pid))
+    walls_ = {}
+    for r in rows("SELECT id, tick, room, place, text, by, medium, what, actor FROM inscriptions ORDER BY tick", ("id", "tick", "room", "place", "text", "by", "medium", "what", "actor")):
+        w = walls_.setdefault(r["id"], dict(r, by_name=name(r["by"]), room_name=h["rooms"][r["room"]].get("name", r["room"]), fate="there"))
+        if r["what"] in ("scrubbed", "worn away", "faded away"):
+            w.update(fate=r["what"], gone=r["tick"], gone_by=name(r["actor"]) if r["actor"] else None)
+    knows = {}
+    for p in h["pets"].values():
+        for e in p.get("songs", []):
+            knows.setdefault(e["id"], []).append(label(p))
+    songs_ = [dict(s, notes=json.loads(s["notes"]), by_name=name(s["by"]), known_by=knows.get(s["id"], []), sounds=songs.sound(json.loads(s["notes"])))
+              for s in rows("SELECT id, tick, name, notes, by, parent, how, family FROM songs ORDER BY tick", ("id", "tick", "name", "notes", "by", "parent", "how", "family"))]
+    lib = [dict(r, name=name(r["pet"])) for r in rows("SELECT pet, tick, question, title, text FROM library ORDER BY tick DESC LIMIT 300", ("pet", "tick", "question", "title", "text"))]
+    said = rows("SELECT tick, room, source, text FROM radio ORDER BY tick DESC LIMIT 300", ("tick", "room", "source", "text"))
+    crossed = [{"text": c["text"], "families": [c.get("family", 1)] + c["crossed"]} for c in h["claims"] if c.get("crossed")]
+    tpd = cfg["ticks_per_day"]
+    v, A = h.get("v31", {"at": 0, "arrived": {}}), cfg["arrivals"]
+    return {"walls": list(walls_.values()), "songs": songs_, "library": lib, "radio": said, "crossed": crossed, "ticks_per_day": tpd,
+            "arrivals": {n: {"arrived": v["arrived"].get(n), "due": v["at"] + round((0.05 * i if A["force"] else A[n]) * tpd)} for i, n in enumerate(director.ORDER)}}
 
 
 @app.get("/api/lab")

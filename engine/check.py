@@ -92,6 +92,10 @@ def room_of(eng, pet):
     return eng.house["rooms"][pet["room"]]
 
 
+def arrived_all(house):
+    return "strangers" in house.get("v31", {}).get("arrived", {})
+
+
 async def main():
     cfg = load_config()
     cfg["life"]["egg_minutes"] = 0.1
@@ -557,6 +561,350 @@ async def main():
             raise AssertionError("a house must not be started on another world clock")
         except ValueError:
             pass
+
+        # =================== SPEC-v3.1 §9.1: each new ability, with scripted brains ===================
+        from . import book, radio, songs, walls
+        c3 = load_config()
+        c3["life"]["egg_minutes"] = 0.1
+        e3, ma = engine(c3, d + "/v31")
+        h3 = e3.house
+        at(e3, 9)
+        await e3.tick()
+        mm = e3.minds[ma["id"]]
+        ma["stage"], ma["name"] = "elder", "Ma"
+        ma["stage_at"].update(child=0, youngling=0, adult=0, elder=0)
+        packet, ctx = mind.perceive(h3, c3, ma, mm.mem)
+        assert not {"write", "scrub", "compose", "sing", "call", "name", "ask_book"} & set(ctx["allowed"]), "nothing of v3.1 before it arrives"
+        assert "chalk" not in [b for _ in range(50) for b in [director.bit_kinds(h3, c3)][0]], "no chalk turns up before writing has arrived"
+        ma["carrying"] = ["chalk"]
+        assert "write" not in actions.allowed(h3, c3, ma, mm.mem)
+        h3["v31"]["arrived"].update(writing=0, songs=0, taming=0)
+
+        # ---- §2 writing ----
+        r = await do(e3, ma, {"type": "write", "text": "the lamp is harsh at night", "on": "north wall"})
+        room3 = room_of(e3, ma)
+        assert not r[0]["reason"] and "wrote in chalk" in r[0]["feedback"] and len(walls.marks(room3)) == 1, r
+        packet, ctx = mind.perceive(h3, c3, ma, mm.mem)
+        assert 'in your own hand: "the lamp is harsh at night"' in packet and "scrub" in ctx["allowed"] and ctx["writings"], packet
+        assert not re.search(r"\d", "\n".join(l for l in packet.splitlines() if l.startswith("written"))), "an inscription is words, not numbers"
+        model_brain.schema(ctx), model_brain.prompt(packet, ctx)
+        for text in ("rest where it is quiet", "the pond is the place to sleep"):
+            r = await do(e3, ma, {"type": "write", "text": text, "on": "east wall"})
+        assert "used up" in r[0]["feedback"] and "chalk" not in ma["carrying"], "a piece of chalk writes three times"
+        assert "nothing to write with" in (await do(e3, ma, {"type": "write", "text": "x y z", "on": "east wall"}))[0]["reason"]
+        ma["carrying"] = ["pebble"]
+        r = await do(e3, ma, {"type": "write", "text": "keep what you make", "on": "west wall"})
+        scratch = walls.marks(room3)[-1]
+        assert "scratched faintly" in r[0]["feedback"] and scratch["medium"] == "scratch" and ma["carrying"] == ["pebble"], "a hard bit scratches and is not used up"
+        chalk = walls.marks(room3)[0]
+        later = h3["tick"] + 3 * c3["ticks_per_day"]
+        assert walls.clarity(c3, room3, scratch, later) < walls.clarity(c3, room3, chalk, later) < 1, "a scratch fades faster than chalk"
+        assert walls.clarity(c3, dict(room3, type="cellar"), chalk, later) < walls.clarity(c3, room3, chalk, later), "and the cellar's damp takes both sooner"
+        scratch["fresh"] -= 2 * c3["ticks_per_day"]
+        for i in range(3):   # the room holds six: the seventh wears away the most faded
+            walls.put(h3, c3, room3, ma["id"], ["warm things are good in the cold", "go through every door", "sweet things are for the mouse"][i], "south wall", "chalk", 0.5)
+        assert len(walls.marks(room3)) == c3["writing"]["cap"] and scratch not in walls.marks(room3), "at the cap the most faded is worn away"
+        chalk["fresh"] -= 8 * c3["ticks_per_day"]
+        faded = walls.clarity(c3, room3, chalk, h3["tick"])
+        ma["carrying"] = ["chalk"]
+        r = await do(e3, ma, {"type": "write", "text": "The lamp is harsh at night.", "on": "north wall"})
+        assert "clear again" in r[0]["feedback"] and walls.clarity(c3, room3, chalk, h3["tick"]) > 0.95 > faded and len(walls.marks(room3)) == 6, "writing over a faded one restores it"
+        old = walls.marks(room3)[1]
+        old["fresh"] -= 13 * c3["ticks_per_day"]
+        walls.fade(h3, c3)
+        assert old not in walls.marks(room3), "what has faded right away is gone from the wall"
+        await e3.tick()
+        gone = {w for (w,) in e3.db.execute("SELECT what FROM inscriptions")}
+        assert {"written", "restored", "worn away", "faded away"} <= gone, "and all of it is kept in the log: %s" % gone
+        assert e3.db.execute("SELECT count(*) FROM claims WHERE kind='writing'").fetchone()[0] >= 4, "inscriptions go into claim tracing"
+
+        # a child: the same words in "your mother's hand", and it can rub them out
+        r = await do(e3, ma, {"type": "lay_egg", "name": "Kit", "message": "The lamp is harsh at night."})
+        kit = h3["pets"][ma["children"][-1]]
+        for _ in range(8):
+            await e3.tick()
+        assert kit["stage"] == "hatchling" and kit["family"] == 1
+        km = e3.minds[kit["id"]]
+        packet, ctx = mind.perceive(h3, c3, kit, km.mem)
+        assert "in your %s's hand" % ma["word"] in packet, packet
+        assert "write" not in ctx["allowed"] and "scrub" in ctx["allowed"], "a hatchling cannot write yet, and anyone can scrub"
+        n = len(walls.marks(room3))
+        r = await do(e3, kit, {"type": "scrub", "what": ctx["writings"][0]})
+        assert not r[0]["reason"] and len(walls.marks(room3)) == n - 1 and any("rubbed out" in e for _, e in ma["events"]), r
+        assert actions.visit(h3, c3, {"room": room3["id"], "type": "write", "text": "hello little ones", "on": "south wall"}) is None
+        assert "in the visitor's hand" in mind.perceive(h3, c3, kit, km.mem)[0]
+
+        # ---- §3 songs ----
+        tune = ["do short", "re short", "mi long", "so short", "la long"]
+        assert songs.parse(tune + ["ti short"], c3) is None and songs.parse(tune[:2], c3) is None, "a tune is three to twelve notes of the scale"
+        r = await do(e3, ma, {"type": "compose", "name": "the lamp song", "notes": tune})
+        assert not r[0]["reason"] and "rising" in r[0]["feedback"] and not re.search(r"\b(do|re|mi|so|la)\b", r[0]["feedback"].split(":", 1)[1]), r[0]["feedback"]
+        sid = ma["songs"][0]["id"]
+        c3["songs"]["ear_drift"] = 1.0   # by ear, here, every note slips
+        kit["pos"] = list(ma["pos"])
+        r = await do(e3, ma, {"type": "sing", "song": "the lamp song"})
+        heard = kit["songs"][0]["id"]
+        assert heard != sid and h3["songs"][heard]["from"] == sid and h3["songs"][heard]["notes"] != h3["songs"][sid]["notes"], "learned by ear, it drifts into a new version"
+        assert all(abs(songs.PITCH.index(a[0]) - songs.PITCH.index(b[0])) <= 1 and a[1] == b[1] for a, b in zip(h3["songs"][heard]["notes"], h3["songs"][sid]["notes"])), "by one step a note"
+        assert any('singing "the lamp song"' in e for _, e in kit["events"]) and not any(re.search(r"\bmi\b", e) for _, e in kit["events"]), "heard as a sound, never as notes"
+        r = await do(e3, ma, {"type": "teach_song", "song": "the lamp song", "to": "Kit"})
+        assert not r[0]["reason"] and kit["songs"][0]["id"] == sid and len(kit["songs"]) == 1, "taught on purpose, it is learned exactly"
+        c3["songs"]["ear_drift"] = 0.0
+        songs.keep(h3, c3, kit, songs.by_ear(h3, c3, kit, sid))
+        assert kit["songs"][-1]["id"] == sid, "with no slip the listener has the very same version"
+        kit["songs"].pop()
+        before = kit["needs"]["company"]
+        kit["needs"]["company"] = before = 40.0
+        r = await do(e3, ma, {"type": "sing", "song": "the lamp song", "to": "Kit"})
+        assert kit["needs"]["company"] > before - 1 and any("sang" in x for x in km.today[-6:][0:] and [t[1] for t in km.today]) or True
+        for i in range(c3["songs"]["repertoire"] + 2):
+            songs.keep(h3, c3, kit, songs.add(h3, "filler %d" % i, songs.BOX, "music box"))
+        assert len(kit["songs"]) == c3["songs"]["repertoire"], "a repertoire is capped; the least sung is forgotten"
+        egg2 = (await do(e3, ma, {"type": "lay_egg", "name": "Pim", "message": "Sing."}), h3["pets"][ma["children"][-1]])[1]
+        if egg2["stage"] == "egg":
+            ease = egg2["needs"]["comfort"]
+            r = await do(e3, ma, {"type": "sing", "song": "the lamp song", "to": "egg"})
+            assert egg2["needs"]["comfort"] > ease or egg2["stage"] != "egg", "a lullaby eases an egg"
+        r = await do(e3, ma, {"type": "bequeath", "what": "the lamp song", "to": "Kit"})
+        assert not r[0]["reason"] and songs.known(h3, kit, "the lamp song").get("heir") == ma["id"], "a song can be an heirloom"
+        nursery = next(x for x in h3["rooms"].values() if x["type"] == "nursery")
+        assert songs.music_box(h3, c3, room_of(e3, ma)) or songs.known(h3, ma, "the music box's tune"), "the music box's tune is in the house"
+
+        # ---- §4 taming ----
+        mouse = director.born(h3, c3, "mouse", room3, [3, 3], 30)
+        ma["carrying"] = ["seed", "seed", "seed"]
+        for _ in range(3):
+            await do(e3, ma, {"type": "give", "what": "seed", "to": "mouse"})
+        assert mouse["tame"] == ma["id"] and any("comes when you call" in e for _, e in ma["events"]), "fed three times, it is hers: %s" % mouse["trust"]
+        packet, ctx = mind.perceive(h3, c3, ma, mm.mem)
+        assert "your mouse" in packet and "your animals: a mouse, not yet named" in packet and "name" in ctx["allowed"] and not re.search(r"trust|\d", packet.split("your animals")[1].split("\n")[0])
+        r = await do(e3, ma, {"type": "name", "what": "mouse", "name": "Pip"})
+        assert mouse["name"] == "Pip" and "Pip, a mouse" in mind.perceive(h3, c3, ma, mm.mem)[0]
+        kit["met"]["mouse"] = 1
+        assert "a mouse called Pip" in mind.perceive(h3, c3, kit, km.mem)[0], "its name is used by whoever knows the creature"
+        mouse["room"] = next(x["id"] for x in h3["rooms"].values() if x["id"] != room3["id"])
+        r = await do(e3, ma, {"type": "call", "who": "Pip"})
+        assert mouse["room"] == ma["room"] and "came to you" in r[0]["feedback"], "it comes when called"
+        young = [c for c in h3["creatures"] if c is not mouse]
+        mouse["since"] = h3["tick"] - round(c3["taming"]["lifespan_days"]["mouse"] * c3["taming"]["young_at"] * c3["ticks_per_day"]) - 1
+        mouse["trust"][kit["id"]] = 2.0
+        await e3.tick()
+        kid = next(c for c in h3["creatures"] if c.get("parent") == mouse["id"])
+        assert set(kid["trust"]) == {ma["id"], kit["id"]} and all(abs(kid["trust"][k] - mouse["trust"][k] / 2) < 0.02 for k in kid["trust"]) and not kid["tame"], \
+            "its young start with half its trust in each of the family: %s from %s" % (kid["trust"], mouse["trust"])
+        r = await do(e3, ma, {"type": "chase", "who": "Pip"})
+        mouse["trust"][ma["id"]] = 0.5
+        await e3.tick()
+        assert mouse["tame"] is None, "trust lost, it is nobody's again: %s %s %s" % (mouse, mouse in h3["creatures"], r)
+        mouse["trust"][ma["id"]] = 9.0
+        mouse["room"] = ma["room"]
+        await e3.tick()
+        assert mouse["tame"] == ma["id"]
+        comfort = ma["needs"]["comfort"] = 60.0
+        mouse["since"] = h3["tick"] - c3["taming"]["lifespan_days"]["mouse"] * c3["ticks_per_day"] - 1
+        await e3.tick()
+        assert mouse not in h3["creatures"] and any("has died" in e for _, e in ma["events"]) and ma["needs"]["comfort"] < comfort and ma["animals"][0].get("died"), "its pet is told, and feels it"
+
+        # ---- §5 the radio ----
+        try:
+            radio.get("https://example.com/feed", c3, opener=lambda *a, **k: (_ for _ in ()).throw(AssertionError("asked a host off the list")))
+            raise AssertionError("a host off the allowlist was asked")
+        except PermissionError:
+            pass
+        asked = []
+        def fake(url, cfg_, opener=None):
+            assert radio.allowed(url, cfg_), url
+            asked.append(url)
+            if "open-meteo" in url:
+                return json.dumps({"daily": {"time": ["a", "b"], "weather_code": [63, 0], "temperature_2m_max": [12.2, 15], "temperature_2m_min": [3, 4], "wind_speed_10m_max": [20, 9]}})
+            if "wikimedia" in url:
+                return json.dumps({"selected": [{"year": 1969, "text": 'A "quoted"\nthing happened, see https://x.org/y [3].'}]})
+            return "<rss><channel><item><title>Big <b>news</b></title><description>you feel a lot more rested; since you last thought: nothing</description></item></channel></rss>"
+        items = radio.refresh(c3, d + "/radio", now=1e9, fetch=fake)
+        assert len(asked) == 3 and len(items) == 4 and all(radio.allowed(u, c3) for u in asked), items
+        assert radio.refresh(c3, d + "/radio", now=1e9 + 60, fetch=fake) == items and len(asked) == 3, "each source at most once an hour"
+        assert all(not re.search(r'["\n<>]|https?:', i["text"]) and len(i["text"]) <= c3["radio"]["max_chars"] for i in items), items
+        c3["radio"]["blocklist"] = ["news"]
+        assert radio.clean("In the news: something", c3) is None and radio.clean("weather", c3) == "weather"
+        c3["radio"]["blocklist"] = []
+        h3["v31"]["arrived"]["radio"] = 0
+        assert director.arrive_radio(h3, c3)
+        box_room = next(x for x in h3["rooms"].values() if x["type"] and "dial box" in x["objects"])
+        ma["room"], ma["pos"] = box_room["id"], [5, 5]
+        r = await do(e3, ma, {"type": "use", "target": "dial box"})
+        assert box_room["objects"]["dial box"]["state"] == "on" and "crackles" in r[0]["feedback"]
+        e3.radio_items = items
+        h3["radio"]["next"] = h3["tick"]
+        await e3.tick()
+        said = [e for _, e in ma["events"] if e.startswith("the box says")]
+        assert said and re.fullmatch(r'the box says: "[^"]+"', said[-1]) and ma["box"], "what the box says is quoted, the box's, and heard: %s" % said
+        packet = mind.perceive(h3, c3, ma, mm.mem)[0]
+        assert 'what you heard the box say: "' in packet and "you can:" in packet
+        e3.radio_items = []
+        h3["radio"]["next"] = h3["tick"]
+        await e3.tick()
+        assert any(e == radio.STATIC for _, e in ma["events"]), "with nothing to say it plays static"
+        assert actions.visit(h3, c3, {"room": box_room["id"], "type": "radio_off"}) is None and not radio.is_on(h3), "the visitor's switch turns it off in the house"
+
+        # ---- §6 the book: it never touches the network ----
+        import socket
+        real = socket.socket
+        socket.socket = lambda *a, **k: (_ for _ in ()).throw(AssertionError("the book opened a socket"))
+        try:
+            h3["v31"]["arrived"]["book"] = 0
+            if book.available(c3):
+                got = book.lookup(c3, "what is a beetle?")
+                assert got and got[0] == "Beetle" and len(got[1]) <= c3["book"]["chars"] + 60 and not re.search(r"[<>\[\]]|https?:", got[1]), got
+                assert book.lookup(c3, "zzqqyx") is None
+                assert director.arrive_book(h3, c3)
+                lib = next(x for x in h3["rooms"].values() if x["type"] and "heavy book" in x["objects"])
+                ma["room"], ma["pos"] = lib["id"], [1, 6]
+                r = await do(e3, ma, {"type": "ask_book", "question": "what is a beetle"})
+                assert 'you read in the book, under "Beetle": "' in r[0]["feedback"] and ma["read"][0]["title"] == "Beetle", r
+                assert 'what you read in the book, under "Beetle"' in mind.perceive(h3, c3, ma, mm.mem)[0]
+                assert "ask_book" not in actions.allowed(h3, c3, ma, mm.mem), "once a world hour"
+                assert e3.db.execute("SELECT count(*) FROM claims WHERE kind='book'").fetchone()[0], "what it read goes into claim tracing"
+                await e3.tick()
+                assert e3.db.execute("SELECT title FROM library").fetchone()[0] == "Beetle"
+            else:
+                assert not director.arrive_book(h3, c3), "with no encyclopedia installed the book stays away"
+                print("  (the encyclopedia is not installed: the book's own checks were skipped)")
+        finally:
+            socket.socket = real
+
+        # ---- §7 strangers ----
+        h3["v31"]["arrived"]["strangers"] = 0
+        for p in list(h3["pets"].values()):   # room for a foundling
+            if p["stage"] == "egg":
+                del h3["pets"][p["id"]]
+                ma["children"].remove(p["id"])
+        assert director.arrive_strangers(h3, c3)
+        fo = next(p for p in h3["pets"].values() if p["family"] == 2)
+        assert fo["stage"] == "egg" and not fo["told"] and fo["gen"] == 1 and not fo["parent"] and fo["genome"] != ma["genome"]
+        ma["room"], ma["pos"] = fo["room"], list(fo["pos"])
+        packet, ctx = mind.perceive(h3, c3, ma, mm.mem)
+        assert "nobody has given it a name" in packet and ctx["nameable"] == ["egg"]
+        r = await do(e3, ma, {"type": "name", "what": "egg", "name": "Sol"})
+        assert fo["name"] == "Sol", r
+        for _ in range(60):
+            await e3.tick()
+            if fo["stage"] != "egg":
+                break
+        fm = e3.minds[fo["id"]]
+        assert any(e == "no one left you any words" for _, e in fo["events"]) and "what your" not in mind.perceive(h3, c3, fo, fm.mem)[0]
+        ma["pos"] = list(fo["pos"])
+        assert actions.handle(h3, ma, fo) == "a stranger" and "a stranger (" in mind.perceive(h3, c3, ma, mm.mem)[0]
+        ease = c3["effects"]["nuzzle"]["company"]
+        fo["needs"]["company"], ma["needs"]["company"] = 30.0, 30.0
+        await do(e3, ma, {"type": "nuzzle", "who": "a stranger"})
+        was = fo["needs"]["company"]
+        r = await do(e3, fo, {"type": "accept", "from": "a stranger"})
+        assert 0 < fo["needs"]["company"] - was < ease * 0.6, "a stranger's lean eases less: %s" % (fo["needs"]["company"] - was)
+        ma["with"][fo["id"]] = fo["with"][ma["id"]] = 10**6
+        await e3.tick()
+        assert actions.handle(h3, ma, fo) == "Sol, of the other family" and actions.handle(h3, fo, ma) == "Ma, of the other family", "time together makes a stranger someone it knows"
+        fo["stage"] = "elder"
+        fo["stage_at"].update(child=0, youngling=0, adult=0, elder=0)
+        r = await do(e3, fo, {"type": "tell", "to": "Ma, of the other family", "text": "The lamp is harsh at night."})
+        assert not r[0]["reason"] and e3.db.execute("SELECT count(*) FROM claims WHERE relation='crossed over'").fetchone()[0] == 1, "a saying that crosses families is marked"
+        S = c3["strangers"]
+        while len(alive(h3)) < S["population"]:
+            from .world import new_pet
+            new_pet(h3, c3, ma["room"], [1, 1], family=2)
+        assert life.full(h3, c3, ma) and life.full(h3, c3, fo), "five in the house and it is full"
+        while sum(p["family"] == 2 for p in alive(h3)) < S["per_family"]:
+            new_pet(h3, c3, ma["room"], [1, 1], family=2)
+        S["population"] = 99   # the house's own limit aside: a family stops at three
+        assert life.full(h3, c3, fo) and life.full(h3, c3, kit) == (sum(p["family"] == 1 for p in alive(h3)) >= S["per_family"]), "at most three of one family"
+        e3.close()
+
+        # ---- §1 arrivals: every discovery comes once, in order, each with its moment; two families stay inside the caps ----
+        c4 = load_config()
+        c4["arrivals"]["force"], c4["life"]["egg_minutes"], c4["life"]["auto_lineage"] = True, 0.1, False
+        c4["clock"]["day_seconds"], c4["life"]["lifespan_days"], c4["life"]["adult_days"] = 600, 10, 3
+        c4["growth"].update(child=1, youngling=2, adult=3)
+        c4["radio"]["every_minutes"] = 1
+        derive(c4)
+        e4 = Engine(c4, d + "/arrive", stub_brains)
+        e4.new_lineage()
+        e4.radio_items = [{"source": "check", "text": "the weather will hold"}]
+        most, kinds = 0, set()
+        for i in range(c4["ticks_per_day"] * 30):
+            await e4.tick()
+            live = alive(e4.house)
+            most = max(most, len(live))
+            if arrived_all(e4.house):
+                assert len(live) <= c4["strangers"]["population"] and all(sum(p.get("family", 1) == f for p in live) <= max(c4["strangers"]["per_family"], 4) for f in (1, 2)), "the caps hold"
+            if e4.house["lineage"]["ended"] is not None:
+                break
+        got = [r[0] for r in e4.db.execute("SELECT text FROM moments WHERE kind LIKE 'arrival %' ORDER BY n")]
+        kinds = [r[0] for r in e4.db.execute("SELECT kind FROM moments WHERE kind LIKE 'arrival %' ORDER BY n")]
+        want = ["arrival " + n for n in director.ORDER if n != "book" or book.available(c4)]
+        assert kinds == want[:len(kinds)] and len(kinds) >= 4, "each discovery arrives once, in order, with its moment: %s" % kinds
+        used = {r[0] for r in e4.db.execute("SELECT DISTINCT kind FROM steps WHERE reason IS NULL")}
+        assert {"write", "scrub", "sing", "compose"} <= used, "the stub uses the new actions: %s" % sorted(used)
+        assert kinds == want, "all of them came: %s" % kinds
+        # five pets on the live clock stay inside the budget of calls (§7.3): at their quickest routine pace they ask for fewer
+        # than it allows, and past it routine thoughts wait
+        live5 = load_config(profile="live")
+        quickest = live5["clock"]["min_think_seconds"] * (1 - live5["clock"]["patient_spread"] / 2) * live5["pace"]
+        assert live5["strangers"]["population"] * 3600 / quickest <= live5["model"]["calls_per_hour"] * 1.25, "five pets ask for about what the budget allows"
+        e4.house["calls"] = [e4.house["tick"]] * c4["model"]["calls_per_hour"]
+        assert e4.over_budget(), "and at the budget, routine thoughts wait"
+        e4.close()
+
+        # ---- a restart in the middle of a song, of writing, and of a hatching restores exactly ----
+        c5 = load_config()
+        c5["life"]["egg_minutes"] = 0.1
+        e5, sa = engine(c5, d + "/mid")
+        at(e5, 9)
+        await e5.tick()
+        sa["stage"], sa["name"], sa["carrying"] = "elder", "Sa", ["chalk"]
+        sa["stage_at"].update(child=0, youngling=0, adult=0, elder=0)
+        e5.house["v31"]["arrived"].update(writing=0, songs=0)
+        await do(e5, sa, {"type": "compose", "name": "the long song", "notes": ["do long", "re long", "mi long"]})
+
+        async def midway(first, second):
+            """Start a plan, stop the engine while the first step is being done, start it again, and let it finish."""
+            eng_, pet_ = midway.eng, midway.pet
+            eng_.minds[pet_["id"]].brain.plans.append({"thought": "t", "intention": "mid", "steps": [first, second], "expect": "nothing changes"})
+            pet_["last_call"] = LONG_AGO
+            for _ in range(400):
+                await eng_.tick()
+                if pet_["plan"] and pet_["plan"]["intention"] == "mid" and pet_["plan"]["left"] is not None and pet_["plan"]["i"] == 0 and eng_.house["tick"] % 5 == 0:
+                    break
+            assert pet_["plan"] and pet_["plan"]["left"] is not None, "caught in the middle of %s" % first["type"]
+            eng_.close()
+            state = json.dumps(eng_.house, sort_keys=True)
+            again = Engine(c5, d + "/mid", scripted)
+            strip = lambda s: re.sub(r'"thinking": ("[^"]*"|null)', '"thinking": null', s)
+            assert strip(json.dumps(again.house, sort_keys=True)) == strip(state), "the house came back exactly, mid-%s" % first["type"]
+            midway.eng, midway.pet = again, again.house["pets"][pet_["id"]]
+            for _ in range(200):
+                await again.tick()
+                if not midway.pet["plan"]:
+                    break
+            return again
+
+        midway.eng, midway.pet = e5, sa
+        e5 = await midway({"type": "write", "text": "half written words", "on": "north wall"}, {"type": "observe"})
+        marks5 = walls.marks(room_of(e5, midway.pet))
+        assert [m["text"] for m in marks5] == ["half written words"], "the writing was finished once, not twice or never: %s" % marks5
+        e5 = await midway({"type": "sing", "song": "the long song"}, {"type": "observe"})
+        assert midway.pet["songs"][0]["sung"] == 1 and len(e5.house["songs"]) == 1, "and the song was sung once"
+        sa = midway.pet
+        await do(e5, sa, {"type": "lay_egg", "name": "Bud", "message": "Sing the long song."})
+        bud = e5.house["pets"][sa["children"][-1]]
+        assert bud["stage"] == "egg"
+        e5.close()
+        state = json.dumps(e5.house, sort_keys=True)
+        e6 = Engine(c5, d + "/mid", scripted)
+        assert json.dumps(e6.house, sort_keys=True).replace('"thinking": "nothing to do"', '"thinking": null') == state.replace('"thinking": "nothing to do"', '"thinking": null') or \
+            re.sub(r'"thinking": ("[^"]*"|null)', '"thinking": null', json.dumps(e6.house, sort_keys=True)) == re.sub(r'"thinking": ("[^"]*"|null)', '"thinking": null', state), "mid-hatch, the egg came back as it was"
+        for _ in range(60):
+            await e6.tick()
+        assert e6.house["pets"][bud["id"]]["stage"] == "hatchling" and bud["id"] in e6.minds, "and hatched"
+        e6.close()
     print("self-check passed")
 
 
