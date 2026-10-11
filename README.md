@@ -9,10 +9,17 @@ Since v3.1 there are six more things in the house for a family to find, each arr
 a **radio** that speaks scraps of the real world, a **book** that answers questions from an offline encyclopedia,
 and a foundling egg that starts a second family of **strangers**.
 
+Since v3.2 the house is drawn in pixel art you can read at a glance: rooms laid out as rooms, every made thing
+a recognisable kind of object (a cushion, a lantern, a wind chime) in its maker's colour, pets as pixel creatures
+grown from their genomes, a thought over each pet's head, and one plain sentence at the top saying what is
+going on. The tiles, furniture, items and sounds are from *Ninja Adventure* by Pixel-boy and AAA (CC0); the pets
+and about half the small pieces were drawn for this project in its style.
+
 - **[SHOWCASE.md](SHOWCASE.md)**: four families from one message, with screenshots and the evidence for each
   thing it was built to show, and what it did not show. The fourth family is the one living in `data/` now.
 - **[FINDINGS.md](FINDINGS.md)**: what has been learned, from the first model test to v3.
-- **[SPEC-v3.1.md](SPEC-v3.1.md)** is the latest spec (the six discoveries), built on **[SPEC-v3.md](SPEC-v3.md)**; [SPEC-v2.md](SPEC-v2.md) and [SPEC.md](SPEC.md) are kept for
+- **[SPEC-v3.2.md](SPEC-v3.2.md)** (how it looks) and **[SPEC-v3.1.md](SPEC-v3.1.md)** (the six discoveries) are the latest
+  specs, built on **[SPEC-v3.md](SPEC-v3.md)**; [SPEC-v2.md](SPEC-v2.md) and [SPEC.md](SPEC.md) are kept for
   history. **[DECISIONS.md](DECISIONS.md)** lists every place the build reads the spec its own way, and why.
   [NOTES.md](NOTES.md) is the account of the v1 and v2 lives as they happened; [VOICE.md](VOICE.md) is the voice.
 
@@ -34,6 +41,12 @@ The house and everyone in it live in `data/`. A family's log is `data/lineage-N/
 folder beside it with its journal, beliefs, life record and every prompt it was ever given (`training.jsonl`).
 When a family dies out the view offers to start another in the same house. To start a new house, archive
 `data/` under another name.
+
+**The art is data.** Everything the house looks and sounds like is described by files in `view/assets/`: the
+asset packs, a name for every picture, the catalog of kinds a pet can make, a hand-made layout for each room type,
+and the sounds. The code names no tile and no pack. [view/assets/README.md](view/assets/README.md) gives the
+formats and how to add a pack: put its zip in `assets-incoming/` (not in the repository) and map its pieces to
+names there. `view/assets/third_party/CREDITS.md` credits what is used.
 
 **The book** reads `book/wikipedia_en-simple_all_maxi_2026-09.zim` (Simple English Wikipedia from
 download.kiwix.org, 2.9 GB, not in the repository). Without it the book never arrives and nothing else minds.
