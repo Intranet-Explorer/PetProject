@@ -79,8 +79,11 @@ def candidates(house, cfg, pet):
                 continue
             where = craft.places(house, cfg, pet, how)
             if where and (bit in pet["carrying"] or bit in grown):
+                # what was read about comes first; then what would give the stuff of a tool it has found it lacks (it is not told that it would)
+                gives = C["rules"].get((bit, how), {}).get("gives")
+                toward = any(gives in g.split("|") for t in pet.get("lacks", {}) if t not in house.get("firsts", {}) for g in C["needs"][t])
                 add("try", key, "you want to find out " + TRY[how] % a(bit), "found out " + TRY[how] % a(bit),
-                    (4.0 if (bit, how) in hinted else 1.6 if rule else 0.5) * (1.3 if bit in pet["carrying"] else 1.0), bit=bit, how=how, room=where[0], bit_room=grown.get(bit))
+                    (4.0 if (bit, how) in hinted else 3.0 if toward else 1.6 if rule else 0.5) * (1.3 if bit in pet["carrying"] else 1.0), bit=bit, how=how, room=where[0], bit_room=grown.get(bit))
     for w in pet.get("unknown", [])[-3:]:
         book = book_room(house)
         hint = "" if not book or pet.get("asked") else "; the heavy book in %s might know" % rooms[book]["name"]

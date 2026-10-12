@@ -82,6 +82,11 @@ def way_to(house, pet, targets):
     return None
 
 
+def handled_lately(house, cfg, pet):
+    """How many different things it has had its paws on in the last while."""
+    return len({th for tk, th in state(pet).get("handled", []) if house["tick"] - tk < cfg["body"]["handle_ticks"]})
+
+
 def tired(pet):
     return feel.level(pet, "energy") >= 2
 
@@ -118,7 +123,7 @@ def targets(house, cfg, pet, mem, name, A):
         for d, rid in room["doors"].items():
             stuck = house["shut"].get("%s|%s" % (room["id"], d), LONG_AGO) > house["tick"]
             to, been = house["rooms"][rid], rid in pet["rooms"]
-            if do == "go" and not stuck and (d in L["doors"] or d == toward) and not anchor(house, pet) and not tired(pet):
+            if do == "go" and not stuck and (d in L["doors"] or d == toward) and not anchor(house, pet) and not tired(pet) and handled_lately(house, cfg, pet) >= 2:   # (not while it has had its paws on little: v3.4 §0 comes first)
                 # a door it wants to know the other side of (the one way a body goes where it has never been), or the way to where a want takes it
                 out.append({"what": d, "goal": list(house["door_tiles"][d]), "bonus": W})
             elif do == "doorway" and not been:

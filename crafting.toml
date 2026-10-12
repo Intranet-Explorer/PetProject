@@ -304,6 +304,37 @@ bit = "petal"
 how = "warm"
 spoils = true
 says = "the petal shrivelled to nothing in the heat"
+# warmth dries what the attic's air dries, only quicker
+[[rule]]
+bit = "reed"
+how = "warm"
+gives = "dry reed"
+says = "the reed dried hollow and hard in the warmth; it whistles when you blow across it"
+[[rule]]
+bit = "vine"
+how = "warm"
+gives = "vine cord"
+says = "the vine dried in the warmth into a tough brown cord"
+[[rule]]
+bit = "leaf"
+how = "warm"
+gives = "dry leaf"
+says = "the leaf dried brown in the warmth and crackles in your paws"
+[[rule]]
+bit = "moss"
+how = "warm"
+gives = "tinder"
+says = "the moss dried light in the warmth, and is warm to the touch"
+[[rule]]
+bit = "feather"
+how = "warm"
+spoils = true
+says = "the feather curled up and singed in the heat: it is spoiled"
+[[rule]]
+bit = "cloth"
+how = "warm"
+gives = "tinder"
+says = "the cloth scorched at the edges and went dry and light: it would catch a spark"
 [[rule]]
 bit = "moss"
 how = "dry"
