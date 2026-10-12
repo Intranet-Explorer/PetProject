@@ -462,3 +462,38 @@ cellar, attic and garden did not move. And 19 made things wore out, three of the
 down off walls: the storeroom filled within hours, and after that every old thing sent to it cost one. The copy
 had shown 19 wearing out in four world days and I reported it as a count, not as a problem. The rule was
 replaced that afternoon (DECISIONS.md, "Keepsake boxes") and all 19 were put back.
+
+## v3.4 Part A: bodies that go places (12 October 2026)
+
+Measured on a copy of the live house with the real model (turbo, the live house paused), in watching time on the
+live clock. The bars are SPEC-v3.4 §0's: in any five minutes at least 3 different things handled and 15 tiles
+walked, and never 30 s in one spot outside a resting pose. Each row is the worst five minutes of a pet's day.
+
+| pass | pet | handled, worst window (share of windows at 3 or more) | tiles walked, worst window | longest still |
+|---|---|---|---|---|
+| first (day 36 evening) | Grey Light, Purple Camo, Sven, Lean | 3, 3, 5, 3 (all 100%) | 20, 27, 21, 27 | 20 to 24 s |
+| first (day 37 morning) | Grey Light | 2 (95%) | 13 (96%) | 24 s |
+| first (day 37 morning) | Purple Camo, Sven, Lean | 3, 5, 4 (100%) | 31, 19, 19 | 20 to 24 s |
+| second (rest of day 37) | Purple Camo | 1 (96%) | 18 | 24 s |
+| second (rest of day 37) | Sven, Lean | 4, 3 (100%) | 26, 19 | 20 to 24 s |
+| **third (day 38, a whole waking day)** | **Purple Camo, Sven, Lean, Morning Bell** | **3, 3, 3, 3 (all 100%)** | **21, 16, 23, 26** | **20 to 24 s** |
+
+- **The third pass met every bar in every window**, for all four pets (Grey Light died of old age on the copy
+  during day 37; Morning Bell hatched). A usual five minutes had 6 to 7 things handled and 31 to 41 tiles walked.
+- **Thoughts did not go up**: 35 to 38 a pet a world day on the copy's day 38, against 38 to 42 on the live house
+  before. No model call failed in any pass.
+- **What the two misses were.** Minds cutting in on things a body had begun (first pass), and a body left to
+  choose freely doing two or three things in a row that handle nothing: a doorway, a look, a dance (second). The
+  fixes are in DECISIONS.md, Part 16.
+- **What a body does now**, by ticks of the third pass's day: playing with things (a ball rolled to someone, a
+  bell, a top), on its way somewhere, settled on a seat or a nest, at the stone, by the window, tending, tidying,
+  taking a thing out to look at, carrying a thing to someone. A stretch or a hum is one tick between two of these.
+- **The fresh-eyes watch** (a reviewer who had not seen the build, three rooms for five minutes each on the first
+  pass's replay at watching pace): the pets plainly go places, in a new spot in 15 to 17 of every 20 looks, and
+  nobody fidgets on the spot. Handling was "mostly not visible": a thing being carried was not drawn while the
+  pet walked, which was a fault in the page and is fixed. A song's name hung over a pet for a minute (fixed), two
+  pets set off to put the same thing away (fixed), and when two stand together one loses its name line (as the
+  spec asks; in POLISH.md). The garden read "fully as a garden"; the nursery's loose things still read as mess.
+
+Not measured: the live house itself. In turbo the world waits while a thought is thought, so the copy's bodies
+had less of the time than the live house's will.

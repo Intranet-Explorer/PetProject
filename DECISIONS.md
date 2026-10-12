@@ -1356,6 +1356,22 @@ as long as the activity lasts and keeps up as they move, and standing by them is
 no focus at all, and it does not nap. A body may now leave the room with its mind on a project, or on being with
 someone who is elsewhere, as well as with no focus, exploring or playing.
 
+**How Part A was checked, and what it took** (a copy of the live house, real model, turbo, the live house paused):
+- *First pass* (the evening of day 36 and the morning of day 37): three pets met every bar in every five minutes.
+  The elder, Grey Light, did in 95% of its windows; its worst had 2 things handled and 13 tiles walked. Its mind
+  had cut in on things its body had already begun (sitting on a nest, at the stone), which were then dropped
+  uncounted, and an elder walks two ticks in three. Changed: a thing a body has begun is done when its mind's
+  step cuts in; a body that has walked little lately is drawn to what is further off.
+- *Second pass* (the rest of day 37): Purple Camo's worst window had 1 to 2 things handled (96% of its windows
+  met the bar); the others met every bar. Changed: the pull toward a thing not handled lately is much stronger
+  while a body has handled fewer than three in the last 50 ticks.
+- *Third pass* (day 38): the numbers are in FINDINGS.md.
+Tyler's ruling while the third pass ran: if it misses only "three things handled" by the same small margin,
+deploy anyway and note it here; no fourth pass.
+
+**In turbo the world waits while a thought is being thought**, so on the copy a body never acts during a thought,
+as it does on the live house (where a thought takes five to ten ticks). The copy's numbers are therefore a little
+harder on the body than the live house will be: more of its time is its mind's.
 ### Part B: wants, skills, making by discovery, tools, growing food, the book and the radio (§2 to §4). 12 October 2026
 
 **Where it lives.** `crafting.toml` is the whole table: processes and where each is done, the materials they give,
