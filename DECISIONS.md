@@ -1101,6 +1101,48 @@ the one restart. Phase B is outlined only (the last section here).
   looked at while it is on, and takes it away when switched off or when their own arrives. Afterwards it
   switches theirs. It uses the v3.1 sources and blocklist; nothing new is asked of the network.
 
+### Getting ready to make, and the radio at once (Tyler, 11 October, before the deploy)
+
+- **A mind set on making something has a body that works toward it.** With the focus "make", the body picks
+  up bits (two, or what there is), takes them to the workbench if the room has one, and lays them out; these
+  three pull hard enough to happen in order, one after the other. The bits stay in its paws: laying them out
+  is handling, not making. Then the pet is told "everything is ready to make something" and **thinks at once**
+  rather than at its usual time (never sooner than 20 world seconds after its last thought). What that saved
+  is owed back: the thought after waits that much longer, so a pet thinks no more often than before. Once it
+  has laid out the very bits it carries it does not lay them out again; it stays by them.
+- **A box switched on speaks straight away**, whoever switched it (the engine sees that it has just come on),
+  and again at once when the visitor asks it for something else. If nothing has been fetched yet (a little
+  radio only just set down), it waits up to a minute for the first words before it gives static, and the
+  engine looks for them every ten seconds meanwhile; each source is still asked at most once an hour.
+
+### What the copy runs and the watchers found
+
+- **The body walked back out of a room the mind had just chosen.** Now it does not leave a room sooner than
+  four world minutes after coming in, however it came, and never while its focus is on something there.
+- **A new hatchling with its mind on exploring did four things only** (door, door, look, wander). An activity
+  now comes due the longer since it was last done, whatever the focus, which is what makes "five different
+  things in any five minutes" hold for every pet.
+- **Resting crept toward a quarter** for an old, tired pet and for two pets each set on being with the other.
+  Past 18% of its last ten minutes a pet now does nothing passive at all, tired or not; the night is for sleep.
+- **There was one tick between activities with nothing going on**, four seconds on the live clock: the next
+  activity is now chosen on the tick the last one ends.
+- **The first fresh-eyes watcher** (three rooms, five minutes each, a frame every five seconds, at live pace
+  with the real model) could say what pets did only from the sentence above the room, found the "why" weak,
+  and saw pets with no sign for half a minute. Changed: a sign over the head during decided steps too; the
+  caption is the focus in plain words ("wants to be with Chet"), with the pet's own words on its card; "going
+  over to the east door" while still on the way; a pet whose mind is on a thing or a pet stays near it; any
+  pet may tidy; things shut in a chest are not played with.
+- **The second watcher** (new, the repeat §8 allows): what each pet was doing, mostly yes; why, yes for two
+  of four pets; alive, one room yes, one for most of it, one empty (four pets, nine rooms). Still open after
+  it: made things carry their makers' names, which say little to a stranger (the name now shows on the thing
+  while a pet uses it, and the words say what kind of thing it is; not watched again); captions crowd when
+  several pets stand together.
+- **Sound** was checked from the page's own log of what it started (`window.petView.audioLog`): speech, eight
+  kinds of small voice, instruments, room ambience and the visitor's music, at full level in the room on
+  screen and low next door. Speech was not broken in v3.2: pets seldom chose to speak.
+- **The music's moods were chosen by track name** and measured loudness, not by ear (`MOODS` in
+  `view/assets/own/src/data.py`).
+
 ### Phase B, outlined (§7)
 
 Nothing of Phase B is built. What is there for it: activities, storage kinds and their effects are data
