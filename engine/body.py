@@ -82,10 +82,14 @@ def targets(house, cfg, pet, mem, name, A):
                 kin = [p for p in house["pets"].values() if p["room"] == rid and p["stage"] not in ("egg", "dead") and not p["sleep"] and relation(house, pet, p)]
                 if focus.get("type") == "be with" and want and want["room"] == rid:
                     out.append({"what": d, "goal": list(house["door_tiles"][d]), "bonus": 2.5})
+                elif focus.get("type") == "tidy" and to.get("mess") == 2 and not order.job(house, cfg, pet, room):
+                    out.append({"what": d, "goal": list(house["door_tiles"][d]), "bonus": 2.0})   # this room is done and the next is a mess: tidying moves on
                 elif focus.get("type") in (None, "explore", "play") and house["tick"] - pet["rooms"].get(room["id"], LONG_AGO) >= ticks(cfg, cfg["body"]["go_again_seconds"]):
                     # (it stays where its mind put it a good while, and where its mind wants it: it never walks out on a focus)
+                    messier = to.get("mess") == 2 and room.get("mess", 0) < 2   # a mess next door draws the orderly, as one here keeps them
                     out.append({"what": d, "goal": list(house["door_tiles"][d]),
-                                "bonus": (0.6 if kin and not kin_here(house, pet) else 0.0) + (0.8 if focus.get("type") == "explore" else 0.0)})
+                                "bonus": (0.6 if kin and not kin_here(house, pet) else 0.0) + (0.8 if focus.get("type") == "explore" else 0.0)
+                                + (cfg["body"]["mess_pull"] * 2 * pet["temper"].get("orderly", 0.5) if messier else 0.0)})
         return out
     if do == "inspect":
         seen = lambda n: pet["times"].get("look " + n, 0)
@@ -114,8 +118,10 @@ def targets(house, cfg, pet, mem, name, A):
         return [{"what": n, "goal": near(objs[n]["pos"])} for n in food[:1]]
     if do == "tidy":
         job = order.job(house, cfg, pet, room)   # the worse the mess, the more it pulls, on the orderly most of all
-        pull = order.clutter(house, cfg, room) * cfg["body"]["mess_pull"] * (0.4 + 1.2 * pet["temper"].get("orderly", 0.5))
-        return [{"what": job[0], "where": job[1], "goal": near(objs[job[0]]["pos"]), "bonus": pull}] if job else []
+        if not job:
+            return []
+        pull = (order.clutter(house, cfg, room) + (job["job"][0] == "old")) * cfg["body"]["mess_pull"] * (0.4 + 1.2 * pet["temper"].get("orderly", 0.5))
+        return [{"what": job["what"], "job": job["job"], "goal": near(job["pos"]), "bonus": pull}]
     making = focus.get("type") == "make" and not laid_out(pet)   # its mind is on making, and it is not ready yet
     bench = next((n for n, o in objs.items() if o.get("fix", {}).get("bench")), None)
     if do == "gather":
@@ -212,7 +218,7 @@ def choose(mind):
     _, name, t = best
     A = cfg["activities"][name]
     lo, hi = A["seconds"]
-    now = {"name": name, "do": A["do"], "what": t.get("what"), "who": t.get("who"), "where": t.get("where"), "door": t.get("door"), "creature": t.get("creature"),
+    now = {"name": name, "do": A["do"], "what": t.get("what"), "who": t.get("who"), "where": t.get("where"), "job": t.get("job"), "door": t.get("door"), "creature": t.get("creature"),
             "goal": t.get("goal"), "left": ticks(cfg, r.uniform(lo, hi)), "since": h["tick"], "began": None, "passive": bool(A.get("passive")),
             "icon": A.get("icon"), "voice": A.get("voice")}
     now["doing"] = say(cfg, h, pet, now, "doing")   # in the page's words, and the packet's
@@ -279,7 +285,7 @@ def finish(mind, now, cut=False):
         if done:
             do, o = now["do"], room["objects"].get(name)
             if do in ACT:   # numbered like any finished step, so the view plays it once (and sounds what sounds: §4)
-                onto = now["where"][1] if do == "tidy" and now.get("where") and now["where"][0] == "on" else None   # the shelf it goes on
+                onto = now["job"][3] if do == "tidy" and now.get("job") and now["job"][2] == "on" else None   # the shelf it goes on
                 act = story.act_of(h, pet, {"type": ACT[do], "door" if do == "go" else "target": now.get("what"), "to": now.get("who") or onto})
                 act.update(type=ACT[do], body=now["name"], loud=bool(o and ((things.prop(cfg, o).get("loud") if "made" in o else o.get("fix", {}).get("loud")))))
             if do == "inspect" and o is not None:
@@ -296,10 +302,9 @@ def finish(mind, now, cut=False):
             elif do == "peek" and now.get("door") in room["doors"]:
                 there = [p for p in h["pets"].values() if p["room"] == room["doors"][now["door"]] and p["stage"] not in ("egg", "dead")]
                 add_event(h, pet, "you peeked into %s: %s" % (now["what"], ", ".join("%s is there" % actions.handle(h, pet, p) for p in there) or "nobody is there"))
-            elif do == "tidy" and o is not None and now.get("where"):
-                how, place = now["where"]
-                if how != "on" or order.stores(cfg, room).get(place, 0) > 0:
-                    where = order.put(h, cfg, pet, room, name, how, place)
+            elif do == "tidy" and now.get("job"):
+                where = order.do_job(h, cfg, pet, room, now["job"])
+                done, act = bool(where), act if where else None   # it was gone, or the place was taken: nothing was put away
             elif do == "gather":
                 a = {"type": "gather", "what": name}
                 if actions.check(a, h, cfg, pet, mind.mem) is None:

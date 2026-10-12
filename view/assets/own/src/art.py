@@ -2174,6 +2174,37 @@ FIX["rock"] = S("""
 ................
 ................
 """)
+FIX["instrument shelf"] = S("""
+################
+#oooooooooooooo#
+#oooooooooooooo#
+#oooooooooooooo#
+#aooooooooooooo#
+#aooooooooooooo#
+#aaaaaooooooooo#
+#RRRRRRRRRRRRRR#
+#RRRRRRRRRRRRRR#
+#RR##########RR#
+#RR##########RR#
+#RR##########RR#
+#RR##########RR#
+#RR##########RR#
+#RRBRRRRRRRRBRR#
+#RRBBBBBBBBBBRR#
+#RRBBBBBBBBBBRR#
+#RR##########RR#
+#RR##cccccc##RR#
+#RR#rxxxxxxr#RR#
+#RR#xrxrxrxx#RR#
+#RRBRRRRRRRRBRR#
+#RRBBBBBBBBBBRR#
+#RR##########RR#
+#RR#yY####yY#RR#
+#RRyYYy##yYYyRR#
+#RRBooooooooBRR#
+#RRRRRRRRRRRRRR#
+BRRRRRRRRRRRRRRB
+""")
 FIX["stone"] = S("""
 ....########....
 ...#FFFFFFFF#...

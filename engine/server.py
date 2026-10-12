@@ -161,7 +161,7 @@ def room_view(r):
         if o.get("on"):
             v["on"] = o["on"]   # SPEC-v3.3 §2.2: put away on (or in) this; it stands on that thing's tile
         if order.cap(cfg, o):
-            v["store"] = {"cap": order.cap(cfg, o), "holds": order.held(r, n),
+            v["store"] = {"cap": order.cap(cfg, o), "holds": order.held(r, n), "bits": [s["bit"] for s in r["spots"] if s.get("on") == n],
                           "inside": bool(o.get("fix", {}).get("inside") or cfg["kinds"].get(o.get("made", {}).get("recipe", {}).get("kind"), {}).get("inside"))}
         objs[n] = v
     return {"id": r["id"], "cell": r["cell"], "type": r["type"], "name": r["name"], "doors": r["doors"], "paint": r["paint"],
@@ -170,7 +170,7 @@ def room_view(r):
             "marks": [dict(m, clarity=round(walls.clarity(cfg, r, m, h["tick"]), 2), by_name=mark_by(m)) for m in r.get("marks", [])],
             "mess": order.clutter(h, cfg, r), "mess_says": order.MESS[order.clutter(h, cfg, r)], "areas": r.get("areas", []),   # SPEC-v3.3 §2
             "sounding": r.get("sounding_until", 0) > h["tick"], "objects": objs, "found": r["found"], "by": r["by"],
-            "spots": [{"bit": s["bit"], "pos": s["pos"]} for s in r["spots"] if s["ready"]]}
+            "spots": [{"bit": s["bit"], "pos": s["pos"]} for s in r["spots"] if s["ready"] and not s.get("on")]}   # bits put away are in `store.bits`
 
 
 def mark_by(m):

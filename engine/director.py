@@ -108,6 +108,8 @@ def hourly(house, cfg):
     for room in found(house):   # SPEC-v3.3 §2.3: the places a room has grown are named from what is in them
         room["areas"] = order.areas(house, cfg, room)
         room["mess"] = order.clutter(house, cfg, room)
+    # what lies about in each room, hour by hour, for four days back: the measure of whether tidying works (engine/alive.py)
+    house["clutter"] = (house.get("clutter", []) + [[house["tick"], {r["id"]: order.count(house, cfg, r) for r in found(house)}]])[-96:]
     if house.get("storm_cut") and house["storm_cut"] <= house["tick"]:
         house["storm_cut"] = None
         if house["weather"] == "storm":

@@ -69,6 +69,9 @@ PACK.update({
     "fix.crates": px("E", 67, 60, 27, 20, anchor=[-2, 4]),                    # two tiles wide
     "fix.shelves": px("E", 160, 113, 32, 29),                                 # two tiles wide
     "crate": px("E", 1, 1, 14, 15, anchor=[-1, -1]),
+    # somewhere to keep things in every room: the pack's own chest, basket, box and shelves (the music room's is drawn: art.py)
+    "fix.toy chest": px("E", 48, 17, 16, 13), "fix.reed basket": px("C", 81, 80, 15, 16), "fix.tool box": px("E", 33, 99, 14, 12, anchor=[-1, -3]),
+    "fix.pot shelf": px("E", 64, 113, 16, 29), "fix.attic shelf": px("E", 48, 113, 16, 29), "fix.long shelf": px("E", 160, 113, 32, 29),   # the last is two tiles wide
 })
 
 # ---- scenery ----
@@ -261,7 +264,7 @@ def nursery():
                          "bowl": {"pos": [0, 7], "sprite": "fix.bowl"}, "music box": {"pos": [0, 3], "sprite": "fix.music box"},
                          "plant": {"pos": [11, 6], "sprite": "fix.plant"}, "ball": {"pos": [5, 4], "sprite": "fix.ball"},
                          "blanket": {"pos": [8, 2], "sprite": "fix.blanket"}, "rock": {"pos": [2, 6], "sprite": "fix.rock"},
-                         "heavy book": {"pos": [4, 7], "sprite": "fix.heavy book"}},
+                         "heavy book": {"pos": [4, 7], "sprite": "fix.heavy book"}, "toy chest": {"pos": [4, 0], "sprite": "fix.toy chest"}},
             "blocked": [[1, 0], [1, 1], [9, 1], [10, 0], [11, 0], [11, 1]],
             "wall_slots": [[3, 0], [6, 0], [8, 0]],
             "bit_spots": {"fluff": [[8, 3], [10, 3], [6, 5], [4, 2]], "pebble": [[3, 6], [1, 6], [9, 6]], "wax": [[0, 1], [2, 1], [3, 1]]},
@@ -293,7 +296,7 @@ def garden():
                       D("decor.stepping stone", 1, 5), D("decor.stepping stone", 3, 5), D("decor.stepping stone", 5, 5), D("decor.stepping stone", 10, 4), D("decor.stepping stone", 8, 4)],
             "fixtures": {"bean row": {"pos": [2, 1], "sprite": "fix.bean row"}, "herb patch": {"pos": [3, 6], "sprite": "fix.herb patch"},
                          "berry bush": {"pos": [10, 6], "sprite": "fix.berry bush"}, "old bench": {"pos": [10, 0], "sprite": "fix.old bench"},
-                         "bird bath": {"pos": [10, 2], "sprite": "fix.bird bath"}},
+                         "bird bath": {"pos": [10, 2], "sprite": "fix.bird bath"}, "tool box": {"pos": [11, 1], "sprite": "fix.tool box"}},
             "blocked": [[9, 0], [11, 0], [0, 0], [5, 0], [6, 0], [11, 7], [0, 7], [0, 3], [11, 2]],
             "wall_slots": [[2, 0], [4, 0]],
             "bit_spots": {"seed": [[1, 2], [3, 2], [4, 2], [2, 7]], "leaf": [[8, 6], [9, 6], [11, 5], [6, 1]], "petal": [[1, 0], [4, 0], [1, 7], [10, 7]]},
@@ -304,12 +307,13 @@ def cellar():
     f = grid(); floor9(f, "tile.floor.cobble.dark")
     return {"type": "cellar", "floor": f, "walls": walls("stone"),
             "decor": [D("decor.grate", 3, -1, "wall"), D("decor.cobweb", 0, -2, "wall"), D("decor.cobweb.right", 11, -2, "wall"),
-                      D("decor.barrel.open", 1, 0), D("decor.barrel.dark", 0, 1), D("decor.shelf.wide", 8, 0),
+                      D("decor.barrel.open", 1, 0), D("decor.barrel.dark", 0, 1),
                       D("decor.urn.tall", 11, 0), D("decor.crate", 11, 7), D("decor.sack", 11, 6), D("decor.keg", 0, 7),
                       D("decor.crate.empty", 1, 7)],
             "fixtures": {"barrel": {"pos": [0, 0], "sprite": "fix.barrel"}, "shelf": {"pos": [10, 0], "sprite": "fix.shelf"},
-                         "lantern": {"pos": [5, 0], "sprite": "fix.lantern", "wall": True}, "old rug": {"pos": [5, 4], "sprite": "fix.old rug"}},
-            "blocked": [[1, 0], [0, 1], [8, 0], [9, 0], [11, 0], [11, 7], [11, 6], [0, 7], [1, 7]],
+                         "lantern": {"pos": [5, 0], "sprite": "fix.lantern", "wall": True}, "old rug": {"pos": [5, 4], "sprite": "fix.old rug"},
+                         "long shelf": {"pos": [8, 0], "sprite": "fix.long shelf"}},
+            "blocked": [[1, 0], [0, 1], [9, 0], [11, 0], [11, 7], [11, 6], [0, 7], [1, 7]],
             "wall_slots": [[2, 0], [4, 0], [6, 0]],
             "bit_spots": {"clay": [[3, 6], [4, 7], [2, 3], [9, 6]], "moss": [[1, 2], [0, 3], [11, 2], [10, 7], [2, 7]], "soot": [[4, 1], [6, 1], [5, 1]]},
             "light": {"window": [[3, 0]], "night": 0.75, "day": 0.3}}
@@ -324,7 +328,7 @@ def attic():
                       D("decor.barrel.small", 11, 7)],
             "fixtures": {"skylight": {"pos": [5, 0], "sprite": "fix.skylight", "wall": True}, "trunk": {"pos": [1, 0], "sprite": "fix.trunk"},
                          "rocking chair": {"pos": [10, 6], "sprite": "fix.rocking chair"}, "sun shaft": {"pos": [5, 3], "sprite": "fix.sun shaft"},
-                         "heavy book": {"pos": [9, 0], "sprite": "fix.heavy book"}},
+                         "heavy book": {"pos": [9, 0], "sprite": "fix.heavy book"}, "attic shelf": {"pos": [10, 0], "sprite": "fix.attic shelf"}},
             "blocked": [[0, 0], [0, 1], [2, 0], [3, 0], [11, 0], [11, 1], [0, 7], [11, 7]],
             "wall_slots": [[4, 0], [6, 0], [8, 0]],
             "bit_spots": {"feather": [[2, 2], [3, 5], [8, 6], [6, 6]], "cloth": [[1, 2], [2, 1], [9, 2]], "wood": [[10, 2], [4, 6], [1, 6]]},
@@ -347,7 +351,7 @@ def pond():
                       D("decor.plant", 0, 0), D("decor.plant", 11, 0), D("decor.flower.white", 2, 2), D("decor.flower.white", 9, 6),
                       D("decor.rock", 8, 2)],
             "fixtures": {"pond": {"pos": [5, 4], "sprite": "fix.pond"}, "reeds": {"pos": [7, 3], "sprite": "fix.reeds"},
-                         "flat stone": {"pos": [2, 5], "sprite": "fix.flat stone"}},
+                         "flat stone": {"pos": [2, 5], "sprite": "fix.flat stone"}, "reed basket": {"pos": [6, 2], "sprite": "fix.reed basket"}},
             "blocked": [[3, 5], [0, 0], [11, 0], [8, 2], [2, 2], [9, 6]],
             "wall_slots": [[2, 0], [5, 0], [9, 0]],
             "bit_spots": {"shell": [[3, 4], [4, 6], [7, 4], [5, 2]], "bead": [[8, 5], [4, 2], [6, 6]], "reed": [[7, 2], [8, 3], [3, 3], [4, 5]]},
@@ -375,10 +379,11 @@ def music():
     floor9(f, "tile.carpet.tan", 4, 3, 6, 5)
     floor9(f, "tile.carpet.green", 1, 1, 3, 3)
     return {"type": "music", "floor": f, "walls": walls("paper"),
-            "decor": [D("decor.banner.2", 5, -1, "wall"), D("decor.banner.6", 11, -1, "wall"), D("decor.banner.4", 3, -1, "wall"),
+            "decor": [D("decor.banner.2", 5, -1, "wall"), D("decor.banner.6", 0, -1, "wall"), D("decor.banner.4", 3, -1, "wall"),
                       D("decor.harp", 4, 0), D("decor.gong", 10, 0), D("decor.table", 0, 0), D("decor.vase", 0, 7)],
             "fixtures": {"drum": {"pos": [2, 2], "sprite": "fix.drum"}, "chimes": {"pos": [9, 0], "sprite": "fix.chimes"},
-                         "rug": {"pos": [5, 4], "sprite": "fix.rug"}, "window": {"pos": [1, 0], "sprite": "fix.window", "wall": True}},
+                         "rug": {"pos": [5, 4], "sprite": "fix.rug"}, "window": {"pos": [1, 0], "sprite": "fix.window", "wall": True},
+                         "instrument shelf": {"pos": [11, 0], "sprite": "fix.instrument shelf"}},
             "blocked": [[4, 0], [10, 0], [0, 0], [0, 7]],
             "wall_slots": [[2, 0], [6, 0], [8, 0]],
             "bit_spots": {"string": [[4, 1], [2, 5], [10, 2]], "bell": [[8, 1], [10, 1], [9, 2], [8, 2]], "felt": [[1, 4], [3, 4], [6, 6]]},
@@ -402,7 +407,7 @@ def greenhouse():
                       D("decor.plant", 4, 0), D("decor.pot", 5, 0), D("decor.plant", 8, 0), D("decor.vase", 9, 0), D("decor.urn", 0, 0),
                       D("decor.watering can", 0, 7), D("decor.tub", 11, 7)],
             "fixtures": {"tomato vine": {"pos": [2, 1], "sprite": "fix.tomato vine"}, "melon bed": {"pos": [8, 5], "sprite": "fix.melon bed"},
-                         "hot pipe": {"pos": [11, 1], "sprite": "fix.hot pipe"}},
+                         "hot pipe": {"pos": [11, 1], "sprite": "fix.hot pipe"}, "pot shelf": {"pos": [1, 0], "sprite": "fix.pot shelf"}},
             "blocked": [[11, 0], [11, 2], [4, 0], [5, 0], [8, 0], [9, 0], [0, 0], [0, 7], [11, 7], [1, 5], [2, 5], [3, 5]],
             "wall_slots": [[2, 0], [7, 0], [10, 0]],
             "bit_spots": {"resin": [[10, 3], [10, 1], [9, 2]], "vine": [[4, 2], [1, 3], [3, 3], [6, 1]], "petal": [[5, 1], [9, 4], [7, 4], [2, 4], [4, 1]]},

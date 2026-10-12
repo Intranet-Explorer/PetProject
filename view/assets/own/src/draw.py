@@ -147,6 +147,7 @@ def fixtures():
         s.add("door." + st, n, anchor=[0, 20])
     for st, swap in (("", UNLIT["little radio"]), (".off", UNLIT["little radio"]), (".on", None)):   # the visitor's own, set down on the floor (SPEC-v3.3 §3.2)
         put("little radio" + st, F["little radio"], swap)
+    put("instrument shelf", F["instrument shelf"])   # the pack's shelf, with a drum and two bells left on it and the top shelf free
     return s
 
 

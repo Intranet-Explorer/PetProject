@@ -240,6 +240,22 @@ def room_type(house, rid):
     return house["plan"][rid]
 
 
+def fixture(f, rng=None):
+    """A fixture as it stands in a room when the room is new, from its line in house.toml."""
+    o = {"pos": list(f["pos"]), "fix": {k: v for k, v in f.items() if k not in ("name", "pos")}}
+    if "light" in f:
+        o["state"] = f["light"]
+    elif "states" in f:
+        o["state"] = f["states"][0]
+    elif "meal" in f:
+        o["state"], o["servings"] = "full", f["meal"]
+    elif f.get("plant"):
+        o["grow"], o["state"] = round(rng.uniform(0.2, 0.7), 2), "growing"
+    elif f.get("window"):
+        o["state"] = "closed"
+    return o
+
+
 def generate_room(house, cfg, rid, kind=None, by=None):
     """Make a room, the first time it is needed. Seeded, so the same house grows the same way."""
     room = house["rooms"][rid]
@@ -251,18 +267,7 @@ def generate_room(house, cfg, rid, kind=None, by=None):
     room.update(type=kind, name=spec["name"], found=house["tick"], by=by, objects={}, spots=[],
                 paint={"wall": None, "floor": None}, wet_until=LONG_AGO, cold_until=LONG_AGO, drift=None)
     for f in spec["fixtures"]:
-        o = {"pos": list(f["pos"]), "fix": {k: v for k, v in f.items() if k not in ("name", "pos")}}
-        if "light" in f:
-            o["state"] = f["light"]
-        elif "states" in f:
-            o["state"] = f["states"][0]
-        elif "meal" in f:
-            o["state"], o["servings"] = "full", f["meal"]
-        elif f.get("plant"):
-            o["grow"], o["state"] = round(rng.uniform(0.2, 0.7), 2), "growing"
-        elif f.get("window"):
-            o["state"] = "closed"
-        room["objects"][f["name"]] = o
+        room["objects"][f["name"]] = fixture(f, rng)
     kinds = spec["bits"]
     if kinds == "any":
         kinds = {b: 1 for b in rng.sample(sorted(b for b, v in cfg["house"]["bits"].items() if not v.get("late")), 4)}

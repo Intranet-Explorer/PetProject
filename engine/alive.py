@@ -7,6 +7,7 @@ Everything is counted in watching time on the live clock (config.live.toml: a ti
 clock the house was run on, since that is the clock Tyler watches."""
 import argparse
 import asyncio
+import json
 import sqlite3
 import time
 from collections import Counter
@@ -78,6 +79,19 @@ def measure(data, since=0, show=True):
     return out, calls, nuzzle
 
 
+def clutter(data, since=0, show=True):
+    """What lay about in each room at each world hour since `since` (the house notes it: director.hourly): {room: [n, ...]}.
+    Tidying that works shows as numbers that fall over a world day and stay down."""
+    house = json.loads((Path(data) / "house.json").read_text())
+    rows = [(t, c) for t, c in house.get("clutter", []) if t > since]
+    out = {r["name"]: [c.get(rid) for _, c in rows] for rid, r in house["rooms"].items() if r["type"]}
+    if show and rows:
+        print("things and bits lying about, by world hour (oldest first; . = not found yet):")
+        for name, ns in out.items():
+            print("  %-16s %s" % (name[4:] if name.startswith("the ") else name, " ".join("%2s" % ("." if n is None else n) for n in ns)))
+    return out
+
+
 def passes(out):
     """Does every pet on every day meet §0's three body numbers?"""
     return bool(out) and all(m["things"] >= THINGS and m["still"] <= STILL and m["passive"] < PASSIVE for m in out.values())
@@ -110,3 +124,4 @@ if __name__ == "__main__":
     a = ap.parse_args()
     since = asyncio.run(stub(a.data, a.stub, a.profile)) if a.stub else a.since
     measure(a.data, since)
+    clutter(a.data, since)

@@ -26,8 +26,8 @@
   ["tile.wall.paper.w", null, null, null, null, null, null, null, null, null, null, null, null, "tile.wall.paper.e"],
   ["tile.wall.paper.sw", "tile.wall.paper.s", "tile.wall.paper.s", "tile.wall.paper.s", "tile.wall.paper.s", "tile.wall.paper.s", "tile.wall.paper.s", "tile.wall.paper.s", "tile.wall.paper.s", "tile.wall.paper.s", "tile.wall.paper.s", "tile.wall.paper.s", "tile.wall.paper.s", "tile.wall.paper.se"]
  ],
- "decor": [{"sprite": "decor.banner.2", "at": [5, -1], "layer": "wall"}, {"sprite": "decor.banner.6", "at": [11, -1], "layer": "wall"}, {"sprite": "decor.banner.4", "at": [3, -1], "layer": "wall"}, {"sprite": "decor.harp", "at": [4, 0], "layer": "floor"}, {"sprite": "decor.gong", "at": [10, 0], "layer": "floor"}, {"sprite": "decor.table", "at": [0, 0], "layer": "floor"}, {"sprite": "decor.vase", "at": [0, 7], "layer": "floor"}],
- "fixtures": {"drum": {"pos": [2, 2], "sprite": "fix.drum"}, "chimes": {"pos": [9, 0], "sprite": "fix.chimes"}, "rug": {"pos": [5, 4], "sprite": "fix.rug"}, "window": {"pos": [1, 0], "sprite": "fix.window", "wall": true}},
+ "decor": [{"sprite": "decor.banner.2", "at": [5, -1], "layer": "wall"}, {"sprite": "decor.banner.6", "at": [0, -1], "layer": "wall"}, {"sprite": "decor.banner.4", "at": [3, -1], "layer": "wall"}, {"sprite": "decor.harp", "at": [4, 0], "layer": "floor"}, {"sprite": "decor.gong", "at": [10, 0], "layer": "floor"}, {"sprite": "decor.table", "at": [0, 0], "layer": "floor"}, {"sprite": "decor.vase", "at": [0, 7], "layer": "floor"}],
+ "fixtures": {"drum": {"pos": [2, 2], "sprite": "fix.drum"}, "chimes": {"pos": [9, 0], "sprite": "fix.chimes"}, "rug": {"pos": [5, 4], "sprite": "fix.rug"}, "window": {"pos": [1, 0], "sprite": "fix.window", "wall": true}, "instrument shelf": {"pos": [11, 0], "sprite": "fix.instrument shelf"}},
  "blocked": [[4, 0], [10, 0], [0, 0], [0, 7]],
  "wall_slots": [[2, 0], [6, 0], [8, 0]],
  "bit_spots": {"string": [[4, 1], [2, 5], [10, 2]], "bell": [[8, 1], [10, 1], [9, 2], [8, 2]], "felt": [[1, 4], [3, 4], [6, 6]]},

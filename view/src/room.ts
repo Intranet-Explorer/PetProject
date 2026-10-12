@@ -635,6 +635,9 @@ export class Room {
     if (o.store) {
       const left = o.store.cap - o.store.holds.length;
       out.push(o.store.holds.length ? `holds: ${o.store.holds.map(called).join(", ")}` : "holds nothing yet", left > 0 ? `room for ${left} more` : "full");
+      const bits = new Map<string, number>();   // loose bits tidied into it, counted: "bits: string x3, bell" (from the room as it is now: `o` is as old as the last redraw)
+      for (const b of room.objects[name]?.store?.bits ?? []) bits.set(b, (bits.get(b) ?? 0) + 1);
+      if (bits.size) out.push(`bits: ${[...bits].map(([b, n]) => (n > 1 ? `${b} x${n}` : b)).join(", ")}`);
     }
     if (o.on) out.push(`kept ${into(o.on)}`);
     const h = o.home, there = h && h.room === room.id && (h.on ? o.on === h.on : !o.on && at(h.pos, o.pos));

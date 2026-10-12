@@ -1166,3 +1166,38 @@ did not jump, the date carried on from day 32, and nobody got younger. The engin
 reads the same two numbers for the times it prints. Left as they fall: a few things already under way that are
 timed in days (writing fading, an animal's age) count their past at the new rate, so they last a little longer
 than they would have. One change of day length per house; a second would need a list.
+
+### Tidying a person can see (12 October 2026)
+
+After a night of v3.3 Tyler could see the house was untidy and the house could not. Seven of nine rooms had
+nowhere to keep anything; of 115 things made, none was a shelf, box, basket or chest; with nowhere to put a
+thing, tidying meant "out of the way", which moved it a tile, marked it tidy and looked like nothing; the mess
+score called every room tidy or nearly, so no pet was ever told otherwise; about 120 dropped bits lay on the
+floors; and nothing ever left, so each generation's things piled on the last. Changed, in his order:
+
+1. **Every kind of room starts with somewhere that fits it** (`house.toml`, placed by the room layouts): a toy
+   chest in the nursery, an instrument shelf in the music room, a reed basket by the pond, a pot shelf in the
+   greenhouse, a tool box in the garden, a second shelf in the cellar and in the attic. A room found before
+   this is given its own the next time the house starts (`Engine.alive_migration`).
+2. **Clutter is what a person sees** (`order.count`): every made thing on the floor that is not on or in
+   something, on the wall or part of a named corner, and every loose bit. "Out of the way" is gone: a thing
+   with nowhere to go is left where it lies and goes on counting. A corner is three or more of a sort standing
+   together (`order.areas`), and a tidy pet will put a fourth with them. An heirloom by its stone is in its place.
+3. **Nowhere left.** In a room that is a mess with nothing left to put things in, a pet is told "there's nowhere
+   left to put things here: a shelf, a box, a basket or a chest would be somewhere to keep them". The crowding
+   rule used to stop any making in such a room; something that keeps things can now always be made.
+4. **Loose bits are tidied too**, a pawful (3) at a go, into whatever keeps things: each shelf, chest or basket
+   takes 8 bits beside its things. They stay bits: anyone can take one out again to make with, and the page
+   lists them on the thing's card instead of drawing them on the floor.
+5. **Old things leave.** A made thing nobody has used or moved for five world days, that is not an heirloom,
+   not put away on anything and not itself a place to keep things, is carried off to the storeroom by a pet
+   that is tidying (its own things, the dead's and nobody's; never another living pet's). The storeroom keeps
+   them on its crates and shelves. When those are full, whichever has gone longest untouched, of the newcomer
+   and what is kept there, wears out and goes back to bits. (His words were "if the storeroom is full it wears
+   out": read as the longest forgotten, since otherwise the first ten things set aside would stay for ever and
+   nothing after them would ever reach the storeroom.) Memorial stones are not made things and never move.
+   The thing goes by itself once the pet has picked it up; walking it through the house is left for later.
+6. **Measured**: the house notes what lies about in each room every world hour (`house["clutter"]`, four days
+   back) and `engine/alive.py` prints it beside the §0 numbers.
+
+Pets tidy the room they are in. A room nobody goes into stays as it is.

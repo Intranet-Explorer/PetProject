@@ -117,6 +117,7 @@ fixtures = [
   { name = "window", pos = [0, 3], window = true },
   { name = "bed", pos = [10, 1], rest = 3.0, cozy = true },
   { name = "mirror", pos = [5, 0], mirror = true },
+  { name = "toy chest", pos = [4, 0], store = 5, inside = true },
 ]
 
 [rooms.garden]
@@ -133,6 +134,7 @@ fixtures = [
   { name = "herb patch", pos = [5, 6], plant = true },
   { name = "old bench", pos = [9, 2], rest = 2.5, cozy = true },
   { name = "bird bath", pos = [2, 5] },
+  { name = "tool box", pos = [11, 1], store = 4, inside = true },
 ]
 
 [rooms.cellar]
@@ -147,6 +149,7 @@ fixtures = [
   { name = "shelf", pos = [9, 1], store = 4 },
   { name = "lantern", pos = [5, 1], light = "off" },
   { name = "old rug", pos = [8, 5], movable = true, soft = 2.5 },
+  { name = "long shelf", pos = [8, 0], store = 6 },
 ]
 
 [rooms.attic]
@@ -162,6 +165,7 @@ fixtures = [
   { name = "trunk", pos = [2, 2], states = ["closed", "open"], store = 4, inside = true },
   { name = "rocking chair", pos = [9, 5], rest = 2.5, cozy = true },
   { name = "sun shaft", pos = [5, 3], sun = true },
+  { name = "attic shelf", pos = [10, 0], store = 5 },
 ]
 
 [rooms.pond]
@@ -176,6 +180,7 @@ fixtures = [
   { name = "pond", pos = [5, 4], water = [[4, 3], [5, 3], [6, 3], [4, 4], [5, 4], [6, 4], [5, 5], [6, 5]] },
   { name = "reeds", pos = [8, 3] },
   { name = "flat stone", pos = [2, 5], rest = 2.5 },
+  { name = "reed basket", pos = [6, 2], store = 4, inside = true },
 ]
 
 [rooms.workshop]
@@ -206,6 +211,7 @@ fixtures = [
   { name = "chimes", pos = [8, 2], toy = 2.0, loud = true },
   { name = "rug", pos = [6, 5], soft = 4.0, cozy = true },
   { name = "window", pos = [0, 2], window = true },
+  { name = "instrument shelf", pos = [11, 0], store = 5 },
 ]
 
 [rooms.greenhouse]
@@ -221,6 +227,7 @@ fixtures = [
   { name = "tomato vine", pos = [3, 2], plant = true },
   { name = "melon bed", pos = [8, 5], plant = true },
   { name = "hot pipe", pos = [10, 1] },
+  { name = "pot shelf", pos = [1, 0], store = 4 },
 ]
 
 [rooms.storeroom]

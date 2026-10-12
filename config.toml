@@ -340,6 +340,9 @@ observe = "eye"
 [order]                   # §2
 tidy_below = 2            # this many loose things or fewer: "everything here has its place"
 mess_above = 6            # more than this: "this room is a mess"
+old_days = 5              # a made thing nobody has touched for this long (no heirloom, not put away) is carried off to the storeroom
+bits = 8                  # loose bits a shelf, chest or basket takes beside the things it holds
+pawful = 3                # loose bits a pet puts away at one go
 mess = -0.15              # comfort per 10 s in a mess, for a pet as orderly as can be (none below the middle)
 tidy = 0.05               # ... and in a tidy room
 

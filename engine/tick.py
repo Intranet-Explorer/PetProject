@@ -630,6 +630,19 @@ class Engine:
         for room in h["rooms"].values():
             if not room["type"]:
                 continue
+            # 12 October 2026: every room has somewhere that fits it to keep things. A room found before then is given
+            # what its kind of room now starts with; whatever stood on that tile steps aside.
+            new = [f for f in cfg["house"]["rooms"][room["type"]]["fixtures"] if f.get("store") and f["name"] not in room["objects"]]
+            for f in new:
+                room["objects"][f["name"]] = world.fixture(f)
+            if new:
+                world.layout(cfg, room)
+                world.settle(h, cfg, room)
+            for o in things.made(room).values():   # "out of the way" is no longer a place: a spot on the floor is not a home, except an heirloom's
+                o.pop("tidy", None)
+                if o.get("home", {}).get("pos") and not o["made"].get("heirloom"):
+                    del o["home"]
+                    o.pop("places", None)
             for n, o in room["objects"].items():
                 if "fix" in o and n in caps and o["fix"].get("store") != caps[n]:
                     o["fix"]["store"] = caps[n]

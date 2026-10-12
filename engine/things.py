@@ -198,8 +198,8 @@ def check_make(a, house, cfg, pet):
         return "you are not big enough yet to make something that large"
     if not clean_name(r.get("name")) or not isinstance(r.get("purpose"), str):
         return "it needs a name and a purpose"
-    if len(on_floor(room)) >= cfg["make"]["crowded"]:
-        return "this room is too crowded for another thing"
+    if len(on_floor(room)) >= cfg["make"]["crowded"] and not kind.get("store"):
+        return "this room is too crowded for another thing, unless it is something to keep things in"
     if kind.get("wall") and not wall_slot(house, room):
         return "there is no free place on the wall here to hang it"
     if pet["needs"]["energy"] < cfg["make"]["tired"]:
@@ -241,7 +241,7 @@ def drop_bits(house, cfg, room, pos, bits):
     """Loose bits on the floor. A room only holds so many: past that the oldest is swept away."""
     for b in bits:
         room["spots"].append({"bit": b, "pos": free_tile(house, cfg, room, pos), "ready": True, "back": None, "loose": True})
-    loose = [s for s in room["spots"] if s["loose"]]
+    loose = [s for s in room["spots"] if s["loose"] and not s.get("on")]   # what has been put away in something stays
     for s in loose[:-cfg["make"]["loose_bits"]]:
         room["spots"].remove(s)
 

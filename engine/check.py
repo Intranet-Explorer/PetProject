@@ -169,7 +169,8 @@ async def main():
             pet["carrying"] = ["fluff"]
             await do(eng, pet, {"type": "make", "recipe": dict(recipe, name="n%d" % i), "near": "here"}, {"type": "observe"})
         assert len(things.made(room_of(eng, pet))) == cfg["make"]["crowded"], "a room only holds so many made things"
-        assert "crowded" in " ".join(physics.senses(h, cfg, pet)) and "make" not in actions.allowed(h, cfg, pet, m.mem), "the limit is felt, not counted"
+        assert "crowded" in " ".join(physics.senses(h, cfg, pet)) and "something to keep things in" in " ".join(physics.senses(h, cfg, pet)), \
+            "the limit is felt, not counted; and what would ease it can still be made (12 October 2026)"
         for n in [n for n in things.made(room_of(eng, pet)) if n != "nest"]:
             things.unmake(h, cfg, pet, n)
         room_of(eng, pet)["spots"] = [s for s in room_of(eng, pet)["spots"] if not s["loose"]]
@@ -1231,10 +1232,10 @@ async def main():
         spots0, roomA["spots"], body.state(pa)["now"] = roomA["spots"], [], None
         for i in range(6):
             pa["carrying"] = ["fluff"]
-            r = await do(eA, pa, {"type": "make", "recipe": dict(recipe, name="loose %d" % i), "near": "here"})
+            r = await do(eA, pa, {"type": "make", "recipe": dict(recipe, name="loose %d" % i, kind="ball"), "near": "here"})
             assert not r[0]["reason"], r
         loose = lambda: order.loose(hA, cA, roomA)
-        roomA["objects"]["shelf"] = {"pos": [9, 1], "state": None, "fix": {"store": 4}}   # (the nursery starts with nowhere to keep things)
+        roomA["objects"]["shelf"] = {"pos": [9, 1], "state": None, "fix": {"store": 6}}
         assert len(loose()) == 6 and order.clutter(hA, cA, roomA) >= 1 and order.stores(cA, roomA), "six things lie about a room that has somewhere to keep them: %s" % [
             loose(), order.clutter(hA, cA, roomA), order.stores(cA, roomA), roomA["type"], {n: {k: v for k, v in o.items() if k in ("on", "tidy", "wall", "home")} for n, o in things.made(roomA).items()}]
         pa["temper"]["orderly"] = 0.95
@@ -1260,7 +1261,8 @@ async def main():
         # keeping things: on a shelf, down again, a home after twice, no more than it holds, and a shelf that goes drops what it held
         store, name = "shelf", "loose 0"
         for o2 in things.made(roomA).values():
-            order.moved(o2)
+            order.moved(o2, hA["tick"])
+        roomA["objects"]["shelf"]["fix"]["store"] = 4
         body.state(pa)["now"] = None
         r = await do(eA, pa, {"type": "put_away", "what": name, "where": store}, {"type": "take_out", "what": name}, {"type": "put_away", "what": name, "where": store})
         o = roomA["objects"][name]
@@ -1277,6 +1279,91 @@ async def main():
         pa["carrying"] = ["fluff"]
         r = await do(eA, pa, {"type": "make", "recipe": dict(recipe, name="wall charm", kind="charm"), "near": "here"}, {"type": "hang", "what": "wall charm"})
         assert not any(x["reason"] for x in r) and roomA["objects"]["wall charm"].get("wall"), "a thing that hangs can be hung on the wall: %s" % r
+        # ---- 12 October 2026: tidying a person can see. Every room has somewhere to keep things; clutter is what lies
+        # about (loose bits too); bits are put away; with nowhere left a pet is told so; old things leave ----
+        assert all(any(f.get("store") for f in spec["fixtures"]) for spec in cA["house"]["rooms"].values()), "every kind of room starts with somewhere to keep things"
+        own = next(f["name"] for f in cA["house"]["rooms"][roomA["type"]]["fixtures"] if f.get("store"))
+        roomA["objects"].pop(own, None)
+        eA.alive_migration()
+        assert order.cap(cA, roomA["objects"][own]) and list(roomA["objects"][own]["pos"]) == cA["layouts"][roomA["type"]]["fixtures"][own]["pos"], "a room found before then is given it, where the layout says"
+        clear = lambda: ([roomA["objects"].pop(n2) for n2 in list(things.made(roomA))], pa.update(room=roomA["id"], pos=[6, 6]))   # (and the pet back in the room, if its body has wandered off)
+        tidy_up = lambda: (mA.brain.plans.append({"thought": "what a mess", "focus": {"type": "tidy", "words": "put things straight"}, "steps": [], "expect": "I will feel more at ease"}),
+                           pa.update(last_call=LONG_AGO), body.state(pa).update(now=None))
+        clear()
+        assert order.count(hA, cA, roomA) == 0
+        things.drop_bits(hA, cA, roomA, [5, 5], ["fluff", "pebble", "wax", "fluff"])
+        assert order.count(hA, cA, roomA) == 4 and order.clutter(hA, cA, roomA) == 1, "every loose bit on the floor is clutter"
+        tidy_up()
+        for _ in range(400):
+            pa["needs"].update(energy=80.0, comfort=80.0)
+            await eA.tick()
+            if not order.loose_bits(roomA):
+                break
+        kept = [s for s in roomA["spots"] if s.get("on")]
+        assert len(kept) >= 3 and order.count(hA, cA, roomA) == 0 and all(s["pos"] == roomA["objects"][s["on"]]["pos"] for s in kept), "a tidy pet puts loose bits in what keeps things: %s" % roomA["spots"]
+        pa["carrying"] = []
+        r = await do(eA, pa, {"type": "gather", "what": kept[0]["bit"]})
+        assert not r[0]["reason"] and len([s for s in roomA["spots"] if s.get("on")]) == len(kept) - 1, "and they can be taken out again to make with: %s" % r
+        roomA["spots"] = []
+        clear()
+        # nowhere left: said when the room is a mess and nothing has room; and then something to keep things in can still be made
+        caps = {n2: o2["fix"].pop("store") for n2, o2 in roomA["objects"].items() if "fix" in o2 and o2["fix"].get("store")}
+        for i in range(7):
+            pa["carrying"], pa["needs"]["energy"] = ["fluff"], 80.0
+            r = await do(eA, pa, {"type": "make", "recipe": dict(recipe, name="stray %d" % i, kind="ball"), "near": "here"})
+            assert not r[0]["reason"], r
+        felt = physics.senses(hA, cA, pa)
+        assert order.clutter(hA, cA, roomA) == 2 and order.NOWHERE in felt and not order.job(hA, cA, pa, roomA), "a mess with nowhere to put it: %s" % felt
+        roomA["objects"].update({"y%d" % i: dict(roomA["objects"]["stray 0"], pos=[i, 6]) for i in range(4)})
+        pa["carrying"], pa["needs"]["energy"] = ["fluff", "fluff"], 80.0
+        r = await do(eA, pa, {"type": "make", "recipe": dict(recipe, name="one too many", kind="ball"), "near": "here"})
+        r += await do(eA, pa, {"type": "make", "recipe": dict(recipe, name="keeper", kind="box"), "near": "here"})
+        assert "crowded" in (r[0]["reason"] or "") and not r[1]["reason"] and order.NOWHERE not in physics.senses(hA, cA, pa), "a crowded room still takes a box: %s" % r
+        assert order.job(hA, cA, pa, roomA)["job"][2:] == ["on", "keeper"], "and then there is somewhere to put things"
+        # old things leave: carried off to the storeroom; when that is full, the longest forgotten goes back to bits
+        clear()
+        sr = world.generate_room(hA, cA, next(rid for rid, x in hA["rooms"].items() if not x["type"]), "storeroom")
+        for n2, o2 in sr["objects"].items():
+            if "fix" in o2 and o2["fix"].get("store"):
+                o2["fix"]["store"] = 1
+        assert len(order.stores(cA, sr)) == 2
+        for i in range(5):
+            pa["carrying"], pa["needs"]["energy"] = ["fluff"], 80.0
+            r = await do(eA, pa, {"type": "make", "recipe": dict(recipe, name="relic %d" % i, kind="ball"), "near": "here"})
+            assert not r[0]["reason"], r
+            roomA["objects"]["relic %d" % i]["made"].update(tick=i, used_at=i, touched=i)
+        was_old, cA["order"]["old_days"] = cA["order"]["old_days"], 0.001   # (so that "days ago" is a moment ago, in a house this young)
+        roomA["objects"]["relic 4"]["made"]["heirloom"] = {"from": pa["id"]}
+        gone0 = len(hA.get("gone_things", []))
+        for want in ("relic 0", "relic 1", "relic 2", "relic 3"):
+            pa["pos"] = list(roomA["objects"][want]["pos"])
+            j = order.job(hA, cA, pa, roomA)
+            assert j["what"] == want and j["job"][0] == "old", "something nobody has touched for days is to be carried off: %s" % j
+            said = order.do_job(hA, cA, pa, roomA, j["job"])
+            assert want not in roomA["objects"] and said == "away in the storeroom", said
+        worn = [g["name"] for g in hA["gone_things"][gone0:] if g["gone"][1] == "worn out"]
+        assert worn == ["relic 0", "relic 1"] and sorted(n2 for n2, o2 in things.made(sr).items() if o2.get("on")) == ["relic 2", "relic 3"], \
+            "the storeroom keeps what was forgotten last; the longest forgotten wears out: %s" % worn
+        assert not order.job(hA, cA, pa, roomA) and "relic 4" in roomA["objects"], "an heirloom stays where it is"
+        cA["order"]["old_days"] = was_old
+        for n2, o2 in roomA["objects"].items():
+            if n2 in caps:
+                o2["fix"]["store"] = caps[n2]
+        # a corner: three of a sort standing together are in their place, and a fourth is put with them
+        clear()
+        caps = {n2: o2["fix"].pop("store") for n2, o2 in roomA["objects"].items() if "fix" in o2 and o2["fix"].get("store")}
+        for i, pos in enumerate(([2, 5], [3, 5], [4, 5], [9, 5])):
+            pa["carrying"], pa["needs"]["energy"] = ["fluff"], 80.0
+            r = await do(eA, pa, {"type": "make", "recipe": dict(recipe, name="bed %d" % i), "near": "here"})
+            roomA["objects"]["bed %d" % i]["pos"] = pos
+        roomA["areas"] = order.areas(hA, cA, roomA)
+        j = order.job(hA, cA, pa, roomA)
+        assert order.loose(hA, cA, roomA) == ["bed 3"] and j["job"][:3] == ["thing", "bed 3", "at"], "three nests together are a sleeping corner; the fourth lies about: %s" % j
+        assert order.do_job(hA, cA, pa, roomA, j["job"]) == "with the others like it" and not order.loose(hA, cA, roomA) and not order.job(hA, cA, pa, roomA)
+        clear()
+        for n2, o2 in roomA["objects"].items():
+            if n2 in caps:
+                o2["fix"]["store"] = caps[n2]
         # a mind set on making: its body gathers bits, takes them to the bench, lays them out, and it thinks sooner, with all to hand
         roomA["spots"], pa["carrying"], body.state(pa)["now"] = [dict(s, ready=True) for s in spots0], [], None
         far = max(([x, y] for x in range(1, cA["W"] - 1) for y in range(1, cA["H"] - 1)), key=lambda t: min(abs(t[0] - s["pos"][0]) + abs(t[1] - s["pos"][1]) for s in spots0))
@@ -1338,6 +1425,7 @@ async def main():
             await eS.tick()
         eS.save()
         eS.close()
+        assert len(eS.house["clutter"]) >= 24 and all(isinstance(n2, int) for n2 in eS.house["clutter"][-1][1].values()), "what lies about in each room is noted every world hour"
         out, _, _ = watch.measure(d + "/day", show=False)
         assert watch.passes(out), "at least five different things in any five minutes, never still for thirty seconds, resting under a quarter: %s" % out
     print("self-check passed")

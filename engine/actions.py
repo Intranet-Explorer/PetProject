@@ -114,7 +114,7 @@ def allowed(house, cfg, pet, mem):
     pets_of_mine = [c for c in house["creatures"] if c.get("tame") == pet["id"]]
     can = {
         "gather": bits and len(pet["carrying"]) < cfg["make"]["carry"], "drop": bool(pet["carrying"]),
-        "make": (bool(pet["carrying"]) or bits) and len(things.on_floor(room)) < cfg["make"]["crowded"],
+        "make": bool(pet["carrying"]) or bits,   # in a crowded room only something to keep things in (things.check_make)
         "unmake": bool(free), "combine": len(free) > 1, "teach": bool(mine),
         "give": bool(others or crs) and bool(pet["carrying"] or mine or bits),
         "show": bool(others) and bool(room["objects"]), "follow": bool(others or crs),
@@ -409,7 +409,7 @@ def fixture_says(fix):
             else "something growing" if fix.get("plant") else "you could see yourself in it" if fix.get("mirror")
             else "you can see outside through it" if fix.get("window") else "water; things put in it drift off" if "water" in fix
             else "a warm patch of light on the floor" if fix.get("sun")
-            else "it can be set " + " or ".join(fix["states"]) if "states" in fix else "a bench to work at" if fix.get("bench") else "it is just there")
+            else "it can be set " + " or ".join(fix["states"]) if "states" in fix else "a bench to work at" if fix.get("bench") else "a place to keep things" if fix.get("store") else "it is just there")
 
 
 def apply(house, cfg, pet, a, mem):
@@ -467,7 +467,7 @@ def apply(house, cfg, pet, a, mem):
             o["pos"] = list(min((t for t in water if not any(x["pos"] == t for x in room["objects"].values())), key=lambda t: dist(t, pet["pos"]), default=water[0]))
             return "you set %s on the water" % ref, {}, "arrange"
         o["pos"] = free_tile(house, cfg, room, to, ref)
-        order.moved(o)
+        order.moved(o, house["tick"])
         return "you moved %s over by %s" % (ref, norm(a["near"])), {}, "arrange"
     if t == "combine":
         return things.combine(house, cfg, pet, a, clean, norm)
@@ -502,7 +502,7 @@ def apply(house, cfg, pet, a, mem):
         o = room["objects"][what]
         owner = house["pets"][o["made"]["owner"]]
         o["made"]["owner"], o["pos"] = pet["id"], free_tile(house, cfg, room, pet["pos"], what)
-        order.moved(o)
+        order.moved(o, house["tick"])
         if owner["room"] == room["id"] and not owner["sleep"]:
             add_event(house, owner, "%s took your %s" % (handle(house, owner, pet), what))
             owner["news"].append("spoken")
@@ -842,7 +842,7 @@ def accept(house, cfg, pet, off):
         if not o or o.get("made", {}).get("owner") != giver["id"]:
             return "the %s is no longer %s's to give" % (what, handle(house, pet, giver)), {}, None
         o["made"]["owner"], o["pos"] = pet["id"], free_tile(house, cfg, room, pet["pos"], what)
-        order.moved(o)
+        order.moved(o, house["tick"])
     add_event(house, giver, "%s took the %s you offered" % (handle(house, giver, pet), what))
     giver["news"].append("answer")
     bump(giver, cfg, {"company": E["gift"]})
