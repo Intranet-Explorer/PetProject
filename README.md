@@ -102,3 +102,8 @@ v3 on the left, v3.2 on the right.
 
 [FINDINGS.md](FINDINGS.md) has the full findings, [SHOWCASE.md](SHOWCASE.md) the four families, and
 [SPEC-v3.3.md](SPEC-v3.3.md) the latest spec.
+
+## License
+
+MIT, see [LICENSE](LICENSE). The *Ninja Adventure* art and sounds in `view/assets/third_party/` are CC0, by
+Pixel-boy and AAA.
