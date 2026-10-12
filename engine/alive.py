@@ -1,4 +1,4 @@
-"""How alive is the house (SPEC-v3.3 §0, §8)? The §0 numbers, per pet per world day, from a house's own log.
+"""How alive is the house (SPEC-v3.3 §0, §8; SPEC-v3.4 §0)? The §0 numbers, per pet per world day, from a house's own log.
 
     uv run python -m engine.alive DATA_DIR [--since TICK]                    # measure what its log already holds
     uv run python -m engine.alive DATA_DIR --stub DAYS [--profile v31check]  # first live it on with stub brains (a COPY only)
@@ -15,35 +15,45 @@ from pathlib import Path
 
 from .world import load_config
 
-WINDOW, STILL, THINGS, PASSIVE = 300, 30, 5, 0.25   # §0: any 5 minutes, 30 seconds, 5 different things, under a quarter
+WINDOW, STILL, THINGS, PASSIVE = 300, 30, 5, 0.25   # v3.3 §0: any 5 minutes, 30 seconds, 5 different things, under a quarter
+HANDLED, WALKED = 3, 15   # v3.4 §0: in any 5 minutes, 3 different things handled (fidgets and looking do not count) and 15 tiles walked
 
 
 def measure(data, since=0, show=True):
-    """{(pet, day): {things, windows_ok, still, on_tile, passive, awake}} and the house's calls per live hour."""
+    """{(pet, day): {handled, walked, still, ...}} and the house's calls per live hour.
+    v3.4: `handled`, `walked` are the fewest in any five minutes awake (`*_ok`: the share of five-minute windows that
+    meet the bar); a log from before v3.4 has neither, and they read as None."""
     live = load_config(profile="live")
     real = live["clock"]["tick_seconds"] * live["pace"]   # watching seconds per tick
     per_day, win = live["ticks_per_day"], round(WINDOW / real)
     db = sqlite3.connect("file:%s?mode=ro" % next(Path(data).glob("lineage-*/lineage.db")), uri=True)
-    rows = db.execute("SELECT pet, tick_from, tick_to, what, passive, by, still, rest, x, y FROM doing WHERE tick_to > ? ORDER BY pet, tick_to, tick_from", (since,)).fetchall()
+    new = {"thing", "walked"} <= {r[1] for r in db.execute("PRAGMA table_info(doing)")}
+    rows = db.execute("SELECT pet, tick_from, tick_to, what, passive, by, still, rest, x, y, %s FROM doing WHERE tick_to > ? ORDER BY pet, tick_to, tick_from" % ("thing, walked" if new else "NULL, NULL"), (since,)).fetchall()
     out, by_pet = {}, {}
     for r in rows:
         by_pet.setdefault(r[0], []).append(r)
     for pet, rs in by_pet.items():
         first, last = max(since, min(r[1] for r in rs)), max(r[2] for r in rs)
-        what, passive, asleep = {}, set(), set()
-        for _, a, b, w, pas, by, still, rest, x, y in rs:
+        what, passive, asleep, held, steps = {}, set(), set(), {}, {}
+        for _, a, b, w, pas, by, still, rest, x, y, thing, walked in rs:
             for t in range(max(a, first), b + 1):   # (the tick it finished on is part of it)
                 what[t] = w if by != "body" or still else "(on its way)"   # a thing it set out to do and never began is only walking
                 (asleep if by == "sleep" else passive if pas else set()).add(t)
+            if thing and b >= first:
+                held.setdefault(b, set()).add(thing)   # handled on the tick it was done
+            for t in range(max(a, first), b + 1) if walked else ():   # the steps it took in doing it, spread over the time it took
+                steps[t] = steps.get(t, 0) + walked / (b + 1 - max(a, first))
         for day in range(first // per_day, last // per_day + 1):
             lo, hi = max(first, day * per_day), min(last, (day + 1) * per_day)
             awake = [t for t in range(lo, hi) if t not in asleep]
             if len(awake) < win:
                 continue
-            counts = [len({what.get(t) for t in range(s, s + win)} - {None}) for s in range(lo, hi - win, 5)
-                      if not any(t in asleep for t in (s, s + win // 2, s + win - 1))]
+            starts = [s for s in range(lo, hi - win, 5) if not any(t in asleep for t in (s, s + win // 2, s + win - 1))]
+            counts = [len({what.get(t) for t in range(s, s + win)} - {None}) for s in starts]
             if not counts:
                 continue   # never five minutes awake together that day: nothing to measure
+            n_held = [len(set().union(*(held.get(t, ()) for t in range(s, s + win)))) for s in starts] if new else None
+            n_walk = [sum(steps.get(t, 0) for t in range(s, s + win)) for s in starts] if new else None
             # standing still: one thing done on one spot, not in a resting pose; and the longest it kept to one tile
             # (several things in a row without a step between) while not resting
             mine = [r for r in rs if lo <= r[2] <= hi and r[5] != "sleep"]
@@ -57,7 +67,10 @@ def measure(data, since=0, show=True):
                 tile = max(tile, run)
             out[(pet, day)] = {"things": min(counts, default=0), "windows_ok": sum(c >= THINGS for c in counts) / max(1, len(counts)),
                                "still": one * real, "on_tile": tile * real, "passive": sum(1 for t in awake if t in passive) / len(awake),
-                               "awake": len(awake) * real / 60, "nothing": idle * real, "top": Counter(what[t] for t in awake if t in what).most_common(4)}
+                               "awake": len(awake) * real / 60, "nothing": idle * real, "top": Counter(what[t] for t in awake if t in what).most_common(4),
+                               "handled": min(n_held) if new else None, "handled_ok": sum(c >= HANDLED for c in n_held) / len(n_held) if new else None,
+                               "walked": min(n_walk) if new else None, "walked_ok": sum(c >= WALKED for c in n_walk) / len(n_walk) if new else None,
+                               "typical": (sorted(n_held)[len(n_held) // 2], sorted(n_walk)[len(n_walk) // 2]) if new else None}
     span = db.execute("SELECT min(tick), max(tick) FROM calls WHERE tick > ?", (since,)).fetchone()
     calls = {}
     if span[0] is not None and span[1] > span[0]:
@@ -68,12 +81,16 @@ def measure(data, since=0, show=True):
     nuzzle = (steps.get("nuzzle", 0) + steps.get("accept", 0)) / max(1, sum(steps.values()))
     names = dict(db.execute("SELECT pet, coalesce(name, pet) FROM pets"))
     if show:
-        print("%-10s %4s %7s %8s %7s %8s %8s %7s  %s" % ("pet", "day", "things", "windows", "still", "on tile", "passive", "awake", "mostly"))
+        # v3.4 §0, per pet per world day: the fewest things handled and tiles walked in any five minutes awake (and how many of the
+        # five-minute windows meet the bar; the usual window), the longest stood in one spot outside a resting pose
+        print("%-10s %4s  %-13s %-13s %6s %7s %7s  %s" % ("pet", "day", "handled (ok)", "walked (ok)", "still", "usual", "awake", "mostly"))
         for (pet, day), m in sorted(out.items(), key=lambda kv: (kv[0][1], kv[0][0])):
-            ok = m["things"] >= THINGS and m["still"] <= STILL and m["passive"] < PASSIVE
-            print("%-10s %4d %7d %7.0f%% %6.0fs %7.0fs %7.0f%% %6.0fm  %s %s" % (
-                (names.get(pet) or pet)[:10], day + 1, m["things"], 100 * m["windows_ok"], m["still"], m["on_tile"], 100 * m["passive"], m["awake"],
-                "ok  " if ok else "FAIL", ", ".join("%s %d" % (w, n) for w, n in m["top"])))
+            if m["handled"] is None:
+                continue
+            print("%-10s %4d  %3d (%3.0f%%)    %3.0f (%3.0f%%)    %5.0fs %3d/%-3.0f %6.0fm  %s %s" % (
+                (names.get(pet) or pet)[:10], day + 1, m["handled"], 100 * m["handled_ok"], m["walked"], 100 * m["walked_ok"], m["still"], m["typical"][0], m["typical"][1], m["awake"],
+                "ok  " if one_passes(m) else "FAIL", ", ".join("%s %d" % (w, n) for w, n in m["top"])))
+        print("thoughts per pet per world day:", ", ".join("%s %.0f" % (names.get(p) or p, n * per_day * real / 3600) for (p, k), n in sorted(calls.items()) if k == "act") or "none")
         print("model calls per live hour:", ", ".join("%s %s %.1f" % (names.get(p) or p, k, n) for (p, k), n in sorted(calls.items())) or "none")
         print("nuzzle and accept: %.0f%% of %d decided steps" % (100 * nuzzle, sum(steps.values())))
     return out, calls, nuzzle
@@ -92,9 +109,14 @@ def clutter(data, since=0, show=True):
     return out
 
 
+def one_passes(m):
+    return m["handled"] is not None and m["handled"] >= HANDLED and m["walked"] >= WALKED and m["still"] <= STILL
+
+
 def passes(out):
-    """Does every pet on every day meet §0's three body numbers?"""
-    return bool(out) and all(m["things"] >= THINGS and m["still"] <= STILL and m["passive"] < PASSIVE for m in out.values())
+    """Does every pet on every day meet SPEC-v3.4 §0's three body numbers: in any five minutes at least three things
+    handled and fifteen tiles walked, and never thirty seconds in one spot outside a resting pose?"""
+    return bool(out) and all(one_passes(m) for m in out.values())
 
 
 async def stub(data, days, profile):

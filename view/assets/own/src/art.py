@@ -2624,3 +2624,27 @@ ACT["radio"] = S("""
 .########.
 ..........
 """)
+ACT["seat"] = S("""
+..........
+..........
+.BBBBBBBB.
+.BnnnnnnB.
+.BBBBBBBB.
+..B....B..
+..B....B..
+..B....B..
+.BB....BB.
+..........
+""")
+ACT["box"] = S("""
+..........
+....Y.....
+...YYY....
+.B..Y...B.
+.BBBBBBBB.
+.BnnnnnnB.
+.BnnnnnnB.
+.BnnnnnnB.
+.BBBBBBBB.
+..........
+""")

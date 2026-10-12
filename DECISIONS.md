@@ -1310,3 +1310,48 @@ as it is until someone finds it (the house will still box what the dead left the
 On the page: a music box left playing now plays its tune, round again every twelve seconds, as loud as its room
 is from where the visitor looks. On a touch screen a tap shows a thing's card and name for five seconds (they
 used to vanish as the finger lifted). Small things seen and set aside are in POLISH.md.
+
+## Part 16: v3.4, purpose
+
+### Part A: bodies that go places (§1), and a room that is easier to read (§5). 12 October 2026
+
+**How §0 is measured** (`engine/alive.py`). The log's `doing` table has two new columns: `thing`, what a pet handled
+in doing something, and `walked`, the tiles it walked since the row before.
+- *Handled* is a thing picked up, used, carried, put away or made with: by the body, the activities marked
+  `handles` in activities.toml (play, eat, tidy, gather, tend, the stone, sitting on something, sitting by the
+  window, taking a thing out, bringing a thing to someone, the bench); by the mind, the steps use, gather, drop,
+  make, unmake, combine, arrange, put_away, take_out, hang, give, take, teach and show. Looking closely at a thing
+  is not handling it. A window counts the different things handled in it.
+- *Any five minutes* is every stretch of 75 ticks (five minutes of watching on the live clock) through which the
+  pet was awake, started every five ticks. The number reported is the worst of them, beside the share of windows
+  that meet the bar and the usual window.
+- *Tiles walked* is counted as it walks, a tile a tick.
+
+**A tick is four seconds of watching, so nothing is shorter than that.** The spec asks for fidgets of three seconds
+at most; a fidget is one tick. "Each lasts 5 to 20 seconds" is read as two to five ticks once a pet is there.
+
+**Fidgets** (stretch, groom, hum, babble, fiddle, look about) are marked `fidget` in activities.toml. A body never
+chooses one as the thing to do. After an activity, three times in ten (six in ten while a thought is on its way),
+one comes before the next activity, never two running. Its mind is not told of them, they make no habit, and
+they are not counted as anything done. Fiddling and babbling happen only with what or whom is in reach.
+
+**What a body does instead.** The menu was reweighted toward things done somewhere else in the room with a thing,
+and four activities were added: *sit on* (a stool, a cushion, a rug, a bed: it goes and settles on it), *take
+out* (a thing put away comes out, a few steps off, to be looked at), *bring to kin* (one of its own things carried
+over to someone it is fond of) and *follow a creature*. Playing with a ball rolls it, to someone if anyone is up.
+- *Things are carried.* A thing put away, taken out or brought to someone is in the pet's paws while it walks to
+  where the thing goes, where before it was put away from where it lay.
+- *A pull toward what it has not handled lately*: while a body has handled fewer than three different things in
+  the last 50 ticks, a thing it has not just handled scores higher; and in a room with nothing new to handle it
+  is free to go next door without waiting.
+- *A thing just taken out, brought over or rolled is left alone for 300 world seconds* before anybody's body
+  tidies it. What someone who died left, taken out of its keepsake box, is tidied back into the box if the box
+  is in that room (a change to this morning's "tidying never puts anything into a box": it may put back that
+  pet's own things, nothing else).
+
+**Being with someone** no longer holds a body within three tiles of them. It is doing what they do: an activity
+the other is at scores higher (the same toy, the same song, tidying or tending beside them), following goes on for
+as long as the activity lasts and keeps up as they move, and standing by them is a short pause (two ticks).
+**Rest** holds a body only when the pet is tired (energy at "tired" or worse); otherwise its body is as free as with
+no focus at all, and it does not nap. A body may now leave the room with its mind on a project, or on being with
+someone who is elsewhere, as well as with no focus, exploring or playing.

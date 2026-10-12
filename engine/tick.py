@@ -227,7 +227,8 @@ class Mind:
         if pet["stage"] == "elder" and self.eng.house["tick"] % 3 == 0:
             return
         for _ in range(2 if pet["spring"] else 1):
-            pet["pos"] = [p + (g > p) - (g < p) for p, g in zip(pet["pos"], goal)]
+            was, pet["pos"] = pet["pos"], [p + (g > p) - (g < p) for p, g in zip(pet["pos"], goal)]
+            pet["walked"] = pet.get("walked", 0) + (pet["pos"] != was)   # tiles walked, all its life (SPEC-v3.4 §0)
         pet["spring"] = max(0, pet["spring"] - 1)
 
     def trail(self):
@@ -359,7 +360,8 @@ class Mind:
         plan["i"], plan["left"], plan["step_needs0"] = plan["i"] + 1, None, None
         story.acted(h, cfg, pet, act, not reason)
         eng.did(pet, plan.get("step_began", h["tick"]), h["tick"], t, t in ("rest", "look", "observe"), "mind", "" if reason else told[:120],
-                still=h["tick"] - plan.get("step_at", h["tick"]), rest=t == "rest")
+                still=h["tick"] - plan.get("step_at", h["tick"]), rest=t == "rest",
+                thing=None if reason or t not in HANDLES else str(a.get(HANDLES[t]) or (a.get("recipe") or {}).get("name") or "") or None)
         b = body.state(pet)   # a decided look counts toward how much of its time goes on resting and looking, like the body's own
         b["idle"] = (b["idle"] + [int(t in ("rest", "look", "observe"))] * min(60, h["tick"] - plan.get("step_began", h["tick"]) + 1))[-cfg["body"]["window_ticks"]:]
         if reason:
@@ -531,6 +533,11 @@ class Mind:
                 self.remember_self()
 
 
+# the steps a mind decides in which a thing is picked up, used, carried, put away or made with (SPEC-v3.4 §0), and where the step names it
+HANDLES = {"use": "target", "gather": "what", "drop": "what", "make": "name", "unmake": "target", "combine": "a", "arrange": "object", "put_away": "what",
+           "take_out": "what", "hang": "what", "give": "what", "take": "what", "teach": "target", "show": "what"}
+
+
 class Engine:
     """The running house: its state, every pet's mind, the one queue of model calls, the lineage's log."""
 
@@ -610,12 +617,14 @@ class Engine:
                 if not pet["name"] and self.said_yes(pet) and not actions.name_taken(self.house, pet, pet["called"]) and not self.readonly:
                     actions.named(self.house, pet, self.minds[pet["id"]].mem, pet["called"].strip())
 
-    def did(self, pet, start, end, what, passive, by, text, still=0, rest=False):
-        """What a pet was doing from one tick to another, for whoever measures how alive the house is (SPEC-v3.3 §0, §8):
-        each thing its body did, each thing its mind decided, each sleep."""
+    def did(self, pet, start, end, what, passive, by, text, still=0, rest=False, thing=None):
+        """What a pet was doing from one tick to another, for whoever measures how alive the house is (SPEC-v3.3 §0, §8;
+        SPEC-v3.4 §0): each thing its body did, each thing its mind decided, each sleep; what it handled in doing it
+        (`thing`), and how many tiles it walked since the last of these was written."""
+        walked, pet["walk_logged"] = pet.get("walked", 0) - pet.get("walk_logged", 0), pet.get("walked", 0)
         if self.db and not self.readonly:
             log.put(self.db, "doing", pet=pet["id"], tick_from=start, tick_to=end, what=what, passive=int(bool(passive)), by=by, text=text,
-                    still=still, rest=int(bool(rest)), room=pet["room"], x=pet["pos"][0], y=pet["pos"][1])
+                    still=still, rest=int(bool(rest)), room=pet["room"], x=pet["pos"][0], y=pet["pos"][1], thing=thing, walked=walked)
 
     def alive_migration(self):
         """SPEC-v3.3 comes to a house already lived in: everyone gets the orderly gene (drawn from the house's seed and

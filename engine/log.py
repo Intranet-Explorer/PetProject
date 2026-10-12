@@ -31,7 +31,8 @@ CREATE TABLE IF NOT EXISTS songs (id TEXT, tick INT, name TEXT, notes TEXT, by T
 CREATE TABLE IF NOT EXISTS radio (tick INT, room TEXT, source TEXT, text TEXT);
 CREATE TABLE IF NOT EXISTS library (pet TEXT, tick INT, question TEXT, title TEXT, text TEXT);
 CREATE TABLE IF NOT EXISTS doing (pet TEXT, tick_from INT, tick_to INT, what TEXT, passive INT, by TEXT, text TEXT,
-                                  still INT, rest INT, room TEXT, x INT, y INT);   -- still: the ticks of it spent in one place; rest: in a resting pose
+                                  still INT, rest INT, room TEXT, x INT, y INT, thing TEXT, walked INT);
+    -- still: the ticks of it spent in one place; rest: in a resting pose; thing: what it handled (v3.4); walked: tiles walked since the row before
 CREATE INDEX IF NOT EXISTS doing_pet ON doing (pet, tick_from);
 CREATE INDEX IF NOT EXISTS steps_pet ON steps (pet, tick);
 CREATE INDEX IF NOT EXISTS intentions_pet ON intentions (pet, tick);
@@ -44,6 +45,10 @@ def open_db(path, readonly=False):
         return sqlite3.connect("file:%s?mode=ro" % path, uri=True)
     db = sqlite3.connect(path)
     db.executescript(SCHEMA)
+    have = {r[1] for r in db.execute("PRAGMA table_info(doing)")}   # a log begun before SPEC-v3.4 gets its two new columns
+    for col in ("thing TEXT", "walked INT"):
+        if col.split()[0] not in have:
+            db.execute("ALTER TABLE doing ADD COLUMN " + col)
     return db
 
 

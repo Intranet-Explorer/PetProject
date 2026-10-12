@@ -249,7 +249,7 @@ bits = "any"              # a little of everything: four kinds, picked when the 
 rule = "storeroom"
 fixtures = [
   { name = "crates", pos = [3, 2], store = 6, inside = true },
-  { name = "corner crates", pos = [11, 9], store = 8, inside = true },   # where the house's old things end up (order.set_aside)
+  { name = "corner crates", pos = [10, 7], store = 8, inside = true },
   { name = "shelves", pos = [9, 2], store = 6 },
   { name = "old lantern", pos = [6, 1], light = "off" },
 ]

@@ -1214,6 +1214,20 @@ async def main():
         did = [r[0] for r in eA.db.execute("SELECT what FROM doing WHERE by = 'body' AND text != ''")]
         assert len(did) > 25 and len(set(did)) >= 6, "left to itself a pet is always doing something, and many different things: %s" % sorted(set(did))
         assert not eB.db.execute("SELECT count(*) FROM doing WHERE by = 'body'").fetchone()[0], "(and with the body off, nothing)"
+        # SPEC-v3.4 §1: a stretch or a hum is filler, never the thing it chose to do; what it handles and how far it walks are written down
+        fid = {n for n, a2 in cA["activities"].items() if a2.get("fidget")}
+        rows = eA.db.execute("SELECT what, tick_to - tick_from, thing, walked FROM doing WHERE by = 'body' ORDER BY rowid").fetchall()
+        assert {"stretch", "hum", "fiddle"} <= fid and any(w in fid for w, *_ in rows) and all(span <= 1 for w, span, *_ in rows if w in fid), "a fidget lasts one tick"
+        assert not any(x[0] in fid and y[0] in fid for x, y in zip(rows, rows[1:])) and sum(w in fid for w, *_ in rows) < len(rows) / 2, "it comes between two activities, never two running"
+        assert body.choose(mA)["name"] not in fid and body.choose(mA, fidget=True)["name"] in fid, "and it is never what a body chooses to do"
+        assert len({t for _, _, t, _ in rows if t}) >= 3 and sum(k or 0 for *_, k in rows) >= 30 and not any(t for w, _, t, _ in rows if w in fid or not cA["activities"][w].get("handles")), \
+            "what a body handles and the tiles it walks are in its log: %s" % sorted({t for _, _, t, _ in rows if t})
+        was_focus, was_energy = pa.get("focus"), pa["needs"]["energy"]
+        pa["focus"], pa["needs"]["energy"] = {"type": "rest", "words": "take it easy", "since": hA["tick"]}, 95.0
+        assert body.minded(pa) is None and not body.targets(hA, cA, pa, mA.mem, "nap", cA["activities"]["nap"]), "a mind set on rest does not hold a body that is not tired"
+        pa["needs"]["energy"] = 20.0
+        assert body.minded(pa) == "rest" and body.targets(hA, cA, pa, mA.mem, "nap", cA["activities"]["nap"]), "and does hold one that is"
+        pa["focus"], pa["needs"]["energy"] = was_focus, was_energy
         asked = [e.db.execute("SELECT count(*) FROM calls WHERE kind = 'act'").fetchone()[0] for e in (eA, eB)]
         assert asked[0] <= asked[1] + 1, "the body asks no brain: as many thoughts with it as without: %s" % asked
         assert hA["vox"] and [v["n"] for v in hA["vox"]] == sorted({v["n"] for v in hA["vox"]}), "the small sounds it makes are numbered, to be played once"
@@ -1480,7 +1494,7 @@ async def main():
         want = ["gather", "carry to the bench", "lay out the bits"]
         assert [w for w in work if w in want][-3:] == want and work.count("gather") >= 2, "its body works toward the making, in order: %s" % work
         early = (hA["tick"] - t0) * cA["clock"]["tick_seconds"]
-        assert pa["think_owed"] > 0 and early < cA["clock"]["min_think_seconds"] * 0.75 and body.laid_out(pa), "and it thinks sooner than its usual time, owing the difference: %s s" % early
+        assert pa["think_owed"] > 0 and early < cA["clock"]["min_think_seconds"] * 0.75 and body.laid_out(pa), "and it thinks sooner than its usual time, owing the difference: %s s after %s" % (early, [r[0] for r in eA.db.execute("SELECT what FROM doing WHERE by = 'body' AND tick_from > ? ORDER BY tick_to", (t0,))])
         assert any("everything is ready to make something" in e for _, e in pa["events"]), "its mind is told all is to hand"
         # the visitor's music: felt, danced to, and (once songs have come) picked up by ear
         assert not body.targets(hA, cA, pa, mA.mem, "dance", cA["activities"]["dance"]), "nobody dances without music"
@@ -1527,7 +1541,7 @@ async def main():
         eS.close()
         assert len(eS.house["clutter"]) >= 24 and all(isinstance(n2, int) for n2 in eS.house["clutter"][-1][1].values()), "what lies about in each room is noted every world hour"
         out, _, _ = watch.measure(d + "/day", show=False)
-        assert watch.passes(out), "at least five different things in any five minutes, never still for thirty seconds, resting under a quarter: %s" % out
+        assert watch.passes(out), "in any five minutes at least three things handled and fifteen tiles walked, and never still for thirty seconds: %s" % {k: {x: v[x] for x in ("handled", "walked", "still")} for k, v in out.items()}
     print("self-check passed")
 
 

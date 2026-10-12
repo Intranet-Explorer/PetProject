@@ -71,7 +71,7 @@ was made on the showcase's, so it is started with `live` (or `showcase`), never 
 uv run python -m engine.check               # the engine's self-check (about two minutes, no model)
 uv run python -m engine.tick --days 40      # a headless lineage with scripted brains
 uv run python -m engine.metrics [data dir]  # the Lab's numbers for a run
-uv run python -m engine.alive <data dir>    # SPEC-v3.3 §0: how alive each pet was, per world day, from the log
+uv run python -m engine.alive <data dir>    # SPEC-v3.4 §0: per pet per world day, the fewest things handled and tiles walked in any five minutes, and the longest stood still
 uv run python -m engine.showcase [data dir] # the evidence for SPEC-v3 §12's bar, from a run's logs
 cd view && npm install && npm run build     # rebuild the view; the running engine serves it as is
 node view/check-voice.ts                    # the voice's self-check (no browser, no sound)

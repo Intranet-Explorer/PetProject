@@ -121,6 +121,8 @@ const MOVES: Record<string, Move> = {
   // by name, where the icon alone does not say it
   "look about": { a: "look" }, "peek next door": { a: "face", lean: 6, ms: 1700 }, "follow kin": { a: "face", hop: 2, ms: 420, air: ["heart", 3000] }, gather: { a: "make" },
   dance: { a: "dance", sway: 2, ms: 640, air: ["note", 650] }, sing: { a: "happy", air: ["note", 520] }, "watch a creature": { a: "face", lean: 2, ms: 1500 },
+  // SPEC-v3.4 §1: settled on something; a thing out of its box, or carried to someone, is in its paws; after a creature at a trot
+  seat: { a: "sit" }, box: { a: "make", stir: 3 }, "follow a creature": { a: "face", hop: 2, ms: 420 },
 };
 const REST: Move = { a: "sit" }, PLAIN: Move = { a: "face", sway: 1, ms: 1100, lean: 1 };
 const ABOUT: Dir[] = ["left", "down", "right", "down"];

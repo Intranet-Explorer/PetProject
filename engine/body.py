@@ -1,14 +1,22 @@
 """The body (SPEC-v3.3 §1): what a pet does by itself between thoughts, with no model asked. Each tick a pet that
 is not carrying out something it decided picks the best activity for the moment from activities.toml and does it:
 short, visible and real (tidying moves things, eating empties the bowl). The mind still decides everything that
-belongs to the pet's story; the body only fills the time in between, in character."""
+belongs to the pet's story; the body only fills the time in between, in character.
+
+SPEC-v3.4 §1: a body goes places and handles things. A stretch, a hum or a look about is filler (a fidget: one
+tick, on the spot, between two activities), never the thing it chose to do; a thing put away or brought to
+someone is carried there; being with someone is doing what they do; and a mind set on rest does not hold a body
+that is not tired."""
 from . import actions, feel, order, songs, story, things
 from .world import LONG_AGO, STAGES, add_event, beside, dist, free_tile, here, label, relation, rnd, ticks
 
 URGENT = {"visitor", "woke", "hatched", "low", "spoken", "event"}   # what stops it in its tracks (as it hurries a thought)
 # what a finished activity is to whoever is watching: the same words the steps a mind decides use, where there is one
 ACT = {"inspect": "look", "play": "use", "eat": "eat", "stone": "use", "go": "go", "tidy": "put_away", "gather": "gather", "fiddle": "fiddle",
-       "tend": "tend", "dance": "dance", "babble": "babble", "nap": "nap", "listen": "listen", "watch": "watch"}
+       "tend": "tend", "dance": "dance", "babble": "babble", "nap": "nap", "listen": "listen", "watch": "watch",
+       "seat": "use", "take out": "take_out", "bring": "show"}
+KEEPS_UP = ("follow", "tail")   # done on the move: it keeps after whoever it is for as long as it lasts
+TOGETHER = ("sing", "dance")    # besides whatever handles a thing: done with someone when they are doing it too
 COUNT = ["", "", "two", "three", "four", "five", "six", "seven", "eight", "nine"]
 
 
@@ -30,13 +38,17 @@ def music(house, pet):
 def anchor(house, pet):
     """Where its mind wants it to be near, if anywhere: the thing or the one its focus names, when they are in this room."""
     f = pet.get("focus") or {}
-    if f.get("type") not in ("stay near", "tend", "be with", "make"):
+    if f.get("type") not in ("stay near", "tend", "make"):   # (not "be with": that is doing what the other does, not standing by them; v3.4 §1)
         return None
     objs = house["rooms"][pet["room"]]["objects"]
     if f.get("type") == "make" and laid_out(pet):   # its bits are laid out: it stays by them
         return next((o["pos"] for o in objs.values() if o.get("fix", {}).get("bench")), pet["pos"])
     o, who = objs.get(f.get("what") or ""), house["pets"].get(f.get("who") or "")
     return o["pos"] if o else who["pos"] if who and who["room"] == pet["room"] and who["stage"] not in ("egg", "dead") else None
+
+
+def focus_who(pet):
+    return (pet.get("focus") or {}).get("who")
 
 
 def laid_out(pet):
@@ -52,6 +64,16 @@ def out_of_sight(cfg, room, o):
 
 def kin_here(house, pet):
     return [p for p in here(house, pet) if relation(house, pet, p)]
+
+
+def tired(pet):
+    return feel.level(pet, "energy") >= 2
+
+
+def minded(pet):
+    """What its mind is about, as far as its body goes: a mind set on rest does not hold a body that is not tired (v3.4 §1)."""
+    f = pet.get("focus") or {}
+    return None if f.get("type") == "rest" and not tired(pet) else f.get("type")
 
 
 def targets(house, cfg, pet, mem, name, A):
@@ -91,8 +113,8 @@ def targets(house, cfg, pet, mem, name, A):
                     out.append({"what": d, "goal": list(house["door_tiles"][d]), "bonus": 2.5})
                 elif focus.get("type") == "tidy" and d == mess and not order.job(house, cfg, pet, room):
                     out.append({"what": d, "goal": list(house["door_tiles"][d]), "bonus": 2.0})   # this room is done and there is a mess it knows of: tidying moves on, door by door
-                elif (focus.get("type") in (None, "explore", "play") or (d == mess and drawn)) \
-                        and ((under_way and d == mess) or house["tick"] - pet["rooms"].get(room["id"], LONG_AGO) >= ticks(cfg, cfg["body"]["go_again_seconds"])):
+                elif (minded(pet) in (None, "explore", "play", "project") or (focus.get("type") == "be with" and not (want and want["room"] == room["id"])) or (d == mess and drawn)) \
+                        and ((under_way and d == mess) or state(pet).get("bare") or house["tick"] - pet["rooms"].get(room["id"], LONG_AGO) >= ticks(cfg, cfg["body"]["go_again_seconds"])):
                     # (it stays where its mind put it a good while, and it never walks out on someone or something its mind
                     # keeps it by. Otherwise a mess it knows of draws it as one here would, the orderly most)
                     out.append({"what": d, "goal": list(house["door_tiles"][d]),
@@ -116,8 +138,8 @@ def targets(house, cfg, pet, mem, name, A):
     if do == "window":
         return [{"what": n, "goal": near([o["pos"][0], max(o["pos"][1], 0)])} for n, o in objs.items() if o.get("fix", {}).get("window")][:1]
     if do == "nap":
-        if feel.level(pet, "energy") < 1 and focus.get("type") != "rest":
-            return []   # not tired, and not minded to rest
+        if feel.level(pet, "energy") < 1 or not (tired(pet) or focus.get("type") == "rest"):
+            return []   # not tired; or only a bit, and not minded to rest
         beds = [o["pos"] for o in objs.values() if "rest" in o.get("fix", {}) or o.get("fix", {}).get("cozy")]
         return [{"goal": near(min(beds, key=lambda t: dist(me, t))) if beds else None}]
     if do == "eat":
@@ -130,7 +152,32 @@ def targets(house, cfg, pet, mem, name, A):
         if not job:
             return []
         pull = order.clutter(house, cfg, room) * cfg["body"]["mess_pull"] * (0.4 + 1.2 * pet["temper"].get("orderly", 0.5))
-        return [{"what": job["what"], "job": job["job"], "goal": near(job["pos"]), "bonus": pull}]
+        place = objs[job["job"][3]]["pos"] if job["job"][2] == "on" else job["job"][3]   # the shelf, the place on the wall or the tile it goes to: it is carried there
+        return [{"what": job["what"], "job": job["job"], "goal": near(job["pos"]), "to": None if dist(job["pos"], place) <= 1 else beside(cfg, place, job["pos"]), "bonus": pull}]
+    if do == "seat":   # something to sit or lie on that nobody is on: it goes and settles on it
+        S = cfg["body"]["seats"]
+        seats = [n for n, o in objs.items() if ("rest" in o.get("fix", {}) or "soft" in o.get("fix", {}) or n in S or o.get("made", {}).get("recipe", {}).get("kind") in S)
+                 and not o.get("wall") and not o.get("on") and not any(p["pos"] == o["pos"] for p in here(house, pet))]
+        return [{"what": n, "goal": None if me == objs[n]["pos"] else list(objs[n]["pos"])} for n in sorted(seats, key=lambda n: (pet["times"].get("body seat " + n, 0), dist(me, objs[n]["pos"])))[:2]]
+    if do == "take out":   # something put away that it may take: out it comes, a few steps off, to be looked at (not into a mess, and not what has only just gone in)
+        fresh = house["tick"] - ticks(cfg, cfg["order"]["just_out_seconds"])
+        kept = [n for n, o in things.made(room).items() if o.get("on") in objs and order.may_move(house, pet, o) and not o["made"].get("heirloom") and o.get("kept", 0) < fresh]
+        if room.get("mess", 0) >= 2 or not kept:
+            return []
+        n = min(kept, key=lambda n: (pet["times"].get("look " + n, 0), dist(me, objs[n]["pos"])))
+        return [{"what": n, "goal": near(objs[n]["pos"]), "to": free_tile(house, cfg, room, me if dist(me, objs[n]["pos"]) > 2 else [cfg["W"] // 2, cfg["H"] // 2])}]
+    if do == "bring":   # one of its own things, carried over to someone it is fond of
+        kin = [p for p in kin_here(house, pet) if not p["sleep"]]
+        mine = [n for n, o in things.on_floor(room).items() if o["made"]["owner"] == pet["id"] and not o["made"].get("heirloom") and not order.cap(cfg, o) and not things.prop(cfg, o).get("fixed")]
+        out = []
+        for p in sorted(kin, key=lambda p: (focus.get("who") != p["id"], dist(me, p["pos"])))[:1]:
+            far = [n for n in mine if dist(objs[n]["pos"], p["pos"]) > 2]
+            if far:
+                n = min(far, key=lambda n: (pet["times"].get("body bring " + n, 0), dist(me, objs[n]["pos"])))
+                out.append({"what": n, "who": p["id"], "goal": near(objs[n]["pos"]), "to": beside(cfg, p["pos"], objs[n]["pos"]), "bonus": 1.0 if focus.get("who") == p["id"] else 0.0})
+        return out
+    if do == "tail":
+        return [{"what": c["kind"], "creature": c["id"], "goal": None if dist(me, c["pos"]) <= 1 else beside(cfg, c["pos"], me)} for c in house["creatures"] if c["room"] == room["id"]][:1]
     making = focus.get("type") == "make" and not laid_out(pet)   # its mind is on making, and it is not ready yet
     bench = next((n for n, o in objs.items() if o.get("fix", {}).get("bench")), None)
     if do == "gather":
@@ -174,6 +221,8 @@ def targets(house, cfg, pet, mem, name, A):
         e = min(known, key=lambda e: e.get("last", LONG_AGO))
         dj = (house.get("dj") or {}).get("music") or {}   # the visitor's tune, if it knows it and it is playing: it sings along (§3.1)
         along = next((x for x in known if dj.get("mood") and songs.book(house)[x["id"]]["name"] == "the visitor's %s tune" % dj["mood"] and music(house, pet)), None)
+        theirs = {state(p)["now"]["what"] for p in kin_here(house, pet) if (state(p)["now"] or {}).get("do") == "sing"}   # someone here is singing one it knows: the same song
+        along = along or next((x for x in known if songs.book(house)[x["id"]]["name"] in theirs), None)
         return [{"what": songs.book(house)[(along or e)["id"]]["name"], "bonus": 1.0 if along else 0.0}]
     return []
 
@@ -187,14 +236,25 @@ def score(house, cfg, pet, name, A, t, b, r):
     s += sum(w * (T.get(g, 0.5) - 0.5) * 2 for g, w in A.get("temper", {}).items())
     s += B["habit"] * min(1.0, b["habits"].get(habit_key(house, pet, name), 0) / B["habit_full"])
     focus = pet.get("focus") or {}
-    if focus.get("type") in A.get("focus", []):
+    if minded(pet) in A.get("focus", []):
         on = focus.get("what") or focus.get("who")
         s += B["focus"] * (1.0 if not on or on in (t.get("what"), t.get("who")) else 0.4)
+    if A.get("handles") and t.get("what") and not (minded(pet) == "make" and not laid_out(pet)):   # (not while it is getting ready to make.) The fewer different things it has had its paws on lately, the more a thing it has not just handled draws it (v3.4 §0, §1)
+        lately = {th for tk, th in b.get("handled", []) if house["tick"] - tk < B["handle_ticks"]}
+        if t["what"] not in lately:
+            s += B["handle"] * min(1.0, max(0, 3 - len(lately)) / 2)
+    if A.get("handles") or name in TOGETHER:   # being with someone is doing what they do (v3.4 §1): the same toy, the same song, tidying side by side
+        want = house["pets"].get(focus.get("who") or "") if focus.get("type") == "be with" else None
+        for p in [want] if want and want["room"] == pet["room"] else kin_here(house, pet):
+            on = state(p)["now"]
+            if on and not p["sleep"] and on["name"] == name and (name not in ("play", "sing") or on.get("what") == t.get("what")):
+                s += B["together"] * (1.0 if p is want else 0.3)
+                break
     now = {phase(house), house["weather"]} | ({"music"} if music(house, pet) else set())
     s += sum(w for k, w in A.get("when", {}).items() if k in now)
     s -= B["variety"] * b["recent"][-8:].count(name) + (B["again"] if b["recent"][-1:] == [name] else 0.0)
     # the longer since it last did this, the more it is due: whatever its mind is about, in five minutes it has done many things (§0)
-    s += B["fresh"] * (0.5 if A.get("passive") else 1.0) * min(1.0, (house["tick"] - b.get("done", {}).get(name, LONG_AGO)) / ticks(cfg, B["fresh_seconds"]))
+    s += B["fresh"] * (1.0 if A.get("handles") else 0.5) * min(1.0, (house["tick"] - b.get("done", {}).get(name, LONG_AGO)) / ticks(cfg, B["fresh_seconds"]))
     if b.get("last_still") and (not t.get("goal") or t["goal"] == pet["pos"]) and not A.get("rest"):
         s -= B["stay"]   # it has just done something on this spot: next it moves (§1.4)
     at = anchor(house, pet)
@@ -210,28 +270,48 @@ def habit_key(house, pet, name):
     return "%s|%s|%s" % (name, house["rooms"][pet["room"]]["type"], phase(house))
 
 
-def choose(mind):
-    """The best thing to do now. There is always something: a pet awake is never doing nothing (§1.4)."""
+def choose(mind, fidget=False):
+    """The best thing to do now. There is always something: a pet awake is never doing nothing (§1.4).
+    `fidget`: the best bit of filler instead (a stretch, a hum, a fiddle with what is in reach), or None: done where
+    it stands, for one tick, and never what is chosen when there is something to do (v3.4 §1)."""
     pet, h, cfg = mind.pet, mind.eng.house, mind.cfg
-    b, r, best = state(pet), rnd(h, "body", pet["id"], h["tick"]), None
+    b, r, best, new = state(pet), rnd(h, "body", pet["id"], h["tick"], fidget), None, False
     rested = sum(b["idle"]) / max(1, len(b["idle"]))
+    lately = {th for tk, th in b.get("handled", []) if h["tick"] - tk < cfg["body"]["handle_ticks"]}
     for name, A in cfg["activities"].items():
-        if STAGES.index(pet["stage"]) < STAGES.index(A.get("stage", "hatchling")) or A.get("needs_tool") or A.get("needs_place"):
+        if STAGES.index(pet["stage"]) < STAGES.index(A.get("stage", "hatchling")) or A.get("needs_tool") or A.get("needs_place") or bool(A.get("fidget")) != fidget:
             continue   # (Phase B: a tool it must carry, a place it must be at; nothing has either yet)
         if A.get("passive") and rested >= cfg["body"]["passive_max"]:
             continue   # it has sat and looked enough for now, however tired and whatever its mind is on (§0); the night is for sleeping
         for t in targets(h, cfg, pet, mind.mem, name, A):
-            s = score(h, cfg, pet, name, A, t, b, r)
+            if fidget and t.get("goal"):
+                continue   # (only with what is already in reach: a fidget takes it nowhere)
+            s = score(h, cfg, pet, name, A, t, b, r) + (cfg["body"]["handle"] if b.get("bare") and A["do"] == "go" else 0.0)
             if best is None or s > best[0]:
                 best = (s, name, t)
+            new = new or bool(A.get("handles") and t.get("what") and t["what"] not in lately)
+    if best is None:
+        return None
+    if not fidget:   # nothing here it has not just had its paws on, and it has handled little lately: the next room has more (v3.4 §1)
+        b["bare"] = len(lately) < 3 and not new
     _, name, t = best
     A = cfg["activities"][name]
     lo, hi = A["seconds"]
     now = {"name": name, "do": A["do"], "what": t.get("what"), "who": t.get("who"), "where": t.get("where"), "job": t.get("job"), "door": t.get("door"), "trip": t.get("trip"), "creature": t.get("creature"),
-            "goal": t.get("goal"), "left": ticks(cfg, r.uniform(lo, hi)), "since": h["tick"], "began": None, "passive": bool(A.get("passive")),
+            "goal": t.get("goal"), "to": t.get("to"), "left": ticks(cfg, r.uniform(lo, hi)), "since": h["tick"], "began": None, "passive": bool(A.get("passive")),
             "icon": A.get("icon"), "voice": A.get("voice")}
     now["doing"] = say(cfg, h, pet, now, "doing")   # in the page's words, and the packet's
     return now
+
+
+def then(mind):
+    """What comes after the thing just done: now and then a fidget, never two running, more often while a thought
+    is on its way; otherwise the next thing to do."""
+    pet, h, B = mind.pet, mind.eng.house, mind.cfg["body"]
+    getting_ready = minded(pet) == "make" and not laid_out(pet)   # (a body working toward what its mind is set on making does not dawdle)
+    if not state(pet).get("fidgeted") and not getting_ready and rnd(h, "fidget", pet["id"], h["tick"]).random() < B["fidget"] * (2 if pet.get("thinking") else 1):
+        return choose(mind, fidget=True) or choose(mind)
+    return choose(mind)
 
 
 def say(cfg, house, pet, now, form, where=""):
@@ -261,16 +341,26 @@ def tick(mind):
     who = h["pets"].get(now.get("who") or "")
     if who and who["room"] == pet["room"] and now["do"] in ("follow", "sit with"):
         now["goal"] = None if dist(pet["pos"], who["pos"]) <= 1 else beside(cfg, who["pos"], pet["pos"])
+    if now["do"] == "tail":
+        c = next((c for c in h["creatures"] if c["id"] == now.get("creature") and c["room"] == pet["room"]), None)
+        now["goal"] = None if not c or dist(pet["pos"], c["pos"]) <= 1 else beside(cfg, c["pos"], pet["pos"])
+    def step(to):
+        now["there"] = h["tick"]   # the last tick it took a step on: what it does after that is done in one place
+        mind.walk(to)
     if now["began"] is None:
-        if now.get("goal") and pet["pos"] != now["goal"] and h["tick"] - now["since"] < ticks(cfg, cfg["body"]["walk_seconds"]):
-            return mind.walk(now["goal"])
+        if now["do"] not in KEEPS_UP and now.get("goal") and pet["pos"] != now["goal"] and h["tick"] - now["since"] < ticks(cfg, cfg["body"]["walk_seconds"]):
+            return step(now["goal"])
         now["began"] = h["tick"]
         if now.get("voice"):
             voice(h, pet, now["voice"])
+    if now["do"] in KEEPS_UP and now.get("goal") and pet["pos"] != now["goal"]:
+        step(now["goal"])   # it keeps after them for as long as this lasts
+    elif now.get("to") and pet["pos"] != now["to"] and h["tick"] - now["began"] < ticks(cfg, cfg["body"]["walk_seconds"]):
+        return step(now["to"])   # it has the thing in its paws and is carrying it to where it goes
     now["left"] -= 1
     if now["left"] <= 0:
         finish(mind, now)
-        b["now"] = dict(choose(mind), startled=urgent)   # and straight on to the next thing: there is no tick on which it is doing nothing (§1.4)
+        b["now"] = dict(then(mind), startled=urgent)   # and straight on to the next thing: there is no tick on which it is doing nothing (§1.4)
 
 
 def voice(house, pet, kind):
@@ -284,7 +374,7 @@ def finish(mind, now, cut=False):
     """The activity is over: what it really did is done, and it is written down, briefly."""
     pet, h, cfg, eng = mind.pet, mind.eng.house, mind.cfg, mind.eng
     b, room, E = state(pet), h["rooms"][pet["room"]], cfg["effects"]
-    b["now"], did, fx, key, where = None, None, {}, None, ""
+    b["now"], did, fx, key, where, told = None, None, {}, None, "", None
     A = cfg["activities"][now["name"]]
     done = not cut and now["began"] is not None
     name = actions.norm(now.get("what")) if now.get("what") else None
@@ -304,6 +394,31 @@ def finish(mind, now, cut=False):
                 fx.pop("tags", None)
                 if do == "play":
                     key = "body play " + name
+                    if o.get("made", {}).get("recipe", {}).get("kind") == "ball" or (name == "ball" and o.get("fix", {}).get("movable")):   # a ball rolls: to someone, if anyone is up, who may send it back
+                        mate = min((p for p in kin_here(h, pet) if not p["sleep"]), key=lambda p: (focus_who(pet) != p["id"], dist(pet["pos"], p["pos"])), default=None)
+                        r = rnd(h, "roll", pet["id"], h["tick"])
+                        order.moved(o, h["tick"])
+                        o["pos"] = free_tile(h, cfg, room, beside(cfg, mate["pos"], pet["pos"]) if mate else [min(cfg["W"] - 2, max(1, pet["pos"][0] + r.randint(-4, 4))), min(cfg["H"] - 2, max(1, pet["pos"][1] + r.randint(-3, 3)))], name)
+                        told = "rolled the %s over to %s" % (name, actions.handle(h, pet, mate)) if mate else "sent the %s rolling across the room" % name
+                        if mate:
+                            add_event(h, mate, "%s rolled the %s over to you" % (actions.handle(h, mate, pet), name))
+            elif do == "seat" and o is not None:
+                _, fx, key = actions.use(h, cfg, pet, name)
+                fx.pop("tags", None)
+                key = "body seat " + name
+            elif do == "take out" and o is not None and o.get("on"):
+                where, o["kept"] = o.pop("on"), h["tick"]
+                o["pos"] = free_tile(h, cfg, room, pet["pos"], name)
+                key = "look " + name
+            elif do == "bring" and o is not None and not o.get("on"):
+                other = h["pets"].get(now.get("who") or "")
+                order.moved(o, h["tick"])
+                o["pos"] = free_tile(h, cfg, room, pet["pos"], name)
+                key = "body bring " + name
+                if other and other["room"] == pet["room"] and not other["sleep"]:
+                    add_event(h, other, "%s carried the %s over to you" % (actions.handle(h, other, pet), name))
+            elif do == "tail":
+                pet["met"][now["what"]] = pet["met"].get(now["what"], 0) + 1
             elif do == "go" and name in room["doors"] and actions.check({"type": "go", "door": name}, h, cfg, pet, mind.mem) is None:
                 text, fx, key = actions.go(h, cfg, pet, name)
                 add_event(h, pet, text)
@@ -342,7 +457,7 @@ def finish(mind, now, cut=False):
                 mind.novelty(fx, key or "body " + now["name"], False, fx.pop("scale", 1.0))
             fx.pop("scale", None)
             actions.bump(pet, cfg, {n: v for n, v in fx.items() if n in pet["needs"]})
-            did = say(cfg, h, pet, now, "did", where)
+            did = told or say(cfg, h, pet, now, "did", where)
             if act:
                 story.acted(h, cfg, pet, act, True)
     except Exception:   # a body's mistake must never stop a pet: it just did not do that
@@ -352,7 +467,8 @@ def finish(mind, now, cut=False):
         if p["id"] in news:
             p["news"] = news[p["id"]]
     start = now["since"]
-    if done and did:
+    b["fidgeted"] = bool(A.get("fidget"))
+    if done and did and not A.get("fidget"):   # (a stretch or a hum is not something it did: its mind is not told of them, and they are no habit)
         b["since"].append(did)
         del b["since"][:-40]
         k = habit_key(h, pet, now["name"])
@@ -364,16 +480,20 @@ def finish(mind, now, cut=False):
         if len(b["habits"]) > 60:
             for k2 in sorted(b["habits"], key=b["habits"].get)[:20]:
                 del b["habits"][k2]
-    b["recent"] = (b["recent"] + [now["name"]])[-12:]
+    if not A.get("fidget"):
+        b["recent"] = (b["recent"] + [now["name"]])[-12:]
     if done:
         b.setdefault("done", {})[now["name"]] = h["tick"]
+        if A.get("handles") and now.get("what"):
+            b["handled"] = (b.get("handled", []) + [[h["tick"], now["what"]]])[-12:]
     b["last_passive"] = bool(now["passive"]) and done
     span = max(1, h["tick"] - start)
     b["idle"] = (b["idle"] + [1 if now["passive"] and now["began"] is not None else 0] * min(span, 60))[-cfg["body"]["window_ticks"]:]
     b["n"] += 1
-    b["last_still"] = now["began"] is not None and now["began"] <= start   # it did not take a step to do it
+    b["last_still"] = now["began"] is not None and not now.get("there")   # it did not take a step to do it
     eng.did(pet, start, h["tick"], now["name"], bool(now["passive"]), "body", did or "",
-            still=h["tick"] - now["began"] if now["began"] is not None else 0, rest=bool(A.get("rest")))
+            still=h["tick"] - max(now["began"], now.get("there") or 0) if now["began"] is not None else 0, rest=bool(A.get("rest")),
+            thing=now.get("what") if done and A.get("handles") else None)
 
 
 def since(pet):

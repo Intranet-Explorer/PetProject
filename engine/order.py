@@ -2,7 +2,7 @@
 a shelf or in a chest is still the same thing, in the same room, doing whatever it does; it only stops lying on the
 floor. Tidying is real: it moves things, and a thing put in the same place twice has a home there."""
 from . import things
-from .world import add_event, days as world_days, dist, free_tile, label, moment
+from .world import add_event, days as world_days, dist, free_tile, label, moment, ticks
 
 MESS = ["everything here has its place", "a few things lie about", "this room is a mess"]
 NOWHERE = "there's nowhere left to put things here: a shelf, a box, a basket or a chest would be somewhere to keep them"
@@ -193,6 +193,9 @@ def place_for(house, cfg, pet, room, name):
             tile = free_tile(house, cfg, room, home["pos"], name)
             if dist(home["pos"], tile) <= 1:   # (no free tile by its stone: it is put somewhere else rather than moved about for ever)
                 return "at", tile
+    box = box_of(house, o["made"]["owner"])
+    if box and box[0] is room and not o["made"].get("heirloom"):   # what someone who died left, out of its box in the room the box stands in (SPEC-v3.4: a body may take it out to look at): back in it
+        return "on", box[1]
     if can_hang(cfg, o) and things.wall_slot(house, room):
         return "wall", things.wall_slot(house, room)
     beside = corner(house, cfg, room, name)
@@ -209,7 +212,8 @@ def job(house, cfg, pet, room):
     bits to put in something. {what, job: [kind, name, how, place], pos}, or None when there is nowhere to put
     anything."""
     out, objs = [], room["objects"]
-    for n in loose(house, cfg, room):   # anyone may put anyone's thing in its place here: it stays its owner's, in the same room
+    fresh = house["tick"] - ticks(cfg, cfg["order"]["just_out_seconds"])   # what has only just been taken out, brought over or rolled across is left a while
+    for n in [n for n in loose(house, cfg, room) if objs[n].get("kept", -10 ** 9) <= fresh]:   # anyone may put anyone's thing in its place here: it stays its owner's, in the same room
         where = place_for(house, cfg, pet, room, n)
         if where:
             out.append({"what": n, "job": ["thing", n, where[0], where[1]], "pos": objs[n]["pos"]})
@@ -232,7 +236,7 @@ def do_job(house, cfg, pet, room, job):
     o = room["objects"].get(name)
     if not o or "made" not in o or o.get("on"):
         return ""
-    if how == "on" and (place not in room["objects"] or stores(cfg, room).get(place, 0) <= 0):
+    if how == "on" and (place not in room["objects"] or (stores(cfg, room).get(place, 0) <= 0 and not keeps(room["objects"][place]))):
         return ""
     said, owner = put(house, cfg, pet, room, name, how, place), house["pets"].get(o["made"]["owner"])
     if owner and owner is not pet and owner["stage"] != "dead":
