@@ -113,7 +113,8 @@ def targets(house, cfg, pet, mem, name, A):
                     out.append({"what": d, "goal": list(house["door_tiles"][d]), "bonus": 2.5})
                 elif focus.get("type") == "tidy" and d == mess and not order.job(house, cfg, pet, room):
                     out.append({"what": d, "goal": list(house["door_tiles"][d]), "bonus": 2.0})   # this room is done and there is a mess it knows of: tidying moves on, door by door
-                elif (minded(pet) in (None, "explore", "play", "project") or (focus.get("type") == "be with" and not (want and want["room"] == room["id"])) or (d == mess and drawn)) \
+                elif (minded(pet) in (None, "explore", "play", "project") or (focus.get("type") == "be with" and not (want and want["room"] == room["id"])) or (d == mess and drawn)
+                      or (state(pet).get("bare") and not anchor(house, pet))) \
                         and ((under_way and d == mess) or state(pet).get("bare") or house["tick"] - pet["rooms"].get(room["id"], LONG_AGO) >= ticks(cfg, cfg["body"]["go_again_seconds"])):
                     # (it stays where its mind put it a good while, and it never walks out on someone or something its mind
                     # keeps it by. Otherwise a mess it knows of draws it as one here would, the orderly most)

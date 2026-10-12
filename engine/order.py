@@ -101,7 +101,7 @@ def old(house, cfg, room, name):
 
 def box_of(house, pid):
     """(room, name) of the keepsake box of someone who has died, or None while it has none."""
-    return next(((r, n) for r in house["rooms"].values() if r["type"] for n, o in r["objects"].items() if keeps(o) == pid), None)
+    return next(((r, n) for r in house["rooms"].values() if r["type"] for n, o in r.get("objects", {}).items() if keeps(o) == pid), None)
 
 
 def give_box(house, cfg, room, stone):
