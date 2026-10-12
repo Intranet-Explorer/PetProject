@@ -1,7 +1,8 @@
 """Which pictures go on which own sheet, and the ones that are computed instead of typed (walls, floors, light)."""
+import colorsys, os, tomllib
 from PIL import Image
 import art
-from build import Sheet, pic, rgba
+from build import ASSETS, Sheet, pic, rgba
 
 OUT = rgba(art.PAL["#"])
 
@@ -33,14 +34,20 @@ def glyph(rows, ox, oy):
 
 def kinds():
     s = Sheet("kinds.png", 8)
+    later = ("rope", "carver", "trowel", "hammer")   # drawn after the egg had its place: they go behind it, so nothing moves
     for name, rows in art.KINDS.items():
         extra = {"anchor": [0, 24]} if name in ("shelf", "mirror", "picture", "wall hook") else {}   # these hang on the wall above their tile
-        s.add("kind." + name, pic(rows), tint="hue", **extra)
+        if name not in later:
+            s.add("kind." + name, pic(rows), tint="hue", **extra)
     egg = pic(art.EGG)
     lean = Image.new("RGBA", egg.size, (0, 0, 0, 0))   # the second frame: the egg rocks to one side
     for y in range(16):
         lean.paste(egg.crop((0, y, 16, y + 1)), (1 if y < 7 else -1 if y > 11 else 0, y))
     s.strip("egg", [egg, lean], tint="hue", anims={"idle": {"frames": [[0, 0]], "fps": 1}, "rock": {"frames": [[0, 0], [1, 0]], "fps": 3}})
+    for name in later:
+        s.add("kind." + name, pic(art.KINDS[name]), tint="hue")
+    # a pot with something planted in it is drawn without the plant it is typed with: plant.* (bits.png) goes on it instead
+    s.add("kind.plant pot.bare", pic(rows_with(art.KINDS["plant pot"], {y: "." * 16 for y in range(8)})), tint="hue")
     return s
 
 
@@ -181,10 +188,31 @@ def source(name):
     return out
 
 
+def materials():
+    """What the processes give (crafting.toml, [material.<name>]): each names the bit it is `like` and a `tint`."""
+    with open(os.path.join(os.path.dirname(os.path.dirname(ASSETS)), "crafting.toml"), "rb") as f:
+        return tomllib.load(f).get("material", {})
+
+
+def recoloured(im, tint):
+    """A picture in another colour: the tint's hue and saturation, and its lightness for the picture's middle tone, so
+    the shading stays. The dark line is left alone."""
+    th, tl, ts = colorsys.rgb_to_hls(*(v / 255 for v in rgba(tint.lstrip("#"))[:3]))
+    px = [(xy, colorsys.rgb_to_hls(*(v / 255 for v in im.getpixel(xy)[:3]))[1]) for xy in ((x, y) for y in range(im.size[1]) for x in range(im.size[0]))
+          if im.getpixel(xy)[3] and im.getpixel(xy) != OUT]
+    mid = sum(l for _, l in px) / max(1, len(px))
+    out = im.copy()
+    for xy, l in px:
+        out.putpixel(xy, tuple(round(v * 255) for v in colorsys.hls_to_rgb(th, max(0.1, min(0.97, tl + (l - mid))), ts)) + (255,))
+    return out
+
+
 def bits():
     s = Sheet("bits.png", 8)
+    made = materials()
     for name, rows in art.BITS.items():
-        s.add("bit." + name, pic(rows))
+        if name not in made:
+            s.add("bit." + name, pic(rows))
     for name, (bare, base, at) in GROWN.items():
         im, bit = source(base), pic(art.BITS[name])
         bit = bit.crop(bit.getbbox())
@@ -193,6 +221,12 @@ def bits():
             im.alpha_composite(bit, (x, y))
         s.add("grows." + name, im)
         s.add("grows.%s.bare" % name, source(bare))
+    for name, rows in art.PLANT.items():   # something growing, to go over the pot or bed it is planted in
+        s.add("plant." + name, pic(rows))
+    # Last, because crafting.toml may grow: a material's own picture if art.BITS has one, or else the bit it is like, tinted.
+    for name, m in made.items():
+        assert name in art.BITS or m.get("like") in art.BITS, "the material %r is like %r, which art.BITS has no picture of" % (name, m.get("like"))
+        s.add("bit." + name, pic(art.BITS[name]) if name in art.BITS else recoloured(pic(art.BITS[m["like"]]), m["tint"]))
     return s
 
 
@@ -237,7 +271,42 @@ def fx():
             if d < 15:
                 glow.putpixel((x, y), rgba("ffe18d", 130 if d < 6 else 80 if d < 10.5 else 40))
     s.add("fx.glow", glow, anchor=[8, 8])
+    # Two bursts (SPEC-v3.4 §5): a pet got what it wanted (warm gold); a pet found something out (white-hot, with sparks of teal).
+    gold = lambda d: "ffffff" if d < 2 else "ffe18d" if d < 5 else "f1c471"
+    hot = lambda d: "ffffff" if d < 3 else "ffe18d" if d < 6 else TEAL
+    play = lambda n: {"play": {"frames": [[i, 0] for i in range(n)], "fps": 10}}
+    want = [burst((0, 3), (0, 0), gold), burst((0, 6), (1, 4), gold), burst((3, 7), (2, 5), gold), burst((5, 7), (4, 6), gold)]
+    s.strip("fx.burst.want", want, anims=play(4))
+    find = [burst((0, 4), (0, 2), hot), burst((0, 7), (0, 5), hot, [(3, 5), (11, 4), (4, 11), (12, 10)]),
+            burst((2, 7), (2, 6), hot, [(2, 4), (12, 3), (3, 12), (13, 11)]), burst((5, 7), (4, 6), hot, [(1, 3), (13, 2), (2, 13), (14, 12), (5, 5), (10, 10)])]
+    s.strip("fx.burst.find", find, anims=play(4))
     return s
+
+
+TEAL = "8feff1"
+
+
+def burst(straight, slant, tone, sparks=()):
+    """One frame of a star-burst about the middle of 16 x 16: four straight rays two pixels thick and four slanting
+    ones, each (from, to) in pixels out from the middle; `tone(d)` is the colour that far out. `sparks` are loose
+    pixels of teal. A darker line of its own colour goes round it, so it shows on a pale floor as well as a dark one."""
+    lit = {}
+    for d in range(*straight):
+        for a in (7, 8):
+            for xy in ((a, 7 - d), (a, 8 + d), (7 - d, a), (8 + d, a)):
+                lit[xy] = tone(d)
+    for d in range(*slant):
+        for xy in ((7 - d, 7 - d), (8 + d, 7 - d), (7 - d, 8 + d), (8 + d, 8 + d)):
+            lit[xy] = tone(d + 1)
+    lit.update({xy: TEAL for xy in sparks})
+    im = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
+    for (x, y), c in sorted(lit.items(), key=lambda p: p[1] != TEAL):   # the warm line last: it wins where the two meet
+        for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            if (x + dx, y + dy) not in lit and 0 <= x + dx < 16 and 0 <= y + dy < 16:
+                im.putpixel((x + dx, y + dy), rgba("2d697b" if c == TEAL else "d78b4a"))
+    for xy, c in lit.items():
+        im.putpixel(xy, rgba(c))
+    return im
 
 
 def ui():

@@ -206,7 +206,7 @@ export class Room {
 
     const lay = layout(room.type, () => { this.built = ""; if (this.scene) this.update(this.scene); });
     const keep = this.keep();
-    const key = JSON.stringify([room.id, room.type, lay === undefined, room.areas, Object.entries(room.objects).map(([n, o]) => [n, o.pos, o.state, o.wall, o.on, o.store?.holds, o.servings === 0, o.grow != null && o.grow < 0.35, o.water,
+    const key = JSON.stringify([room.id, room.type, lay === undefined, room.areas, Object.entries(room.objects).map(([n, o]) => [n, o.pos, o.state, o.wall, o.on, o.store?.holds, o.servings === 0, o.grow != null && o.grow < 0.35, o.water, o.planted,
       o.made && [o.made.recipe, o.made.active, o.made.behavior?.do, o.made.worn, !!o.made.heirloom], !!o.memorial]), room.spots, room.paint, room.doors, room.shut, room.wet, snap.power,
       snap.rooms.map((r) => r.type), room.marks, this.K, keep, snap.door_tiles]);
     if (key !== this.built) {
@@ -537,6 +537,7 @@ export class Room {
       if (t.bob || t.bounce || t.stir === 1) t.s.y = t.y - Math.round((t.bounce ? Math.abs(Math.sin(now / 190 + t.x)) * 5 : t.stir === 1 ? Math.abs(Math.sin(now / 215)) * 4 : (Math.sin(now / 700 + t.x) + 1) * 1) * K) / K;
       else if (t.s.y !== t.y) t.s.y = t.y;
       t.s.x = t.stir === 2 ? t.x + Math.round(Math.sin(now / 70) * K * Math.max(0, Math.sin(now / 450))) / K : t.x;   // fiddled with: it shakes, in fits
+      for (const e of t.extra) { e.position.copyFrom(t.s.position); e.visible = t.s.visible; }   // what grows in it goes with it
     }
     if (now > n.glint) {
       n.glint = now + 700;
@@ -632,6 +633,13 @@ export class Room {
       const bits = new Map<string, number>();   // loose bits tidied into it, counted: "bits: string x3, bell" (from the room as it is now: `o` is as old as the last redraw)
       for (const b of room.objects[name]?.store?.bits ?? []) bits.set(b, (bits.get(b) ?? 0) + 1);
       if (bits.size) out.push(`bits: ${[...bits].map(([b, n]) => (n > 1 ? `${b} x${n}` : b)).join(", ")}`);
+    }
+    const p = o.planted;   // SPEC-v3.4 §3.5: what is growing in it, and how it is doing ("a bean plant, in leaf")
+    if (p) {
+      const a = /^[aeiou]/.test(p.what) ? "an" : "a", ripe = "ripe: ready to pick";
+      const plant = p.stage === "planted" ? `${a} ${p.what}` : /seed$/.test(p.what) ? "a plant" : `${a} ${p.what} plant`;
+      const how = { planted: "just planted", sprout: "sprouting", leaves: "in leaf", ripe }[p.stage] ?? p.stage;
+      out.push(`${plant}, ${p.wilted ? (p.stage === "ripe" ? `wilted, but ${ripe}` : "wilted") : how}`);
     }
     if (o.on) out.push(`kept ${into(o.on)}`);
     const h = o.home, there = h && h.room === room.id && (h.on ? o.on === h.on : !o.on && at(h.pos, o.pos));

@@ -65,7 +65,8 @@ A pack whose licence forbids redistribution lives outside the repository: give i
   `creature.<kind>` · `emote.<mood>` (tired, uneasy, lonely, bored, content, and more) · `fx.*` puffs, sparkles,
   hearts, notes, z's · `ui.*` bubbles and frames · `icon.room.<type>` for the minimap · `icon.act.<icon>` what a
   pet's body is doing by itself, to go over its head (one for each `icon` in activities.toml: 12 × 12, a sign on a
-  small white plate so it reads on any floor) · `door.<state>` · `egg` · `stone` (a memorial).
+  small white plate so it reads on any floor) · `plant.<stage>` something growing (below) · `door.<state>` · `egg` ·
+  `stone` (a memorial).
 - `fix.little radio` (`.on`, `.off`) is the visitor's own radio, set down in a room until the pets find theirs.
 - A bit a room grows is drawn on its source, standing on the bit's tile like a fixture: `grows.<bit>` with the bit on
   it (petals on a flower, feathers in a nest, reed among the reeds), `grows.<bit>.bare` after it has been picked,
@@ -73,6 +74,18 @@ A pack whose licence forbids redistribution lives outside the repository: give i
   drawn loose as before, and not at all while it grows back, so a pack can bring sources by adding these names.
   Ours are in `own/bits.png` (`own/src/draw.py`, `GROWN`: a source from `art.py` with the bit's own picture set on
   it), but for leaf and wood, which grow on pictures of the pack.
+- What a process gives (`crafting.toml`, `[material.<name>]`: wicker, fired clay, rope…) is a bit like any other and
+  needs a `bit.<name>`. Ours are drawn by `own/src/draw.py` at the end of `own/bits.png`, one for every material in
+  that file: its own picture if `art.py`'s `BITS` has one, or else the bit it is `like` in its `tint`. After adding
+  a material, draw the sheets again and give the new `bit.<name>` its entry here (validate.py asks for it).
+- Something planted (SPEC-v3.4 §3.5) is drawn over the pot or bed it is in: `plant.<stage>` for each stage in
+  `crafting.toml` (`planted`, `sprout`, `leaves`, `ripe`) and `plant.wilted`, or `plant.<what>.<stage>` where one
+  plant should look different from the rest (`plant.bean.ripe`). The picture is set foot to foot and middle to
+  middle on what it is planted in, at that thing's size; ours put the earth where a 16 × 16 pot's rim is. A thing
+  that has `<its sprite>.bare` is drawn as that while something is planted in it (`kind.plant pot.bare`: our pot is
+  typed with a plant of its own). A pack with no `plant.*` shows nothing.
+- `fx.burst.want` and `fx.burst.find`: the moment a pet gets what it wanted, or finds something out; each has a
+  `play` animation.
 
 ## kinds.json
 
@@ -90,7 +103,8 @@ A pack whose licence forbids redistribution lives outside the repository: give i
 - `store`: it keeps things, this many (a shelf, a chest, a crate, a basket, a box). `inside`: they go in it, out of
   sight, instead of on it.
 - `hooks`: things can be hung on it, this many (a wall hook). `hangs`: a pet can hang it on a wall or on a hook.
-- The engine reads `rank`, `wall`, `not`, `a`, `flat`, `store`, `inside`, `hooks`, `hangs`. The view reads `sprite`.
+- `tool`: it is a tool (a carver, a trowel, a hammer): `crafting.toml` says what each is for and what it is made of.
+- The engine reads `rank`, `wall`, `not`, `a`, `flat`, `store`, `inside`, `hooks`, `hangs`, `tool`. The view reads `sprite`.
 
 ## rooms/<type>.json
 
@@ -178,5 +192,7 @@ Three more sections say what the house sounds like (SPEC-v3.3 §3 and §4):
    and sound names something that exists, every layout leaves its doors reachable, nothing in the catalog is
    unusable, no file lies about unused), and `uv run python -m engine.check` (minutes: the whole house, the art too).
 
-The pictures in `own/` and the JSON beside this file (all but `kinds.json`) are written by `own/src/build.py` from
-the tables in `own/src`: change them there and run it again (its first lines say how).
+The pictures in `own/` are drawn by `own/src/build.py` from the tables in `own/src`: change them there and run it
+again (its first lines say how). The JSON beside this file was first written by it too and is kept by hand now: a
+new picture's entry for `sprites.json` is what `build.own_art()` returns for its name. Add pictures at the end of a
+sheet, so no other moves.

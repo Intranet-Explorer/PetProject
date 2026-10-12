@@ -447,5 +447,62 @@
   "sprite": "kind.wall hook",
   "a": "a",
   "hooks": 2
+ },
+ "rope": {
+  "rank": 1,
+  "wall": false,
+  "not": [
+   "hard",
+   "glassy",
+   "sweet",
+   "bright"
+  ],
+  "sprite": "kind.rope",
+  "a": "a",
+  "hangs": true
+ },
+ "carver": {
+  "rank": 1,
+  "wall": false,
+  "not": [
+   "soft",
+   "bouncy",
+   "springy",
+   "sweet",
+   "fragrant"
+  ],
+  "sprite": "kind.carver",
+  "a": "a",
+  "tool": true
+ },
+ "trowel": {
+  "rank": 1,
+  "wall": false,
+  "not": [
+   "soft",
+   "bouncy",
+   "springy",
+   "sweet",
+   "fragrant",
+   "glassy"
+  ],
+  "sprite": "kind.trowel",
+  "a": "a",
+  "tool": true
+ },
+ "hammer": {
+  "rank": 2,
+  "wall": false,
+  "not": [
+   "soft",
+   "bouncy",
+   "sweet",
+   "fragrant",
+   "glassy",
+   "quiet"
+  ],
+  "sprite": "kind.hammer",
+  "a": "a",
+  "tool": true
  }
 }

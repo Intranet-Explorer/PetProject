@@ -22,7 +22,7 @@ export type Drawn = { kind: string; sprite: string; color: string | null; size: 
 /** `sprite`: the name of its picture. `stir`: a pet is at it just now (1 playing with it: it bounces; 2 fiddling: it
  *  shakes; 3 it has been picked up to be put away: not shown), set by the room at every snapshot. */
 export type Thing = { name: string; obj: Obj; s: Sprite; x: number; y: number; rect: Rect; canvas: HTMLCanvasElement; texture: Texture; drawn: Drawn | null; scale: number; sprite: string;
-  wall: boolean; on: boolean; glassy: boolean; bob: boolean; bounce: boolean; noisy: boolean; fragrant: boolean; heirloom: boolean; extra: Sprite[]; stir: number };
+  wall: boolean; on: boolean; glassy: boolean; bob: boolean; bounce: boolean; noisy: boolean; fragrant: boolean; heirloom: boolean; extra: Sprite[]; stir: number };   // `extra`: what is drawn on it and goes where it goes (a plant in a pot)
 /** Where a thing put away on another stands (SPEC-v3.3 §2): its foot, its depth, and whether that is up on the wall. */
 type Slot = { x: number; y: number; z: number; wall: boolean };
 export type Lamp = { x: number; y: number; r: number; color: number[]; made: boolean };
@@ -107,7 +107,7 @@ export class Still {
         // how it looks just now: a bowl by what is left in it, a plant by how far it has grown, anything else by its state
         const dead = !!o.fix?.light && o.state === "on" && !snap.power;   // in a power cut no lamp is lit, whatever its switch says
         const state = dead ? "off" : o.servings != null ? (o.servings <= 0 ? "empty" : o.servings < 2 ? "half" : "full") : o.state === "ripe" ? "ripe" : o.grow != null ? (o.grow >= 0.4 ? "growing" : null) : o.state;
-        const sprite = pick(state ? `${base}.${state}` : null, base), sz = size(sprite);
+        const sprite = pick(o.planted ? `${base}.bare` : null, state ? `${base}.${state}` : null, base), sz = size(sprite);
         const flat = !!o.fix?.soft || !!o.fix?.sun || !!o.water || lf?.walk || lf?.layer === "floor", onWall = !!o.wall || !!lf?.wall || lf?.layer === "wall";   // (a recording from before the layouts has its window on a floor tile: it is hung on the wall above all the same)
         const t = this.put(name, o, sprite, slot ? "sorted" : flat ? "ground" : onWall ? "wall" : lf?.layer === "top" ? "top" : "sorted", undefined, undefined, slot ? this.small : 1, slot);
         if (o.fix?.window) this.windows.push({ name, rect: this.glass(sprite, t), open: o.state === "open" });
@@ -318,6 +318,18 @@ export class Still {
     const t: Thing = { name, obj: o, s, x, y, rect, canvas, texture, drawn: null, scale, sprite, wall: hung, on: false, glassy: false, bob: false, bounce: false, noisy: false,
                        fragrant: false, heirloom: false, extra: [], stir: 0 };
     this.things.set(name, t);
+    // Something planted in it (SPEC-v3.4 §3.5): the picture for how far it has grown (or for a plant that has wilted)
+    // goes over it, foot on foot, at its size. An art pack with no such picture shows nothing.
+    const stage = o.planted && (o.planted.wilted ? "wilted" : o.planted.stage), plant = o.planted && [`plant.${o.planted.what}.${stage}`, `plant.${stage}`].find(has);
+    if (plant) {
+      const p = new Sprite(tex(plant));
+      p.anchor.set(0.5, 1);
+      p.scale.set(scale);
+      p.position.set(x, y);
+      p.zIndex = s.zIndex + 0.05;
+      if (s.parent) s.parent.addChild(p); else this.standing.push(p);
+      t.extra.push(p);
+    }
     return t;
   }
 
@@ -327,9 +339,10 @@ export class Still {
     const color = doing.startsWith("change_color:") ? doing.split(":")[1] : d.color;
     const look = { soft: mat === "soft" || undefined, dark: mat === "dark" || undefined, damp: m.worn.includes("damp") || undefined, dusty: m.worn.includes("dusty") || undefined,
                    eaten: m.worn.includes("eaten") || undefined };
-    const pic = has(d.sprite) ? tinted(d.sprite, color, look) : { texture: tex(d.sprite), canvas: canvasOf(d.sprite) };
+    const sprite = o.planted ? pick(`${d.sprite}.bare`, d.sprite) : d.sprite;   // a pot drawn with a plant of its own is bare under what is planted in it
+    const pic = has(sprite) ? tinted(sprite, color, look) : { texture: tex(sprite), canvas: canvasOf(sprite) };
     const scale = slot ? this.small : Math.max(1, Math.round(this.K * (SIZES[Math.round(d.size) - 1] ?? 1))) / this.K;
-    const t = this.put(name, o, d.sprite, "sorted", pic.texture, pic.canvas, scale, slot);
+    const t = this.put(name, o, sprite, "sorted", pic.texture, pic.canvas, scale, slot);
     t.drawn = { ...d, color };
     t.on = power && (o.state === "on" || doing === "glow" || ((mat === "bright" || mat === "warm") && m.active));   // a power cut is dark for made lights too
     if (!t.wall && !slot) {   // a made thing sits on a small soft shadow: that, and its size, tell it from a bit lying loose

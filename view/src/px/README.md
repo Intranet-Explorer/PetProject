@@ -57,6 +57,10 @@ others there, along that sprite's `surface` (`sprites.json`, optional: `[x, y, w
 across the sprite's middle). In a thing whose `store.inside` is true it is not drawn: the chest wears a small
 number. `room.areas` are tinted faintly, each name its own colour, and named when names show.
 
+**Planted (SPEC-v3.4 §3.5).** A thing with `obj.planted` wears `plant.<what>.<stage>` or `plant.<stage>` (`plant.wilted`
+when it has wilted) over it, foot on foot at its size, and is itself drawn as `<its sprite>.bare` if the art has
+that; with no such picture nothing is added. Its hover card says "a bean plant, in leaf".
+
 **The hover card (SPEC-v3.2 §3.3).** Nothing in the room carries a permanent label except the pets' name plates.
 `onHover` and `onClick` give a `Target` (`tile`, and whichever of `pet`, `creature`, `door`, `object`, `bit`, `mark`
 is under the pointer). `room.describe(target)` turns that into a `Card`, or null:

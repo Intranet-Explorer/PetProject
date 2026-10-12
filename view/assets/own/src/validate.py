@@ -85,7 +85,8 @@ if parts.exists():
 # ---- everything the house has: fixtures and their states, bits, small creatures, feelings ----
 for name in ("fix.dial box", "fix.dial box.on", "fix.dial box.off", "fix.little radio", "fix.little radio.on", "fix.little radio.off", "fix.heavy book", "egg", "stone", "crate", "door.open", "door.shut", "door.stuck",
              "ui.bubble.say", "ui.bubble.think", "ui.bubble.say.tail", "ui.bubble.think.tail", "ui.plate", "ui.panel", "icon.room.unknown",
-             "fx.sparkle", "fx.puff", "fx.flash", "fx.heart", "fx.note", "fx.zzz", "fx.dust", "fx.glow", "fx.chalk dust", "fx.drip", "fx.rain", "fx.snow"):
+             "fx.sparkle", "fx.puff", "fx.flash", "fx.heart", "fx.note", "fx.zzz", "fx.dust", "fx.glow", "fx.chalk dust", "fx.drip", "fx.rain", "fx.snow",
+             "fx.burst.want", "fx.burst.find"):
     have(name)
 for wall in DOORS:
     for state in ("open", "shut", "stuck"):
@@ -95,6 +96,14 @@ for b, v in house["bits"].items():
     if any(not v.get("late") if r["bits"] == "any" else b in r["bits"] for r in house["rooms"].values()):   # a room grows it: it is drawn on what it grows on
         have("grows." + b)
         have("grows.%s.bare" % b)
+crafting = tomllib.loads((ROOT / "crafting.toml").read_text()) if (ROOT / "crafting.toml").exists() else {}   # SPEC-v3.4 §3
+for m in crafting.get("material", {}):   # what a process gives is a bit like any other
+    have("bit." + m)
+for k in list(crafting.get("needs", {})) + list(crafting.get("tool", {})):
+    if k not in kinds:
+        bad("crafting.toml names the kind %r, which the catalog does not have" % k)
+for stage in {st for g in crafting.get("grow", {}).values() for st in g.get("stages", [])} | ({"wilted"} if crafting.get("grow") else set()):
+    have("plant." + stage)   # what is planted is drawn over its pot or bed, by how far it has grown
 for c in house["creatures"]:
     if have("creature." + c) is True:
         for a in ("idle", "walk.up", "walk.down", "walk.left", "walk.right"):

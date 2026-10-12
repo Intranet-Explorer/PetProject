@@ -1,4 +1,4 @@
-"""Builds the art data of view/assets (see ../../README.md). Needs Python 3.9+ and Pillow.
+"""Builds the art data of view/assets (see ../../README.md). Needs Python 3.11+ and Pillow.
 
   python3 build.py                 draw own/*.png again from art.py (nothing else is touched)
   python3 build.py data <pack>     also write sprites.json, rooms/*.json, sounds.json and packs.json from data.py,

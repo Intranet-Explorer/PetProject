@@ -31,6 +31,8 @@ export type Obj = {
   // SPEC-v3.3 §2: `on`: it is put away on (or in) the thing of that name and stands on that thing's tile; `store`: it
   // keeps things; `home`: where it belongs
   on?: string; store?: Store; home?: { room: string; on?: string; pos?: Tile };
+  // SPEC-v3.4 §3.5: something is planted in it (a pot, a planting bed): what, how far it has grown, and whether it has wilted
+  planted?: { what: string; stage: "planted" | "sprout" | "leaves" | "ripe"; wilted: boolean };
 };
 /** An inscription (SPEC-v3.1 §2): `on` is a wall or the name of a thing, `at` how far along the wall, `clarity` 1 new to 0 gone. */
 export type Mark = { id: number; text: string; by: string; by_name?: string; family?: number; on: string; medium: string; tick: number; fresh?: number; at?: number; clarity?: number };
