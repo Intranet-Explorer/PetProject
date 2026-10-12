@@ -445,10 +445,13 @@ not put away, hung up or part of a corner, and loose bits. The rules are in DECI
 - **§0 held throughout**, on the final rules: 8 to 10 different things in every five minutes, still 20 to
   28 s, passive 13 to 18%; 66 thoughts, none failed. One slice on an earlier build read 30% passive: a
   hatchling's last eight waking minutes of a day, mostly napping.
-- **A pet made somewhere to keep things, unasked.** Of 37 things made on the copy, three were storage, all by
-  the hatchling Quiet Lean, each in a room that was a mess with nowhere left: a box in the workshop, a basket
-  in the storeroom, a basket in the music room. Before, it was none of 115.
+- **Storage made by a pet: 0 of 115 things before, 3 of 37 after**, each in a messy room with nowhere left,
+  unasked: a box in the workshop, a basket in the storeroom, a basket in the music room, all by the hatchling
+  Quiet Lean.
 - **Nineteen old things wore out** on the copy in four world days, most while the storeroom had ten places.
   It now has twenty.
 
 Not measured: fading bits over more than two world days; the live house itself, which got all this at once.
+
+The cost of measuring this way: five of the live house's thoughts timed out while the copy shared its model
+(Tyler's count).
