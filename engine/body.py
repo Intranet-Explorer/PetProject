@@ -150,8 +150,8 @@ def targets(house, cfg, pet, mem, name, A):
         return [{"what": n, "goal": near(objs[n]["pos"])} for n in food[:1]]
     if do == "tidy":
         job = order.job(house, cfg, pet, room)   # the worse the mess, the more it pulls, on the orderly most of all
-        if not job:
-            return []
+        if not job or any((state(p)["now"] or {}).get("do") == "tidy" and state(p)["now"].get("what") == job["what"] for p in here(house, pet)):
+            return []   # nothing to put away, or someone is already putting that very thing away
         pull = order.clutter(house, cfg, room) * cfg["body"]["mess_pull"] * (0.4 + 1.2 * pet["temper"].get("orderly", 0.5))
         place = objs[job["job"][3]]["pos"] if job["job"][2] == "on" else job["job"][3]   # the shelf, the place on the wall or the tile it goes to: it is carried there
         return [{"what": job["what"], "job": job["job"], "goal": near(job["pos"]), "to": None if dist(job["pos"], place) <= 1 else beside(cfg, place, job["pos"]), "bonus": pull}]
@@ -550,4 +550,5 @@ def doing(cfg, house, pet):
         return None
     walking = on_its_way(pet, now)
     return {"activity": now["name"], "doing": words(house, pet, now), "icon": "walk" if walking and now["do"] in ("nap", "window") else now["icon"], "what": now.get("what"), "who": now.get("who"),
-            "since": now["since"], "passive": now["passive"], "walking": now["began"] is None, "goal": now.get("goal")}
+            "since": now["since"], "passive": now["passive"], "walking": now["began"] is None, "goal": now.get("goal"),
+            "carrying": bool(now.get("to")) and now["began"] is not None}   # it has the thing in its paws and is taking it where it goes (the page shows it carried)
