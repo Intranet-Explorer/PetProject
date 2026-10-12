@@ -244,6 +244,8 @@ def score(house, cfg, pet, name, A, t, b, r):
         lately = {th for tk, th in b.get("handled", []) if house["tick"] - tk < B["handle_ticks"]}
         if t["what"] not in lately:
             s += B["handle"] * min(1.0, max(0, 3 - len(lately)) / 2)
+    if t.get("goal") and b.get("strides") and pet.get("walked", 0) - b["strides"][0][1] < B["stride_tiles"] and house["tick"] - b["strides"][0][0] >= B["handle_ticks"] - 5:
+        s += B["stride"] * min(1.0, dist(pet["pos"], t["goal"]) / 6)   # it has not walked far lately: what is further off draws it (v3.4 §0)
     if A.get("handles") or name in TOGETHER:   # being with someone is doing what they do (v3.4 §1): the same toy, the same song, tidying side by side
         want = house["pets"].get(focus.get("who") or "") if focus.get("type") == "be with" else None
         for p in [want] if want and want["room"] == pet["room"] else kin_here(house, pet):
@@ -293,6 +295,8 @@ def choose(mind, fidget=False):
             new = new or bool(A.get("handles") and t.get("what") and t["what"] not in lately)
     if best is None:
         return None
+    if not fidget:
+        b["strides"] = [x for x in b.get("strides", []) + [[h["tick"], pet.get("walked", 0)]] if h["tick"] - x[0] <= cfg["body"]["handle_ticks"]]   # how far it had walked, at each thing chosen lately
     if not fidget:   # nothing here it has not just had its paws on, and it has handled little lately: the next room has more (v3.4 §1)
         b["bare"] = len(lately) < 3 and not new
     _, name, t = best
@@ -301,7 +305,7 @@ def choose(mind, fidget=False):
     now = {"name": name, "do": A["do"], "what": t.get("what"), "who": t.get("who"), "where": t.get("where"), "job": t.get("job"), "door": t.get("door"), "trip": t.get("trip"), "creature": t.get("creature"),
             "goal": t.get("goal"), "to": t.get("to"), "left": ticks(cfg, r.uniform(lo, hi)), "since": h["tick"], "began": None, "passive": bool(A.get("passive")),
             "icon": A.get("icon"), "voice": A.get("voice")}
-    now["doing"] = say(cfg, h, pet, now, "doing")   # in the page's words, and the packet's
+    now["doing"], now["of"] = say(cfg, h, pet, now, "doing"), now["left"]   # in the page's words, and the packet's
     return now
 
 
@@ -532,6 +536,11 @@ def going(house, pet, now):
     if now["do"] in ("nap", "window"):
         return "going to %s" % {"nap": "lie down", "window": "sit by the window"}[now["do"]]
     return "going over to %s" % (label(who) if who else "the " + now["what"]) if who or now.get("what") else now["doing"]
+
+
+def begun(pet, now):
+    """Has it got there and been at it a tick or more (and, carrying something, got it where it goes)? Then cutting it short still leaves it done."""
+    return now["began"] is not None and now["left"] < now.get("of", now["left"]) and (not now.get("to") or pet["pos"] == now["to"])
 
 
 def on_its_way(pet, now):

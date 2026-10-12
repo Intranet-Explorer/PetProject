@@ -179,8 +179,8 @@ class Mind:
             pet["focus"] = {"type": focus["type"], "words": actions.clean(focus["words"], 120), "since": h["tick"],
                             "who": on[1]["id"] if on[0] == "pet" else None, "what": on[1] if on[0] == "thing" else None}
         now = body.state(pet)["now"]
-        if now and turn["steps"]:   # what it has decided comes first: whatever its body was at is dropped
-            body.finish(self, now, cut=True)
+        if now and turn["steps"]:   # what it has decided comes first: whatever its body was at ends here (a thing it had already begun on is done; one it was still on its way to is dropped)
+            body.finish(self, now, cut=not body.begun(pet, now))
         pet["plan"] = {
             "thought": thought, "intention": actions.clean(turn.get("intention") or focus["words"], 120), "steps": turn["steps"][:5],
             "expect": life.last_sentence(actions.clean(turn["expect"], 230), 200), "why": why, "meter": feel.meter_talk(thought),
