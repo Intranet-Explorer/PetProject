@@ -71,15 +71,18 @@ was made on the showcase's, so it is started with `live` (or `showcase`), never 
 uv run python -m engine.check               # the engine's self-check (about two minutes, no model)
 uv run python -m engine.tick --days 40      # a headless lineage with scripted brains
 uv run python -m engine.metrics [data dir]  # the Lab's numbers for a run
-uv run python -m engine.alive <data dir>    # SPEC-v3.4 §0: per pet per world day, the fewest things handled and tiles walked in any five minutes, and the longest stood still
+uv run python -m engine.alive <data dir>    # SPEC-v3.4 §0, from a house's own log: things handled, tiles walked, wants met, discoveries, tools, food grown, the book, the box
+uv run python -m engine.check               # (the self-check takes about ten minutes now)
 uv run python -m engine.showcase [data dir] # the evidence for SPEC-v3 §12's bar, from a run's logs
 cd view && npm install && npm run build     # rebuild the view; the running engine serves it as is
 node view/check-voice.ts                    # the voice's self-check (no browser, no sound)
 ```
 
 Everything tunable is in `config.toml` (the engine), `house.toml` (rooms, bits, weather, events, creatures),
-`materials.toml` (what each property of a made thing does) and `activities.toml` (what a pet's body does by
-itself: add an activity there and the body can do it). The pets are told none of the numbers in any
+`materials.toml` (what each property of a made thing does), `activities.toml` (what a pet's body does by
+itself: add an activity there and the body can do it) and `crafting.toml` (SPEC-v3.4: what can be done to a bit and
+where, what comes of it, the kinds that take a material found out first, the tools, what two joined things make
+that neither was, what a seed grows into, and what a passage in the book can point at). The pets are told none of the numbers in any
 of them.
 
 ## What a pet is given

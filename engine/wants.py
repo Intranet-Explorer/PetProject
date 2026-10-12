@@ -124,7 +124,7 @@ def candidates(house, cfg, pet):
     for key in (parent or {}).get("recipes", {}):
         if key not in pet.get("recipes", {}) and not key.startswith("kind:"):
             what = C["meets"][frozenset(key.split("+"))]["name"] + " things" if "+" in key else "a planted thing grow" if key.endswith("|plant") else C["rules"][tuple(key.split("|"))]["gives"]
-            add("recipe", key, "your %s knew how to make %s; you want to find out how" % (pet.get("word") and relation(house, pet, parent) or "parent", what),
+            add("recipe", key, "your %s knew how to make %s; you want to find out how" % (relation(house, pet, parent) or "parent", what),
                 "found out how to make %s, as its parent knew" % what, 1.4, recipe=key)
     mine = {e["id"] for e in pet.get("songs", [])}
     for p in kin:

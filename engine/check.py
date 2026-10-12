@@ -952,23 +952,23 @@ async def main():
         po["stage"], po["name"] = "adult", "Po"
         po["stage_at"].update(child=0, youngling=0, adult=0)
         room8 = room_of(e8, po)
-        base = {"name": "glow", "kind": "candle", "material": "bright", "color": "yellow", "size": "small", "purpose": "to see by"}
+        base = {"name": "glow", "kind": "jar", "material": "bright", "color": "yellow", "size": "small", "purpose": "to see by"}
         po["carrying"] = ["wax", "wax", "fluff"]
         packet, ctx = mind.perceive(h8, c8, po, pm.mem)
-        assert set(ctx["kinds"]) >= {"warm", "bright", "soft"} and "candle" in ctx["kinds"]["bright"] and "candle" not in ctx["kinds"]["soft"]
-        assert "candle" in model_brain.prompt(packet, ctx) and "parts" not in model_brain.prompt(packet, ctx).split("each step is one of")[1], "the kinds it can make are listed; parts are gone"
+        assert set(ctx["kinds"]) >= {"warm", "bright", "soft"} and "jar" in ctx["kinds"]["bright"] and "jar" not in ctx["kinds"]["soft"]
+        assert "jar" in model_brain.prompt(packet, ctx) and "parts" not in model_brain.prompt(packet, ctx).split("each step is one of")[1], "the kinds it can make are listed; parts are gone"
         shape = json.dumps(model_brain.schema(ctx))
         assert '"kind"' in shape and '"shape"' not in shape
-        assert "cannot be soft" in actions.check({"type": "make", "recipe": dict(base, material="soft"), "near": "here"}, h8, c8, po, pm.mem), "a candle cannot be soft"
+        assert "cannot be soft" in actions.check({"type": "make", "recipe": dict(base, material="soft"), "near": "here"}, h8, c8, po, pm.mem), "a jar cannot be soft"
         po["stage"] = "hatchling"
         assert "not big enough" in actions.check({"type": "make", "recipe": dict(base, size="large"), "near": "here"}, h8, c8, po, pm.mem)
         po["stage"] = "adult"
         r = await do(e8, po, {"type": "make", "recipe": base, "near": "here"})
         glow = room8["objects"]["glow"]
         assert not r[0]["reason"] and glow["made"]["recipe"] == dict(base, size=1) and po["carrying"] == ["wax", "fluff"] and glow["state"] == "on", r
-        assert "a yellow candle" in r[0]["feedback"] and h8["moments"][-1]["text"] == "Po made a yellow candle it calls 'glow'", h8["moments"][-1]["text"]
+        assert "a yellow jar" in r[0]["feedback"] and h8["moments"][-1]["text"] == "Po made a yellow jar it calls 'glow'", h8["moments"][-1]["text"]
         packet = mind.perceive(h8, c8, po, pm.mem)[0]
-        assert "glow (a yellow candle; yours" in packet, "a pet is told what a thing is, beside its name"
+        assert "glow (a yellow jar; yours" in packet, "a pet is told what a thing is, beside its name"
         slots = len(room8["wall_slots"])
         for i in range(slots):
             po["carrying"] = ["wax"]
@@ -1007,20 +1007,20 @@ async def main():
         assert not r[0]["reason"], r
         r = await do(e8, bo, {"type": "accept", "from": actions.handle(h8, bo, po)})
         assert not r[0]["reason"], r
-        assert glow["made"]["owner"] == bo["id"] and [m["on"] for m in walls_.marks(room8)] == ["glow"] and "gave Bo a yellow candle, 'glow'" in h8["moments"][-1]["text"], \
+        assert glow["made"]["owner"] == bo["id"] and [m["on"] for m in walls_.marks(room8)] == ["glow"] and "gave Bo a yellow jar, 'glow'" in h8["moments"][-1]["text"], \
             "a thing given keeps what is written on it, and the moment says what it is: %s" % h8["moments"][-1]["text"]
         assert 'on the glow, in your %s\'s hand' % po["word"] in mind.perceive(h8, c8, bo, bm.mem)[0]
         glow["made"]["owner"] = po["id"]
         po["stage"], po["useful"] = "elder", ["glow"]
         po["stage_at"]["elder"] = 0
         r = await do(e8, po, {"type": "bequeath", "what": "glow", "to": "Bo"})
-        assert not r[0]["reason"] and glow["made"]["heirloom"]["to"] == [bo["id"]] and "left its yellow candle, 'glow', to Bo" in h8["moments"][-1]["text"], h8["moments"][-1]["text"]
+        assert not r[0]["reason"] and glow["made"]["heirloom"]["to"] == [bo["id"]] and "left its yellow jar, 'glow', to Bo" in h8["moments"][-1]["text"], h8["moments"][-1]["text"]
         assert "heirloom" in actions.check({"type": "combine", "a": "glow", "b": "ring-a", "recipe": {"name": "x", "material": "bright", "purpose": "y"}}, h8, c8, po, pm.mem), "an heirloom is never remade"
         glow["made"]["heirloom"] = None
         r = await do(e8, po, {"type": "combine", "a": "glow", "b": "ring-a", "recipe": {"name": "ringing light", "material": "noisy", "purpose": "both"}})
         both = room8["objects"]["ringing light"]["made"]["recipe"]
         assert not r[0]["reason"] and both["kind"] == "mobile" and both["color"] == "blue" and both["size"] == 2 and "parts" not in both, both
-        assert h8["moments"][-1]["text"] == "Po joined a candle and a bell into a mobile it calls 'ringing light'", h8["moments"][-1]["text"]
+        assert any(m_["text"] == "Po joined a jar and a bell into a mobile it calls 'ringing light'" for m_ in h8["moments"][-3:]), h8["moments"][-1]["text"]   # (SPEC-v3.4: and what came of it, something bright and noisy, is a moment after it)
         assert not walls_.marks(room8), "what was written on a thing goes when the thing does"
         await e8.tick()
         assert e8.db.execute("SELECT count(*) FROM inscriptions WHERE what='gone with the thing'").fetchone()[0] == 1
