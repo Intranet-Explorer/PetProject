@@ -30,6 +30,7 @@ room.onClick = (target) => { ... };
 room.onHover = (target, fx, fy) => { ... };   // target is null when the pointer leaves; fx, fy: where, 0 to 1 across `element`
 room.labels();                          // name lines, captions and bubbles that show now (CSS pixels in the canvas), for overlap checks
 room.describe(target);                  // what a hover card can show: see below
+room.burst(petId, kind);                // SPEC-v3.4 §5: a small burst over a pet, once ("want": it got what it wanted, "find": it found something out); the page calls it for each new entry of `snap.bursts` in this room, and gives it the top line
 room.picture(genome, stage, look);      // a data URL of a body, kept for the old page; new code can use petsprite.ts directly
 room.clear = ["roomName", "banner"];    // ids of the page's own elements lying over the room: lettering keeps out from under them
 room.names(on);                         // hold the names of the things in the room on, or let them go
@@ -109,6 +110,7 @@ Each of these is optional and has a fallback.
   `fx.drip`, `fx.rain` and `fx.snow` (their animation `kinds` is a set of variants) are used if they are there; a
   one-shot animation of any name plays once over the effect's life. Without them, and for the smallest things
   (glints, specks, the tame creature's flag, an heirloom's ribbon), a few pixels drawn in `fx.ts` are used.
+  `fx.burst.want` and `fx.burst.find` play once just above a pet's name line, over any caption or bubble that is up.
 - `kinds.json`: `"flat": true` for a kind that lies on the floor and can be walked over (a rug). Otherwise a made
   thing blocks its tile.
 - Creatures: animations `walk.<dir>`, or `walk`, or `idle`; a creature with one set of frames is taken to face right.

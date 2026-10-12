@@ -347,7 +347,7 @@ sing = "note"
 teach_song = "note"
 call = "speech"
 name = "speech"
-ask_book = "eye"
+ask_book = "book"
 take_name = "speech"
 rest = "zzz"
 observe = "eye"
@@ -362,6 +362,17 @@ pawful = 3                # loose bits a pet puts away at one go
 just_out_seconds = 300    # a thing taken out, brought to someone or rolled across the room is left where it is this long before anybody's body tidies it away again
 mess = -0.15              # comfort per 10 s in a mess, for a pet as orderly as can be (none below the middle)
 tidy = 0.05               # ... and in a tidy room
+
+[process_signs]           # SPEC-v3.4 §3.1: the sign for each way of changing a bit, over a pet that is trying it (a decided step, or its body by itself)
+soak = "drop"
+warm = "flame"
+melt = "flame"
+dry = "dry"
+press = "press"
+weave = "weave"
+carve = "edge"
+grind = "grind"
+plant = "sprout"
 
 [skills]                  # SPEC-v3.4 §2.2: practice, felt in words, never shown as a number
 steps = [3, 10, 25]       # how many times it has done a thing before it is some, a good deal, and very practised

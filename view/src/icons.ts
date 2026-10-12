@@ -62,6 +62,8 @@ const KIND: Record<string, string> = {
   "arrival writing": "chalk", "arrival songs": "music", "arrival taming": "paw", "arrival radio": "radio", "arrival book": "book", "arrival strangers": "stranger",
   wrote: "chalk", scrubbed: "scrub", song: "music", tamed: "paw", untamed: "paw", young: "mouse", "creature died": "stone", read: "book",
   moth: "mouse", beetle: "mouse", bird: "mouse",
+  // SPEC-v3.4: a want met, a thing found out, the first tool, growing food, a recipe nobody knows any more, the book carried
+  want: "star", discovery: "star", tool: "hammer", harvest: "leaf", planted: "leaf", forgotten: "stone", moved: "crate",
   clear: "sun", cloudy: "cloud", "power cut": "bolt", "lost thing": "crate", "rule drift": "wind", surprise: "crate",
 };
 

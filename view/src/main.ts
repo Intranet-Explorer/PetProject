@@ -1,7 +1,7 @@
 // Wiring (SPEC-v3 §10, SPEC-v3.2 §7): one websocket to the engine (or a recorded run played back), snapshots in, the
 // visitor's actions out. Lays the page out round the room, decides which room is on screen, and keeps that choice
 // across a reload.
-import { $, doingOf, el, emoteOf, face, goodWord, hatchWords, moodWords, ownLabel, stageWord, when, wishOf } from "./dom";
+import { $, doingOf, el, emoteOf, face, goodWord, hatchWords, moodWords, ownLabel, stageWord, wantWords, when, wishOf } from "./dom";
 import type { Ctx, Kid } from "./dom";
 import { showRecord } from "./family";
 import { icon } from "./icons";
@@ -16,7 +16,7 @@ import { momentRow } from "./story";
 import { ago, fam, hhmm } from "./types";
 import { voiceInput } from "./voice";
 import { initVoice } from "./voicelab";
-import type { Creature, Hello, Mark, Moment, Note, Obj, PetV, RoomV, Snap } from "./types";
+import type { Burst, Creature, Hello, Mark, Moment, Note, Obj, PetV, RoomV, Snap } from "./types";
 
 const remember = (key: string, value: string) => { try { localStorage.setItem(key, value); } catch { /* private window */ } };
 const recall = (key: string) => { try { return localStorage.getItem(key); } catch { return null; } };
@@ -183,9 +183,12 @@ function render() {
   for (const [k, v] of Object.entries({ room: view.room, follow: view.follow, sel: view.sel ?? "" })) remember(k, v);
 
   voice.update(s, view.room, view.sel);
+  const burst = bursts(s);
   header(s);
-  try { room.update({ snap: s, room: here, hello, selected: view.sel, picked, replay: !!replayId }); }
-  catch (e) { console.error(e); }   // whatever goes wrong in the room, the page round it still says what is happening
+  try {
+    room.update({ snap: s, room: here, hello, selected: view.sel, picked, replay: !!replayId });
+    for (const b of burst) if (b.room === view.room) room.burst(b.pet, b.kind);
+  } catch (e) { console.error(e); }   // whatever goes wrong in the room, the page round it still says what is happening
   drawMap($("map"), s, view.room, view.sel, (id) => jump({ room: id }), mapWidth());
   side(s, here);
   cards(s);
@@ -203,7 +206,8 @@ function render() {
   const say = (m: Moment) => flash(m.kind === "project" ? m.text.split(":")[0] : m.text, false, () => jump(m), m.kind);   // a project's own words are long, and are in the list beside the room
   if (jumped) { $("banner").hidden = true; bannerN = newest?.n ?? 0; }
   else if (newest && newest.n !== bannerN) {
-    const fresh = bannerN >= 0 ? s.moments.filter((m) => m.n > bannerN) : [];
+    // (a want met or a thing found out has the top line of the page: the banner does not say it a second time)
+    const fresh = bannerN >= 0 ? s.moments.filter((m) => m.n > bannerN && !s.bursts?.some((b) => b.tick === m.tick && b.text === m.text)) : [];
     // a death is never old news: one from the last few minutes of the watcher's time is announced even on first load
     const died = bannerN < 0 && !replayId ? [...s.moments].reverse().find((m) => m.kind === "death" && ago(s, m.tick) < 600) : undefined;
     const m = [...fresh].sort((a, b) => rank(b) - rank(a))[0] ?? died;
@@ -250,6 +254,32 @@ function flash(text: string, error = false, go: (() => void) | null = null, kind
   bannerTimer = setTimeout(() => (b.hidden = true), death ? 20_000 : arrival ? 10_000 : error ? 5000 : 4500);
 }
 
+/** SPEC-v3.4 §5: a want met or a thing found out. Each is numbered and shown once (the last number is remembered across
+ *  a reload, like the finished steps in room.ts; never old news): it takes the top line of the page for a few seconds,
+ *  whichever room it was in, and the room plays a small burst over the pet for those in the room on screen. */
+function bursts(s: Snap): Burst[] {
+  const all = s.bursts ?? [], top = all.reduce((n, b) => Math.max(n, b.n), 0), house = `${s.start}|${s.lineage.id}|${s.profile}`;
+  if (seenBurst == null) {
+    const [h, n] = (recall("pet.bursts") ?? "").split("#");
+    seenBurst = h === house && Number(n) <= top ? Number(n) : top;
+  }
+  const fresh = all.filter((b) => b.n > seenBurst! && ago(s, b.tick) <= 15);
+  if (top !== seenBurst) remember("pet.bursts", `${house}#${top}`);
+  seenBurst = top;   // (also when it is lower: a replay wound back, or another house)
+  // ponytail: one at a time, the newest (a thing found out before a want met); a queue if they ever come in clumps
+  const b = fresh.filter((x) => x.kind === "find").at(-1) ?? fresh.at(-1);
+  if (b) {
+    const ms = b.kind === "find" ? 11_000 : 8000;
+    taken = { b, until: performance.now() + ms };
+    clearTimeout(takenTimer);
+    takenTimer = setTimeout(() => snap && header(snap), ms + 20);   // then the usual line again
+  }
+  return fresh;
+}
+let seenBurst: number | null = null;
+let taken: { b: Burst; until: number } | null = null;   // what has the top line just now
+let takenTimer: ReturnType<typeof setTimeout> | undefined;
+
 /** The one plain sentence about the house (SPEC-v3.2 §5.4). The engine writes it; a recording made before it did
  *  gets a modest one put together here from who is up and what they are doing. */
 function nowLine(s: Snap) {
@@ -281,15 +311,17 @@ function header(s: Snap) {
   // the sentence sits in the header, in a box two lines high that is always there, so it never moves the room; an unusually long one is set smaller
   // The engine's sentence is about whoever acted last, which may be in another room. Whoever is in the room on screen
   // and is not named in it gets a short second line: who is here and what each is doing.
-  const now = $("now"), line = now.firstElementChild as HTMLElement, text = nowLine(s);
-  const unsaid = s.pets.filter((p) => p.room === view.room && p.needs && !text.toLowerCase().includes(p.label.toLowerCase()));
-  const here = unsaid.length ? `Here: ${unsaid.map((p) => `${p.label} is ${doingOf(p) || "here"}`).join("; ")}.` : s.pets.some((p) => p.room === view.room && p.stage !== "dead" && p.stage !== "egg") ? "" : "Here: nobody just now.";
+  // SPEC-v3.4 §5: a want met or a thing found out has the line to itself while it is up (a thing found out with a star)
+  const got = taken && performance.now() < taken.until ? taken.b : null;
+  const now = $("now"), line = now.firstElementChild as HTMLElement, text = got ? got.text : nowLine(s);
+  const unsaid = got ? [] : s.pets.filter((p) => p.room === view.room && p.needs && !text.toLowerCase().includes(p.label.toLowerCase()));
+  const here = got ? "" : unsaid.length ? `Here: ${unsaid.map((p) => `${p.label} is ${doingOf(p) || "here"}`).join("; ")}.` : s.pets.some((p) => p.room === view.room && p.stage !== "dead" && p.stage !== "egg") ? "" : "Here: nobody just now.";
   if (now.dataset.key !== text + here) {
     now.dataset.key = text + here;
     const mine = s.pets.filter((p) => p.room === view.room && p.needs);
     const lead = !!unsaid.length && unsaid.length === mine.length;   // the sentence is all about other rooms: this room's own line leads
-    line.replaceChildren(...(lead ? [here, el("span", "here", text)] : [text, ...(here ? [el("span", "here", here)] : [])]));
-    now.classList.remove("long");
+    line.replaceChildren(...(lead ? [here, el("span", "here", text)] : [...(got?.kind === "find" ? [icon("star")] : []), text, ...(here ? [el("span", "here", here)] : [])]));
+    now.className = got ? got.kind : "";
     now.classList.toggle("long", line.offsetHeight > now.clientHeight);   // more than the box holds: set smaller
     if (line.offsetHeight > now.clientHeight) line.querySelector(".here")?.remove();   // still more: the engine's sentence alone
   }
@@ -348,7 +380,7 @@ function cards(s: Snap) {
   // the visitor's naming: what was offered, and whether the pet has taken it (said for a quarter of a day after it does)
   const naming = (p: PetV) => !p.naming ? null : !p.naming.took ? `you called it ${p.naming.offered}; waiting to hear`
     : p.naming.at != null && (s.tick - p.naming.at) * s.tick_seconds < s.day_seconds / 4 ? `it took the name ${p.naming.offered}` : null;
-  const key = JSON.stringify(who.map((p) => [naming(p), p.id, p.label, p.stage, p.room, p.stage === "egg" ? hatchWords(p.hatches_in ?? 0) : [moodWords(p), goodWord(p), emoteOf(p), doingOf(p), wishOf(p), p.body?.icon, p.asleep || p.focus?.words, p.habits], p.genome, p.id === view.sel, p.family, p.animals]));
+  const key = JSON.stringify(who.map((p) => [naming(p), p.id, p.label, p.stage, p.room, p.stage === "egg" ? hatchWords(p.hatches_in ?? 0) : [moodWords(p), goodWord(p), emoteOf(p), doingOf(p), wishOf(p), p.body?.icon, p.asleep || p.focus?.words, p.habits, p.wants?.map((w) => w.text), p.skills, p.recipes], p.genome, p.id === view.sel, p.family, p.animals]));
   const box = $("cards");
   if (box.dataset.key === key) return;
   box.dataset.key = key;
@@ -360,6 +392,8 @@ function cards(s: Snap) {
     const sign = !egg && p.body?.icon && hasSprite(`icon.act.${p.body.icon}`) ? sprite(`icon.act.${p.body.icon}`, 1) : null;
     const focus = egg || p.asleep ? "" : p.focus?.words ?? "", habits = egg ? [] : p.habits ?? [];
     const wish = wishOf(p) === focus ? "" : wishOf(p);   // since v3.3 what it means to do is what its mind is on, in the same words: said once
+    // SPEC-v3.4 §2: its wants, said of it ("wants to know what is behind the north door"). The card has a line for the newest; all of them are in its hover
+    const wants = (p.wants ?? []).map((w) => wantWords(w.text));
     if (feels) feels.title = `feeling ${emote}`;
     if (place) place.title = `in ${where(p)}`;
     const mind = el("button", "mind", "mind") as HTMLButtonElement;
@@ -374,13 +408,15 @@ function cards(s: Snap) {
         doing ? el("span", "doing", el("i", "", "now "), sign, doing) : null,
         focus ? el("span", "focus", el("i", "", "mind on "), focus) : null,
         wish ? el("span", "wish", el("i", "", "wants "), el("q", "", wish)) : null,
+        wants.length ? el("span", "want", wants.at(-1)!) : null,
         habits.length ? el("span", "habits", el("i", "", habits.length > 1 ? "habits " : "habit "), habits.join("; ")) : null,
         animals ? el("span", "", icon("paw", 12), ` ${animals}`) : null));
     // the whole card is the button that follows this pet; "mind" inside it is a button of its own
     li.tabIndex = 0;
     li.setAttribute("role", "button");
     li.title = `${egg ? "Look at this egg" : `Follow ${p.label}`}: it is in ${where(p)}` + (wish && !egg ? `\nIt wants: ${wish}` : "")   // in full: the card shows a line or two of each
-      + (focus ? `\nIts mind is on: ${focus}` : "") + (habits.length ? `\nIts habits: ${habits.join("; ")}` : "");
+      + (focus ? `\nIts mind is on: ${focus}` : "") + wants.map((w) => `\n${w.startsWith("wants ") ? `It ${w}` : cap(w)}`).join("")
+      + (p.skills ? `\nIt feels: “${p.skills}”` : "") + (p.recipes?.length ? `\nIt has found out: ${p.recipes.join("; ")}` : "") + (habits.length ? `\nIts habits: ${habits.join("; ")}` : "");
     li.onclick = () => jump({ pet: p.id, room: p.room });
     li.onkeydown = (e) => { if (e.target === li && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); li.click(); } };
     return li;

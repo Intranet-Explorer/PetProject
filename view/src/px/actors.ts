@@ -99,10 +99,12 @@ const POSE: Record<string, PetAnim | "turn" | "wall" | "look"> = {
   give: "make", show: "make", bequeath: "make", eat: "eat", rest: "sit", lay_egg: "sit", revise_belief: "sit", write_belief: "sit", nuzzle: "happy", accept: "happy",
   sing: "happy", compose: "happy", teach_song: "happy", call: "happy", name: "happy", speak: "turn", tell: "turn", write: "wall", scrub: "wall",
   ask_book: "wall", observe: "look", look: "look", put_away: "make", take_out: "make", hang: "wall",
+  process: "make", mend: "make", carry: "make",   // SPEC-v3.4 §3: doing something to a bit, mending, carrying the book
 };
 /** What rises from a pet while it is at something, and how often (ms). */
 const AIR: Record<string, [string, number]> = { make: ["sparkle", 450], combine: ["sparkle", 380], teach: ["sparkle", 600], sing: ["note", 520], compose: ["note", 700],
-  teach_song: ["note", 520], write: ["chalk", 420], scrub: ["chalk", 320], ask_book: ["page", 650], unmake: ["grit", 300], paint: ["grit", 300], lay_egg: ["sparkle", 500] };
+  teach_song: ["note", 520], write: ["chalk", 420], scrub: ["chalk", 320], ask_book: ["page", 650], unmake: ["grit", 300], paint: ["grit", 300], lay_egg: ["sparkle", 500],
+  process: ["sparkle", 450] };
 
 /** How a thing a body does by itself looks on the spot (SPEC-v3.3 §1.4), looked up by the activity's name and then by
  *  its icon: an activity added to activities.toml later moves like the others that share its icon, and one with an
@@ -123,6 +125,7 @@ const MOVES: Record<string, Move> = {
   dance: { a: "dance", sway: 2, ms: 640, air: ["note", 650] }, sing: { a: "happy", air: ["note", 520] }, "watch a creature": { a: "face", lean: 2, ms: 1500 },
   // SPEC-v3.4 §1: settled on something; a thing out of its box, or carried to someone, is in its paws; after a creature at a trot
   seat: { a: "sit" }, box: { a: "make", stir: 3 }, "follow a creature": { a: "face", hop: 2, ms: 420 },
+  "try it": { a: "make", stir: 2 },   // SPEC-v3.4 §3.1: its paws at a bit, whatever sign the way of trying is given
 };
 const REST: Move = { a: "sit" }, PLAIN: Move = { a: "face", sway: 1, ms: 1100, lean: 1 };
 const ABOUT: Dir[] = ["left", "down", "right", "down"];

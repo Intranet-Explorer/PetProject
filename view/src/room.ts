@@ -77,6 +77,7 @@ export class Room {
   private rims = new Container();       // the pets' pale outlines, over the dark
   private mark = new Graphics();        // round the thing the visitor has picked up
   private fx = new Fx();
+  private over = new Fx();              // SPEC-v3.4 §5: a burst, drawn over the lettering: a caption or bubble that is up does not hide it
   private light = new Light();
   private marks = new Marks();
   private words = new Labels();
@@ -142,7 +143,7 @@ export class Room {
     el.append(cv);
     this.sorted.sortableChildren = true;
     this.world.addChild(this.ground, this.walls, this.marks.c, this.flat, this.sorted, this.top, this.mark, this.light.dark, this.rims, this.light.glow, this.light.panes, this.fx.c, this.light.falling);
-    this.app.stage.addChild(this.world, this.words.c);
+    this.app.stage.addChild(this.world, this.words.c, this.over.c);
     const at = (e: PointerEvent) => { const r = cv.getBoundingClientRect(); return [((e.clientX - r.left) / r.width) * W, ((e.clientY - r.top) / r.height) * H]; };
     // a finger has no hover: a tap shows what a hover would (the card, the thing's name) for five seconds, and lifting the finger does not take it away
     const finger = (e: PointerEvent) => e.pointerType !== "mouse";
@@ -170,6 +171,7 @@ export class Room {
     this.app.canvas.style.setProperty("width", `${(W * K) / dpr}px`, "important");
     this.app.canvas.style.setProperty("height", `${(H * K) / dpr}px`, "important");
     this.world.scale.set(K);
+    this.over.c.scale.set(K);
     this.built = "";
     if (this.scene && this.ready) this.update(this.scene);
   }
@@ -191,6 +193,15 @@ export class Room {
     return this.words.placed.map((r) => ({ x: r.x / dpr, y: r.y / dpr, w: r.w / dpr, h: r.h / dpr, kind: r.kind }));
   }
 
+  /** SPEC-v3.4 §5: a small burst over a pet, once: it got what it wanted ("want") or found something out ("find").
+   *  Just above its name line (twelve lettering pixels high, one above its head), never on it. */
+  burst(pet: string, kind: string) {
+    const a = this.pets.get(pet);
+    if (!a) return;
+    const r = a.rect(), y = r.y - (14 * this.F) / this.K - 8;
+    this.over.spawn(`burst.${kind}`, r.x + r.w / 2, Math.max(this.fx.top + 9, y), { vy: -4, life: 900 });
+  }
+
   // ---- a snapshot arrives ----
 
   update(sc: Scene) {
@@ -202,7 +213,7 @@ export class Room {
       [this.tick, this.lastUpdate] = [snap.tick, now];
     }
     this.roomId = room.id;
-    if (fresh) { this.fx.clear(); this.ghosts.clear(); this.crate?.destroy(); this.crate = null; this.hatched.clear(); }
+    if (fresh) { this.fx.clear(); this.over.clear(); this.ghosts.clear(); this.crate?.destroy(); this.crate = null; this.hatched.clear(); }
 
     const lay = layout(room.type, () => { this.built = ""; if (this.scene) this.update(this.scene); });
     const keep = this.keep();
@@ -515,6 +526,7 @@ export class Room {
     const tip = this.marks.step(now);
     if (tip && Math.random() < 0.3) this.fx.spawn("grit", tip[0] / K, tip[1] / K, { vx: (Math.random() - 0.5) * 10, vy: 8, g: 30, life: 500 });
     this.fx.step(now, dt);
+    this.over.step(now, dt);
     this.mark.alpha = 0.6 + 0.4 * Math.sin(now / 200);
     if (now - this.avoidAt > 500) {   // the page's own plates over the room take their space first
       this.avoidAt = now;

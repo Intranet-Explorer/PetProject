@@ -117,6 +117,11 @@ function mind(c: Ctx): Kid[] {
     play.setAttribute("aria-label", `Hear ${p.label} sing “${s.name}”`);
     return el("li", "", play, ` ${s.name} `, el("span", "hint", s.by === p.id ? (s.from ? "as it heard it" : "its own") : ""));
   })) : null);
+  // SPEC-v3.4 §2, §3.3: what it wants and how practised it feels, as its own mind is told them, and what it has found out
+  const plain = (items: string[]) => (items.length ? list("plain", items.map((x) => el("li", "", x)), "") : null);
+  const wants = section("What it wants", plain((p.wants ?? []).map((w) => w.text)));
+  const knows = section("What it can do", p.skills ? el("p", "", `How practised it feels: “${p.skills}”`) : null,
+    p.recipes?.length ? el("p", "hint", "It has found out:") : null, plain(p.recipes ?? []));
   const beliefs = (d.beliefs ?? []) as { id: string; statement: string; source?: string; status: string }[];
   const held = beliefs.filter((b) => b.status === "active"), dropped = beliefs.filter((b) => b.status !== "active");
   const belief = (b: (typeof beliefs)[number]) => el("li", "", el("div", "", b.statement), el("span", "tag", b.source ?? "lived"));
@@ -127,7 +132,7 @@ function mind(c: Ctx): Kid[] {
   return [
     head, needs,
     senses.length ? section("What it notices", list("plain", senses.map((s) => el("li", "", s)), "")) : null,
-    now, project,
+    now, wants, project, knows,
     p.habits ? section("Habits", p.habits.length ? list("plain", p.habits.map((h) => el("li", "", h)), "")
       : el("p", "empty", "None yet. A habit is something it has done again and again, in the same place at the same time of day.")) : null,
     read, sings, toldBy,

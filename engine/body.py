@@ -226,7 +226,7 @@ def targets(house, cfg, pet, mem, name, A):
             at = next((o["pos"] for o in objs.values() if o.get("fix", {}).get("book")), None)
             return [{"what": "heavy book", "where": "ask " + bit, "want": key, "goal": near(at), "bonus": W * 1.5}] if at else []
         at = craft.place(house, cfg, room, how)
-        return [{"what": bit, "where": TO[how], "want": key, "goal": near(at[1]) if at[1] else None, "bonus": W * 1.5}]
+        return [{"what": bit, "where": TO[how], "want": key, "how": how, "goal": near(at[1]) if at[1] else None, "bonus": W * 1.5}]
     if do == "try":   # it has stood where the thing can be tried long enough for its mind to take it up, and its mind has not: its paws try it
         b = state(pet)
         if not L["place"] or b.get("placed") != [L["place"][2], room["id"]] or b.get("tried_at") == L["place"][2] \
@@ -239,7 +239,7 @@ def targets(house, cfg, pet, mem, name, A):
             at = next((o["pos"] for o in objs.values() if o.get("fix", {}).get("book")), None)
             return [{"what": "heavy book", "where": "ask " + bit, "want": key, "goal": near(at), "bonus": W * 1.5}] if at else []
         at = craft.place(house, cfg, room, how)
-        return [{"what": bit, "where": how, "want": key, "goal": near(at[1]) if at[1] else None, "bonus": W * 1.5}]
+        return [{"what": bit, "where": how, "want": key, "how": how, "goal": near(at[1]) if at[1] else None, "bonus": W * 1.5}]
     if do in ("bench", "lay out"):   # (§1.2: the body works toward what the mind is about)
         enough = len(pet["carrying"]) >= cfg["body"]["make_bits"] or (pet["carrying"] and not any(s["ready"] for s in room["spots"]))
         at_bench = not bench or dist(me, objs[bench]["pos"]) <= 1
@@ -358,7 +358,7 @@ def choose(mind, fidget=False):
     lo, hi = A["seconds"]
     now = {"name": name, "do": A["do"], "what": t.get("what"), "who": t.get("who"), "where": t.get("where"), "job": t.get("job"), "door": t.get("door"), "trip": t.get("trip"), "creature": t.get("creature"),
             "goal": t.get("goal"), "to": t.get("to"), "want": t.get("want"), "left": ticks(cfg, r.uniform(lo, hi)), "since": h["tick"], "began": None, "passive": bool(A.get("passive")),
-            "icon": A.get("icon"), "voice": A.get("voice")}
+            "icon": cfg["process_signs"].get(t.get("how")) or A.get("icon"), "voice": A.get("voice")}
     now["doing"], now["of"] = say(cfg, h, pet, now, "doing"), now["left"]   # in the page's words, and the packet's
     return now
 

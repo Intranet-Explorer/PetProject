@@ -21,6 +21,10 @@ export type Body = { activity: string; doing: string; icon: string | null; what:
   passive: boolean; walking: boolean; goal: Tile | null; carrying?: boolean };   // `carrying`: the thing it names is in its paws, on the way to where it goes
 /** SPEC-v3.3 §4: a small sound a pet made in its own voice, numbered so it is played once. */
 export type Vox = { n: number; tick: number; pet: string; room: string; kind: "murmur" | "hum" | "chirp" | "yawn" | "laugh" | "greet" | "grumble" | "gasp" };
+/** SPEC-v3.4 §2.1: something a pet wants, in its own packet's words ("you want to know what is behind the north door"). */
+export type Want = { text: string; what: string; since: number };
+/** SPEC-v3.4 §5: the moment a pet got what it wanted ("want") or found something out ("find"), numbered so it is shown once. */
+export type Burst = { n: number; tick: number; pet: string; room: string; kind: "want" | "find"; text: string };
 /** SPEC-v3.3 §3: the visitor's music (`scope` is "house" or a room id) and the radio control (`theirs`: the pets have
  *  found their own box, so the control switches that one; otherwise it is the visitor's "little radio"). */
 export type Dj = { music: { mood: string; scope: string; since: number } | null; moods: string[];
@@ -82,6 +86,9 @@ export type PetV = {
   // the icon for it (sprite icon.act.<icon>) and what it is doing in words.
   sign?: { icon: string | null; word: string; step: string; walking: boolean } | null;
   habits?: string[]; react?: { tick: number; kind: "startle" | "turn" } | null; orderly?: number;
+  // SPEC-v3.4 §2, §3.3; absent in older recordings. `wants`: up to three. `skills`: how practised it
+  // is, in its own words ("your paws are surer at the bench"; may be ""). `recipes`: what it has found out.
+  wants?: Want[]; skills?: string; recipes?: string[];
 };
 /** `tame` is the pet it belongs to. (The engine also sends its trust in each pet; that is hidden and never shown.) */
 /** A step a pet has just finished (SPEC-v3.2 §5.2). `what` is the thing, bit or song it was about, `to` whom or
@@ -111,6 +118,7 @@ export type Snap = {
   radio?: { here: boolean; on: boolean; said: Heard[] };
   // SPEC-v3.3: the visitor's music and radio, the small sounds pets make, and every body activity with its icon
   dj?: Dj; vox?: Vox[]; activities?: Record<string, { icon: string | null; passive: boolean; rest: boolean }>;
+  bursts?: Burst[];   // SPEC-v3.4 §5
   hello?: Hello; error?: string;
 };
 /** What /api/v31 answers: everything ever written, sung, asked and heard, and when each discovery comes. */

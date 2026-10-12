@@ -125,8 +125,10 @@ def sign_view(p):
     if not world.busy(p):
         return None
     plan = p["plan"]
-    t = plan["steps"][min(plan["i"], len(plan["steps"]) - 1)].get("type")
-    return {"icon": cfg["signs"].get(t), "word": mind.doing(eng.house, p), "step": t, "walking": plan["left"] is None}
+    step = plan["steps"][min(plan["i"], len(plan["steps"]) - 1)]
+    t = step.get("type")
+    icon = cfg["process_signs"].get(actions.norm(step.get("how"))) if t == "process" else None   # SPEC-v3.4 §3.1: each way of changing a thing has its own sign
+    return {"icon": icon or cfg["signs"].get(t), "word": mind.doing(eng.house, p), "step": t, "walking": plan["left"] is None}
 
 
 def room_view(r):

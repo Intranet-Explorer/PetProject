@@ -173,6 +173,9 @@ export function doingOf(p: PetV): string {
 }
 /** What a pet means to do: the intention it is on, which is a wish, not what it is doing. None while it sleeps. */
 export const wishOf = (p: PetV): string => (p.stage === "egg" || p.stage === "dead" || p.asleep ? "" : p.plan?.intention ?? "");
+/** A want as the engine words it for the pet's own mind, said of the pet for the page (SPEC-v3.4 §2.1): "you want to know
+ *  what your kin made" -> "wants to know what its kin made". One that begins some other way keeps its beginning. */
+export const wantWords = (text: string) => text.replace(/^you want\b/, "wants").replace(/\byou want\b/g, "it wants").replace(/\byour\b/g, "its");
 /** One clearly good feeling (a need at its best), to say beside whatever is wrong; "" if there is none or it is already said. */
 export function goodWord(p: PetV): string {
   const said = moodWords(p);
