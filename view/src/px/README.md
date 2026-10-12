@@ -18,7 +18,7 @@ console: nothing is ever a hole.
 | `acts.ts` | each finished step or body activity played once: pop, puff, slide together, heart, notes, dust, a thing flown to its shelf |
 | `fx.ts` | the small moving things (sparkles, hearts, notes, z's, dust), pooled |
 | `marks.ts` | writing on the walls |
-| `bubbles.ts` | name plates, thought captions, speech bubbles, the sign of what a body is doing, the box's words, the names of things, and where each may go |
+| `bubbles.ts` | each pet's one line (the sign of what it is doing, its name), the caption of what it wants, speech bubbles, the box's words, the names of things, and whose turn it is to show |
 
 ## What the page gives the room, and gets back
 
@@ -28,7 +28,7 @@ await room.init(element);              // loads the art; the canvas goes inside 
 room.update({ snap, room, hello, selected, picked, replay });   // every snapshot (and whenever the page's choice changes)
 room.onClick = (target) => { ... };
 room.onHover = (target, fx, fy) => { ... };   // target is null when the pointer leaves; fx, fy: where, 0 to 1 across `element`
-room.labels();                          // plates, captions and bubbles as laid out now (CSS pixels in the canvas), for overlap checks
+room.labels();                          // name lines, captions and bubbles that show now (CSS pixels in the canvas), for overlap checks
 room.describe(target);                  // what a hover card can show: see below
 room.picture(genome, stage, look);      // a data URL of a body, kept for the old page; new code can use petsprite.ts directly
 room.clear = ["roomName", "banner"];    // ids of the page's own elements lying over the room: lettering keeps out from under them
