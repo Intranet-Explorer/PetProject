@@ -408,3 +408,47 @@ bars: 8 to 13 things, 20 to 28 s, 5% to 23%):
 - **What two strangers could say after watching three rooms for five minutes** is in DECISIONS.md, Part 15:
   what each pet was doing, mostly; why, for about half the pets; and a room with nobody in it is still an
   empty room.
+
+## Tidying a person can see (12 October 2026)
+
+Measured on a copy of the live house taken that morning (day 32), lived on in turbo with the real model while
+the live house used the same model. "Lying about" is what a person sees: made things on the floor that are
+not put away, hung up or part of a corner, and loose bits. The rules are in DECISIONS.md.
+
+| room | start | first cut, a world day | bits fit, anyone tidies, a day | final rules, one waking day |
+|---|---|---|---|---|
+| storeroom | 16 | 18 | 17 | 10 → 0 |
+| music room | 10 | 8 | 1-3 | 4 → 0 |
+| cellar | 5 | 0 | 0-1 | 0-2 |
+| pond room | 19 | 19 | 19 | 19 → 1 |
+| nursery | 10 | 0 | 0 | 0 |
+| greenhouse | 11 | 6 | 6 | 6-7 |
+| workshop | 12 | 12 | 12 | 10 |
+| attic | 5 | 5 | 2 | 0 |
+| garden | 8 | 8 | 8 | 5 |
+
+- **Storage and the new count were enough for the rooms the pets live in, and for no others.** With a chest,
+  a shelf or a basket in every room, the nursery, the cellar and then the music room went to nothing or
+  nearly and stayed there. The five rooms nobody walked into did not change in two world days.
+- **Telling the minds moved nobody.** A door that says "to the storeroom, which is a mess" stood beside pets
+  for a world day and none went through it to tidy. What the minds were about, sampled through a waking day:
+  resting 34%, being with someone 22%, tending 12%, a project 12%, making 11%, playing or exploring 5%,
+  tidying under 1%.
+- **Letting a known mess draw the body did it.** Without the cap, eight waking hours took the storeroom from
+  18 to 11. With everything in (one trip a day, crates, fading bits), one waking day took the storeroom from
+  10 to 0, the pond room from 19 to 1 and the music room from 4 to 0. Three of the four pets made their one
+  trip that day; the bodies put 33 things away.
+- **Still as they were after that day:** the workshop (10), the greenhouse (6-7, "a few things lie about",
+  which draws nobody) and the garden (5). With stub minds given the real minds' mix of focuses and never
+  choosing to go anywhere, two world days took the workshop from 10 to 7 and held the storeroom at 0-1 and
+  the pond room at 3-5.
+- **§0 held throughout**, on the final rules: 8 to 10 different things in every five minutes, still 20 to
+  28 s, passive 13 to 18%; 66 thoughts, none failed. One slice on an earlier build read 30% passive: a
+  hatchling's last eight waking minutes of a day, mostly napping.
+- **A pet made somewhere to keep things, unasked.** Of 37 things made on the copy, three were storage, all by
+  the hatchling Quiet Lean, each in a room that was a mess with nowhere left: a box in the workshop, a basket
+  in the storeroom, a basket in the music room. Before, it was none of 115.
+- **Nineteen old things wore out** on the copy in four world days, most while the storeroom had ten places.
+  It now has twenty.
+
+Not measured: fading bits over more than two world days; the live house itself, which got all this at once.
