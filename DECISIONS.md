@@ -1214,11 +1214,16 @@ Found on a copy of the live house with the real model (one world day), and chang
   so when the room beyond it is a mess ("north (to the storeroom, which is a mess)"), and "rooms you know" says
   so of the ones further off. That alone moved no mind in a world day, so the body does the walking: a mess a
   pet knows of, anywhere in the house, draws its body door by door through the rooms it knows, as strongly as a
-  mess in the room it is in (`order.way`). This happens with its mind on tidying (once the room it is in is
-  done), with nothing on its mind, with its mind on exploring or playing, and with its mind on a project; not
-  when its mind keeps it by someone or something (be with, stay near, tend, make) or has it resting. That last
-  is a change to "it never walks out on a focus": a project is the commonest thing a mind says it is about and
-  does not tie it to a spot, and without it the real minds left no time for a body to go anywhere.
+  mess in the room it is in (`order.way`), once it has been in a room four world minutes.
+- **The minds left the bodies no time to go.** v3.3 had a body leave a room by itself only with nothing on its
+  mind, or exploring, or playing: "it never walks out on a focus". Sampled through a waking day, the real minds
+  were about resting 34% of the time, being with someone 22%, tending 12%, making 11%, a project 12%, and
+  playing or exploring 5%. Even with a project counted as free, a body could go about one time in six, and
+  the storeroom and the pond room stayed at 19 and 20 things all day. The rule is now narrower: a body does not walk out on someone or
+  something its mind keeps it by (be with, stay near or tend what is in the room; making, with its bits laid
+  out), nor out of a mess, nor when it is minded to rest and is tired. Otherwise a mess it knows of may draw
+  it. So a pet whose mind is on resting and which is not tired may get up and go and tidy the storeroom. Its
+  wandering for no reason is as it was.
 
 Pets still only tidy a room they are in, and a body only goes to rooms its pet has been in: a room no living pet
 has found (the garden, on 12 October) stays as it is until a mind chooses to go through that door.

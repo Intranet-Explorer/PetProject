@@ -1374,6 +1374,15 @@ async def main():
         assert order.way(hA, pa) == d1, "the first door on the way to the mess two rooms off: %s" % order.way(hA, pa)
         pa["focus"] = {"type": "tidy", "words": "put things straight", "since": hA["tick"]}
         assert [t["what"] for t in body.targets(hA, cA, pa, mA.mem, "go next door", cA["activities"]["go next door"]) if t.get("bonus") == 2.0] == [d1], "with its mind on tidying and this room done, its body sets off that way"
+        go_bonus = lambda: [t["what"] for t in body.targets(hA, cA, pa, mA.mem, "go next door", cA["activities"]["go next door"]) if t.get("bonus", 0) > 1]
+        pa["rooms"][roomA["id"]], pa["needs"]["energy"] = hA["tick"] - 10000, 80.0
+        pa["focus"] = {"type": "rest", "words": "take it easy", "since": hA["tick"]}
+        assert go_bonus() == [d1], "minded to rest and not tired, the mess still draws it: %s" % go_bonus()
+        things.drop_bits(hA, cA, roomA, [5, 5], ["fluff"])
+        pa["focus"] = {"type": "stay near", "words": "keep by it", "what": next(n2 for n2 in roomA["objects"]), "since": hA["tick"]}
+        assert body.anchor(hA, pa) and go_bonus() == [], "it does not walk out on what its mind keeps it by"
+        clear()
+        roomA["spots"] = [s2 for s2 in roomA["spots"] if not s2["loose"]]
         pa["rooms"] = was_rooms
         for rid, r2 in hA["rooms"].items():
             r2["mess"], r2["type"] = was_mess[rid]

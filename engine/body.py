@@ -68,6 +68,8 @@ def targets(house, cfg, pet, mem, name, A):
         return [{"goal": free_tile(house, cfg, room, max(tries, key=lambda t: min(dist(me, t), 6)))}]
     if do in ("doorway", "peek", "go"):
         out, mess = [], order.way(house, pet) if do == "go" else None
+        # may a mess elsewhere draw it out of this room? Not out of a mess, not from beside what its mind keeps it by, not when it is resting tired
+        drawn = bool(mess) and room.get("mess", 0) < 2 and not anchor(house, pet) and (focus.get("type") != "rest" or feel.level(pet, "energy") < 2)
         for d, rid in room["doors"].items():
             stuck = house["shut"].get("%s|%s" % (room["id"], d), LONG_AGO) > house["tick"]
             to, been = house["rooms"][rid], rid in pet["rooms"]
@@ -84,13 +86,13 @@ def targets(house, cfg, pet, mem, name, A):
                     out.append({"what": d, "goal": list(house["door_tiles"][d]), "bonus": 2.5})
                 elif focus.get("type") == "tidy" and d == mess and not order.job(house, cfg, pet, room):
                     out.append({"what": d, "goal": list(house["door_tiles"][d]), "bonus": 2.0})   # this room is done and there is a mess it knows of: tidying moves on, door by door
-                elif (focus.get("type") in (None, "explore", "play") or (focus.get("type") == "project" and d == mess and room.get("mess", 0) < 2)) \
+                elif (focus.get("type") in (None, "explore", "play") or (d == mess and drawn)) \
                         and house["tick"] - pet["rooms"].get(room["id"], LONG_AGO) >= ticks(cfg, cfg["body"]["go_again_seconds"]):
-                    # (it stays where its mind put it a good while, and where its mind wants it: it never walks out on a focus
-                    # that keeps it by someone or something. A mess it knows of draws it as one here would, the orderly most)
+                    # (it stays where its mind put it a good while, and it never walks out on someone or something its mind
+                    # keeps it by. Otherwise a mess it knows of draws it as one here would, the orderly most)
                     out.append({"what": d, "goal": list(house["door_tiles"][d]),
                                 "bonus": (0.6 if kin and not kin_here(house, pet) else 0.0) + (0.8 if focus.get("type") == "explore" else 0.0)
-                                + (cfg["body"]["mess_pull"] * 2 * (0.4 + 1.2 * pet["temper"].get("orderly", 0.5)) if d == mess and room.get("mess", 0) < 2 else 0.0)})
+                                + (cfg["body"]["mess_pull"] * 2 * (0.4 + 1.2 * pet["temper"].get("orderly", 0.5)) if d == mess and drawn else 0.0)})
         return out
     if do == "inspect":
         seen = lambda n: pet["times"].get("look " + n, 0)
