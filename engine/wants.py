@@ -287,7 +287,7 @@ def hear(house, cfg, pet):
     seen, words = pet.get("box_seen", LONG_AGO), pet.setdefault("words", [])
     for b in [b for b in pet.get("box", []) if b["tick"] > seen]:
         heard = [w for w in re.findall(r"[a-z]{6,}", b["text"].lower()) if w not in words]
-        if heard and not b["text"].startswith("The forecast"):
+        if max(map(len, heard), default=0) >= 8 and not b["text"].startswith("The forecast"):   # (a long word: short ones are mostly ones it only seems not to know)
             pet["unknown"] = (pet.get("unknown", []) + [max(heard, key=len)])[-4:]
         words += [w for w in dict.fromkeys(heard)]
         pet["box_seen"] = b["tick"]
