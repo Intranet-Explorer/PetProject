@@ -387,12 +387,13 @@ model (`engine/alive.py`; everything in watching time on the live clock, where a
 
 The world day before that, on code that differed only in the last two additions (getting ready to make, the
 radio speaking at once), gave 8 to 10 things, 24 s, 3% to 16% and 13 to 15 thoughts an hour. Over the
-whole of the copy runs nothing failed and no call to the model was refused.
+whole of the copy runs (407 calls to the model) none failed and the engine logged no error.
 
 - **The pets think as often as they did.** The body asks nothing of the model; a thought brought forward
   because everything is laid out to make something is paid back by the next one.
 - **What a thought expects is now scored over the whole time until the next thought**, body and all. The
-  share judged right did not move: 16 of 54 on the copy's last day, 18 of 58 in the live house before.
+  share judged right did not move: 16 of 54 on the copy's last world day and a bit, 18 of 58 in the live
+  house before.
 - **Of ten thoughts brought forward with bits laid out, about half made something at once.** The others did
   something else with a mind that was plainly on making; that is the pet's to decide.
 - **What two strangers could say after watching three rooms for five minutes** is in DECISIONS.md, Part 15:
