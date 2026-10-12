@@ -185,7 +185,7 @@ export class Room {
     return petPortrait(genome, stage, 2, { grey: look.grey }).toDataURL();
   }
 
-  /** The name plates, captions and bubbles as they are laid out now (CSS pixels within the canvas), for checking that none overlap. */
+  /** The name lines, captions and bubbles that show now (CSS pixels within the canvas), for checking that none overlap. */
   labels(): (Rect & { kind: string })[] {
     const dpr = devicePixelRatio || 1;
     return this.words.placed.map((r) => ({ x: r.x / dpr, y: r.y / dpr, w: r.w / dpr, h: r.h / dpr, kind: r.kind }));
@@ -318,22 +318,17 @@ export class Room {
     }
   }
 
-  /** Name plates, thought captions, speech, and what the box is saying. */
+  /** Each pet's line (its name and the sign of what it is doing), what it wants, its words, and what the box is saying. */
   private say(sc: Scene) {
     const { snap, room } = sc, who: Who[] = [];
-    const hour = snap.day_seconds / snap.tick_seconds / 24;   // nobody looks content in a room where someone has just died
-    const grief = [...this.pets.values()].some((a) => a.pet.stage === "dead") || snap.moments.some((m) => m.kind === "death" && m.room === room.id && snap.tick - m.tick >= 0 && snap.tick - m.tick <= 2 * hour);
-    const several = [...this.pets.values()].filter((a) => a.pet.stage !== "egg" && a.pet.stage !== "dead").length > 1;   // then every bubble says whose it is
     for (const a of this.pets.values()) {
       const p = a.pet, egg = p.stage === "egg", dead = p.stage === "dead";
       const said = p.said && ago(snap, p.said.tick) <= (sc.replay ? 30 : 16) ? p.said : null;
       who.push({ id: p.id, name: egg ? p.name ?? "egg" : p.label, family: p.family ?? 1, selected: sc.selected === p.id, faded: dead,
                  caption: egg || dead || p.asleep ? null : p.focus?.says || p.plan?.intention || p.focus?.words || null, thinking: !!p.thinking && !p.asleep && !egg && !dead,
                  say: said ? { key: `${said.tick}${said.text}`, text: said.text, to: said.to_name, song: !!said.song } : null,
-                 mood: egg || dead || p.asleep || (grief && p.emote === "content") ? null : p.emote ?? null, tab: several,
-                 // what its body is doing by itself (SPEC-v3.3 §5): a small sign over its head; none while it carries out a step it decided
-                 icon: egg || dead || p.asleep ? null : p.body?.icon ? { name: p.body.icon, key: `${p.body.activity}|${p.body.what}|${p.body.who}|${p.body.walking}`, word: p.body.doing ?? "" }
-                   : p.sign?.icon ? { name: p.sign.icon, key: `${p.sign.step}|${p.sign.walking}|${p.plan?.i}`, word: p.sign.word } : null });
+                 // the sign of what it is doing (SPEC-v3.3 §5): its body's by itself, or the step it decided on
+                 icon: egg || dead || p.asleep ? null : p.body?.icon || p.sign?.icon || "" });
     }
     const heard = (snap.radio?.said ?? []).filter((h) => h.room === room.id && ago(snap, h.tick) <= 30).at(-1);
     this.words.sync(who, heard ? { key: `${heard.tick}${heard.text}`, text: heard.text, source: heard.source } : null, this.F, (W * this.K) / this.F);
@@ -431,7 +426,6 @@ export class Room {
     once(still.scenery.map((s) => ({ name: sceneryName(s.sprite), rect: s.rect })), 4);
     for (const [id, until] of this.hatched) if (this.heads.has(id)) tags.push({ key: `h.${id}`, text: "just hatched", rect: this.heads.get(id)!, pri: 0, until });
     this.words.name(tags);
-    this.words.keepOff = [...still.things.values()].filter((t) => t.obj.memorial).map((t) => px({ x: t.rect.x - 1, y: t.rect.y - 1, w: t.rect.w + 2, h: t.rect.h + 2 }));
     this.words.things = [...still.things.values()].filter((t) => !t.obj.fix?.soft && !t.obj.fix?.sun).map((t) => px(t.rect));
   }
 
