@@ -154,7 +154,9 @@ def processes(house, cfg, pet):
     changing a thing that has a place in this room (whether or not anything would come of it)."""
     room = house["rooms"][pet["room"]]
     hows = [h for h in craft.DONE if craft.place(house, cfg, room, h) is not None]
-    bits = list(dict.fromkeys(pet["carrying"] + [s["bit"] for s in room["spots"] if s["ready"] and not s.get("on")]))
+    wanted = [w["bit"] for w in pet.get("wants", []) if w["what"] == "try"]   # what it carries, what it wants to try, and a couple of what lies here
+    lying = sorted({s["bit"] for s in room["spots"] if s["ready"] and not s.get("on")}, key=lambda b: (b not in wanted, b))
+    bits = list(dict.fromkeys(pet["carrying"] + lying[:max(2, sum(b in wanted for b in lying))]))
     return {b: [h for h in hows if h != "plant" or b in cfg["craft"]["grow"]] for b in bits} if hows else {}
 
 

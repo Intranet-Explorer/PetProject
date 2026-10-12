@@ -113,6 +113,28 @@ def tool_here(house, cfg, room, kind):
     return next((n for n, o in things.made(room).items() if o["made"]["recipe"].get("kind") == kind and o["made"].get("wear", 0) < lasts(cfg, o)), None)
 
 
+def tool_for(house, cfg, pet, kind):
+    """(room, name) of a tool of this kind that still works: here, else in any room it knows. One that is elsewhere
+    is fetched when it is used. ponytail: it comes by itself as the pet sets to work; walking it through the house is
+    the upgrade."""
+    rooms = [house["rooms"][pet["room"]]] + [house["rooms"][r] for r in pet["rooms"] if r != pet["room"] and house["rooms"][r]["type"]]
+    return next(((r, n) for r in rooms for n, o in things.made(r).items() if o["made"]["recipe"].get("kind") == kind and o["made"].get("wear", 0) < lasts(cfg, o)), None)
+
+
+def fetch(house, cfg, pet, kind):
+    """The tool, in this room: (its name, where it was fetched from or "")."""
+    from .world import free_tile
+    room, (at, name) = house["rooms"][pet["room"]], tool_for(house, cfg, pet, kind)
+    if at is room:
+        return name, ""
+    o = at["objects"].pop(name)
+    for k in ("on", "wall", "home", "places"):
+        o.pop(k, None)
+    o["pos"], o["kept"] = free_tile(house, cfg, room, pet["pos"]), house["tick"]
+    room["objects"][name] = o
+    return name, at["name"]
+
+
 def wear(house, cfg, pet, room, name):
     o = room["objects"][name]
     o["made"]["wear"] = o["made"].get("wear", 0) + 1
@@ -254,7 +276,7 @@ def check_process(a, house, cfg, pet, norm):
     if place(house, cfg, room, how) is None:
         return NOWHERE[how]
     tool = "trowel" if how == "plant" else P.get("tool")
-    if tool and not tool_here(house, cfg, room, tool):
+    if tool and not tool_for(house, cfg, pet, tool):
         pet.setdefault("lacks", {})[tool] = house["tick"]   # (felt as a want: wants.py)
         return C["tool"][tool]["without"]
     if skill(cfg, pet, "making") < P.get("skill", 0):
@@ -294,8 +316,11 @@ def process(house, cfg, pet, a, norm):
     how, bit = norm(a["how"]), norm(a["what"])
     key, P = "%s|%s" % (bit, how), C["process"].get(how, {})
     tool = "trowel" if how == "plant" else P.get("tool")
+    fetched = ""
     if tool:
-        wear(house, cfg, pet, room, tool_here(house, cfg, room, tool))
+        name, frm = fetch(house, cfg, pet, tool)
+        fetched = "you fetched the %s from %s; " % (name, frm) if frm else ""
+        wear(house, cfg, pet, room, name)
     tried = pet.setdefault("tried", {})
     if how == "plant":
         name, _ = place(house, cfg, room, how)
@@ -305,7 +330,7 @@ def process(house, cfg, pet, a, norm):
         practise(house, cfg, pet, "tending")
         new = learn(house, cfg, pet, key)
         moment(house, "planted", "%s planted a %s in the %s" % (label(pet), bit, name), pet["id"], room["id"])
-        return "you dug a hole in the %s with the trowel and planted the %s; it will want water" % (name, bit), {"curiosity": C["knowing"]["lift"] if new else 0.0}, "plant" if new else None
+        return "%syou dug a hole in the %s with the trowel and planted the %s; it will want water" % (fetched, name, bit), {"curiosity": C["knowing"]["lift"] if new else 0.0}, "plant" if new else None
     rule = C["rules"].get((bit, how))
     if not rule:
         tried[key] = None
@@ -322,7 +347,7 @@ def process(house, cfg, pet, a, norm):
         if learn(house, cfg, kid, key, "watching %s" % label(pet)):   # a young one watching picks it up
             add_event(house, kid, "you watched and saw how: %s" % words(cfg, key))
     opens = [k for k, groups in C["needs"].items() if any(rule["gives"] in g.split("|") for g in groups) and not lacking(cfg, k, pet["carrying"])]
-    text = "%s; you have %s now" % (rule["says"], rule["gives"])
+    text = "%s%s; you have %s now" % (fetched, rule["says"], rule["gives"])
     if new and rule.get("hint"):
         text += "; " + rule["hint"]
     if new and opens:

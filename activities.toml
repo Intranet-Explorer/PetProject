@@ -435,7 +435,7 @@ do = "place"
 book = true
 doing = "going over to the heavy book"
 did = "went over to the heavy book"
-icon = "eye"
+icon = "book"
 seconds = [2, 3]
 base = 0.0
 
@@ -444,7 +444,7 @@ do = "try"
 book = true
 doing = "leafing through the heavy book"
 did = "leafed through the heavy book"
-icon = "eye"
+icon = "book"
 seconds = [5, 8]
 base = 0.0
 handles = true

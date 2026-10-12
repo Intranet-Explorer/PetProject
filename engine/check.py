@@ -1482,6 +1482,132 @@ async def main():
         for n2, o2 in roomA["objects"].items():
             if n2 in caps:
                 o2["fix"]["store"] = caps[n2]
+        # ---- SPEC-v3.4 §2, §3: making by discovery, tools, recipes, wants, the book carried, food grown ----
+        from . import craft, wants
+        C = cA["craft"]
+        clear()
+        made_thing = lambda kind, material="hard": {"pos": [1, 1], "made": {"id": 9000 + len(roomA["objects"]), "recipe": {"name": kind, "kind": kind, "material": material, "color": "grey", "size": 1, "purpose": "a tool"},
+                                                                         "by": pa["id"], "owner": pa["id"], "tick": hA["tick"], "bits": [], "uses": 0, "ups": 0, "used_at": hA["tick"], "heirloom": None, "behavior": None}}
+        was_objects, was_type, was_spots = dict(roomA["objects"]), roomA["type"], list(roomA["spots"])
+        roomA["objects"].update({"pond": {"pos": [1, 6], "fix": {"water": [[1, 6]]}}, "hot pipe": {"pos": [2, 6], "fix": {}}, "barrel": {"pos": [3, 6], "fix": {}},
+                                 "workbench": {"pos": [4, 6], "state": None, "fix": {"bench": True}}, "herb patch": {"pos": [8, 6], "fix": {"plant": True}, "grow": 0.0, "state": "bare"},
+                                 "edge": made_thing("carver"), "spade": made_thing("trowel")})
+        pa["skill"], pa["recipes"], pa["tried"], hA["recipes"] = {"making": 30.0}, {}, {}, {}
+        act = lambda a2: (actions.check(a2, hA, cA, pa, mA.mem), None) if actions.check(a2, hA, cA, pa, mA.mem) else (None, actions.apply(hA, cA, pa, a2, mA.mem))
+        # every rule in the table: the bit, done to in its place, becomes what the table says (or is spoiled), and the pet is told the table's words
+        for (bit, how), rule in C["rules"].items():
+            roomA["type"] = {"dry": "attic", "grind": "cellar"}.get(how, was_type)
+            pa["carrying"], pa["needs"]["energy"], roomA["objects"]["edge"]["made"]["wear"] = [bit] * (2 if C["process"][how].get("pair") else 1), 80.0, 0
+            why, got = act({"type": "process", "what": bit, "how": how})
+            assert not why and pa["carrying"] == ([] if rule.get("spoils") else [rule["gives"]]) and rule["says"] in got[0], "the table's rule for %s, %s: %s %s" % (bit, how, why, got)
+        roomA["type"] = was_type
+        found = [k for k, v in pa["recipes"].items()]
+        assert sorted(found) == sorted("%s|%s" % k for k, r in C["rules"].items() if not r.get("spoils")) and all(v["by"] == pa["id"] for v in hA["recipes"].values()), "what it found out it knows, and the house knows who found it first"
+        assert sum(m["kind"] == "discovery" for m in hA["moments"]) >= 10 and hA["bursts"][-1]["kind"] == "find" and craft.words(cA, "reed|soak") == "reed, soaked, makes supple reed", "each thing found out for the first time is a moment"
+        pa["carrying"] = ["bell"]
+        why, got = act({"type": "process", "what": "bell", "how": "soak"})
+        assert not why and pa["carrying"] == ["bell"] and "only got wet" in got[0] and "bell|soak" in pa["tried"] and "bell|soak" not in pa["recipes"], "a thing that does not change that way is kept, and it is told so: %s" % (got,)
+        assert actions.check({"type": "process", "what": "bell", "how": "dry"}, hA, cA, pa, mA.mem) == craft.NOWHERE["dry"], "a thing is done where it can be done"
+        # joining: every pair in the table meets; a bright thing and a dark one make a light that is not harsh
+        assert all(craft.meet(cA, e["a"], e["b"]) is e and craft.meet(cA, e["b"], e["a"]) is e and cA["materials"][e["name"]]["says"] for e in C["emerge"]) and not craft.meet(cA, "soft", "soft")
+        for nm, mat, bit in (("glim", "bright", "wax"), ("murk", "dark", "soot"), ("plain one", "soft", "fluff"), ("plain two", "soft", "fluff")):
+            pa["carrying"], pa["needs"]["energy"] = [bit], 80.0
+            why, got = act({"type": "make", "recipe": dict(recipe, name=nm, kind="sculpture", material=mat), "near": "here"})
+            assert not why, why
+        why, got = act({"type": "combine", "a": "glim", "b": "murk", "recipe": {"name": "soft glow", "material": "bright", "purpose": "a kind light"}})
+        glow = roomA["objects"]["soft glow"]
+        assert not why and glow["made"]["recipe"]["material"] == "glowing" and "neither part did" in got[0] and "bright+dark" in pa["recipes"], "what meets makes something new: %s" % (got,)
+        assert things.light_on(hA, cA, {"objects": {"g": glow}}) and not things.light_on(hA, cA, {"objects": {"g": glow}}, harsh=True), "a soft glow is a light, and not a harsh one"
+        why, got = act({"type": "combine", "a": "plain one", "b": "plain two", "recipe": {"name": "plain three", "material": "soft", "purpose": "more of the same"}})
+        assert not why and "nothing new came of it" in got[0], got
+        # a kind that takes a material found out first; the same kind and material again is nothing new; a practised maker's thing is finer
+        pa["carrying"], pa["needs"]["energy"] = ["reed"], 80.0
+        assert "basket" not in mind.perceive(hA, cA, pa, mA.mem)[1]["kinds"].get("springy", []) and "have not got what" in actions.check({"type": "make", "recipe": dict(recipe, name="b1", kind="basket", material="springy"), "near": "here"}, hA, cA, pa, mA.mem)
+        pa["carrying"] = ["wicker"]
+        assert "basket" in mind.perceive(hA, cA, pa, mA.mem)[1]["kinds"]["springy"] and "you could make a basket" in mind.perceive(hA, cA, pa, mA.mem)[0]
+        why, got = act({"type": "make", "recipe": dict(recipe, name="b1", kind="basket", material="springy"), "near": "here"})
+        assert not why and pa["carrying"] == [] and roomA["objects"]["b1"]["made"]["fine"] == 3 and "kind:basket" in pa["recipes"] and got[2], "wicker makes a basket: %s" % (got,)
+        pa["carrying"], pa["needs"]["energy"] = ["wicker"], 80.0
+        why, got = act({"type": "make", "recipe": dict(recipe, name="b2", kind="basket", material="springy"), "near": "here"})
+        assert not why and "doesn't feel new" in got[0] and got[2] is None and pa["last_made"]["new"] is False, "the same again is nothing new: %s" % (got,)
+        assert "your paws know making well" in craft.skills_line(cA, pa) and "with practice: " in mind.perceive(hA, cA, pa, mA.mem)[0], "a skill is felt in words"
+        # tools: needed where the table says, worn by use, mended; the first of one is a moment
+        edge = roomA["objects"].pop("edge")
+        pa["carrying"] = ["wood"]
+        assert actions.check({"type": "process", "what": "wood", "how": "carve"}, hA, cA, pa, mA.mem) == C["tool"]["carver"]["without"] and "carver" in pa["lacks"], "carving needs something with an edge"
+        roomA["objects"]["edge"] = edge
+        why, got = act({"type": "process", "what": "wood", "how": "carve"})
+        assert not why and edge["made"]["wear"] == 1, "a tool wears with use"
+        edge["made"]["wear"] = craft.lasts(cA, edge)
+        assert craft.tool_here(hA, cA, roomA, "carver") is None and not actions.check({"type": "mend", "target": "edge"}, hA, cA, pa, mA.mem), "worn out, it does no more until it is mended"
+        act({"type": "mend", "target": "edge"})
+        assert craft.tool_here(hA, cA, roomA, "carver") == "edge" and pa["skill"]["mending"] == 1, "and mended it works again"
+        pa["carrying"], pa["needs"]["energy"] = ["sharp stone"], 80.0
+        why, got = act({"type": "make", "recipe": dict(recipe, name="cutter", kind="carver", material="hard"), "near": "here"})
+        assert not why and "carver" in hA["firsts"] and any(m["kind"] == "tool" for m in hA["moments"][-6:]), "the first of a tool is a moment: %s %s" % (why, got)
+        # recipes are family knowledge: a child starts with some, and what nobody living knows is lost until it is found again
+        kid = dict(pa, id="kid", parent=pa["id"], recipes={})
+        craft.inherit(hA, cA, kid)
+        assert 0 < len(kid["recipes"]) < len(pa["recipes"]), "a child starts out knowing some of what its parent knew: %d of %d" % (len(kid["recipes"]), len(pa["recipes"]))
+        pa["recipes"] = {}
+        craft.lost(hA, cA)
+        assert all("lost" in r for r in hA["recipes"].values()) and any(m["kind"] == "forgotten" for m in hA["moments"][-80:]), "what nobody living knows is lost"
+        pa["carrying"] = ["reed"]
+        act({"type": "process", "what": "reed", "how": "soak"})
+        assert "lost" not in hA["recipes"]["reed|soak"] and "found again" in hA["moments"][-1]["text"], "and can be found again: %s" % hA["moments"][-1]
+        # the book can be carried through a door, and stays where it is put
+        roomA["objects"]["heavy book"] = {"pos": [6, 3], "fix": {"book": True}}
+        d2 = next(iter(roomA["doors"]))
+        why, got = act({"type": "carry", "door": d2})
+        there = hA["rooms"][roomA["doors"][d2]]
+        assert not why and pa["room"] == there["id"] and "heavy book" in there["objects"] and "heavy book" not in roomA["objects"], "the book goes with it: %s" % (why,)
+        del there["objects"]["heavy book"]
+        pa.update(room=roomA["id"], pos=[6, 6])
+        # food is grown: planted with a trowel, it comes up watered, wilts dry, ripens, and feeds
+        pa["carrying"], pa["needs"]["energy"] = ["seed", "seed"], 80.0
+        why, got = act({"type": "process", "what": "seed", "how": "plant"})
+        bed = roomA["objects"]["herb patch"]
+        assert not why and bed["planted"]["by"] == pa["id"] and roomA["objects"]["spade"]["made"]["wear"] == 1 and pa["carrying"] == ["seed"], "a seed is planted with a trowel: %s" % (why,)
+        seen = []
+        for _ in range(600):
+            bed["planted"]["watered"] = hA["tick"]
+            craft.grow(hA, cA)
+            seen.append(craft.stage(bed["planted"]))
+            if seen[-1] == "ripe":
+                break
+        assert list(dict.fromkeys(seen)) == ["planted", "sprout", "leaves", "ripe"] and bed["state"] == "ripe" and any("is ripe" in e for _, e in pa["events"][-8:]), "watered, it comes up, leafs and ripens, and its planter is told: %s" % list(dict.fromkeys(seen))
+        pa["needs"]["energy"], pa["last_eat"], n_h = 40.0, LONG_AGO, len(hA.get("harvests", []))
+        text, fx, _ = actions.use(hA, cA, pa, "herb patch")
+        assert fx.get("energy", 0) > 0 and "planted" not in bed and len(hA["harvests"]) == n_h + 1 and any(s2["bit"] == "bean" for s2 in roomA["spots"]) and "food the family grew" in text, "ripe, it is picked and eaten: %s" % text
+        bed["planted"] = {"what": "seed", "at": hA["tick"], "grow": 0.2, "watered": hA["tick"] - 3 * cA["ticks_per_day"], "by": pa["id"], "stage": "sprout"}
+        craft.grow(hA, cA)
+        assert bed["planted"].get("wilted") and "pulled the wilted" in actions.use(hA, cA, pa, "herb patch")[0] and "planted" not in bed, "left dry, it wilts"
+        # wants: made from where it is and what it has not done, told to its mind, met when the world shows it, and faded when left
+        cA["wants"] = dict(cA["wants"], most=3)
+        pa["wants"], pa["wanted"], pa["carrying"] = [], {}, []
+        wants.refresh(hA, cA, pa)
+        assert 1 <= len(pa["wants"]) <= 3 and len({w["what"] for w in pa["wants"]}) == len(pa["wants"]) and all(w["text"] in mind.perceive(hA, cA, pa, mA.mem)[0] for w in pa["wants"]), \
+            "up to three wants, no two of a kind, in its mind's words: %s" % [w["text"] for w in pa["wants"]]
+        roomA["spots"].append({"bit": "fibre", "pos": [5, 5], "ready": True, "back": None, "loose": True, "since": hA["tick"]})
+        want = {"what": "bit", "key": "bit:fibre", "text": "you want to know what fibre is like in your paws", "done": "held fibre for the first time", "bit": "fibre", "room": roomA["id"], "since": hA["tick"]}
+        pa["wants"], n_f, n_b = [dict(want)], pa.get("fulfilled", 0), hA["n"].get("burst", 0)
+        wants.refresh(hA, cA, pa)
+        assert any(w["key"] == "bit:fibre" for w in pa["wants"]) and wants.lean(hA, cA, pa)["gather"] == {"fibre"}, "a want not yet met stays, and its body leans toward it"
+        assert [t["what"] for t in body.targets(hA, cA, pa, mA.mem, "gather", cA["activities"]["gather"]) if t.get("bonus")] == ["fibre"], "its body would pick up the bit it wants to hold"
+        actions.apply(hA, cA, pa, {"type": "gather", "what": "fibre"}, mA.mem)
+        pa["gathered"].setdefault(roomA["id"], []).append("fibre")
+        wants.refresh(hA, cA, pa)
+        assert not any(w["key"] == "bit:fibre" for w in pa["wants"]) and pa["fulfilled"] == n_f + 1 and hA["n"]["burst"] == n_b + 1 and hA["bursts"][-1]["kind"] == "want" \
+            and hA["moments"][-1]["kind"] == "want" and any("as you wanted" in e for _, e in pa["events"][-4:]), "a want met is felt, seen and written down"
+        pa["wants"] = [dict(want, key="try:bell|press", what="try", how="press", since=hA["tick"] - 2 * cA["ticks_per_day"])]
+        pa["carrying"] = ["bell"]
+        wants.refresh(hA, cA, pa)
+        assert not any(w["key"] == "try:bell|press" for w in pa["wants"]) and "try:bell|press" in pa["wanted"] and pa["fulfilled"] == n_f + 1, "a want left alone a world day fades"
+        wants.refresh(hA, cA, pa)
+        assert not any(w["key"] == "try:bell|press" for w in pa["wants"]), "and does not come straight back"
+        cA["wants"], pa["wants"], pa["carrying"] = dict(cA["wants"], most=0), [], []
+        roomA["objects"], roomA["spots"] = {n2: o2 for n2, o2 in roomA["objects"].items() if n2 in was_objects}, was_spots
+        clear()
         # a mind set on making: its body gathers bits, takes them to the bench, lays them out, and it thinks sooner, with all to hand
         roomA["spots"], pa["carrying"], body.state(pa)["now"] = [dict(s, ready=True) for s in spots0], [], None
         far = max(([x, y] for x in range(1, cA["W"] - 1) for y in range(1, cA["H"] - 1)), key=lambda t: min(abs(t[0] - s["pos"][0]) + abs(t[1] - s["pos"][1]) for s in spots0))

@@ -209,9 +209,9 @@ def targets(house, cfg, pet, mem, name, A):
     bench = next((n for n, o in objs.items() if o.get("fix", {}).get("bench")), None)
     if do == "gather":
         wanted = [s for s in room["spots"] if s["ready"] and not s.get("on") and s["bit"] in L["gather"]]   # a bit one of its wants is about: picked up whatever else it carries
-        if wanted and len(pet["carrying"]) < cfg["make"]["carry"]:
+        if wanted:   # (with its arms full it puts something else down first)
             s = min(wanted, key=lambda s: dist(me, s["pos"]))
-            return [{"what": s["bit"], "goal": near(s["pos"]), "bonus": W}]
+            return [{"what": s["bit"], "goal": near(s["pos"]), "bonus": W, "want": "swap" if len(pet["carrying"]) >= cfg["make"]["carry"] else None}]
         if len(pet["carrying"]) >= (cfg["body"]["make_bits"] if making else cfg["make"]["carry"] if focus.get("type") == "project" else 1):
             return []
         spots = sorted((s for s in room["spots"] if s["ready"] and not s.get("on")), key=lambda s: dist(me, s["pos"]))
@@ -501,6 +501,11 @@ def finish(mind, now, cut=False):
                 if where:
                     craft.practise(h, cfg, pet, "tidying", 0.25)
             elif do == "gather":
+                if now.get("want") == "swap" and len(pet["carrying"]) >= cfg["make"]["carry"]:   # room in its arms for the bit it wants: the first thing it carries that no want of its is about
+                    keep = {w.get("bit") for w in pet.get("wants", [])}
+                    spare = next((x for x in pet["carrying"] if x not in keep), pet["carrying"][0])
+                    pet["carrying"].remove(spare)
+                    things.drop_bits(h, cfg, room, pet["pos"], [spare])
                 a = {"type": "gather", "what": name}
                 if actions.check(a, h, cfg, pet, mind.mem) is None:
                     actions.apply(h, cfg, pet, a, mind.mem)

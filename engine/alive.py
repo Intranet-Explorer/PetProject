@@ -96,6 +96,68 @@ def measure(data, since=0, show=True):
     return out, calls, nuzzle
 
 
+def purpose(data, since=0, show=True):
+    """SPEC-v3.4 §0, the rest of it, by world day from a house's own log: wants fulfilled by each pet, things made that
+    repeat a kind and material their maker had made before, discoveries, the first tool, food the family grew and
+    ate, questions put to the book, and whether anything the box said turned up in a thought, a question or a telling.
+    Returns {day: {...}}."""
+    import re
+    db = sqlite3.connect("file:%s?mode=ro" % next(Path(data).glob("lineage-*/lineage.db")), uri=True)
+    house = json.loads((Path(data) / "house.json").read_text())
+    names = dict(db.execute("SELECT pet, coalesce(name, pet) FROM pets"))
+    names.update({i: p.get("name") or i for i, p in house["pets"].items()})
+    day_of = {t: d for t, d in db.execute("SELECT tick, day FROM moments WHERE tick > ?", (since,))}
+    days = sorted(set(day_of.values()))
+    if not days:
+        return {}
+    edges = {d: min(t for t, x in day_of.items() if x == d) for d in days}   # the first thing noted each world day: near enough its start
+    day_at = lambda tick: max((d for d in days if edges[d] <= tick), default=days[0])
+    out = {d: {"wants": Counter(), "made": 0, "repeats": 0, "discoveries": [], "tools": [], "harvests": [], "asked": [], "radio": []} for d in days}
+    for d, kind, text, pet in db.execute("SELECT day, kind, text, pet FROM moments WHERE tick > ? ORDER BY tick", (since,)):
+        if kind == "want":
+            out[d]["wants"][names.get(pet, pet)] += 1
+        elif kind in ("discovery", "tool", "harvest"):
+            out[d][{"discovery": "discoveries", "tool": "tools", "harvest": "harvests"}[kind]].append(text)
+    seen = {}   # (pet, kind, material) made before, all its life
+    for pet, tick, action in db.execute("SELECT pet, tick, action FROM steps WHERE kind = 'make' AND (reason IS NULL OR reason = '') ORDER BY tick"):
+        r = (json.loads(action).get("recipe") or {})
+        key = (pet, r.get("kind"), r.get("material"))
+        if tick > since:
+            out[day_at(tick)]["made"] += 1
+            out[day_at(tick)]["repeats"] += key in seen
+        seen[key] = True
+    for pet, tick, q, title in db.execute("SELECT pet, tick, question, title FROM library WHERE tick > ?", (since,)):
+        out[day_at(tick)]["asked"].append("%s asked \"%s\"%s" % (names.get(pet, pet), q, " and read about %s" % title if title else " and found nothing"))
+    long = lambda text: set(re.findall(r"[a-z]{7,}", (text or "").lower()))
+    said = {}
+    for tick, text in db.execute("SELECT tick, text FROM radio WHERE tick > ?", (since,)):
+        said.setdefault(day_at(tick), set()).update(long(text))
+    box = re.compile(r"\b(the box|the radio|box said|forecast)\b", re.I)
+    for d in days:
+        lo, hi = edges[d], min([edges[x] for x in days if x > d] or [10**9])
+        heard = said.get(d, set()) | said.get(d - 1, set())
+        for what, rows in (("thought", db.execute("SELECT pet, thought FROM intentions WHERE tick > ? AND tick <= ?", (lo, hi)).fetchall()),
+                           ("question", db.execute("SELECT pet, question FROM library WHERE tick > ? AND tick <= ?", (lo, hi)).fetchall()),
+                           ("telling", db.execute("SELECT from_pet, text FROM social WHERE kind IN ('tell', 'speak') AND tick > ? AND tick <= ?", (lo, hi)).fetchall())):
+            for pet, text in rows:
+                words = long(text) & heard
+                if box.search(text or "") or (what == "question" and words) or len(words) >= 2:
+                    out[d]["radio"].append("%s (%s): %s" % (names.get(pet, pet), what, (text or "")[:110]))
+    if show:
+        print("by world day: wants fulfilled per pet; things made (repeats of a kind and material); discoveries; tools; grown and eaten; book asked; the box in a thought, question or telling")
+        for d in days:
+            m = out[d]
+            print("  day %d: wants %s | made %d (%d repeats) | discoveries %d | tools %d | harvests %d | book %d | radio %d" % (
+                d, ", ".join("%s %d" % kv for kv in sorted(m["wants"].items())) or "none", m["made"], m["repeats"], len(m["discoveries"]), len(m["tools"]), len(m["harvests"]), len(m["asked"]), len(m["radio"])))
+        for title, key in (("discoveries", "discoveries"), ("tools", "tools"), ("grown and eaten", "harvests"), ("the book", "asked"), ("the box, taken up", "radio")):
+            lines = ["day %d: %s" % (d, t) for d in days for t in out[d][key]]
+            if lines:
+                print(title + ":")
+                for line in lines[:40]:
+                    print("   " + line[:200])
+    return out
+
+
 def clutter(data, since=0, show=True):
     """What lay about in each room at each world hour since `since` (the house notes it: director.hourly): {room: [n, ...]}.
     Tidying that works shows as numbers that fall over a world day and stay down."""
@@ -146,4 +208,5 @@ if __name__ == "__main__":
     a = ap.parse_args()
     since = asyncio.run(stub(a.data, a.stub, a.profile)) if a.stub else a.since
     measure(a.data, since)
+    purpose(a.data, since)
     clutter(a.data, since)
