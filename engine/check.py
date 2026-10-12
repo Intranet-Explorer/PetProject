@@ -566,15 +566,18 @@ async def main():
         # ---- the live profile: the showcase's world, one world day to the real hour; a house can move to it ----
         live = load_config(profile="live")
         assert not live["clock"]["turbo"] and live["pace"] == 2 and show["pace"] == cfg["pace"] == 1
-        assert live["clock"]["tick_seconds"] * live["pace"] * live["ticks_per_day"] == 3600, "a world day is a real hour"
-        assert {k: live[k] for k in ("life", "growth", "sleep", "ticks_per_day")} == {k: show[k] for k in ("life", "growth", "sleep", "ticks_per_day")}, \
-            "nothing in the world differs from the showcase's"
+        assert live["clock"]["tick_seconds"] * live["pace"] * live["ticks_per_day"] == 7200, "a world day is two real hours"
+        assert {k: live[k] for k in ("life", "growth", "sleep")} == {k: show[k] for k in ("life", "growth", "sleep")} and live["ticks_per_day"] == 2 * show["ticks_per_day"], \
+            "nothing in the world differs from the showcase's but the length of its day"
         moved, _ = engine(show, d + "/moved")
+        moved.house["tick"] = 500
         tick, pets = moved.house["tick"], json.dumps(moved.house["pets"], sort_keys=True)
         moved.close()
         again = Engine(live, d + "/moved", scripted)
         assert again.house["profile"] == "live" and again.house["tick"] == tick and json.dumps(again.house["pets"], sort_keys=True) == pets, \
             "the same family on the live clock"
+        assert again.house["shift"] == {"until": tick, "by": 1.0} and world.clock(live, tick) == world.clock(show, tick) \
+            and world.days(live, 0, tick + live["ticks_per_day"]) == world.days(show, 0, tick) + 1, "its day is twice as long from here; the clock and every age carry on"
         again.close()
         try:
             Engine(cfg, d + "/moved", scripted)

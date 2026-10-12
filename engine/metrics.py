@@ -9,7 +9,7 @@ from pathlib import Path
 
 from . import life, story
 from .feel import meter_talk
-from .world import NEEDS, ROOT, label, load_config, ticks
+from .world import NEEDS, ROOT, days as world_days, label, load_config, ticks
 
 
 def pet_lab(db, house, cfg, pet, beliefs):
@@ -27,7 +27,7 @@ def pet_lab(db, house, cfg, pet, beliefs):
     calls = one("SELECT count(*) FROM calls WHERE pet=?")
     return {
         "id": pid, "name": label(pet), "gen": pet["gen"], "stage": pet["stage"], "cause": pet["cause"],
-        "days": round((end - born) / cfg["ticks_per_day"], 1) if pet["born"] is not None else 0,
+        "days": round(world_days(cfg, born, end), 1) if pet["born"] is not None else 0,
         "intentions": plans, "steps": steps,
         "meter_all": story.meter_share(db, pid)[0], "meter_after_day1": story.meter_share(db, pid, first_day)[0],
         "meter_beliefs": round(100 * sum(meter_talk(b["statement"]) for b in beliefs) / len(beliefs), 1) if beliefs else None,

@@ -6,7 +6,7 @@ import re
 from . import genome, life, things
 from .feel import meter_talk
 from .log import pet_row, put
-from .world import label, moment
+from .world import days as world_days, label, moment
 
 STOP = set("""a an the and or but if then so that this these those it its is are was were be been being am do does did
 to of in on at by for with from as into than too very not no you your yours i my me mine we our they them their he she
@@ -146,7 +146,7 @@ def made_by(house, pet):
 def life_record(eng, pet, mem):
     from . import body
     house, cfg = eng.house, eng.cfg
-    day = lambda t: None if t is None else round((t - pet["laid"]) / cfg["ticks_per_day"], 1)
+    day = lambda t: None if t is None else round(world_days(cfg, pet["laid"], t), 1)
     name = label(pet)
     lived = round(life.days(house, cfg, pet), 1)
     heir = lambda o: o["made"].get("heirloom") or {}

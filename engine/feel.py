@@ -3,7 +3,7 @@ what changed in words, and what it notices. This module is the only place that t
 and it also reads a pet's words back into numbers so the engine can score what it expected."""
 import re
 
-from .world import NEEDS, dist
+from .world import NEEDS, days as world_days, dist
 
 # Five felt states per need, best to worst, with the level each begins at. The words for one need are meant to
 # be no louder than another's (v2's "restless" drowned out comfort): each list goes from good, to fine, to a
@@ -91,7 +91,7 @@ def when(house):
 
 
 def ago(house, cfg, tick):
-    days = (house["tick"] - tick) / cfg["ticks_per_day"]
+    days = world_days(cfg, tick, house["tick"])
     return "today" if days < 0.75 else "yesterday" if days < 1.75 else "%d days ago" % round(days)
 
 

@@ -199,7 +199,7 @@ def snapshot():
         # SPEC-v3.2: the one plain sentence about the house now, and the steps finished in the last world minute or so
         "now": story.now(h, cfg), "acts": recent(h.get("acts", []), 40),
         "tick": h["tick"], "clock": h["clock"], "weather": h["weather"], "power": power_on(h), "size": [cfg["W"], cfg["H"]],
-        "tick_seconds": cfg["clock"]["tick_seconds"], "day_seconds": cfg["clock"]["day_seconds"], "turbo": cfg["clock"]["turbo"],
+        "tick_seconds": cfg["clock"]["tick_seconds"], "day_seconds": cfg["clock"]["day_seconds"], "turbo": cfg["clock"]["turbo"], "shift": cfg.get("shift"),
         "profile": cfg["profile"], "start": h["start"], "door_tiles": h["door_tiles"], "lineage": h["lineage"],
         "rooms": [room_view(r) for r in h["rooms"].values()], "pets": [pet_view(p) for p in h["pets"].values()],
         "creatures": h["creatures"], "moments": h["moments"][-60:], "events": h["events"][-8:],

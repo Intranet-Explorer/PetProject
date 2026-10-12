@@ -3,7 +3,7 @@ grows old, and dies; before that it may lay eggs, and what it hands on is a body
 and a couple of things."""
 from . import genome, order, things
 from .feel import level
-from .world import (GENES, STAGES, add_event, alive, arrived, family, free_tile, hours, label, moment, new_pet, rnd, ticks)
+from .world import (GENES, STAGES, days as world_days, add_event, alive, arrived, family, free_tile, hours, label, moment, new_pet, rnd, ticks)
 
 GROWS = {"hatchling": "child", "child": "youngling", "youngling": "adult"}
 UNLOCKS = {
@@ -44,7 +44,7 @@ def full(house, cfg, pet):
 
 def days(house, cfg, pet):
     """World days since it hatched."""
-    return (house["tick"] - pet["born"]) / cfg["ticks_per_day"] if pet["born"] is not None else 0.0
+    return world_days(cfg, pet["born"], house["tick"]) if pet["born"] is not None else 0.0
 
 
 def wellbeing(pet, cfg=None):
@@ -88,7 +88,7 @@ def body_feels(house, cfg, pet):
     if stage in ("adult", "elder") and not pet["useful"]:
         out.append("you haven't made anything that's really yours")
     if stage in ("adult", "elder") and pet["eggs"] < fertility(pet):
-        pull = (house["tick"] - pet["stage_at"]["adult"]) >= L["egg_pull_days"] * cfg["ticks_per_day"] and pet["eggs"] == 0
+        pull = world_days(cfg, pet["stage_at"]["adult"], house["tick"]) >= L["egg_pull_days"] and pet["eggs"] == 0
         if full(house, cfg, pet):
             out.append("the house is full")
         elif pull or left <= 2:
@@ -176,7 +176,7 @@ def earned(house, cfg, pet):
     nxt = GROWS.get(stage)
     if nxt:
         return nxt if age >= cfg["growth"][nxt] else None
-    if stage == "adult" and house["tick"] - pet["stage_at"]["adult"] >= cfg["life"]["adult_days"] * cfg["ticks_per_day"]:
+    if stage == "adult" and world_days(cfg, pet["stage_at"]["adult"], house["tick"]) >= cfg["life"]["adult_days"]:
         return "elder"
     return None
 
@@ -259,7 +259,7 @@ def bury(house, cfg, pet):
     name, n = ("stone for %s" % label(pet)).lower(), 2
     while name in room["objects"]:
         name, n = ("stone for %s %d" % (label(pet), n)).lower(), n + 1
-    lived = round((pet["died"] - (pet["born"] or pet["died"])) / cfg["ticks_per_day"])
+    lived = round(world_days(cfg, pet["born"] or pet["died"], pet["died"]))
     room["objects"][name] = {"pos": free_tile(house, cfg, room, pet["pos"]),
                              "memorial": {"pet": pet["id"], "text": "a stone for %s, who lived %d days and made %d things" % (label(pet), lived, pet["made"])}}
     pet["buried"] = True

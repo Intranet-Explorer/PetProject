@@ -35,11 +35,13 @@ export type Ctx = {
 
 export const plural = (n: number, one: string, many = one + "s") => `${n} ${n === 1 ? one : many}`;
 /** A tick as a day of the house, for "since day 3". */
-export const dayOf = (snap: Snap, tick: number) => 1 + Math.floor((8 + (tick * snap.tick_seconds * 24) / snap.day_seconds) / 24);
+export const dayOf = (snap: Snap, tick: number) => 1 + Math.floor(worldHours(snap, tick) / 24);
+/** World hours since midnight before day 1. A house whose day was made longer counts its earlier ticks for more (engine/world.py `wt`). */
+const worldHours = (snap: Snap, tick: number) => 8 + ((tick + Math.min(tick, snap.shift?.until ?? 0) * (snap.shift?.by ?? 0)) * snap.tick_seconds * 24) / snap.day_seconds;
 
 /** A tick as a day and an hour: "day 3, 14:20". */
 export function when(snap: Snap, tick: number) {
-  const m = Math.round((8 + (tick * snap.tick_seconds * 24) / snap.day_seconds) * 60);   // the house starts at 08:00 on day 1
+  const m = Math.round(worldHours(snap, tick) * 60);   // the house starts at 08:00 on day 1
   return `day ${1 + Math.floor(m / 1440)}, ${hhmm(0, m % 1440)}`;
 }
 /** A length of real time, roughly: "under a minute", "about 20 minutes", "about 3 hours", "about 2 days". */

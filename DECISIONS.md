@@ -1149,3 +1149,20 @@ Nothing of Phase B is built. What is there for it: activities, storage kinds and
 (`activities.toml`, `view/assets/kinds.json`, `house.toml`); an activity may carry `needs_tool` or
 `needs_place`, which the body reads and, for now, treats as "cannot be done"; the kinds of focus are one
 tuple (`actions.FOCUS`) with the activities that serve each listed per activity.
+
+### A two-hour day for the live house (12 October 2026)
+
+Eleven world days went by in the first night of v3.3 and three of the family died with nobody watching, so the
+live house's day is now two real hours. Slowing the whole world to half speed would have undone §0 (a tick of
+eight seconds, a tile every eight seconds), so the tick stays at four real seconds and everything a watcher
+times stays as it was: a step, an activity, the wait between thoughts, every per-second rate, model calls per
+real hour. What is counted in world days and hours takes twice as long: a life, a stage, a night, a season,
+food growing back, an event coming round. The base profile has always had a longer day than this, so nothing
+here is a new balance.
+
+A house that already has a past keeps it: `world.wt` counts each tick before the change for two, so the clock
+did not jump, the date carried on from day 32, and nobody got younger. The engine notes the change once in
+`house["shift"]` when it first opens a house whose day differs from the profile's `was_day_seconds`; the view
+reads the same two numbers for the times it prints. Left as they fall: a few things already under way that are
+timed in days (writing fading, an animal's age) count their past at the new rate, so they last a little longer
+than they would have. One change of day length per house; a second would need a list.

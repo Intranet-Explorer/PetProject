@@ -383,11 +383,20 @@ model (`engine/alive.py`; everything in watching time on the live clock, where a
 | longest on one spot doing one thing, outside a resting pose | 30 s | 24 s | 24 s |
 | resting, looking and watching, share of waking time | under 25% | 1% to 23% | 6% to 19% |
 | thoughts asked of the model, per pet per live hour | no more than before | 9 to 14 (the live house before: 16 to 21) | n/a (too short) |
-| nuzzle and accept, share of decided steps | (v3.2: 9 to 13% of thoughts) | 0 of 84 | 0 of 18 |
+| nuzzle and accept, share of decided steps | (v3.2: 9 to 13% of thoughts) | about 13 of 84 | about 1 of 18 |
 
 The world day before that, on code that differed only in the last two additions (getting ready to make, the
 radio speaking at once), gave 8 to 10 things, 24 s, 3% to 16% and 13 to 15 thoughts an hour. Over the
 whole of the copy runs (407 calls to the model) none failed and the engine logged no error.
+
+**Corrected 12 October 2026, from the live house's first eleven world days on v3.3** (38 pet-days, all inside the
+bars: 8 to 13 things, 20 to 28 s, 5% to 23%):
+
+- Leaning was first reported here as "0 of 84". That was the measure reading the wrong column of the log. It
+  did not stop: on the live house, nuzzle and accept were 137 of 1,193 decided steps (11.5%; 163 of 1,294,
+  12.6%, over the nine days before). Counting what the bodies do as well, it is 137 of about 6,000 things done.
+- Thoughts did not fall as the copy suggested: 19.2 per pet per world day against 18.2 before (full days
+  only). Each was quicker, 16.6 s against 29.2 s, so the model's time per pet fell by about 40%.
 
 - **The pets think as often as they did.** The body asks nothing of the model; a thought brought forward
   because everything is laid out to make something is paid back by the next one.

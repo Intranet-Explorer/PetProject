@@ -9,7 +9,7 @@ Other docs: [DECISIONS.md](DECISIONS.md) (every place the build reads a spec its
 ## Run
 
 ```sh
-./run.sh start live     # the family living in data/: a world day is one real hour, a life about sixteen
+./run.sh start live     # the family living in data/: a world day is two real hours, a life about sixteen
 ./run.sh status
 ./run.sh stop
 ```
@@ -42,7 +42,7 @@ was made on the showcase's, so it is started with `live` (or `showcase`), never 
 
 | | |
 |---|---|
-| `./run.sh start live` | `config.live.toml`: the showcase's lives (a world day is 900 ticks, a life about 16 days) shown at one world day to the real hour. The house in `data/`. |
+| `./run.sh start live` | `config.live.toml`: the showcase's lives (about 16 world days) off turbo, with a world day of two real hours (1800 ticks; one hour until 12 October 2026). The house in `data/`. |
 | `./run.sh start` | `config.toml` alone, for a new house: a world day is two real hours, a life about two days. |
 | `./run.sh start showcase` | `config.showcase.toml`: short lives in turbo time (the world waits while the model thinks and otherwise runs straight on). About seven or eight real hours for five generations. Watch it afterwards with Replay. |
 | `PET_PROFILE=viewdev PET_DATA=data.viewdev PET_PORT=8002 uv run python -m engine.server` | scripted brains on a quick clock, every v3.1 discovery within minutes, for working on the view |

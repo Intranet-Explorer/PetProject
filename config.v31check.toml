@@ -9,7 +9,8 @@ force = true
 every_minutes = 4
 
 [clock]
-day_seconds = 1800        # about 18 thoughts per pet per world day at the usual think rate
+day_seconds = 3600        # the live house's day, so a copy of it keeps its clock
+was_day_seconds = 1800
 turbo = true
 
 [life]

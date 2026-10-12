@@ -94,7 +94,7 @@ export type Hello = {
   properties: Record<string, string>; rooms: Record<string, { name: string; feel: string }>;
 };
 export type Snap = {
-  tick: number; clock: Clock; weather: string; power: boolean; size: [number, number]; tick_seconds: number; day_seconds: number;
+  tick: number; clock: Clock; weather: string; power: boolean; size: [number, number]; tick_seconds: number; day_seconds: number; shift?: { until: number; by: number } | null;
   turbo: boolean; profile: string | null; start: string; door_tiles: Record<string, Tile>; lineage: Lineage;
   rooms: RoomV[]; pets: PetV[]; creatures: Creature[]; moments: Moment[]; events: HouseEvent[]; chronicle: Chronicle[];
   visitor: string | null; population: number; sayings: { text: string; gens: number; truth: string | null }[];

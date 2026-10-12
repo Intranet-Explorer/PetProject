@@ -64,6 +64,19 @@ def ticks(cfg, seconds):
     return max(1, round(seconds / cfg["clock"]["tick_seconds"]))
 
 
+def wt(cfg, tick):
+    """A tick as it counts toward the world's days. A house whose day was made longer (the live house went from one
+    real hour to two on 12 October 2026) counts each tick before the change for more, so the clock, the date and
+    everyone's age carry on from where they were."""
+    s = cfg.get("shift")   # ponytail: one change of day length per house; a second needs a list of these
+    return tick + min(tick, s["until"]) * s["by"] if s else tick
+
+
+def days(cfg, since, tick):
+    """World days from one tick to another."""
+    return (wt(cfg, tick) - wt(cfg, since)) / cfg["ticks_per_day"]
+
+
 def hours(cfg, n):
     """World hours as ticks."""
     return max(1, round(n * cfg["ticks_per_hour"]))
@@ -79,7 +92,7 @@ def rnd(house, *key):
 
 def clock(cfg, tick):
     """Life in the house starts at 08:00 on day 1 of spring."""
-    at = 8 + tick / cfg["ticks_per_hour"]
+    at = 8 + wt(cfg, tick) / cfg["ticks_per_hour"]
     day, hour = 1 + int(at // 24), at % 24
     names = list(cfg["house"]["seasons"])
     span = cfg["house"]["house"]["season_days"]

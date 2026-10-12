@@ -2,7 +2,7 @@
 A message goes from a parent to its child; an inscription waits for whoever walks in. Every one ever written
 is kept in the lineage's log, whether or not it is still on the wall."""
 from . import things
-from .world import dist, family, knows, label, moment, relation, witness
+from .world import days as world_days, dist, family, knows, label, moment, relation, witness
 
 WALLS = ["north wall", "south wall", "west wall", "east wall"]
 
@@ -27,7 +27,7 @@ def clarity(cfg, room, m, tick):
     """1 when just written, 0 when it has gone. Chalk lasts longer than a scratch; the cellar's damp takes both sooner."""
     W = cfg["writing"]
     last = W["chalk_days" if m["medium"] == "chalk" else "scratch_days"] / (W["damp"] if room["type"] == "cellar" else 1.0)
-    return max(0.0, 1.0 - (tick - m["fresh"]) / (last * cfg["ticks_per_day"]))
+    return max(0.0, 1.0 - world_days(cfg, m["fresh"], tick) / last)
 
 
 def before(cfg, room, pet, m):

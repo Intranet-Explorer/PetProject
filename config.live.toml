@@ -1,11 +1,14 @@
 # The live profile (11 October 2026): the family that began as the fourth showcase run, carried on where anyone
-# can watch it. Its world is the showcase profile's, unchanged (a world day is 900 ticks, a life about 16 world
-# days); only the speed it is shown at differs: off turbo, one world day to the real hour. Started with
+# can watch it, off turbo, a tick every 4 real seconds. Since 12 October 2026 its world day is two real hours
+# (1800 ticks), twice the showcase's: a life of about 16 world days was over in a night with nobody watching.
+# Nothing else moved: a tick, a step, a thought and every rate take as long as they did; what is counted in world
+# days and hours (a life, a stage, a night, a season, what regrows) takes twice as long. Started with
 # ./run.sh start live. Everything below [clock] is config.showcase.toml's and must stay the same as it.
 
 [clock]
-day_seconds = 1800        # the world's own day, as the family has always lived it
-real_day_seconds = 3600   # what a visitor sees: one world day an hour, so a tick is 4 real seconds
+day_seconds = 3600        # the world's own day
+was_day_seconds = 1800    # ... and what it was: a house that lived by the old day keeps its clock and its ages (world.wt)
+real_day_seconds = 7200   # what a visitor sees: one world day in two hours, so a tick is 4 real seconds
 turbo = false
 
 [life]

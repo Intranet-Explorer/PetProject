@@ -45,7 +45,7 @@ die, and leave their children a body, a message and a few things they made.
   and a few steps. Between thoughts a body layer keeps it busy with no model calls.
 - Nine rooms with hidden rules, weather, seasons, small animals, a radio with real headlines and a book
   backed by an offline Wikipedia.
-- The live house runs one world day per real hour. A life is about sixteen days.
+- The live house runs one world day per two real hours. A life is about sixteen days.
 - Art is *Ninja Adventure* by Pixel-boy and AAA (CC0). The pets are drawn from their genomes.
 
 ```bash

@@ -63,7 +63,7 @@ def measure(data, since=0, show=True):
         hours = (span[1] - max(since, span[0])) * real / 3600
         for pet, kind, n in db.execute("SELECT pet, kind, count(*) FROM calls WHERE tick > ? GROUP BY 1, 2", (since,)):
             calls[(pet, kind)] = n / hours
-    steps = dict(db.execute("SELECT action, count(*) FROM steps WHERE tick > ? GROUP BY 1", (since,)).fetchall())
+    steps = dict(db.execute("SELECT kind, count(*) FROM steps WHERE tick > ? GROUP BY 1", (since,)).fetchall())
     nuzzle = (steps.get("nuzzle", 0) + steps.get("accept", 0)) / max(1, sum(steps.values()))
     names = dict(db.execute("SELECT pet, coalesce(name, pet) FROM pets"))
     if show:

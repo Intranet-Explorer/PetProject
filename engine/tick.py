@@ -542,11 +542,19 @@ class Engine:
             self.dir.mkdir(parents=True, exist_ok=True)
         self.path = self.dir / "house.json"
         self.house = json.loads(self.path.read_text()) if self.path.exists() else new_house(cfg)
+        before = round(cfg["clock"].get("was_day_seconds", cfg["clock"]["day_seconds"]) / cfg["clock"]["tick_seconds"])   # the day this profile's houses had, if it has been made longer
         if "profile" in self.house and self.house["profile"] != cfg.get("profile"):
             # a house may move to a profile that keeps its world clock (turbo to live): its logs still read the same
             was = load_config(profile=self.house["profile"])
-            if (was["ticks_per_day"], was["clock"]["tick_seconds"]) != (cfg["ticks_per_day"], cfg["clock"]["tick_seconds"]):
+            if was["clock"]["tick_seconds"] != cfg["clock"]["tick_seconds"] or was["ticks_per_day"] not in (cfg["ticks_per_day"], before):
                 raise ValueError("this house was made with profile %r; start it with PET_PROFILE=%s" % (self.house["profile"], self.house["profile"] or ""))
+        # a house whose day has been made longer keeps its clock and its ages (world.wt): the change is noted once, here
+        was = self.house.get("day_ticks") or before
+        if was != cfg["ticks_per_day"] and self.house["tick"]:
+            if self.house.get("shift"):
+                raise ValueError("this house has changed the length of its day once already")
+            self.house["shift"] = {"until": self.house["tick"], "by": cfg["ticks_per_day"] / was - 1}
+        self.house["day_ticks"], cfg["shift"] = cfg["ticks_per_day"], self.house.get("shift")
         self.house["profile"] = cfg.get("profile")   # so the Lab and the showcase script read the logs on the same clock
         # SPEC-v3.1 comes to a house that is already lived in: the discoveries are counted from this tick, and everyone
         # in it is given the few things a pet now carries. Nothing else about the house or the family is touched.

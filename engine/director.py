@@ -1,7 +1,7 @@
 """What the house does on its own (SPEC-v3 §6.4, §6.5): the day's weather, the seasons, storms and power
 cuts, the events nobody caused, and the small creatures. All of it scripted; no model is ever asked."""
 from . import genome, order, songs, things, walls
-from .world import (LONG_AGO, moving as on_the_move, add_event, alive, arrived, bit_kinds, clock, dist, family, free_tile, hours, in_room, label, moment,
+from .world import (LONG_AGO, days as world_days, moving as on_the_move, add_event, alive, arrived, bit_kinds, clock, dist, family, free_tile, hours, in_room, label, moment,
                     new_pet, power_on, rnd, ticks, weather_of)
 
 SKY = {"clear": "the sky has cleared", "cloudy": "the sky has gone grey", "rain": "it has started to rain",
@@ -664,7 +664,7 @@ def arrivals(house, cfg):
             v["box_again"] = None
     if not awake_pets(house):
         return
-    days = (house["tick"] - v["at"]) / cfg["ticks_per_day"]
+    days = world_days(cfg, v["at"], house["tick"])
     for i, name in enumerate(ORDER):
         if name in v["arrived"]:
             continue
@@ -707,7 +707,7 @@ def arrive_writing(house, cfg):
 
 def arrive_songs(house, cfg):
     box, v, A = next((x for x in found(house) if "music box" in x["objects"]), None), house["v31"], cfg["arrivals"]
-    overdue = (house["tick"] - v["at"]) / cfg["ticks_per_day"] >= (0.05 if A["force"] else A["songs"]) + 1.5
+    overdue = world_days(cfg, v["at"], house["tick"]) >= (0.05 if A["force"] else A["songs"]) + 1.5
     if not box or (house["clock"]["phase"] != "night" and not overdue):   # "one night"; by day only if no night has found anyone awake
         return False
     learned = songs.music_box(house, cfg, box)
