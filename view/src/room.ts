@@ -107,8 +107,7 @@ export class Room {
   private avoid: Rect[] = [];
   private avoidAt = -1e9;
   private flashing = false;
-  private namesUntil = 0;               // the names of things show until then (a room has just come into view)
-  private namesOn = false;              // or for as long as the page holds them on
+  private namesOn = false;              // the names of things show for as long as the page holds them on
   private tagKey = "";
   private beastBox = new Map<string, Rect>();
   private crate: Sprite | null = null;  // what a delivery came in, for a while after it
@@ -172,8 +171,8 @@ export class Room {
     if (this.scene && this.ready) this.update(this.scene);
   }
 
-  /** Hold the names of the things in the room on (true), or let them go (false). They also show by themselves for 8
-   *  seconds whenever a room comes into view, and each one while the pointer is on its thing; otherwise they are gone. */
+  /** Hold the names of the things in the room on (true), or let them go (false). Each one also shows while the pointer
+   *  is on its thing; otherwise they are gone (nothing names itself when a room comes into view). */
   names(on: boolean) {
     this.namesOn = on;
   }
@@ -195,7 +194,6 @@ export class Room {
     this.scene = sc;
     if (!this.ready) return;
     const now = performance.now(), { snap, room } = sc, fresh = room.id !== this.roomId;
-    if (fresh || this.tick < 0 || snap.tick < this.tick || snap.tick - this.tick > 60) this.namesUntil = now + 8000;   // a room has come into view (or a replay has jumped): what everything is, for a moment
     if (snap.tick !== this.tick) {   // a new moment of the house: how long since the last one sets the walking pace, so a walk is a glide and not a step and a wait
       this.pace = this.tick < 0 || fresh ? tickMs(snap) : clamp(now - this.lastUpdate, 120, Math.max(2600, tickMs(snap) * 1.25));
       [this.tick, this.lastUpdate] = [snap.tick, now];
@@ -390,7 +388,7 @@ export class Room {
     this.crate.alpha = Math.min(1, (2 * hour - (snap.tick - m.tick)) / (0.4 * hour));
   }
 
-  /** The name of every thing in the room, for the moment a room comes into view (or while the page holds them on):
+  /** The name of every thing in the room, for while the page holds them on (each also shows under the pointer):
    *  a made thing by its kind, a fixture and a piece of scenery by its name, bits and scenery once per kind (the one
    *  nearest the middle), a creature by its kind, a place the room has grown by its name. */
   private tag(sc: Scene) {
@@ -435,7 +433,7 @@ export class Room {
   }
 
   /** An egg has hatched (at x, y in the room's pixels): its broken shell lies there for a world hour, and the newcomer
-   *  is tagged "just hatched" for as long as names show. The art's `egg.shell` if it has one, else a few shards in the egg's colours. */
+   *  is tagged "just hatched" for a while. The art's `egg.shell` if it has one, else a few shards in the egg's colours. */
   private hatch(p: PetV, x: number, y: number, tick: number, now: number) {
     if (this.shells.has(p.id)) return;
     const c = new Container(), light = hslInt(p.genome.hue, p.genome.saturation * 0.5, 0.84), dark = hslInt(p.genome.hue, p.genome.saturation * 0.6, 0.62);
@@ -506,9 +504,7 @@ export class Room {
       const box = this.beastBox.get(id), r = b.rect();
       if (box) [box.x, box.y, box.w, box.h] = [r.x * K, r.y * K, r.w * K, r.h * K];
     }
-    this.words.naming = this.namesOn || now < this.namesUntil;
-    this.words.using.clear();   // whatever a pet is busy with says what it is, while it is
-    for (const a of this.pets.values()) { const w = a.pet.asleep ? null : a.pet.body ? (a.pet.body.walking ? null : a.pet.body.what) : a.pet.act?.what; if (w) this.words.using.add(w); }
+    this.words.naming = this.namesOn;
     const at = this.pointer;
     if (at) { this.aim[0] = at[0] * K; this.aim[1] = at[1] * K; }
     this.words.pointer = at ? this.aim : null;

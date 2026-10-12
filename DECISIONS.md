@@ -1246,3 +1246,11 @@ Tyler's rulings on that, the same day, and two more rules of his:
 
 Pets still only tidy a room they are in, and a body only goes to rooms its pet has been in: a room no living pet
 has found (the garden, on 12 October) stays as it is until a mind chooses to go through that door.
+
+## Names of things only when asked for (12 October 2026)
+
+Tyler: item names are not to show when a room comes into view; only on hover (a tap on a touch screen) or while
+the Names button is held on. This takes back the eight seconds of names on entering a room (the "second reading"
+above, and SPEC-v3.3 §5). Taken out with it, as the same thing by another road: a thing's name showing by itself
+while a pet was busy with it. Left as they were: a pet's name plate, which does not come and go with the room but
+is always under its feet, and the "just hatched" tag on a newcomer, which is not the name of a thing. View only.

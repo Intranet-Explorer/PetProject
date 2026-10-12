@@ -587,8 +587,8 @@ function card(t: Target | null, fx: number, fy: number, forMs = 0) {
 }
 room.onHover = (t, fx, fy) => card(t, fx, fy);
 
-// "Names": the room's own short labels of what every thing in it is, held on while this is pressed (the room shows
-// them by itself for a few seconds when it comes into view). Off by default, and not remembered.
+// "Names": the room's own short labels of what every thing in it is, held on while this is pressed (otherwise
+// a thing is named only while the pointer is on it). Off by default, and not remembered.
 $("namesBtn").onclick = () => {
   const on = $("namesBtn").getAttribute("aria-pressed") !== "true";
   $("namesBtn").setAttribute("aria-pressed", String(on));

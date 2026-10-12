@@ -19,10 +19,9 @@ export type Who = { id: string; name: string; family: number; selected: boolean;
   say: { key: string; text: string; to: string | null; song: boolean } | null; mood: string | null; tab: boolean;
   icon?: { name: string | null; key: string; word: string } | null };
 
-/** A short plain name for a thing in the room, shown for a moment when the room comes into view (or held on).
+/** A short plain name for a thing in the room, shown while the pointer is on it (or while names are held on).
  *  `rect`: the thing on screen (kept up to date by the room). `pri`: lower is kept first when there is no room for all.
- *  Names show for a moment when a room comes into view, while they are held on, and each while the pointer is on its
- *  thing; otherwise they are gone (SPEC-v3.3 §5). */
+ *  Names show while they are held on, and each while the pointer is on its thing; otherwise they are gone. */
 export type Tag = { key: string; text: string; rect: Rect; pri: number; until?: number };   // `until`: it shows until then whatever else (a newcomer's "just hatched")
 
 const INK = "#2b2233", PAPER = "#fffdf2", ACCENT = "#ffb347";
@@ -167,8 +166,6 @@ export class Labels {
   private tags = new Map<string, { tag: Tag; card: Card; fits: boolean; lead: Graphics }>();
   /** Are the things' names showing just now (the room says so every frame). */
   naming = false;
-  /** The things pets are busy with just now, by name: a thing's name shows while a pet is at it. */
-  using = new Set<string>();
   /** Where the pointer is on screen, or null: the name of the thing under it shows. */
   pointer: number[] | null = null;
   /** Places on screen that plates, bubbles and faces keep off (memorial stones). */
@@ -370,11 +367,10 @@ export class Labels {
     return false;
   }
 
-  /** Does this name show just now: all of them for a moment or while held on, each one while the pointer is on its thing. */
+  /** Does this name show just now: all of them while held on, each one while the pointer is on its thing. */
   private shown(t: Tag, now: number) {
     const p = this.pointer, r = t.rect;
-    return this.naming || now < (t.until ?? 0) || (!!p && inside(r, p[0], p[1]))
-      || (this.using.size > 0 && /^[mt]\./.test(t.key) && t.key.slice(2).split("|").some((n) => this.using.has(n)));
+    return this.naming || now < (t.until ?? 0) || (!!p && inside(r, p[0], p[1]));
   }
 
   /** A bubble's tail, all the way to its owner: a wedge for speech, a string of dots for a thought, in lettering pixels. */

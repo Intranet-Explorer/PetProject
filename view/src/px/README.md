@@ -35,8 +35,8 @@ room.clear = ["roomName", "banner"];    // ids of the page's own elements lying 
 room.names(on);                         // hold the names of the things in the room on, or let them go
 ```
 
-**Names of things (SPEC-v3.3 §5).** They show for 8 seconds when a room comes into view, while `names(true)` holds
-them, and one at a time while the pointer is on its thing. Otherwise they are faded out and not drawn.
+**Names of things (SPEC-v3.3 §5).** They show while `names(true)` holds them, and one at a time while the pointer
+is on its thing (a tap on a touch screen); nothing names itself when a room comes into view. Otherwise they are faded out and not drawn.
 
 **Size.** Give `element` a width (and, to cap the height, a CSS `max-height`). The canvas takes the largest whole
 number of screen pixels to an art pixel that fits, and is centred in the element; it sets its own CSS size
