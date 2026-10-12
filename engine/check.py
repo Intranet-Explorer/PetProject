@@ -1361,6 +1361,22 @@ async def main():
         assert order.loose(hA, cA, roomA) == ["bed 3"] and j["job"][:3] == ["thing", "bed 3", "at"], "three nests together are a sleeping corner; the fourth lies about: %s" % j
         assert order.do_job(hA, cA, pa, roomA, j["job"]) == "with the others like it" and not order.loose(hA, cA, roomA) and not order.job(hA, cA, pa, roomA)
         clear()
+        # a mess it knows of, anywhere in the house, draws it door by door: through rooms it knows, to the nearest
+        was_mess, was_rooms = {rid: (r2.get("mess"), r2["type"]) for rid, r2 in hA["rooms"].items()}, dict(pa["rooms"])
+        d1, mid = next((d2, x) for d2, x in roomA["doors"].items() if len(hA["rooms"][x]["doors"]) > 1)
+        far = next(x for x in hA["rooms"][mid]["doors"].values() if x != roomA["id"] and x not in roomA["doors"].values())
+        for r2 in hA["rooms"].values():
+            r2["mess"], r2["type"] = 0, r2["type"] or "attic"
+        hA["rooms"][far]["mess"] = 2
+        pa["rooms"] = {roomA["id"]: 0, mid: 0}
+        assert order.way(hA, pa) is None, "a mess in a room it has never been in is not one it knows of"
+        pa["rooms"][far] = 0
+        assert order.way(hA, pa) == d1, "the first door on the way to the mess two rooms off: %s" % order.way(hA, pa)
+        pa["focus"] = {"type": "tidy", "words": "put things straight", "since": hA["tick"]}
+        assert [t["what"] for t in body.targets(hA, cA, pa, mA.mem, "go next door", cA["activities"]["go next door"]) if t.get("bonus") == 2.0] == [d1], "with its mind on tidying and this room done, its body sets off that way"
+        pa["rooms"] = was_rooms
+        for rid, r2 in hA["rooms"].items():
+            r2["mess"], r2["type"] = was_mess[rid]
         for n2, o2 in roomA["objects"].items():
             if n2 in caps:
                 o2["fix"]["store"] = caps[n2]

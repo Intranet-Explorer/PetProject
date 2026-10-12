@@ -61,8 +61,9 @@ def clutter(house, cfg, room):
 
 
 def full(cfg, room):
-    """Is there nowhere left here to put a thing away: nothing that keeps things, or none of it with room?"""
-    return not any(k > 0 for k in stores(cfg, room).values())
+    """Is there nowhere left here to put things away: nothing that keeps things, none of it with room for another
+    thing, or bits on the floor and none of it with room for a bit?"""
+    return not any(k > 0 for k in stores(cfg, room).values()) or (bool(loose_bits(room)) and not any(k > 0 for k in bit_room(cfg, room).values()))
 
 
 def bit_room(cfg, room):
@@ -91,6 +92,20 @@ def old(house, cfg, room, name):
 
 def storeroom(house):
     return next((r for r in house["rooms"].values() if r["type"] == "storeroom"), None)
+
+
+def way(house, pet):
+    """The door from where it is toward the nearest mess it knows of, through rooms it knows: a door, or None."""
+    rooms, seen, queue = house["rooms"], {pet["room"]}, [(pet["room"], None)]
+    while queue:
+        rid, first = queue.pop(0)
+        if first and rooms[rid].get("mess") == 2:
+            return first
+        for d, to in rooms[rid]["doors"].items():
+            if to in pet["rooms"] and to not in seen and rooms[to]["type"]:
+                seen.add(to)
+                queue.append((to, first or d))
+    return None
 
 
 def may_move(house, pet, o):
@@ -140,8 +155,8 @@ def job(house, cfg, pet, room):
     to carry off to the storeroom, a pawful of loose bits to put in something. {what, job: [kind, name, how,
     place], pos}, or None when there is nothing it may move or nowhere to put it."""
     out, objs, sr = [], room["objects"], storeroom(house)
-    for n in loose(house, cfg, room):
-        where = may_move(house, pet, objs[n]) and place_for(house, cfg, pet, room, n)
+    for n in loose(house, cfg, room):   # anyone may put anyone's thing in its place here: it stays its owner's, in the same room
+        where = place_for(house, cfg, pet, room, n)
         if where:
             out.append({"what": n, "job": ["thing", n, where[0], where[1]], "pos": objs[n]["pos"]})
     if sr:   # until the storeroom has been found there is nowhere for old things to go
@@ -171,7 +186,10 @@ def do_job(house, cfg, pet, room, job):
         return set_aside(house, cfg, pet, room, name)
     if how == "on" and (place not in room["objects"] or stores(cfg, room).get(place, 0) <= 0):
         return ""
-    return put(house, cfg, pet, room, name, how, place)
+    said, owner = put(house, cfg, pet, room, name, how, place), house["pets"].get(o["made"]["owner"])
+    if owner and owner is not pet and owner["stage"] != "dead":
+        add_event(house, owner, "your %s was put %s" % (name, said))
+    return said
 
 
 def wear_out(house, cfg, room, name):

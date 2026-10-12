@@ -145,7 +145,7 @@ def perceive(house, cfg, pet, mem):
     def door_line(d, rid):
         shut = house["shut"].get("%s|%s" % (room["id"], d), LONG_AGO) > tick
         if rid in pet["rooms"]:
-            text = "to " + house["rooms"][rid]["name"]
+            text = "to " + house["rooms"][rid]["name"] + (", which is a mess" if house["rooms"][rid].get("mess") == 2 else "")   # so a mind can choose to go and put it straight
         else:   # what comes under an untried door, and how a bold or a timid pet takes it (§8.1)
             hint = cfg["house"]["rooms"][room_type(house, rid)]["hint"]
             text = "you have not been through it; from under it comes %s%s" % (
@@ -216,6 +216,7 @@ def perceive(house, cfg, pet, mem):
         way = next((d for d, x in room["doors"].items() if x == rid), None)
         found = pet["gathered"].get(rid)
         return r["name"] + (" (here)" if rid == room["id"] else " (through the %s door)" % way if way else "") + (
+            ", a mess when you last looked" if r.get("mess") == 2 and rid != room["id"] and not way else "") + (   # (the door line says so of the rooms next door)
             ": you found %s there" % ", ".join(found) if found else "")
 
     def known_line(pid, line):

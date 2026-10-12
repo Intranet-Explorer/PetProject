@@ -1200,4 +1200,25 @@ floors; and nothing ever left, so each generation's things piled on the last. Ch
 6. **Measured**: the house notes what lies about in each room every world hour (`house["clutter"]`, four days
    back) and `engine/alive.py` prints it beside the §0 numbers.
 
-Pets tidy the room they are in. A room nobody goes into stays as it is.
+Found on a copy of the live house with the real model (one world day), and changed before it went live:
+
+- **Bits overflowed.** A floor holds up to 12 dropped bits and one shelf took 8, so the music room stuck at 8
+  lying about. A place that keeps things now takes 12, and "nowhere left" is also said when it is bits that
+  have nowhere to go.
+- **Nobody would touch a housemate's thing.** Tidying kept to a pet's own things, the dead's and its young
+  children's, so one living pet's cushions and charms lay about a room for good. Now anyone may put anyone's
+  thing in its place in the same room (it stays its owner's, who is told where it went). Carrying a thing off
+  to the storeroom is still only for its own, the dead's and nobody's.
+- **Nobody went to the messes.** Four pets spent two world days in three or four rooms; the music room fell
+  from 8 to 1-3 and stayed there, and the five rooms nobody walked into did not change at all. A door now says
+  so when the room beyond it is a mess ("north (to the storeroom, which is a mess)"), and "rooms you know" says
+  so of the ones further off. That alone moved no mind in a world day, so the body does the walking: a mess a
+  pet knows of, anywhere in the house, draws its body door by door through the rooms it knows, as strongly as a
+  mess in the room it is in (`order.way`). This happens with its mind on tidying (once the room it is in is
+  done), with nothing on its mind, with its mind on exploring or playing, and with its mind on a project; not
+  when its mind keeps it by someone or something (be with, stay near, tend, make) or has it resting. That last
+  is a change to "it never walks out on a focus": a project is the commonest thing a mind says it is about and
+  does not tie it to a spot, and without it the real minds left no time for a body to go anywhere.
+
+Pets still only tidy a room they are in, and a body only goes to rooms its pet has been in: a room no living pet
+has found (the garden, on 12 October) stays as it is until a mind chooses to go through that door.
