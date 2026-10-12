@@ -1,6 +1,6 @@
 """What the house does on its own (SPEC-v3 §6.4, §6.5): the day's weather, the seasons, storms and power
 cuts, the events nobody caused, and the small creatures. All of it scripted; no model is ever asked."""
-from . import genome, order, songs, things, walls
+from . import craft, genome, order, songs, things, walls
 from .world import (LONG_AGO, days as world_days, moving as on_the_move, add_event, alive, arrived, bit_kinds, clock, dist, family, free_tile, hours, in_room, label, moment,
                     new_pet, power_on, rnd, ticks, weather_of)
 
@@ -89,20 +89,12 @@ def hourly(house, cfg):
                 s["ready"], s["back"] = True, None
                 if s["pos"] in [o["pos"] for o in room["objects"].values()]:
                     s["pos"] = free_tile(house, cfg, room, s["pos"])
-        rule = lambda k, d: things.room_rule(cfg, room, k, d)
         for o in room["objects"].values():
-            if o.get("fix", {}).get("plant") and o["state"] != "ripe":
-                rate = season["growth"] * (rule("growth", 1.0) if room["type"] == "greenhouse" else 1.0)
-                if room["type"] == "garden" and house["weather"] == "rain":
-                    rate *= rule("rain_growth", 2.0)
-                if room["type"] == "greenhouse":
-                    rate = max(rate, 0.8)   # warm under glass even in winter
-                o["grow"] = round(o["grow"] + rate / (24 * H["rules"]["garden"]["ripe_days"]), 3)
-                if o["grow"] >= 1:
-                    o["state"] = "ripe"
             if o.get("fix", {}).get("sun"):   # the attic's shaft of sun crosses the floor with the hour
                 span = season["sunset"] - season["sunrise"]
                 o["pos"] = [max(1, min(cfg["W"] - 2, round(1 + (cfg["W"] - 3) * (c["hour"] - season["sunrise"]) / span))), o["pos"][1]]
+    craft.grow(house, cfg)   # SPEC-v3.4 §3.5: what is planted grows, watered or not, and wilts if left dry
+    craft.lost(house, cfg)   # §3.3: what nobody living knows any more is lost
     things.upkeep(house, cfg)
     walls.fade(house, cfg)
     order.keep(house, cfg)

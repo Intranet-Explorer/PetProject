@@ -15,7 +15,7 @@ import time
 from collections import Counter, deque
 from pathlib import Path
 
-from . import actions, body, director, feel, genome, life, log, mind, order, physics, radio, sleep, story, things, world
+from . import actions, body, craft, director, feel, genome, life, log, mind, order, physics, radio, sleep, story, things, wants, world
 from .memory import Memory
 from .world import LONG_AGO, NEEDS, add_event, alive, dist, family, here, hours, label, load_config, moment, new_house, relation, ticks
 
@@ -478,6 +478,8 @@ class Mind:
             self.adopt()
         if world.busy(pet):
             self.advance()
+        if h["tick"] % self.cfg["wants"]["every_ticks"] == 0:   # SPEC-v3.4 §2.1: what it wants, looked over: met, faded, and what comes next
+            wants.refresh(h, self.cfg, pet)
         if self.cfg["body"]["on"] and not world.busy(pet):   # (also on the tick its last decided step ends)
             body.tick(self)   # SPEC-v3.3 §1: between the things it decides, its body is never doing nothing
         elif pet["following"] and not world.busy(pet):
@@ -535,7 +537,7 @@ class Mind:
 
 # the steps a mind decides in which a thing is picked up, used, carried, put away or made with (SPEC-v3.4 §0), and where the step names it
 HANDLES = {"use": "target", "gather": "what", "drop": "what", "make": "name", "unmake": "target", "combine": "a", "arrange": "object", "put_away": "what",
-           "take_out": "what", "hang": "what", "give": "what", "take": "what", "teach": "target", "show": "what"}
+           "take_out": "what", "hang": "what", "give": "what", "take": "what", "teach": "target", "show": "what", "process": "what", "mend": "target"}
 
 
 class Engine:
@@ -662,6 +664,22 @@ class Engine:
             for stone in [n for n, o in room["objects"].items() if "memorial" in o]:   # 12 October 2026: everyone who has a stone has a keepsake box beside it
                 order.give_box(h, cfg, room, stone)
         self.unwear()
+        if "v34" not in h:   # SPEC-v3.4 §7.5 comes to a house already lived in, once
+            h["v34"] = {"at": h["tick"]}
+            for pet in h["pets"].values():   # skills from what each has done; no recipes: discovery starts fresh
+                if pet["stage"] not in ("egg", "dead"):
+                    craft.from_history(cfg, pet)
+            for room in h["rooms"].values():
+                if not room["type"]:
+                    continue
+                for n, o in room["objects"].items():   # what was growing in the house's beds goes on growing, as if planted; after it is picked a bed is bare until someone plants it
+                    if "fix" in o and o["fix"].get("plant") and "planted" not in o:
+                        o["planted"] = {"what": "seed", "at": h["tick"], "grow": float(o.get("grow") or 0.0), "watered": h["tick"], "by": None, "stage": "planted"}
+                want = cfg["house"]["rooms"][room["type"]]["bits"]   # a room that now grows a bit it did not (seed, in the greenhouse) gets the places for it
+                for bit, n in (want.items() if isinstance(want, dict) else ()):
+                    for _ in range(n - sum(1 for s in room["spots"] if s["bit"] == bit and not s["loose"])):
+                        r = world.rnd(h, "v34", room["id"], bit, len(room["spots"]))
+                        room["spots"].append({"bit": bit, "pos": world.free_tile(h, cfg, room, [r.randrange(1, cfg["W"] - 1), r.randrange(1, cfg["H"] - 1)]), "ready": True, "back": None, "loose": False})
 
     def unwear(self):
         """12 October 2026: for one waking day old things were carried to a storeroom that was full, and wore out

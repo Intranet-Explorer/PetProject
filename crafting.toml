@@ -421,6 +421,62 @@ gives = "sprouting seed"
 says = "the seed swelled in the water and split: a pale shoot is coming out of it"
 hint = "a seed that has begun might grow quicker in the ground"
 
+# ---- what a pet reads in the book can point at something to try (§4.1): a hint, never a recipe ----
+# match: every one of these must be in the passage or its title ("a|b": either). bit, how: the thing it then wants to try.
+
+[[hint]]
+match = ["reed|rush|wicker|basket", "weav|woven|wet|water|soak"]
+bit = "reed"
+how = "soak"
+[[hint]]
+match = ["clay|pottery|ceramic|brick", "fire|kiln|heat|bak"]
+bit = "clay"
+how = "warm"
+[[hint]]
+match = ["wax|candle", "melt|heat|wick"]
+bit = "wax"
+how = "melt"
+[[hint]]
+match = ["rope|cord|twine|string", "twist|braid|strand|weav"]
+bit = "string"
+how = "weave"
+[[hint]]
+match = ["seed|plant|garden|farm", "grow|soil|sow|germinat"]
+bit = "seed"
+how = "plant"
+[[hint]]
+match = ["stone|flint|tool|knife|blade", "sharp|edge|cut|grind"]
+bit = "pebble"
+how = "grind"
+[[hint]]
+match = ["glass|sand", "melt|heat|furnace"]
+bit = "pebble"
+how = "grind"
+[[hint]]
+match = ["felt|wool|fibre|fiber", "press|mat"]
+bit = "fluff"
+how = "press"
+[[hint]]
+match = ["charcoal|wood", "burn|heat|fire"]
+bit = "wood"
+how = "warm"
+[[hint]]
+match = ["flour|grain|bread|meal", "grind|mill"]
+bit = "seed"
+how = "grind"
+[[hint]]
+match = ["amber|resin", "hard|fossil|dry"]
+bit = "resin"
+how = "dry"
+[[hint]]
+match = ["dye|colour|color|pigment", "flower|petal|plant|water"]
+bit = "petal"
+how = "soak"
+
+[knowing]
+inherited = 0.5           # how likely a child is to start out knowing each thing its parent knew
+lift = 5.0                # the curiosity a thing found out is worth to the one who found it
+
 # ---- kinds that take a processed material: getting one is what opens the kind (§3.1) ----
 
 [needs]
@@ -599,4 +655,5 @@ untended = 0.5            # how fast one grows that is dry and untended
 tended = 1.4              # ... and one watered and tended that day
 wilt_days = 2             # dry this long it wilts, and a wilted plant gives nothing
 cold = 0.5                # a cold night outdoors halves that night's growth
+grown_lift = 3.0          # the comfort of eating what the family grew, on top of the meal
 beds = ["bean row", "herb patch", "melon bed", "tomato vine", "berry bush"]   # fixtures a seed can be planted in, besides a plant pot

@@ -1201,6 +1201,7 @@ async def main():
         from . import alive as watch, body, order, radio, songs
         cA = load_config(body=True)
         cA["life"]["egg_minutes"], cA["stub"] = 0.1, dict(cA["stub"], paced=True)
+        cA["wants"] = dict(cA["wants"], most=0)   # (these are about what a body does left to itself in one room; what it wants, and where that takes it, is checked further on)
         cB = load_config()
         cB["life"]["egg_minutes"], cB["stub"] = 0.1, dict(cB["stub"], paced=True)
         (eA, pa), (eB, pb) = engine(cA, d + "/alive"), engine(cB, d + "/still")
@@ -1271,7 +1272,10 @@ async def main():
         assert 6 <= tidied <= 8 and any(o.get("on") for o in roomA["objects"].values()), "each thing is put away once, some of them on the shelf: %d" % tidied
         for _ in range(150):
             await eA.tick()
-        assert eA.db.execute("SELECT count(*) FROM doing WHERE what = 'tidy' AND text != ''").fetchone()[0] - n0 == tidied, "and a tidy room is left alone: no tidying for ever"
+        # (SPEC-v3.4: a body takes a thing out now and then to look at, and that is put back; nothing else is tidied twice)
+        again = eA.db.execute("SELECT count(*) FROM doing WHERE what = 'tidy' AND text != ''").fetchone()[0] - n0 - tidied
+        outs = eA.db.execute("SELECT count(*) FROM doing WHERE what IN ('take out', 'bring to kin') AND text != ''").fetchone()[0]
+        assert again <= outs + 2 and order.clutter(hA, cA, roomA) < 2, "and a tidy room is left alone, but for what is taken out and put back: %d tidied again, %d taken out" % (again, outs)
         # keeping things: on a shelf, down again, a home after twice, no more than it holds, and a shelf that goes drops what it held
         store, name = "shelf", "loose 0"
         for o2 in things.made(roomA).values():

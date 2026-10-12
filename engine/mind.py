@@ -2,7 +2,7 @@
 No numbers, no coordinates, no counts of anything, and no sentence telling the pet what it is or what it is
 like. Its temperament shows only in what is mentioned and how (§8.1). Alongside the text comes `ctx`: the
 names the packet shows, so a brain's reply can be held to things that are really there."""
-from . import actions, body, feel, life, order, physics, songs, things, walls
+from . import actions, body, craft, feel, life, order, physics, songs, things, walls, wants
 from .world import LONG_AGO, dist, family, here, neighbours, room_type
 
 BUSY = {"observe": "watching the room", "look": "looking at something", "move": "walking", "go": "heading for a door",
@@ -14,14 +14,16 @@ BUSY = {"observe": "watching the room", "look": "looking at something", "move": 
         "lay_egg": "laying an egg", "bequeath": "choosing what to leave", "write_belief": "thinking", "revise_belief": "thinking", "take_name": "taking a name",
         "put_away": "putting something away", "take_out": "taking something down", "hang": "hanging something up",
         "write": "writing on something", "scrub": "rubbing out some words", "compose": "making up a tune", "sing": "singing",
-        "teach_song": "teaching a song", "call": "calling", "name": "naming something", "ask_book": "reading the book"}
+        "teach_song": "teaching a song", "call": "calling", "name": "naming something", "ask_book": "reading the book",
+        "process": "trying something with what it has", "mend": "mending something", "carry": "carrying the book"}
 RECENT = 6          # how many earlier happenings are shown
 # What is cut first when the packet is over its budget (§8.3), least needed first. Never cut: how it feels, what
 # it notices, what is here, who is here, what just happened, what was said to it, its parent's words, what it can do.
 # SPEC-v3.1 §8 adds, after v3's own: older inscriptions, older words from the box, songs beyond the last three sung, what
 # it read beyond the last passage. Never cut: anything said or sung to it, the inscription it is standing in front of.
 # SPEC-v3.3 §6 adds what its body has been at, its habits, and where things are kept: habits go early, the rest stay.
-CUT_ORDER = ["habits", "earlier", "rooms", "known", "told", "things", "sounds", "beliefs", "writing", "box", "songs", "read"]
+# SPEC-v3.4 §6 adds its wants (never cut), how practised it is, what it has found out, and what could be tried here: what it knows how to do goes first of all.
+CUT_ORDER = ["recipes", "habits", "earlier", "rooms", "known", "told", "things", "sounds", "beliefs", "writing", "box", "songs", "read"]
 
 
 def doing(house, pet):
@@ -144,6 +146,12 @@ def perceive(house, cfg, pet, mem):
     could = sorted({p for b in pet["carrying"] for p in cfg["house"]["bits"][b]["can"]})
     if could:
         carry += "; from this you could make something " + " or ".join(could)
+    opens = [k for k in cfg["craft"]["needs"] if not craft.lacking(cfg, k, pet["carrying"])]   # SPEC-v3.4 §3.1: a kind opens when it holds what the kind is made of
+    if opens:
+        carry += "; with this you could make " + " or ".join("%s %s" % (cfg["kinds"].get(k, {}).get("a", "a"), k) for k in opens)
+    trying = actions.processes(house, cfg, pet) if "process" in can else {}
+    tried = pet.get("tried", {})
+    try_line = "; ".join("%s: %s" % (b, ", ".join(h + (" (tried)" if "%s|%s" % (b, h) in tried else "") for h in hows)) for b, hows in trying.items() if hows)
 
     def door_line(d, rid):
         shut = house["shut"].get("%s|%s" % (room["id"], d), LONG_AGO) > tick
@@ -232,11 +240,15 @@ def perceive(house, cfg, pet, mem):
         "time": "it is %s" % feel.when(house),
         "room": "you are in %s%s" % (room["name"], ": %s walls, %s floor" % (room["paint"]["wall"], room["paint"]["floor"]) if room["paint"]["wall"] else ""),
         "feel": "you feel: " + feel.feelings(pet),
+        "wants": "; ".join(wants.lines(pet)),
+        "skills": "with practice: " + craft.skills_line(cfg, pet),
         "senses": "you notice: " + ("; ".join(senses) or "nothing in particular"),
         "here": "here: " + " · ".join(seen),
         "who": "with you: " + (" · ".join(who) or "nobody"),
         "bits": "lying about: " + bits,
         "carry": "you carry: " + carry,
+        "try": "what could be tried here, and how: " + try_line,
+        "recipes": "what you have found out: " + "; ".join(craft.recipe_lines(cfg, pet)),
         "doors": "this room's doors: " + doors,
         "sounds": "from next door: " + "; ".join(sounds(house, cfg, pet)),
         "doing": "you are doing: " + busy,
@@ -267,7 +279,8 @@ def perceive(house, cfg, pet, mem):
     empty = {"sounds": "from next door: ", "earlier": "earlier: ", "said": "said to you: ", "offers": "offered to you: ", "parent": "",
              "told": "", "things": "your things here: ", "known": "who you know: ", "front": "written right in front of you: ",
              "writing": "written in this room: ", "box": "what you heard the box say: ", "read": "", "songs": "songs you know: ",
-             "animals": "your animals: ", "focus": "you have been about: ",
+             "animals": "your animals: ", "focus": "you have been about: ", "wants": "", "skills": "with practice: ",
+             "try": "what could be tried here, and how: ", "recipes": "what you have found out: ",
              "body": "since you last thought, without thinking about it, you: ", "habits": "your habits: "}
     for k, blank in empty.items():
         if sections[k] == blank:
@@ -309,7 +322,8 @@ def perceive(house, cfg, pet, mem):
         "leave": list(dict.fromkeys(mine_here + heirs)),
         "movable": [n for n, o in objs.items() if actions.movable(cfg, o)] + (["egg"] if any(e["parent"] == pet["id"] for e in eggs) else []),
         "beliefs": [b["id"] for b in beliefs], "make": [most, reach],   # the largest size its stage can make; the materials in reach
-        "kinds": {m: things.kinds_for(cfg, m) for m in reach},
+        "kinds": {m: [k for k in things.kinds_for(cfg, m) if not craft.lacking(cfg, k, pet["carrying"])] for m in reach},
+        "process": trying, "mendable": actions.mendable(room),
         "materials": sorted({objs[n]["made"]["recipe"]["material"] for n in free}),
         "offers": [actions.handle(house, pet, house["pets"][o["from"]]) for o in pet["offers"]
                    if o["from"] in house["pets"] and house["pets"][o["from"]]["room"] == pet["room"]],

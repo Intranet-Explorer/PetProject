@@ -72,7 +72,8 @@ def keep(house, cfg, pet, sid, heir=None):
 
 def by_ear(house, cfg, pet, sid):
     """What it makes of a song it has only heard: each note may slip a step. A slipped tune is a new version."""
-    r, notes, drift = rnd(house, "ear", pet["id"], sid, house["tick"]), [], cfg["songs"]["ear_drift"]
+    from . import craft   # SPEC-v3.4 §2.2: a tune slips less in the ear of one who holds a tune well
+    r, notes, drift = rnd(house, "ear", pet["id"], sid, house["tick"]), [], cfg["songs"]["ear_drift"] * (1 - 0.25 * craft.skill(cfg, pet, "music"))
     for p, long in book(house)[sid]["notes"]:
         i = PITCH.index(p)
         if r.random() < drift:
@@ -121,6 +122,8 @@ def sing(house, cfg, pet, a, find, handle, bump):
     e, room, E = known(house, pet, a["song"]), house["rooms"][pet["room"]], cfg["effects"]
     s = book(house)[e["id"]]
     e["sung"], e["last"] = e["sung"] + 1, house["tick"]
+    from . import craft
+    craft.practise(house, cfg, pet, "music", 0.5)
     kind, other = find(house, pet, a.get("to")) if isinstance(a.get("to"), str) and a["to"].strip() else (None, None)
     fx, to = dict(E["speak"]), ""
     if kind == "egg" or (kind == "pet" and other["sleep"]):

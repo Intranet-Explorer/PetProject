@@ -2,7 +2,7 @@
 world before it happens and again when the pet gets there; what it does is decided here, not by the pet."""
 import re
 
-from . import book, feel, genome, life, order, songs, things, walls
+from . import book, craft, feel, genome, life, order, songs, things, walls
 from .world import (BACK, LONG_AGO, add_event, arrived, beside, dist, family, free_tile, generate_room, here, knows, label, moment,
                     power_on, relation, ticks, witness)
 
@@ -126,6 +126,9 @@ def allowed(house, cfg, pet, mem):
         # SPEC-v3.1: each appears only when it could be done now (§8)
         "write": walls.tool(cfg, pet) is not None, "scrub": bool(walls.marks(room)),
         "sing": bool(pet.get("songs")), "teach_song": bool(pet.get("songs")) and bool(others),
+        # SPEC-v3.4 §3: something to hand that could be changed here; something here that wants mending; the book, and a door
+        "process": bool(processes(house, cfg, pet)), "mend": bool(mendable(room)),
+        "carry": any(o.get("fix", {}).get("book") for o in room["objects"].values()),
         "call": any(c["room"] != room["id"] or dist(c["pos"], pet["pos"]) > 2 for c in pets_of_mine),
         "name": bool(nameable(house, pet)),
         "ask_book": any(o.get("fix", {}).get("book") for o in room["objects"].values()) and book.check_ask({"question": "?"}, house, cfg, pet, filled) is None,
@@ -144,6 +147,19 @@ def allowed(house, cfg, pet, mem):
 
 # SPEC-v3.3 §1: what the body does by itself. The mind is no longer offered these; it sets a focus instead.
 BODY_ONLY = ("observe", "rest", "move", "follow")
+
+
+def processes(house, cfg, pet):
+    """What it could try just now: {bit: [ways]} for every bit in its paws or lying ready here and every way of
+    changing a thing that has a place in this room (whether or not anything would come of it)."""
+    room = house["rooms"][pet["room"]]
+    hows = [h for h in craft.DONE if craft.place(house, cfg, room, h) is not None]
+    bits = list(dict.fromkeys(pet["carrying"] + [s["bit"] for s in room["spots"] if s["ready"] and not s.get("on")]))
+    return {b: [h for h in hows if h != "plant" or b in cfg["craft"]["grow"]] for b in bits} if hows else {}
+
+
+def mendable(room):
+    return [n for n, o in things.made(room).items() if o["made"].get("wear") or o["made"].get("damp") or o["made"].get("dusty") or o["made"].get("eaten")]
 
 
 def offered_to_mind(house, cfg, pet, mem):
@@ -175,6 +191,19 @@ def check(a, house, cfg, pet, mem):
     t, room = a.get("type"), house["rooms"][pet["room"]]
     if t in ("put_away", "take_out", "hang"):
         return order.check(a, house, cfg, pet, norm)
+    if t in ("process", "mend", "carry") and t not in life.unlocked(house, pet["stage"]):
+        return "you cannot do that yet"
+    if t == "process":
+        return craft.check_process(a, house, cfg, pet, norm)
+    if t == "mend":
+        return craft.check_mend(a, house, cfg, pet, norm)
+    if t == "carry":   # the heavy book, through a door (SPEC-v3.4 §4.1)
+        d = norm(a.get("door")).replace(" door", "")
+        if not any(o.get("fix", {}).get("book") for o in room["objects"].values()):
+            return "the book is not here"
+        if d not in room["doors"]:
+            return "there is no door that way"
+        return "that door is stuck shut" if house["shut"].get("%s|%s" % (room["id"], d), LONG_AGO) > house["tick"] else None
     if t == "take_name":
         if not offered(pet):
             return "nobody has offered you a name"
@@ -363,9 +392,15 @@ def destination(house, cfg, pet, a):
             "give": "to", "nuzzle": "who", "tell": "to", "chase": "who", "accept": "from", "arrange": "object",
             "combine": "a", "bequeath": "what", "make": "near", "write": "on", "sing": "to", "teach_song": "to", "name": "what",
             "put_away": "what", "take_out": "what", "hang": "what"}.get(t)
-    if t == "ask_book":
+    if t in ("ask_book", "carry"):
         at = next((o["pos"] for o in house["rooms"][pet["room"]]["objects"].values() if o.get("fix", {}).get("book")), None)
         return None if at is None or dist(pet["pos"], at) <= 1 else beside(cfg, at, pet["pos"])
+    if t == "process":   # to the water, the heat, the bench, the bed of earth
+        at = craft.place(house, cfg, house["rooms"][pet["room"]], norm(a.get("how"))) if norm(a.get("how")) in craft.DONE else None
+        return None if not at or at[1] is None or dist(pet["pos"], at[1]) <= 1 else beside(cfg, at[1], pet["pos"])
+    if t == "mend":
+        at = house["rooms"][pet["room"]]["objects"].get(norm(a.get("target")))
+        return None if not at or dist(pet["pos"], at["pos"]) <= 1 else beside(cfg, at["pos"], pet["pos"])
     if t == "go":
         d = norm(a.get("door")).replace(" door", "")
         return list(house["door_tiles"][d]) if d in house["rooms"][pet["room"]]["doors"] else None
@@ -419,6 +454,19 @@ def apply(house, cfg, pet, a, mem):
     name = label(pet)
     if t in ("put_away", "take_out", "hang"):
         return order.do(a, house, cfg, pet, norm)
+    if t == "process":
+        return craft.process(house, cfg, pet, a, norm)
+    if t == "mend":
+        return craft.mend(house, cfg, pet, a, norm)
+    if t == "carry":   # it and the book go through together, slowly; the book stays where it is put down
+        book_name = next(n for n, o in room["objects"].items() if o.get("fix", {}).get("book"))
+        thing = room["objects"].pop(book_name)
+        text, fx, _ = go(house, cfg, pet, norm(a["door"]).replace(" door", ""))
+        to = house["rooms"][pet["room"]]
+        thing["pos"] = free_tile(house, cfg, to, pet["pos"])
+        to["objects"][book_name] = thing
+        moment(house, "moved", "%s carried the %s into %s" % (name, book_name, to["name"]), pet["id"], to["id"])
+        return "you carried the %s through, a step at a time, and set it down; %s" % (book_name, text), dict(fx, energy=fx.get("energy", 0) - cfg["make"]["effort"]), "carry book"
     if t == "take_name":
         named(house, pet, mem, pet["called"].strip())
         return "you took the name %s; it is yours now" % pet["name"], {}, None
@@ -526,6 +574,9 @@ def apply(house, cfg, pet, a, mem):
         bump(other, cfg, {"company": 0.0 if again else E["spoken_to"]})
         house.setdefault("said", []).append({"tick": house["tick"], "from": pet["id"], "to": other["id"], "kind": "tell", "text": text})
         moment(house, "told", "%s told %s something to keep" % (name, label(other)), pet["id"], room["id"])
+        shown = craft.pass_on(house, cfg, pet, other)   # SPEC-v3.3 §3.3: with a telling goes one thing the teller has found out
+        if shown:
+            add_event(house, other, "and %s showed you something it knows: %s" % (handle(house, other, pet), shown))
         return "you told %s what you wanted them to keep%s" % (handle(house, pet, other), AGAIN if again else ""), {} if again else {"company": E["said_to"]}, "tell"
     if t == "lay_egg":
         return life.lay_egg(house, cfg, pet, a, clean)
@@ -624,6 +675,7 @@ def look(house, cfg, pet, a):
         o = room["objects"][ref]
         if o.get("fix", {}).get("mirror"):
             return "in the mirror you see yourself: " + genome.describe(pet["genome"]), fx, "look mirror"
+        pet["looked"] = (pet.get("looked", []) + [ref])[-80:]   # (SPEC-v3.4 §2.1: what it has had a close look at)
         key = "look a %s thing" % o["made"]["recipe"]["material"] if "made" in o else "look " + ref
         return "you looked at " + describe_thing(house, cfg, pet, ref), fx, key
     if kind == "pet":
@@ -723,6 +775,12 @@ def use(house, cfg, pet, name):
         kin = house["pets"].get(o["memorial"]["pet"])
         own = bool(kin) and (relation(house, pet, kin) is not None)
         return "you touched the stone; " + o["memorial"]["text"], dict(cfg["effects"]["stone"]) if own else {}, "use memorial"
+    if o.get("planted"):   # SPEC-v3.4 §3.5: watered, picked when ripe, pulled up when wilted
+        return craft.use_planted(house, cfg, pet, room, name)
+    if "made" in o and o["made"]["recipe"].get("kind") in cfg["craft"]["tool"]:
+        return "you turned the %s over in your paws; it is for %s, not for using by itself%s" % (
+            name, {"carve": "carving", "plant": "planting", "mend": "mending and building"}[cfg["craft"]["tool"][o["made"]["recipe"]["kind"]]["does"]],
+            "; it is worn and wants mending" if o["made"].get("wear", 0) >= craft.lasts(cfg, o) else ""), {}, None
     if "made" in o:
         text, fx, key = things.use(house, cfg, pet, name)
         if things.prop(cfg, o).get("loud") and room["type"] == "music":
@@ -748,7 +806,9 @@ def use(house, cfg, pet, name):
     if fix.get("window"):
         o["state"] = "open" if o["state"] == "closed" else "closed"
         return "you pushed the %s %s" % (name, o["state"]), {}, "use " + name
-    if "meal" in fix or (fix.get("plant") and o["state"] == "ripe"):
+    if fix.get("plant"):
+        return "the earth of the %s is bare: nothing is planted in it" % name, {}, None
+    if "meal" in fix:
         if "meal" in fix:
             if not o["servings"]:
                 return "the %s is empty" % name, {}, None
@@ -801,6 +861,7 @@ def give(house, cfg, pet, a):
         pet["carrying"].remove(what)
         return director.fed(house, cfg, other, pet, what), dict(cfg["effects"]["feed_creature"]), "feed " + other["kind"]
     offer(house, cfg, pet, other, {"kind": "give", "what": what, "bit": what in pet["carrying"]})
+    pet["gave"] = {"tick": house["tick"], "to": other["id"]}
     return "you held out the %s to %s; it is up to them now" % (what, handle(house, pet, other)), {}, None
 
 

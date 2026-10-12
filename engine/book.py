@@ -97,8 +97,11 @@ def check_ask(a, house, cfg, pet, filled):
 def ask(house, cfg, pet, a, clean):
     """`ask_book`: the pet turns the pages looking for what it asked, and reads what it finds."""
     from .world import label, moment
+    from . import craft, wants
     q = clean(a["question"], cfg["book"]["max_question"])
     pet["asked_at"] = house["tick"]
+    pet["asked"] = (pet.get("asked", []) + [q.lower()])[-12:]   # SPEC-v3.4 §4.1: a word it wondered about has been asked after
+    craft.practise(house, cfg, pet, "reading")
     found = lookup(cfg, q) if available(cfg) else None
     house.setdefault("fresh_reads", []).append({"pet": pet["id"], "tick": house["tick"], "question": q,
                                                 "title": found[0] if found else None, "text": found[1] if found else None})
@@ -110,4 +113,5 @@ def ask(house, cfg, pet, a, clean):
     del pet["read"][6:]
     house["read_glow"] = house["tick"]
     moment(house, "read", "%s asked the book \"%s\" and read about %s" % (label(pet), q, title), pet["id"], pet["room"])
-    return 'you read in the book, under "%s": "%s"' % (title, text), dict(cfg["effects"]["read"]), "read " + title
+    hint = wants.hinted(house, cfg, pet, title, text)   # what it read may point at something to try: a hint, never a recipe
+    return 'you read in the book, under "%s": "%s"%s' % (title, text, "; " + hint if hint else ""), dict(cfg["effects"]["read"]), "read " + title

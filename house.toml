@@ -231,7 +231,7 @@ hint = "warm, wet air"   # what comes under the door before anyone has been thro
 outdoors = true
 glass = true
 regrow_hours = 8
-bits = { resin = 2, vine = 3, petal = 3 }
+bits = { resin = 2, vine = 3, petal = 3, seed = 2 }
 rule = "greenhouse"
 fixtures = [
   { name = "tomato vine", pos = [3, 2], plant = true },

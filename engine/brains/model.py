@@ -61,6 +61,10 @@ WRITTEN = {   # how each action is written, shown only for the actions it can do
     "call": '{"type": "call", "who": an animal of yours}',
     "name": '{"type": "name", "what": an animal of yours here, or "egg", "name": up to 16 chars}',
     "ask_book": '{"type": "ask_book", "question": what you want to know, at most 80 chars}',
+    # SPEC-v3.4 §3
+    "process": '{"type": "process", "what": a bit you carry or one lying here, "how": one of the ways it could be tried here} (do that to it and see what comes of it)',
+    "mend": '{"type": "mend", "target": a made thing here that is worn or spoiled}',
+    "carry": '{"type": "carry", "door": one of the doors} (carry the heavy book through it, slowly; it stays where you put it down)',
 }
 FORMAT_OLD = """
 Reply with one JSON object and nothing else:
@@ -151,6 +155,9 @@ def schema(ctx):
         "call": [one("call", who={"enum": c["tame"]})] if c["tame"] else [],
         "name": [one("name", what={"enum": c["nameable"]}, name=text(16))] if c["nameable"] else [],
         "ask_book": [one("ask_book", question=text(80))],
+        "process": [one("process", what={"const": b}, how={"enum": hows}) for b, hows in c.get("process", {}).items() if hows],
+        "mend": [one("mend", target={"enum": c["mendable"]})] if c.get("mendable") else [],
+        "carry": [one("carry", door={"enum": c["doors"]})],
         "write_belief": [one("write_belief", statement=text(240), source={"enum": ["lived", "seen"] + ["told by " + t for t in c["tellers"]]})],
         "revise_belief": [one("revise_belief", id={"enum": c["beliefs"]}, statement=text(240))] if c["beliefs"] else [],
     }

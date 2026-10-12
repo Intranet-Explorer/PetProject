@@ -7,7 +7,7 @@ SPEC-v3.4 §1: a body goes places and handles things. A stretch, a hum or a look
 tick, on the spot, between two activities), never the thing it chose to do; a thing put away or brought to
 someone is carried there; being with someone is doing what they do; and a mind set on rest does not hold a body
 that is not tired."""
-from . import actions, feel, order, songs, story, things
+from . import actions, craft, feel, order, songs, story, things, wants
 from .world import LONG_AGO, STAGES, add_event, beside, dist, free_tile, here, label, relation, rnd, ticks
 
 URGENT = {"visitor", "woke", "hatched", "low", "spoken", "event"}   # what stops it in its tracks (as it hurries a thought)
@@ -15,6 +15,8 @@ URGENT = {"visitor", "woke", "hatched", "low", "spoken", "event"}   # what stops
 ACT = {"inspect": "look", "play": "use", "eat": "eat", "stone": "use", "go": "go", "tidy": "put_away", "gather": "gather", "fiddle": "fiddle",
        "tend": "tend", "dance": "dance", "babble": "babble", "nap": "nap", "listen": "listen", "watch": "watch",
        "seat": "use", "take out": "take_out", "bring": "show"}
+TO = {"soak": "to the water", "warm": "to the warmth", "melt": "to the heat", "dry": "up into the dry air", "press": "over to something heavy",
+      "weave": "to the bench", "carve": "to the bench", "grind": "onto the stone floor", "plant": "to the earth"}   # where a bit is carried to be tried (v3.4 §3)
 KEEPS_UP = ("follow", "tail")   # done on the move: it keeps after whoever it is for as long as it lasts
 TOGETHER = ("sing", "dance")    # besides whatever handles a thing: done with someone when they are doing it too
 COUNT = ["", "", "two", "three", "four", "five", "six", "seven", "eight", "nine"]
@@ -66,6 +68,20 @@ def kin_here(house, pet):
     return [p for p in here(house, pet) if relation(house, pet, p)]
 
 
+def way_to(house, pet, targets):
+    """The door from where it is toward the nearest of these rooms, through rooms it knows: a door, or None."""
+    rooms, seen, queue = house["rooms"], {pet["room"]}, [(pet["room"], None)]
+    while queue and targets:
+        rid, first = queue.pop(0)
+        if first and rid in targets:
+            return first
+        for d, to in rooms[rid]["doors"].items():
+            if to in pet["rooms"] and to not in seen and rooms[to]["type"]:
+                seen.add(to)
+                queue.append((to, first or d))
+    return None
+
+
 def tired(pet):
     return feel.level(pet, "energy") >= 2
 
@@ -83,6 +99,7 @@ def targets(house, cfg, pet, mem, name, A):
     near = lambda pos: None if dist(me, pos) <= 1 else beside(cfg, pos, me)
     if do == "self":
         return [{}]
+    L, W = wants.lean(house, cfg, pet) if do in ("go", "gather", "tail", "watch", "place", "try", "play", "inspect") else None, cfg["body"]["want"]   # SPEC-v3.4 §2.1: its body leans toward what serves its wants
     if do == "wander":   # somewhere a few steps off: the farthest of a few tries (or near what its mind is on)
         at = anchor(house, pet)
         tries = [[r.randrange(1, cfg["W"] - 1), r.randrange(1, cfg["H"] - 1)] for _ in range(4)] if not at else \
@@ -97,10 +114,14 @@ def targets(house, cfg, pet, mem, name, A):
         under_way = trip[0] == house["clock"]["day"] and not trip[1]
         drawn = bool(mess) and room.get("mess", 0) < 2 and not anchor(house, pet) and (focus.get("type") != "rest" or feel.level(pet, "energy") < 2) \
             and (trip[0] != house["clock"]["day"] or under_way)
+        toward = way_to(house, pet, L["rooms"]) if do == "go" else None
         for d, rid in room["doors"].items():
             stuck = house["shut"].get("%s|%s" % (room["id"], d), LONG_AGO) > house["tick"]
             to, been = house["rooms"][rid], rid in pet["rooms"]
-            if do == "doorway" and not been:
+            if do == "go" and not stuck and (d in L["doors"] or d == toward) and not anchor(house, pet) and not tired(pet):
+                # a door it wants to know the other side of (the one way a body goes where it has never been), or the way to where a want takes it
+                out.append({"what": d, "goal": list(house["door_tiles"][d]), "bonus": W})
+            elif do == "doorway" and not been:
                 out.append({"what": d, "goal": list(house["door_tiles"][d]), "bonus": 0.5})
             elif do == "doorway":
                 out.append({"what": d, "goal": list(house["door_tiles"][d])})
@@ -126,7 +147,8 @@ def targets(house, cfg, pet, mem, name, A):
     if do == "inspect":
         seen = lambda n: pet["times"].get("look " + n, 0)
         names = sorted((n for n in objs if not out_of_sight(cfg, room, objs[n])), key=lambda n: (seen(n), dist(me, objs[n]["pos"])))[:3]
-        return [{"what": n, "goal": near(objs[n]["pos"]), "bonus": 0.4 if not seen(n) else 0.0} for n in names]
+        names = [n for n in L["look"] if n in objs and not out_of_sight(cfg, room, objs[n])][:1] + [n for n in names if n not in L["look"]]   # what it wants a closer look at, first
+        return [{"what": n, "goal": near(objs[n]["pos"]), "bonus": W if n in L["look"] else 0.4 if not seen(n) else 0.0} for n in names]
     if do == "fiddle":
         mine = [n for n, o in things.made(room).items() if things.free_to_change(house, pet, o) and not out_of_sight(cfg, room, o)] \
             + [n for n, o in objs.items() if o.get("fix", {}).get("movable")]
@@ -135,7 +157,8 @@ def targets(house, cfg, pet, mem, name, A):
         toys = [n for n, o in objs.items() if "toy" in o.get("fix", {})]
         toys += [n for n, o in things.made(room).items() if things.prop(cfg, o).get("use", {}).get("curiosity") and not things.prop(cfg, o).get("food")
                  and things.free_to_change(house, pet, o) and not out_of_sight(cfg, room, o)]
-        return [{"what": n, "goal": near(objs[n]["pos"])} for n in sorted(toys, key=lambda n: (pet["times"].get("body play " + n, 0), dist(me, objs[n]["pos"])))[:2]]
+        ball = lambda n: bool(L["play"]) and (n == "ball" or objs[n].get("made", {}).get("recipe", {}).get("kind") == "ball")   # a game it wants with someone: the ball first
+        return [{"what": n, "goal": near(objs[n]["pos"]), "bonus": W if ball(n) else 0.0} for n in sorted(toys, key=lambda n: (not ball(n), pet["times"].get("body play " + n, 0), dist(me, objs[n]["pos"])))[:2]]
     if do == "window":
         return [{"what": n, "goal": near([o["pos"][0], max(o["pos"][1], 0)])} for n, o in objs.items() if o.get("fix", {}).get("window")][:1]
     if do == "nap":
@@ -146,8 +169,10 @@ def targets(house, cfg, pet, mem, name, A):
     if do == "eat":
         if feel.level(pet, "energy") < 2 or (house["tick"] - pet.get("last_eat", LONG_AGO)) * cfg["clock"]["tick_seconds"] <= cfg["effects"]["double_feed_seconds"]:
             return []
-        food = [n for n, o in objs.items() if ("meal" in o.get("fix", {}) and o.get("servings")) or (o.get("fix", {}).get("plant") and o.get("state") == "ripe")]
-        return [{"what": n, "goal": near(objs[n]["pos"])} for n in food[:1]]
+        # what the family grew before the bowl the visitor fills (SPEC-v3.4 §3.5)
+        food = [n for n, o in objs.items() if o.get("planted") and o["planted"]["grow"] >= 1 and not o["planted"].get("wilted")] \
+            + [n for n, o in objs.items() if "meal" in o.get("fix", {}) and o.get("servings")]
+        return [{"what": n, "goal": near(objs[n]["pos"]), "bonus": 0.5 if objs[n].get("planted") else 0.0} for n in food[:1]]
     if do == "tidy":
         job = order.job(house, cfg, pet, room)   # the worse the mess, the more it pulls, on the orderly most of all
         if not job:
@@ -178,14 +203,43 @@ def targets(house, cfg, pet, mem, name, A):
                 out.append({"what": n, "who": p["id"], "goal": near(objs[n]["pos"]), "to": beside(cfg, p["pos"], objs[n]["pos"]), "bonus": 1.0 if focus.get("who") == p["id"] else 0.0})
         return out
     if do == "tail":
-        return [{"what": c["kind"], "creature": c["id"], "goal": None if dist(me, c["pos"]) <= 1 else beside(cfg, c["pos"], me)} for c in house["creatures"] if c["room"] == room["id"]][:1]
+        return [{"what": c["kind"], "creature": c["id"], "goal": None if dist(me, c["pos"]) <= 1 else beside(cfg, c["pos"], me), "bonus": W if c["kind"] in L["creatures"] else 0.0}
+                for c in sorted(house["creatures"], key=lambda c: c["kind"] not in L["creatures"]) if c["room"] == room["id"]][:1]
     making = focus.get("type") == "make" and not laid_out(pet)   # its mind is on making, and it is not ready yet
     bench = next((n for n, o in objs.items() if o.get("fix", {}).get("bench")), None)
     if do == "gather":
+        wanted = [s for s in room["spots"] if s["ready"] and not s.get("on") and s["bit"] in L["gather"]]   # a bit one of its wants is about: picked up whatever else it carries
+        if wanted and len(pet["carrying"]) < cfg["make"]["carry"]:
+            s = min(wanted, key=lambda s: dist(me, s["pos"]))
+            return [{"what": s["bit"], "goal": near(s["pos"]), "bonus": W}]
         if len(pet["carrying"]) >= (cfg["body"]["make_bits"] if making else cfg["make"]["carry"] if focus.get("type") == "project" else 1):
             return []
-        spots = sorted((s for s in room["spots"] if s["ready"]), key=lambda s: dist(me, s["pos"]))
+        spots = sorted((s for s in room["spots"] if s["ready"] and not s.get("on")), key=lambda s: dist(me, s["pos"]))
         return [{"what": s["bit"], "goal": near(s["pos"]), "bonus": cfg["body"]["make_pull"] if making else 0.0} for s in spots[:1]]
+    if do == "place":   # a bit it wants to try something on, carried to where that can be tried; there its mind is told, once, and thinks sooner
+        if not L["place"] or state(pet).get("placed") == [L["place"][2], room["id"]]:
+            return []
+        how, bit, key = L["place"]
+        if (how == "ask") != bool(A.get("book")):
+            return []
+        if how == "ask":   # a word it wonders about, and the book is here: it goes over to it
+            at = next((o["pos"] for o in objs.values() if o.get("fix", {}).get("book")), None)
+            return [{"what": "heavy book", "where": "ask " + bit, "want": key, "goal": near(at), "bonus": W * 1.5}] if at else []
+        at = craft.place(house, cfg, room, how)
+        return [{"what": bit, "where": TO[how], "want": key, "goal": near(at[1]) if at[1] else None, "bonus": W * 1.5}]
+    if do == "try":   # it has stood where the thing can be tried long enough for its mind to take it up, and its mind has not: its paws try it
+        b = state(pet)
+        if not L["place"] or b.get("placed") != [L["place"][2], room["id"]] or b.get("tried_at") == L["place"][2] \
+                or house["tick"] - b.get("placed_at", house["tick"]) < ticks(cfg, cfg["body"]["try_after_seconds"]):
+            return []
+        how, bit, key = L["place"]
+        if (how == "ask") != bool(A.get("book")):
+            return []
+        if how == "ask":
+            at = next((o["pos"] for o in objs.values() if o.get("fix", {}).get("book")), None)
+            return [{"what": "heavy book", "where": "ask " + bit, "want": key, "goal": near(at), "bonus": W * 1.5}] if at else []
+        at = craft.place(house, cfg, room, how)
+        return [{"what": bit, "where": how, "want": key, "goal": near(at[1]) if at[1] else None, "bonus": W * 1.5}]
     if do in ("bench", "lay out"):   # (§1.2: the body works toward what the mind is about)
         enough = len(pet["carrying"]) >= cfg["body"]["make_bits"] or (pet["carrying"] and not any(s["ready"] for s in room["spots"]))
         at_bench = not bench or dist(me, objs[bench]["pos"]) <= 1
@@ -194,9 +248,9 @@ def targets(house, cfg, pet, mem, name, A):
         if do == "bench":
             return [{"what": bench, "goal": near(objs[bench]["pos"]), "bonus": cfg["body"]["make_pull"]}]
         return [{"where": "on the %s" % bench if bench else "on the floor", "bonus": cfg["body"]["make_pull"]}]
-    if do == "tend":
-        plants = [n for n, o in objs.items() if o.get("fix", {}).get("plant") and o.get("state") != "ripe"]
-        return [{"what": n, "goal": near(objs[n]["pos"])} for n in plants[:2]]
+    if do == "tend":   # what is planted and not yet ripe, the driest first (SPEC-v3.4 §3.5: tending is watering)
+        plants = sorted((n for n, o in objs.items() if o.get("planted") and o["planted"]["grow"] < 1 and not o["planted"].get("wilted")), key=lambda n: objs[n]["planted"]["watered"])
+        return [{"what": n, "goal": near(objs[n]["pos"]), "bonus": 0.6 if house["tick"] - objs[n]["planted"]["watered"] > cfg["ticks_per_day"] / 2 else 0.0} for n in plants[:2]]
     if do in ("follow", "sit with"):
         kin = kin_here(house, pet)
         if do == "follow":
@@ -299,7 +353,7 @@ def choose(mind, fidget=False):
     A = cfg["activities"][name]
     lo, hi = A["seconds"]
     now = {"name": name, "do": A["do"], "what": t.get("what"), "who": t.get("who"), "where": t.get("where"), "job": t.get("job"), "door": t.get("door"), "trip": t.get("trip"), "creature": t.get("creature"),
-            "goal": t.get("goal"), "to": t.get("to"), "left": ticks(cfg, r.uniform(lo, hi)), "since": h["tick"], "began": None, "passive": bool(A.get("passive")),
+            "goal": t.get("goal"), "to": t.get("to"), "want": t.get("want"), "left": ticks(cfg, r.uniform(lo, hi)), "since": h["tick"], "began": None, "passive": bool(A.get("passive")),
             "icon": A.get("icon"), "voice": A.get("voice")}
     now["doing"] = say(cfg, h, pet, now, "doing")   # in the page's words, and the packet's
     return now
@@ -402,6 +456,7 @@ def finish(mind, now, cut=False):
                         o["pos"] = free_tile(h, cfg, room, beside(cfg, mate["pos"], pet["pos"]) if mate else [min(cfg["W"] - 2, max(1, pet["pos"][0] + r.randint(-4, 4))), min(cfg["H"] - 2, max(1, pet["pos"][1] + r.randint(-3, 3)))], name)
                         told = "rolled the %s over to %s" % (name, actions.handle(h, pet, mate)) if mate else "sent the %s rolling across the room" % name
                         if mate:
+                            pet.setdefault("played_with", {})[mate["id"]] = h["tick"]
                             add_event(h, mate, "%s rolled the %s over to you" % (actions.handle(h, mate, pet), name))
             elif do == "seat" and o is not None:
                 _, fx, key = actions.use(h, cfg, pet, name)
@@ -416,8 +471,19 @@ def finish(mind, now, cut=False):
                 order.moved(o, h["tick"])
                 o["pos"] = free_tile(h, cfg, room, pet["pos"], name)
                 key = "body bring " + name
+                if other:
+                    pet["gave"] = {"tick": h["tick"], "to": other["id"]}
                 if other and other["room"] == pet["room"] and not other["sleep"]:
                     add_event(h, other, "%s carried the %s over to you" % (actions.handle(h, other, pet), name))
+            elif do == "try":
+                asking = now["where"].startswith("ask ")   # (the book: it turns the pages looking for the word it wondered about)
+                a = {"type": "ask_book", "question": "what is %s" % now["where"][4:]} if asking else {"type": "process", "what": name, "how": now["where"]}
+                b["tried_at"] = now["want"]
+                why = actions.check(a, h, cfg, pet, mind.mem)
+                told, fx, key = (why, {}, None) if why else actions.apply(h, cfg, pet, a, mind.mem)
+                add_event(h, pet, told if asking else "you tried the %s: %s" % (name, told))
+                told = None
+                act = story.act_of(h, pet, a) if not why else None
             elif do == "tail":
                 pet["met"][now["what"]] = pet["met"].get(now["what"], 0) + 1
             elif do == "go" and name in room["doors"] and actions.check({"type": "go", "door": name}, h, cfg, pet, mind.mem) is None:
@@ -432,6 +498,8 @@ def finish(mind, now, cut=False):
             elif do == "tidy" and now.get("job"):
                 where = order.do_job(h, cfg, pet, room, now["job"])
                 done, act = bool(where), act if where else None   # it was gone, or the place was taken: nothing was put away
+                if where:
+                    craft.practise(h, cfg, pet, "tidying", 0.25)
             elif do == "gather":
                 a = {"type": "gather", "what": name}
                 if actions.check(a, h, cfg, pet, mind.mem) is None:
@@ -440,8 +508,16 @@ def finish(mind, now, cut=False):
                 b["laid"], where = list(pet["carrying"]), now["where"]
                 add_event(h, pet, "what you carry is laid out %s: everything is ready to make something" % where)
                 pet["ready"] = h["tick"]
-            elif do == "tend" and o is not None and o.get("fix", {}).get("plant") and o.get("state") != "ripe":
-                o["grow"] = round(min(1.0, o["grow"] + cfg["body"]["tend_grow"]), 3)
+            elif do == "tend" and o is not None and o.get("planted"):
+                craft.water(h, cfg, pet, room, name)
+            elif do == "place":   # it is where the thing can be tried, with the thing: its mind is told, and thinks sooner
+                b["placed"], b["placed_at"], where = [now["want"], room["id"]], h["tick"], now["where"]
+                if where.startswith("ask "):
+                    where = ""
+                    add_event(h, pet, 'you are by the heavy book: you could ask it what "%s" is' % now["where"][4:])
+                else:
+                    add_event(h, pet, "you have carried the %s %s: you could try it now" % (name, where))
+                pet["ready"] = h["tick"]
             elif do == "nap":
                 fx = {"energy": E["rest_per_10s"] * A["seconds"][1] / 10}
             elif do == "babble":

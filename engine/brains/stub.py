@@ -103,6 +103,13 @@ class Stub:
             return {"type": t, "who": pick(c["tame"])}
         if t == "name":
             return {"type": t, "what": pick(c["nameable"]), "name": "Nib%d" % r.randrange(1000)}
+        if t == "process":   # SPEC-v3.4 §3: whatever it has not tried yet, of what could be tried here
+            bit = pick([b for b, hows in c["process"].items() if hows])
+            return {"type": t, "what": bit, "how": pick(c["process"][bit])}
+        if t == "mend":
+            return {"type": t, "target": pick(c["mendable"])}
+        if t == "carry":
+            return {"type": t, "door": pick(c["doors"])}
         if t == "ask_book":
             return {"type": t, "question": pick(["what is a beetle", "why does it rain", "what is a lamp", "what is a storm", "how do birds sing"])}
         if t == "write_belief":
@@ -127,7 +134,7 @@ class Stub:
                 "follow": c["pets"] + c["creatures"], "nuzzle": c["awake"] or c["eggs"], "accept": c["offers"], "take": c["theirs"],
                 "chase": c["creatures"], "tell": c["awake"], "bequeath": c["leave"] or c["songs"], "revise_belief": c["beliefs"], "use": c["things"],
                 "write": c["surfaces"], "scrub": c["writings"], "sing": c["songs"], "teach_song": c["songs"] and c["awake"], "call": c["tame"],
-                "name": c["nameable"], "put_away": c.get("loose") and c.get("stores"), "take_out": c.get("stored"), "hang": c.get("hangable")}
+                "name": c["nameable"], "process": any(c.get("process", {}).values()), "mend": c.get("mendable"), "put_away": c.get("loose") and c.get("stores"), "take_out": c.get("stored"), "hang": c.get("hangable")}
         return bool(need.get(t, True))
 
     async def act(self, packet, ctx):

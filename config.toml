@@ -42,6 +42,9 @@ write_belief = 10
 revise_belief = 10
 take_name = 4
 put_away = 6              # SPEC-v3.3
+process = 12              # SPEC-v3.4 §3: doing something to a bit, mending, carrying the book through a door
+mend = 12
+carry = 30
 take_out = 4
 hang = 8
 write = 12                # SPEC-v3.1
@@ -295,6 +298,8 @@ go_again_seconds = 180    # it does not leave a room by itself sooner than this 
 fidget = 0.3              # v3.4 §1: after an activity, this often a fidget (a stretch, a hum: one tick, on the spot) comes before the next; twice as often while a thought is on its way
 handle = 3.0              # what a thing it has not handled lately adds while it has handled fewer than three different things in the last handle_ticks ...
 handle_ticks = 50         # ... (three and a half minutes of watching), in full when it has handled one or none
+try_after_seconds = 90    # v3.4 §3.1: with a bit carried to where it can be tried, this long is left for its mind to take it up before its paws try it themselves
+want = 3.5                # SPEC-v3.4 §2.1: what serving one of its wants adds (a bit it wants to hold, a door it wants to try, the way to where it can try something)
 together = 1.5            # what doing the same thing as the one its mind is on being with adds (a third of it with any kin who is at it)
 seats = ["cushion", "rug", "blanket", "nest", "bed-mat", "stool"]   # the kinds of made thing (and the fixtures by these names) a body settles on, besides whatever the house has to rest on or that is soft
 mess_pull = 0.6           # what each step of a room's mess adds to tidying (times 0.4 to 1.6 by how orderly it is)
@@ -317,6 +322,9 @@ unmake = "paws"
 combine = "paws"
 arrange = "broom"
 put_away = "broom"
+process = "paws"
+mend = "paws"
+carry = "paws"
 take_out = "paws"
 hang = "broom"
 paint = "paws"
@@ -352,6 +360,19 @@ pawful = 3                # loose bits a pet puts away at one go
 just_out_seconds = 300    # a thing taken out, brought to someone or rolled across the room is left where it is this long before anybody's body tidies it away again
 mess = -0.15              # comfort per 10 s in a mess, for a pet as orderly as can be (none below the middle)
 tidy = 0.05               # ... and in a tidy room
+
+[skills]                  # SPEC-v3.4 §2.2: practice, felt in words, never shown as a number
+steps = [3, 10, 25]       # how many times it has done a thing before it is some, a good deal, and very practised
+watched = 0.3             # what a young one picks up each time it watches a practised parent do it
+
+[wants]                   # SPEC-v3.4 §2.1
+most = 3                  # wants a pet holds at once
+every_ticks = 5           # how often each pet's wants are looked over
+fade_days = 1             # a want left alone this long fades
+again_days = 3            # ... and the same one does not come back sooner than this
+lift = { comfort = 4.0, curiosity = 5.0 }   # what a want fulfilled is worth
+cold_rooms = ["cellar", "attic"]            # where a pet at night wants something warm
+uneasy_below = 35         # comfort below which kin wants bringing something
 
 [music]                   # §3.1: the visitor's music, per 10 s to whoever hears it; never said as a number
 calm = { comfort = 0.15 }

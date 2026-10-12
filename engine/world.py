@@ -43,6 +43,8 @@ def load_config(path=ROOT / "config.toml", profile=None):
     cfg["from_parts"] = read("kinds-from-parts.json", {"shape": {}, "material": {}, "many": {"hanging": [], "then": "sculpture", "else": "sculpture"}, "pair": {}})
     cfg["activities"] = tomllib.loads((path.parent / "activities.toml").read_text())   # SPEC-v3.3 §1.1: what a body does by itself
     cfg["layouts"] = {f.stem: json.loads(f.read_text()) for f in sorted((art / "rooms").glob("*.json"))} if (art / "rooms").exists() else {}
+    from . import craft   # SPEC-v3.4 §3: crafting.toml, laid into the bits and the properties
+    craft.load(cfg, path.parent)
     return derive(cfg)
 
 
@@ -267,7 +269,9 @@ def generate_room(house, cfg, rid, kind=None, by=None):
     room.update(type=kind, name=spec["name"], found=house["tick"], by=by, objects={}, spots=[],
                 paint={"wall": None, "floor": None}, wet_until=LONG_AGO, cold_until=LONG_AGO, drift=None)
     for f in spec["fixtures"]:
-        room["objects"][f["name"]] = fixture(f, rng)
+        room["objects"][f["name"]] = o = fixture(f, rng)
+        if f.get("plant"):   # SPEC-v3.4 §3.5: what a room is found with growing in its beds grows on; once picked, a bed is bare until someone plants it
+            o["planted"] = {"what": "seed", "at": house["tick"], "grow": o["grow"], "watered": house["tick"], "by": None, "stage": "planted"}
     kinds = spec["bits"]
     if kinds == "any":
         kinds = {b: 1 for b in rng.sample(sorted(b for b, v in cfg["house"]["bits"].items() if not v.get("late")), 4)}

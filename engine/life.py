@@ -1,7 +1,7 @@
 """Life and death, eggs and inheritance (SPEC-v3 §4, §5). A pet hatches, grows by what it has lived and made,
 grows old, and dies; before that it may lay eggs, and what it hands on is a body, a temperament, a message,
 and a couple of things."""
-from . import genome, order, things
+from . import craft, genome, order, things
 from .feel import level
 from .world import (GENES, STAGES, days as world_days, add_event, alive, arrived, family, free_tile, hours, label, moment, new_pet, rnd, ticks)
 
@@ -9,7 +9,8 @@ GROWS = {"hatchling": "child", "child": "youngling", "youngling": "adult"}
 UNLOCKS = {
     "hatchling": ["observe", "look", "move", "go", "speak", "rest", "use", "gather", "drop", "make", "unmake", "give", "show",
                   "follow", "nuzzle", "accept", "take", "chase", "write_belief", "revise_belief"],
-    "child": ["arrange"], "youngling": ["combine", "paint"], "adult": ["teach", "lay_egg"], "elder": ["tell", "bequeath"],
+    # SPEC-v3.4 §3: a child may try what can be done to a bit, a youngling mend, a grown pet carry the book to another room
+    "child": ["arrange", "process"], "youngling": ["combine", "paint", "mend"], "adult": ["teach", "lay_egg", "carry"], "elder": ["tell", "bequeath"],
 }
 # SPEC-v3.1: what a discovery makes possible, the stage it needs, and the discovery it waits for. These are never
 # announced with a stage: a pet meets them in the world (a stick of chalk, a tune that stays with it, a creature that
@@ -167,6 +168,7 @@ def hatch(house, cfg, pet):
         add_event(house, parent, "the egg you laid has hatched%s" % (": " + pet["name"] if pet["name"] else ""))
         parent["news"].append("event")
     moment(house, "hatched", "%s hatched" % (pet["name"] or "an egg"), pet["id"], pet["room"])
+    craft.inherit(house, cfg, pet)   # SPEC-v3.4 §3.3: it starts out knowing some of what its parent knew
 
 
 def earned(house, cfg, pet):
@@ -234,6 +236,7 @@ def die(house, cfg, pet, cause):
     things.drop_bits(house, cfg, house["rooms"][pet["room"]], pet["pos"], pet["carrying"])   # what it carried lies where it fell
     pet["carrying"] = []
     pet.update(stage_before=pet["stage"], stage="dead", died=house["tick"], cause=cause, plan=None, thinking=None, sleep=None, following=None)
+    craft.lost(house, cfg)   # SPEC-v3.4 §3.3: what only it knew is lost with it
     name = label(pet)
     if pet["message"]:
         pet["last_words"] = pet["message"][-1]["text"]

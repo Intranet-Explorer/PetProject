@@ -17,7 +17,7 @@ import uvicorn
 from fastapi import FastAPI, HTTPException, Response, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
 
-from . import actions, body, director, feel, order, life, metrics, mind, physics, radio, songs, story, things, walls
+from . import actions, body, craft, director, feel, order, life, metrics, mind, physics, radio, songs, story, things, walls
 from .tick import Engine, model_brains, stub_brains
 from . import world
 from .world import ROOT, STAGE_WORD, alive, label, load_config, power_on, relation
@@ -80,6 +80,8 @@ def pet_view(p):
               "steps": [actions.words(s) for s in plan["steps"]], "acting": plan["left"] is not None and not plan.get("idle"),
               "idle": bool(plan.get("idle"))} if plan else None,
         body=body.doing(cfg, h, p) if cfg["body"]["on"] and not p["sleep"] and not world.busy(p) else None,   # SPEC-v3.3 §1, §5.4
+        # SPEC-v3.4: what it wants (in its mind's own words), how practised it is, what it has found out
+        wants=[{"text": w["text"], "what": w["what"], "since": w["since"]} for w in p.get("wants", [])], skills=craft.skills_line(cfg, p), recipes=craft.recipe_lines(cfg, p, 12),
         focus=focus_view(p), sign=sign_view(p), habits=body.habits(h, cfg, p), react=body.state(p).get("react"), orderly=p["temper"].get("orderly"),
         step=step and step.get("type"), last_plan=p["last_plan"], calls_hour=len(p["calls"]), spring=p["spring"] > 0,
         portrait=p["portraits"][-1] if p["portraits"] else None, old=life.span(cfg, p) - life.days(h, cfg, p) <= 1,
@@ -156,6 +158,8 @@ def room_view(r):
                 v["grow"] = o["grow"]
             if "meal" in o["fix"]:
                 v["servings"] = o["servings"]
+        if o.get("planted"):   # SPEC-v3.4 §3.5
+            v["planted"] = {"what": o["planted"]["what"], "stage": craft.stage(o["planted"]), "wilted": bool(o["planted"].get("wilted"))}
         if o.get("wall"):
             v["wall"] = True
         if o.get("on"):
@@ -196,6 +200,7 @@ def snapshot():
                "radio": {"on": radio.is_on(h), "plays": h.get("radio", {}).get("plays") or "mix", "theirs": any(n != "little radio" for _, n, _ in radio.boxes(h)),
                          "rooms": [r["id"] for r, _, _ in radio.boxes(h)]}},
         "vox": recent(h.get("vox", []), 20),
+        "bursts": recent(h.get("bursts", []), 20),   # SPEC-v3.4 §5: a want fulfilled or a thing found out, each numbered, to be shown once
         "activities": {n: {"icon": a.get("icon"), "passive": bool(a.get("passive")), "rest": bool(a.get("rest"))} for n, a in cfg["activities"].items()},
         # SPEC-v3.2: the one plain sentence about the house now, and the steps finished in the last world minute or so
         "now": story.now(h, cfg), "acts": recent(h.get("acts", []), 40),

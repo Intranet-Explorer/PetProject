@@ -256,6 +256,7 @@ PAST = {"eat": "ate from the {what}", "make": "made {thing}", "unmake": "took ap
         "nuzzle": "leaned toward {to}", "accept": "took what {to} offered", "speak": "said something", "tell": "told {to} something to keep",
         "go": "came through the {what} door", "write": "wrote on the {to}", "scrub": "rubbed out some writing", "sing": "sang \"{what}\"",
         "compose": "made up a song", "teach_song": "taught {to} a song", "ask_book": "asked the book a question", "call": "called its {what}",
+        "process": "tried something with some {what}", "mend": "mended the {what}", "carry": "carried the book through the {what} door",
         "name": "gave a name to something", "lay_egg": "laid an egg", "bequeath": "chose something to leave behind", "arrange": "moved the {what}",
         "take": "took the {what}", "chase": "chased the {to}", "paint": "painted the room", "teach": "taught the {what} a trick"}
 

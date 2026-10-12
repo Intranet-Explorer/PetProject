@@ -11,8 +11,8 @@ BOX = 10 ** 6   # a keepsake box has no limit
 
 def cap(cfg, o):
     """How many things this can hold: a fixture with a surface, or a made thing of a kind that keeps things."""
-    if "made" in o:
-        return cfg["kinds"].get(o["made"]["recipe"].get("kind"), {}).get("store", 0)
+    if "made" in o:   # (SPEC-v3.4 §3.4: one built with a hammer is sturdier, and holds two more)
+        return cfg["kinds"].get(o["made"]["recipe"].get("kind"), {}).get("store", 0) + (2 if o["made"].get("sturdy") and cfg["kinds"].get(o["made"]["recipe"].get("kind"), {}).get("store") else 0)
     return o.get("fix", {}).get("store", 0)
 
 

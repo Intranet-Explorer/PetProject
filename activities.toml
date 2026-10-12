@@ -406,3 +406,46 @@ temper = { curious = 0.5, bold = 0.5, playful = 0.4 }
 needs = { curiosity = 0.6 }
 focus = ["explore", "play"]
 effects = { curiosity = 0.5 }
+
+# SPEC-v3.4 §2.1, §3.1: a bit it wants to try something on is carried to where that can be tried (the water, the
+# heat, the bench, the earth). What comes of it is its mind's to find out: there it is told, and thinks sooner.
+["take to try"]
+do = "place"
+doing = "carrying its {what} {where}"
+did = "carried the {what} {where}"
+icon = "paws"
+seconds = [2, 3]
+base = 0.0
+handles = true
+
+["try it"]
+do = "try"
+doing = "trying something with its {what}"
+did = "tried something with the {what}"
+icon = "paws"
+voice = "murmur"
+seconds = [4, 6]
+base = 0.0
+handles = true
+
+# SPEC-v3.4 §4.1: a word it wonders about, and the book is in the room: it goes over to it, and its mind may ask.
+# Left long enough, it leafs through the book by itself, looking for the word.
+["go to the book"]
+do = "place"
+book = true
+doing = "going over to the heavy book"
+did = "went over to the heavy book"
+icon = "eye"
+seconds = [2, 3]
+base = 0.0
+
+["leaf through the book"]
+do = "try"
+book = true
+doing = "leafing through the heavy book"
+did = "leafed through the heavy book"
+icon = "eye"
+seconds = [5, 8]
+base = 0.0
+handles = true
+
