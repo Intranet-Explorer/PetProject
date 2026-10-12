@@ -371,3 +371,30 @@ orange and one-limbed. As an Adult it combines in chains, each result feeding th
   long run reached Adult in 16.5 hours, as early as the 8-day requirement allows.
 - The spec's own: the pet's name, whether made things survive across lives, and whether the visitor should
   see an intention before it is carried out.
+
+## v3.3: alive (11 October 2026)
+
+What was measured before the body layer went into the live house, on copies of that house with the real
+model (`engine/alive.py`; everything in watching time on the live clock, where a tick is four seconds):
+
+| | the bar (SPEC-v3.3 §0) | turbo copy, one full world day on the deployed code | a second copy at live pace, 11 minutes |
+|---|---|---|---|
+| different things in any 5 minutes, the worst window of the worst pet | at least 5 | 7 (the four pets: 11, 11, 10, 7) | 12 |
+| longest on one spot doing one thing, outside a resting pose | 30 s | 24 s | 24 s |
+| resting, looking and watching, share of waking time | under 25% | 1% to 23% | 6% to 19% |
+| thoughts asked of the model, per pet per live hour | no more than before | 9 to 14 (the live house before: 16 to 21) | n/a (too short) |
+| nuzzle and accept, share of decided steps | (v3.2: 9 to 13% of thoughts) | 0 of 84 | 0 of 18 |
+
+The world day before that, on code that differed only in the last two additions (getting ready to make, the
+radio speaking at once), gave 8 to 10 things, 24 s, 3% to 16% and 13 to 15 thoughts an hour. Over the
+whole of the copy runs nothing failed and no call to the model was refused.
+
+- **The pets think as often as they did.** The body asks nothing of the model; a thought brought forward
+  because everything is laid out to make something is paid back by the next one.
+- **What a thought expects is now scored over the whole time until the next thought**, body and all. The
+  share judged right did not move: 16 of 54 on the copy's last day, 18 of 58 in the live house before.
+- **Of ten thoughts brought forward with bits laid out, about half made something at once.** The others did
+  something else with a mind that was plainly on making; that is the pet's to decide.
+- **What two strangers could say after watching three rooms for five minutes** is in DECISIONS.md, Part 15:
+  what each pet was doing, mostly; why, for about half the pets; and a room with nobody in it is still an
+  empty room.
