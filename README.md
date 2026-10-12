@@ -1,5 +1,7 @@
 # Pet
 
+![built with Claude × Rectangular](.github/badge.svg)
+
 <img src="showcase/v32/live-1.png" alt="The workshop at night: two pets asleep by the lamp" width="880">
 
 Small creatures living in a house in the browser, each one run by a local LLM. They hatch, grow old and
