@@ -1254,3 +1254,59 @@ the Names button is held on. This takes back the eight seconds of names on enter
 above, and SPEC-v3.3 §5). Taken out with it, as the same thing by another road: a thing's name showing by itself
 while a pet was busy with it. Left as they were: a pet's name plate, which does not come and go with the room but
 is always under its feet, and the "just hatched" tag on a newcomer, which is not the name of a thing. View only.
+
+## Keepsake boxes: nothing made wears out (12 October 2026)
+
+Rule 5 of "Tidying a person can see" (old things are carried to the storeroom, and wear out when it is full) ran
+on the live house for one waking day. The storeroom's twenty places were full within hours, and after that every
+old thing sent there wore out the one longest untouched: 19 things in a day, three of them living pets', five
+taken down off walls. Tyler stopped it (carrying-off switched off, one restart while the pets slept) and
+replaced the rule:
+
+- **Nothing made wears out.** `order.wear_out` and `order.set_aside` are gone. Only loose bits fade.
+- **A keepsake box beside every memorial stone.** It appears with the stone (`life.bury`); a house already lived in
+  got one for each stone it had. It has no limit, what is in it counts as put away, and a pet may take a thing out
+  of it (a mind's `take_out`; the dead's things are anyone's to take, as they always were).
+- **What the dead left lying about goes into their box**: a made thing whose owner has a stone, untouched for five
+  world days. Not a thing on a wall, not a thing already on a shelf or in a chest, not a thing that itself keeps
+  things, not a thing too heavy to move, and never an heirloom.
+- **The living's things stay where they are**, however long untouched.
+- My choices, where the ruling left room. *The house does the moving, once a world hour* (`order.keep`), not a
+  pet that happens to be tidying there; so it also reaches rooms no living pet knows. *A thing taken out is not
+  old again for five days.* *Tidying never puts anything into a keepsake box* (it would swallow a whole room,
+  and the room would never read as full); a mind may put back only what belonged to the one the box is for.
+  *A mind is told what a box holds in one line* ("what Garry left is kept in it: a, b, c and 4 more"), not a
+  line for each thing: a box with no limit would otherwise crowd the packet. *The things in a box still do what
+  they did* (a lamp left on in a box is still on), as on any shelf. *The box's picture* is the small camp
+  chest (`fix.keepsake box` in sprites.json).
+
+**What wore out was put back** (`tick.unwear`, once, at the restart): from the copy of the house taken just before
+the tidying deploy, every thing the house's own list of gone things said had worn out. A living pet's thing went
+back where it was (the room, the wall or the shelf if still free) and its owner was told; the dead's went into
+their keepsake boxes, including five that had hung on walls, as Tyler asked. The bits those things fell into were
+left where they went (in the storeroom's crates). One thing the old rule took down from the pond room wall and
+put in a storeroom crate has been used since, so it was left there.
+
+**Fixed with it.**
+- *The one-trip cap leaked.* A trip was only marked done on arriving in a mess; a mess cleared on the way left it
+  "under way" for the rest of the day, free to set off again and to change rooms without waiting. Now it ends
+  when the pet stands in a mess or there is none left to go to, and only the door toward the mess is free of the
+  wait.
+- *The mind and the body follow one rule.* A body could put a housemate's thing in its place; a mind that chose
+  to was told "that belongs to someone else". Anyone may now put away or hang up anyone's thing in the room, and
+  its owner is told. Taking a thing out is still taking: its own, nobody's, the dead's, its children's.
+- *Two messes could send a tidying pet back and forth.* With its mind on tidying and nothing it could put away
+  here, a body made for the nearest known mess; if that one had nowhere left either, it came straight back. A
+  mess now draws a body only if there is something it could put away there (`order.way`), which also stops a
+  day's one trip being spent on a room where nothing can be done.
+- *An heirloom could be tidied for ever.* With no free tile by its stone it was put on the nearest free one, still
+  counted as lying about, and was moved again. It is now put somewhere else (a wall, a corner, a shelf) or left.
+- *Looking at a loud thing sounded it.* A body's every act on a loud thing was marked loud; only playing with it
+  or fiddling with it is now.
+
+Not changed, as Tyler ruled: a room that settles at "a few things lie about" is lived in, and the garden is left
+as it is until someone finds it (the house will still box what the dead left there).
+
+On the page: a music box left playing now plays its tune, round again every twelve seconds, as loud as its room
+is from where the visitor looks. On a touch screen a tap shows a thing's card and name for five seconds (they
+used to vanish as the finger lifted). Small things seen and set aside are in POLISH.md.

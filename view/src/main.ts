@@ -476,6 +476,7 @@ const FIX: Record<string, string> = {
   light: "a light: using it switches it on or off", meal: "food; it is filled again at dawn", soft: "a comfort to use", rest: "a place to rest: it gives back energy",
   toy: "something to play with", loud: "it is loud", cozy: "it is a comfort to be near", window: "a window: it can be opened and closed", mirror: "a mirror",
   plant: "it grows, and when it is ripe it is a meal", water: "water: things put in it drift off", bench: "a bench: a place to work at", sun: "a patch of sun that moves with the hour",
+  keepsake: "a keepsake box: what someone who has died left lying about is kept in it, and can be taken out again",
   radio: "when it is on it speaks scraps of the real world outside", book: "it answers a question put to it, out of an encyclopedia",
 };
 

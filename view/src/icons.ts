@@ -57,7 +57,7 @@ const KIND: Record<string, string> = {
   egg: "egg", hatched: "hatch", stage: "star", death: "stone", ended: "stone", weak: "stone",
   nuzzle: "heart", gift: "heart", befriended: "heart", heirloom: "star", project: "star", made: "hammer", unmade: "hammer", taught: "star",
   room: "door", entered: "door", power: "bolt", "power back": "bolt", storm: "storm", leak: "drop", floated: "drop", draught: "wind", drift: "wind", season: "leaf",
-  delivery: "crate", lost: "crate", took: "crate", told: "speech", message: "speech", named: "speech", saying: "speech", discarded: "speech",
+  delivery: "crate", kept: "crate", lost: "crate", took: "crate", told: "speech", message: "speech", named: "speech", saying: "speech", discarded: "speech",
   ate: "bowl", painted: "brush", mouse: "mouse", words: "speech", mark: "star",
   "arrival writing": "chalk", "arrival songs": "music", "arrival taming": "paw", "arrival radio": "radio", "arrival book": "book", "arrival strangers": "stranger",
   wrote: "chalk", scrubbed: "scrub", song: "music", tamed: "paw", untamed: "paw", young: "mouse", "creature died": "stone", read: "book",

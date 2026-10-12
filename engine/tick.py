@@ -650,6 +650,53 @@ class Engine:
                         o["fix"]["inside"] = True
                 if "made" in o and o["made"].get("heirloom") and not o.get("home"):
                     order.heirloom_home(h, cfg, room, o)
+            for stone in [n for n, o in room["objects"].items() if "memorial" in o]:   # 12 October 2026: everyone who has a stone has a keepsake box beside it
+                order.give_box(h, cfg, room, stone)
+        self.unwear()
+
+    def unwear(self):
+        """12 October 2026: for one waking day old things were carried to a storeroom that was full, and wore out
+        there. Nothing made wears out any more, and what did is put back from the copy of the house taken just before
+        (order.restore_from, a folder beside this house's data): a living pet's thing where it was, on its wall or its
+        shelf if that is still free, and the dead's in their keepsake boxes. What was carried to the storeroom that
+        day and still lies there untouched goes back the same way. Once; a house with no such copy is left alone."""
+        h, cfg = self.house, self.cfg
+        src = self.dir.resolve().parent / cfg["order"]["restore_from"] / "house.json"
+        if "unworn" in h or not src.exists():
+            return
+        was, h["unworn"] = json.loads(src.read_text()), []
+        if (was["seed"], was["lineage"].get("id")) != (h["seed"], h["lineage"].get("id")):
+            return
+        then = {n: (rid, o) for rid, r in was["rooms"].items() if r["type"] for n, o in r["objects"].items() if "made" in o}
+        now = {n: r for r in h["rooms"].values() if r["type"] for n in r["objects"]}
+        back = [g["name"] for g in h.get("gone_things", []) if g["gone"][1] == "worn out" and g["name"] in then and g["name"] not in now]
+        back += [n for n, r in now.items() if r["type"] == "storeroom" and n in then and then[n][0] != r["id"] and r["objects"][n].get("on")
+                 and order.last_touch(r["objects"][n]) == order.last_touch(then[n][1])]
+        for n in back:
+            (rid, o), owner = then[n], h["pets"].get(then[n][1]["made"]["owner"])
+            room = h["rooms"][rid]
+            if n in now:
+                del now[n]["objects"][n]
+            left = order.stores(cfg, room)
+            room["objects"][n] = o
+            if owner and owner["stage"] == "dead" and order.into_box(h, room, n):
+                where = "in the %s" % o["on"]
+            else:
+                if o.get("wall") and any(x.get("wall") and x["pos"] == o["pos"] for k, x in room["objects"].items() if k != n):
+                    del o["wall"]
+                if o.get("on") and left.get(o["on"], 0) <= 0:
+                    del o["on"]
+                if not o.get("wall") and not o.get("on"):
+                    o["pos"] = world.free_tile(h, cfg, room, o["pos"], n)
+                where = "%s in %s" % ("on the wall" if o.get("wall") else "on the %s" % o["on"] if o.get("on") else "on the floor", room["name"])
+                if owner and owner["stage"] != "dead":
+                    add_event(h, owner, "your %s is back %s" % (n, where))
+            h["unworn"].append([n, o["made"]["owner"], where])
+            logging.info("put back: %s (%s's) %s", n, o["made"]["owner"], where)
+        h["gone_things"] = [g for g in h.get("gone_things", []) if g["name"] not in back]
+        if back:
+            boxed = sum(1 for x in h["unworn"] if "keepsake box" in x[2])
+            moment(h, "kept", "%d things that had worn out or been carried off are back: %d where they were, %d in keepsake boxes" % (len(back), len(back) - boxed, boxed), None, None)
 
     def said_yes(self, pet):
         """Has it lately said yes to the name it was offered? Its last words, and the last few things it said, from the log."""

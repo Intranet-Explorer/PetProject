@@ -105,6 +105,7 @@ def hourly(house, cfg):
                 o["pos"] = [max(1, min(cfg["W"] - 2, round(1 + (cfg["W"] - 3) * (c["hour"] - season["sunrise"]) / span))), o["pos"][1]]
     things.upkeep(house, cfg)
     walls.fade(house, cfg)
+    order.keep(house, cfg)
     for room in found(house):   # SPEC-v3.3 §2.3: the places a room has grown are named from what is in them
         room["areas"] = order.areas(house, cfg, room)
         room["mess"] = order.clutter(house, cfg, room)

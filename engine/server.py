@@ -161,7 +161,7 @@ def room_view(r):
         if o.get("on"):
             v["on"] = o["on"]   # SPEC-v3.3 §2.2: put away on (or in) this; it stands on that thing's tile
         if order.cap(cfg, o):
-            v["store"] = {"cap": order.cap(cfg, o), "holds": order.held(r, n), "bits": [s["bit"] for s in r["spots"] if s.get("on") == n],
+            v["store"] = {"cap": None if order.keeps(o) else order.cap(cfg, o), "holds": order.held(r, n), "bits": [s["bit"] for s in r["spots"] if s.get("on") == n],
                           "inside": bool(o.get("fix", {}).get("inside") or cfg["kinds"].get(o.get("made", {}).get("recipe", {}).get("kind"), {}).get("inside"))}
         objs[n] = v
     return {"id": r["id"], "cell": r["cell"], "type": r["type"], "name": r["name"], "doors": r["doors"], "paint": r["paint"],

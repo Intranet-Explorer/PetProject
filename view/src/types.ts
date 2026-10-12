@@ -14,7 +14,7 @@ export type Made = {
   loud?: boolean; hums?: boolean;   // SPEC-v3.3 §4: it sounds when used; it is making a noise by itself right now
 };
 /** SPEC-v3.3 §2. A thing that keeps things: how many, which (by name), and whether they go in it (a chest) or on it (a shelf). */
-export type Store = { cap: number; holds: string[]; inside: boolean; bits?: string[] };   // `bits`: the loose bits tidied into it, by name ("string", "bell")
+export type Store = { cap: number | null; holds: string[]; inside: boolean; bits?: string[] };   // `bits`: the loose bits tidied into it, by name ("string", "bell")
 /** SPEC-v3.3 §1, §5.4: what a pet's body is doing by itself between the things its mind decides. `icon` names the
  *  sprite icon.act.<icon>; `walking` is true while it is on its way to `goal`; `since` is the tick it set out. */
 export type Body = { activity: string; doing: string; icon: string | null; what: string | null; who: string | null; since: number;

@@ -6,6 +6,7 @@ from .world import add_event, days as world_days, dist, free_tile, label, moment
 
 MESS = ["everything here has its place", "a few things lie about", "this room is a mess"]
 NOWHERE = "there's nowhere left to put things here: a shelf, a box, a basket or a chest would be somewhere to keep them"
+BOX = 10 ** 6   # a keepsake box has no limit
 
 
 def cap(cfg, o):
@@ -19,9 +20,14 @@ def held(room, name):
     return [n for n, o in room["objects"].items() if o.get("on") == name]
 
 
+def keeps(o):
+    """Whose keepsake box this is: the id of the one who died, or None for anything else."""
+    return o.get("fix", {}).get("keepsake")
+
+
 def stores(cfg, room):
-    """{name: places left} for everything here that keeps things."""
-    return {n: cap(cfg, o) - len(held(room, n)) for n, o in room["objects"].items() if cap(cfg, o)}
+    """{name: places left} for everything here that keeps things. (Not a keepsake box: it is for one pet's things.)"""
+    return {n: cap(cfg, o) - len(held(room, n)) for n, o in room["objects"].items() if cap(cfg, o) and not keeps(o)}
 
 
 def can_hang(cfg, o):
@@ -68,7 +74,7 @@ def full(cfg, room):
 
 def bit_room(cfg, room):
     """{name: loose bits it can still take} for everything here that keeps things: bits go in beside the things."""
-    return {n: cfg["order"]["bits"] - sum(1 for s in room["spots"] if s.get("on") == n) for n, o in room["objects"].items() if cap(cfg, o)}
+    return {n: cfg["order"]["bits"] - sum(1 for s in room["spots"] if s.get("on") == n) for n, o in room["objects"].items() if cap(cfg, o) and not keeps(o)}
 
 
 def inside(cfg, o):
@@ -86,23 +92,66 @@ def last_touch(o):
 
 
 def old(house, cfg, room, name):
-    """Forgotten: a made thing nobody has touched for `old_days`, that is not an heirloom, not put away on anything,
-    and not itself a place where things are kept."""
+    """Left lying: a made thing nobody has touched for `old_days`, that is not an heirloom, not up on a wall, not put
+    away on anything, not itself a place where things are kept, and not too heavy to be moved."""
     o = room["objects"][name]
-    return not o["made"].get("heirloom") and not o.get("on") and not cap(cfg, o) \
+    return not o["made"].get("heirloom") and not o.get("on") and not o.get("wall") and not cap(cfg, o) and not things.prop(cfg, o).get("fixed") \
         and world_days(cfg, last_touch(o), house["tick"]) >= cfg["order"]["old_days"]
 
 
-def storeroom(house):
-    return next((r for r in house["rooms"].values() if r["type"] == "storeroom"), None)
+def box_of(house, pid):
+    """(room, name) of the keepsake box of someone who has died, or None while it has none."""
+    return next(((r, n) for r in house["rooms"].values() if r["type"] for n, o in r["objects"].items() if keeps(o) == pid), None)
 
 
-def way(house, pet):
-    """The door from where it is toward the nearest mess it knows of, through rooms it knows: a door, or None."""
+def give_box(house, cfg, room, stone):
+    """A keepsake box beside a memorial stone (12 October 2026): what the one it is for left lying about is kept in
+    it. It has no limit, what is in it is put away like anything on a shelf, and it can be taken out again."""
+    if not box_of(house, room["objects"][stone]["memorial"]["pet"]):
+        room["objects"][stone.replace("stone for", "keepsake box for", 1)] = {
+            "pos": free_tile(house, cfg, room, room["objects"][stone]["pos"]), "fix": {"store": BOX, "inside": True, "keepsake": room["objects"][stone]["memorial"]["pet"]}}
+
+
+def into_box(house, room, name):
+    """A made thing goes into its dead owner's keepsake box, wherever in the house that is. False if there is none."""
+    o = room["objects"][name]
+    to, box = box_of(house, o["made"]["owner"]) or (None, None)
+    if not to or (to is not room and name in to["objects"]):
+        return False
+    del room["objects"][name]
+    for k in ("wall", "tidy", "home", "places"):
+        o.pop(k, None)
+    o["on"], o["pos"] = box, list(to["objects"][box]["pos"])   # being put by is not being wanted: it stays as long untouched as it was
+    to["objects"][name] = o
+    for m in [m for m in room.get("marks", []) if m["on"] == name] if room is not to else []:   # what is written on a thing goes where the thing goes
+        room["marks"].remove(m)
+        to.setdefault("marks", []).append(m)
+    return True
+
+
+def keep(house, cfg):
+    """Every hour (12 October 2026, in place of the storeroom and wearing out: nothing made wears out): what someone
+    who has died left lying about, untouched for `old_days`, goes into the keepsake box by its stone. The living's
+    things stay where they are however long untouched, things on walls stay up, and no heirloom is moved."""
+    went = {}
+    for room in [r for r in house["rooms"].values() if r["type"]]:
+        for n, o in list(things.made(room).items()):
+            if old(house, cfg, room, n) and into_box(house, room, n):
+                went.setdefault(o["made"]["owner"], []).append(n)
+        room["areas"] = areas(house, cfg, room)
+    for pid, names in went.items():
+        to, box = box_of(house, pid)
+        moment(house, "kept", "what %s left lying about went into the %s: %s" % (label(house["pets"][pid]), box, ", ".join(names[:4]) + (" and %d more" % (len(names) - 4) if len(names) > 4 else "")), None, to["id"])
+
+
+def way(house, cfg, pet):
+    """The door from where it is toward the nearest mess it knows of where there is something it could put away,
+    through rooms it knows: a door, or None. (A mess with nowhere left to put things is no reason to go: two of
+    those used to send a tidying pet back and forth between them.)"""
     rooms, seen, queue = house["rooms"], {pet["room"]}, [(pet["room"], None)]
     while queue:
         rid, first = queue.pop(0)
-        if first and rooms[rid].get("mess") == 2:
+        if first and rooms[rid].get("mess") == 2 and job(house, cfg, pet, rooms[rid]):
             return first
         for d, to in rooms[rid]["doors"].items():
             if to in pet["rooms"] and to not in seen and rooms[to]["type"]:
@@ -141,7 +190,9 @@ def place_for(house, cfg, pet, room, name):
         if home.get("on") and left.get(home["on"], 0) > 0:
             return "on", home["on"]
         if home.get("pos") and o["made"].get("heirloom") and dist(home["pos"], o["pos"]) > 1:
-            return "at", free_tile(house, cfg, room, home["pos"], name)
+            tile = free_tile(house, cfg, room, home["pos"], name)
+            if dist(home["pos"], tile) <= 1:   # (no free tile by its stone: it is put somewhere else rather than moved about for ever)
+                return "at", tile
     if can_hang(cfg, o) and things.wall_slot(house, room):
         return "wall", things.wall_slot(house, room)
     beside = corner(house, cfg, room, name)
@@ -154,18 +205,14 @@ def place_for(house, cfg, pet, room, name):
 
 
 def job(house, cfg, pet, room):
-    """Something for a tidy pet to do here, the nearest of: a loose thing with somewhere to go, a forgotten thing
-    to carry off to the storeroom, a pawful of loose bits to put in something. {what, job: [kind, name, how,
-    place], pos}, or None when there is nothing it may move or nowhere to put it."""
-    out, objs, sr = [], room["objects"], storeroom(house)
+    """Something for a tidy pet to do here, the nearer of: a loose thing with somewhere to go, a pawful of loose
+    bits to put in something. {what, job: [kind, name, how, place], pos}, or None when there is nowhere to put
+    anything."""
+    out, objs = [], room["objects"]
     for n in loose(house, cfg, room):   # anyone may put anyone's thing in its place here: it stays its owner's, in the same room
         where = place_for(house, cfg, pet, room, n)
         if where:
             out.append({"what": n, "job": ["thing", n, where[0], where[1]], "pos": objs[n]["pos"]})
-    if sr:   # until the storeroom has been found there is nowhere for old things to go
-        got = {j["what"] for j in out}
-        out += [{"what": n, "job": ["old", n, "away", sr["id"]], "pos": o["pos"]} for n, o in things.made(room).items()
-                if n not in got and may_move(house, pet, o) and (old(house, cfg, room, n) or (room is sr and not settled(cfg, room, o)))]   # in the storeroom itself, whatever lies about is put by
     bits, space = loose_bits(room), {n: k for n, k in bit_room(cfg, room).items() if k > 0}
     if bits and space:
         first = min(bits, key=lambda s: dist(s["pos"], pet["pos"]))
@@ -185,8 +232,6 @@ def do_job(house, cfg, pet, room, job):
     o = room["objects"].get(name)
     if not o or "made" not in o or o.get("on"):
         return ""
-    if kind == "old":
-        return set_aside(house, cfg, pet, room, name)
     if how == "on" and (place not in room["objects"] or stores(cfg, room).get(place, 0) <= 0):
         return ""
     said, owner = put(house, cfg, pet, room, name, how, place), house["pets"].get(o["made"]["owner"])
@@ -205,43 +250,6 @@ def stow(cfg, room, bits):
         else:
             left.append(b)
     return left
-
-
-def wear_out(house, cfg, room, name):
-    """A thing long forgotten falls apart. What it was made of goes into whatever keeps things there, if any has room."""
-    o = room["objects"].pop(name)
-    stow(cfg, room, o["made"]["bits"])
-    things.gone(house, o, name, "worn out", room)
-    moment(house, "unmade", "the %s '%s', long forgotten, wore out and went back to bits" % (o["made"]["recipe"].get("kind", "thing"), name), None, room["id"])
-
-
-def set_aside(house, cfg, pet, room, name):
-    """An old thing leaves for the storeroom (12 October 2026: nothing ever left, and the dead's things piled up).
-    It goes onto whatever keeps things there. When none of that has room, whichever has gone longest untouched, of
-    it and what the storeroom keeps (heirlooms apart), wears out and goes back to bits. Returns the pet's words.
-    ponytail: the thing goes there by itself once the pet has picked it up; walking it through the house is the upgrade."""
-    sr, o = storeroom(house), room["objects"][name]
-    free = lambda: sorted((n for n, k in stores(cfg, sr).items() if k > 0 and n != name), key=lambda n: not inside(cfg, sr["objects"][n]))   # into the crates first: put by, out of sight
-    space = free()
-    if not space:
-        kept = [n for n, x in things.made(sr).items() if x.get("on") and not x["made"].get("heirloom")]
-        worst = min(kept + [name], key=lambda n: last_touch((room if n == name else sr)["objects"][n]))
-        wear_out(house, cfg, room if worst == name else sr, worst)
-        if worst == name:
-            return "down for the last time: it had worn out, and went back to bits"
-        space = free()
-    del room["objects"][name]
-    for k in ("wall", "tidy", "home", "places"):
-        o.pop(k, None)
-    o["on"], o["pos"] = space[0], list(sr["objects"][space[0]]["pos"])   # being carried off is not being wanted: it stays as long forgotten as it was
-    sr["objects"][name] = o
-    for m in [m for m in room.get("marks", []) if m["on"] == name] if room is not sr else []:   # what is written on a thing goes where the thing goes
-        room["marks"].remove(m)
-        sr.setdefault("marks", []).append(m)
-    owner = house["pets"].get(o["made"]["owner"])
-    if owner and owner is not pet and owner["stage"] != "dead":
-        add_event(house, owner, "your %s was put away in the storeroom" % name)
-    return "away in the storeroom" if room is not sr else into(cfg, sr, space[0])
 
 
 def remember(o, room, where):
@@ -278,10 +286,8 @@ def check(a, house, cfg, pet, norm):
     o = room["objects"].get(name)
     if not o or "made" not in o:
         return "that is not a made thing here"
-    if not may_move(house, pet, o):
-        return "that belongs to someone else"
-    if t == "take_out":
-        return None if o.get("on") else "it is not put away"
+    if t == "take_out":   # taking out is taking: its own, nobody's, the dead's (so anything in a keepsake box), its children's
+        return "that belongs to someone else" if not may_move(house, pet, o) else None if o.get("on") else "it is not put away"
     if t == "hang":
         if not cfg["kinds"].get(o["made"]["recipe"].get("kind"), {}).get("hangs"):
             return "that is not a thing to hang up"
@@ -289,6 +295,8 @@ def check(a, house, cfg, pet, norm):
     where = norm(a.get("where"))
     if where not in room["objects"] or not cap(cfg, room["objects"][where]) or where == name:
         return "there is nowhere like that here to keep things"
+    if keeps(room["objects"][where]):
+        return None if o["made"]["owner"] == keeps(room["objects"][where]) else "that box is only for what the one it is for left behind"
     return None if stores(cfg, room)[where] > 0 else "the %s is full" % where
 
 
@@ -299,11 +307,11 @@ def do(a, house, cfg, pet, norm):
         was, o["kept"] = o.pop("on"), house["tick"]
         o["pos"] = free_tile(house, cfg, room, pet["pos"], name)
         return "you took the %s down from the %s" % (name, was), {}, None
-    if t == "hang":
-        said = put(house, cfg, pet, room, name, "wall", things.wall_slot(house, room))
-        return "you hung the %s %s" % (name, said), {}, "put away"
-    said = put(house, cfg, pet, room, name, "on", norm(a["where"]))
-    return "you put the %s %s" % (name, said), {}, "put away"
+    said = put(house, cfg, pet, room, name, "wall", things.wall_slot(house, room)) if t == "hang" else put(house, cfg, pet, room, name, "on", norm(a["where"]))
+    owner = house["pets"].get(o["made"]["owner"])
+    if owner and owner is not pet and owner["stage"] != "dead":   # anyone may put anyone's thing in its place here, as a body does (do_job); its owner is told
+        add_event(house, owner, "your %s was put %s" % (name, said))
+    return "you %s the %s %s" % ("hung" if t == "hang" else "put", name, said), {}, "put away"
 
 
 def moved(o, tick):

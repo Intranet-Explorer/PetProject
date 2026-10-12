@@ -155,6 +155,8 @@ export function effect(ctx: BaseAudioContext, dest: AudioNode, kind: HouseSound 
   }
 }
 
+const BOX_TUNE: Note[] = [["mi", 0], ["so", 0], ["la", 1], ["so", 0], ["mi", 0], ["re", 0], ["do", 1]];   // the music box's tune, as the engine has it (songs.BOX), for a house where it has not yet played by itself
+
 /** A tune that is nobody's voice (SPEC-v3.1 §3.4): the music box plucks each note and lets it ring, a bird whistles
  *  it high with a little run up into each note. Returns when it ends. */
 export function tune(ctx: BaseAudioContext, dest: AudioNode, notes: Note[], at: number, bird = false) {
@@ -303,6 +305,7 @@ export class Voice {
   private kept = new Map<string, ReturnType<typeof ambient>>();   // what keeps going by itself: the room's layers, the weather's, things that hum
   private band: { mood: string; el: HTMLAudioElement; name: string; gain: number; here: GainNode; far: GainNode; where: string } | null = null;   // the visitor's music
   private voxAt = new Map<string, number>();     // pet -> when it last made a small sound
+  private boxAt = 0;                             // when a music box left playing may go round again
   private seen: Seen | null = null;
   private power = true;
   private nextCall: Record<string, number> = {};
@@ -619,6 +622,14 @@ export class Voice {
       const song = s.songs?.[x.song], p = pets.get(x.by), dest = song && this.bus(x.room, s, here);
       const beast = s.creatures.find((c) => c.id === x.by), who = p?.label ?? (x.by === "music box" ? "the music box" : beast?.name ?? `a ${beast?.kind ?? "bird"}`);
       if (dest) this.sing(who, song!.name, song!.notes, p ? voiceInput(p, s) : x.by === "music box" ? "box" : "bird", dest, x.room);
+    }
+    // a music box left playing plays (12 October 2026: it showed notes and made no sound): the house's own box tune,
+    // round again after a pause, as loud as its room is from here
+    const playing = performance.now() < this.boxAt ? undefined : s.rooms.find((r) => Object.values(r.objects ?? {}).some((o) => o.state === "playing") && this.bus(r.id, s, here));
+    if (playing) {
+      const song = Object.values(s.songs ?? {}).find((x) => x.by === "music box");
+      this.sing("the music box", song?.name ?? "the music box's tune", song?.notes ?? BOX_TUNE, "box", this.bus(playing.id, s, here)!, playing.id);
+      this.boxAt = performance.now() + 12000;
     }
     for (const h of t.heard) {
       const dest = this.bus(h.room, s, here);

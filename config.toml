@@ -340,7 +340,8 @@ observe = "eye"
 [order]                   # §2
 tidy_below = 2            # this many loose things or fewer: "everything here has its place"
 mess_above = 6            # more than this: "this room is a mess"
-old_days = 5              # a made thing nobody has touched for this long (no heirloom, not put away) is carried off to the storeroom
+old_days = 5              # a thing someone who has died left lying about, untouched this long, goes into its keepsake box (order.keep)
+restore_from = "data.backup-v3.3-2026-10-12-before-tidy"   # the copy of the house (a folder beside its data) that what wore out on 12 October is put back from, once (tick.unwear)
 bits = 12                 # loose bits a shelf, chest or basket takes beside the things it holds: a whole floor's worth (make.loose_bits)
 pawful = 3                # loose bits a pet puts away at one go
 mess = -0.15              # comfort per 10 s in a mess, for a pet as orderly as can be (none below the middle)

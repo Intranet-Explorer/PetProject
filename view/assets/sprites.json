@@ -223,6 +223,7 @@
  "fix.tomato vine.growing": {"pack": "own", "file": "fixtures.png", "rect": [224, 64, 16, 22]},
  "fix.tomato vine.ripe": {"pack": "own", "file": "fixtures.png", "rect": [240, 64, 16, 22]},
  "fix.tool box": {"pack": "ninja", "file": "Backgrounds/Tilesets/TilesetElement.png", "rect": [33, 99, 14, 12], "anchor": [-1, -3]},
+ "fix.keepsake box": {"pack": "ninja", "file": "Backgrounds/Tilesets/tileset_camp.png", "rect": [65, 129, 14, 14], "anchor": [-1, -2]},
  "fix.toy chest": {"pack": "ninja", "file": "Backgrounds/Tilesets/TilesetElement.png", "rect": [48, 17, 16, 13]},
  "fix.trunk": {"pack": "ninja", "file": "Backgrounds/Tilesets/tileset_camp.png", "rect": [65, 129, 14, 14], "anchor": [-1, -2]},
  "fix.trunk.closed": {"pack": "ninja", "file": "Backgrounds/Tilesets/tileset_camp.png", "rect": [65, 129, 14, 14], "anchor": [-1, -2]},

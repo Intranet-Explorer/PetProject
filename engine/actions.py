@@ -133,9 +133,9 @@ def allowed(house, cfg, pet, mem):
     }
     # SPEC-v3.3 §2.2: keeping things. Open to any pet old enough to arrange things.
     movable_things = [n for n, o in things.made(room).items() if order.may_move(house, pet, o)]
-    can["put_away"] = any(k > 0 for k in order.stores(cfg, room).values()) and any(not room["objects"][n].get("on") and not order.cap(cfg, room["objects"][n]) for n in movable_things)
+    can["put_away"] = any(k > 0 for k in order.stores(cfg, room).values()) and any(not o.get("on") and not order.cap(cfg, o) for o in things.made(room).values())   # anyone's thing: tidying is not taking
     can["take_out"] = any(room["objects"][n].get("on") for n in movable_things)
-    can["hang"] = bool(things.wall_slot(house, room)) and any(order.can_hang(cfg, room["objects"][n]) for n in movable_things)
+    can["hang"] = bool(things.wall_slot(house, room)) and any(order.can_hang(cfg, o) for o in things.made(room).values())
     extra = [a for a in ("put_away", "take_out", "hang") if "arrange" in life.unlocked(house, pet["stage"])] + (["take_name"] if offered(pet) else [])
     if offered(pet):   # only while the visitor has offered it a name it has not taken
         can["take_name"] = True
@@ -409,7 +409,7 @@ def fixture_says(fix):
             else "something growing" if fix.get("plant") else "you could see yourself in it" if fix.get("mirror")
             else "you can see outside through it" if fix.get("window") else "water; things put in it drift off" if "water" in fix
             else "a warm patch of light on the floor" if fix.get("sun")
-            else "it can be set " + " or ".join(fix["states"]) if "states" in fix else "a bench to work at" if fix.get("bench") else "a place to keep things" if fix.get("store") else "it is just there")
+            else "it can be set " + " or ".join(fix["states"]) if "states" in fix else "a bench to work at" if fix.get("bench") else "a box for what someone who died left behind" if fix.get("keepsake") else "a place to keep things" if fix.get("store") else "it is just there")
 
 
 def apply(house, cfg, pet, a, mem):

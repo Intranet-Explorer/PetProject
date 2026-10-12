@@ -101,6 +101,7 @@ export class Room {
   private seenEvent = -1;
   private weather = "";
   private pointer: number[] | null = null;
+  private tap = 0;                      // the timer that lets go of what a finger tapped
   private aim = [0, 0];                 // the same, in screen pixels
   private next = { note: 0, air: 0, glint: 0, drip: 0 };
   private stage: Stage;
@@ -143,9 +144,11 @@ export class Room {
     this.world.addChild(this.ground, this.walls, this.marks.c, this.flat, this.sorted, this.top, this.mark, this.light.dark, this.rims, this.light.glow, this.light.panes, this.fx.c, this.light.falling);
     this.app.stage.addChild(this.world, this.words.c);
     const at = (e: PointerEvent) => { const r = cv.getBoundingClientRect(); return [((e.clientX - r.left) / r.width) * W, ((e.clientY - r.top) / r.height) * H]; };
-    cv.addEventListener("pointerdown", (e) => { this.point(at(e)); const p = at(e); this.onClick(this.under(p[0], p[1])); });   // a tap shows what a hover would
-    cv.addEventListener("pointermove", (e) => this.point(at(e)));
-    cv.addEventListener("pointerleave", () => this.point(null));
+    // a finger has no hover: a tap shows what a hover would (the card, the thing's name) for five seconds, and lifting the finger does not take it away
+    const finger = (e: PointerEvent) => e.pointerType !== "mouse";
+    cv.addEventListener("pointerdown", (e) => { const p = at(e); this.point(p); clearTimeout(this.tap); if (finger(e)) this.tap = window.setTimeout(() => this.point(null), 5000); this.onClick(this.under(p[0], p[1])); });
+    cv.addEventListener("pointermove", (e) => { if (!finger(e)) this.point(at(e)); });
+    cv.addEventListener("pointerleave", (e) => { if (!finger(e)) this.point(null); });
     new ResizeObserver(() => this.fit()).observe(el);
     addEventListener("resize", () => this.fit());   // a change of zoom or screen changes the pixel ratio without changing the element
     this.fit();
@@ -629,8 +632,8 @@ export class Room {
     const called = (n: string) => { const m = room.objects[n]?.made, d = m && drawnOf(m); return m?.called ? `“${m.called}”` : d ? `a ${d.color ? `${d.color} ` : ""}${d.kind}` : n; };
     const into = (n: string) => `${room.objects[n]?.store?.inside ? "in" : "on"} the ${n}`, place = (pos: Tile) => room.areas?.find((a) => a.tiles.some((t) => at(t, pos)))?.name;
     if (o.store) {
-      const left = o.store.cap - o.store.holds.length;
-      out.push(o.store.holds.length ? `holds: ${o.store.holds.map(called).join(", ")}` : "holds nothing yet", left > 0 ? `room for ${left} more` : "full");
+      const left = o.store.cap == null ? null : o.store.cap - o.store.holds.length;   // (a keepsake box has no limit)
+      out.push(o.store.holds.length ? `holds: ${o.store.holds.map(called).join(", ")}` : "holds nothing yet", ...(left == null ? [] : [left > 0 ? `room for ${left} more` : "full"]));
       const bits = new Map<string, number>();   // loose bits tidied into it, counted: "bits: string x3, bell" (from the room as it is now: `o` is as old as the last redraw)
       for (const b of room.objects[name]?.store?.bits ?? []) bits.set(b, (bits.get(b) ?? 0) + 1);
       if (bits.size) out.push(`bits: ${[...bits].map(([b, n]) => (n > 1 ? `${b} x${n}` : b)).join(", ")}`);

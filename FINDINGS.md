@@ -455,3 +455,10 @@ Not measured: fading bits over more than two world days; the live house itself, 
 
 The cost of measuring this way: five of the live house's thoughts timed out while the copy shared its model
 (Tyler's count).
+
+**On the live house the same day:** in its first waking day on these rules the storeroom went from 17 lying about
+to 0, the music room 15 to 1, the pond room 20 to 4 and the workshop 12 to 4; the nursery (15 to 14), greenhouse,
+cellar, attic and garden did not move. And 19 made things wore out, three of them living pets' and five taken
+down off walls: the storeroom filled within hours, and after that every old thing sent to it cost one. The copy
+had shown 19 wearing out in four world days and I reported it as a count, not as a problem. The rule was
+replaced that afternoon (DECISIONS.md, "Keepsake boxes") and all 19 were put back.

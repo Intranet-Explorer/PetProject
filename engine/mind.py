@@ -109,12 +109,15 @@ def perceive(house, cfg, pet, mem):
                 state = "dark"
             if state and state != "closed":
                 notes.append(state)
-        if order.cap(cfg, o):   # SPEC-v3.3 §2.2
+        if order.keeps(o):   # what someone who died left behind: said in one line, however many things that is
+            inside = order.held(room, n)
+            notes.append("what %s left is kept in it: %s" % (actions.label(house["pets"][order.keeps(o)]), ", ".join(inside[:5]) + (" and %d more" % (len(inside) - 5) if len(inside) > 5 else "") if inside else "nothing yet"))
+        elif order.cap(cfg, o):   # SPEC-v3.3 §2.2
             notes.append("a place to keep things" + ("; full" if order.stores(cfg, room).get(n, 0) <= 0 else ""))
         notes.append(feel.near_word(me, o["pos"]))
         return "%s (%s)" % (n, "; ".join(notes))
 
-    seen = [thing_line(n, o) for n, o in sorted(objs.items(), key=lambda no: dist(me, no[1]["pos"]))]
+    seen = [thing_line(n, o) for n, o in sorted(objs.items(), key=lambda no: dist(me, no[1]["pos"])) if not order.keeps(objs.get(o.get("on"), {}))]
     seen += ["%s egg (%s)" % ("your" if e["parent"] == pet["id"] else "an", feel.near_word(me, e["pos"])) for e in eggs]
 
     def other_line(p):
@@ -319,9 +322,9 @@ def perceive(house, cfg, pet, mem):
         "asleep": [actions.handle(house, pet, p) for p in others if p["sleep"]],
         # SPEC-v3.3: where things can be kept, what can be put away, taken out or hung up; who and what a focus can name
         "stores": [n for n, k in order.stores(cfg, room).items() if k > 0],
-        "loose": [n for n, o in things.made(room).items() if order.may_move(house, pet, o) and not o.get("on") and not order.cap(cfg, o)],
+        "loose": [n for n, o in things.made(room).items() if not o.get("on") and not order.cap(cfg, o)],   # anyone may put anyone's thing in its place here, as a body does
         "stored": [n for n, o in things.made(room).items() if o.get("on") and order.may_move(house, pet, o)],
-        "hangable": [n for n, o in things.made(room).items() if order.can_hang(cfg, o) and order.may_move(house, pet, o)],
+        "hangable": [n for n, o in things.made(room).items() if order.can_hang(cfg, o)],
         "body": cfg["body"]["on"],
     }
     return text, ctx

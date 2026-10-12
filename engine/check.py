@@ -1320,7 +1320,7 @@ async def main():
         r += await do(eA, pa, {"type": "make", "recipe": dict(recipe, name="keeper", kind="box"), "near": "here"})
         assert "crowded" in (r[0]["reason"] or "") and not r[1]["reason"] and order.NOWHERE not in physics.senses(hA, cA, pa), "a crowded room still takes a box: %s" % r
         assert order.job(hA, cA, pa, roomA)["job"][2:] == ["on", "keeper"], "and then there is somewhere to put things"
-        # old things leave: carried off to the storeroom; when that is full, the longest forgotten goes back to bits
+        # bits the house brings to the storeroom go into its crates
         clear()
         sr = world.generate_room(hA, cA, next(rid for rid, x in hA["rooms"].items() if not x["type"]), "storeroom")
         for n2, o2 in sr["objects"].items():
@@ -1332,26 +1332,57 @@ async def main():
             "bits the house brings to the storeroom go into its crates, not onto the floor"
         assert len(order.stow(cA, sr, ["fluff"] * (3 * cA["order"]["bits"]))) == 3, "and only what the crates and shelves have no room for is left out"
         del sr["spots"][n0:]
-        for i in range(5):
+        # nothing made wears out. What someone who has died left lying about goes into the keepsake box by its stone;
+        # the living's things, things on walls and heirlooms stay where they are; and it can be taken out again
+        for i in range(6):
             pa["carrying"], pa["needs"]["energy"] = ["fluff"], 80.0
             r = await do(eA, pa, {"type": "make", "recipe": dict(recipe, name="relic %d" % i, kind="ball"), "near": "here"})
             assert not r[0]["reason"], r
-            roomA["objects"]["relic %d" % i]["made"].update(tick=i, used_at=i, touched=i)
+            roomA["objects"]["relic %d" % i]["made"].update(tick=i, used_at=i, touched=i, owner="gone" if i else pa["id"])
+        hA["pets"]["gone"] = dict(pa, id="gone", name="Gone", stage="dead", buried=True)   # (nothing ticks while these two stand in)
+        roomA["objects"]["rack"] = {"pos": [2, 2], "state": None, "fix": {"store": 3}}
+        roomA["objects"]["stone for gone"] = {"pos": [6, 4], "memorial": {"pet": "gone", "text": "a stone for Gone"}}
+        order.give_box(hA, cA, roomA, "stone for gone")
+        order.give_box(hA, cA, roomA, "stone for gone")
+        box = "keepsake box for gone"
+        assert order.box_of(hA, "gone") == (roomA, box) and world.dist(roomA["objects"][box]["pos"], [6, 4]) <= 1.5 and sum(1 for o2 in roomA["objects"].values() if order.keeps(o2)) == 1, "one keepsake box, by the stone"
+        assert box not in order.stores(cA, roomA) and box not in order.bit_room(cA, roomA), "it is nobody's shelf: tidying puts nothing in it"
         was_old, cA["order"]["old_days"] = cA["order"]["old_days"], 0.001   # (so that "days ago" is a moment ago, in a house this young)
-        roomA["objects"]["relic 4"]["made"]["heirloom"] = {"from": pa["id"]}
-        gone0 = len(hA.get("gone_things", []))
-        for want in ("relic 0", "relic 1", "relic 2", "relic 3"):
-            pa["pos"] = list(roomA["objects"][want]["pos"])
-            j = order.job(hA, cA, pa, roomA)
-            assert j["what"] == want and j["job"][0] == "old", "something nobody has touched for days is to be carried off: %s" % j
-            said = order.do_job(hA, cA, pa, roomA, j["job"])
-            assert want not in roomA["objects"] and said == "away in the storeroom", said
-            assert want != "relic 0" or order.inside(cA, sr["objects"][sr["objects"][want]["on"]]), "what the house puts by goes into the crates first"
-            assert not order.loose(hA, cA, sr), "and counts as stored, not as lying about"
-        worn = [g["name"] for g in hA["gone_things"][gone0:] if g["gone"][1] == "worn out"]
-        assert worn == ["relic 0"] and sorted(n2 for n2, o2 in things.made(sr).items() if o2.get("on")) == ["relic 1", "relic 2", "relic 3"], \
-            "the storeroom keeps what was forgotten last; the longest forgotten wears out: %s" % worn
-        assert not order.job(hA, cA, pa, roomA) and "relic 4" in roomA["objects"], "an heirloom stays where it is"
+        roomA["objects"]["relic 2"]["wall"] = True
+        roomA["objects"]["relic 3"]["made"]["heirloom"] = {"from": "gone", "to": [], "line": ["gone"]}
+        gone0, made0 = len(hA.get("gone_things", [])), len(things.made(roomA))
+        order.keep(hA, cA)
+        assert sorted(order.held(roomA, box)) == ["relic 1", "relic 4", "relic 5"] and len(things.made(roomA)) == made0 and len(hA.get("gone_things", [])) == gone0, \
+            "what the dead left lying about is in its box, and nothing has worn out: %s" % order.held(roomA, box)
+        assert all(not roomA["objects"]["relic %d" % i].get("on") for i in (0, 2, 3)) and roomA["objects"]["relic 2"].get("wall"), "a living pet's thing, a thing on the wall and an heirloom stay where they are"
+        assert not {"relic 1", "relic 4", "relic 5"} & set(order.loose(hA, cA, roomA)) and any(m["kind"] == "kept" for m in hA["moments"][-3:]), "what is in the box is put away, not lying about; and the house says so once"
+        packet, ctx = mind.perceive(hA, cA, pa, mA.mem)
+        assert "what Gone left is kept in it: relic 1, relic 4, relic 5" in packet and "relic 4 (" not in packet and "relic 4" in ctx["stored"], "its mind is told what the box holds in one line: %s" % [l for l in packet.split("\n") if "keepsake" in l]
+        assert order.check({"type": "put_away", "what": "relic 0", "where": box}, hA, cA, pa, actions.norm) and not order.check({"type": "put_away", "what": "relic 2", "where": box}, hA, cA, pa, actions.norm), \
+            "only what the one it is for left goes in it"
+        assert not order.check({"type": "take_out", "what": "relic 1"}, hA, cA, pa, actions.norm), "anyone may take a thing out of it"
+        order.do({"type": "take_out", "what": "relic 1"}, hA, cA, pa, actions.norm)
+        order.keep(hA, cA)
+        assert not roomA["objects"]["relic 1"].get("on"), "and a thing just taken out stays out"
+        # the mind follows the body's rule: anyone may put a housemate's thing in its place, and its owner is told
+        hA["pets"]["mate"] = dict(pa, id="mate", name="Mate", events=[])
+        roomA["objects"]["relic 0"]["made"]["owner"] = "mate"
+        shelf = "rack"
+        assert not order.check({"type": "put_away", "what": "relic 0", "where": shelf}, hA, cA, pa, actions.norm), "a housemate's thing may be put away"
+        order.do({"type": "put_away", "what": "relic 0", "where": shelf}, hA, cA, pa, actions.norm)
+        assert roomA["objects"]["relic 0"]["on"] == shelf and any("your relic 0 was put" in e for _, e in hA["pets"]["mate"]["events"]), "and its owner is told: %s" % hA["pets"]["mate"]["events"]
+        assert order.check({"type": "take_out", "what": "relic 0"}, hA, cA, pa, actions.norm) == "that belongs to someone else", "taking it out again is taking"
+        # an heirloom whose place by the stone is taken is put somewhere else, not carried about for ever
+        heir = roomA["objects"]["relic 3"]
+        heir["home"], heir["pos"] = {"room": roomA["id"], "pos": [6, 4]}, [1, 6]
+        was_blocked, roomA["blocked"] = roomA.get("blocked", []), [[x, y] for x in range(4, 9) for y in range(2, 7)]
+        where = order.place_for(hA, cA, pa, roomA, "relic 3")
+        assert not where or where[0] != "at", "no free tile by its stone: %s" % (where,)
+        roomA["blocked"] = was_blocked
+        for n2 in ("gone", "mate"):
+            del hA["pets"][n2]
+        for n2 in ("stone for gone", box, "rack"):
+            del roomA["objects"][n2]
         cA["order"]["old_days"] = was_old
         for n2, o2 in roomA["objects"].items():
             if n2 in caps:
@@ -1369,16 +1400,24 @@ async def main():
         assert order.do_job(hA, cA, pa, roomA, j["job"]) == "with the others like it" and not order.loose(hA, cA, roomA) and not order.job(hA, cA, pa, roomA)
         clear()
         # a mess it knows of, anywhere in the house, draws it door by door: through rooms it knows, to the nearest
+        pa["carrying"], pa["needs"]["energy"] = ["fluff"], 80.0
+        r = await do(eA, pa, {"type": "make", "recipe": dict(recipe, name="left about", kind="ball"), "near": "here"})
+        left_about = roomA["objects"].pop("left about")   # (made now: nothing may tick while the rooms below are made up)
         was_mess, was_rooms = {rid: (r2.get("mess"), r2["type"]) for rid, r2 in hA["rooms"].items()}, dict(pa["rooms"])
         d1, mid = next((d2, x) for d2, x in roomA["doors"].items() if len(hA["rooms"][x]["doors"]) > 1)
         far = next(x for x in hA["rooms"][mid]["doors"].values() if x != roomA["id"] and x not in roomA["doors"].values())
         for r2 in hA["rooms"].values():
             r2["mess"], r2["type"] = 0, r2["type"] or "attic"
         hA["rooms"][far]["mess"] = 2
-        pa["rooms"] = {roomA["id"]: 0, mid: 0}
-        assert order.way(hA, pa) is None, "a mess in a room it has never been in is not one it knows of"
+        was_far = {k: hA["rooms"][far].get(k) for k in ("objects", "spots")}
+        hA["rooms"][far].update(objects={"shelf": {"pos": [1, 1], "state": None, "fix": {"store": 2}}}, spots=[])
+        pa["rooms"] = {roomA["id"]: 0, mid: 0, far: 0}
+        assert order.way(hA, cA, pa) is None, "a mess where there is nothing it could put away is no reason to go"
+        hA["rooms"][far]["objects"]["left about"] = left_about
+        del pa["rooms"][far]
+        assert order.way(hA, cA, pa) is None, "a mess in a room it has never been in is not one it knows of"
         pa["rooms"][far] = 0
-        assert order.way(hA, pa) == d1, "the first door on the way to the mess two rooms off: %s" % order.way(hA, pa)
+        assert order.way(hA, cA, pa) == d1, "the first door on the way to the mess two rooms off: %s" % order.way(hA, cA, pa)
         pa["focus"] = {"type": "tidy", "words": "put things straight", "since": hA["tick"]}
         assert [t["what"] for t in body.targets(hA, cA, pa, mA.mem, "go next door", cA["activities"]["go next door"]) if t.get("bonus") == 2.0] == [d1], "with its mind on tidying and this room done, its body sets off that way"
         go_bonus = lambda: [t["what"] for t in body.targets(hA, cA, pa, mA.mem, "go next door", cA["activities"]["go next door"]) if t.get("bonus", 0) > 1]
@@ -1391,6 +1430,10 @@ async def main():
         assert go_bonus() == [d1], "a trip it has set out on and not finished goes on"
         body.state(pa)["trip"] = [hA["clock"]["day"] - 1, True]
         assert go_bonus() == [d1], "and tomorrow it may make another"
+        body.state(pa)["trip"], hA["rooms"][far]["mess"] = [hA["clock"]["day"], False], 0
+        assert go_bonus() == [] and body.state(pa)["trip"][1], "a mess cleared while it was on its way ends today's trip"
+        hA["rooms"][far]["mess"] = 2
+        assert go_bonus() == [], "so a new mess the same day does not draw it out a second time"
         things.drop_bits(hA, cA, roomA, [5, 5], ["fluff"])
         pa["focus"] = {"type": "stay near", "words": "keep by it", "what": next(n2 for n2 in roomA["objects"]), "since": hA["tick"]}
         assert body.anchor(hA, pa) and go_bonus() == [], "it does not walk out on what its mind keeps it by"
@@ -1398,6 +1441,8 @@ async def main():
         clear()
         roomA["spots"] = [s2 for s2 in roomA["spots"] if not s2["loose"]]
         pa["rooms"] = was_rooms
+        for k, v in was_far.items():
+            hA["rooms"][far].pop(k) if v is None else hA["rooms"][far].update({k: v})
         for rid, r2 in hA["rooms"].items():
             r2["mess"], r2["type"] = was_mess[rid]
         # loose bits nobody picks up fade: petals and leaves in a world day, fluff and feathers in two; a pebble stays, and so does what is put away

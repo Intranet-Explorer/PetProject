@@ -101,7 +101,7 @@ export class Still {
       } else {
         if (o.water) blocked.push(...o.water);
         if (o.fix?.sun) this.sun = [OX + o.pos[0] * TILE + 8, OY + o.pos[1] * TILE + 8];
-        const base = lf ? lf.sprite : pick(`fix.${name}`, `fix.${name.replace(/ /g, "_")}`, `fix.${name.replace(/ /g, "-")}`);
+        const base = lf ? lf.sprite : o.fix?.keepsake ? "fix.keepsake box" : pick(`fix.${name}`, `fix.${name.replace(/ /g, "_")}`, `fix.${name.replace(/ /g, "-")}`);
         if (!base || ((o.fix?.sun || o.water) && !has(base))) continue;   // light and water may be part of the floor's own picture
         // how it looks just now: a bowl by what is left in it, a plant by how far it has grown, anything else by its state
         const dead = !!o.fix?.light && o.state === "on" && !snap.power;   // in a power cut no lamp is lit, whatever its switch says

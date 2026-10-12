@@ -262,6 +262,7 @@ def bury(house, cfg, pet):
     lived = round(world_days(cfg, pet["born"] or pet["died"], pet["died"]))
     room["objects"][name] = {"pos": free_tile(house, cfg, room, pet["pos"]),
                              "memorial": {"pet": pet["id"], "text": "a stone for %s, who lived %d days and made %d things" % (label(pet), lived, pet["made"])}}
+    order.give_box(house, cfg, room, name)   # and a box beside it for what it left lying about (order.keep)
     pet["buried"] = True
     if not alive(house) and house["lineage"]["ended"] is None:
         house["lineage"]["ended"] = house["tick"]

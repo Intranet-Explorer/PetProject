@@ -67,9 +67,11 @@ def targets(house, cfg, pet, mem, name, A):
             [[min(cfg["W"] - 2, max(1, at[0] + r.randint(-2, 2))), min(cfg["H"] - 2, max(1, at[1] + r.randint(-2, 2)))] for _ in range(4)]
         return [{"goal": free_tile(house, cfg, room, max(tries, key=lambda t: min(dist(me, t), 6)))}]
     if do in ("doorway", "peek", "go"):
-        out, mess = [], order.way(house, pet) if do == "go" else None
+        out, mess = [], order.way(house, cfg, pet) if do == "go" else None
         # may a mess elsewhere draw it out of this room? Not out of a mess, not from beside what its mind keeps it by, not when it is resting tired
         trip = state(pet).get("trip") or [None, True]   # [the world day it last set off for a mess, has it got there]: one such trip a day
+        if do == "go" and trip[0] == house["clock"]["day"] and not trip[1] and (room.get("mess") == 2 or not mess):
+            trip[1] = True   # it stands in a mess, or the one it set off for has been cleared: that was today's trip (it used to stay "under way" all day, free to set off again)
         under_way = trip[0] == house["clock"]["day"] and not trip[1]
         drawn = bool(mess) and room.get("mess", 0) < 2 and not anchor(house, pet) and (focus.get("type") != "rest" or feel.level(pet, "energy") < 2) \
             and (trip[0] != house["clock"]["day"] or under_way)
@@ -90,7 +92,7 @@ def targets(house, cfg, pet, mem, name, A):
                 elif focus.get("type") == "tidy" and d == mess and not order.job(house, cfg, pet, room):
                     out.append({"what": d, "goal": list(house["door_tiles"][d]), "bonus": 2.0})   # this room is done and there is a mess it knows of: tidying moves on, door by door
                 elif (focus.get("type") in (None, "explore", "play") or (d == mess and drawn)) \
-                        and (under_way or house["tick"] - pet["rooms"].get(room["id"], LONG_AGO) >= ticks(cfg, cfg["body"]["go_again_seconds"])):
+                        and ((under_way and d == mess) or house["tick"] - pet["rooms"].get(room["id"], LONG_AGO) >= ticks(cfg, cfg["body"]["go_again_seconds"])):
                     # (it stays where its mind put it a good while, and it never walks out on someone or something its mind
                     # keeps it by. Otherwise a mess it knows of draws it as one here would, the orderly most)
                     out.append({"what": d, "goal": list(house["door_tiles"][d]),
@@ -127,7 +129,7 @@ def targets(house, cfg, pet, mem, name, A):
         job = order.job(house, cfg, pet, room)   # the worse the mess, the more it pulls, on the orderly most of all
         if not job:
             return []
-        pull = (order.clutter(house, cfg, room) + (job["job"][0] == "old")) * cfg["body"]["mess_pull"] * (0.4 + 1.2 * pet["temper"].get("orderly", 0.5))
+        pull = order.clutter(house, cfg, room) * cfg["body"]["mess_pull"] * (0.4 + 1.2 * pet["temper"].get("orderly", 0.5))
         return [{"what": job["what"], "job": job["job"], "goal": near(job["pos"]), "bonus": pull}]
     making = focus.get("type") == "make" and not laid_out(pet)   # its mind is on making, and it is not ready yet
     bench = next((n for n, o in objs.items() if o.get("fix", {}).get("bench")), None)
@@ -294,7 +296,7 @@ def finish(mind, now, cut=False):
             if do in ACT:   # numbered like any finished step, so the view plays it once (and sounds what sounds: §4)
                 onto = now["job"][3] if do == "tidy" and now.get("job") and now["job"][2] == "on" else None   # the shelf it goes on
                 act = story.act_of(h, pet, {"type": ACT[do], "door" if do == "go" else "target": now.get("what"), "to": now.get("who") or onto})
-                act.update(type=ACT[do], body=now["name"], loud=bool(o and ((things.prop(cfg, o).get("loud") if "made" in o else o.get("fix", {}).get("loud")))))
+                act.update(type=ACT[do], body=now["name"], loud=bool(o and ACT[do] in ("use", "fiddle") and ((things.prop(cfg, o).get("loud") if "made" in o else o.get("fix", {}).get("loud")))))
             if do == "inspect" and o is not None:
                 _, fx, key = actions.look(h, cfg, pet, {"target": name})
             elif do in ("play", "eat", "stone") and o is not None and not ("made" in o and things.prop(cfg, o).get("food")):
