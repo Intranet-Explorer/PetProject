@@ -113,12 +113,18 @@ def is_on(house):
 def tick(house, cfg, items):
     """While a box is on it says one thing every so often to whoever is in the room, and static if it has nothing."""
     R = cfg["radio"]
+    st = house.setdefault("radio", {"next": 0, "told": [], "said": []})
+    on = sorted("%s|%s" % (room["id"], name) for room, name, o in boxes(house) if o["state"] == "on")
+    if set(on) - set(st.get("on", [])):   # just switched on, by the visitor or a pet: it speaks straight away, not at the next slot
+        st["next"] = house["tick"]
+    st["on"] = on
     for room, name, o in boxes(house):
         if o["state"] != "on":
             continue
-        st = house.setdefault("radio", {"next": 0, "told": [], "said": []})
         if house["tick"] < st["next"]:
             continue
+        if not items and house["tick"] - st["next"] < 60 / (cfg["clock"]["tick_seconds"] * cfg["pace"]):
+            continue   # nothing has come in yet (a box only just set down): it warms up for a minute before it gives static
         st["next"] = house["tick"] + max(1, round(R["every_minutes"] * 60 / (cfg["clock"]["tick_seconds"] * cfg["pace"])))
         plays = st.get("plays") or "mix"   # news, forecast, on this day, or a mix (SPEC-v3.3 §3.2)
         of = [i for i in items if plays == "mix" or i["source"] == plays] or items
@@ -145,6 +151,8 @@ def visitor(house, cfg, room, on, plays):
     from .world import add_event, free_tile
     st = house.setdefault("radio", {"next": 0, "told": [], "said": []})
     if plays in ("mix", "news", "forecast", "on this day"):
+        if on and st.get("plays", "mix") != plays:
+            st["next"] = house["tick"]   # asked for something else: it gives some of that now
         st["plays"] = plays
     theirs = [(r, n, o) for r, n, o in boxes(house) if n != "little radio"]
     if not theirs:   # the visitor's own: set down where the visitor is looking while it plays, taken away when it is switched off
@@ -158,8 +166,6 @@ def visitor(house, cfg, room, on, plays):
     for r, n, o in theirs:
         if (o["state"] == "on") != bool(on):
             o["state"] = "on" if on else "off"
-            if on:
-                st["next"] = house["tick"] + max(1, round(20 / cfg["clock"]["tick_seconds"]))
             for p in house["pets"].values():
                 if p["room"] == r["id"] and p["stage"] not in ("egg", "dead") and not p["sleep"]:
                     add_event(house, p, "the visitor turned the box %s" % ("on" if on else "off"))

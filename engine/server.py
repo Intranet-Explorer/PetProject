@@ -297,7 +297,7 @@ async def wireless():
                 eng.radio_items = await asyncio.to_thread(radio.refresh, cfg, DATA / "radio")
             except Exception as e:
                 logging.warning("radio not refreshed: %r", e)
-        await asyncio.sleep(300)
+        await asyncio.sleep(300 if eng.radio_items or not radio.is_on(eng.house) else 10)   # a box on with nothing to say yet: look again soon (each source is still asked at most once an hour)
 
 
 @asynccontextmanager

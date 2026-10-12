@@ -123,6 +123,12 @@ class Mind:
         if URGENT & set(pet["news"]) and quiet >= c["urgent_seconds"]:
             return "something happened"
         floor = c["min_think_seconds"] * (1 - c["patient_spread"] / 2 + c["patient_spread"] * pet["temper"]["patient"]) * (c["elder_think"] if pet["stage"] == "elder" else 1.0)
+        # SPEC-v3.3: its body has everything laid out to make something: it thinks now, not at its usual time. What that
+        # saves is owed back before the thought after, so it thinks no more often than it did.
+        if pet.get("ready") and quiet >= c["urgent_seconds"] and not world.busy(pet) and (self.brain.instant or not self.eng.over_budget()):
+            pet["think_owed"] = max(0.0, floor - quiet)
+            return "ready to make"
+        floor += pet.get("think_owed", 0.0)
         if quiet < (0 if self.brain.instant and not self.cfg["stub"].get("paced") else floor):
             return None
         if not self.brain.instant and self.eng.over_budget():
@@ -139,6 +145,9 @@ class Mind:
         self.today += [[h["tick"], "%s %s" % (self.stamp(), said), 99] for said in pet["inbox"]]
         urgent = bool(URGENT & set(pet["news"]))
         pet["inbox"], pet["news"], pet["seen"], pet["last_call"], pet["thinking"] = [], [], h["tick"], h["tick"], why
+        pet["ready"] = None
+        if why not in ("ready to make", "something happened"):   # (what a thought brought forward saved is paid back by the next one in its turn)
+            pet["think_owed"] = 0.0
         if ctx["cut"]:
             pet["cuts"] = pet.get("cuts", 0) + 1
         self.thought = self.eng.call(0 if urgent else 1, pet["id"], "act", why, lambda: self.brain.act(packet, ctx), ctx["chars"])

@@ -30,10 +30,18 @@ def music(house, pet):
 def anchor(house, pet):
     """Where its mind wants it to be near, if anywhere: the thing or the one its focus names, when they are in this room."""
     f = pet.get("focus") or {}
-    if f.get("type") not in ("stay near", "tend", "be with"):
+    if f.get("type") not in ("stay near", "tend", "be with", "make"):
         return None
-    o, who = house["rooms"][pet["room"]]["objects"].get(f.get("what") or ""), house["pets"].get(f.get("who") or "")
+    objs = house["rooms"][pet["room"]]["objects"]
+    if f.get("type") == "make" and laid_out(pet):   # its bits are laid out: it stays by them
+        return next((o["pos"] for o in objs.values() if o.get("fix", {}).get("bench")), pet["pos"])
+    o, who = objs.get(f.get("what") or ""), house["pets"].get(f.get("who") or "")
     return o["pos"] if o else who["pos"] if who and who["room"] == pet["room"] and who["stage"] not in ("egg", "dead") else None
+
+
+def laid_out(pet):
+    """Has it laid out the very bits it is carrying? (Then it is ready to make, and does not lay them out again.)"""
+    return bool(pet["carrying"]) and state(pet).get("laid") == pet["carrying"]
 
 
 def out_of_sight(cfg, room, o):
@@ -108,11 +116,21 @@ def targets(house, cfg, pet, mem, name, A):
         job = order.job(house, cfg, pet, room)   # the worse the mess, the more it pulls, on the orderly most of all
         pull = order.clutter(house, cfg, room) * cfg["body"]["mess_pull"] * (0.4 + 1.2 * pet["temper"].get("orderly", 0.5))
         return [{"what": job[0], "where": job[1], "goal": near(objs[job[0]]["pos"]), "bonus": pull}] if job else []
+    making = focus.get("type") == "make" and not laid_out(pet)   # its mind is on making, and it is not ready yet
+    bench = next((n for n, o in objs.items() if o.get("fix", {}).get("bench")), None)
     if do == "gather":
-        if len(pet["carrying"]) >= (cfg["make"]["carry"] if focus.get("type") in ("make", "project") else 1):
+        if len(pet["carrying"]) >= (cfg["body"]["make_bits"] if making else cfg["make"]["carry"] if focus.get("type") == "project" else 1):
             return []
         spots = sorted((s for s in room["spots"] if s["ready"]), key=lambda s: dist(me, s["pos"]))
-        return [{"what": s["bit"], "goal": near(s["pos"])} for s in spots[:1]]
+        return [{"what": s["bit"], "goal": near(s["pos"]), "bonus": cfg["body"]["make_pull"] if making else 0.0} for s in spots[:1]]
+    if do in ("bench", "lay out"):   # (§1.2: the body works toward what the mind is about)
+        enough = len(pet["carrying"]) >= cfg["body"]["make_bits"] or (pet["carrying"] and not any(s["ready"] for s in room["spots"]))
+        at_bench = not bench or dist(me, objs[bench]["pos"]) <= 1
+        if not making or not enough or (do == "bench") == at_bench:
+            return []
+        if do == "bench":
+            return [{"what": bench, "goal": near(objs[bench]["pos"]), "bonus": cfg["body"]["make_pull"]}]
+        return [{"where": "on the %s" % bench if bench else "on the floor", "bonus": cfg["body"]["make_pull"]}]
     if do == "tend":
         plants = [n for n, o in objs.items() if o.get("fix", {}).get("plant") and o.get("state") != "ripe"]
         return [{"what": n, "goal": near(objs[n]["pos"])} for n in plants[:2]]
@@ -207,7 +225,7 @@ def say(cfg, house, pet, now, form, where=""):
     o = house["rooms"][pet["room"]]["objects"].get(what, {})
     if form == "doing" and "made" in o and o["made"]["recipe"].get("kind") and o["made"]["recipe"]["kind"] not in what:
         what = "%s (a %s)" % (what, o["made"]["recipe"]["kind"])   # its maker's name for it says little to a stranger: what it is, too
-    return cfg["activities"][now["name"]][form].format(what=what, where=where,
+    return cfg["activities"][now["name"]][form].format(what=what, where=where or (now.get("where") if isinstance(now.get("where"), str) else ""),
                                                          who=(actions.handle(house, pet, who) if form == "did" else label(who)) if who else "someone")
 
 
@@ -286,6 +304,10 @@ def finish(mind, now, cut=False):
                 a = {"type": "gather", "what": name}
                 if actions.check(a, h, cfg, pet, mind.mem) is None:
                     actions.apply(h, cfg, pet, a, mind.mem)
+            elif do == "lay out":   # everything is to hand: it thinks about making sooner than it otherwise would
+                b["laid"], where = list(pet["carrying"]), now["where"]
+                add_event(h, pet, "what you carry is laid out %s: everything is ready to make something" % where)
+                pet["ready"] = h["tick"]
             elif do == "tend" and o is not None and o.get("fix", {}).get("plant") and o.get("state") != "ripe":
                 o["grow"] = round(min(1.0, o["grow"] + cfg["body"]["tend_grow"]), 3)
             elif do == "nap":

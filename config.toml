@@ -293,6 +293,8 @@ window_ticks = 150        # the recent time that share is taken over
 walk_seconds = 30         # it gives up walking to where an activity is after this long, and does it where it stands
 go_again_seconds = 240    # it does not leave a room by itself sooner than this after coming in
 mess_pull = 0.6           # what each step of a room's mess adds to tidying (times 0.4 to 1.6 by how orderly it is)
+make_bits = 2             # with its mind on making, it gathers this many bits (if there are that many) before it lays them out
+make_pull = 6.0           # how strongly each step of getting ready to make pulls, once its mind is on making
 tend_grow = 0.01          # what tending adds to a plant's growth
 sing_again_seconds = 600  # it does not sing by itself more often than this
 

@@ -310,3 +310,25 @@ passive = true
 temper = { curious = 0.7, patient = 0.3 }
 needs = { curiosity = 1.0 }
 effects = { curiosity = 0.8 }
+
+# A mind set on making something (focus "make"): the body gets ready for it, in order. It picks up bits, takes them
+# to the workbench if the room has one, and lays them out; then the pet thinks sooner than it otherwise would, with
+# everything to hand. The making itself is still its mind's to decide.
+["carry to the bench"]
+do = "bench"
+doing = "carrying its bits over to the {what}"
+did = "carried what you had gathered over to the {what}"
+icon = "paws"
+seconds = [2, 3]
+base = 0.0
+focus = ["make"]
+
+["lay out the bits"]
+do = "lay out"
+doing = "laying out its bits {where}"
+did = "laid out what you carry {where}, ready to make something of"
+icon = "paws"
+voice = "murmur"
+seconds = [5, 8]
+base = 0.0
+focus = ["make"]

@@ -763,6 +763,9 @@ async def main():
         e3.radio_items = []
         h3["radio"]["next"] = h3["tick"]
         await e3.tick()
+        assert not any(e == radio.STATIC for _, e in ma["events"]), "with nothing come in yet it waits a minute (SPEC-v3.3: a box only just set down)"
+        h3["radio"]["next"] = h3["tick"] - round(60 / c3["clock"]["tick_seconds"]) - 1
+        await e3.tick()
         assert any(e == radio.STATIC for _, e in ma["events"]), "with nothing to say it plays static"
         assert actions.visit(h3, c3, {"room": box_room["id"], "type": "radio_off"}) is None and not radio.is_on(h3), "the visitor's switch turns it off in the house"
 
@@ -1222,7 +1225,7 @@ async def main():
         eA.alive_migration()
         assert 0.25 <= pa["temper"]["orderly"] <= 0.75 and "orderly" in world.GENES, "a pet from before v3.3 is given the orderly gene"
         # a mess is felt by the orderly, and a focus on tidying clears it: each loose thing put away once, then no more
-        roomA["spots"], body.state(pa)["now"] = [], None
+        spots0, roomA["spots"], body.state(pa)["now"] = roomA["spots"], [], None
         for i in range(6):
             pa["carrying"] = ["fluff"]
             r = await do(eA, pa, {"type": "make", "recipe": dict(recipe, name="loose %d" % i), "near": "here"})
@@ -1271,6 +1274,24 @@ async def main():
         pa["carrying"] = ["fluff"]
         r = await do(eA, pa, {"type": "make", "recipe": dict(recipe, name="wall charm", kind="charm"), "near": "here"}, {"type": "hang", "what": "wall charm"})
         assert not any(x["reason"] for x in r) and roomA["objects"]["wall charm"].get("wall"), "a thing that hangs can be hung on the wall: %s" % r
+        # a mind set on making: its body gathers bits, takes them to the bench, lays them out, and it thinks sooner, with all to hand
+        roomA["spots"], pa["carrying"], body.state(pa)["now"] = [dict(s, ready=True) for s in spots0], [], None
+        far = max(([x, y] for x in range(1, cA["W"] - 1) for y in range(1, cA["H"] - 1)), key=lambda t: min(abs(t[0] - s["pos"][0]) + abs(t[1] - s["pos"][1]) for s in spots0))
+        roomA["objects"]["workbench"] = {"pos": far, "state": None, "fix": {"bench": True}}
+        t0 = hA["tick"]
+        mA.brain.plans.append({"thought": "something soft", "focus": {"type": "make", "words": "make a soft thing"}, "steps": [], "expect": "I will feel more interested"})
+        pa["last_call"] = LONG_AGO
+        for _ in range(60):
+            pa["needs"].update(energy=80.0, comfort=80.0, curiosity=80.0, company=80.0)
+            await eA.tick()
+            if eA.db.execute("SELECT count(*) FROM calls WHERE why = 'ready to make' AND tick > ?", (t0,)).fetchone()[0]:
+                break
+        work = [r[0] for r in eA.db.execute("SELECT what FROM doing WHERE by = 'body' AND text != '' AND tick_from > ? ORDER BY tick_to", (t0,))]
+        want = ["gather", "carry to the bench", "lay out the bits"]
+        assert [w for w in work if w in want][-3:] == want and work.count("gather") >= 2, "its body works toward the making, in order: %s" % work
+        early = (hA["tick"] - t0) * cA["clock"]["tick_seconds"]
+        assert pa["think_owed"] > 0 and early < cA["clock"]["min_think_seconds"] * 0.75 and body.laid_out(pa), "and it thinks sooner than its usual time, owing the difference: %s s" % early
+        assert any("everything is ready to make something" in e for _, e in pa["events"]), "its mind is told all is to hand"
         # the visitor's music: felt, danced to, and (once songs have come) picked up by ear
         assert not body.targets(hA, cA, pa, mA.mem, "dance", cA["activities"]["dance"]), "nobody dances without music"
         assert actions.visit(hA, cA, {"room": pa["room"], "type": "music", "mood": "lively", "scope": "room"}) is None
@@ -1293,6 +1314,16 @@ async def main():
         roomA["objects"]["dial box"] = {"pos": [6, 5], "state": "off", "fix": {"radio": True, "movable": True, "states": ["off", "on"]}}
         assert actions.visit(hA, cA, {"room": pa["room"], "type": "radio", "on": True}) is None
         assert roomA["objects"]["dial box"]["state"] == "on" and "little radio" not in roomA["objects"], "once they have theirs, the control switches theirs"
+        eA.radio_items, n = [{"source": "news", "text": "the river is high"}], len(hA["radio"]["said"])
+        await eA.tick()
+        assert len(hA["radio"]["said"]) == n + 1 and hA["radio"]["said"][-1]["text"] == "the river is high", "a box just switched on speaks straight away"
+        await eA.tick()
+        assert len(hA["radio"]["said"]) == n + 1, "and then at its usual slots"
+        roomA["objects"]["dial box"]["state"] = "off"
+        await eA.tick()
+        r = await do(eA, pa, {"type": "use", "target": "dial box"})
+        await eA.tick()
+        assert not r[0]["reason"] and len(hA["radio"]["said"]) == n + 2, "the same when a pet switches it on: %s" % r
         eA.close()
         eB.close()
         # a world day with stub brains meets §0's numbers (engine/alive.py measures them in watching time on the live clock)

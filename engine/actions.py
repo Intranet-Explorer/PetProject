@@ -739,10 +739,8 @@ def use(house, cfg, pet, name):
             return "you tried the %s; nothing happens, it stays dark" % name, {}, None
         o["state"] = "off" if o["state"] == "on" else "on"
         return "you switched the %s %s" % (name, o["state"]), {}, "use " + name
-    if fix.get("radio"):   # SPEC-v3.1 §5.1: switched on, it speaks before long
+    if fix.get("radio"):   # SPEC-v3.1 §5.1: switched on, it speaks straight away (radio.tick sees that it has just come on)
         o["state"] = "on" if o["state"] == "off" else "off"
-        if o["state"] == "on":
-            house.setdefault("radio", {"next": 0, "told": [], "said": []})["next"] = house["tick"] + ticks(cfg, 20)
         return "you turned the dial on the %s; %s" % (name, "it crackles, and a hum comes out of it" if o["state"] == "on" else "it goes quiet"), {}, "use " + name
     if "states" in fix:
         o["state"] = fix["states"][(fix["states"].index(o["state"]) + 1) % len(fix["states"])]
