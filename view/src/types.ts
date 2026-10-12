@@ -38,10 +38,13 @@ export type Note = [string, number];   // a pitch of the five-note scale ("low d
 export type Song = { id: string; name: string; notes: Note[]; by: string; from?: string | null; how?: string; tick: number; family?: number };
 export type Sung = { tick: number; by: string; song: string; room: string };
 export type Heard = { tick: number; room: string | null; source: string; text: string };   // what the box said; "" is static
+/** A bit to gather (SPEC-v3.4 §5). `loose` false: the room grows it here, on its source, and `ready` says whether it is
+ *  there just now or still growing back. `loose` true (or not said: an older recording): a pet dropped it. `on`: put away in that. */
+export type BitSpot = { bit: string; pos: Tile; ready?: boolean; loose?: boolean; on?: string };
 export type RoomV = {
   id: string; cell: Tile; type: string | null; doors: Record<string, string>; marks?: Mark[];
   name: string; paint: { wall: string | null; floor: string | null }; shut: string[]; wet: boolean; cold: boolean; lit: boolean;
-  sounding: boolean; found: number; by: string | null; objects: Record<string, Obj>; spots: { bit: string; pos: Tile }[];
+  sounding: boolean; found: number; by: string | null; objects: Record<string, Obj>; spots: BitSpot[];
   // SPEC-v3.3 §2: how much lies about (0 tidy, 1 a few things, 2 a mess) in the pets' own words, and the places the
   // room has grown ("sleeping corner", "making bench", "keepsake shelf"): a faint tint and a line in hover cards
   mess?: 0 | 1 | 2; mess_says?: string; areas?: { name: string; tiles: Tile[]; on?: string }[];

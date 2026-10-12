@@ -137,7 +137,7 @@ def taken(house, room, but=None):
     """Tiles with something on them: objects, bits lying about, door thresholds, eggs, water."""
     tiles = [o["pos"] for n, o in room["objects"].items() if n != but and not o.get("wall") and not o.get("on")]   # what hangs on a wall or sits on a shelf takes no floor
     tiles += room.get("blocked", [])   # the layout's furniture (SPEC-v3.2 §4)
-    tiles += [s["pos"] for s in room["spots"] if s["ready"]]
+    tiles += [s["pos"] for s in room["spots"] if s["ready"] or not s["loose"]]   # (what a bit grows on stands there whether or not it has been picked)
     tiles += [p["pos"] for p in house["pets"].values() if p["room"] == room["id"] and p["stage"] == "egg"]
     tiles += [list(house["door_tiles"][d]) for d in room["doors"]]
     for o in room["objects"].values():

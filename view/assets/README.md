@@ -61,11 +61,18 @@ A pack whose licence forbids redistribution lives outside the repository: give i
 - Names of ours, by prefix: `tile.*` floors and walls · `decor.*` furniture that is only scenery · `fix.<fixture
   name>` the engine's fixtures (lamp, bed, bowl, music box, dial box, heavy book, …; `fix.<name>.<state>` where a
   state looks different: `fix.lamp.on`) · `kind.<kind>` made things · `bit.<bit>` things to gather ·
+  `grows.<bit>` and `grows.<bit>.bare` what a room grows that bit on (below) ·
   `creature.<kind>` · `emote.<mood>` (tired, uneasy, lonely, bored, content, and more) · `fx.*` puffs, sparkles,
   hearts, notes, z's · `ui.*` bubbles and frames · `icon.room.<type>` for the minimap · `icon.act.<icon>` what a
   pet's body is doing by itself, to go over its head (one for each `icon` in activities.toml: 12 × 12, a sign on a
   small white plate so it reads on any floor) · `door.<state>` · `egg` · `stone` (a memorial).
 - `fix.little radio` (`.on`, `.off`) is the visitor's own radio, set down in a room until the pets find theirs.
+- A bit a room grows is drawn on its source, standing on the bit's tile like a fixture: `grows.<bit>` with the bit on
+  it (petals on a flower, feathers in a nest, reed among the reeds), `grows.<bit>.bare` after it has been picked,
+  until it grows back. Only a bit a pet dropped is drawn loose, as `bit.<bit>`. A bit with no `grows.*` sprite is
+  drawn loose as before, and not at all while it grows back, so a pack can bring sources by adding these names.
+  Ours are in `own/bits.png` (`own/src/draw.py`, `GROWN`: a source from `art.py` with the bit's own picture set on
+  it), but for leaf and wood, which grow on pictures of the pack.
 
 ## kinds.json
 

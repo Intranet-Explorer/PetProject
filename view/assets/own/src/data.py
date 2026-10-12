@@ -107,6 +107,12 @@ PACK.update({
         "decor.rock": cell("N", 15, 9),
 })
 
+# ---- what leaf and wood grow on (the other bits' sources are drawn: draw.py GROWN) ----
+PACK.update({
+    "grows.leaf": cell("N", 0, 10), "grows.leaf.bare": cell("N", 5, 9),
+    "grows.wood": px("C", 65, 64, 14, 16, anchor=[-1, 0]), "grows.wood.bare": px("C", 213, 135, 11, 7, anchor=[-3, -6]),
+})
+
 # ---- bits the pack has, small creatures, feelings, effects, bubbles ----
 ACT = "Actor/Animal/"
 side = lambda fps: {"idle": {"frames": [[0, 0]], "fps": 1}, "walk.right": {"frames": [[0, 0], [1, 0]], "fps": fps}, "walk.down": {"frames": [[0, 0], [1, 0]], "fps": fps},

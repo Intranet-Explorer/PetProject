@@ -27,7 +27,8 @@ export type Thing = { name: string; obj: Obj; s: Sprite; x: number; y: number; r
 type Slot = { x: number; y: number; z: number; wall: boolean };
 export type Lamp = { x: number; y: number; r: number; color: number[]; made: boolean };
 export type Door = { dir: string; to: string; rect: Rect; tile: Tile };
-export type Spot = { bit: string; pos: Tile; rect: Rect; s: Sprite };
+/** A bit to gather, as drawn. `bare`: this is where the room grows it, and it has been picked: nothing to gather just now. */
+export type Spot = { bit: string; pos: Tile; rect: Rect; s: Sprite; bare: boolean };
 
 /** SPEC-v3.2 §3.2: what a thing made before kinds (from parts) is drawn as, by view/assets/kinds-from-parts.json. */
 export function kindOf(r: Recipe): { kind: string; color: string | null; size: number } {
@@ -124,15 +125,28 @@ export class Still {
       }
     }
     for (const s of room.spots) {
-      // a bit to gather is a small pickup: drawn smaller than anything made, where that keeps its pixels whole
+      const [cx, cy] = corner(s.pos), bare = s.loose === false && s.ready === false;
+      if (s.on || (s.ready === false && !bare)) continue;   // put away in something: that thing says so
+      // a bit the room grows is drawn on what it grows on (SPEC-v3.4 §5): `grows.<bit>`, or `grows.<bit>.bare` while it grows back
+      const source = s.loose === false ? `grows.${s.bit}${bare ? ".bare" : ""}` : null;
+      if (source && has(source)) {
+        const sz = size(source), sp = new Sprite(tex(source));
+        sp.position.set(cx - sz.ax, cy - sz.ay);
+        sp.zIndex = cy + TILE - 4;
+        this.standing.push(sp);
+        this.spots.push({ bit: s.bit, pos: s.pos, s: sp, bare, rect: { x: sp.x, y: sp.y, w: sz.w, h: sz.h } });
+        blocked.push(s.pos);
+        continue;
+      }
+      if (bare) continue;   // no picture of where it grows: only the bit itself is drawn, when it is there
+      // a bit lying loose is a small pickup: drawn smaller than anything made, where that keeps its pixels whole
       const sprite = `bit.${s.bit}`, f = K >= 2 ? (K - 1) / K : 1, sp = new Sprite(tex(sprite));
-      const [cx, cy] = corner(s.pos);
       sp.anchor.set(0.5, 1);
       sp.scale.set(f);
       sp.position.set(cx + 8, cy + 14);
       sp.zIndex = cy + 12;
       this.standing.push(sp);
-      this.spots.push({ bit: s.bit, pos: s.pos, s: sp, rect: { x: cx + 8 - 8 * f, y: cy + 14 - 16 * f, w: 16 * f, h: 16 * f } });
+      this.spots.push({ bit: s.bit, pos: s.pos, s: sp, bare: false, rect: { x: cx + 8 - 8 * f, y: cy + 14 - 16 * f, w: 16 * f, h: 16 * f } });
     }
     for (const t of [...this.things.values()]) {   // what is kept inside a thing is not seen: a small number on it says how many
       const n = t.obj.store?.inside ? t.obj.store.holds.length : 0, F = Math.max(1, Math.round(K / 2));

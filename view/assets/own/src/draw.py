@@ -151,10 +151,48 @@ def fixtures():
     return s
 
 
+# A bit a room grows is drawn on what it grows on (SPEC-v3.4 §5): petals on a flower, feathers in a nest.
+# bit: (the source picked bare, the source it is on when it is there, where the bit's own picture goes on that).
+# The sources are art.GROWS; several bits may share one. (Leaf and wood grow on pictures of the pack: sprites.json.)
+GROWN = {
+    "petal": ("flower.bare", "flower", []), "wax": ("candle.bare", "candle", []),
+    "fluff": ("twig", "twig", [(0, 1), (6, 3)]), "vine": ("stake", "stake", [(2, 2), (3, 7)]),
+    "pebble": ("gravel", "gravel", [(0, 9), (7, 9), (3, 6)]), "metal": ("gravel", "gravel", [(0, 8), (6, 8), (3, 4)]),
+    "seed": ("seedhead", "seedhead", [(4, 1)]), "reed": ("reeds", "reeds", [(2, 1), (7, 3)]),
+    "clay": ("bank", "bank", [(1, 5), (7, 7)]), "moss": ("stone", "stone", [(1, 5), (6, 8)]), "soot": ("pan", "pan", [(3, 3)]),
+    "feather": ("nest", "nest", [(1, 2), (6, 3)]), "resin": ("stump", "stump", [(2, 7), (9, 6)]),
+    "cloth": ("bench", "bench", [(2, 5), (3, 1)]), "felt": ("bench", "bench", [(3, 5), (2, 1)]),
+    "shell": ("sand", "sand", [(0, 5), (6, 8)]), "bead": ("clam", "clam.open", [(5, 6)]),
+    "wire": ("spindle", "spindle", [(3, 6), (3, 2)]), "string": ("spindle", "spindle", [(3, 7), (4, 2)]),
+    "bell": ("stand", "stand", [(0, 3), (8, 3)]),
+}
+
+
+def source(name):
+    """A picture of art.GROWS with the pack's dark line drawn round it (sand lies flat: it has none)."""
+    im = pic(art.GROWS[name])
+    if name == "sand":
+        return im
+    out = im.copy()
+    for x in range(16):
+        for y in range(16):
+            if not im.getpixel((x, y))[3] and any(0 <= x + dx < 16 and 0 <= y + dy < 16 and im.getpixel((x + dx, y + dy))[3] for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))):
+                out.putpixel((x, y), OUT)
+    return out
+
+
 def bits():
     s = Sheet("bits.png", 8)
     for name, rows in art.BITS.items():
         s.add("bit." + name, pic(rows))
+    for name, (bare, base, at) in GROWN.items():
+        im, bit = source(base), pic(art.BITS[name])
+        bit = bit.crop(bit.getbbox())
+        for x, y in at:
+            assert x + bit.size[0] <= 16 and y + bit.size[1] <= 16, "the %s at %s does not fit on its %s" % (name, (x, y), base)
+            im.alpha_composite(bit, (x, y))
+        s.add("grows." + name, im)
+        s.add("grows.%s.bare" % name, source(bare))
     return s
 
 

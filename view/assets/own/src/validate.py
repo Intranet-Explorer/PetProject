@@ -90,8 +90,11 @@ for name in ("fix.dial box", "fix.dial box.on", "fix.dial box.off", "fix.little 
 for wall in DOORS:
     for state in ("open", "shut", "stuck"):
         have("door.%s.%s" % (wall, state))
-for b in house["bits"]:
+for b, v in house["bits"].items():
     have("bit." + b)
+    if any(not v.get("late") if r["bits"] == "any" else b in r["bits"] for r in house["rooms"].values()):   # a room grows it: it is drawn on what it grows on
+        have("grows." + b)
+        have("grows.%s.bare" % b)
 for c in house["creatures"]:
     if have("creature." + c) is True:
         for a in ("idle", "walk.up", "walk.down", "walk.left", "walk.right"):

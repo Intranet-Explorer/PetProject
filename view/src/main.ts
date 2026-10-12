@@ -550,7 +550,7 @@ function tipFor(t: Target): Kid[] | null {
   if (o && t.object) return fixture(t.object, o, here, s, drawn(t), kept(t));
   if (t.bit) {
     const can = hello?.bits[t.bit]?.can ?? [];
-    return [drawn(t) ?? (hasSprite(`bit.${t.bit}`) ? sprite(`bit.${t.bit}`, 3) : null), el("div", "", el("b", "", `some ${t.bit}`), el("p", "hint", "Something to gather and make things from."),
+    return [drawn(t) ?? (hasSprite(`bit.${t.bit}`) ? sprite(`bit.${t.bit}`, 3) : null), el("div", "", el("b", "", `some ${t.bit}`), el("p", "hint", t.bare ? "It grows here. Nothing to gather just now." : "Something to gather and make things from."),
       can.length ? el("p", "truth", el("b", "", "What it really does: "), `a thing made of it can be ${can.join(" or ")}.`) : null)];
   }
   // anything else the room can say something about: its own scenery (a bookcase, a barrel) is "part of the room"

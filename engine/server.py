@@ -170,7 +170,8 @@ def room_view(r):
             "marks": [dict(m, clarity=round(walls.clarity(cfg, r, m, h["tick"]), 2), by_name=mark_by(m)) for m in r.get("marks", [])],
             "mess": order.clutter(h, cfg, r), "mess_says": order.MESS[order.clutter(h, cfg, r)], "areas": r.get("areas", []),   # SPEC-v3.3 §2
             "sounding": r.get("sounding_until", 0) > h["tick"], "objects": objs, "found": r["found"], "by": r["by"],
-            "spots": [{"bit": s["bit"], "pos": s["pos"]} for s in r["spots"] if s["ready"] and not s.get("on")]}   # bits put away are in `store.bits`
+            # what can be gathered, and (SPEC-v3.4 §5) what a bit the room grows is growing on, picked bare or not; bits put away are in `store.bits`
+            "spots": [{"bit": s["bit"], "pos": s["pos"], "ready": s["ready"], "loose": s["loose"]} for s in r["spots"] if not s.get("on") and (s["ready"] or not s["loose"])]}
 
 
 def mark_by(m):

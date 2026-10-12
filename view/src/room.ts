@@ -26,8 +26,8 @@ import { Light } from "./px/weather";
 
 export type Rect = { x: number; y: number; w: number; h: number };
 /** What is under the pointer. */
-/** `decor`: a piece of the room's own scenery (its sprite's name), when nothing else is there. */
-export type Target = { tile: [number, number]; pet?: string; creature?: string; door?: string; object?: string; bit?: string; mark?: Mark; decor?: string };
+/** `decor`: a piece of the room's own scenery (its sprite's name), when nothing else is there. `bare`: the bit grows here and has been picked. */
+export type Target = { tile: [number, number]; pet?: string; creature?: string; door?: string; object?: string; bit?: string; bare?: boolean; mark?: Mark; decor?: string };
 export type Scene = { snap: Snap; room: RoomV; hello: Hello | null; selected: string | null; picked: string | null; replay: boolean };
 /** What a hover card can show about a Target (§3.3): see `Room.describe`. Every field but `title` may be missing. */
 export type Card = { what: "pet" | "creature" | "thing" | "fixture" | "stone" | "bit" | "door" | "writing" | "scenery"; title: string; sprite: HTMLCanvasElement | null;
@@ -599,7 +599,8 @@ export class Room {
     for (const t of still.things.values()) if (inside(grown(t.rect, 1), x, y) && (!best || t.rect.w * t.rect.h < best.rect.w * best.rect.h)) best = t;   // the smallest thing under the pointer: a cup on a rug, not the rug
     const onTile = x >= OX && y >= OY && x < OX + FX * TILE && y < OY + FY * TILE;
     out.object = best?.name ?? (onTile ? Object.entries(room.objects).reverse().find(([, o]) => !o.fix?.sun && !o.wall && !o.on && (o.water ?? [o.pos]).some((t) => t[0] === out.tile[0] && t[1] === out.tile[1]))?.[0] : undefined);
-    out.bit = still.spots.find((s) => inside(grown(s.rect, 2), x, y))?.bit ?? (onTile && !out.object ? room.spots.find((s) => s.pos[0] === out.tile[0] && s.pos[1] === out.tile[1])?.bit : undefined);
+    const spot = still.spots.find((s) => inside(grown(s.rect, 2), x, y)) ?? (onTile && !out.object ? still.spots.find((s) => s.pos[0] === out.tile[0] && s.pos[1] === out.tile[1]) : undefined);
+    if (spot) [out.bit, out.bare] = [spot.bit, spot.bare || undefined];
     if (!out.object && !out.bit && !out.door) {   // nothing of the house's own there: a piece of the room's scenery, the smallest under the pointer
       let piece: Still["scenery"][number] | null = null;
       for (const s of still.scenery) if (inside(s.rect, x, y) && (!piece || s.rect.w * s.rect.h <= piece.rect.w * piece.rect.h)) piece = s;
@@ -672,7 +673,7 @@ export class Room {
                                                      notes: this.order(t.object, room.objects[t.object]) };
     if (t.bit) {   // something to gather: what it is, and what a thing made of it can be
       const can = sc.hello?.bits[t.bit]?.can ?? [];
-      return { what: "bit", title: `some ${t.bit}`, sprite: canvasOf(`bit.${t.bit}`), kind: t.bit, can, text: `a bit to gather${can.length ? `: something made of it can be ${can.join(" or ")}` : ""}` };
+      return { what: "bit", title: `some ${t.bit}`, sprite: canvasOf(`bit.${t.bit}`), kind: t.bit, can, text: `${t.bare ? "it grows here: nothing to gather just now" : "a bit to gather"}${can.length ? `: something made of it can be ${can.join(" or ")}` : ""}` };
     }
     if (t.door) {
       const to = snap.rooms.find((r) => r.id === room.doors[t.door!]);
