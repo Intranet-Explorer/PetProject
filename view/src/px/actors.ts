@@ -248,7 +248,7 @@ export class PetActor {
   }
 
   /** What the thing its body is at should be doing meanwhile (see Move.stir), or 0. */
-  get stirs() { const b = this.pet.body; return b && !b.walking && !this.pet.asleep && !this.w.moving ? this.move?.stir ?? 0 : 0; }
+  get stirs() { const b = this.pet.body; return !b || this.pet.asleep ? 0 : b.carrying ? 3 : !b.walking && !this.w.moving ? this.move?.stir ?? 0 : 0; }   // (carried: in its paws all the way there)
 
   /** Lean toward a point for a moment (a nuzzle, a gift held out). */
   leanTo(x: number, y: number, now: number, ms = 1500, far = 4) {

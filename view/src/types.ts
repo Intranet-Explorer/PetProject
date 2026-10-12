@@ -18,7 +18,7 @@ export type Store = { cap: number | null; holds: string[]; inside: boolean; bits
 /** SPEC-v3.3 §1, §5.4: what a pet's body is doing by itself between the things its mind decides. `icon` names the
  *  sprite icon.act.<icon>; `walking` is true while it is on its way to `goal`; `since` is the tick it set out. */
 export type Body = { activity: string; doing: string; icon: string | null; what: string | null; who: string | null; since: number;
-  passive: boolean; walking: boolean; goal: Tile | null };
+  passive: boolean; walking: boolean; goal: Tile | null; carrying?: boolean };   // `carrying`: the thing it names is in its paws, on the way to where it goes
 /** SPEC-v3.3 §4: a small sound a pet made in its own voice, numbered so it is played once. */
 export type Vox = { n: number; tick: number; pet: string; room: string; kind: "murmur" | "hum" | "chirp" | "yawn" | "laugh" | "greet" | "grumble" | "gasp" };
 /** SPEC-v3.3 §3: the visitor's music (`scope` is "house" or a room id) and the radio control (`theirs`: the pets have

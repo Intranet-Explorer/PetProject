@@ -313,7 +313,7 @@ export class Labels {
     const asks: { e: Entry; k: Card; rank: number; since: number }[] = [];
     for (const e of list) {
       const read = e.sayOn && !!e.sayUntil && now > e.sayUntil;                                              // its words have been up long enough to read
-      if (read && !e.who.say) e.sayOn = false;                                                               // and are no longer being said
+      if (read) e.sayOn = false;                                                                             // and then they go, however lately they were said (a song's name used to hang there for a minute)
       if (e.capAsk && (e.capUntil ? now > e.capUntil : now - e.capAsk > 4000)) e.capAsk = e.capUntil = 0;   // it has had its six seconds, or waited too long to be worth showing
       const hov = on(e) && !!e.who.caption, k = e.sayOn ? e.say : hov || e.capAsk ? e.cap : null;
       for (const o of [e.say, e.cap]) if (o !== k) o.want = 0;
