@@ -306,7 +306,7 @@ together = 1.5            # what doing the same thing as the one its mind is on 
 seats = ["cushion", "rug", "blanket", "nest", "bed-mat", "stool"]   # the kinds of made thing (and the fixtures by these names) a body settles on, besides whatever the house has to rest on or that is soft
 mess_pull = 0.6           # what each step of a room's mess adds to tidying (times 0.4 to 1.6 by how orderly it is)
 make_bits = 2             # with its mind on making, it gathers this many bits (if there are that many) before it lays them out
-make_pull = 6.0           # how strongly each step of getting ready to make pulls, once its mind is on making
+make_pull = 8.0           # how strongly each step of getting ready to make pulls, once its mind is on making
 tend_grow = 0.01          # what tending adds to a plant's growth
 sing_again_seconds = 600  # it does not sing by itself more often than this
 

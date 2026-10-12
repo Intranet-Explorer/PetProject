@@ -297,8 +297,8 @@ def score(house, cfg, pet, name, A, t, b, r):
     if A.get("handles") and t.get("what") and not (minded(pet) == "make" and not laid_out(pet)):   # (not while it is getting ready to make.) The fewer different things it has had its paws on lately, the more a thing it has not just handled draws it (v3.4 §0, §1)
         lately = {th for tk, th in b.get("handled", []) if house["tick"] - tk < B["handle_ticks"]}
         if t["what"] not in lately:
-            s += B["handle"] * min(1.0, max(0, 3 - len(lately)) / 2)
-    if t.get("goal") and b.get("strides") and pet.get("walked", 0) - b["strides"][0][1] < B["stride_tiles"] and house["tick"] - b["strides"][0][0] >= B["handle_ticks"] - 5:
+            s += B["handle"] * (0.0 if len(lately) >= 3 else 1.5 if len(lately) == 2 else 2.3)   # (with one or none, little else is chosen before it)
+    if t.get("goal") and b.get("strides") and not (minded(pet) == "make" and not laid_out(pet)) and pet.get("walked", 0) - b["strides"][0][1] < B["stride_tiles"] and house["tick"] - b["strides"][0][0] >= B["handle_ticks"] - 5:
         s += B["stride"] * min(1.0, dist(pet["pos"], t["goal"]) / 6)   # it has not walked far lately: what is further off draws it (v3.4 §0)
     if A.get("handles") or name in TOGETHER:   # being with someone is doing what they do (v3.4 §1): the same toy, the same song, tidying side by side
         want = house["pets"].get(focus.get("who") or "") if focus.get("type") == "be with" else None
