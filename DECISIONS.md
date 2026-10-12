@@ -1355,3 +1355,81 @@ as long as the activity lasts and keeps up as they move, and standing by them is
 **Rest** holds a body only when the pet is tired (energy at "tired" or worse); otherwise its body is as free as with
 no focus at all, and it does not nap. A body may now leave the room with its mind on a project, or on being with
 someone who is elsewhere, as well as with no focus, exploring or playing.
+
+### Part B: wants, skills, making by discovery, tools, growing food, the book and the radio (§2 to §4). 12 October 2026
+
+**Where it lives.** `crafting.toml` is the whole table: processes and where each is done, the materials they give,
+41 rules, the kinds that take a material found out first, three tools, 20 pairs of properties that make a new one
+when two things are joined, what a planted seed gives, and what a passage in the book can point at. `engine/craft.py`
+carries it out (and keeps skills); `engine/wants.py` makes, meets and fades wants. Nothing in either asks a model.
+
+**Materials are bits; what emerges is a property.** A processed material (wicker, fired clay, rope) is a bit like
+any other: carried, dropped, tidied away, made with. A property that emerges from joining two things (glowing,
+snug, booming) is a property like those in materials.toml, built from the same parts (a light, a comfort near it,
+more rest), so everything the house already does with a property it does with these. Three of the spec's examples
+needed one new thing each: *glowing* is a light that does not count as harsh at night (`gentle`); the others use
+what was there. Where a table entry says more than the engine does (a jingling toy "draws kin", a honeyed treat
+wins a creature over sooner), the extra is words only for now.
+
+**What a pet is and is not told.** Told plainly: what came of a thing it tried, in the table's words; that it
+"needs something with an edge"; where a thing cannot be done ("there is no water here to soak it in"). Not told:
+what a kind is made of. A basket is simply not among the kinds it can make until it holds wicker; then "with this
+you could make a basket" is in its packet. A pet that asks for a gated kind without the material is told only
+"you have not got what a basket is made of".
+
+**The body prepares; the mind tries; after a wait the paws try by themselves.** The spec gives the mind a new
+action, `process`, and has the body carry bits to the right place. Built so: a pet that wants to find out what
+water does to a reed picks one up, makes for a room with water through rooms it knows, carries the reed to the
+water, and its mind is told ("you have carried the reed to the water: you could try it now") and thinks sooner.
+If after 90 world seconds its mind has not taken that up, its body tries it. This last is mine, not the spec's: a
+want the body serves should not die for a day because the mind was about something else, and §0 asks for
+discoveries every day. The same for a word it wonders about when the book is in the room: it goes over to the
+book, its mind may ask, and left long enough it leafs through for the word by itself.
+
+**A body may now go through a door it has never been through, if finding out what is behind it is one of its
+wants.** v3.3 kept finding a room for the mind. A want is the pet's own, and "the body leans toward whatever
+serves the pet's wants"; without this, a want to know a room would wait on the mind every time, and the garden
+would stay unfound.
+
+**Wants.** Up to three, looked over every five ticks. Eighteen kinds in five groups (to know, to make better, for
+someone, of the family, to get better). No two of a kind and never three of one group; one of the three is always
+something its body can do something about, when there is such a thing. A want is met when the world shows it is,
+not by a hook in whatever met it. A want that can no longer be had (the bit used up, the thing taken apart) is
+dropped, one left a world day fades, and neither comes back for three days. Two wants are mine: a closer look at
+a thing a housemate has just made, and (from a failed try) the tool it lacked. Not built: "the question written
+on a grandparent's thing", a want for the visitor, a leak.
+- *A word from the box:* the longest word in what the box said that this pet has never heard before. Crude, and it
+  picks proper names as readily as "drones".
+- *Preparing for rain:* a pet that has heard a forecast of rain for today, and knows a room with an open window,
+  wants it shut; if it is shut when the rain comes it is told "the rain came and the window was shut". The other
+  three preparations in §4.2 (moving things from the leak, gathering petals, a warm thing to the cellar) are not
+  built.
+
+**Skills** are counts of things done, read in three steps (3, 10, 25 times) and said only in words. Making: a
+practised maker's things are finer (they do more when used), a step bigger, and its tools last longer. Tending:
+it grows things faster and picks more. Music: a tune slips less in its ear. Tidying, reading and mending are
+counted and said, and mending lets a pet mend without a hammer; they change nothing else yet. A young one
+watching a practised parent make, tidy, tend or sing picks up a little.
+
+**Tools are used where they lie, and fetched.** A pet does not carry a made thing. A tool works for anyone in the
+room it is in; one in another room the pet knows comes with the pet as it sets to work ("you fetched the trowel
+from the greenhouse"). Walking it through the house is the upgrade. A worn tool does nothing until it is mended:
+with a hammer, or by a pet practised at mending or making. Nothing made wears out; "wears" here means blunt.
+
+**Growing.** The house's planting beds are the five plant fixtures it always had, and a plant pot. What was growing
+in them when v3.4 came goes on growing; once picked, a bed is bare until someone plants it with a trowel. Tending is
+watering (nobody carries water). Rain waters the garden. Dry for two world days, a plant wilts and gives nothing.
+A pot cannot be moved to another room, so "a cold night makes moving a pot inside a choice" is not built; a cold
+night halves the garden's growth. Picking a ripe plant eats one of what it gives there and then and leaves the rest
+beside it. Only what a pet planted counts as "food grown" in §0.
+
+**The book** can be carried through a door by a grown pet (`carry`), a step at a time. What a pet reads can give
+it a want to try something (twelve hints in the table, matched on words in the passage); it is never told a rule.
+
+**A recipe rides with a telling.** There is no "teach a recipe" action. When a pet tells another something to
+keep, the newest thing it has found out that the other has not goes with it; a young one watching its parent try
+something picks it up; a child starts out knowing each thing its parent knew as likely as not. Writing a recipe on
+a wall or in a message is the mind's own words, read by other minds as a hint.
+
+**"Name it for what it does now."** A pet that joins two things into something new is told it could; there is no
+action to rename a thing, so the name it gave when joining stands.
