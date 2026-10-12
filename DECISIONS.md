@@ -1225,5 +1225,24 @@ Found on a copy of the live house with the real model (one world day), and chang
   it. So a pet whose mind is on resting and which is not tired may get up and go and tidy the storeroom. Its
   wandering for no reason is as it was.
 
+Tyler's rulings on that, the same day, and two more rules of his:
+
+- **Yes to the narrower rule, with a cap: one tidying trip to another room per pet per world day.** A trip is a
+  body setting off for a mess it knows of; it may take several doors, and is over once the pet stands in the
+  mess. After that, until the next world day, no mess draws that body out of a room. Read as a cap on what the
+  body does by itself: a mind that chooses to go, or says it wants to tidy, is not counted or stopped.
+- **What the house moves to the storeroom goes into its crates** and counts as stored. Old things carried
+  there did already count, but went onto whatever had room; now crates first, out of sight. What made the
+  copy's storeroom go from 16 to 18 with nobody in it was the other thing the house brings there: a delivery,
+  "a crate of bits", was four loose bits dropped in the middle of the floor. Those now go into the crates too
+  (`order.stow`), and only what nothing has room for is left out. The storeroom had ten places for a house of
+  over a hundred things, so nine things wore out in three days; the crates now take 6 (were 4) and the crates
+  in the corner, which were only drawn, take 8. Twenty places. When those are full the longest forgotten
+  still wears out.
+- **Loose bits fade.** A bit dropped on a floor and left there is gone after `fades_days` world days
+  (`house.toml`, per bit): petals and leaves after one, fluff and feathers after two, as Tyler said, and by
+  the same reasoning vine, moss and reed after one and soot after two. Everything else stays. Bits a room
+  grows and bits put away in something do not fade. A bit already on a floor on 12 October counts from then.
+
 Pets still only tidy a room they are in, and a body only goes to rooms its pet has been in: a room no living pet
 has found (the garden, on 12 October) stays as it is until a mind chooses to go through that door.

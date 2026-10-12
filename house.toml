@@ -19,8 +19,11 @@ east = [11, 4]
 
 # ---- bits: what can be gathered, and what a part made of each can be (§6.2, §6.3) ----
 # `can` lists the properties (materials.toml) a thing can take from this bit. `looks` is how the view draws it.
+# `fades_days`: dropped on a floor and left there, it is gone after this many world days (what wilts in one, what blows
+# away in two); without it a bit stays where it was dropped. Bits a room grows, and bits put away in something, do not fade.
 
 [bits.fluff]
+fades_days = 2
 can = ["soft"]
 looks = { shape = "blob", color = "white" }
 [bits.pebble]
@@ -33,21 +36,26 @@ looks = { shape = "square", color = "yellow" }
 can = ["sweet"]
 looks = { shape = "dot", color = "brown" }
 [bits.leaf]
+fades_days = 1
 can = ["cool", "soft"]
 looks = { shape = "triangle", color = "green" }
 [bits.petal]
+fades_days = 1
 can = ["fragrant"]
 looks = { shape = "blob", color = "pink" }
 [bits.clay]
 can = ["hard", "cool"]
 looks = { shape = "square", color = "brown" }
 [bits.moss]
+fades_days = 1
 can = ["soft", "quiet"]
 looks = { shape = "blob", color = "green" }
 [bits.soot]
+fades_days = 2
 can = ["dark"]
 looks = { shape = "dot", color = "black" }
 [bits.feather]
+fades_days = 2
 can = ["soft", "bouncy"]
 looks = { shape = "bar", color = "white" }
 [bits.cloth]
@@ -63,6 +71,7 @@ looks = { shape = "ring", color = "pink" }
 can = ["glassy", "bright"]
 looks = { shape = "circle", color = "teal" }
 [bits.reed]
+fades_days = 1
 can = ["springy", "noisy"]
 looks = { shape = "bar", color = "green" }
 [bits.wire]
@@ -88,6 +97,7 @@ can = ["hard", "bright"]
 looks = { shape = "bar", color = "white" }
 late = "writing"
 [bits.vine]
+fades_days = 1
 can = ["springy", "soft"]
 looks = { shape = "ring", color = "green" }
 
@@ -238,7 +248,8 @@ regrow_hours = 24
 bits = "any"              # a little of everything: four kinds, picked when the room is first found
 rule = "storeroom"
 fixtures = [
-  { name = "crates", pos = [3, 2], store = 4, inside = true },
+  { name = "crates", pos = [3, 2], store = 6, inside = true },
+  { name = "corner crates", pos = [11, 9], store = 8, inside = true },   # where the house's old things end up (order.set_aside)
   { name = "shelves", pos = [9, 2], store = 6 },
   { name = "old lantern", pos = [6, 1], light = "off" },
 ]

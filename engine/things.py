@@ -3,7 +3,7 @@ from them, and the thing takes one property its bits allow. What the thing then 
 materials.toml; the purpose the pet writes changes nothing. Taking a thing apart gives the bits back."""
 import re
 
-from .world import LONG_AGO, add_event, dist, free_tile, hours, label, moment, sunny
+from .world import LONG_AGO, add_event, days as world_days, dist, free_tile, hours, label, moment, sunny
 
 SHAPES = ["circle", "square", "triangle", "blob", "bar", "dot", "ring", "star"]
 COLORS = ["red", "orange", "yellow", "green", "teal", "blue", "purple", "pink", "brown", "white", "grey", "black"]
@@ -240,7 +240,7 @@ def make(house, cfg, pet, a, clean):
 def drop_bits(house, cfg, room, pos, bits):
     """Loose bits on the floor. A room only holds so many: past that the oldest is swept away."""
     for b in bits:
-        room["spots"].append({"bit": b, "pos": free_tile(house, cfg, room, pos), "ready": True, "back": None, "loose": True})
+        room["spots"].append({"bit": b, "pos": free_tile(house, cfg, room, pos), "ready": True, "back": None, "loose": True, "since": house["tick"]})
     loose = [s for s in room["spots"] if s["loose"] and not s.get("on")]   # what has been put away in something stays
     for s in loose[:-cfg["make"]["loose_bits"]]:
         room["spots"].remove(s)
@@ -519,6 +519,10 @@ def upkeep(house, cfg):
     for room in house["rooms"].values():
         if not room["type"]:
             continue
+        for s in [s for s in room["spots"] if s.get("loose") and not s.get("on")]:   # what nobody picks up fades: petals and leaves wilt, fluff blows away, a pebble stays
+            fades = cfg["house"]["bits"].get(s["bit"], {}).get("fades_days")
+            if fades and world_days(cfg, s.setdefault("since", house["tick"]), house["tick"]) >= fades:   # (one dropped before 12 October 2026 counts from the first hour after)
+                room["spots"].remove(s)
         water = [t for o in room["objects"].values() for t in o.get("fix", {}).get("water", [])]
         for n, o in list(made(room).items()):
             m, idle = o["made"], house["tick"] - o["made"]["used_at"]

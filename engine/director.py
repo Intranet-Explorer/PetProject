@@ -166,7 +166,8 @@ def events(house, cfg):
     elif kind == "delivery":
         store = next((x for x in rooms if x["type"] == "storeroom"), room)
         bits = [r.choice(bit_kinds(house, cfg)) for _ in range(E["delivery_bits"])]
-        things.drop_bits(house, cfg, store, [cfg["W"] // 2, cfg["H"] // 2], bits)
+        # what the house brings to the storeroom goes into its crates, put by, not onto the floor (12 October 2026); what they have no room for is left out
+        things.drop_bits(house, cfg, store, [cfg["W"] // 2, cfg["H"] // 2], order.stow(cfg, store, bits) if store["type"] == "storeroom" else bits)
         for p in awake_pets(house):
             add_event(house, p, "a crate of bits has appeared here" if p["room"] == store["id"] else "something heavy was set down somewhere in the house")
             p["news"].append("event")

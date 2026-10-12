@@ -171,6 +171,7 @@
  "fix.bowl.full": {"pack": "own", "file": "fixtures.png", "rect": [240, 0, 16, 16]},
  "fix.bowl.half": {"pack": "own", "file": "fixtures.png", "rect": [0, 32, 16, 16]},
  "fix.chimes": {"pack": "own", "file": "fixtures.png", "rect": [224, 32, 16, 29]},
+ "fix.corner crates": {"pack": "ninja", "file": "Backgrounds/Tilesets/TilesetElement.png", "rect": [1, 1, 14, 15], "anchor": [-1, -1]},
  "fix.crates": {"pack": "ninja", "file": "Backgrounds/Tilesets/TilesetElement.png", "rect": [67, 60, 27, 20], "anchor": [-2, 4]},
  "fix.dial box": {"pack": "own", "file": "fixtures.png", "rect": [144, 0, 16, 16]},
  "fix.dial box.off": {"pack": "own", "file": "fixtures.png", "rect": [160, 0, 16, 16]},

@@ -1326,7 +1326,12 @@ async def main():
         for n2, o2 in sr["objects"].items():
             if "fix" in o2 and o2["fix"].get("store"):
                 o2["fix"]["store"] = 1
-        assert len(order.stores(cA, sr)) == 2
+        assert len(order.stores(cA, sr)) == 3
+        n0 = len(sr["spots"])
+        assert not order.stow(cA, sr, ["fluff", "pebble", "wax"]) and not order.loose_bits(sr) and all(order.inside(cA, sr["objects"][s2["on"]]) for s2 in sr["spots"][n0:]), \
+            "bits the house brings to the storeroom go into its crates, not onto the floor"
+        assert len(order.stow(cA, sr, ["fluff"] * (3 * cA["order"]["bits"]))) == 3, "and only what the crates and shelves have no room for is left out"
+        del sr["spots"][n0:]
         for i in range(5):
             pa["carrying"], pa["needs"]["energy"] = ["fluff"], 80.0
             r = await do(eA, pa, {"type": "make", "recipe": dict(recipe, name="relic %d" % i, kind="ball"), "near": "here"})
@@ -1341,8 +1346,10 @@ async def main():
             assert j["what"] == want and j["job"][0] == "old", "something nobody has touched for days is to be carried off: %s" % j
             said = order.do_job(hA, cA, pa, roomA, j["job"])
             assert want not in roomA["objects"] and said == "away in the storeroom", said
+            assert want != "relic 0" or order.inside(cA, sr["objects"][sr["objects"][want]["on"]]), "what the house puts by goes into the crates first"
+            assert not order.loose(hA, cA, sr), "and counts as stored, not as lying about"
         worn = [g["name"] for g in hA["gone_things"][gone0:] if g["gone"][1] == "worn out"]
-        assert worn == ["relic 0", "relic 1"] and sorted(n2 for n2, o2 in things.made(sr).items() if o2.get("on")) == ["relic 2", "relic 3"], \
+        assert worn == ["relic 0"] and sorted(n2 for n2, o2 in things.made(sr).items() if o2.get("on")) == ["relic 1", "relic 2", "relic 3"], \
             "the storeroom keeps what was forgotten last; the longest forgotten wears out: %s" % worn
         assert not order.job(hA, cA, pa, roomA) and "relic 4" in roomA["objects"], "an heirloom stays where it is"
         cA["order"]["old_days"] = was_old
@@ -1378,14 +1385,37 @@ async def main():
         pa["rooms"][roomA["id"]], pa["needs"]["energy"] = hA["tick"] - 10000, 80.0
         pa["focus"] = {"type": "rest", "words": "take it easy", "since": hA["tick"]}
         assert go_bonus() == [d1], "minded to rest and not tired, the mess still draws it: %s" % go_bonus()
+        body.state(pa)["trip"] = [hA["clock"]["day"], True]
+        assert go_bonus() == [], "one tidying trip to another room a world day: it has made today's"
+        body.state(pa)["trip"] = [hA["clock"]["day"], False]
+        assert go_bonus() == [d1], "a trip it has set out on and not finished goes on"
+        body.state(pa)["trip"] = [hA["clock"]["day"] - 1, True]
+        assert go_bonus() == [d1], "and tomorrow it may make another"
         things.drop_bits(hA, cA, roomA, [5, 5], ["fluff"])
         pa["focus"] = {"type": "stay near", "words": "keep by it", "what": next(n2 for n2 in roomA["objects"]), "since": hA["tick"]}
         assert body.anchor(hA, pa) and go_bonus() == [], "it does not walk out on what its mind keeps it by"
+        body.state(pa).pop("trip")
         clear()
         roomA["spots"] = [s2 for s2 in roomA["spots"] if not s2["loose"]]
         pa["rooms"] = was_rooms
         for rid, r2 in hA["rooms"].items():
             r2["mess"], r2["type"] = was_mess[rid]
+        # loose bits nobody picks up fade: petals and leaves in a world day, fluff and feathers in two; a pebble stays, and so does what is put away
+        things.drop_bits(hA, cA, roomA, [5, 5], ["petal", "leaf", "fluff", "feather", "pebble", "petal"])
+        lying = lambda: sorted(s2["bit"] for s2 in roomA["spots"] if s2["loose"])
+        roomA["spots"][-1]["on"] = "a shelf"
+        def a_day_on():
+            for s2 in roomA["spots"]:
+                if s2["loose"]:
+                    s2["since"] -= cA["ticks_per_day"]
+            things.upkeep(hA, cA)
+        things.upkeep(hA, cA)
+        assert len(lying()) == 6, "nothing fades the hour it is dropped"
+        a_day_on()
+        assert lying() == ["feather", "fluff", "pebble", "petal"] and order.count(hA, cA, roomA) == 3, "after a world day the petal and the leaf have wilted; the petal put away has not: %s" % lying()
+        a_day_on()
+        assert lying() == ["pebble", "petal"], "after two the fluff and the feather have blown away, and the pebble stays: %s" % lying()
+        roomA["spots"] = [s2 for s2 in roomA["spots"] if not s2["loose"]]
         for n2, o2 in roomA["objects"].items():
             if n2 in caps:
                 o2["fix"]["store"] = caps[n2]

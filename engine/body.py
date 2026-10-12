@@ -69,7 +69,10 @@ def targets(house, cfg, pet, mem, name, A):
     if do in ("doorway", "peek", "go"):
         out, mess = [], order.way(house, pet) if do == "go" else None
         # may a mess elsewhere draw it out of this room? Not out of a mess, not from beside what its mind keeps it by, not when it is resting tired
-        drawn = bool(mess) and room.get("mess", 0) < 2 and not anchor(house, pet) and (focus.get("type") != "rest" or feel.level(pet, "energy") < 2)
+        trip = state(pet).get("trip") or [None, True]   # [the world day it last set off for a mess, has it got there]: one such trip a day
+        under_way = trip[0] == house["clock"]["day"] and not trip[1]
+        drawn = bool(mess) and room.get("mess", 0) < 2 and not anchor(house, pet) and (focus.get("type") != "rest" or feel.level(pet, "energy") < 2) \
+            and (trip[0] != house["clock"]["day"] or under_way)
         for d, rid in room["doors"].items():
             stuck = house["shut"].get("%s|%s" % (room["id"], d), LONG_AGO) > house["tick"]
             to, been = house["rooms"][rid], rid in pet["rooms"]
@@ -87,12 +90,13 @@ def targets(house, cfg, pet, mem, name, A):
                 elif focus.get("type") == "tidy" and d == mess and not order.job(house, cfg, pet, room):
                     out.append({"what": d, "goal": list(house["door_tiles"][d]), "bonus": 2.0})   # this room is done and there is a mess it knows of: tidying moves on, door by door
                 elif (focus.get("type") in (None, "explore", "play") or (d == mess and drawn)) \
-                        and house["tick"] - pet["rooms"].get(room["id"], LONG_AGO) >= ticks(cfg, cfg["body"]["go_again_seconds"]):
+                        and (under_way or house["tick"] - pet["rooms"].get(room["id"], LONG_AGO) >= ticks(cfg, cfg["body"]["go_again_seconds"])):
                     # (it stays where its mind put it a good while, and it never walks out on someone or something its mind
                     # keeps it by. Otherwise a mess it knows of draws it as one here would, the orderly most)
                     out.append({"what": d, "goal": list(house["door_tiles"][d]),
                                 "bonus": (0.6 if kin and not kin_here(house, pet) else 0.0) + (0.8 if focus.get("type") == "explore" else 0.0)
-                                + (cfg["body"]["mess_pull"] * 2 * (0.4 + 1.2 * pet["temper"].get("orderly", 0.5)) if d == mess and drawn else 0.0)})
+                                + (cfg["body"]["mess_pull"] * 2 * (0.4 + 1.2 * pet["temper"].get("orderly", 0.5)) if d == mess and drawn else 0.0),
+                                "trip": d == mess and drawn})
         return out
     if do == "inspect":
         seen = lambda n: pet["times"].get("look " + n, 0)
@@ -221,7 +225,7 @@ def choose(mind):
     _, name, t = best
     A = cfg["activities"][name]
     lo, hi = A["seconds"]
-    now = {"name": name, "do": A["do"], "what": t.get("what"), "who": t.get("who"), "where": t.get("where"), "job": t.get("job"), "door": t.get("door"), "creature": t.get("creature"),
+    now = {"name": name, "do": A["do"], "what": t.get("what"), "who": t.get("who"), "where": t.get("where"), "job": t.get("job"), "door": t.get("door"), "trip": t.get("trip"), "creature": t.get("creature"),
             "goal": t.get("goal"), "left": ticks(cfg, r.uniform(lo, hi)), "since": h["tick"], "began": None, "passive": bool(A.get("passive")),
             "icon": A.get("icon"), "voice": A.get("voice")}
     now["doing"] = say(cfg, h, pet, now, "doing")   # in the page's words, and the packet's
@@ -302,6 +306,8 @@ def finish(mind, now, cut=False):
                 text, fx, key = actions.go(h, cfg, pet, name)
                 add_event(h, pet, text)
                 room = h["rooms"][pet["room"]]
+                if now.get("trip"):   # drawn out by a mess: that is today's one such trip, over once it stands in the mess
+                    b["trip"] = [h["clock"]["day"], room.get("mess") == 2]
             elif do == "peek" and now.get("door") in room["doors"]:
                 there = [p for p in h["pets"].values() if p["room"] == room["doors"][now["door"]] and p["stage"] not in ("egg", "dead")]
                 add_event(h, pet, "you peeked into %s: %s" % (now["what"], ", ".join("%s is there" % actions.handle(h, pet, p) for p in there) or "nobody is there"))

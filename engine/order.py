@@ -71,10 +71,13 @@ def bit_room(cfg, room):
     return {n: cfg["order"]["bits"] - sum(1 for s in room["spots"] if s.get("on") == n) for n, o in room["objects"].items() if cap(cfg, o)}
 
 
+def inside(cfg, o):
+    """Does this keep things out of sight (a chest, a crate, a basket) rather than on show (a shelf)?"""
+    return bool(o.get("fix", {}).get("inside") or cfg["kinds"].get(o.get("made", {}).get("recipe", {}).get("kind"), {}).get("inside"))
+
+
 def into(cfg, room, store):
-    o = room["objects"][store]
-    inside = o.get("fix", {}).get("inside") or cfg["kinds"].get(o.get("made", {}).get("recipe", {}).get("kind"), {}).get("inside")
-    return "%s the %s" % ("in" if inside else "on", store)
+    return "%s the %s" % ("in" if inside(cfg, room["objects"][store]) else "on", store)
 
 
 def last_touch(o):
@@ -192,13 +195,22 @@ def do_job(house, cfg, pet, room, job):
     return said
 
 
+def stow(cfg, room, bits):
+    """Bits put straight into whatever keeps things here, crates and the like first. Returns those nothing had room for."""
+    left = []
+    for b in bits:
+        space = sorted((n for n, k in bit_room(cfg, room).items() if k > 0), key=lambda n: not inside(cfg, room["objects"][n]))
+        if space:
+            room["spots"].append({"bit": b, "pos": list(room["objects"][space[0]]["pos"]), "ready": True, "back": None, "loose": True, "on": space[0]})
+        else:
+            left.append(b)
+    return left
+
+
 def wear_out(house, cfg, room, name):
     """A thing long forgotten falls apart. What it was made of goes into whatever keeps things there, if any has room."""
     o = room["objects"].pop(name)
-    for b in o["made"]["bits"]:
-        space = [n for n, k in bit_room(cfg, room).items() if k > 0]
-        if space:
-            room["spots"].append({"bit": b, "pos": list(room["objects"][space[0]]["pos"]), "ready": True, "back": None, "loose": True, "on": space[0]})
+    stow(cfg, room, o["made"]["bits"])
     things.gone(house, o, name, "worn out", room)
     moment(house, "unmade", "the %s '%s', long forgotten, wore out and went back to bits" % (o["made"]["recipe"].get("kind", "thing"), name), None, room["id"])
 
@@ -209,14 +221,15 @@ def set_aside(house, cfg, pet, room, name):
     it and what the storeroom keeps (heirlooms apart), wears out and goes back to bits. Returns the pet's words.
     ponytail: the thing goes there by itself once the pet has picked it up; walking it through the house is the upgrade."""
     sr, o = storeroom(house), room["objects"][name]
-    space = [n for n, k in stores(cfg, sr).items() if k > 0 and n != name]
+    free = lambda: sorted((n for n, k in stores(cfg, sr).items() if k > 0 and n != name), key=lambda n: not inside(cfg, sr["objects"][n]))   # into the crates first: put by, out of sight
+    space = free()
     if not space:
         kept = [n for n, x in things.made(sr).items() if x.get("on") and not x["made"].get("heirloom")]
         worst = min(kept + [name], key=lambda n: last_touch((room if n == name else sr)["objects"][n]))
         wear_out(house, cfg, room if worst == name else sr, worst)
         if worst == name:
             return "down for the last time: it had worn out, and went back to bits"
-        space = [n for n, k in stores(cfg, sr).items() if k > 0 and n != name]
+        space = free()
     del room["objects"][name]
     for k in ("wall", "tidy", "home", "places"):
         o.pop(k, None)
