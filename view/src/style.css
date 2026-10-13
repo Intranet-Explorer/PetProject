@@ -294,6 +294,9 @@ blockquote.scratch { font-style: italic; color: var(--muted); }
 .tree .lines path { fill: none; stroke: var(--line); stroke-width: 2; }
 .tree .lines.over { pointer-events: none; }
 .tree .lines path.cross { stroke: var(--accent); stroke-dasharray: 5 4; }   /* something crossed between the families */
+.tree .lines path.new { stroke: var(--gold, #c9962b); stroke-width: 3; }   /* SPEC-v3.5 §2.2: the branch to one born with a part no ancestor had */
+.node .newpart { position: absolute; top: 2px; right: 2px; padding: 0 3px; font-size: 10px; line-height: 13px; white-space: nowrap; color: var(--bg); background: var(--gold); }
+.node.mutant { border-color: var(--gold); }
 .crossmark { pointer-events: auto; }
 .crossmark circle { fill: var(--surface); stroke: var(--accent); stroke-width: 1.5; }
 .crossmark text { fill: var(--accent); font-size: 12px; }

@@ -3,10 +3,11 @@
 // gather, memorial stones. Rebuilt only when one of them changes.
 import { Container, Graphics, Sprite } from "pixi.js";
 import type { Texture } from "pixi.js";
+import { composeThing, inventedKind } from "../parts";
 import { PALETTE } from "../things";
 import type { Part, Recipe } from "../things";
 import type { Made, Obj, RoomV, Snap, Tile } from "../types";
-import { canvasOf, def, fromCanvas, fromParts, has, kind, pick, size, tex } from "./assets";
+import { addSprite, canvasOf, def, fromCanvas, fromParts, has, kind, pick, size, tex } from "./assets";
 import type { Layout } from "./assets";
 import { FAMILY, tagCanvas } from "./bubbles";
 import { fxTexture } from "./fx";
@@ -41,7 +42,8 @@ export function kindOf(r: Recipe): { kind: string; color: string | null; size: n
   return { kind: k ?? "thing", color: big?.color ?? r.color ?? null, size: big?.size ?? 2 };
 }
 export function drawnOf(m: Made): Drawn {
-  const k = kindOf(m.recipe);
+  const k = kindOf(m.recipe), inv = inventedKind(k.kind);
+  if (inv) return { ...k, color: null, sprite: addSprite(`invented.${k.kind}`, composeThing(inv)), material: m.recipe.material };   // SPEC-v3.5 §3: put together from its parts, each in its own colour
   return { ...k, sprite: kind(k.kind)?.sprite ?? `kind.${k.kind}`, material: m.recipe.material };
 }
 
@@ -344,7 +346,7 @@ export class Still {
     const scale = slot ? this.small : Math.max(1, Math.round(this.K * (SIZES[Math.round(d.size) - 1] ?? 1))) / this.K;
     const t = this.put(name, o, sprite, "sorted", pic.texture, pic.canvas, scale, slot);
     t.drawn = { ...d, color };
-    t.on = power && (o.state === "on" || doing === "glow" || ((mat === "bright" || mat === "warm") && m.active));   // a power cut is dark for made lights too
+    t.on = power && (o.state === "on" || doing === "glow" || ((mat === "bright" || mat === "warm") && m.active) || !!inventedKind(d.kind)?.glow);   // a power cut is dark for made lights too
     if (!t.wall && !slot) {   // a made thing sits on a small soft shadow: that, and its size, tell it from a bit lying loose
       const hw = Math.max(3, Math.round(t.rect.w / 2) - 1), g = new Graphics();
       g.rect(Math.round(t.x) - hw, Math.round(t.y) - 2, 2 * hw, 3).rect(Math.round(t.x) - hw + 2, Math.round(t.y) - 3, 2 * hw - 4, 1).rect(Math.round(t.x) - hw + 2, Math.round(t.y) + 1, 2 * hw - 4, 1).fill({ color: 0x1a1420, alpha: 0.22 });

@@ -1,6 +1,7 @@
 // Pictures and sounds by our own names (view/assets/README.md). The data in /art/ says where each one lives; nothing
 // here, or anywhere else on the page, names a tile, a file or a pack. A name the data does not have gives a visible
 // placeholder, never an error.
+import { composeThing, inventedKind, loadParts } from "./parts";
 import { PALETTE } from "./things";
 import type { Part } from "./things";
 
@@ -24,7 +25,7 @@ const BASE = "/art/";
 const get = async (file: string) => { try { const r = await fetch(BASE + file); return r.ok ? await r.json() : null; } catch { return null; } };
 
 /** Everything is asked for once. Whatever is missing stays empty: the page still draws, with placeholders. */
-export const artReady: Promise<void> = Promise.all(["packs.json", "sprites.json", "kinds.json", "kinds-from-parts.json", "sounds.json"].map(get)).then(([packs, sprites, kinds, parts, sounds]) => {
+export const artReady: Promise<void> = Promise.all([...["packs.json", "sprites.json", "kinds.json", "kinds-from-parts.json", "sounds.json"].map(get), loadParts(BASE.slice(0, -1))]).then(([packs, sprites, kinds, parts, sounds]) => {
   Object.assign(art, { packs: packs ?? {}, sprites: sprites ?? {}, kinds: kinds ?? {}, fromParts: parts, sounds: sounds ?? {} });
   // a pixel face for the page's headings, if a pack brings one (packs.json: `"font": "<file in the pack>"`)
   const [name, pack] = Object.entries(art.packs).find(([, p]) => p.font && !p.local) ?? [], src = name && fileUrl({ pack: name, file: pack!.font! });
@@ -159,6 +160,12 @@ export function aThing(r: Thing) {
 
 /** A made thing's picture, in its own colour. */
 export function thingSprite(r: Thing, scale = 2) {
-  const { kind, color } = kindOf(r);
+  const { kind, color } = kindOf(r), inv = inventedKind(kind);
+  if (inv) {   // SPEC-v3.5 §3: a kind the house invented is put together from its parts
+    const src = composeThing(inv), c = Object.assign(document.createElement("canvas"), { className: "px", width: src.width * scale, height: src.height * scale }), x = c.getContext("2d")!;
+    x.imageSmoothingEnabled = false;
+    x.drawImage(src, 0, 0, c.width, c.height);
+    return c;
+  }
   return sprite(art.kinds[kind]?.sprite ?? `kind.${kind}`, scale, color);
 }

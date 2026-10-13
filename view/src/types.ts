@@ -1,4 +1,5 @@
 // What the engine sends (engine/server.py: snapshot, pet_view, room_view). The view only ever reads these.
+import type { Invention } from "./parts";
 import type { Genome } from "./pet";
 import type { Part, Recipe } from "./things";
 
@@ -89,6 +90,7 @@ export type PetV = {
   // SPEC-v3.4 §2, §3.3; absent in older recordings. `wants`: up to three. `skills`: how practised it
   // is, in its own words ("your paws are surer at the bench"; may be ""). `recipes`: what it has found out.
   wants?: Want[]; skills?: string; recipes?: string[];
+  mutation?: { slot: string; from: string; to: string } | null;   // SPEC-v3.5 §2.2: born with something no ancestor had
 };
 /** `tame` is the pet it belongs to. (The engine also sends its trust in each pet; that is hidden and never shown.) */
 /** A step a pet has just finished (SPEC-v3.2 §5.2). `what` is the thing, bit or song it was about, `to` whom or
@@ -119,6 +121,7 @@ export type Snap = {
   // SPEC-v3.3: the visitor's music and radio, the small sounds pets make, and every body activity with its icon
   dj?: Dj; vox?: Vox[]; activities?: Record<string, { icon: string | null; passive: boolean; rest: boolean }>;
   bursts?: Burst[];   // SPEC-v3.4 §5
+  invented?: Record<string, Invention>;   // SPEC-v3.5 §3: the kinds this house invented, by name: drawn from their parts
   hello?: Hello; error?: string;
 };
 /** What /api/v31 answers: everything ever written, sung, asked and heard, and when each discovery comes. */

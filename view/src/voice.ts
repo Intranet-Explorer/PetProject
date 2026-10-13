@@ -3,6 +3,7 @@
 // View-only: it listens to what the view already receives and nothing here goes back to the engine.
 import { hash, news, planSong, planSound, planSpeech, planVox, semitone, voiceOf } from "./voice-plan";
 import type { HouseSound, Plan, Seen, SoundKind, VoiceInput, VoxKind } from "./voice-plan";
+import { inventedSound } from "./parts";
 import { clip, sound, sounds } from "./sprite";
 import type { Layer } from "./sprite";
 import { bodyStage } from "./types";
@@ -596,7 +597,7 @@ export class Voice {
       const dest = this.bus(a.room, s, here), o = s.rooms.find((r) => r.id === a.room)?.objects[(a.what ?? "").toLowerCase().replace(/^(the|my|your|an?) /, "")], used = a.type === "use" || a.type === "fiddle";
       // SPEC-v3.3 §4: a thing that sounds, sounded: its own sound by its kind or (a fixture) its name, from wherever it is
       const loud = a.loud || (used && !!(o?.made?.loud || o?.fix?.loud));
-      const rings = [a.kind ?? o?.made?.recipe.kind, a.what, loud ? "default" : null].map((k) => (k ? tools[k] : null)).find((x) => typeof x === "string");
+      const rings = [inventedSound(a.kind ?? o?.made?.recipe.kind), a.kind ?? o?.made?.recipe.kind, a.what, loud ? "default" : null].map((k) => (k ? tools[k] : null)).find((x) => typeof x === "string");   // (an invented thing sounds like its loudest part)
       if (dest && rings && (loud || used)) this.sfx(rings, dest, `${label(a.pet)} sounds the ${a.what}`, "instrument", { pet: label(a.pet), room: a.room });
       else if (dest === this.near) {   // SPEC-v3.2 §8: the small sounds of a step, in this room only
         const fix = o?.fix, name = a.type === "use" ? (fix && "meal" in fix ? "eat" : "") : SFX[a.type];

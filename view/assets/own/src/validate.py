@@ -255,8 +255,11 @@ fixtures = {f["name"]: f for r in house["rooms"].values() for f in r["fixtures"]
 for name in ["bell", "drum", "wind chime", "flute", "hum"] + [n for n, f in fixtures.items() if f.get("loud")]:
     if name not in inst:
         bad("sounds.json: instruments has no %r" % name)
+part_sounds = {p["sound"] for p in J("parts.json")["thing"].values() if p.get("sound")} if (ASSETS / "parts.json").exists() else set()   # SPEC-v3.5 §3.4: what an invented thing sounds like
+for name in part_sounds - set(inst):
+    bad("sounds.json: instruments has no %r, the sound of a part in parts.json" % name)
 for name, v in inst.items():
-    if name not in ("hum", "default") and name not in kinds and name not in fixtures:
+    if name not in ("hum", "default") and name not in kinds and name not in fixtures and name not in part_sounds:
         bad("instruments: %r is neither a kind nor a fixture" % name)
     if isinstance(v, dict):
         layer(v, "instruments %s" % name)
@@ -266,6 +269,12 @@ for name, v in inst.items():
 for name, pack in packs.items():   # a pack may bring a font for the page's headings
     if pack.get("font"):
         pack_file({"pack": name, "file": pack["font"]}, "the font of pack %s" % name)
+
+# ---- the parts library (SPEC-v3.5 §1; engine.check_parts looks at it closely): its pictures are in use ----
+if (ASSETS / "parts.json").exists():
+    lib = J("parts.json")
+    used.update(ASSETS / x["file"] for p in lib["thing"].values() for x in p.get("px", {}).values())
+    used.update([ASSETS / lib["body"]["file"]] if lib.get("body") else [])
 
 # ---- nothing lies about unused ----
 for pack in packs.values():

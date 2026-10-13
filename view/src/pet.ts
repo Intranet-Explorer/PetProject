@@ -4,6 +4,9 @@ import { Container, Graphics } from "pixi.js";
 export type Genome = {
   roundness: number; stretch: number; wobble: number; hue: number; saturation: number; pattern: string;
   pattern_density: number; eye_size: number; eye_spacing: number; limbs: number; marks: string[];
+  // SPEC-v3.5 §2: its body plan and the part in each slot (view/assets/bodies.json); `size` 0.8 to 1.2. A genome from
+  // before these has none of them: one blob, drawn as it always was (and its feet by `limbs`, which is otherwise retired).
+  plan?: string; ears?: string; tail?: string; head?: string; whiskers?: string; feet?: string; mouth?: string; fur?: string; shade?: string; size?: number;
 };
 
 const INK = 0x16241f;

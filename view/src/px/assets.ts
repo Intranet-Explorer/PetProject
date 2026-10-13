@@ -10,7 +10,7 @@ export type Anim = { frames: [number, number][]; fps: number; flip?: boolean };
 /** `glass` (optional): the part of a window's picture that is sky, as [x, y, w, h] inside the sprite. `slice`: a frame
  *  that stretches, as the widths of its [left, top, right, bottom] borders. */
 /** `surface` (optional): where things put away on it stand, as [x, y, w] inside the sprite: a line `w` wide whose left end is at x, y. */
-export type SpriteDef = { pack: string; file: string; rect: [number, number, number, number]; anchor?: [number, number]; anims?: Record<string, Anim>;
+export type SpriteDef = { pack: string; file: string; rect: [number, number, number, number]; anchor?: [number, number]; anims?: Record<string, Anim>; made?: boolean;
   tint?: string; fallback?: string; glass?: [number, number, number, number]; slice?: [number, number, number, number]; surface?: [number, number, number] };
 export type KindDef = { sprite?: string; wall?: boolean; a?: string; flat?: boolean };
 export type Decor = { sprite: string; at: Tile; layer?: string };
@@ -65,6 +65,7 @@ export function def(name: string | null | undefined): SpriteDef | null {
   for (let n = name, hops = 0; n && hops < 4; hops++) {
     const d = data.sprites[n];
     if (!d) return null;
+    if (d.made) return d;
     const a = address(d);
     if (a && images.get(a)) return d;
     n = d.fallback;
@@ -138,6 +139,16 @@ export function canvasOf(name: string, a?: string, i = 0): HTMLCanvasElement {
   c.getContext("2d")!.drawImage(images.get(address(d)!)!, x, y, w, h, 0, 0, w, h);
   canvases.set(key, c);
   return c;
+}
+
+/** A picture put together on the page (SPEC-v3.5 §3: a thing invented, composed from parts): from now on a sprite like
+ *  any other, by this name. */
+export function addSprite(name: string, c: HTMLCanvasElement) {
+  if (data.sprites[name]?.made && canvases.get(`${name}||0`) === c) return name;
+  data.sprites[name] = { pack: "", file: "", rect: [0, 0, c.width, c.height], made: true };
+  canvases.set(`${name}||0`, c);
+  textures.set(`${name}||0`, fromCanvas(c));
+  return name;
 }
 
 export function fromCanvas(c: HTMLCanvasElement): Texture {
