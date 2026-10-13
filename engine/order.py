@@ -2,7 +2,7 @@
 a shelf or in a chest is still the same thing, in the same room, doing whatever it does; it only stops lying on the
 floor. Tidying is real: it moves things, and a thing put in the same place twice has a home there."""
 from . import things
-from .world import add_event, days as world_days, dist, free_tile, label, moment, ticks
+from .world import add_event, days as world_days, dist, free_tile, label, moment, taken, ticks
 
 MESS = ["everything here has its place", "a few things lie about", "this room is a mess"]
 NOWHERE = "there's nowhere left to put things here: a shelf, a box, a basket or a chest would be somewhere to keep them"
@@ -35,18 +35,19 @@ def can_hang(cfg, o):
 
 
 def settled(cfg, room, o):
-    """Is a made thing where a person looking in would say it belongs: on or in something, on the wall, one of a
-    corner of things of its sort, an heirloom by its stone, itself a place to keep things, or too heavy to be
-    anywhere else? Anything else on the floor is clutter, however neatly it lies (12 October 2026: "out of the
-    way" was a kind of tidy nobody could see)."""
-    return bool(o.get("on") or o.get("wall") or cap(cfg, o) or things.prop(cfg, o).get("fixed")
-                or (o["made"].get("heirloom") and o.get("home", {}).get("pos") and dist(o["home"]["pos"], o["pos"]) <= 1)
-                or any(list(o["pos"]) in a["tiles"] for a in room.get("areas", [])))
+    """Is a made thing somewhere other than lying on the floor (13 October 2026: clutter is what a person looking in
+    sees): on or in something, on the wall, an heirloom by its stone, or furniture the room uses (somewhere to keep
+    things, something to sit on or grow things in, something too heavy to be anywhere else)? Anything else on the
+    floor is clutter, however neatly it lies, unless it is one of the few things of a corner (`corners`)."""
+    return bool(o.get("on") or o.get("wall") or cap(cfg, o) or things.prop(cfg, o).get("fixed") or o.get("planted")
+                or cfg["kinds"].get(o["made"]["recipe"].get("kind"), {}).get("furniture")
+                or (o["made"].get("heirloom") and o.get("home", {}).get("pos") and dist(o["home"]["pos"], o["pos"]) <= 1))
 
 
 def loose(house, cfg, room):
     """The made things lying about on the floor."""
-    return [n for n, o in things.made(room).items() if not settled(cfg, room, o)]
+    put = {n for names in corners(house, cfg, room).values() for n in names}
+    return [n for n, o in things.made(room).items() if n not in put and not settled(cfg, room, o)]
 
 
 def loose_bits(room):
@@ -55,8 +56,8 @@ def loose_bits(room):
 
 
 def count(house, cfg, room):
-    """What a person sees lying about: every made thing on the floor that is not put away, hung up or part of a
-    corner, and every loose bit."""
+    """What a person sees lying about: every made thing on the floor that is not furniture the room uses or one of
+    the few things of a corner, and every loose bit."""
     return len(loose(house, cfg, room)) + len(loose_bits(room))
 
 
@@ -166,18 +167,28 @@ def may_move(house, pet, o):
 
 
 def corner(house, cfg, room, name):
-    """A tile beside the others of its sort, where three or more together are a corner (`areas`): or None, when
-    there are not enough of them here, it stands with them already, or there is no room beside them."""
-    o = room["objects"][name]
-    kinds = next((ks for ks in KEEP.values() if o["made"]["recipe"].get("kind") in ks), None)
-    group = [x for n, x in things.made(room).items() if n != name and kinds and x["made"]["recipe"].get("kind") in kinds and not x.get("wall") and not x.get("on")]
+    """A tile where this thing would be one of a corner (`corners`) that still has room for it: or None, when there
+    is no such corner here, it is full, or there is no free tile by it. (A thing whose home is a shelf or a box
+    belongs there, not in a corner.)"""
+    o, floor = room["objects"][name], things.on_floor(room)
+    area = next((a for a, ks in KEEP.items() if o["made"]["recipe"].get("kind") in ks), None)
+    if not area or o.get("home"):
+        return None
+    now = corners(house, cfg, room).get(area, [])
+    if area == "sleeping corner":   # against a wall, one bed-thing for each pet who sleeps here
+        if len(now) >= min(MOST, sleepers(house, room)):
+            return None
+        used, by = taken(house, room, name), floor[now[0]]["pos"] if now else o["pos"]
+        tiles = [[x, y] for x in range(cfg["W"]) for y in range(cfg["H"]) if edge(cfg, [x, y]) and [x, y] not in used and (not now or dist([x, y], by) <= 2)]
+        return min(tiles, key=lambda t: (dist(t, by), t), default=None)
+    group = [n for n, x in floor.items() if n != name and x["made"]["recipe"].get("kind") in KEEP[area] and not x.get("home")]
     if len(group) < 2:
         return None
-    best = max(group, key=lambda a: sum(dist(a["pos"], x["pos"]) <= 2 for x in group))
-    if dist(o["pos"], best["pos"]) <= 2:
+    best = now[0] if now else max(group, key=lambda a: sum(dist(floor[a]["pos"], floor[x]["pos"]) <= 2 for x in group))
+    if len(now) >= MOST or dist(o["pos"], floor[best]["pos"]) <= 2:
         return None
-    tile = free_tile(house, cfg, room, best["pos"], name)
-    return tile if dist(tile, best["pos"]) <= 2 else None
+    tile = free_tile(house, cfg, room, floor[best]["pos"], name)
+    return tile if dist(tile, floor[best]["pos"]) <= 2 else None
 
 
 def place_for(house, cfg, pet, room, name):
@@ -222,7 +233,8 @@ def job(house, cfg, pet, room):
         first = min(bits, key=lambda s: dist(s["pos"], pet["pos"]))
         out.append({"what": "loose bits" if len(bits) > 1 else "loose %s" % first["bit"], "pos": first["pos"],
                     "job": ["bits", None, "on", min(space, key=lambda n: dist(objs[n]["pos"], first["pos"]))]})
-    return min(out, key=lambda j: dist(j["pos"], pet["pos"]), default=None)
+    back = lambda j: j["job"][0] == "thing" and bool(objs[j["job"][1]].get("home", {}).get("on") or (j["job"][2] == "on" and keeps(objs[j["job"][3]])))
+    return min(out, key=lambda j: (not back(j), dist(j["pos"], pet["pos"])), default=None)   # what has a home on a shelf or in a box, or belongs in a keepsake box, goes back first
 
 
 def do_job(house, cfg, pet, room, job):
@@ -278,7 +290,7 @@ def put(house, cfg, pet, room, name, how, where):
         said = "up on the wall"
     else:
         o["pos"] = list(where)
-        said = "by its stone" if o["made"].get("heirloom") else "with the others like it"
+        said = "by its stone" if o["made"].get("heirloom") else "in the sleeping corner" if o["made"]["recipe"].get("kind") in KEEP["sleeping corner"] else "with the others like it"
     room["areas"] = areas(house, cfg, room)
     return said
 
@@ -310,6 +322,8 @@ def do(a, house, cfg, pet, norm):
     if t == "take_out":
         was, o["kept"] = o.pop("on"), house["tick"]
         o["pos"] = free_tile(house, cfg, room, pet["pos"], name)
+        if not o.get("home"):   # where it was kept is where it belongs: out, it lies about until it is put back
+            o["home"] = {"room": room["id"], "on": was}
         return "you took the %s down from the %s" % (name, was), {}, None
     said = put(house, cfg, pet, room, name, "wall", things.wall_slot(house, room)) if t == "hang" else put(house, cfg, pet, room, name, "on", norm(a["where"]))
     owner = house["pets"].get(o["made"]["owner"])
@@ -344,23 +358,46 @@ def upkeep(house, cfg):
                 s["pos"] = list(store["pos"])
 
 
-KEEP = {"sleeping corner": ("cushion", "blanket", "nest", "bed-mat", "rug", "doll"), "music corner": ("bell", "drum", "flute", "wind chime"),
-        "lamp corner": ("candle", "lantern", "lamp"), "keepsake shelf": ()}
+KEEP = {"sleeping corner": ("cushion", "blanket", "nest", "bed-mat"), "music corner": ("bell", "drum", "flute", "wind chime"),
+        "lamp corner": ("candle", "lantern", "lamp")}
+MOST = 4   # a corner is never more than this many tiles: it does not swallow the room
+
+
+def sleepers(house, room):
+    """How many of the living sleep here: each where it last lay down to sleep."""
+    return sum(1 for p in house["pets"].values() if p["stage"] not in ("egg", "dead") and p.get("sleeps_in") == room["id"])
+
+
+def edge(cfg, pos):
+    """Is this tile against a wall?"""
+    return pos[0] in (0, cfg["W"] - 1) or pos[1] in (0, cfg["H"] - 1)
+
+
+def corners(house, cfg, room):
+    """{corner: [things]}, the one the rest stand round first (13 October 2026: a corner used to grow until it was
+    the room). A corner is at most MOST things, each on its own tile. Three or more instruments or lights standing
+    together are one. A sleeping corner is against a wall and holds one bed-thing for each pet who sleeps here; a
+    room nobody sleeps in has none. Whatever else of the sort stands about is clutter, to be stacked away. A thing
+    with a home (a shelf, a box, an heirloom's place by its stone) is never one of a corner: it belongs there."""
+    out, floor = {}, things.on_floor(room)
+    for area, kinds in KEEP.items():
+        bed = area == "sleeping corner"
+        most = min(MOST, sleepers(house, room)) if bed else MOST
+        group = [n for n, o in floor.items() if o["made"]["recipe"].get("kind") in kinds and not o.get("home") and (not bed or edge(cfg, o["pos"]))]
+        near = lambda n: sorted((m for m in group if dist(floor[m]["pos"], floor[n]["pos"]) <= 2), key=lambda m: dist(floor[m]["pos"], floor[n]["pos"]))[:most]
+        best = max((near(n) for n in group), key=len, default=[])
+        if most and len(best) >= (1 if bed else 3):
+            out[area] = best
+    return out
 
 
 def areas(house, cfg, room):
-    """Name the places a room has grown (§2.3): where three or more things of a sort stand together, and any shelf
-    of heirlooms. [{name, tiles}] for the view's faint tint and the hover cards; recomputed now and then."""
-    out, made = [], things.made(room)
-    for area, kinds in KEEP.items():
-        if not kinds:
-            for store in {o.get("on") for o in made.values() if o.get("on") and o["made"].get("heirloom")}:
-                out.append({"name": "keepsake shelf", "tiles": [list(room["objects"][store]["pos"])], "on": store})
-            continue
-        group = [o for o in made.values() if o["made"]["recipe"].get("kind") in kinds and not o.get("wall")]
-        best = max(([x["pos"] for x in group if dist(x["pos"], o["pos"]) <= 2] for o in group), key=len, default=[])
-        if len(best) >= 3:
-            out.append({"name": area, "tiles": [list(t) for t in dict.fromkeys(map(tuple, best))]})
+    """Name the places a room has grown (§2.3): its corners, any shelf of heirlooms, and a bench in use. [{name,
+    tiles}] for the view's faint tint and the hover cards; recomputed now and then."""
+    made = things.made(room)
+    out = [{"name": area, "tiles": [list(made[n]["pos"]) for n in names]} for area, names in corners(house, cfg, room).items()]
+    for store in {o.get("on") for o in made.values() if o.get("on") and o["made"].get("heirloom")}:
+        out.append({"name": "keepsake shelf", "tiles": [list(room["objects"][store]["pos"])], "on": store})
     bench = next((n for n, o in room["objects"].items() if o.get("fix", {}).get("bench")), None)
     if bench and (held(room, bench) or sum(1 for s in room["spots"] if dist(s["pos"], room["objects"][bench]["pos"]) <= 2) >= 2):
         out.append({"name": "making bench", "tiles": [list(room["objects"][bench]["pos"])], "on": bench})

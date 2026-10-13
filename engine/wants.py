@@ -104,7 +104,10 @@ def candidates(house, cfg, pet):
                 add("useless", n, "you want your %s to be good for something" % n, "made the %s into something that is good for something" % n, 0.6, thing=n, room=r["id"])
     for tool, at in pet.get("lacks", {}).items():
         if world_days(cfg, at, tick) < 2 and tool not in house.get("firsts", {}):
-            add("tool", tool, "you want to " + C["tool"][tool]["want"], "has a tool: " + a(tool), 2.5, tool=tool)
+            book = book_room(house)   # (13 October 2026) what a tool takes is said when making one fails; until then the book is where to look
+            takes = "; %s %s takes %s" % ("an" if tool[0] in "aeiou" else "a", tool, craft.takes(cfg, tool)) if tool in pet.get("takes", []) else \
+                "; the heavy book in %s might know what one is made of" % rooms[book]["name"] if book and not asked_of(pet, tool) else ""
+            add("tool", tool, "you want to " + C["tool"][tool]["want"] + takes, "has a tool: " + a(tool), 2.5, tool=tool)
     box = [b for b in pet.get("box", []) if world_days(cfg, b["tick"], tick) < 0.4]
     if any("forecast" in b["text"].lower() and RAIN.search(b["text"].split("Tomorrow")[0]) for b in box) and house["weather"] not in ("rain", "storm"):
         for r in known:
@@ -141,6 +144,10 @@ def candidates(house, cfg, pet):
     if last and pet.get("made", 0) >= 2:
         add("finer", last["kind"], "you want to make something finer than your last %s" % last["kind"], "made a finer %s than its last" % last["kind"], 1.0, kind=last["kind"], at=last["tick"])
     return out
+
+
+def asked_of(pet, tool):
+    return tool in pet.get("takes", []) or any(tool in q for q in pet.get("asked", []))
 
 
 def gentle(cfg, room):
@@ -196,7 +203,7 @@ def met(house, cfg, pet, w):
     return False
 
 
-SERVED = ("door", "creature", "bit", "look", "try", "game", "word")   # the wants its body can do something about without being told
+SERVED = ("door", "creature", "bit", "look", "try", "game", "word")   # (and "tool", as far as the book: lean)   # the wants its body can do something about without being told
 
 
 def possible(house, cfg, pet, w):
@@ -289,10 +296,12 @@ def hear(house, cfg, pet):
     from .actions import bump
     seen, words = pet.get("box_seen", LONG_AGO), pet.setdefault("words", [])
     for b in [b for b in pet.get("box", []) if b["tick"] > seen]:
-        heard = [w for w in re.findall(r"[a-z]{6,}", b["text"].lower()) if w not in words]
-        if max(map(len, heard), default=0) >= 8 and not b["text"].startswith("The forecast"):   # (a long word: short ones are mostly ones it only seems not to know)
-            pet["unknown"] = (pet.get("unknown", []) + [max(heard, key=len)])[-4:]
-        words += [w for w in dict.fromkeys(heard)]
+        # 13 October 2026: a thing it could picture (picturable.txt), not the longest word: "association" and
+        # "subsequently" are nothing to wonder about, and the book has nothing to show for them
+        heard = [w for w in dict.fromkeys(filter(None, (noun(cfg, w) for w in re.findall(r"[a-z]{3,}", b["text"].lower())))) if w not in words]
+        if heard and not b["text"].startswith("The forecast"):
+            pet["unknown"] = (pet.get("unknown", []) + heard[:1])[-4:]
+        words += heard
         pet["box_seen"] = b["tick"]
     del words[:-500]
     p = pet.get("prepared")
@@ -300,6 +309,12 @@ def hear(house, cfg, pet):
         add_event(house, pet, "the rain came and the %s was shut: your things stayed dry" % p["thing"])
         bump(pet, cfg, {"comfort": cfg["wants"]["lift"].get("comfort", 0)})
         pet["prepared"] = None
+
+
+def noun(cfg, word):
+    """The thing this word names, if it is one a pet could picture ("ships" -> "ship"), else None."""
+    return next((w for w in (word, word[:-1] if word.endswith("s") else "", word[:-2] if word.endswith("es") else "", word[:-3] + "y" if word.endswith("ies") else "")
+                 if w in cfg.get("picturable", ())), None)
 
 
 def hinted(house, cfg, pet, title, text):
@@ -347,6 +362,12 @@ def lean(house, cfg, pet):
             book = book_room(house)
             if book == here:
                 out["place"] = out["place"] or ("ask", w["word"], w["key"])
+            elif book in pet["rooms"]:
+                out["rooms"].add(book)
+        elif t == "tool" and not asked_of(pet, w["tool"]):   # what a tool is made of: the book may say
+            book = book_room(house)
+            if book == here:
+                out["place"] = out["place"] or ("ask", w["tool"], w["key"])
             elif book in pet["rooms"]:
                 out["rooms"].add(book)
         elif t in ("store", "glow", "warm", "window") and w.get("room") and w["room"] != here:

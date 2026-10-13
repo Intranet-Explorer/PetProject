@@ -179,6 +179,15 @@ def to_pick_up(house, cfg, pet, recipe):
     return [s for s in spots if recipe.get("material") in bits[s["bit"]]["can"]][:1]
 
 
+def made_today(house, pet):
+    """{"kind|material": how many of them it has made this world day} (13 October 2026: after two, that pair is not
+    offered to it again until tomorrow; everything else stays open)."""
+    t = pet.get("made_today")
+    if not t or t[0] != house["clock"]["day"]:
+        t = pet["made_today"] = [house["clock"]["day"], {}]
+    return t[1]
+
+
 def check_make(a, house, cfg, pet):
     """SPEC-v3.2 §3.1: a thing is a kind from the catalog, in a material its bits allow, a colour and a size."""
     r, room = a.get("recipe"), house["rooms"][pet["room"]]
@@ -192,7 +201,13 @@ def check_make(a, house, cfg, pet):
         return "nothing here can be made %s" % r.get("material")
     kind = cfg["kinds"][r["kind"]]
     if craft.lacking(cfg, r["kind"], carrying):   # (SPEC-v3.4 §3.1: what it takes has to be found out; it is not told what)
+        if r["kind"] in cfg["craft"]["tool"]:   # ... except a tool (13 October 2026): trying to make one says what is missing, and it goes on wanting it
+            pet.setdefault("lacks", {})[r["kind"]] = house["tick"]
+            pet["takes"] = list(dict.fromkeys(pet.get("takes", []) + [r["kind"]]))
+            return "you have not got what %s %s is made of: it takes %s" % (kind.get("a", "a"), r["kind"], craft.takes(cfg, r["kind"], carrying))
         return "you have not got what %s %s is made of" % (kind.get("a", "a"), r["kind"])
+    if made_today(house, pet).get("%s|%s" % (r["kind"], r["material"]), 0) >= cfg["make"]["same_a_day"]:
+        return "you have made %d %s %ss today: not another until tomorrow; anything else you could make is open" % (cfg["make"]["same_a_day"], r["material"], r["kind"])
     if r["material"] in kind.get("not", []):
         return "%s %s cannot be %s" % (kind.get("a", "a"), r["kind"], r["material"])
     if r.get("color") not in COLORS or not as_size(r.get("size", 2)):
@@ -247,6 +262,7 @@ def make(house, cfg, pet, a, clean):
     if not again:
         pet["made_kinds"].append("%s|%s" % (r["kind"], want))
     pet["last_made"] = {"tick": house["tick"], "kind": r["kind"], "material": want, "new": not again}
+    made_today(house, pet)["%s|%s" % (r["kind"], want)] = made_today(house, pet).get("%s|%s" % (r["kind"], want), 0) + 1
     craft.practise(house, cfg, pet, "making")
     moment(house, "made", "%s made %s it calls '%s'" % (label(pet), a_thing(cfg, recipe), name), pet["id"], room["id"])   # §6: the kind, then the name
     craft.first_of(house, cfg, pet, r["kind"])

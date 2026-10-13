@@ -370,7 +370,7 @@ when = { dusk = 0.4, night = 0.4 }
 ["take out"]
 do = "take out"
 doing = "taking the {what} out to look at"
-did = "took the {what} out of the {where} and looked it over"
+did = "took the {what} out of the {where}, looked it over and put it back"
 icon = "box"
 voice = "chirp"
 seconds = [3, 5]

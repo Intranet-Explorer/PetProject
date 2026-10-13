@@ -1449,3 +1449,44 @@ a wall or in a message is the mind's own words, read by other minds as a hint.
 
 **"Name it for what it does now."** A pet that joins two things into something new is told it could; there is no
 action to rename a thing, so the name it gave when joining stands.
+
+### Part B deployed, and a follow-up (13 October 2026)
+
+**Part B went live at 07:41 on 13 October** as measured (FINDINGS: v3.4 Part B). Tyler accepted the "three things
+handled" margin as he had for Part A: one or two pets with a single window of one or two, 97 to 99% of windows met.
+The repeat share (7 of 12 on the second day) and the missing tool and planting are what the follow-up is for.
+
+**Repeats.** After a pet has made the same kind in the same material twice in a world day, that pair is not
+offered to it again until the next day: its mind's list of kinds for that material leaves it out, and a make of it
+is refused in plain words. Everything else stays open. I read "twice" as twice that day, not twice ever; a pet can
+still make two springy charms every day, and both count as repeats if it has made one before.
+
+**Tools.** Trying to make a tool without what it takes now says what is missing ("it takes fired clay or carved
+wood"); every other kind that takes a found-out material still says only that something is missing. A tool kind is
+offered to a mind that wants that tool even when it cannot be made yet, so that the attempt can happen at all. The
+want then carries what the tool takes; before that it points at the book, and the pet's body goes there as it does
+for a word. The book has four pages of its own (crafting.toml `[[entry]]`: trowel, digging, clay, edge), found
+before the encyclopedia is searched, and each points at something to try through the hints already there.
+
+**Planting by paw.** A seed can be planted with no trowel. Planted by paw it grows at 0.7 of the rate, and a pet
+can have one such planting coming up at a time; with a trowel, the full rate and as many as there are beds. That
+is my reading of "slower and fewer plants". Planting by paw is where wanting something to dig with starts.
+
+**A body tries only what a want is about.** Wants opening doors stays. A body carries a bit to where it can be
+tried, and tries it if its mind has not, only for one of the pet's current wants; with no such want it does
+neither. That was already how it was built; the self-check now holds it there.
+
+**Words from the box.** A word a pet wonders about is now a thing it could picture, from a list (picturable.txt,
+about 400 nouns: animals, plants, land and sky, buildings, vehicles, made things, people by what they carry, food),
+less anything the house already has a word for. Not the longest word. Words already wondered about that are not on
+the list were dropped once.
+
+**The mess.** Clutter is every made thing on the floor that is not furniture the room uses: something that keeps
+things, a stool, a plant pot, a rug, something too heavy to move, an heirloom by its stone, or one of a corner.
+A corner is at most four tiles. A sleeping corner is against a wall and holds one bed-thing (cushion, blanket,
+nest, bed-mat) for each pet who sleeps in that room, which is where it last lay down to sleep; a room nobody
+sleeps in has none. A music or lamp corner is three or four of the sort standing together. Everything else of the
+sort is clutter, and tidying stacks it in storage. A thing whose home is a shelf or a box is never part of a
+corner, lies about while it is out, and is put back before anything else. A body taking something out to look at
+holds it up where it is kept and puts it back; a mind that takes a thing out leaves it out, and where it was kept
+becomes its home. Once, on arrival: every thing on a floor whose home was a keepsake box went back into it.

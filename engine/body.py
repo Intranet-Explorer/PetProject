@@ -190,13 +190,13 @@ def targets(house, cfg, pet, mem, name, A):
         seats = [n for n, o in objs.items() if ("rest" in o.get("fix", {}) or "soft" in o.get("fix", {}) or n in S or o.get("made", {}).get("recipe", {}).get("kind") in S)
                  and not o.get("wall") and not o.get("on") and not any(p["pos"] == o["pos"] for p in here(house, pet))]
         return [{"what": n, "goal": None if me == objs[n]["pos"] else list(objs[n]["pos"])} for n in sorted(seats, key=lambda n: (pet["times"].get("body seat " + n, 0), dist(me, objs[n]["pos"])))[:2]]
-    if do == "take out":   # something put away that it may take: out it comes, a few steps off, to be looked at (not into a mess, and not what has only just gone in)
+    if do == "take out":   # something put away that it may take: out it comes, is looked over there, and goes back where it was (13 October 2026: left out, sixteen such things lay about one room); not in a mess, and not what has only just gone in
         fresh = house["tick"] - ticks(cfg, cfg["order"]["just_out_seconds"])
         kept = [n for n, o in things.made(room).items() if o.get("on") in objs and order.may_move(house, pet, o) and not o["made"].get("heirloom") and o.get("kept", 0) < fresh]
         if room.get("mess", 0) >= 2 or not kept:
             return []
         n = min(kept, key=lambda n: (pet["times"].get("look " + n, 0), dist(me, objs[n]["pos"])))
-        return [{"what": n, "goal": near(objs[n]["pos"]), "to": free_tile(house, cfg, room, me if dist(me, objs[n]["pos"]) > 2 else [cfg["W"] // 2, cfg["H"] // 2])}]
+        return [{"what": n, "goal": near(objs[n]["pos"])}]
     if do == "bring":   # one of its own things, carried over to someone it is fond of
         kin = [p for p in kin_here(house, pet) if not p["sleep"]]
         mine = [n for n, o in things.on_floor(room).items() if o["made"]["owner"] == pet["id"] and not o["made"].get("heirloom") and not order.cap(cfg, o) and not things.prop(cfg, o).get("fixed")]
@@ -472,8 +472,7 @@ def finish(mind, now, cut=False):
                 fx.pop("tags", None)
                 key = "body seat " + name
             elif do == "take out" and o is not None and o.get("on"):
-                where, o["kept"] = o.pop("on"), h["tick"]
-                o["pos"] = free_tile(h, cfg, room, pet["pos"], name)
+                where, o["kept"] = o["on"], h["tick"]   # it is back where it was: looking is not leaving out
                 key = "look " + name
             elif do == "bring" and o is not None and not o.get("on"):
                 other = h["pets"].get(now.get("who") or "")
@@ -646,4 +645,4 @@ def doing(cfg, house, pet):
     walking = on_its_way(pet, now)
     return {"activity": now["name"], "doing": words(house, pet, now), "icon": "walk" if walking and now["do"] in ("nap", "window") else now["icon"], "what": now.get("what"), "who": now.get("who"),
             "since": now["since"], "passive": now["passive"], "walking": now["began"] is None, "goal": now.get("goal"),
-            "carrying": bool(now.get("to")) and now["began"] is not None}   # it has the thing in its paws and is taking it where it goes (the page shows it carried)
+            "carrying": (bool(now.get("to")) or now["do"] == "take out") and now["began"] is not None}   # it has the thing in its paws and is taking it where it goes (the page shows it carried)

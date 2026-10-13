@@ -1,0 +1,35 @@
+# Words a pet might catch from the box and wonder about (SPEC-v3.4 §4.2; 13 October 2026): concrete nouns it could
+# picture, one or more to a line, singular. Common words, abstract ones and names are left out on purpose; anything
+# that is already a bit, a kind of thing, a fixture or a room of the house is dropped when this is read.
+# animals
+elephant whale dolphin shark octopus squid jellyfish crab lobster seal walrus penguin eagle hawk falcon owl parrot swan goose heron crane pelican
+peacock ostrich flamingo sparrow raven crow pigeon rooster turkey horse pony donkey camel llama cow bull ox buffalo bison goat sheep lamb pig boar
+deer moose elk reindeer antelope giraffe zebra rhinoceros hippopotamus lion tiger leopard cheetah panther jaguar wolf fox coyote hyena bear panda
+koala kangaroo monkey gorilla chimpanzee baboon squirrel rabbit hare hedgehog badger otter beaver raccoon skunk bat rat hamster frog toad lizard
+snake cobra python crocodile alligator turtle tortoise salmon trout eel butterfly bee wasp hornet ant spider scorpion snail worm caterpillar
+dragonfly grasshopper cricket ladybird firefly dinosaur mammoth dragon
+# plants and what grows
+tree oak pine palm willow maple birch cedar bamboo cactus fern mushroom orchid tulip rose daisy sunflower lily lotus ivy thistle clover wheat corn
+rice barley potato carrot onion pumpkin cabbage pepper apple pear peach plum cherry lemon orange banana grape coconut pineapple strawberry walnut
+acorn forest jungle orchard meadow vineyard
+# land, water and sky
+mountain volcano hill cliff canyon valley cave desert dune island beach reef lagoon swamp marsh glacier iceberg waterfall river creek lake ocean
+harbor harbour bay lighthouse geyser crater boulder avalanche comet meteor asteroid planet moon star galaxy rainbow tornado hurricane lightning
+blizzard earthquake
+# buildings and places
+castle palace fortress tower cathedral church temple mosque pyramid monument statue fountain bridge tunnel dam canal windmill mill barn farm
+stable cottage cabin tent igloo skyscraper factory mine quarry museum library theater theatre stadium circus market bakery hospital school
+prison railway station airport dock pier village
+# things that go
+ship boat canoe raft sailboat steamship submarine ferry yacht anchor train locomotive wagon cart carriage chariot sled sleigh bicycle motorcycle
+car truck bus tram tractor airplane aeroplane helicopter balloon airship glider parachute rocket spacecraft satellite
+# made things
+crown throne sword shield spear arrow bow cannon armor armour helmet flag banner drum trumpet violin guitar piano harp organ whistle telescope
+microscope compass map globe clock watch camera telephone television radio computer robot engine wheel gear chain ladder rope net hook axe saw
+plow plough shovel bucket barrel kettle oven stove chimney candle torch umbrella tent kite puppet mask costume necklace ring medal coin treasure
+key lock gate fence wall roof window staircase elevator
+# people a pet could picture by what they wear or carry
+king queen prince princess knight soldier sailor pirate captain pilot astronaut farmer shepherd fisherman hunter blacksmith baker miner doctor
+nurse firefighter painter sculptor musician drummer dancer clown juggler acrobat wizard giant
+# food
+bread cheese butter honey egg soup cake pie cookie chocolate candy noodle sausage

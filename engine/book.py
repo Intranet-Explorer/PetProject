@@ -83,6 +83,12 @@ def lookup(cfg, question):
     return None
 
 
+def entry(cfg, question):
+    """One of the book's own pages (crafting.toml [[entry]]), if the question has one of its words: (title, text)."""
+    asked = set(words(question))
+    return next(((e["title"], e["text"]) for e in cfg["craft"].get("entry", []) if asked & set(e["words"])), None)
+
+
 def check_ask(a, house, cfg, pet, filled):
     room = house["rooms"][pet["room"]]
     if not any(o.get("fix", {}).get("book") for o in room["objects"].values()):
@@ -102,7 +108,7 @@ def ask(house, cfg, pet, a, clean):
     pet["asked_at"] = house["tick"]
     pet["asked"] = (pet.get("asked", []) + [q.lower()])[-12:]   # SPEC-v3.4 §4.1: a word it wondered about has been asked after
     craft.practise(house, cfg, pet, "reading")
-    found = lookup(cfg, q) if available(cfg) else None
+    found = entry(cfg, q) or (lookup(cfg, q) if available(cfg) else None)
     house.setdefault("fresh_reads", []).append({"pet": pet["id"], "tick": house["tick"], "question": q,
                                                 "title": found[0] if found else None, "text": found[1] if found else None})
     if not found:

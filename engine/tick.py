@@ -496,6 +496,7 @@ class Mind:
             if pet["plan"]:
                 self.end_plan("interrupted" if world.busy(pet) else "done")
             pet["sleep"], pet["following"] = {"since": h["tick"], "day": h["clock"]["day"], "done": False}, None
+            pet["sleeps_in"] = pet["room"]   # where it sleeps: a room's sleeping corner holds one bed-thing for each who does (order.corners)
             if body.state(pet)["now"]:
                 body.finish(self, body.state(pet)["now"], cut=True)
             for other in here(h, pet, awake=True):
@@ -664,6 +665,7 @@ class Engine:
             for stone in [n for n, o in room["objects"].items() if "memorial" in o]:   # 12 October 2026: everyone who has a stone has a keepsake box beside it
                 order.give_box(h, cfg, room, stone)
         self.unwear()
+        self.v341()
         if "v34" not in h:   # SPEC-v3.4 §7.5 comes to a house already lived in, once
             h["v34"] = {"at": h["tick"]}
             for pet in h["pets"].values():   # skills from what each has done; no recipes: discovery starts fresh
@@ -680,6 +682,31 @@ class Engine:
                     for _ in range(n - sum(1 for s in room["spots"] if s["bit"] == bit and not s["loose"])):
                         r = world.rnd(h, "v34", room["id"], bit, len(room["spots"]))
                         room["spots"].append({"bit": bit, "pos": world.free_tile(h, cfg, room, [r.randrange(1, cfg["W"] - 1), r.randrange(1, cfg["H"] - 1)]), "ready": True, "back": None, "loose": False})
+
+    def v341(self):
+        """13 October 2026, once: each pet sleeps where it last slept (a sleeping corner holds one bed-thing for each
+        who sleeps there); what was taken out of a keepsake box and left on the floor is back in it; and words from
+        the box that are nothing a pet could picture are no longer wondered about."""
+        h, cfg = self.house, self.cfg
+        if "v341" in h:
+            return
+        h["v341"] = {"at": h["tick"], "boxed": []}
+        last = {r[0]: r[1] for r in self.db.execute("SELECT pet, room, max(tick_to) FROM doing WHERE what = 'asleep' GROUP BY pet")} if self.db else {}
+        for pet in h["pets"].values():
+            if pet["stage"] in ("egg", "dead"):
+                continue
+            pet.setdefault("sleeps_in", pet["room"] if pet["sleep"] else last.get(pet["id"]))
+            pet["unknown"] = [w for w in pet.get("unknown", []) if w in cfg["picturable"]]
+            pet["wants"] = [w for w in pet.get("wants", []) if w["what"] != "word" or w["word"] in cfg["picturable"]]
+        for room in [r for r in h["rooms"].values() if r["type"]]:
+            for n, o in list(things.on_floor(room).items()):
+                box = order.box_of(h, o["made"]["owner"])
+                if box and not o["made"].get("heirloom") and o.get("home", {}).get("on") == box[1] and order.into_box(h, room, n):
+                    h["v341"]["boxed"].append([n, box[1], box[0]["id"]])
+        for room in [r for r in h["rooms"].values() if r["type"]]:
+            room["areas"], room["mess"] = order.areas(h, cfg, room), order.clutter(h, cfg, room)
+        for box, rid in dict.fromkeys((b, rid) for _, b, rid in h["v341"]["boxed"]):
+            moment(h, "kept", "what had been taken out of the %s and left lying is back in it: %s" % (box, ", ".join(n for n, b, _ in h["v341"]["boxed"] if b == box)), None, rid)
 
     def unwear(self):
         """12 October 2026: for one waking day old things were carried to a storeroom that was full, and wore out

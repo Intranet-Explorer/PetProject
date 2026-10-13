@@ -504,6 +504,26 @@ match = ["dye|colour|color|pigment", "flower|petal|plant|water"]
 bit = "petal"
 how = "soak"
 
+# ---- the book's own pages (13 October 2026): what it says under a few plain words the encyclopedia is no help with ----
+# words: any of these in the question finds the page. Like any passage, it may point at something to try (the hints above).
+
+[[entry]]
+words = ["trowel", "trowels"]
+title = "Trowel"
+text = "A trowel is a small tool held in one hand, with a flat blade for digging small holes and for planting. The blade has to be hard. The oldest trowels were flat pieces of fired clay, or wood carved thin."
+[[entry]]
+words = ["dig", "digs", "digging", "dug"]
+title = "Digging"
+text = "To dig is to move earth out of the way to make a hole. Animals dig with their paws, which is slow. A tool goes deeper: the first digging tools were pointed sticks and flat blades of baked clay. A small one for planting is called a trowel."
+[[entry]]
+words = ["clay"]
+title = "Clay"
+text = "Clay is soft, sticky earth found near water. Wet, it can be shaped in the paws. Warmed by a fire it bakes hard and keeps its shape for good: pots, tiles and the blades of simple tools are made of fired clay."
+[[entry]]
+words = ["edge", "edges", "sharp", "blade", "blades"]
+title = "Edge"
+text = "An edge is the thin side of a hard thing. A sharp edge cuts. A stone is given an edge by grinding it against another stone until one side is thin. Tools with an edge are used to cut and to carve wood."
+
 [knowing]
 inherited = 0.5           # how likely a child is to start out knowing each thing its parent knew
 lift = 5.0                # the curiosity a thing found out is worth to the one who found it
@@ -687,4 +707,6 @@ tended = 1.4              # ... and one watered and tended that day
 wilt_days = 2             # dry this long it wilts, and a wilted plant gives nothing
 cold = 0.5                # a cold night outdoors halves that night's growth
 grown_lift = 3.0          # the comfort of eating what the family grew, on top of the meal
+paw = 0.7                 # how fast a thing planted by paw grows, beside one planted with a trowel (13 October 2026: the trowel makes planting better, not possible)
+paw_plants = 1            # how many things planted by paw one pet can have coming up at a time; with a trowel, as many as there are beds
 beds = ["bean row", "herb patch", "melon bed", "tomato vine", "berry bush"]   # fixtures a seed can be planted in, besides a plant pot

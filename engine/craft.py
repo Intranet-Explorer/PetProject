@@ -182,7 +182,7 @@ def words(cfg, key):
         return "something %s joined with something %s makes a thing that is %s: %s" % (e["a"], e["b"], e["name"], e["says"])
     bit, how = key.split("|")
     if how == "plant":
-        return "a %s planted in earth with a trowel grows" % bit
+        return "a %s planted in earth grows" % bit
     return "%s, %s, makes %s" % (bit, DONE[how], C["rules"][(bit, how)]["gives"])
 
 
@@ -275,10 +275,13 @@ def check_process(a, house, cfg, pet, norm):
         return "you have no %s to hand" % bit if not have else "it takes two of them, and there is only one %s to hand" % bit
     if place(house, cfg, room, how) is None:
         return NOWHERE[how]
-    tool = "trowel" if how == "plant" else P.get("tool")
+    tool = P.get("tool")   # (13 October 2026: a seed can be planted by paw; a trowel makes it better, not possible)
     if tool and not tool_for(house, cfg, pet, tool):
         pet.setdefault("lacks", {})[tool] = house["tick"]   # (felt as a want: wants.py)
         return C["tool"][tool]["without"]
+    if how == "plant" and bit in C["grow"] and not tool_for(house, cfg, pet, "trowel") and by_paw(house, pet) >= C["growing"]["paw_plants"]:
+        pet.setdefault("lacks", {})["trowel"] = house["tick"]
+        return "your paws are sore from digging: what you planted by paw has to come up before you can plant again; something to dig with would do more"
     if skill(cfg, pet, "making") < P.get("skill", 0):
         return "your paws are not sure enough for that yet"
     if how == "plant" and bit not in C["grow"]:
@@ -315,7 +318,7 @@ def process(house, cfg, pet, a, norm):
     room, C = house["rooms"][pet["room"]], cfg["craft"]
     how, bit = norm(a["how"]), norm(a["what"])
     key, P = "%s|%s" % (bit, how), C["process"].get(how, {})
-    tool = "trowel" if how == "plant" else P.get("tool")
+    tool = P.get("tool") or ("trowel" if how == "plant" and tool_for(house, cfg, pet, "trowel") else None)
     fetched = ""
     if tool:
         name, frm = fetch(house, cfg, pet, tool)
@@ -325,11 +328,15 @@ def process(house, cfg, pet, a, norm):
     if how == "plant":
         name, _ = place(house, cfg, room, how)
         take(house, cfg, pet, room, bit, 1)
-        room["objects"][name]["planted"] = {"what": bit, "at": house["tick"], "grow": 0.0, "watered": house["tick"], "by": pet["id"], "stage": "planted"}
+        room["objects"][name]["planted"] = {"what": bit, "at": house["tick"], "grow": 0.0, "watered": house["tick"], "by": pet["id"], "stage": "planted", **({} if tool else {"paw": True})}
         tried[key] = "planted"
         practise(house, cfg, pet, "tending")
         new = learn(house, cfg, pet, key)
         moment(house, "planted", "%s planted a %s in the %s" % (label(pet), bit, name), pet["id"], room["id"])
+        if not tool:   # by paw: a shallow hole, so it comes up slowly, and one at a time; wanting something to dig with starts here
+            pet.setdefault("lacks", {})["trowel"] = house["tick"]
+            return "you scraped a shallow hole in the %s with your paws and planted the %s; it will want water, and will come up slowly: something to dig with would plant it deeper" % (name, bit), \
+                {"curiosity": C["knowing"]["lift"] if new else 0.0}, "plant" if new else None
         return "%syou dug a hole in the %s with the trowel and planted the %s; it will want water" % (fetched, name, bit), {"curiosity": C["knowing"]["lift"] if new else 0.0}, "plant" if new else None
     rule = C["rules"].get((bit, how))
     if not rule:
@@ -360,6 +367,18 @@ def process(house, cfg, pet, a, norm):
 def lacking(cfg, kind, bits):
     """What a kind takes that is not among these bits: [] if it can be made of them."""
     return [g.split("|")[0] for g in cfg["craft"].get("needs", {}).get(kind, []) if not any(alt in bits for alt in g.split("|"))]
+
+
+def takes(cfg, kind, bits=()):
+    """What a kind is made of that is not among these bits, in words: "fired clay or carved wood", "wood or carved
+    wood, and rope or vine cord"."""
+    return ", and ".join(" or ".join(g.split("|")) for g in cfg["craft"].get("needs", {}).get(kind, []) if not any(alt in bits for alt in g.split("|")))
+
+
+def by_paw(house, pet):
+    """How many things it planted by paw are still coming up."""
+    return sum(1 for r in house["rooms"].values() if r["type"] for o in r["objects"].values()
+               if o.get("planted") and o["planted"].get("paw") and o["planted"].get("by") == pet["id"] and o["planted"]["grow"] < 1 and not o["planted"].get("wilted"))
 
 
 def gated(cfg, kind):
@@ -458,6 +477,7 @@ def grow(house, cfg):
                     elif room["type"] == "garden" and house["clock"]["phase"] == "night" and season["growth"] < 0.8:
                         rate *= G["cold"]       # a cold night outdoors
                     was = stage(p)
+                    rate *= G["paw"] if p.get("paw") else 1.0   # planted by paw, in a shallow hole
                     p["grow"] = round(min(1.0, p["grow"] + rate * (G["tended"] if dry * 24 <= G["water_hours"] else G["untended"]) / (24 * cfg["craft"]["grow"][p["what"]]["days"])), 3)
                     who = house["pets"].get(p.get("by") or "")
                     if stage(p) != was and who and who["stage"] != "dead":

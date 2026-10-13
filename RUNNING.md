@@ -82,8 +82,9 @@ Everything tunable is in `config.toml` (the engine), `house.toml` (rooms, bits, 
 `materials.toml` (what each property of a made thing does), `activities.toml` (what a pet's body does by
 itself: add an activity there and the body can do it) and `crafting.toml` (SPEC-v3.4: what can be done to a bit and
 where, what comes of it, the kinds that take a material found out first, the tools, what two joined things make
-that neither was, what a seed grows into, and what a passage in the book can point at). The pets are told none of the numbers in any
-of them.
+that neither was, what a seed grows into, what a passage in the book can point at, and the book's own few pages).
+`picturable.txt` lists the words from the box a pet may wonder about: things it could picture. The pets are told
+none of the numbers in any of them.
 
 ## What a pet is given
 

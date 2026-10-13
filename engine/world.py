@@ -45,6 +45,10 @@ def load_config(path=ROOT / "config.toml", profile=None):
     cfg["layouts"] = {f.stem: json.loads(f.read_text()) for f in sorted((art / "rooms").glob("*.json"))} if (art / "rooms").exists() else {}
     from . import craft   # SPEC-v3.4 §3: crafting.toml, laid into the bits and the properties
     craft.load(cfg, path.parent)
+    # the words from the box a pet may wonder about (picturable.txt): never what the house already has a word for
+    own = set(cfg["house"]["bits"]) | set(cfg["kinds"]) | set(cfg["house"]["rooms"]) | {f["name"] for r in cfg["house"]["rooms"].values() for f in r["fixtures"]}
+    listed = path.parent / "picturable.txt"
+    cfg["picturable"] = {w for line in (listed.read_text().splitlines() if listed.exists() else ()) if not line.startswith("#") for w in line.split()} - own
     return derive(cfg)
 
 

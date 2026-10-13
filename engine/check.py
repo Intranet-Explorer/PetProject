@@ -22,6 +22,7 @@ def load_config(*a, body=False, **k):
     them); the body has its own checks at the end (SPEC-v3.3)."""
     cfg = world.load_config(*a, **k)
     cfg["body"]["on"] = body
+    cfg["make"]["same_a_day"] = 99   # (these checks make the same thing over and over; the rule that stops that has its own check)
     return cfg
 
 
@@ -1274,8 +1275,10 @@ async def main():
             await eA.tick()
         # (SPEC-v3.4: a body takes a thing out now and then to look at, and that is put back; nothing else is tidied twice)
         again = eA.db.execute("SELECT count(*) FROM doing WHERE what = 'tidy' AND text != ''").fetchone()[0] - n0 - tidied
-        outs = eA.db.execute("SELECT count(*) FROM doing WHERE what IN ('take out', 'bring to kin') AND text != ''").fetchone()[0]
-        assert again <= outs + 2 and order.clutter(hA, cA, roomA) < 2, "and a tidy room is left alone, but for what is taken out and put back: %d tidied again, %d taken out" % (again, outs)
+        outs = eA.db.execute("SELECT count(*) FROM doing WHERE what = 'take out' AND text != ''").fetchone()[0]
+        brought = eA.db.execute("SELECT count(*) FROM doing WHERE what = 'bring to kin' AND text != ''").fetchone()[0]
+        # (13 October 2026: taking a thing out to look at ends with putting it back, so that leaves nothing to tidy)
+        assert again <= brought + 2 and not loose() and order.clutter(hA, cA, roomA) == 0, "and a tidy room is left alone: what is taken out to look at goes back: %d tidied again, %d taken out, %s loose" % (again, outs, loose())
         # keeping things: on a shelf, down again, a home after twice, no more than it holds, and a shelf that goes drops what it held
         store, name = "shelf", "loose 0"
         for o2 in things.made(roomA).values():
@@ -1405,17 +1408,47 @@ async def main():
         for n2, o2 in roomA["objects"].items():
             if n2 in caps:
                 o2["fix"]["store"] = caps[n2]
-        # a corner: three of a sort standing together are in their place, and a fourth is put with them
+        # a sleeping corner (13 October 2026): against a wall, one bed-thing for each pet who sleeps here; the rest are clutter, stacked away
         clear()
         caps = {n2: o2["fix"].pop("store") for n2, o2 in roomA["objects"].items() if "fix" in o2 and o2["fix"].get("store")}
         for i, pos in enumerate(([2, 5], [3, 5], [4, 5], [9, 5])):
             pa["carrying"], pa["needs"]["energy"] = ["fluff"], 80.0
             r = await do(eA, pa, {"type": "make", "recipe": dict(recipe, name="bed %d" % i), "near": "here"})
             roomA["objects"]["bed %d" % i]["pos"] = pos
-        roomA["areas"] = order.areas(hA, cA, roomA)
+        slept = {p2["id"]: p2.pop("sleeps_in", None) for p2 in hA["pets"].values()}
+        assert len(order.loose(hA, cA, roomA)) == 4 and not order.areas(hA, cA, roomA) and not order.job(hA, cA, pa, roomA), \
+            "nobody sleeps here: no sleeping corner, four beds lie about, and there is nowhere to put them: %s" % order.areas(hA, cA, roomA)
+        pa["sleeps_in"] = roomA["id"]
         j = order.job(hA, cA, pa, roomA)
-        assert order.loose(hA, cA, roomA) == ["bed 3"] and j["job"][:3] == ["thing", "bed 3", "at"], "three nests together are a sleeping corner; the fourth lies about: %s" % j
-        assert order.do_job(hA, cA, pa, roomA, j["job"]) == "with the others like it" and not order.loose(hA, cA, roomA) and not order.job(hA, cA, pa, roomA)
+        assert j and j["job"][2] == "at" and order.edge(cA, j["job"][3]), "one sleeps here: one bed goes against the wall: %s" % j
+        assert order.do_job(hA, cA, pa, roomA, j["job"]) == "in the sleeping corner" and len(order.loose(hA, cA, roomA)) == 3 and not order.job(hA, cA, pa, roomA)
+        assert [len(a2["tiles"]) for a2 in order.areas(hA, cA, roomA)] == [1], "the corner is the one bed's tile: %s" % order.areas(hA, cA, roomA)
+        roomA["objects"]["rack"] = {"pos": [9, 1], "state": None, "fix": {"store": 6}}
+        for _ in range(3):
+            j = order.job(hA, cA, pa, roomA)
+            assert j and j["job"][2:] == ["on", "rack"] and order.do_job(hA, cA, pa, roomA, j["job"]), "a spare bed is stacked in storage: %s" % j
+        assert not order.loose(hA, cA, roomA) and order.clutter(hA, cA, roomA) == 0
+        # no corner swallows the room: six beds along a wall with six sleeping here, and the corner is four tiles; a thing whose home is a shelf is clutter while it is out
+        clear()
+        for i in range(6):
+            pa["carrying"], pa["needs"]["energy"] = ["fluff"], 80.0
+            r = await do(eA, pa, {"type": "make", "recipe": dict(recipe, name="cot %d" % i), "near": "here"})
+            roomA["objects"]["cot %d" % i]["pos"] = [0, 1 + i]
+        hA["pets"].update({"s%d" % i: dict(pa, id="s%d" % i, room="elsewhere", sleeps_in=roomA["id"]) for i in range(5)})
+        corner = [a2 for a2 in order.areas(hA, cA, roomA) if a2["name"] == "sleeping corner"]
+        assert len(corner) == 1 and len(corner[0]["tiles"]) == 4 and len(order.loose(hA, cA, roomA)) == 2, "a sleeping corner is at most four tiles: %s" % corner
+        one = next(n2 for n2 in things.made(roomA) if n2 not in order.loose(hA, cA, roomA))
+        roomA["objects"][one]["home"] = {"room": roomA["id"], "on": "rack"}
+        j = order.job(hA, cA, pa, roomA)
+        assert one in order.loose(hA, cA, roomA) and j["job"][:4] == ["thing", one, "on", "rack"], "what has a home on a shelf lies about while it is out, and goes back first: %s" % j
+        for i in range(5):
+            del hA["pets"]["s%d" % i]
+        for p2 in hA["pets"].values():
+            p2.pop("sleeps_in", None) if slept.get(p2["id"]) is None else p2.update(sleeps_in=slept[p2["id"]])
+        del roomA["objects"]["rack"]
+        for n2, o2 in roomA["objects"].items():
+            if n2 in caps:
+                o2["fix"]["store"] = caps[n2]
         clear()
         # a mess it knows of, anywhere in the house, draws it door by door: through rooms it knows, to the nearest
         pa["carrying"], pa["needs"]["energy"] = ["fluff"], 80.0
@@ -1582,6 +1615,62 @@ async def main():
         bed["planted"] = {"what": "seed", "at": hA["tick"], "grow": 0.2, "watered": hA["tick"] - 3 * cA["ticks_per_day"], "by": pa["id"], "stage": "sprout"}
         craft.grow(hA, cA)
         assert bed["planted"].get("wilted") and "pulled the wilted" in actions.use(hA, cA, pa, "herb patch")[0] and "planted" not in bed, "left dry, it wilts"
+        # 13 October 2026. A seed can be planted by paw: one at a time, and it comes up more slowly; wanting something to dig with starts there
+        from . import book as the_book
+        spade = roomA["objects"].pop("spade")
+        roomA["objects"]["bean row"] = {"pos": [9, 6], "fix": {"plant": True}, "grow": 0.0, "state": "bare"}
+        pa["carrying"], pa["needs"]["energy"], pa["lacks"] = ["seed", "seed", "seed"], 80.0, {}
+        why, got = act({"type": "process", "what": "seed", "how": "plant"})
+        first = next(o2 for o2 in roomA["objects"].values() if o2.get("planted"))
+        assert not why and first["planted"].get("paw") and "with your paws" in got[0] and "trowel" in pa["lacks"], "with no trowel a seed is planted by paw: %s %s" % (why, got)
+        why, _ = act({"type": "process", "what": "seed", "how": "plant"})
+        assert why and "sore" in why, "one planting by paw at a time: %s" % why
+        grew = []
+        for paw in (True, False):
+            first["planted"].update(grow=0.0, watered=hA["tick"], paw=paw)
+            craft.grow(hA, cA)
+            grew.append(first["planted"]["grow"])
+        assert 0 < grew[0] < grew[1], "planted by paw it comes up more slowly than planted with a trowel: %s" % grew
+        first["planted"]["paw"], roomA["objects"]["spade"] = True, spade
+        why, got = act({"type": "process", "what": "seed", "how": "plant"})
+        assert not why and "with the trowel" in got[0] and sum(1 for o2 in roomA["objects"].values() if o2.get("planted")) == 2, "with a trowel, as many as there are beds: %s" % (why,)
+        del roomA["objects"]["bean row"], roomA["objects"]["herb patch"]["planted"]
+        # a tool it cannot make yet: trying says what it is short of, and it goes on wanting one with that in mind
+        pa["carrying"], pa["lacks"], pa["takes"], pa["needs"]["energy"] = ["pebble"], {}, [], 80.0
+        del roomA["objects"]["spade"]
+        why = things.check_make({"type": "make", "recipe": dict(recipe, kind="trowel", material=cA["house"]["bits"]["pebble"]["can"][0], name="digger")}, hA, cA, pa)
+        assert why and "it takes fired clay or carved wood" in why and "trowel" in pa["lacks"] and pa["takes"] == ["trowel"], "a tool that cannot be made yet says what is missing: %s" % why
+        assert any(c2["what"] == "tool" and "a trowel takes fired clay or carved wood" in c2["text"] for c2 in wants.candidates(hA, cA, pa)), [c2["text"] for c2 in wants.candidates(hA, cA, pa) if c2["what"] == "tool"]
+        roomA["objects"]["spade"] = spade
+        # the book's own pages: a trowel, digging, clay, an edge; and what is read there points at something to try
+        pa["hints"], pa["tried"] = [], {}
+        assert the_book.entry(cA, "what is trowel")[0] == "Trowel" and the_book.entry(cA, "How do I dig?")[0] == "Digging" and the_book.entry(cA, "what is association") is None
+        assert "what warmth does to clay" in wants.hinted(hA, cA, pa, *the_book.entry(cA, "what is clay")), "reading about clay points at warming it"
+        assert "what grinding does to a pebble" in wants.hinted(hA, cA, pa, *the_book.entry(cA, "what is an edge")), "reading about an edge points at grinding a stone"
+        pa["hints"] = []
+        assert "what warmth does to clay" in wants.hinted(hA, cA, pa, *the_book.entry(cA, "what is a trowel"))
+        pa["hints"] = []
+        # the same kind in the same material twice in a world day is enough: not again until tomorrow, and everything else stays open
+        cA["make"]["same_a_day"], pa["made_today"] = 2, None
+        for i in range(4):
+            pa["carrying"], pa["needs"]["energy"] = ["fluff"], 80.0
+            why, got = act({"type": "make", "recipe": dict(recipe, name="twin %d" % i, kind="cushion" if i == 3 else "nest"), "near": "here"})
+            assert bool(why) == (i == 2) and (not why or "until tomorrow" in why), "two of a kind in a material a day, and anything else is open: %d %s" % (i, why)
+        pa["made_today"][0] -= 1
+        pa["carrying"], pa["needs"]["energy"] = ["fluff"], 80.0
+        why = actions.check({"type": "make", "recipe": dict(recipe, name="twin 4"), "near": "here"}, hA, cA, pa, mA.mem)
+        assert "until tomorrow" not in (why or ""), "tomorrow it is open again: %s" % why
+        cA["make"]["same_a_day"] = 99
+        for n2 in [n2 for n2 in things.made(roomA) if n2.startswith("twin")]:
+            del roomA["objects"][n2]
+        # what the box says: a thing it could picture is wondered about; long and abstract words are not
+        pa["box"], pa["box_seen"], pa["words"], pa["unknown"] = [{"tick": hA["tick"], "text": "The association subsequently established that two ships reached the lighthouse."}], LONG_AGO, [], []
+        wants.hear(hA, cA, pa)
+        assert pa["unknown"] == ["ship"] and "lighthouse" in pa["words"], "a word from the box that is wondered about is a thing a pet could picture: %s" % pa["unknown"]
+        pa["box"], pa["unknown"] = [], []
+        # its body tries nothing by itself: only what one of its wants is about
+        pa["wants"] = []
+        assert not body.targets(hA, cA, pa, mA.mem, "try it", cA["activities"]["try it"]) and not body.targets(hA, cA, pa, mA.mem, "take to try", cA["activities"]["take to try"]), "with no want behind it, a body tries nothing"
         # wants: made from where it is and what it has not done, told to its mind, met when the world shows it, and faded when left
         cA["wants"] = dict(cA["wants"], most=3)
         pa["wants"], pa["wanted"], pa["carrying"] = [], {}, []
