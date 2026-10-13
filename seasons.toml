@@ -1,0 +1,58 @@
+# Seasons that matter (SPEC-v3.5 §5). Each season's table here is laid over the one of the same name in house.toml
+# (sunrise, sunset, growth, cold, weather): what a season asks of the house, beside what its sky does. The pets are
+# told none of the numbers. Tune here, not in code. Rates are per 10 seconds; days are world days.
+#
+#   needs       what the season asks, in a few words: said with the time in everything a pet is told
+#   garden      bits that lie about under the open sky while the season lasts, beside what the garden always grows
+#   eggs        how much more tired a pet may be and still lay an egg (a step of energy as it is felt)
+#   warm_day    what a warm thing does to whoever stands by it by day, times this (1: uncomfortable, as on any day);
+#   warm_says   ... and how that feels ({thing}: its name)
+#   harvest     this many more of each food a ripe plant gives
+#   stores      wants come to put food by
+#   dormant     under the open sky nothing planted grows, or wilts, until the season is over; under glass it goes on
+#   cold_rooms  comfort lost in these rooms, day and night, on top of the season's cold (house.toml), away from anything warm
+#   spoil       how fast food left lying goes bad, beside any other season
+
+[spring]
+needs = "everything is coming up"
+garden = { petal = 2, seed = 2 }
+eggs = 1
+
+[summer]
+needs = "warm things are too warm by day"
+warm_day = 1.6
+warm_says = "the {thing} beside you is too warm to be near in the heat of the day"
+
+[autumn]
+needs = "food not put by spoils; winter is next"
+garden = { "fallen leaf" = 4 }
+harvest = 1
+stores = true
+
+[winter]
+needs = "only the greenhouse grows; keep warm"
+dormant = true
+warm_day = -1.0
+warm_says = "the {thing} beside you is warm against the winter"
+cold_rooms = { cellar = -0.15, attic = -0.1, garden = -0.15 }
+spoil = 0.5
+
+# ---- food that keeps (§5): put away in anything that keeps things it stays good; left lying it goes bad ----
+
+[food]
+bits = ["bean", "berry", "meal", "seed cake"]
+days = 1.5                # lying loose on a floor this long, it has gone bad
+cold = 0.5                # ... this much slower in a cold room
+cold_rooms = ["cellar"]
+becomes = "spoiled food"
+
+# ---- the seasons' own bits: never grown by a room all year, never delivered ----
+
+[bit."fallen leaf"]       # autumn, in the garden: dry and deep enough to be warm
+fades_days = 2
+can = ["warm", "soft"]
+looks = { shape = "triangle", color = "orange" }
+[bit."spoiled food"]      # what food left lying turns to: nothing to eat, black and soft, gone in a day
+fades_days = 1
+can = ["dark"]
+looks = { shape = "blob", color = "brown" }

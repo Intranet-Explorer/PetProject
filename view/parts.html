@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Pet parts</title>
+<!-- The parts library by itself (SPEC-v3.5 §1), for checking its style: every thing part at every size, every body
+     part and body plan on a pet, and random compositions of both. It draws with the house's own code (src/parts.ts,
+     src/petsprite.ts), so what is judged here is what the house shows. On a running house: /parts.html
+     ?seed=7 other random ones · ?z=4 zoom · ?t=1.5 freezes the clock at that second · #things #bodies #random, or nothing: all.
+     The older page of the rest of the art is /art/preview.html. -->
+<style>
+  body { margin: 12px; background: #2a2f33; color: #e8e2d6; font: 12px/1.3 ui-monospace, Menlo, monospace; }
+  h2 { font-size: 13px; margin: 18px 0 6px; } p { margin: 2px 0 8px; color: #b9b7ae; max-width: 110ch; }
+  canvas { image-rendering: pixelated; display: block; }
+  .grid { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; } figure { margin: 0; } figcaption { margin-top: 2px; color: #b9b7ae; font-size: 11px; max-width: 150px; }
+  .sand { background: #cbb28c; padding: 6px; display: flex; gap: 6px; align-items: flex-end; } .wood { background: #8f6a48; } .green { background: #7c8a6a; }
+</style>
+</head>
+<body>
+<div id="out"></div>
+<script type="module">
+import { composeThing, loadParts, partsData } from "./src/parts.ts";
+import { PET_ANIMS, petSheet } from "./src/petsprite.ts";
+
+const q = new URLSearchParams(location.search), Z = +(q.get("z") ?? 4), frozen = q.has("t") ? +q.get("t") : null, want = location.hash.slice(1);
+let seed = +(q.get("seed") ?? 5);
+const rnd = () => ((seed = (seed * 1664525 + 1013904223) % 4294967296) / 4294967296), one = (a) => a[Math.floor(rnd() * a.length)];
+const out = document.getElementById("out");
+const el = (tag, cls, parent, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; (parent ?? out).append(e); return e; };
+const section = (id, title, note) => { if (want && want !== id) return null; el("h2", "", out, title); if (note) el("p", "", out, note); return el("div", "grid"); };
+const big = (src, z = Z) => { const c = el("canvas", "", document.createElement("div")); c.width = src.width * z; c.height = src.height * z; const x = c.getContext("2d"); x.imageSmoothingEnabled = false; x.drawImage(src, 0, 0, c.width, c.height); return c; };
+const fig = (grid, caption, ...canvases) => { const f = el("figure", "", grid), s = el("div", "sand", f); s.append(...canvases); el("figcaption", "", f, caption); return s; };
+
+await loadParts("/art");
+const D = partsData(), bodies = await (await fetch("/art/bodies.json")).json();
+const COLOURS = ["red", "orange", "yellow", "green", "teal", "blue", "purple", "pink", "brown", "white", "grey", "black"];
+const MATERIALS = ["soft", "hard", "warm", "bright", "cool", "dark", "noisy", "quiet", "bouncy", "heavy", "sweet", "fragrant", "glassy", "springy"];
+const sizes = Object.keys(D.rules.px), bases = Object.keys(D.thing).filter((n) => D.thing[n].role === "base"), rest = Object.keys(D.thing).filter((n) => D.thing[n].role !== "base");
+
+// ---- thing parts ----
+let g = section("things", "Thing parts", "Every part as it is drawn (unpainted), at each size a thing can be: " + sizes.map((s) => `${s} ${D.rules.px[s]}px`).join(", ") + ". A base says where things go on it; the others what they go on.");
+if (g) for (const [name, p] of Object.entries(D.thing))
+  fig(g, `${name} · ${p.role}${p.glow ? " · glows" : ""}${p.sound ? ` · ${p.sound}` : ""}\n${p.spots ? "spots: " + p.spots.join(", ") : "on: " + p.on.join(", ")}`, ...sizes.map((size) => big(composeThing({ parts: [{ part: name, at: null }], size }))));
+
+g = section("things", "Each catalog kind as its parts", "What an invention takes from each kind: its base, and its signature part on the first spot of that base it can go on.");
+if (g) for (const [kind, k] of Object.entries(D.kinds)) {
+  const at = D.thing[k.signature].on.find((s) => D.thing[k.base].spots.includes(s));
+  fig(g, `${kind}: ${k.base} + ${k.signature}${at ? ` @${at}` : " (no spot)"}`, big(composeThing({ parts: [{ part: k.base, at: null, color: "brown", material: "hard" }, ...(at ? [{ part: k.signature, at, color: "teal", material: "hard" }] : [])], size: "small" })));
+}
+
+/** A random thing the rules allow: a base, then one or two parts each on a spot of it that is still free. */
+function randomThing(size) {
+  const base = one(bases), free = [...D.thing[base].spots], parts = [{ part: base, at: null, color: one(COLOURS), material: one(MATERIALS) }];
+  for (let n = 1 + Math.floor(rnd() * 2), tries = 0; n > 0 && tries < 30; tries++) {
+    const name = one(rest), at = one(D.thing[name].on.filter((s) => free.includes(s)));
+    if (!at || parts.length >= D.rules.max_parts || (D.rules.no_stack.includes(name) && parts.some((p) => p.part === name))) continue;
+    free.splice(free.indexOf(at), 1);
+    parts.push({ part: name, at, color: one(COLOURS), material: one(MATERIALS) });
+    n--;
+  }
+  return { parts, size };
+}
+g = section("random", "Random things", "Two or three parts each, in random materials and colours, small (16) on the floor colour and large (24) on wood.");
+if (g) for (let i = 0; i < 60; i++) {
+  const t = randomThing(i % 3 === 2 ? "large" : "small");
+  fig(g, t.parts.map((p) => `${p.color} ${p.part}${p.at ? "@" + p.at : ""}`).join(" + "), big(composeThing(t))).classList.toggle("wood", i % 3 === 2);
+}
+
+// ---- bodies ----
+const PLAIN = { roundness: 0.72, stretch: 1.05, wobble: 0.4, hue: 31, saturation: 0.6, pattern: "plain", pattern_density: 0.5, eye_size: 0.5, eye_spacing: 0.4, limbs: 0, marks: [],
+  plan: "blob", ears: "none", tail: "none", head: "none", whiskers: "no", feet: "nubs", mouth: "dot", fur: "thin", shade: "light", size: 1 };
+const live = [];   // [canvas, frames, fps]
+const pet = (genome, stage, anim = "idle", z = Z) => {
+  const sheet = petSheet(genome, stage, { grey: stage === "elder" ? 0.55 : 0 }), frames = sheet.frames[anim], c = big(frames[0], z);
+  live.push([c, frames, sheet.fps[anim]]);
+  return c;
+};
+const turned = (genome, stage = "adult") => ["stand.down", "stand.right", "stand.up", "stand.left"].map((a) => pet(genome, stage, a));
+g = section("bodies", "Body parts", "Every value of every slot, alone on a plain grown body (front, right, back, left), and on a little one.");
+if (g) for (const [slot, values] of Object.entries(bodies.slots)) for (const v of values) fig(g, `${slot}: ${v}`, ...turned({ ...PLAIN, [slot]: v }), pet({ ...PLAIN, [slot]: v }, "child"));
+g = section("bodies", "Patterns and sizes", "Each pattern (the five, and what two give together); the smallest and the largest body.");
+if (g) {
+  for (const pattern of bodies.patterns) fig(g, pattern, pet({ ...PLAIN, hue: 200, pattern }, "adult", "stand.down"), pet({ ...PLAIN, hue: 200, pattern }, "adult", "stand.up"), pet({ ...PLAIN, hue: 200, pattern }, "child"));
+  for (const size of [0.8, 1, 1.2]) fig(g, `size ${size}`, ...["hatchling", "child", "youngling", "adult", "elder"].map((s) => pet({ ...PLAIN, size }, s)));
+}
+g = section("bodies", "Body plans", "Each plan at every stage, then turned each way.");
+if (g) for (const plan of bodies.plans) fig(g, plan, ...["hatchling", "child", "youngling", "adult", "elder"].map((s) => pet({ ...PLAIN, plan, hue: 160 }, s)), ...turned({ ...PLAIN, plan, hue: 160 }));
+g = section("anims", "Every animation, every plan", "Each row a plan, wearing ears, a tail, a crest, whiskers and long legs, so that anything left behind by a movement shows.");
+if (g) for (const plan of bodies.plans) {
+  const G = { ...PLAIN, plan, hue: 280, ears: "pointed", tail: "long", head: "crest", whiskers: "yes", feet: plan === "long" ? "paws" : "legs", pattern: "stripes" };
+  const row = el("div", "sand green", el("figure", "", g));
+  for (const a of PET_ANIMS) { const f = el("figure", "", row); f.append(pet(G, "adult", a, 3)); el("figcaption", "", f, a); }
+  el("figcaption", "", row.parentElement, plan);
+}
+/** A random body: mostly plain, as a family's are, with a few parts. */
+function randomBody() {
+  const G = { ...PLAIN, roundness: 0.3 + rnd() * 0.7, stretch: 0.8 + rnd() * 0.55, hue: Math.floor(rnd() * 360), saturation: 0.3 + rnd() * 0.7, pattern: one(bodies.patterns), pattern_density: rnd(),
+    eye_size: 0.2 + rnd() * 0.8, eye_spacing: 0.2 + rnd() * 0.6, size: 0.8 + rnd() * 0.4, plan: rnd() < 0.5 ? "blob" : one(bodies.plans) };
+  for (const [slot, values] of Object.entries(bodies.slots)) G[slot] = rnd() < 0.5 ? values[0] : one(values);
+  return G;
+}
+g = section("random", "Random bodies", "A grown one, and its child as the engine might make it: the same body with one slot a step along.");
+if (g) for (let i = 0; i < 48; i++) {
+  const G = randomBody(), slot = one(Object.keys(bodies.slots)), values = bodies.slots[slot], n = values.indexOf(G[slot]);
+  const child = { ...G, [slot]: values[Math.min(values.length - 1, Math.max(0, n + (rnd() < 0.5 ? -1 : 1)))], hue: (G.hue + Math.round(rnd() * 30 - 15) + 360) % 360 };
+  fig(g, `${G.plan} · ${["ears", "tail", "head"].map((s) => G[s]).join(" ")}\n${G.pattern}, ${G.feet}, ${G.mouth}, ${G.fur}, ${G.shade}`, pet(G, "adult"), pet(child, "child"));
+}
+
+const t0 = performance.now();
+(function tick() {
+  const t = frozen ?? (performance.now() - t0) / 1000;
+  for (const [c, frames, fps] of live) {
+    const f = frames[Math.floor(t * fps) % frames.length];
+    if (c.f !== f) { c.f = f; const x = c.getContext("2d"); x.clearRect(0, 0, c.width, c.height); x.drawImage(f, 0, 0, c.width, c.height); }
+  }
+  if (frozen == null) requestAnimationFrame(tick);
+})();
+document.title = "Pet parts: ready";
+</script>
+</body>
+</html>

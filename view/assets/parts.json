@@ -2,240 +2,790 @@
  "about": "SPEC-v3.5 \u00a71: the parts library. `thing`: every thing part. A base has `spots` (where other parts may go); a top or a wrap has `on` (the spots it may sit on). `layer` is behind, body or front. `glow`: it gets a soft halo. `sound`: what it sounds like (\u00a73.4). `kinds`: for every kind in kinds.json, the base part it is built on and the signature part it gives to an invention. `rules`: the composition limits. The engine composes inventions from the names here; the view draws them. Drawing fields (file, rect, where each spot is in pixels, regions) are added per part by the art.",
  "rules": {
   "max_parts": 3,
-  "no_stack": [
-   "flame",
-   "blade"
-  ],
+  "no_stack": ["flame", "blade"],
   "px": {
    "small": 16,
    "large": 24,
    "furniture": 32
-  }
+  },
+  "behind": ["inside"]
  },
  "thing": {
   "stick": {
    "role": "base",
-   "spots": [
-    "tip",
-    "side"
-   ],
-   "layer": "body"
+   "spots": ["tip", "side"],
+   "layer": "body",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [0, 0, 16, 16],
+     "at": {
+      "tip": [7, 7],
+      "base": [7, 15],
+      "side": [9, 11],
+      "face": [7, 11]
+     }
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [0, 0, 24, 24],
+     "at": {
+      "tip": [11, 11],
+      "base": [11, 22],
+      "side": [13, 17],
+      "face": [11, 17]
+     }
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [0, 0, 32, 32],
+     "at": {
+      "tip": [15, 15],
+      "base": [15, 30],
+      "side": [18, 23],
+      "face": [15, 23]
+     }
+    }
+   }
   },
   "bowl": {
    "role": "base",
-   "spots": [
-    "inside",
-    "side",
-    "top",
-    "base"
-   ],
-   "layer": "body"
+   "spots": ["inside", "side", "top", "base"],
+   "layer": "body",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [16, 0, 16, 16],
+     "at": {
+      "top": [7, 8],
+      "base": [7, 15],
+      "side": [13, 11],
+      "face": [7, 12],
+      "inside": [7, 10]
+     }
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [24, 0, 24, 24],
+     "at": {
+      "top": [11, 12],
+      "base": [11, 22],
+      "side": [19, 17],
+      "face": [11, 18],
+      "inside": [11, 15]
+     }
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [32, 0, 32, 32],
+     "at": {
+      "top": [15, 17],
+      "base": [15, 30],
+      "side": [26, 23],
+      "face": [15, 25],
+      "inside": [15, 21]
+     }
+    }
+   }
   },
   "box": {
    "role": "base",
-   "spots": [
-    "top",
-    "side",
-    "inside",
-    "base"
-   ],
-   "layer": "body"
+   "spots": ["top", "side", "inside", "base"],
+   "layer": "body",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [32, 0, 16, 16],
+     "at": {
+      "top": [7, 7],
+      "base": [7, 15],
+      "side": [13, 12],
+      "face": [7, 12],
+      "inside": [7, 9]
+     }
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [48, 0, 24, 24],
+     "at": {
+      "top": [11, 11],
+      "base": [11, 22],
+      "side": [19, 18],
+      "face": [11, 18],
+      "inside": [11, 14]
+     }
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [64, 0, 32, 32],
+     "at": {
+      "top": [15, 15],
+      "base": [15, 30],
+      "side": [26, 25],
+      "face": [15, 25],
+      "inside": [15, 19]
+     }
+    }
+   }
   },
   "disc": {
    "role": "base",
-   "spots": [
-    "top",
-    "side"
-   ],
-   "layer": "body"
+   "spots": ["top", "side"],
+   "layer": "body",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [48, 0, 16, 16],
+     "at": {
+      "top": [7, 11],
+      "base": [7, 15],
+      "side": [13, 12],
+      "face": [7, 12]
+     }
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [72, 0, 24, 24],
+     "at": {
+      "top": [11, 17],
+      "base": [11, 22],
+      "side": [19, 18],
+      "face": [11, 18]
+     }
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [96, 0, 32, 32],
+     "at": {
+      "top": [15, 23],
+      "base": [15, 29],
+      "side": [26, 24],
+      "face": [15, 24]
+     }
+    }
+   }
   },
   "ring": {
    "role": "base",
-   "spots": [
-    "inside",
-    "top",
-    "side"
-   ],
-   "layer": "body"
+   "spots": ["inside", "top", "side"],
+   "layer": "body",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [64, 0, 16, 16],
+     "at": {
+      "top": [7, 6],
+      "base": [7, 15],
+      "side": [12, 11],
+      "face": [7, 11],
+      "inside": [7, 12]
+     }
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [96, 0, 24, 24],
+     "at": {
+      "top": [11, 9],
+      "base": [11, 23],
+      "side": [18, 16],
+      "face": [11, 16],
+      "inside": [11, 19]
+     }
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [128, 0, 32, 32],
+     "at": {
+      "top": [15, 13],
+      "base": [15, 30],
+      "side": [24, 22],
+      "face": [15, 22],
+      "inside": [15, 26]
+     }
+    }
+   }
   },
   "frame": {
    "role": "base",
-   "spots": [
-    "top",
-    "inside",
-    "side",
-    "base"
-   ],
-   "layer": "body"
+   "spots": ["top", "inside", "side", "base"],
+   "layer": "body",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [80, 0, 16, 16],
+     "at": {
+      "top": [7, 6],
+      "base": [7, 15],
+      "side": [13, 11],
+      "face": [7, 11],
+      "inside": [7, 13]
+     }
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [120, 0, 24, 24],
+     "at": {
+      "top": [11, 10],
+      "base": [11, 22],
+      "side": [19, 16],
+      "face": [11, 16],
+      "inside": [11, 20]
+     }
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [160, 0, 32, 32],
+     "at": {
+      "top": [15, 13],
+      "base": [15, 30],
+      "side": [26, 22],
+      "face": [15, 22],
+      "inside": [15, 27]
+     }
+    }
+   }
   },
   "cushion": {
    "role": "base",
-   "spots": [
-    "top",
-    "side"
-   ],
-   "layer": "body"
+   "spots": ["top", "side"],
+   "layer": "body",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [96, 0, 16, 16],
+     "at": {
+      "top": [7, 9],
+      "base": [7, 15],
+      "side": [13, 12],
+      "face": [7, 12]
+     }
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [144, 0, 24, 24],
+     "at": {
+      "top": [11, 14],
+      "base": [11, 23],
+      "side": [20, 18],
+      "face": [11, 18]
+     }
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [192, 0, 32, 32],
+     "at": {
+      "top": [15, 19],
+      "base": [15, 30],
+      "side": [27, 25],
+      "face": [15, 25]
+     }
+    }
+   }
   },
   "block": {
    "role": "base",
-   "spots": [
-    "top",
-    "side",
-    "base"
-   ],
+   "spots": ["top", "side", "base"],
    "layer": "body",
-   "sound": "thud"
+   "sound": "thud",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [112, 0, 16, 16],
+     "at": {
+      "top": [7, 7],
+      "base": [7, 15],
+      "side": [12, 12],
+      "face": [7, 12]
+     }
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [168, 0, 24, 24],
+     "at": {
+      "top": [11, 11],
+      "base": [11, 23],
+      "side": [19, 18],
+      "face": [11, 18]
+     }
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [224, 0, 32, 32],
+     "at": {
+      "top": [15, 15],
+      "base": [15, 30],
+      "side": [25, 25],
+      "face": [15, 25]
+     }
+    }
+   }
   },
   "bundle": {
    "role": "base",
-   "spots": [
-    "top",
-    "side",
-    "tip"
-   ],
-   "layer": "body"
+   "spots": ["top", "side", "tip"],
+   "layer": "body",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [128, 0, 16, 16],
+     "at": {
+      "top": [7, 7],
+      "tip": [7, 7],
+      "base": [7, 15],
+      "side": [10, 11],
+      "face": [7, 11]
+     }
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [192, 0, 24, 24],
+     "at": {
+      "top": [11, 11],
+      "tip": [11, 11],
+      "base": [11, 22],
+      "side": [15, 17],
+      "face": [11, 17]
+     }
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [256, 0, 32, 32],
+     "at": {
+      "top": [15, 15],
+      "tip": [15, 15],
+      "base": [15, 30],
+      "side": [20, 22],
+      "face": [15, 22]
+     }
+    }
+   }
   },
   "flame": {
    "role": "top",
-   "on": [
-    "tip",
-    "top",
-    "inside"
-   ],
+   "on": ["tip", "top", "inside"],
    "layer": "front",
-   "glow": true
+   "glow": true,
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [0, 16, 16, 16],
+     "pin": [7, 15]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [0, 24, 24, 24],
+     "pin": [11, 22]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [0, 32, 32, 32],
+     "pin": [15, 30]
+    }
+   }
   },
   "blade": {
    "role": "top",
-   "on": [
-    "tip"
-   ],
-   "layer": "front"
+   "on": ["tip"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [16, 16, 16, 16],
+     "pin": [7, 15]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [24, 24, 24, 24],
+     "pin": [11, 22]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [32, 32, 32, 32],
+     "pin": [15, 30]
+    }
+   }
   },
   "tines": {
    "role": "top",
-   "on": [
-    "tip"
-   ],
-   "layer": "front"
+   "on": ["tip"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [32, 16, 16, 16],
+     "pin": [7, 15]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [48, 24, 24, 24],
+     "pin": [11, 22]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [64, 32, 32, 32],
+     "pin": [15, 30]
+    }
+   }
   },
   "bell dome": {
    "role": "top",
-   "on": [
-    "tip",
-    "top",
-    "inside"
-   ],
+   "on": ["tip", "top", "inside"],
    "layer": "front",
-   "sound": "ring"
+   "sound": "ring",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [48, 16, 16, 16],
+     "pin": [7, 15]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [72, 24, 24, 24],
+     "pin": [11, 22]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [96, 32, 32, 32],
+     "pin": [15, 30]
+    }
+   }
   },
   "lid": {
    "role": "top",
-   "on": [
-    "top"
-   ],
-   "layer": "front"
+   "on": ["top"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [64, 16, 16, 16],
+     "pin": [7, 15]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [96, 24, 24, 24],
+     "pin": [11, 22]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [128, 32, 32, 32],
+     "pin": [15, 30]
+    }
+   }
   },
   "spout": {
    "role": "top",
-   "on": [
-    "side"
-   ],
-   "layer": "front"
+   "on": ["side"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [80, 16, 16, 16],
+     "pin": [4, 13]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [120, 24, 24, 24],
+     "pin": [6, 20]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [160, 32, 32, 32],
+     "pin": [9, 26]
+    }
+   }
   },
   "strings": {
    "role": "top",
-   "on": [
-    "inside",
-    "side"
-   ],
+   "on": ["inside", "side"],
    "layer": "front",
-   "sound": "pluck"
+   "sound": "pluck",
+   "outline": false,
+   "to": {
+    "inside": "face",
+    "side": "face"
+   },
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [96, 16, 16, 16],
+     "pin": [7, 11]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [144, 24, 24, 24],
+     "pin": [11, 17]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [192, 32, 32, 32],
+     "pin": [15, 23]
+    }
+   }
   },
   "wheel": {
    "role": "top",
-   "on": [
-    "base",
-    "side"
-   ],
-   "layer": "front"
+   "on": ["base", "side"],
+   "layer": "front",
+   "to": {
+    "side": "base"
+   },
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [112, 16, 16, 16],
+     "pin": [7, 15]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [168, 24, 24, 24],
+     "pin": [11, 22]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [224, 32, 32, 32],
+     "pin": [15, 30]
+    }
+   }
   },
   "hook": {
    "role": "top",
-   "on": [
-    "top",
-    "tip"
-   ],
-   "layer": "front"
+   "on": ["top", "tip"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [128, 16, 16, 16],
+     "pin": [7, 15]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [192, 24, 24, 24],
+     "pin": [11, 23]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [256, 32, 32, 32],
+     "pin": [15, 30]
+    }
+   }
   },
   "flower": {
    "role": "top",
-   "on": [
-    "top",
-    "tip",
-    "inside"
-   ],
-   "layer": "front"
+   "on": ["top", "tip", "inside"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [0, 32, 16, 16],
+     "pin": [7, 15]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [0, 48, 24, 24],
+     "pin": [11, 22]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [0, 64, 32, 32],
+     "pin": [15, 30]
+    }
+   }
   },
   "gem": {
    "role": "top",
-   "on": [
-    "top",
-    "tip",
-    "inside"
-   ],
-   "layer": "front"
+   "on": ["top", "tip", "inside"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [16, 32, 16, 16],
+     "pin": [7, 14]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [24, 48, 24, 24],
+     "pin": [11, 22]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [32, 64, 32, 32],
+     "pin": [15, 29]
+    }
+   }
   },
   "sail": {
    "role": "top",
-   "on": [
-    "top",
-    "tip"
-   ],
-   "layer": "front"
+   "on": ["top", "tip"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [32, 32, 16, 16],
+     "pin": [7, 15]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [48, 48, 24, 24],
+     "pin": [11, 22]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [64, 64, 32, 32],
+     "pin": [15, 30]
+    }
+   }
   },
   "head": {
    "role": "top",
-   "on": [
-    "tip"
-   ],
-   "layer": "front"
+   "on": ["tip"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [48, 32, 16, 16],
+     "pin": [7, 14]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [72, 48, 24, 24],
+     "pin": [11, 21]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [96, 64, 32, 32],
+     "pin": [15, 28]
+    }
+   }
   },
   "cord": {
    "role": "wrap",
-   "on": [
-    "side"
-   ],
-   "layer": "front"
+   "on": ["side"],
+   "layer": "front",
+   "clip": true,
+   "to": {
+    "side": "face"
+   },
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [64, 32, 16, 16],
+     "pin": [7, 8]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [96, 48, 24, 24],
+     "pin": [11, 12]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [128, 64, 32, 32],
+     "pin": [15, 16]
+    }
+   }
   },
   "cloth": {
    "role": "wrap",
-   "on": [
-    "side",
-    "top"
-   ],
-   "layer": "front"
+   "on": ["side", "top"],
+   "layer": "front",
+   "clip": true,
+   "to": {
+    "side": "face"
+   },
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [80, 32, 16, 16],
+     "pin": [7, 8]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [120, 48, 24, 24],
+     "pin": [11, 12]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [160, 64, 32, 32],
+     "pin": [15, 16]
+    }
+   }
   },
   "band": {
    "role": "wrap",
-   "on": [
-    "side"
-   ],
-   "layer": "front"
+   "on": ["side"],
+   "layer": "front",
+   "clip": true,
+   "to": {
+    "side": "face"
+   },
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [96, 32, 16, 16],
+     "pin": [7, 8]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [144, 48, 24, 24],
+     "pin": [11, 12]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [192, 64, 32, 32],
+     "pin": [15, 16]
+    }
+   }
   },
   "studs": {
    "role": "wrap",
-   "on": [
-    "side"
-   ],
-   "layer": "front"
+   "on": ["side"],
+   "layer": "front",
+   "clip": true,
+   "to": {
+    "side": "face"
+   },
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [112, 32, 16, 16],
+     "pin": [7, 8]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [168, 48, 24, 24],
+     "pin": [11, 12]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [224, 64, 32, 32],
+     "pin": [15, 16]
+    }
+   }
   },
   "weave": {
    "role": "wrap",
-   "on": [
-    "side"
-   ],
-   "layer": "front"
+   "on": ["side"],
+   "layer": "front",
+   "clip": true,
+   "to": {
+    "side": "face"
+   },
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [128, 32, 16, 16],
+     "pin": [7, 8]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [192, 48, 24, 24],
+     "pin": [11, 12]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [256, 64, 32, 32],
+     "pin": [15, 16]
+    }
+   }
   }
  },
  "kinds": {
@@ -394,6 +944,859 @@
   "hammer": {
    "base": "stick",
    "signature": "head"
+  }
+ },
+ "palette": {
+  "main": ["8a4a1f", "bf6a2c", "dc9457", "ecc19d"],
+  "trim": ["5b5f6e", "7e8491", "a9afb7", "d3d6d9"],
+  "glow": ["e46d3a", "ffad5d", "ffe18d"],
+  "ink": "141b1b",
+  "white": "ffffff",
+  "red": "c4484a"
+ },
+ "body": {
+  "about": "The body parts a genome's slots name (bodies.json), as the view stamps them on a pet: `frames` are <view>.<size> (front, side facing right, back; l, or s for a body under `small` pixels wide), a mouth's <what it does>.<1 or 2 middle columns, or side>.<size>. `layer`: behind the body, in front of it, or on it. `pair`: one each side, mirrored. `plans`: each body plan as proportions of the one body.",
+  "file": "own/parts/body.png",
+  "small": 10,
+  "shade": {
+   "light": 0,
+   "mid": -0.09,
+   "dark": -0.17
+  },
+  "plans": {
+   "blob": {
+    "w": 1,
+    "h": 1
+   },
+   "head": {
+    "w": 0.62,
+    "h": 0.5,
+    "head": {
+     "w": 1,
+     "tall": 0.82,
+     "round": 0.85
+    },
+    "overlap": 1
+   },
+   "segments": {
+    "w": 1.12,
+    "h": 0.72,
+    "head": {
+     "w": 0.66,
+     "tall": 0.9,
+     "round": 0.9
+    },
+    "overlap": 2
+   },
+   "long": {
+    "w": 1.45,
+    "h": 0.6
+   },
+   "tall": {
+    "w": 0.68,
+    "h": 1.4
+   }
+  },
+  "slots": {
+   "ears": {
+    "layer": "behind",
+    "pair": true,
+    "spread": 0.3,
+    "values": {
+     "round": {
+      "frames": {
+       "front.l": {
+        "rect": [0, 0, 4, 3],
+        "pin": [2, 2]
+       },
+       "front.s": {
+        "rect": [8, 0, 2, 2],
+        "pin": [1, 1]
+       },
+       "side.l": {
+        "rect": [16, 0, 4, 3],
+        "pin": [2, 2]
+       },
+       "side.s": {
+        "rect": [24, 0, 2, 2],
+        "pin": [1, 1]
+       },
+       "back.l": {
+        "rect": [32, 0, 4, 3],
+        "pin": [2, 2]
+       },
+       "back.s": {
+        "rect": [40, 0, 2, 2],
+        "pin": [1, 1]
+       }
+      }
+     },
+     "pointed": {
+      "frames": {
+       "front.l": {
+        "rect": [0, 8, 3, 4],
+        "pin": [1, 3]
+       },
+       "front.s": {
+        "rect": [8, 8, 2, 3],
+        "pin": [1, 2]
+       },
+       "side.l": {
+        "rect": [16, 8, 3, 4],
+        "pin": [1, 3]
+       },
+       "side.s": {
+        "rect": [24, 8, 2, 3],
+        "pin": [1, 2]
+       },
+       "back.l": {
+        "rect": [32, 8, 3, 4],
+        "pin": [1, 3]
+       },
+       "back.s": {
+        "rect": [40, 8, 2, 3],
+        "pin": [1, 2]
+       }
+      }
+     },
+     "long": {
+      "frames": {
+       "front.l": {
+        "rect": [0, 16, 2, 6],
+        "pin": [1, 5]
+       },
+       "front.s": {
+        "rect": [8, 16, 1, 4],
+        "pin": [0, 3]
+       },
+       "side.l": {
+        "rect": [16, 16, 5, 5],
+        "pin": [4, 4]
+       },
+       "side.s": {
+        "rect": [24, 16, 3, 3],
+        "pin": [2, 2]
+       },
+       "back.l": {
+        "rect": [32, 16, 2, 6],
+        "pin": [1, 5]
+       },
+       "back.s": {
+        "rect": [40, 16, 1, 4],
+        "pin": [0, 3]
+       }
+      }
+     }
+    }
+   },
+   "head": {
+    "layer": "behind",
+    "pair": true,
+    "spread": 0.16,
+    "values": {
+     "horns": {
+      "frames": {
+       "front.l": {
+        "rect": [0, 24, 3, 4],
+        "pin": [2, 3]
+       },
+       "front.s": {
+        "rect": [8, 24, 2, 2],
+        "pin": [1, 1]
+       },
+       "side.l": {
+        "rect": [16, 24, 3, 4],
+        "pin": [2, 3]
+       },
+       "side.s": {
+        "rect": [24, 24, 2, 2],
+        "pin": [1, 1]
+       },
+       "back.l": {
+        "rect": [32, 24, 3, 4],
+        "pin": [2, 3]
+       },
+       "back.s": {
+        "rect": [40, 24, 2, 2],
+        "pin": [1, 1]
+       }
+      }
+     },
+     "antennae": {
+      "frames": {
+       "front.l": {
+        "rect": [0, 32, 3, 5],
+        "pin": [2, 4]
+       },
+       "front.s": {
+        "rect": [8, 32, 2, 3],
+        "pin": [1, 2]
+       },
+       "side.l": {
+        "rect": [16, 32, 3, 5],
+        "pin": [2, 4]
+       },
+       "side.s": {
+        "rect": [24, 32, 2, 3],
+        "pin": [1, 2]
+       },
+       "back.l": {
+        "rect": [32, 32, 3, 5],
+        "pin": [2, 4]
+       },
+       "back.s": {
+        "rect": [40, 32, 2, 3],
+        "pin": [1, 2]
+       }
+      }
+     },
+     "crest": {
+      "pair": false,
+      "frames": {
+       "front.l": {
+        "rect": [0, 40, 5, 3],
+        "pin": [2, 2]
+       },
+       "front.s": {
+        "rect": [8, 40, 3, 3],
+        "pin": [1, 2]
+       },
+       "side.l": {
+        "rect": [16, 40, 5, 3],
+        "pin": [2, 2]
+       },
+       "side.s": {
+        "rect": [24, 40, 3, 3],
+        "pin": [1, 2]
+       },
+       "back.l": {
+        "rect": [32, 40, 5, 3],
+        "pin": [2, 2]
+       },
+       "back.s": {
+        "rect": [40, 40, 3, 3],
+        "pin": [1, 2]
+       }
+      }
+     }
+    }
+   },
+   "tail": {
+    "layer": "behind",
+    "pair": false,
+    "values": {
+     "stub": {
+      "frames": {
+       "front.l": {
+        "rect": [0, 48, 4, 3],
+        "pin": [0, 1]
+       },
+       "front.s": {
+        "rect": [8, 48, 3, 2],
+        "pin": [0, 1]
+       },
+       "side.l": {
+        "rect": [16, 48, 4, 3],
+        "pin": [0, 1]
+       },
+       "side.s": {
+        "rect": [24, 48, 3, 2],
+        "pin": [0, 1]
+       },
+       "back.l": {
+        "rect": [32, 48, 3, 3],
+        "pin": [1, 2]
+       },
+       "back.s": {
+        "rect": [40, 48, 2, 2],
+        "pin": [0, 1]
+       }
+      }
+     },
+     "long": {
+      "frames": {
+       "front.l": {
+        "rect": [0, 56, 5, 5],
+        "pin": [0, 4]
+       },
+       "front.s": {
+        "rect": [8, 56, 3, 3],
+        "pin": [0, 2]
+       },
+       "side.l": {
+        "rect": [16, 56, 5, 5],
+        "pin": [0, 4]
+       },
+       "side.s": {
+        "rect": [24, 56, 3, 3],
+        "pin": [0, 2]
+       },
+       "back.l": {
+        "rect": [32, 56, 2, 5],
+        "pin": [1, 4]
+       },
+       "back.s": {
+        "rect": [40, 56, 1, 3],
+        "pin": [0, 2]
+       }
+      }
+     },
+     "fluffy": {
+      "frames": {
+       "front.l": {
+        "rect": [0, 64, 6, 5],
+        "pin": [0, 3]
+       },
+       "front.s": {
+        "rect": [8, 64, 3, 3],
+        "pin": [0, 1]
+       },
+       "side.l": {
+        "rect": [16, 64, 6, 5],
+        "pin": [0, 3]
+       },
+       "side.s": {
+        "rect": [24, 64, 3, 3],
+        "pin": [0, 1]
+       },
+       "back.l": {
+        "rect": [32, 64, 4, 4],
+        "pin": [1, 3]
+       },
+       "back.s": {
+        "rect": [40, 64, 3, 3],
+        "pin": [1, 2]
+       }
+      }
+     }
+    }
+   },
+   "whiskers": {
+    "layer": "front",
+    "pair": true,
+    "outline": false,
+    "values": {
+     "yes": {
+      "frames": {
+       "front.l": {
+        "rect": [0, 72, 3, 3],
+        "pin": [2, 1]
+       },
+       "front.s": {
+        "rect": [8, 72, 3, 1],
+        "pin": [2, 0]
+       },
+       "side.l": {
+        "rect": [16, 72, 3, 3],
+        "pin": [2, 1]
+       },
+       "side.s": {
+        "rect": [24, 72, 3, 1],
+        "pin": [2, 0]
+       },
+       "back.l": {
+        "rect": [32, 72, 3, 3],
+        "pin": [2, 1]
+       },
+       "back.s": {
+        "rect": [40, 72, 3, 1],
+        "pin": [2, 0]
+       }
+      }
+     }
+    }
+   },
+   "feet": {
+    "layer": "front",
+    "pair": true,
+    "values": {
+     "nubs": {
+      "frames": {
+       "front.l": {
+        "rect": [0, 80, 2, 1],
+        "pin": [0, 0]
+       },
+       "front.s": {
+        "rect": [8, 80, 2, 1],
+        "pin": [0, 0]
+       },
+       "side.l": {
+        "rect": [16, 80, 2, 1],
+        "pin": [0, 0]
+       },
+       "side.s": {
+        "rect": [24, 80, 2, 1],
+        "pin": [0, 0]
+       },
+       "back.l": {
+        "rect": [32, 80, 2, 1],
+        "pin": [0, 0]
+       },
+       "back.s": {
+        "rect": [40, 80, 2, 1],
+        "pin": [0, 0]
+       }
+      }
+     },
+     "paws": {
+      "frames": {
+       "front.l": {
+        "rect": [0, 88, 3, 2],
+        "pin": [1, 0]
+       },
+       "front.s": {
+        "rect": [8, 88, 3, 1],
+        "pin": [1, 0]
+       },
+       "side.l": {
+        "rect": [16, 88, 4, 2],
+        "pin": [0, 0]
+       },
+       "side.s": {
+        "rect": [24, 88, 3, 1],
+        "pin": [0, 0]
+       },
+       "back.l": {
+        "rect": [32, 88, 3, 2],
+        "pin": [1, 0]
+       },
+       "back.s": {
+        "rect": [40, 88, 3, 1],
+        "pin": [1, 0]
+       }
+      }
+     },
+     "legs": {
+      "frames": {
+       "front.l": {
+        "rect": [0, 96, 2, 4],
+        "pin": [1, 0]
+       },
+       "front.s": {
+        "rect": [8, 96, 2, 3],
+        "pin": [1, 0]
+       },
+       "side.l": {
+        "rect": [16, 96, 2, 4],
+        "pin": [0, 0]
+       },
+       "side.s": {
+        "rect": [24, 96, 2, 3],
+        "pin": [0, 0]
+       },
+       "back.l": {
+        "rect": [32, 96, 2, 4],
+        "pin": [1, 0]
+       },
+       "back.s": {
+        "rect": [40, 96, 2, 3],
+        "pin": [1, 0]
+       }
+      }
+     }
+    }
+   },
+   "mouth": {
+    "layer": "on",
+    "pair": false,
+    "outline": false,
+    "values": {
+     "dot": {
+      "frames": {
+       "flat.1.l": {
+        "rect": [0, 104, 1, 1],
+        "pin": [0, 0]
+       },
+       "smile.1.l": {
+        "rect": [8, 104, 3, 2],
+        "pin": [1, 0]
+       },
+       "frown.1.l": {
+        "rect": [16, 104, 3, 2],
+        "pin": [1, 0]
+       },
+       "open.1.l": {
+        "rect": [24, 104, 3, 3],
+        "pin": [1, 0]
+       },
+       "o.1.l": {
+        "rect": [32, 104, 3, 2],
+        "pin": [1, 0]
+       },
+       "flat.2.l": {
+        "rect": [40, 104, 2, 1],
+        "pin": [0, 0]
+       },
+       "smile.2.l": {
+        "rect": [48, 104, 4, 2],
+        "pin": [1, 0]
+       },
+       "frown.2.l": {
+        "rect": [56, 104, 4, 2],
+        "pin": [1, 0]
+       },
+       "open.2.l": {
+        "rect": [64, 104, 2, 3],
+        "pin": [0, 0]
+       },
+       "o.2.l": {
+        "rect": [72, 104, 2, 2],
+        "pin": [0, 0]
+       },
+       "flat.side.l": {
+        "rect": [80, 104, 1, 1],
+        "pin": [0, 0]
+       },
+       "smile.side.l": {
+        "rect": [88, 104, 3, 2],
+        "pin": [1, 0]
+       },
+       "frown.side.l": {
+        "rect": [96, 104, 3, 2],
+        "pin": [1, 0]
+       },
+       "open.side.l": {
+        "rect": [104, 104, 3, 3],
+        "pin": [1, 0]
+       },
+       "o.side.l": {
+        "rect": [112, 104, 3, 2],
+        "pin": [1, 0]
+       },
+       "flat.1.s": {
+        "rect": [120, 104, 1, 1],
+        "pin": [0, 0]
+       },
+       "smile.1.s": {
+        "rect": [128, 104, 3, 2],
+        "pin": [1, 0]
+       },
+       "frown.1.s": {
+        "rect": [136, 104, 3, 2],
+        "pin": [1, 0]
+       },
+       "open.1.s": {
+        "rect": [144, 104, 1, 2],
+        "pin": [0, 0]
+       },
+       "o.1.s": {
+        "rect": [152, 104, 1, 2],
+        "pin": [0, 0]
+       },
+       "flat.2.s": {
+        "rect": [160, 104, 2, 1],
+        "pin": [0, 0]
+       },
+       "smile.2.s": {
+        "rect": [168, 104, 4, 2],
+        "pin": [1, 0]
+       },
+       "frown.2.s": {
+        "rect": [176, 104, 4, 2],
+        "pin": [1, 0]
+       },
+       "open.2.s": {
+        "rect": [184, 104, 2, 2],
+        "pin": [0, 0]
+       },
+       "o.2.s": {
+        "rect": [192, 104, 2, 2],
+        "pin": [0, 0]
+       },
+       "flat.side.s": {
+        "rect": [200, 104, 1, 1],
+        "pin": [0, 0]
+       },
+       "smile.side.s": {
+        "rect": [208, 104, 3, 2],
+        "pin": [1, 0]
+       },
+       "frown.side.s": {
+        "rect": [216, 104, 3, 2],
+        "pin": [1, 0]
+       },
+       "open.side.s": {
+        "rect": [224, 104, 1, 2],
+        "pin": [0, 0]
+       },
+       "o.side.s": {
+        "rect": [232, 104, 1, 2],
+        "pin": [0, 0]
+       }
+      }
+     },
+     "wide": {
+      "frames": {
+       "flat.1.l": {
+        "rect": [0, 112, 3, 1],
+        "pin": [1, 0]
+       },
+       "smile.1.l": {
+        "rect": [8, 112, 5, 2],
+        "pin": [2, 0]
+       },
+       "frown.1.l": {
+        "rect": [16, 112, 5, 2],
+        "pin": [2, 0]
+       },
+       "open.1.l": {
+        "rect": [24, 112, 5, 3],
+        "pin": [2, 0]
+       },
+       "o.1.l": {
+        "rect": [32, 112, 5, 2],
+        "pin": [2, 0]
+       },
+       "flat.2.l": {
+        "rect": [40, 112, 4, 1],
+        "pin": [1, 0]
+       },
+       "smile.2.l": {
+        "rect": [48, 112, 6, 2],
+        "pin": [2, 0]
+       },
+       "frown.2.l": {
+        "rect": [56, 112, 6, 2],
+        "pin": [2, 0]
+       },
+       "open.2.l": {
+        "rect": [64, 112, 4, 3],
+        "pin": [1, 0]
+       },
+       "o.2.l": {
+        "rect": [72, 112, 4, 2],
+        "pin": [1, 0]
+       },
+       "flat.side.l": {
+        "rect": [80, 112, 3, 1],
+        "pin": [1, 0]
+       },
+       "smile.side.l": {
+        "rect": [88, 112, 5, 2],
+        "pin": [2, 0]
+       },
+       "frown.side.l": {
+        "rect": [96, 112, 5, 2],
+        "pin": [2, 0]
+       },
+       "open.side.l": {
+        "rect": [104, 112, 5, 3],
+        "pin": [2, 0]
+       },
+       "o.side.l": {
+        "rect": [112, 112, 5, 2],
+        "pin": [2, 0]
+       },
+       "flat.1.s": {
+        "rect": [120, 112, 3, 1],
+        "pin": [1, 0]
+       },
+       "smile.1.s": {
+        "rect": [128, 112, 5, 2],
+        "pin": [2, 0]
+       },
+       "frown.1.s": {
+        "rect": [136, 112, 5, 2],
+        "pin": [2, 0]
+       },
+       "open.1.s": {
+        "rect": [144, 112, 3, 2],
+        "pin": [1, 0]
+       },
+       "o.1.s": {
+        "rect": [152, 112, 3, 2],
+        "pin": [1, 0]
+       },
+       "flat.2.s": {
+        "rect": [160, 112, 4, 1],
+        "pin": [1, 0]
+       },
+       "smile.2.s": {
+        "rect": [168, 112, 6, 2],
+        "pin": [2, 0]
+       },
+       "frown.2.s": {
+        "rect": [176, 112, 6, 2],
+        "pin": [2, 0]
+       },
+       "open.2.s": {
+        "rect": [184, 112, 4, 2],
+        "pin": [1, 0]
+       },
+       "o.2.s": {
+        "rect": [192, 112, 4, 2],
+        "pin": [1, 0]
+       },
+       "flat.side.s": {
+        "rect": [200, 112, 3, 1],
+        "pin": [1, 0]
+       },
+       "smile.side.s": {
+        "rect": [208, 112, 5, 2],
+        "pin": [2, 0]
+       },
+       "frown.side.s": {
+        "rect": [216, 112, 5, 2],
+        "pin": [2, 0]
+       },
+       "open.side.s": {
+        "rect": [224, 112, 3, 2],
+        "pin": [1, 0]
+       },
+       "o.side.s": {
+        "rect": [232, 112, 3, 2],
+        "pin": [1, 0]
+       }
+      }
+     },
+     "beak": {
+      "layer": "front",
+      "side_at": "edge",
+      "frames": {
+       "flat.1.l": {
+        "rect": [0, 120, 3, 2],
+        "pin": [1, 0]
+       },
+       "smile.1.l": {
+        "rect": [8, 120, 3, 2],
+        "pin": [1, 0]
+       },
+       "frown.1.l": {
+        "rect": [16, 120, 3, 2],
+        "pin": [1, 0]
+       },
+       "open.1.l": {
+        "rect": [24, 120, 3, 3],
+        "pin": [1, 0]
+       },
+       "o.1.l": {
+        "rect": [32, 120, 3, 3],
+        "pin": [1, 0]
+       },
+       "flat.2.l": {
+        "rect": [40, 120, 4, 2],
+        "pin": [1, 0]
+       },
+       "smile.2.l": {
+        "rect": [48, 120, 4, 2],
+        "pin": [1, 0]
+       },
+       "frown.2.l": {
+        "rect": [56, 120, 4, 2],
+        "pin": [1, 0]
+       },
+       "open.2.l": {
+        "rect": [64, 120, 4, 3],
+        "pin": [1, 0]
+       },
+       "o.2.l": {
+        "rect": [72, 120, 4, 3],
+        "pin": [1, 0]
+       },
+       "flat.side.l": {
+        "rect": [80, 120, 2, 2],
+        "pin": [0, 0]
+       },
+       "smile.side.l": {
+        "rect": [88, 120, 2, 2],
+        "pin": [0, 0]
+       },
+       "frown.side.l": {
+        "rect": [96, 120, 2, 2],
+        "pin": [0, 0]
+       },
+       "open.side.l": {
+        "rect": [104, 120, 2, 3],
+        "pin": [0, 0]
+       },
+       "o.side.l": {
+        "rect": [112, 120, 2, 3],
+        "pin": [0, 0]
+       },
+       "flat.1.s": {
+        "rect": [120, 120, 3, 2],
+        "pin": [1, 0]
+       },
+       "smile.1.s": {
+        "rect": [128, 120, 3, 2],
+        "pin": [1, 0]
+       },
+       "frown.1.s": {
+        "rect": [136, 120, 3, 2],
+        "pin": [1, 0]
+       },
+       "open.1.s": {
+        "rect": [144, 120, 3, 3],
+        "pin": [1, 0]
+       },
+       "o.1.s": {
+        "rect": [152, 120, 3, 3],
+        "pin": [1, 0]
+       },
+       "flat.2.s": {
+        "rect": [160, 120, 4, 2],
+        "pin": [1, 0]
+       },
+       "smile.2.s": {
+        "rect": [168, 120, 4, 2],
+        "pin": [1, 0]
+       },
+       "frown.2.s": {
+        "rect": [176, 120, 4, 2],
+        "pin": [1, 0]
+       },
+       "open.2.s": {
+        "rect": [184, 120, 4, 3],
+        "pin": [1, 0]
+       },
+       "o.2.s": {
+        "rect": [192, 120, 4, 3],
+        "pin": [1, 0]
+       },
+       "flat.side.s": {
+        "rect": [200, 120, 2, 2],
+        "pin": [0, 0]
+       },
+       "smile.side.s": {
+        "rect": [208, 120, 2, 2],
+        "pin": [0, 0]
+       },
+       "frown.side.s": {
+        "rect": [216, 120, 2, 2],
+        "pin": [0, 0]
+       },
+       "open.side.s": {
+        "rect": [224, 120, 2, 3],
+        "pin": [0, 0]
+       },
+       "o.side.s": {
+        "rect": [232, 120, 2, 3],
+        "pin": [0, 0]
+       }
+      }
+     }
+    }
+   }
+  }
+ },
+ "looks": {
+  "soft": {
+   "cap": 0.78
+  },
+  "dark": {
+   "sat": 0.7,
+   "light": 0.62
+  },
+  "glassy": {
+   "sat": 0.6,
+   "add": 0.08
+  },
+  "heavy": {
+   "sat": 0.8,
+   "light": 0.88
+  },
+  "bright": {
+   "add": 0.05
   }
  }
 }

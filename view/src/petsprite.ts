@@ -1,6 +1,8 @@
 // A pet as pixel art, made from its genome (SPEC-v3.2 §2). Everything else in the view draws pets only through this.
 // Each frame is painted pixel by pixel into a 24x24 grid of palette slots, then copied to a canvas: no vector
 // drawing, no smoothing, no randomness that is not in the genome, so the same genome always gives the same pixels.
+import { bodyPlan, bodyShade, bodySlot, bodySmall, bodyStamp, partsVersion } from "./parts";
+import type { Stamp } from "./parts";
 import type { Genome } from "./pet";
 
 type Facing = "down" | "up" | "left" | "right";
@@ -22,7 +24,7 @@ const cache = new Map<string, PetSheet>();   // ponytail: never emptied; a house
 /** The sheet for a body at a stage (hatchling, child, youngling, adult, elder). Cached: call it every frame if you like. */
 export function petSheet(g: Genome, stage: string, look: PetLook = {}): PetSheet {
   const grey = Math.round(Math.min(1, Math.max(0, look.grey ?? 0)) * 4) / 4;
-  const key = JSON.stringify([g, stage, grey]);
+  const key = JSON.stringify([g, stage, grey, partsVersion()]);
   let sheet = cache.get(key);
   if (!sheet) cache.set(key, (sheet = build(g, stage, grey)));
   return sheet;
@@ -42,7 +44,7 @@ export function petPortrait(g: Genome, stage: string, scale = 2, look: PetLook =
 // ---------------------------------------------------------------------------------------------------------------
 const S = 24;   // 24, not 32: an adult is 14 pixels across beside the pack's 16-pixel people, with room left to jump
 // palette slots
-const INK = 1, DARK = 2, MID = 3, LIGHT = 4, SHINE = 5, PAT = 6, WHITE = 7, PALE = 8, RED = 9, TEAR = 10;
+const INK = 1, DARK = 2, MID = 3, LIGHT = 4, SHINE = 5, PAT = 6, WHITE = 7, PALE = 8, RED = 9, TEAR = 10, WARM = 11, WARM_D = 12;   // WARM: a beak, an antenna's bob
 type RGB = [number, number, number];
 
 /** Width of the body's colour in pixels (the outline adds one each side); `soft`: how far a young body is pulled
@@ -80,11 +82,11 @@ function toward(h: number, target: number, by: number) {
 
 function palette(g: Genome, grey: number, egg = false): RGB[] {
   const h = g.hue, s = (0.16 + 0.56 * g.saturation) * (1 - 0.6 * grey);
-  const l = 0.55 + 0.05 * Math.cos(((h - 250) * Math.PI) / 180) + 0.06 * grey;      // blues a touch lighter, yellows darker
-  const ink: RGB = [0x14, 0x1b, 0x1b], white: RGB = [0xf3, 0xf7, 0xf2], red: RGB = [0xc4, 0x48, 0x4a], tear: RGB = [0x8f, 0xd6, 0xf2];
-  if (egg) return [[0, 0, 0], ink, hsl(toward(h, 260, 10), s * 0.6, 0.67), hsl(h, s * 0.6, 0.81), hsl(h, s * 0.5, 0.89), white, hsl(h, s * 0.85, 0.63), white, white, red, tear];
+  const l = 0.55 + 0.05 * Math.cos(((h - 250) * Math.PI) / 180) + 0.06 * grey + bodyShade(g.shade);      // blues a touch lighter, yellows darker; its coat's own shade
+  const ink: RGB = [0x14, 0x1b, 0x1b], white: RGB = [0xf3, 0xf7, 0xf2], red: RGB = [0xc4, 0x48, 0x4a], tear: RGB = [0x8f, 0xd6, 0xf2], warm: RGB = [0xff, 0xad, 0x5d], warmD: RGB = [0xe4, 0x6d, 0x3a];
+  if (egg) return [[0, 0, 0], ink, hsl(toward(h, 260, 10), s * 0.6, 0.67), hsl(h, s * 0.6, 0.81), hsl(h, s * 0.5, 0.89), white, hsl(h, s * 0.85, 0.63), white, white, red, tear, warm, warmD];
   return [[0, 0, 0], ink, hsl(toward(h, 260, 14), s * 0.92, l - 0.16), hsl(h, s, l), hsl(toward(h, 55, 10), s, l + 0.13), hsl(toward(h, 55, 14), s * 0.5, 0.9),
-    hsl(toward(h, 260, 20), s * 0.85, l - 0.29), white, hsl(h, s * 0.4, Math.min(0.88, l + 0.24)), red, tear];
+    hsl(toward(h, 260, 20), s * 0.85, Math.max(0.14, l - 0.29)), white, hsl(h, s * 0.4, Math.min(0.88, l + 0.24)), red, tear, warm, warmD];
 }
 
 /** The body: a box with rounded corners (roundness sets how round), flatter underneath so it sits. With `egg`, an
@@ -128,27 +130,44 @@ function fixedRandom(seed: number) {
 }
 const PATCHES = [[0.82, 0.16], [0.14, 0.72], [0.7, 0.86], [0.2, 0.08]];   // where patches sit, as fractions of the body
 
-/** The pattern's pixels as [column, row] within a body of w x h colour pixels, seen from `view` (0 front, 2 back, -1/1 side). */
+/** The pattern's pixels as [column, row] within a body of w x h colour pixels, seen from `view` (0 front, 2 back, -1/1 side).
+ *  SPEC-v3.5 §2.1: the five patterns and what two of them give together (bodies.json), each made of the same few marks. */
 function patternCells(g: Genome, w: number, h: number, view: number): [number, number][] {
-  const out: [number, number][] = [], d = g.pattern_density, back = view === 2;
-  if (g.pattern === "speckle") {
-    const rnd = fixedRandom(7), n = Math.max(2, Math.round(((3 + d * 12) * w * h) / 150));
+  const d = g.pattern_density, back = view === 2, name = g.pattern === "speckle" ? "spots" : g.pattern === "stripe" ? "stripes" : g.pattern;
+  const spots = (from = 0) => {                                    // `from`: only so far down the body and below
+    const out: [number, number][] = [], rnd = fixedRandom(7), n = Math.max(2, Math.round(((3 + d * 12) * w * h) / 150));
     for (let i = 0; i < n; i++) {
-      const x = Math.floor(rnd() * w), y = Math.floor(rnd() * h);
+      const x = Math.floor(rnd() * w), y = Math.floor(h * from + rnd() * h * (1 - from));
       out.push([x, y]);
       if (i % 3 === 0 && w > 8) out.push([x + 1, y]);
     }
-  } else if (g.pattern === "stripe") {
-    const n = Math.min(2 + Math.round(d * 4), Math.floor(h / 2.5));
+    return out;
+  };
+  const stripes = (keep: (x: number, k: number, y: number) => boolean = () => true) => {
+    const out: [number, number][] = [], n = Math.min(2 + Math.round(d * 4), Math.floor(h / 2.5));
     for (let k = 0; k < n; k++) {
       const y = Math.round(((k + 0.5) * h) / n - 0.5);
-      for (let x = 0; x < w; x++) out.push([x, y]);                 // right across; the face is kept clear by the caller
+      for (let x = 0; x < w; x++) if (keep(x, k, y)) out.push([x, y]);   // right across; the face is kept clear by the caller
     }
-  } else if (g.pattern === "patch") {
-    const r = Math.max(1.3, w * 0.24);
+    return out;
+  };
+  const patch = (keep: (x: number, y: number) => boolean = () => true) => {
+    const out: [number, number][] = [], r = Math.max(1.3, w * 0.24);
     for (const [u, v] of PATCHES.slice(0, 1 + Math.round(d * 3)))
-      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if ((x + 0.5 - u * w) ** 2 + (y + 0.5 - v * h) ** 2 <= r * r) out.push([x, y]);
-  }
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if ((x + 0.5 - u * w) ** 2 + (y + 0.5 - v * h) ** 2 <= r * r && keep(x, y)) out.push([x, y]);
+    return out;
+  };
+  const fade = () => {                                             // darker toward its foot: dithered, then whole
+    const out: [number, number][] = [];
+    for (let y = Math.round(h * 0.5); y < h; y++) for (let x = 0; x < w; x++) if (y >= h * 0.76 || (x + y) % 2 === 0) out.push([x, y]);
+    return out;
+  };
+  const made: Record<string, () => [number, number][]> = {
+    spots: () => spots(), stripes: () => stripes(), patch: () => patch(), gradient: fade,
+    "broken stripes": () => stripes((x, k) => (x + k) % 3 !== 2), "faded patch": () => patch((x, y) => (x + y) % 2 === 0), "dappled patch": () => [...patch(), ...spots()],
+    "banded gradient": () => stripes((_x, _k, y) => y >= h * 0.45), "speckled fade": () => [...spots(0.45), ...spots(0.7)], "striped patch": () => patch((_x, y) => y % 2 === 0),
+  };
+  const out = made[name]?.() ?? [];
   return back ? out.map(([x, y]) => [w - 1 - x, y]) : out;
 }
 
@@ -163,22 +182,69 @@ function nub(m: Uint8Array, x: number, y: number, w: number, h: number, c: numbe
   }
 }
 
+/** The palette slot each colour of a body part's picture is painted in (parts.ts, CODES). */
+const PART = [0, DARK, MID, LIGHT, SHINE, PAT, PAT, PALE, PALE, WARM_D, WARM, WARM, INK, WHITE, RED];
+/** A part's picture set down with its pin on (x, y). `flip`: mirrored. `behind`: only where the body is not (it grows
+ *  out of it). `hard`: its line is drawn over the body too. `bare`: no line. `skip`: without its first rows (a leg
+ *  lifted). `up`: its top row carried that many rows higher, to meet a rounded body. `on`: only on this body. */
+function stamp(m: Uint8Array, s: Stamp | null, x: number, y: number, o: { flip?: boolean; behind?: Uint8Array; hard?: boolean; bare?: boolean; skip?: number; up?: number; on?: Uint8Array } = {}) {
+  if (!s) return;
+  const put: number[] = [], skip = o.skip ?? 0, px = o.flip ? s.w - 1 - s.pin[0] : s.pin[0];
+  for (let j = -(o.up ?? 0); j < s.h - skip; j++) for (let i = 0; i < s.w; i++) {
+    const c = s.px[(j < 0 ? skip : j + skip) * s.w + (o.flip ? s.w - 1 - i : i)], k = at(x - px + i, y - s.pin[1] + j);
+    if (!c || k < 0 || (o.behind && o.behind[k]) || (o.on && !o.on[k])) continue;
+    m[k] = PART[c];
+    put.push(k);
+  }
+  if (o.bare || o.on) return;
+  const mine = new Set(put);
+  for (const k of put) for (const [i, j] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+    const n = at((k % S) + i, ((k / S) | 0) + j);
+    if (n >= 0 && !mine.has(n) && (m[n] === 0 || (o.hard && !(o.behind && o.behind[n])))) m[n] = INK;
+  }
+}
+
 function drawPet(g: Genome, stage: string, p: Pose): Uint8Array {
   const st = STAGES[stage] ?? STAGES.hatchling, m = new Uint8Array(S * S), b = new Uint8Array(S * S);
   const face = p.face ?? "down", side = face === "left" ? -1 : face === "right" ? 1 : 0, back = face === "up", view = back ? 2 : side;
   const stretch = 1 + (g.stretch - 1) * (1 - st.soft), round0 = g.roundness + (1 - g.roundness) * st.soft;
-  const w0 = st.w, h0 = Math.max(5, Math.round(w0 * (0.3 + 0.7 * stretch))) - st.stoop;
   const curl = !!p.curl;
-  const w = curl ? w0 + 2 * Math.max(1, Math.round(w0 * 0.14)) : w0 + 2 * (w0 < 9 ? 0 : (p.dw ?? 0));       // a hatchling is too small to spread
-  const h = curl ? Math.max(5, Math.round(w * 0.56)) + (p.dh ?? 0) : Math.max(3, h0 + (p.dh ?? 0));
-  const feet = curl || p.sit ? 0 : Math.min(g.limbs, 2), arms = curl ? 0 : p.paws ? 2 : clamp(g.limbs - 2, 0, 2);   // busy paws come out even of an armless body
-  const dy = clamp(p.dy ?? 0, 0, S - 2 - (feet ? 1 : 0) - h - 1);
-  const bot = S - 2 - (feet ? 1 : 0) - dy, top = bot - h + 1, x0 = ((S - w) >> 1) + (p.dx ?? 0);
+  // SPEC-v3.5 §2: the body's plan and what it wears, each from the parts library. A genome from before parts has
+  // none of these (one blob, feet and arms by its `limbs`) and is drawn pixel for pixel as it always was.
+  const old = g.feet === undefined, w0 = clamp(Math.round(st.w * (g.size ?? 1)), 5, 14), sz = w0 < bodySmall() ? "s" : "l", plan = bodyPlan(g.plan);
+  const fr = `${back ? "back" : side ? "side" : "front"}.${sz}`;
+  const worn = (slot: string, value: string | undefined) => (bodySlot(slot, value) ? { ...bodySlot(slot, value)!, at: (frame = fr) => bodyStamp(slot, value, frame) } : null);
+  const ears = worn("ears", g.ears), crown = worn("head", g.head), tail = worn("tail", g.tail), whisk = worn("whiskers", g.whiskers), foot = old ? null : worn("feet", g.feet), lips = worn("mouth", g.mouth);
+  const footH = foot?.at(`front.${sz}`)?.h ?? 1, headroom = Math.max(0, ...[ears, crown].map((x) => x?.at(`front.${sz}`)?.pin[1] ?? 0));   // the rows its feet take under it, and what it wears above it
+  const like = (n: number) => n + ((n - w0) & 1);                 // every width as odd or even as the first, so all of it stands on one middle line
+  const W0 = like(clamp(Math.round(w0 * plan.w), 3, 16)), HW0 = plan.head ? like(clamp(Math.round(w0 * plan.head.w), 4, 14)) : 0;
+  const hh = plan.head ? Math.max(4, Math.round(HW0 * plan.head.tall)) : 0, lap = plan.head ? plan.overlap ?? 1 : 0;
+  const h0 = clamp(Math.round((Math.max(5, Math.round(w0 * (0.3 + 0.7 * stretch))) - st.stoop) * plan.h), plan.head ? 3 : 3, Math.max(3, S - 3 - footH - headroom - (hh - lap)));
+  const two = !!plan.head && !curl, wide = Math.max(W0, HW0), tall = h0 + (plan.head ? hh - lap : 0);        // the whole of it, standing still
+  const fw = Math.min(w0, plan.head ? HW0 : W0), fh = plan.head ? hh : h0;                                    // what the face is laid out on
+  const add = curl ? Math.max(1, Math.round(wide * 0.14)) : w0 < 9 ? 0 : (p.dw ?? 0);                         // a hatchling is too small to spread
+  const w = wide + 2 * add;
+  const bh = curl ? Math.max(5, Math.round(w * 0.56)) + (p.dh ?? 0) : Math.max(3, h0 + (p.dh ?? 0)), h = bh + (two ? hh - lap : 0);
+  const feet = curl || p.sit ? 0 : old ? Math.min(g.limbs, 2) : 2, arms = curl ? 0 : p.paws ? 2 : old ? clamp(g.limbs - 2, 0, 2) : 0;   // busy paws come out even of an armless body
+  const lift = feet ? (foot ? footH : 1) : 0;
+  const dy = clamp(p.dy ?? 0, 0, Math.max(0, S - 2 - lift - h - 1 - headroom));
+  const bot = S - 2 - lift - dy, top = bot - h + 1, x0 = ((S - w) >> 1) + (p.dx ?? 0);
   const lean = w0 < 9 ? 0 : clamp((p.lean ?? 0) + side * st.stoop, -2, 2);                 // a hatchling is too small to lean and keep its shape
   const shift = (y: number) => (h > 1 ? Math.round((lean * (bot - y)) / (h - 1)) : 0);      // how far a row is pushed over
   const mx = (x: number) => (back ? 2 * x0 + w - 1 - x : x);                                 // seen from behind, left is right
+  const hx = x0 + ((w - HW0 - 2 * add) >> 1), hw = two ? HW0 + 2 * add : w, bx = x0 + ((w - W0 - 2 * add) >> 1), bw = two ? W0 + 2 * add : w;   // the head and the body under it, as posed
+  const hl = two ? hx : x0, bl = two ? bx : x0;
 
-  blob(b, x0, bot, w, h, round0, lean, curl ? 0.75 : 0);
+  const raw = new Uint8Array(S * S);
+  if (two) { blob(raw, hx, top + hh - 1, hw, hh, Math.max(round0, plan.head!.round ?? 0), 0); blob(raw, bx, bot, bw, bh, round0, 0); }
+  else blob(raw, x0, bot, w, h, round0, 0, curl ? 0.75 : 0);
+  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) if (raw[y * S + x]) { const k = at(x + shift(y), y); if (k >= 0) b[k] = MID; }
+  const edge = (y: number, dir: number) => { for (let x = dir < 0 ? 0 : S - 1; x >= 0 && x < S; x -= dir) if (has(b, x, y)) return x; return dir < 0 ? x0 : x0 + w - 1; };
+  if (g.fur === "thick") {                                         // thick fur: a ragged edge, a tuft every other row
+    const tufts: number[] = [];
+    for (let y = top + 1; y < bot; y += 2) for (const dir of [-1, 1]) tufts.push(at(edge(y, dir) + dir, y));
+    for (const k of tufts) if (k >= 0) b[k] = MID;
+  }
 
   if (g.marks.some((k) => k.includes("notch"))) {                // a nick out of the top edge
     const nx = mx(x0 + Math.round(w * 0.68)), step = back ? -1 : 1;
@@ -190,34 +256,35 @@ function drawPet(g: Genome, stage: string, p: Pose): Uint8Array {
   // where the face is, so the pattern keeps off it
   const es = g.eye_size;
   let ew = clamp(Math.round(0.7 + es * 2.3), 1, 3);
-  const eh = Math.min(clamp(Math.round(1.5 + es * 2.5), 2, 4), Math.max(1, Math.floor(h0 * 0.36)));
-  const gapMin = w0 % 2 ? 1 : 2;
-  let gap = Math.round(w0 * (0.2 + 0.58 * g.eye_spacing) - ew);
-  if ((w0 - gap) % 2) gap += 1;
-  while (ew > 1 && gapMin + 2 * ew > w0 - (w0 > 7 ? 2 : 0)) ew--;
-  gap = clamp(gap, gapMin, Math.max(gapMin, w0 - 2 - 2 * ew));
-  const xc = x0 + (w - w0) / 2;                                   // the unwidened body's left edge: the face does not stretch
-  const turn = side * Math.round(w0 / 4) - (curl ? Math.max(1, Math.round(w0 * 0.15)) : 0);
-  const ey = curl ? Math.max(top + 1, bot - 2 - Math.min(eh, 2)) : clamp(top + Math.round(h0 * st.face - eh / 2) + (p.look ?? 0), top + 1, Math.max(top + 1, bot - eh - 1));
+  const eh = Math.min(clamp(Math.round(1.5 + es * 2.5), 2, 4), Math.max(1, Math.floor(fh * 0.36)));
+  const gapMin = fw % 2 ? 1 : 2;
+  let gap = Math.round(fw * (0.2 + 0.58 * g.eye_spacing) - ew);
+  if ((fw - gap) % 2) gap += 1;
+  while (ew > 1 && gapMin + 2 * ew > fw - (fw > 7 ? 2 : 0)) ew--;
+  gap = clamp(gap, gapMin, Math.max(gapMin, fw - 2 - 2 * ew));
+  const xc = x0 + (w - fw) / 2, xp = x0 + (w - wide) / 2;        // the unwidened face's left edge (the face does not stretch), and the whole body's
+  const turn = side * Math.round(fw / 4) - (curl ? Math.max(1, Math.round(fw * 0.15)) : 0);
+  const fbot = two ? top + hh - 1 : bot;                         // the foot of what the face is on
+  const ey = curl ? Math.max(top + 1, bot - 2 - Math.min(eh, 2)) : clamp(top + Math.round(fh * st.face - eh / 2) + (p.look ?? 0), top + 1, Math.max(top + 1, fbot - eh - 1));
   const eyeH = curl ? 2 : eh;
-  const eyesAt = [xc + (w0 - gap) / 2 - ew + turn, xc + (w0 + gap) / 2 + turn];
-  const cl = xc + ((w0 - 1) >> 1) + turn, cr = xc + (w0 >> 1) + turn;    // the middle column(s) of the face
-  const my = Math.min(ey + eyeH + (h0 - (ey - top) - eyeH >= 5 ? 1 : 0), bot - 1);
+  const eyesAt = [xc + (fw - gap) / 2 - ew + turn, xc + (fw + gap) / 2 + turn];
+  const cl = xc + ((fw - 1) >> 1) + turn, cr = xc + (fw >> 1) + turn;    // the middle column(s) of the face
+  const my = Math.min(ey + eyeH + (fh - (ey - top) - eyeH >= 5 ? 1 : 0), fbot - 1);
 
-  for (const [px, py] of patternCells(g, w0, h0, view)) {
-    const x = xc + px, y = top + py;
+  for (const [px, py] of patternCells(g, wide, tall, view)) {
+    const x = xp + px, y = top + py;
     if (!back && x >= eyesAt[0] - 1 && x <= eyesAt[1] + ew && y >= ey - 1 && y <= my + 1) continue;
     set(x, y, PAT);
   }
   if (g.marks.some((k) => k.includes("patch"))) {                // faded where the sun fell: a pale place low on one side
-    const cx = mx(xc + Math.round(w0 * 0.74)), cy = top + Math.round(h0 * 0.7), r = Math.max(1.2, w0 * 0.2);
+    const cx = mx(xp + Math.round(wide * 0.74)), cy = top + Math.round(tall * 0.7), r = Math.max(1.2, wide * 0.2);
     for (let y = -3; y <= 3; y++) for (let x = -3; x <= 3; x++) if (x * x + y * y <= r * r) set(cx + x, cy + y, PALE);
   }
-  if (g.marks.some((k) => k.includes("streak"))) for (let i = 0; i < Math.max(2, Math.round(h0 * 0.35)); i++) set(mx(xc + Math.round(w0 * 0.22) + (i >> 1)), top + 1 + i, PALE);
-  if (g.marks.some((k) => k.includes("scar"))) for (let i = 0; i < 3; i++) set(mx(xc + 1 + i), bot - 2 - i, RED);
+  if (g.marks.some((k) => k.includes("streak"))) for (let i = 0; i < Math.max(2, Math.round(tall * 0.35)); i++) set(mx(xp + Math.round(wide * 0.22) + (i >> 1)), top + 1 + i, PALE);
+  if (g.marks.some((k) => k.includes("scar"))) for (let i = 0; i < 3; i++) set(mx(xp + 1 + i), bot - 2 - i, RED);
 
   if (!back) {
-    const eyes = p.eyes ?? "open", lo = x0 + (w > 7 ? 1 : 0), hi = x0 + w - 1 - (w > 7 ? 1 : 0);
+    const eyes = p.eyes ?? "open", lo = hl + (hw > 7 ? 1 : 0), hi = hl + hw - 1 - (hw > 7 ? 1 : 0);
     eyesAt.forEach((ex0, n) => {
       const out = n ? 1 : -1, inner = n ? ex0 : ex0 + ew - 1;                       // which way is outward; the column nearest the nose
       const xa = Math.max(ex0, lo), xb = Math.min(ex0 + ew - 1, hi);
@@ -243,19 +310,22 @@ function drawPet(g: Genome, stage: string, p: Pose): Uint8Array {
         if (eyeH > 2) dot(inner, mid - 1, INK);
       } else if (eyes === "x") {
         const c = n ? ex0 + (ew >> 1) : ex0 + ((ew - 1) >> 1);
-        if (w0 >= 9 && gap >= 2) for (const [x, y] of [[-1, -1], [1, -1], [0, 0], [-1, 1], [1, 1]]) dot(c + x, mid + y, INK);
+        if (fw >= 9 && gap >= 2) for (const [x, y] of [[-1, -1], [1, -1], [0, 0], [-1, 1], [1, 1]]) dot(c + x, mid + y, INK);
         else for (let x = xa; x <= Math.max(xb, xa + 1); x++) dot(x, mid, INK);
       }
       if (p.tear && n === 0) dot(xa, Math.min(ey + eyeH + p.tear - 1, bot - 1), TEAR);
     });
     const mouth = curl ? "none" : (p.mouth ?? "flat"), ml = side > 0 ? cr : cl, mr = side < 0 ? cl : cr;   // in profile the mouth is one pixel
-    if (mouth === "flat") for (let x = ml; x <= mr; x++) set(x, my, INK, my);
+    if (lips && mouth !== "none") {                                // the mouth its genome gives it, doing what the face does
+      if (!(side && lips.side_at)) stamp(b, lips.at(`${mouth}.${side ? "side" : ml === mr ? 1 : 2}.${sz}`), ml + shift(my), my, { on: b });
+    }
+    else if (mouth === "flat") for (let x = ml; x <= mr; x++) set(x, my, INK, my);
     else if (mouth === "smile") { set(ml - 1, my, INK, my); set(mr + 1, my, INK, my); for (let x = ml; x <= mr; x++) set(x, my + 1, INK, my); }
     else if (mouth === "frown") { set(ml - 1, my + 1, INK, my); set(mr + 1, my + 1, INK, my); for (let x = ml; x <= mr; x++) set(x, my, INK, my); }
     else if (mouth === "open" || mouth === "o") {
-      const a = ml - (ml === mr && w0 >= 9 ? 1 : 0), z = mr + (ml === mr && w0 >= 9 ? 1 : 0);
+      const a = ml - (ml === mr && fw >= 9 ? 1 : 0), z = mr + (ml === mr && fw >= 9 ? 1 : 0);
       for (let x = a; x <= z; x++) { set(x, my, INK, my); set(x, my + 1, mouth === "open" ? RED : INK, my); }
-      if (mouth === "open" && w0 >= 9) for (let x = a; x <= z; x++) set(x, my + 2, INK, my);
+      if (mouth === "open" && fw >= 9) for (let x = a; x <= z; x++) set(x, my + 2, INK, my);
     }
   }
   // a glint on the crown
@@ -274,31 +344,55 @@ function drawPet(g: Genome, stage: string, p: Pose): Uint8Array {
     const x = k % S, y = (k / S) | 0;
     for (const [i, j] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const n = at(x + i, y + j); if (n >= 0 && !b[n]) m[n] = INK; }
   }
-  const edge = (y: number, dir: number) => { for (let x = dir < 0 ? 0 : S - 1; x >= 0 && x < S; x -= dir) if (has(b, x, y)) return x; return dir < 0 ? x0 : x0 + w - 1; };
+
+  // what it wears on its head: one each side of the middle of the face (or one, turned, in profile), standing on the body's own top edge
+  const topAt = (x: number) => { for (let y = 0; y < S; y++) if (has(b, x, y)) return y; return -1; };
+  const ml0 = cl - (side ? turn : 0) + shift(top), mr0 = cr - (side ? turn : 0) + shift(top);
+  for (const part of [crown, ears]) {
+    if (!part) continue;
+    const s = part.at(), half = Math.max(1, Math.round(hw * (part.spread ?? 0.25)));
+    const cols: [number, boolean][] = side ? [[side > 0 ? ml0 - 1 : mr0 + 1, side < 0]] : part.pair ? [[Math.max(ml0 - half, hl + shift(top)), false], [Math.min(mr0 + half, hl + hw - 1 + shift(top)), true]] : [[ml0, false]];
+    for (const [x, flip] of cols) if (topAt(x) >= 0) stamp(m, s, x, topAt(x), { flip, behind: b });
+  }
+  if (lips?.side_at && side && !curl && (p.mouth ?? "flat") !== "none") stamp(m, lips.at(`${p.mouth ?? "flat"}.side.${sz}`), edge(my, side) + side, my, { flip: side < 0, bare: true });   // a beak, in profile, stands out of the face
+  if (whisk && !back && !curl) for (const dir of side ? [side] : [-1, 1]) stamp(m, whisk.at(`front.${sz}`), edge(my, dir) + dir, my, { flip: dir > 0, bare: true });
 
   if (feet) {
-    const a = Math.max(1, Math.round(w0 * 0.17)), where = feet === 1 ? [xc + (w0 >> 1) - 1] : [xc + a, xc + w0 - a - 2];
+    const a = Math.max(1, Math.round(W0 * 0.17)), fx0 = bl + add, where = feet === 1 ? [fx0 + (W0 >> 1) - 1] : [fx0 + a, fx0 + W0 - a - 2];
     where.forEach((fx, n) => {
-      const step = (p.feet ?? [0, 0])[feet === 1 ? 0 : n];
+      const step = (p.feet ?? [0, 0])[feet === 1 ? 0 : n], s = foot?.at(`${side ? "side" : "front"}.${sz}`);
+      if (s) {                                                     // the feet its genome gives it; a long leg lifted is drawn up, not gone
+        if (step === 9 && s.h < 3) return;
+        const sx = fx + (step === 9 ? 0 : step), flip = side ? side < 0 : n === 1;
+        let up = 0;
+        while (up < 2 && !has(b, sx, bot - up) && !has(b, sx + 1, bot - up)) up++;
+        stamp(m, s, sx + (flip ? 1 : 0), bot + 1, { flip, skip: step === 9 ? 1 : 0, up });
+        return;
+      }
       if (step === 9) return;
       for (let y = bot; y > bot - 3; y--) if (has(b, fx + step, y) || has(b, fx + step + 1, y)) { nub(m, fx + step, y + 1, 2, bot + 1 - y, DARK); break; }
     });
   }
-  if (p.sit && g.limbs) {                                        // sitting: its feet out in front of it
-    const a = Math.max(1, Math.round(w0 * 0.17));
-    for (const fx of g.limbs === 1 ? [xc + (w0 >> 1) - 1] : [xc + a, xc + w0 - a - 2]) nub(m, fx, bot, 2, 1, DARK, true);
+  if (p.sit && (!old || g.limbs)) {                              // sitting: its feet out in front of it
+    const a = Math.max(1, Math.round(W0 * 0.17)), fx0 = bl + add;
+    for (const fx of old && g.limbs === 1 ? [fx0 + (W0 >> 1) - 1] : [fx0 + a, fx0 + W0 - a - 2]) nub(m, fx, bot, 2, 1, DARK, true);
   }
-  const ay = clamp(top + Math.round(h * 0.55) - (p.arms ?? 0), top + 1, bot - 1), aw = w0 >= 10 ? 2 : 1, ah = (p.arms ?? 0) > 0 ? 3 : 2;
+  const ay = two ? clamp(bot - bh + 1 + Math.round(bh * 0.4) - (p.arms ?? 0), top + 1, bot - 1) : clamp(top + Math.round(h * 0.55) - (p.arms ?? 0), top + 1, bot - 1), aw = w0 >= 10 ? 2 : 1, ah = (p.arms ?? 0) > 0 ? 3 : 2;
+  const ty = Math.max(top + 1, bot - 2);
   if (side) {
     if (arms > (side > 0 ? 0 : 1)) { const ax = x0 + (w >> 1) - 1 + shift(ay) - ((p.arms ?? 0) ? side : 0); nub(m, ax, ay, 2, 2, DARK); for (const i of [0, 1]) { const k = at(ax + i, ay + 2); if (k >= 0) m[k] = INK; } }   // the arm on the side we can see
-    const ty = Math.max(top + 1, bot - 2), tx = edge(ty, -side);                                                              // a tuft of tail behind
-    nub(m, tx - side - (side < 0 ? 0 : aw - 1), ty, aw, 2, LIGHT);
+    if (!tail) { const tx = edge(ty, -side); nub(m, tx - side - (side < 0 ? 0 : aw - 1), ty, aw, 2, LIGHT); }                 // a tuft of tail behind
   } else {
     for (let n = 0; n < arms; n++) {
       const left = (n === 0) !== back, y = p.paws ? clamp(ay + (p.paws === n + 1 ? -2 : 1), top + 1, bot - 1) : ay, x = edge(y, left ? -1 : 1);
       nub(m, left ? x - aw : x + 1, y, aw, ah, DARK);
     }
-    if (back) { const tx = xc + (w0 >> 1) - 1; for (const [i, j] of [[0, 0], [1, 0], [0, -1], [1, -1]]) { const k = at(tx + i, bot + j); if (k >= 0 && b[k]) m[k] = LIGHT; } }
+    if (back && !tail) { const tx = xc + (fw >> 1) - 1; for (const [i, j] of [[0, 0], [1, 0], [0, -1], [1, -1]]) { const k = at(tx + i, bot + j); if (k >= 0 && b[k]) m[k] = LIGHT; } }
+  }
+  // the tail its genome gives it: out to one side from in front, behind it in profile, on its back from behind; asleep it is wrapped round
+  if (tail && !curl) {
+    if (back) stamp(m, tail.at(), bl + (bw >> 1) - 1 + shift(bot), bot, { hard: true });
+    else { const dir = side ? -side : 1; stamp(m, tail.at(`front.${sz}`), edge(ty, dir), ty, { flip: dir < 0, behind: b }); }
   }
   return m;
 }
@@ -348,7 +442,7 @@ function build(g: Genome, stage: string, grey: number): PetSheet {
     return c;
   };
   const amp = g.wobble < 0.34 ? 0 : g.wobble < 0.67 ? 1 : 2;     // wobble: how much it moves when it breathes and walks
-  const sway = amp ? 1 : 0, wide = amp === 2 ? 1 : 0, steps = g.limbs >= 2;
+  const sway = amp ? 1 : 0, wide = amp === 2 ? 1 : 0, steps = g.feet !== undefined || g.limbs >= 2;   // (every body with the new feet has two to step with)
   const walk = (face: Pose["face"]): HTMLCanvasElement[] => {
     const side = face === "left" ? -1 : face === "right" ? 1 : 0, lean = side;
     if (!steps) return [                                         // no two feet to step with: it hops

@@ -1,0 +1,106 @@
+{
+ "spring": {
+  "garden": {
+   "tile.grass.1": "season.spring.tile.grass.1",
+   "tile.grass.2": "season.spring.tile.grass.2",
+   "tile.grass.3": "season.spring.tile.grass.3",
+   "tile.grass": [
+    "season.spring.tile.grass",
+    "tile.grass",
+    "season.spring.tile.grass~2",
+    "tile.grass",
+    "tile.grass"
+   ],
+   "tile.sky.hedge": "season.spring.tile.sky.hedge",
+   "decor.bush": "season.spring.decor.bush"
+  },
+  "*": {
+   "fix.window": "season.spring.fix.window",
+   "fix.window.closed": "season.spring.fix.window.closed",
+   "fix.window.open": "season.spring.fix.window.open",
+   "fix.skylight": "season.spring.fix.skylight"
+  }
+ },
+ "autumn": {
+  "garden": {
+   "tile.grass.1": "season.autumn.tile.grass.1",
+   "tile.grass.2": "season.autumn.tile.grass.2",
+   "tile.grass.3": "season.autumn.tile.grass.3",
+   "tile.soil.nw": "season.autumn.tile.soil.nw",
+   "tile.soil.n": "season.autumn.tile.soil.n",
+   "tile.soil.ne": "season.autumn.tile.soil.ne",
+   "tile.soil.sw": "season.autumn.tile.soil.sw",
+   "tile.soil.s": "season.autumn.tile.soil.s",
+   "tile.soil.se": "season.autumn.tile.soil.se",
+   "tile.grass": [
+    "season.autumn.tile.grass",
+    "season.autumn.tile.grass~1",
+    "season.autumn.tile.grass~2",
+    "season.autumn.tile.grass~3",
+    "season.autumn.tile.grass~4"
+   ],
+   "tile.path": "season.autumn.tile.path",
+   "tile.sky.hedge": "season.autumn.tile.sky.hedge",
+   "decor.bush": "season.autumn.decor.bush",
+   "grows.leaf": "season.autumn.grows.leaf",
+   "grows.leaf.bare": "season.autumn.grows.leaf.bare"
+  },
+  "*": {
+   "fix.window": "season.autumn.fix.window",
+   "fix.window.closed": "season.autumn.fix.window.closed",
+   "fix.window.open": "season.autumn.fix.window.open",
+   "fix.skylight": "season.autumn.fix.skylight"
+  }
+ },
+ "winter": {
+  "garden": {
+   "tile.grass": "season.winter.tile.grass",
+   "tile.grass.1": "season.winter.tile.grass.1",
+   "tile.grass.2": "season.winter.tile.grass.2",
+   "tile.grass.3": "season.winter.tile.grass.3",
+   "tile.soil.nw": "season.winter.tile.soil.nw",
+   "tile.soil.n": "season.winter.tile.soil.n",
+   "tile.soil.ne": "season.winter.tile.soil.ne",
+   "tile.soil.sw": "season.winter.tile.soil.sw",
+   "tile.soil.s": "season.winter.tile.soil.s",
+   "tile.soil.se": "season.winter.tile.soil.se",
+   "tile.path": "season.winter.tile.path",
+   "tile.sky.hedge": "season.winter.tile.sky.hedge",
+   "tile.fence": "season.winter.tile.fence",
+   "tile.fence.nw": "season.winter.tile.fence.nw",
+   "tile.fence.ne": "season.winter.tile.fence.ne",
+   "tile.fence.sw": "season.winter.tile.fence.sw",
+   "tile.fence.se": "season.winter.tile.fence.se",
+   "decor.bush": "season.winter.decor.bush",
+   "decor.stepping stone": "season.winter.decor.stepping stone",
+   "decor.sprout": null,
+   "decor.flower.sun": "season.winter.snow mound",
+   "decor.flower.red": "season.winter.snow mound",
+   "decor.flower.white": "season.winter.snow mound",
+   "fix.bean row": "season.winter.fix.bean row",
+   "fix.bean row.growing": "season.winter.fix.bean row.growing",
+   "fix.bean row.ripe": "season.winter.fix.bean row.ripe",
+   "fix.berry bush": "season.winter.fix.berry bush",
+   "fix.berry bush.growing": "season.winter.fix.berry bush.growing",
+   "fix.berry bush.ripe": "season.winter.fix.berry bush.ripe",
+   "fix.herb patch": "season.winter.fix.herb patch",
+   "fix.herb patch.growing": "season.winter.fix.herb patch.growing",
+   "fix.herb patch.ripe": "season.winter.fix.herb patch.ripe",
+   "fix.old bench": "season.winter.fix.old bench",
+   "fix.tool box": "season.winter.fix.tool box",
+   "fix.bird bath": "season.winter.fix.bird bath",
+   "grows.petal": "season.winter.grows.petal",
+   "grows.petal.bare": "season.winter.grows.petal.bare",
+   "grows.seed": "season.winter.grows.seed",
+   "grows.seed.bare": "season.winter.grows.seed.bare",
+   "grows.leaf": "season.winter.grows.leaf",
+   "grows.leaf.bare": "season.winter.grows.leaf.bare"
+  },
+  "*": {
+   "fix.window": "season.winter.fix.window",
+   "fix.window.closed": "season.winter.fix.window.closed",
+   "fix.window.open": "season.winter.fix.window.open",
+   "fix.skylight": "season.winter.fix.skylight"
+  }
+ }
+}

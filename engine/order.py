@@ -241,9 +241,11 @@ def do_job(house, cfg, pet, room, job):
     """Carry out what `job` found. Returns where it went, in the pet's words, or "" if it could no longer be done."""
     kind, name, how, place = job
     if kind == "bits":
-        took = sorted(loose_bits(room), key=lambda s: dist(s["pos"], pet["pos"]))[:max(0, min(cfg["order"]["pawful"], bit_room(cfg, room).get(place, 0)))]
+        took = sorted((s for s in loose_bits(room) if not name or s["bit"] in name), key=lambda s: dist(s["pos"], pet["pos"]))[:max(0, min(cfg["order"]["pawful"], bit_room(cfg, room).get(place, 0)))]   # (`name`: only these bits; SPEC-v3.5 §5, food put by)
         for s in took:
             s["on"], s["pos"] = place, list(room["objects"][place]["pos"])
+        from . import season
+        season.stored(house, cfg, pet, room, took, place)   # SPEC-v3.5 §5: food put away in something is put by, and keeps
         return into(cfg, room, place) if took else ""
     o = room["objects"].get(name)
     if not o or "made" not in o or o.get("on"):

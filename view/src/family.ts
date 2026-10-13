@@ -83,9 +83,9 @@ function tree(c: Ctx, pets: PetV[], crossings: Crossing[], sayings: number, redr
   }
   for (const p of pets) {
     const [x, y] = at(p), parent = pets.find((q) => q.id === p.parent);
-    if (parent) {
+    if (parent) {   // (SPEC-v3.5 §2.2: the branch to one born with something new is marked)
       const [px, py] = at(parent), mid = y - 8;
-      lines.append(svg("path", { d: `M${px + CW / 2} ${py + CH - 12}V${mid}H${x + CW / 2}V${y + 2}` }));
+      lines.append(svg("path", { class: p.mutation ? "new" : "", d: `M${px + CW / 2} ${py + CH - 12}V${mid}H${x + CW / 2}V${y + 2}` }));
     }
     const dead = p.stage === "dead", egg = p.stage === "egg";
     const life = dead ? `lived ${plural(Math.round(p.days ?? 0), "day")}` : egg ? "not hatched" : (p.days ?? 0) < 1 ? "born today" : `${plural(Math.floor(p.days ?? 0), "day")} old`;
@@ -95,6 +95,13 @@ function tree(c: Ctx, pets: PetV[], crossings: Crossing[], sayings: number, redr
     node.style.left = `${x}px`;
     node.style.top = `${y}px`;
     node.title = `${p.label}, generation ${p.gen}${two ? `, of the ${(NAMES[of(p)] ?? "other family").toLowerCase()}` : ""}`;
+    if (p.mutation) {
+      const was = p.mutation.from === "none" || p.mutation.from === "no" ? "" : `, where its parent had ${p.mutation.from}`, star = el("span", "newpart", `✦ ${p.mutation.slot}`);
+      star.title = `Born with something new: ${p.mutation.slot} ${p.mutation.to}${was}.`;
+      node.title += `. ${star.title}`;
+      node.classList.add("mutant");
+      node.append(star);
+    }
     node.onclick = () => { chosen = chosen === p.id ? null : p.id; keep(); redraw(); };
     box.append(node);
   }

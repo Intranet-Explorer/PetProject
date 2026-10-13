@@ -94,6 +94,8 @@ def hourly(house, cfg):
                 span = season["sunset"] - season["sunrise"]
                 o["pos"] = [max(1, min(cfg["W"] - 2, round(1 + (cfg["W"] - 3) * (c["hour"] - season["sunrise"]) / span))), o["pos"][1]]
     craft.grow(house, cfg)   # SPEC-v3.4 §3.5: what is planted grows, watered or not, and wilts if left dry
+    from . import season
+    season.hourly(house, cfg)   # SPEC-v3.5 §5: the season's own bits in the garden, and food left lying goes bad
     craft.lost(house, cfg)   # §3.3: what nobody living knows any more is lost
     things.upkeep(house, cfg)
     walls.fade(house, cfg)

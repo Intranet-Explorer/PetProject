@@ -464,6 +464,9 @@
   "wind chime": "chime",
   "flute": "flute",
   "chimes": "chimes",
+  "ring": "bell",
+  "pluck": "chime",
+  "thud": "drum",
   "default": "clatter",
   "hum": {
    "synth": "hum",

@@ -26,7 +26,7 @@ These are measured on a copy of the live house with the real model (in turbo whe
 | A new body part appears in a family (stub run, many births) | about 1 birth in 12, never more than 1 in 6 |
 | A body trait is felt (a sense line from it), per pet per world day | at least once |
 | Invented kinds, house-wide per world day | at least 1 |
-| A reviewer shown 10 invented things (sprite and name) says roughly what each is | at least 7 of 10 |
+| A reviewer shown 10 invented things (sprite and name) says what each is for | at least 7 of 10 |
 | A lasting project finished, house-wide | by the end of world day three |
 | In winter on the copy, the outdoor garden is dormant and the greenhouse still grows | yes |
 | Model calls per pet per world day | no more than 10% up |
@@ -118,12 +118,42 @@ These are measured on a copy of the live house with the real model (in turbo whe
 
 **Why:** discovery should be able to produce new things, not only new materials and properties. A thing invented in one family should exist only in that house.
 
-### 3.1 When a new kind is born
-A new kind is created when a pet **combines** or **makes** with a recipe the house hasn't seen, **and** either:
-- something new emerges (a v3.4 emergent property), or
-- the mind gives the result a name and purpose that differ from both parts.
+### 3.0 Amendment (Tyler, 13 October): inventions must have a use
+The parts preview's random sheet showed what parts can do with no meaning behind them: "teal ring + brown cloth + blue strings". That is a style test, but nothing in §3.1 stopped the house filling with things like it. The difference that matters: the random sheet combined parts nobody chose. In the house, a pet chooses what to put together, and any combination is allowed. What the uses decide is what the result **does**:
 
-Otherwise the result is the larger kind, as now.
+- **If it fits a use** (below), it's a new kind with that use's effect. A fork with a torch on it is a carried light.
+- **If it fits no use,** it's still a new thing: drawn from the two things' parts, named by the pet, with its materials' properties, but no special effect. It's a **curio**, like a bell sewn onto a cushion. Curios are kept, given and inherited like keepsakes, and can be fed to the vending machine (§4.3).
+
+| Use | Parts (base + what's added) | What it does in the house |
+|---|---|---|
+| carried light | stick, fork or handle + flame | a light that goes where its carrier goes |
+| soft light | flame or gem + cloth or shade | lights a room at night without harshness (the lamp's answer) |
+| cutter | handle + blade or edge | counts as a carver |
+| digger | handle + flat blade | counts as a trowel |
+| pourer | bowl or pot + spout | carries water to plants |
+| keeper | box, bowl or pot + lid | food inside doesn't spoil; things inside count as stored |
+| cart | box or block + wheels | carries several things at once |
+| instrument | frame, bowl or box + strings or bell dome | plays; can be learned to play like a song |
+| reacher | stick + hook | reaches high places (the attic's high shelf) |
+| chime | ring or frame + hanging pieces | sounds in the wind; in the garden it tells the weather |
+| seat or bed | cushion + frame or block | better rest than either part |
+| planter | pot or bowl + flower or seed | grows a plant indoors |
+| boat | disc or bowl + sail | floats on the pond; a toy |
+| rolling toy | ball or disc + bell | rings when rolled; draws kin to play |
+| feeder | bowl + seed or food | draws creatures; helps taming |
+| keepsake | ring, disc or block + gem, studs or band | no use but meaning: kept, given, inherited |
+
+- **Decoration stays in the material.** Studs, bands and colour come from the material and the maker, never as a random extra part.
+- **The parts preview's random sheet** is replaced by two sheets:
+  - one per use, showing it in five materials;
+  - one of curios made from real pairs of existing kinds (fork + torch, bell + cushion, basket + wheel), not random parts.
+  
+  A reviewer should say what each use is for, and recognise both halves of each curio.
+- **The pet still names it** ("night fork" is a carried light), and the use decides what it does.
+- More uses can be added later in data (`uses.toml`).
+
+### 3.1 When a new kind is born
+A new kind is created whenever a pet **combines** two things in a way the house hasn't seen. It gets a use if it fits one (§3.0); otherwise it's a curio.
 
 ### 3.2 What it is and does
 - **Its parts:** the base comes from the sturdier or larger thing. The other thing gives its **signature part** (the torch its flame, the bell its dome, the basket its weave), placed on the base's free attach spot. Up to 3 parts in all.
@@ -179,6 +209,38 @@ Otherwise the result is the larger kind, as now.
   - a family's patterns can echo its coats (§2.1), so a household's rooms come to look like it.
 - **Paint fades over many world days** unless it's redone.
 - **Pets react to decoration:** a painted room is felt as homely by the family that painted it, and only as a little strange by a stranger.
+
+### 4.3 The vending machine and base materials (Tyler, 13 October)
+**Why:** making needs a steady supply of real ingredients. Bits that grow back (petals, fluff, reed) aren't enough to build tools, furniture and projects. Unwanted things also pile up with nowhere to go. A machine that hands out materials and takes things back solves both, and it's fun to watch.
+
+- **Six new base materials,** with properties and crafting rules in `crafting.toml`:
+  - **wood:** hard, light; carve gives a handle or plank
+  - **stone:** hard, heavy; grind gives sharp stone or grit
+  - **metal:** hard, rings when struck, holds warmth; warming lets it bend
+  - **clay:** soft until warmed, then fired clay
+  - **fibre:** woven gives cord, pressed gives felt
+  - **sand:** kept for glass later (v3.6); for now, a weight and a filler
+  
+  Use them in the existing processes, and add about 15 rules.
+- **The vending machine:** a fixture in the storeroom, drawn in the house style (repo art), with lights and a clunk when it gives something.
+  - **It gives:** each pet can take 2 materials a world day free (so a new family can always start), choosing which.
+  - **It takes back:** a pet can feed it a made thing or bits and choose a material in return, one per thing (bits: one per three). The kind decides which materials it gives: soft things give fibre, hard things wood or stone, noisy things metal.
+  - **What it never takes:**
+    - heirlooms;
+    - memorial stones;
+    - anything in a keepsake box;
+    - anything belonging to another living pet without that pet's leave.
+  - **Its stock is limited** (about 12 of each), with a little restocked each morning by delivery.
+- **The visitor can stock it.** A header control, "Stock the machine", lets Tyler add materials of his choice, up to its limit. Pets perceive it: "the visitor put metal in the machine".
+- **Wants use it:**
+  - want-chaining (v3.4) can lead to "get some clay from the machine";
+  - an orderly pet wants to feed spare things to it, such as a room's third nest or a charm nobody has touched in days;
+  - a pet with nothing to make wants to see what's in it.
+- **On screen:** the machine lights up when used, and the item drops into the pet's paws.
+- **New bars for §0:**
+  - the machine is used at least 3 times per world day, house-wide;
+  - at least one thing is fed back per world day;
+  - things lying about don't rise over two world days.
 
 ---
 

@@ -200,6 +200,20 @@ for path in (ASSETS / "rooms").glob("*.json"):
     if path.stem not in house["rooms"]:
         bad("rooms/%s is a layout for a room type that does not exist" % path.name)
 
+# ---- the seasons (SPEC-v3.5 §5): their own bits have pictures, and every stand-in in seasons.json is for a name that exists ----
+turns = tomllib.loads((ROOT / "seasons.toml").read_text()) if (ROOT / "seasons.toml").exists() else {}
+for b in turns.get("bit", {}):
+    have("bit." + b)
+for season, rooms in (J("seasons.json") if (ASSETS / "seasons.json").exists() else {}).items():
+    if season not in house["seasons"]:
+        bad("seasons.json: there is no season %r" % season)
+    for kind, swaps in rooms.items():
+        if kind != "*" and kind not in house["rooms"]:
+            bad("seasons.json: there is no room type %r" % kind)
+        for name, to in swaps.items():
+            for n in [name] + (to if isinstance(to, list) else [to] if to else []):
+                have(n)
+
 # ---- sounds ----
 for name in "pickup drop make unmake combine door step eat write book call heart radio arrival".split():
     if name not in sounds["sfx"]:
@@ -255,8 +269,11 @@ fixtures = {f["name"]: f for r in house["rooms"].values() for f in r["fixtures"]
 for name in ["bell", "drum", "wind chime", "flute", "hum"] + [n for n, f in fixtures.items() if f.get("loud")]:
     if name not in inst:
         bad("sounds.json: instruments has no %r" % name)
+part_sounds = {p["sound"] for p in J("parts.json")["thing"].values() if p.get("sound")} if (ASSETS / "parts.json").exists() else set()   # SPEC-v3.5 §3.4: what an invented thing sounds like
+for name in part_sounds - set(inst):
+    bad("sounds.json: instruments has no %r, the sound of a part in parts.json" % name)
 for name, v in inst.items():
-    if name not in ("hum", "default") and name not in kinds and name not in fixtures:
+    if name not in ("hum", "default") and name not in kinds and name not in fixtures and name not in part_sounds:
         bad("instruments: %r is neither a kind nor a fixture" % name)
     if isinstance(v, dict):
         layer(v, "instruments %s" % name)
@@ -266,6 +283,12 @@ for name, v in inst.items():
 for name, pack in packs.items():   # a pack may bring a font for the page's headings
     if pack.get("font"):
         pack_file({"pack": name, "file": pack["font"]}, "the font of pack %s" % name)
+
+# ---- the parts library (SPEC-v3.5 §1; engine.check_parts looks at it closely): its pictures are in use ----
+if (ASSETS / "parts.json").exists():
+    lib = J("parts.json")
+    used.update(ASSETS / x["file"] for p in lib["thing"].values() for x in p.get("px", {}).values())
+    used.update([ASSETS / lib["body"]["file"]] if lib.get("body") else [])
 
 # ---- nothing lies about unused ----
 for pack in packs.values():
