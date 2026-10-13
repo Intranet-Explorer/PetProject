@@ -1,0 +1,74 @@
+{
+ "about": "SPEC-v3.5 \u00a72: body parts as genes. Each slot's values in order: a small mutation steps to a neighbouring value. A pet's genome carries one value per slot (genome.ears, genome.tail ...), genome.plan, genome.pattern (one of `patterns`) and genome.size (0.8 to 1.2). `pattern_mix`: what two patterns give when they combine. The engine inherits and mutates these; the view draws them.",
+ "slots": {
+  "ears": [
+   "none",
+   "round",
+   "pointed",
+   "long"
+  ],
+  "tail": [
+   "none",
+   "stub",
+   "long",
+   "fluffy"
+  ],
+  "head": [
+   "none",
+   "horns",
+   "antennae",
+   "crest"
+  ],
+  "whiskers": [
+   "no",
+   "yes"
+  ],
+  "feet": [
+   "nubs",
+   "paws",
+   "legs"
+  ],
+  "mouth": [
+   "dot",
+   "wide",
+   "beak"
+  ],
+  "fur": [
+   "thin",
+   "thick"
+  ],
+  "shade": [
+   "light",
+   "mid",
+   "dark"
+  ]
+ },
+ "plans": [
+  "blob",
+  "head",
+  "segments",
+  "long",
+  "tall"
+ ],
+ "patterns": [
+  "plain",
+  "spots",
+  "stripes",
+  "patch",
+  "gradient",
+  "broken stripes",
+  "faded patch",
+  "dappled patch",
+  "banded gradient",
+  "speckled fade",
+  "striped patch"
+ ],
+ "pattern_mix": {
+  "spots+stripes": "broken stripes",
+  "gradient+patch": "faded patch",
+  "patch+spots": "dappled patch",
+  "gradient+stripes": "banded gradient",
+  "gradient+spots": "speckled fade",
+  "patch+stripes": "striped patch"
+ }
+}

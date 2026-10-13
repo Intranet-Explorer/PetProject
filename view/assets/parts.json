@@ -1,0 +1,399 @@
+{
+ "about": "SPEC-v3.5 \u00a71: the parts library. `thing`: every thing part. A base has `spots` (where other parts may go); a top or a wrap has `on` (the spots it may sit on). `layer` is behind, body or front. `glow`: it gets a soft halo. `sound`: what it sounds like (\u00a73.4). `kinds`: for every kind in kinds.json, the base part it is built on and the signature part it gives to an invention. `rules`: the composition limits. The engine composes inventions from the names here; the view draws them. Drawing fields (file, rect, where each spot is in pixels, regions) are added per part by the art.",
+ "rules": {
+  "max_parts": 3,
+  "no_stack": [
+   "flame",
+   "blade"
+  ],
+  "px": {
+   "small": 16,
+   "large": 24,
+   "furniture": 32
+  }
+ },
+ "thing": {
+  "stick": {
+   "role": "base",
+   "spots": [
+    "tip",
+    "side"
+   ],
+   "layer": "body"
+  },
+  "bowl": {
+   "role": "base",
+   "spots": [
+    "inside",
+    "side",
+    "top",
+    "base"
+   ],
+   "layer": "body"
+  },
+  "box": {
+   "role": "base",
+   "spots": [
+    "top",
+    "side",
+    "inside",
+    "base"
+   ],
+   "layer": "body"
+  },
+  "disc": {
+   "role": "base",
+   "spots": [
+    "top",
+    "side"
+   ],
+   "layer": "body"
+  },
+  "ring": {
+   "role": "base",
+   "spots": [
+    "inside",
+    "top",
+    "side"
+   ],
+   "layer": "body"
+  },
+  "frame": {
+   "role": "base",
+   "spots": [
+    "top",
+    "inside",
+    "side",
+    "base"
+   ],
+   "layer": "body"
+  },
+  "cushion": {
+   "role": "base",
+   "spots": [
+    "top",
+    "side"
+   ],
+   "layer": "body"
+  },
+  "block": {
+   "role": "base",
+   "spots": [
+    "top",
+    "side",
+    "base"
+   ],
+   "layer": "body",
+   "sound": "thud"
+  },
+  "bundle": {
+   "role": "base",
+   "spots": [
+    "top",
+    "side",
+    "tip"
+   ],
+   "layer": "body"
+  },
+  "flame": {
+   "role": "top",
+   "on": [
+    "tip",
+    "top",
+    "inside"
+   ],
+   "layer": "front",
+   "glow": true
+  },
+  "blade": {
+   "role": "top",
+   "on": [
+    "tip"
+   ],
+   "layer": "front"
+  },
+  "tines": {
+   "role": "top",
+   "on": [
+    "tip"
+   ],
+   "layer": "front"
+  },
+  "bell dome": {
+   "role": "top",
+   "on": [
+    "tip",
+    "top",
+    "inside"
+   ],
+   "layer": "front",
+   "sound": "ring"
+  },
+  "lid": {
+   "role": "top",
+   "on": [
+    "top"
+   ],
+   "layer": "front"
+  },
+  "spout": {
+   "role": "top",
+   "on": [
+    "side"
+   ],
+   "layer": "front"
+  },
+  "strings": {
+   "role": "top",
+   "on": [
+    "inside",
+    "side"
+   ],
+   "layer": "front",
+   "sound": "pluck"
+  },
+  "wheel": {
+   "role": "top",
+   "on": [
+    "base",
+    "side"
+   ],
+   "layer": "front"
+  },
+  "hook": {
+   "role": "top",
+   "on": [
+    "top",
+    "tip"
+   ],
+   "layer": "front"
+  },
+  "flower": {
+   "role": "top",
+   "on": [
+    "top",
+    "tip",
+    "inside"
+   ],
+   "layer": "front"
+  },
+  "gem": {
+   "role": "top",
+   "on": [
+    "top",
+    "tip",
+    "inside"
+   ],
+   "layer": "front"
+  },
+  "sail": {
+   "role": "top",
+   "on": [
+    "top",
+    "tip"
+   ],
+   "layer": "front"
+  },
+  "head": {
+   "role": "top",
+   "on": [
+    "tip"
+   ],
+   "layer": "front"
+  },
+  "cord": {
+   "role": "wrap",
+   "on": [
+    "side"
+   ],
+   "layer": "front"
+  },
+  "cloth": {
+   "role": "wrap",
+   "on": [
+    "side",
+    "top"
+   ],
+   "layer": "front"
+  },
+  "band": {
+   "role": "wrap",
+   "on": [
+    "side"
+   ],
+   "layer": "front"
+  },
+  "studs": {
+   "role": "wrap",
+   "on": [
+    "side"
+   ],
+   "layer": "front"
+  },
+  "weave": {
+   "role": "wrap",
+   "on": [
+    "side"
+   ],
+   "layer": "front"
+  }
+ },
+ "kinds": {
+  "cushion": {
+   "base": "cushion",
+   "signature": "cloth"
+  },
+  "rug": {
+   "base": "disc",
+   "signature": "cloth"
+  },
+  "blanket": {
+   "base": "cushion",
+   "signature": "cloth"
+  },
+  "nest": {
+   "base": "ring",
+   "signature": "weave"
+  },
+  "bed-mat": {
+   "base": "block",
+   "signature": "cloth"
+  },
+  "doll": {
+   "base": "bundle",
+   "signature": "cloth"
+  },
+  "candle": {
+   "base": "stick",
+   "signature": "flame"
+  },
+  "lantern": {
+   "base": "frame",
+   "signature": "flame"
+  },
+  "lamp": {
+   "base": "stick",
+   "signature": "flame"
+  },
+  "bell": {
+   "base": "ring",
+   "signature": "bell dome"
+  },
+  "drum": {
+   "base": "block",
+   "signature": "band"
+  },
+  "flute": {
+   "base": "stick",
+   "signature": "studs"
+  },
+  "wind chime": {
+   "base": "frame",
+   "signature": "bell dome"
+  },
+  "ball": {
+   "base": "disc",
+   "signature": "band"
+  },
+  "spinning top": {
+   "base": "disc",
+   "signature": "wheel"
+  },
+  "mobile": {
+   "base": "frame",
+   "signature": "sail"
+  },
+  "jar": {
+   "base": "bowl",
+   "signature": "lid"
+  },
+  "bowl": {
+   "base": "bowl",
+   "signature": "band"
+  },
+  "cup": {
+   "base": "bowl",
+   "signature": "spout"
+  },
+  "vase": {
+   "base": "bowl",
+   "signature": "flower"
+  },
+  "basket": {
+   "base": "bowl",
+   "signature": "weave"
+  },
+  "box": {
+   "base": "box",
+   "signature": "lid"
+  },
+  "shelf": {
+   "base": "frame",
+   "signature": "hook"
+  },
+  "stool": {
+   "base": "block",
+   "signature": "studs"
+  },
+  "mirror": {
+   "base": "frame",
+   "signature": "gem"
+  },
+  "picture": {
+   "base": "frame",
+   "signature": "cloth"
+  },
+  "plant pot": {
+   "base": "bowl",
+   "signature": "flower"
+  },
+  "garland": {
+   "base": "bundle",
+   "signature": "flower"
+  },
+  "charm": {
+   "base": "ring",
+   "signature": "gem"
+  },
+  "stone stack": {
+   "base": "block",
+   "signature": "studs"
+  },
+  "sculpture": {
+   "base": "block",
+   "signature": "gem"
+  },
+  "treat": {
+   "base": "disc",
+   "signature": "gem"
+  },
+  "chest": {
+   "base": "box",
+   "signature": "band"
+  },
+  "crate": {
+   "base": "box",
+   "signature": "studs"
+  },
+  "wall hook": {
+   "base": "stick",
+   "signature": "hook"
+  },
+  "rope": {
+   "base": "bundle",
+   "signature": "cord"
+  },
+  "carver": {
+   "base": "stick",
+   "signature": "blade"
+  },
+  "trowel": {
+   "base": "stick",
+   "signature": "blade"
+  },
+  "hammer": {
+   "base": "stick",
+   "signature": "head"
+  }
+ }
+}
