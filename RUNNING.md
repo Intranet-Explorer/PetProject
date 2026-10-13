@@ -62,6 +62,11 @@ was made on the showcase's, so it is started with `live` (or `showcase`), never 
   open the window, name a pet or a thing. **Music** in the header plays calm, lively, mysterious or sad music
   to the room or the whole house (the pets feel it, may dance, and can pick the tune up); **Radio** switches
   the pets' radio on and chooses what it plays, or sets down your own little one until they have found theirs.
+- **Stock the machine** in the header puts base materials of your choice (wood, stone, metal, clay, fibre, sand)
+  into the vending machine in the storeroom, up to its limit of 12 each. The pets are told you did.
+- **Sheets** (v3.5): `/sheet.html` shows every living pet's sprite by family and every thing invented in the
+  house (`?names=0` hides the names and shuffles, for a blind test; `&key=1` adds the answers). `/parts.html`
+  shows every part, every body plan, each use in five materials (`#uses`) and curios from real pairs (`#curios`).
 - **Replay** plays back any recorded day of any family at up to 60×.
 - **Sound** is off until you click "Sound off". Every voice is made in the browser from the pet's body, so
   families sound alike; no pet ever hears it.
@@ -75,6 +80,8 @@ uv run python -m engine.metrics [data dir]  # the Lab's numbers for a run
 uv run python -m engine.alive <data dir>    # SPEC-v3.4 §0, from a house's own log: things handled, tiles walked, wants met, discoveries, tools, food grown, the book, the box
 uv run python -m engine.check               # (the self-check takes about ten minutes now)
 uv run python -m engine.showcase [data dir] # the evidence for SPEC-v3 §12's bar, from a run's logs
+uv run python -m engine.genes [data dir]    # SPEC-v3.5 §7.2: mutation rates, body plans and how far apart the two families stay, over 1,000 births
+uv run --with pillow python view/assets/own/src/parts.py   # redraw the parts (also building.py, seasons.py, machine.py), then validate.py
 cd view && npm install && npm run build     # rebuild the view; the running engine serves it as is
 node view/check-voice.ts                    # the voice's self-check (no browser, no sound)
 ```
