@@ -570,5 +570,5 @@ Four pets by the end of it: Purple Camo died of old age at 14:40.
   another.
 - **The mess.** Things lying about, start of day to end: storeroom 12 to 7, music room 6 to 1, cellar 8 to 1. The
   music room has six made things on its floor (two baskets, a box Sven made that day, two heirlooms by Garry's
-  stone, one loose lamp). All 44 times a body took something out of a box it put it back.
+  stone, one loose lamp). A body took something out of a box and looked at it 41 times, and each ended with it back.
 - 155 model calls, none failed; no errors in the engine's log.
