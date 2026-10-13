@@ -17,6 +17,8 @@ from .check import at, engine, scripted
 from .tick import Engine, Mind
 from .world import LONG_AGO, generate_room
 
+BASE = ("wood", "stone", "metal", "clay", "fibre", "sand")   # SPEC-v3.5 §4.3: what the machine in the storeroom gives
+
 
 def grown(h, pet, stage="adult"):
     pet.update(stage=stage, born=h["tick"], sleep=None)
@@ -63,13 +65,12 @@ async def main():
     # ---- the data holds together ----
     assert 10 <= len(PJ) <= 14, "about ten projects"
     for key, P in PJ.items():
-        assert P["when"] in build.WHEN and all(b in cfg["house"]["bits"] for b in P["needs"]) and P["sessions"] >= 3, "a project names a real cause and real bits: %s" % key
+        assert P["when"] in build.WHEN and P["sessions"] >= 3 and 2 <= sum(P["needs"].values()) <= 5, "a project names a real cause, and takes a few pieces: %s" % key
         assert P["rooms"] == "any" or all(t in cfg["house"]["rooms"] for t in P["rooms"]), key
         assert P.get("fix") or P.get("rules") or P.get("proof") or P.get("bits"), "every project changes its room: %s" % key
         assert not sprites or "fix.built." + key in sprites, "and has a picture: %s" % key
-        made = [b for b in P["needs"] if cfg["house"]["bits"][b].get("made")]
-        assert all(any(r.get("gives") == b and not cfg["house"]["bits"][src].get("made") for (src, how), r in cfg["craft"]["rules"].items()) for b in made), \
-            "what a project takes lies about or is one step from what does (a want leads one step deep): %s" % key
+        assert all(b in BASE or any(r.get("gives") == b and src in BASE for (src, how), r in cfg["craft"]["rules"].items()) for b in P["needs"]), \
+            "a project is made of the six base materials, or of what one process makes of one (a want leads one step deep): %s" % key
     assert all(d in cfg["house"]["bits"] and (not sprites or "bit." + d in sprites) for d in B["paint"]["dyes"]), "every dye is a bit with a picture"
     assert not sprites or all(n in sprites for n in ("fix.site", "fix.site.half", "fix.site.wall", "fix.site.wall.half", "grows.lily")), "a thing under way has its pictures"
     assert all(a["do"] == "build" and a["mode"] in ("place", "work", "mend", "hammer", "paint") for a in B["activities"].values()) and "build" in cfg["activities"]
@@ -185,7 +186,15 @@ async def main():
         at(eng, 23)
         cold = lambda: [e for e in physics.effects(h, cfg, pet) if e["tag"] == "cellar"][0]
         assert cold()["rate"] < 0 and things.room_rule(cfg, cellar, "cold_night") < 0, "the cellar is cold at night"
-        lining, lo = put_up(h, cfg, pet, cellar, "wall lining")
+        # (what it takes that lies in no room it knows is named, so a step to get it can follow: here, from clay under something heavy)
+        lining, lo = build.begin(h, cfg, pet, cellar, "wall lining")
+        pet["wants"], pet["carrying"] = [dict({k: v for k, v in cand(h, cfg, pet, "build:%s|wall lining" % cellar["id"]).items() if k != "weight"}, since=h["tick"])], []
+        assert ("clay tile", pet["wants"][0]["key"]) in build.named(h, cfg, pet) and ("fibre", pet["wants"][0]["key"]) in build.named(h, cfg, pet), build.named(h, cfg, pet)
+        step = [c for c in wants.candidates(h, cfg, pet) if c["what"] == "get" and c.get("gives") == "clay tile"]
+        assert step and step[0]["bit"] == "clay" and step[0]["how"] == "press" and step[0]["parent"] == pet["wants"][0]["key"], "a material it lacks leads to a step to get it: %s" % step
+        lo["site"]["placed"], lo["site"]["paws"], pet["wants"] = dict(PJ["wall lining"]["needs"]), {pet["id"]: 3}, []
+        build.stand(h, cfg, pet, cellar, lining)
+        lo = cellar["objects"][lining]
         assert lo["wall"] and things.room_rule(cfg, cellar, "cold_night") == 0 and cold()["rate"] == 0 and "easy" in cold()["feel"], "lined, the cellar is not cold: %s" % cold()
         out = []
         assert build.felt(h, cfg, pet, cellar, out, -0.3) == -0.3 * PJ["wall lining"]["cold"] and "keeps most of the cold out" in out[-1]["feel"], "and winter's cold gets in less"

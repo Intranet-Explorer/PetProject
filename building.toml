@@ -7,7 +7,10 @@
 #     when      what about a room gives the want for it (engine/build.py WHEN): no_rest, no_bench, crowded, sleeps,
 #               leaks, draughty, cold, dark, tame, always
 #     want      the want in the pet's words; done: what is written down when it stands ({room}: the room's name)
-#     needs     what it is made of: bits carried to it and set in place, how many of each
+#     needs     what it is made of: bits carried to it and set in place, how many of each. Only the six base materials
+#               (SPEC-v3.5 §4.3: wood, stone, metal, clay, fibre, sand; two a day for each pet from the machine in the
+#               storeroom) and what one process makes of them (a clay tile). A small thing takes two or three pieces,
+#               the largest five: about half a day's materials for the whole house
 #     sessions  how many spells of work with the hammer it takes (two working together count for more: [build])
 #     at        the tile it stands on or near (the nearest free one); wall = true: it is on the north wall above that
 #               tile and takes no floor; flat = true: it lies on the floor and is walked over
@@ -41,7 +44,7 @@ lift = { comfort = 3.0, curiosity = 2.0 }   # what having had a paw in a finishe
 
 [project.bench]
 a = "a"
-rooms = ["workshop", "greenhouse", "music", "storeroom"]
+rooms = ["workshop", "greenhouse", "music"]
 when = "no_rest"
 want = "there is nowhere to sit in {room}: you want to build a bench there"
 done = "built a bench in {room}"
@@ -58,7 +61,7 @@ rooms = ["nursery", "attic", "music", "greenhouse"]
 when = "no_bench"
 want = "there is nothing to work at in {room}: you want to build a table there"
 done = "built a table in {room}"
-needs = { wood = 2, pebble = 1 }
+needs = { wood = 2, stone = 1 }
 sessions = 6
 at = [6, 3]
 fix = { bench = true, store = 2 }
@@ -71,7 +74,7 @@ rooms = "any"
 when = "crowded"
 want = "the floor of {room} is crowded: you want to build a big shelf there"
 done = "built a big shelf in {room}"
-needs = { wood = 2, "vine cord" = 1 }
+needs = { wood = 2, metal = 1 }
 sessions = 8
 at = [10, 1]
 fix = { store = 8 }
@@ -83,7 +86,7 @@ rooms = "any"
 when = "sleeps"
 want = "you sleep on the floor of {room}: you want to build a bed frame there"
 done = "built a bed frame in {room}"
-needs = { wood = 2, cloth = 1, fluff = 1 }
+needs = { wood = 2, fibre = 2 }
 sessions = 8
 at = [9, 2]
 fix = { rest = 3.5, cozy = true }
@@ -98,12 +101,12 @@ rooms = "any"
 when = "leaks"
 want = "water comes into {room}: you want to stop the leak"
 done = "stopped the leak in {room}"
-needs = { clay = 2, moss = 1 }
+needs = { clay = 2, fibre = 1 }
 sessions = 5
 at = [4, 0]
 wall = true
 proof = "leak"
-says = "clay and moss packed where the water came in: it keeps the rain out"
+says = "clay and fibre packed where the water came in: it keeps the rain out"
 
 ["project"."draught curtain"]
 a = "a"
@@ -111,12 +114,12 @@ rooms = "any"
 when = "draughty"
 want = "a draught gets into {room}: you want to stop the cold coming in"
 done = "stopped the draught in {room}"
-needs = { felt = 1, cloth = 1 }
+needs = { fibre = 2, wood = 1 }
 sessions = 4
 at = [8, 0]
 wall = true
 proof = "draught"
-says = "a heavy curtain where the draught came in: it keeps the cold air out"
+says = "a heavy curtain of fibre on a rod where the draught came in: it keeps the cold air out"
 
 # ---- improvements ----
 
@@ -126,13 +129,13 @@ rooms = ["cellar", "attic"]
 when = "cold"
 want = "the cold gets into {room}: you want to line its walls against it"
 done = "lined the walls of {room} against the cold"
-needs = { moss = 2, cloth = 1, "clay tile" = 1 }
+needs = { fibre = 2, "clay tile" = 2 }
 sessions = 10
 at = [6, 0]
 wall = true
 rules = { cold_night = 0.0 }
 cold = 0.3
-says = "moss and cloth packed behind tiles along the wall: it keeps the cold out"
+says = "fibre packed behind clay tiles along the wall: it keeps the cold out"
 weight = 2.5
 
 ["project"."pond bridge"]
@@ -141,7 +144,7 @@ rooms = ["pond"]
 when = "always"
 want = "you want a way out over the water of {room}: a bridge"
 done = "built a bridge over the pond"
-needs = { wood = 2, reed = 2, "vine cord" = 1 }
+needs = { wood = 3, stone = 1, sand = 1 }
 sessions = 12
 on = "water"                  # it stands where the room's water is
 flat = true
@@ -170,7 +173,7 @@ rooms = ["cellar", "storeroom"]
 when = "always"
 want = "{room} is dark and harsh by turns: you want a small soft light set into its wall"
 done = "set a lamp niche into the wall of {room}"
-needs = { clay = 2, "clear wax" = 1 }
+needs = { stone = 1, clay = 1, sand = 1 }
 sessions = 5
 at = [3, 0]
 wall = true
@@ -184,7 +187,7 @@ rooms = ["greenhouse"]
 when = "always"
 want = "the vines of {room} have nothing to climb: you want to build a trellis"
 done = "built a trellis in {room}"
-needs = { wood = 1, reed = 2 }
+needs = { wood = 2, metal = 1 }
 sessions = 6
 at = [6, 1]
 bits = { vine = 2 }
@@ -197,7 +200,7 @@ rooms = "any"
 when = "tame"
 want = "your animal has nowhere of its own: you want to build it a hutch in {room}"
 done = "built a hutch in {room}"
-needs = { wood = 1, reed = 1, fluff = 1 }
+needs = { wood = 2, fibre = 1 }
 sessions = 5
 at = [2, 6]
 fix = { hutch = true }

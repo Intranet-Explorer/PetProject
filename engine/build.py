@@ -134,8 +134,8 @@ def candidates(house, cfg, pet, add, known):
                 continue
             o = here_.get(key)
             k, lack = "%s|%s" % (r["id"], key), missing(P, o)
-            if o is None:
-                if not WHEN[P["when"]](house, cfg, pet, r) or (P.get("on") and spot(house, cfg, r, P) is None):
+            if o is None:   # (not a thing made of something this house has never had: stone, before the machine came)
+                if not WHEN[P["when"]](house, cfg, pet, r) or (P.get("on") and spot(house, cfg, r, P) is None) or any(b not in cfg["house"]["bits"] for b in P["needs"]):
                     continue
                 text, done, weight = P["want"].format(room=r["name"]) + "; it takes %s, and a hammer" % some(P["needs"]), P["done"].format(room=r["name"]), P["weight"]
             elif "site" in o:
@@ -238,14 +238,15 @@ def parts(cfg, pet):
 
 
 def named(house, cfg, pet):
-    """What its wants to build or paint name that it has not got and that has to be made of something first (one
-    line in wants.candidates: each becomes a step, as a tool's makings do): a material that comes of a process; the
-    makings of a hammer, once it knows them and the hammer is all that is wanting; a dye. [(the bit, the want)]"""
+    """What its wants to build or paint name that it has not got and that lies in no room it knows (one line in
+    wants.candidates: each becomes a step to get it, as a tool's makings do, from whatever it is made of or wherever
+    it is to be had): a material the thing takes; the makings of a hammer, once it knows them and the hammer is all
+    that is wanting; a dye. [(the bit, the want)]"""
     C, carry, out = cfg["craft"], pet["carrying"], []
     for w in pet.get("wants", []):
         if w["what"] == "build":
             name, o = find(house["rooms"][w["room"]], w["project"])
-            out += [(b, w["key"]) for b in missing(cfg["build"]["project"][w["project"]], o) if cfg["house"]["bits"][b].get("made")]
+            out += [(b, w["key"]) for b in missing(cfg["build"]["project"][w["project"]], o) if not lying(house, pet, b)]   # (what lies about it simply picks up: lean)
             if "hammer" in pet.get("takes", []) and chain(house, cfg, pet, w):   # (what lies about it simply picks up: lean)
                 out += [(b, w["key"]) for alts in parts(cfg, pet) if not any(lying(house, pet, b) for b in alts) for b in alts]
     out = [(bit, key) for bit, key in out if bit not in carry]
