@@ -12,6 +12,8 @@ view/assets/
   kinds.json           the catalog of things a pet can make (SPEC-v3.2 §3): rules for the engine, a sprite for the view
   rooms/<type>.json    one hand-designed layout per room type: floor, walls, furniture, where things can hang
   sounds.json          sound effects and music, by a name of ours -> a file in some pack
+  parts.json           the parts library (SPEC-v3.5 §1): what an invented thing and a pet's body are put together from
+  bodies.json          the body genes: each slot's values, the plans, the patterns (the engine inherits them; the view draws them)
   own/                 pieces drawn for this project in the pack's style (PNG), where a pack had nothing
   third_party/<pack>/  only the files of a pack that are actually used, with its licence, and CREDITS.md
 ```
@@ -196,3 +198,37 @@ The pictures in `own/` are drawn by `own/src/build.py` from the tables in `own/s
 again (its first lines say how). The JSON beside this file was first written by it too and is kept by hand now: a
 new picture's entry for `sprites.json` is what `build.own_art()` returns for its name. Add pictures at the end of a
 sheet, so no other moves.
+
+## parts.json
+
+The parts library. Its pictures are drawn by `own/src/parts.py` into `own/parts/` (run it again after changing a
+part; it rewrites the drawing fields here and leaves the names, roles, spots, rules and kinds alone). Look at them
+all on a running house at `/parts.html`; check them with `uv run python -m engine.check_parts`.
+
+```json
+{ "rules":   { "max_parts": 3, "no_stack": ["flame", "blade"], "px": { "small": 16, "large": 24, "furniture": 32 }, "behind": ["inside"] },
+  "palette": { "main": ["8a4a1f", "…"], "trim": ["…"], "glow": ["…"], "ink": "141b1b", "white": "ffffff", "red": "c4484a" },
+  "looks":   { "dark": { "sat": 0.7, "light": 0.62 } },
+  "thing":   { "bowl":  { "role": "base", "spots": ["inside", "side", "top", "base"], "layer": "body",
+                          "px": { "16": { "file": "own/parts/thing16.png", "rect": [16, 0, 16, 16], "at": { "top": [7, 8], "inside": [7, 11], "side": [13, 11], "base": [7, 15], "face": [7, 12] } } } },
+               "flame": { "role": "top", "on": ["tip", "top", "inside"], "glow": true, "px": { "16": { "file": "…", "rect": [0, 16, 16, 16], "pin": [7, 15] } } },
+               "band":  { "role": "wrap", "on": ["side"], "clip": true, "to": { "side": "face" }, "px": { "…": {} } } },
+  "kinds":   { "candle": { "base": "stick", "signature": "flame" } },
+  "body":    { "file": "own/parts/body.png", "small": 10, "shade": { "dark": -0.22 }, "plans": { "tall": { "w": 0.68, "h": 1.4 } },
+               "slots": { "ears": { "layer": "behind", "pair": true, "spread": 0.3, "values": { "long": { "frames": { "front.l": { "rect": [0, 16, 2, 6], "pin": [1, 5] } } } } } } } }
+```
+
+- `palette`: the colours a part's picture is drawn in, dark to light. The view paints `main` in the part's own colour
+  (a thing part: its `color`, changed by its `material` as `looks` says; a body part: the pet's coat), `trim` in a
+  duller tone of it (a pet: the pattern's dark and its pale), and leaves `glow`, `white`, `red` and the line as drawn.
+- A thing is composed of at most `max_parts` parts (the snapshot's `invented`, one record a kind): the first is the
+  base, drawn where it is; each other is set with its `pin` on the base's `at` point for the spot it was given (`to`
+  sends a spot to another point: a wrap on the side goes to the middle of the `face`). A part on a spot in
+  `rules.behind` is drawn behind the base, so it shows over a rim or through a hole; a part with `clip` is painted
+  only on the base's own body; a part with `"outline": false` has no line of its own. The whole stands in the middle
+  of the bottom of a square of `rules.px[size]` pixels, and anything with a part that has `glow` gets a soft halo.
+- `body.slots.<slot>.values.<value>.frames`: a body part's picture from each side at each size (`front.l`, `side.s`
+  …: the side view faces right; `s` is for a body under `body.small` pixels wide; a mouth has one for each thing a
+  face does with it). `layer`: behind the body (it grows out of it), front, or on (only where the body is). `pair`:
+  one each side of the middle, the second mirrored. `plans`: a body plan as proportions of the one body a genome's
+  roundness and stretch give; with a `head`, that stands on the body and carries the face.

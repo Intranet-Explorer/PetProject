@@ -6,6 +6,7 @@ import type { Ctx, Kid } from "./dom";
 import { showRecord } from "./family";
 import { icon } from "./icons";
 import { drawMap } from "./minimap";
+import { noteInvented } from "./parts";
 import { renderDrawer, showMind, sources, truthOf } from "./panels";
 import { startReplay } from "./replay";
 import type { Replay } from "./replay";
@@ -155,6 +156,7 @@ function jump(to: { pet?: string | null; room?: string | null }) {
 async function show(s: Snap) {
   if (s.hello) hello = s.hello;
   raw = s;
+  noteInvented(s.invented);   // SPEC-v3.5 §3: the kinds the house invented are drawn from their parts
   snap = { ...s, ...tweak, clock: { ...s.clock, ...((tweak.clock as object) ?? {}) }, lineage: { ...s.lineage, ...((tweak.lineage as object) ?? {}) } };
   snap.pets = snap.pets.map((p) => (p.label === "the little one" ? { ...p, label: ownLabel(p) } : p));   // a recording from before unnamed pets had labels of their own
   if (!ready) {
