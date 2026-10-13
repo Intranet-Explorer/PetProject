@@ -158,7 +158,8 @@ taught_max = 4
 
 [make]
 carry = 3                 # bits a pet can carry
-same_a_day = 2            # after this many of one kind in one material in a world day, that pair is not offered to it again until tomorrow
+same = 2                  # after this many of one kind in one material ...
+same_days = 3             # ... within this many world days, that pair is not offered to it again (13 October 2026); everything else stays open
 effort = 2.0              # energy to make a thing, plus one per part; combining costs effort + 1 (halved at a workbench)
 tired = 8                 # too tired to make anything below this much energy
 loose_bits = 12           # dropped bits a room's floor holds before the oldest is swept away

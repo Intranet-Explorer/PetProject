@@ -11,7 +11,7 @@ from .world import LONG_AGO, add_event, days as world_days, label, moment, relat
 GROUPS = {"door": "know", "creature": "know", "bit": "know", "try": "know", "word": "know", "look": "know",
           "store": "better", "glow": "better", "warm": "better", "useless": "better", "tool": "better", "window": "better",
           "comfort": "someone", "toy": "someone", "tell": "someone", "game": "someone",
-          "recipe": "family", "song": "family", "finer": "skill"}
+          "recipe": "family", "song": "family", "finer": "skill", "get": "get", "plant": "tend", "pick": "tend"}
 # which temperament leans toward which kind of want (§2.1): gene -> the wants it weights up
 LEANS = {"curious": ("bit", "try", "word", "door", "creature", "look"), "bold": ("door", "creature"), "orderly": ("store", "glow", "warm", "useless", "tool", "window"),
          "sociable": ("comfort", "toy", "tell"), "playful": ("toy", "game"), "patient": ("recipe", "song", "finer")}
@@ -21,12 +21,31 @@ TRY = {"soak": "what water does to %s", "warm": "what warmth does to %s", "melt"
 RAIN = re.compile(r"\b(rain|drizzle|showers?|thunderstorms?|snow)\b", re.I)
 
 
+STEP = ("get", "try", "plant")   # wants that are a bit carried to where something is done to it: its body does these the same way
 ONE = ("pebble", "seed", "leaf", "petal", "feather", "shell", "bead", "reed", "bell", "vine", "quill", "berry", "bean", "stone", "tile", "brick", "block", "cake")
 
 
 def a(bit):
     """A bit with its article: "a reed", "an ink block"; stuff has none ("clay", "wicker")."""
     return "%s %s" % ("an" if bit[0] in "aeiou" else "a", bit) if bit.split()[-1] in ONE else bit
+
+
+def some(bit):
+    return a(bit) if bit.split()[-1] in ONE else "some " + bit
+
+
+def named(cfg, pet):
+    """What its wants name that it has not got (13 October 2026: a want that names a thing leads to a want to get
+    it): [(the bit, the want that names it)]. What a tool it wants is made of, once it has been told or has read
+    it; what a parent knew how to make. ponytail: one step deep; a thing made of a thing made of a thing is found
+    when the first step is in its paws and something else names the next."""
+    C, out = cfg["craft"], []
+    for w in pet.get("wants", []):
+        if w["what"] == "tool" and w["tool"] in pet.get("takes", []):
+            out += [(alt, w["key"]) for g in C["needs"][w["tool"]] if not any(x in pet["carrying"] for x in g.split("|")) for alt in g.split("|")]
+        elif w["what"] == "recipe" and "|" in w["recipe"] and not w["recipe"].endswith("|plant"):
+            out.append((C["rules"][tuple(w["recipe"].split("|"))]["gives"], w["key"]))
+    return [(bit, key) for bit, key in out if bit not in pet["carrying"]]
 
 
 def held(pet):
@@ -39,7 +58,7 @@ def door_words(house, pet, rid, d):
 
 
 def book_room(house):
-    return next((r["id"] for r in house["rooms"].values() if r["type"] and any(o.get("fix", {}).get("book") for o in r["objects"].values())), None)
+    return next((r["id"] for r in house["rooms"].values() if r["type"] and any(o.get("fix", {}).get("book") for o in r.get("objects", {}).values())), None)
 
 
 def candidates(house, cfg, pet):
@@ -84,10 +103,41 @@ def candidates(house, cfg, pet):
                 toward = any(gives in g.split("|") for t in pet.get("lacks", {}) if t not in house.get("firsts", {}) for g in C["needs"][t])
                 add("try", key, "you want to find out " + TRY[how] % a(bit), "found out " + TRY[how] % a(bit),
                     (4.0 if (bit, how) in hinted else 3.0 if toward else 1.6 if rule else 0.5) * (1.3 if bit in pet["carrying"] else 1.0), bit=bit, how=how, room=where[0], bit_room=grown.get(bit))
+    # to get what another want names (13 October 2026): it lies about somewhere, or something it can reach becomes it
+    mine = {w["key"] for w in pet.get("wants", [])}
+    for bit, parent in named(cfg, pet):
+        if bit in grown:
+            add("get", bit, "you want %s%s" % (some(bit), "" if grown[bit] == here["id"] else " (there is some in %s)" % rooms[grown[bit]]["name"]),
+                "has %s now" % some(bit), 4.0, bit=bit, gives=bit, room=grown[bit], parent=parent)
+        for (src, how), rule in C["rules"].items():
+            key = "%s|%s" % (src, how)
+            where = craft.places(house, cfg, pet, how)
+            if rule.get("gives") != bit or not where or not (src in pet["carrying"] or src in grown) or "try:" + key in mine \
+                    or craft.skill(cfg, pet, "making") < C["process"].get(how, {}).get("skill", 0):
+                continue
+            knows = isinstance(tried.get(key), str)   # what it has found out it sets about; what it has not, it wants to find out
+            needs = C["process"].get(how, {}).get("tool")   # (what takes a tool nobody has comes a long way after what can be done now)
+            add("get", key, "you want to %s %s, for the %s" % (how, some(src), bit) if knows else "you want to find out " + TRY[how] % a(src),
+                "has %s now" % some(bit), (5.0 if knows else 4.0) * (0.2 if needs and not craft.tool_for(house, cfg, pet, needs) else 1.0), bit=src, how=how, gives=bit, room=where[0], bit_room=grown.get(src), parent=parent)
+    stepped = {c["key"][4:] for c in out if c["what"] == "get"}
+    out[:] = [c for c in out if c["what"] != "try" or c["key"][4:] not in stepped]   # (the same thing is not wanted twice over)
     for w in pet.get("unknown", [])[-3:]:
         book = book_room(house)
         hint = "" if not book or pet.get("asked") else "; the heavy book in %s might know" % rooms[book]["name"]
-        add("word", w, 'you want to know what "%s" is: the box said it%s' % (w, hint), 'asked what "%s" is' % w, 1.2, word=w, room=book if book in pet["rooms"] else None)
+        why = "you have been close to one" if w in pet["met"] else "the box said it"
+        add("word", w, 'you want to know what %s is: %s%s' % ("a " + w if w in pet["met"] else '"%s"' % w, why, hint), 'asked what "%s" is' % w, 1.2, word=w, room=book if book in pet["rooms"] else None)
+    # to tend (13 October 2026): bare earth and a seed to be had, and it wants to plant (one who tends, most); something ripe, and it wants to pick it
+    seeds = [b for b in C["grow"] if b in pet["carrying"]] + [b for b in C["grow"] if b in grown]
+    digs = craft.tool_for(house, cfg, pet, "trowel") or craft.by_paw(house, pet) < C["growing"]["paw_plants"]
+    for r in known:
+        for n, o in r["objects"].items():
+            p, at = o.get("planted"), "the %s in %s" % (n, r["name"])
+            if seeds and digs and craft.plantable(cfg, n, o):
+                add("plant", "%s|%s" % (r["id"], n), "the earth of %s is bare: you want to plant %s there" % (at, a(seeds[0])), "planted %s in the %s" % (a(seeds[0]), n),
+                    1.5 * (1 + craft.skill(cfg, pet, "tending")), bit=seeds[0], how="plant", room=r["id"], thing=n, bit_room=grown.get(seeds[0]))
+            elif p and p["grow"] >= 1 and not p.get("wilted"):
+                add("pick", "%s|%s" % (r["id"], n), "what grows in %s is ripe: you want to pick it, and eat of it or leave some for the others" % at,
+                    "picked what was ripe in the %s" % n, 1.5, room=r["id"], thing=n, at=p["at"])
     # to make better: somewhere to keep things, a light that is not harsh, a warm thing for a cold room, a thing that did nothing, a tool it lacked
     for r in known:
         if r.get("mess") == 2 and order.full(cfg, r):
@@ -105,7 +155,9 @@ def candidates(house, cfg, pet):
     for tool, at in pet.get("lacks", {}).items():
         if world_days(cfg, at, tick) < 2 and tool not in house.get("firsts", {}):
             book = book_room(house)   # (13 October 2026) what a tool takes is said when making one fails; until then the book is where to look
-            takes = "; %s %s takes %s" % ("an" if tool[0] in "aeiou" else "a", tool, craft.takes(cfg, tool)) if tool in pet.get("takes", []) else \
+            one = "%s %s" % ("an" if tool[0] in "aeiou" else "a", tool)
+            takes = "; you carry what %s takes: you could make one now" % one if tool in pet.get("takes", []) and not craft.lacking(cfg, tool, pet["carrying"]) else \
+                "; %s takes %s" % (one, craft.takes(cfg, tool)) if tool in pet.get("takes", []) else \
                 "; the heavy book in %s might know what one is made of" % rooms[book]["name"] if book and not asked_of(pet, tool) else ""
             add("tool", tool, "you want to " + C["tool"][tool]["want"] + takes, "has a tool: " + a(tool), 2.5, tool=tool)
     box = [b for b in pet.get("box", []) if world_days(cfg, b["tick"], tick) < 0.4]
@@ -147,7 +199,24 @@ def candidates(house, cfg, pet):
 
 
 def asked_of(pet, tool):
-    return tool in pet.get("takes", []) or any(tool in q for q in pet.get("asked", []))
+    """Has it looked in the book for what this tool is made of (or been told)?"""
+    return tool in pet.get("takes", []) or tool in pet.get("asked_tool", [])
+
+
+def may_try(house, pet, tool):
+    """May its mind try to make a tool it has not the stuff for? (Trying says what is missing.) Not before it has
+    been to the book about it (13 October 2026), unless there is no book it can get to."""
+    return asked_of(pet, tool) or book_room(house) not in pet["rooms"]
+
+
+def question(house, cfg, pet, w):
+    """What it could ask the book for the sake of this want, if it has not asked that already: a word, how a tool
+    is made, the bit it wants to try something on, the thing a parent knew how to make."""
+    t, C = w["what"], cfg["craft"]
+    q = "what is %s" % w["word"] if t == "word" else "how do you %s" % C["tool"][w["tool"]]["want"] if t == "tool" and not asked_of(pet, w["tool"]) else \
+        "what is %s" % w["bit"] if t == "try" or (t == "get" and w["text"].startswith("you want to find out")) else \
+        "what is %s" % C["rules"][tuple(w["recipe"].split("|"))]["gives"] if t == "recipe" and "|" in w["recipe"] and not w["recipe"].endswith("|plant") else None
+    return q if q and q not in pet.get("asked", []) else None
 
 
 def gentle(cfg, room):
@@ -169,6 +238,14 @@ def met(house, cfg, pet, w):
         return w["bit"] in held(pet)
     if t == "try":
         return w["key"][4:] in pet.get("tried", {})
+    if t == "get":   # in its paws; or it has come of what it did since, and lies beside it (its arms were full)
+        got = pet.get("got") or [None, LONG_AGO]
+        return w["gives"] in pet["carrying"] or (got[0] == w["gives"] and got[1] >= w["since"])
+    if t == "plant":
+        p = rooms[w["room"]]["objects"][w["thing"]].get("planted") or {}
+        return p.get("by") == pet["id"] and p.get("at", LONG_AGO) >= w["since"]
+    if t == "pick":
+        return (pet.get("picked") or {}).get("tick", LONG_AGO) >= w["since"] and pet["picked"]["thing"] == w["thing"]
     if t == "word":
         return any(w["word"] in q for q in pet.get("asked", []))
     if t == "look":
@@ -203,7 +280,7 @@ def met(house, cfg, pet, w):
     return False
 
 
-SERVED = ("door", "creature", "bit", "look", "try", "game", "word")   # (and "tool", as far as the book: lean)   # the wants its body can do something about without being told
+SERVED = ("door", "creature", "bit", "look", "try", "game", "word", "get", "plant", "pick")   # (and "tool", as far as the book: lean)   # the wants its body can do something about without being told
 
 
 def possible(house, cfg, pet, w):
@@ -214,6 +291,14 @@ def possible(house, cfg, pet, w):
         return lying(w["bit"])
     if t == "try":
         return w["bit"] in pet["carrying"] or lying(w["bit"])
+    if t == "get":   # (a step toward another want: gone when that one is)
+        return (w["bit"] in pet["carrying"] or lying(w["bit"])) and any(x["key"] == w["parent"] for x in pet["wants"])
+    if t == "plant":
+        o = house["rooms"][w["room"]]["objects"][w["thing"]]
+        return (craft.plantable(cfg, w["thing"], o) or (o.get("planted") or {}).get("by") == pet["id"]) and (w["bit"] in pet["carrying"] or lying(w["bit"]))
+    if t == "pick":
+        p = house["rooms"][w["room"]]["objects"][w["thing"]].get("planted") or {}
+        return p.get("at") == w["at"] and not p.get("wilted") or (pet.get("picked") or {}).get("tick", LONG_AGO) >= w["since"]
     if t == "creature":
         return any(c["kind"] == w["kind"] for c in house["creatures"])
     if t in ("game", "comfort", "toy"):
@@ -232,18 +317,22 @@ def refresh(house, cfg, pet):
             done = met(house, cfg, pet, w)
         except (KeyError, TypeError):   # (what it was about is gone from the house)
             done, w["gone"] = False, True
-        if done:
+        if done and w["what"] == "get" and not any(x["key"] == w["parent"] for x in wants):
+            wants.remove(w)   # (what it was a step toward was met by the same deed: that is the one that is felt and written down)
+        elif done:
             fulfil(house, cfg, pet, w)
-        elif w.get("gone") or not possible(house, cfg, pet, w) or world_days(cfg, w["since"], tick) >= W["fade_days"]:
+        elif w.get("gone") or not possible(house, cfg, pet, w) or world_days(cfg, w.get("touched", w["since"]), tick) >= W["fade_days"]:
             wants.remove(w)
             pet.setdefault("wanted", {})[w["key"]] = tick
-    if len(wants) >= W["most"]:
-        return
+    count = lambda: sum(w["what"] != "get" for w in wants)   # (a step toward another want is not one of the three)
     wanted, T, r = pet.setdefault("wanted", {}), pet["temper"], rnd(house, "wants", pet["id"], tick)
     have, groups = {w["key"] for w in wants}, [GROUPS[w["what"]] for w in wants]
     cands = []
-    for c in candidates(house, cfg, pet):
-        if c["key"] in have or world_days(cfg, wanted.get(c["key"], LONG_AGO), tick) < W["again_days"]:
+    fresh = candidates(house, cfg, pet)
+    for w in wants:   # (what a want says follows what it now knows: "a carver takes sharp stone or fired clay")
+        w["text"] = next((c["text"] for c in fresh if c["key"] == w["key"]), w["text"])
+    for c in fresh:
+        if c["key"] in have or (c["what"] != "get" and world_days(cfg, wanted.get(c["key"], LONG_AGO), tick) < W["again_days"]):
             continue
         try:
             if met(house, cfg, pet, dict(c, since=tick)):
@@ -258,8 +347,8 @@ def refresh(house, cfg, pet):
         ranked.sort(key=lambda x: x[1]["what"] not in SERVED)
         ranked = ranked[:1] + sorted(ranked[1:], key=lambda x: -x[0])
     for _, c in ranked:
-        if len(wants) >= W["most"]:
-            break
+        if count() >= W["most"] and c["what"] != "get":
+            continue
         if GROUPS[c["what"]] in groups and (c["what"] in [w["what"] for w in wants] or groups.count(GROUPS[c["what"]]) >= 2):
             continue   # (no two of one kind, and never all three of one sort: no single kind of want crowds out the rest)
         c.pop("weight")
@@ -282,6 +371,9 @@ def fulfil(house, cfg, pet, w):
     text = "%s %s" % (label(pet), w["done"])
     moment(house, "want", text, pet["id"], pet["room"])
     craft.burst(house, pet, "want", text)
+    for x in pet["wants"]:
+        if x["key"] == w.get("parent"):
+            x["touched"] = house["tick"]   # (a want being worked toward is not one left alone)
     if w["what"] == "window":
         pet["prepared"] = {"tick": house["tick"], "thing": w["thing"]}
     if w["what"] == "tell":
@@ -299,10 +391,15 @@ def hear(house, cfg, pet):
         # 13 October 2026: a thing it could picture (picturable.txt), not the longest word: "association" and
         # "subsequently" are nothing to wonder about, and the book has nothing to show for them
         heard = [w for w in dict.fromkeys(filter(None, (noun(cfg, w) for w in re.findall(r"[a-z]{3,}", b["text"].lower())))) if w not in words]
-        if heard and not b["text"].startswith("The forecast"):
+        if heard:   # (the forecast too: frost, thunder)
             pet["unknown"] = (pet.get("unknown", []) + heard[:1])[-4:]
         words += heard
         pet["box_seen"] = b["tick"]
+    # a creature it has been close to is a thing to wonder about too: one a world day
+    new = next((k for k, n in pet["met"].items() if n and k not in words), None)
+    if new and pet.get("creature_word") != house["clock"]["day"]:
+        pet["unknown"], pet["creature_word"] = (pet.get("unknown", []) + [new])[-4:], house["clock"]["day"]
+        words.append(new)
     del words[:-500]
     p = pet.get("prepared")
     if p and house["weather"] in ("rain", "storm") and world_days(cfg, p["tick"], house["tick"]) < 1:
@@ -337,10 +434,16 @@ def lean(house, cfg, pet):
     """What its body leans toward for the sake of its wants: {rooms: the rooms to make for, doors: doors not yet
     tried that it may now go through, gather: bits to pick up, creatures: kinds to get close to, place: (how, bit,
     want) to carry a bit to in this room, play: who to play with}."""
-    out = {"rooms": set(), "doors": set(), "gather": set(), "creatures": set(), "place": None, "play": set(), "look": set()}
-    here = pet["room"]
-    for w in pet.get("wants", []):
+    out = {"rooms": set(), "doors": set(), "gather": set(), "creatures": set(), "place": None, "play": set(), "look": set(), "pick": set(), "ask": None}
+    here, book = pet["room"], book_room(house)
+    rested = house["tick"] - pet.get("asked_at", LONG_AGO) >= cfg["book"]["per_hours"] * cfg["ticks_per_hour"]   # (its eyes are up to the small writing again)
+    for w in sorted(pet.get("wants", []), key=lambda w: w["what"] != "get"):   # (a step toward another want comes first)
         t = w["what"]
+        q = question(house, cfg, pet, w) if rested else None
+        if q and book == here:   # (13 October 2026) the book is in the room and might know: it is drawn over to it
+            out["ask"] = out["ask"] or ("ask", q, w["key"])
+        elif q and t in ("word", "tool") and book in pet["rooms"]:   # ... and for a word or a tool it goes to where the book is
+            out["rooms"].add(book)
         if t == "door":
             out["doors" if w["frm"] == here else "rooms"].add(w["door"] if w["frm"] == here else w["frm"])
         elif t == "creature":
@@ -348,28 +451,20 @@ def lean(house, cfg, pet):
             (out["creatures"].add(w["kind"]) if where == here else out["rooms"].add(where) if where in pet["rooms"] else None)
         elif t == "bit":
             (out["gather"].add(w["bit"]) if any(s["bit"] == w["bit"] and s["ready"] for s in house["rooms"][here]["spots"]) else out["rooms"].add(w["room"]))
-        elif t == "try":
+        elif t == "get" and not w.get("how"):
+            (out["gather"].add(w["bit"]) if any(s["bit"] == w["bit"] and s["ready"] for s in house["rooms"][here]["spots"]) else out["rooms"].add(w["room"]))
+        elif t == "pick":
+            (out["pick"].add(w["thing"]) if w["room"] == here else out["rooms"].add(w["room"]))
+        elif t in STEP:
             need = 2 if cfg["craft"]["process"].get(w["how"], {}).get("pair") else 1
             if craft.to_hand(pet, house["rooms"][here], w["bit"]) < need and pet["carrying"].count(w["bit"]) < need:
                 (out["gather"].add(w["bit"]) if any(s["bit"] == w["bit"] and s["ready"] for s in house["rooms"][here]["spots"]) else out["rooms"].add(w.get("bit_room")))
             elif pet["carrying"].count(w["bit"]) < need:
                 out["gather"].add(w["bit"])
-            elif craft.place(house, cfg, house["rooms"][here], w["how"]) is not None:
+            elif craft.place(house, cfg, house["rooms"][here], w["how"]) is not None and (t != "plant" or w["room"] == here):
                 out["place"] = out["place"] or (w["how"], w["bit"], w["key"])
             else:
                 out["rooms"].add(w["room"])
-        elif t == "word":   # where the book is now (it can be carried): over to it, and its mind may ask (or, left long enough, it leafs through by itself)
-            book = book_room(house)
-            if book == here:
-                out["place"] = out["place"] or ("ask", w["word"], w["key"])
-            elif book in pet["rooms"]:
-                out["rooms"].add(book)
-        elif t == "tool" and not asked_of(pet, w["tool"]):   # what a tool is made of: the book may say
-            book = book_room(house)
-            if book == here:
-                out["place"] = out["place"] or ("ask", w["tool"], w["key"])
-            elif book in pet["rooms"]:
-                out["rooms"].add(book)
         elif t in ("store", "glow", "warm", "window") and w.get("room") and w["room"] != here:
             out["rooms"].add(w["room"])
         elif t == "game":

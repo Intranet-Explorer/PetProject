@@ -16,6 +16,8 @@ acorn forest jungle orchard meadow vineyard
 mountain volcano hill cliff canyon valley cave desert dune island beach reef lagoon swamp marsh glacier iceberg waterfall river creek lake ocean
 harbor harbour bay lighthouse geyser crater boulder avalanche comet meteor asteroid planet moon star galaxy rainbow tornado hurricane lightning
 blizzard earthquake
+# weather the forecast names that the house has no word for
+frost thunder thunderstorm fog hail drizzle sleet mist
 # buildings and places
 castle palace fortress tower cathedral church temple mosque pyramid monument statue fountain bridge tunnel dam canal windmill mill barn farm
 stable cottage cabin tent igloo skyscraper factory mine quarry museum library theater theatre stadium circus market bakery hospital school

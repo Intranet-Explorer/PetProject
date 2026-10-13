@@ -53,9 +53,9 @@ def parse(kind, raw):
     if kind == "forecast":
         d = json.loads(raw)["daily"]
         names = ["Today", "Tomorrow", "The day after"]
-        return ["The forecast for the Twin Cities. %s: %s, a high of %d and a low of %d degrees, wind up to %d." % (
+        return ["The forecast for the Twin Cities. %s: %s, a high of %d and a low of %d degrees, wind up to %d.%s" % (
             names[i], WMO.get(d["weather_code"][i], "changeable weather"), round(d["temperature_2m_max"][i]), round(d["temperature_2m_min"][i]),
-            round(d["wind_speed_10m_max"][i])) for i in range(min(3, len(d["time"])))]
+            round(d["wind_speed_10m_max"][i]), " Frost overnight." if d["temperature_2m_min"][i] <= 0 else "") for i in range(min(3, len(d["time"])))]
     if kind == "onthisday":
         return ["On this day in %s: %s" % (e["year"], e["text"]) for e in json.loads(raw).get("selected", []) if e.get("text")]
     if kind == "rss":

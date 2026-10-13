@@ -322,10 +322,10 @@ def perceive(house, cfg, pet, mem):
         "leave": list(dict.fromkeys(mine_here + heirs)),
         "movable": [n for n, o in objs.items() if actions.movable(cfg, o)] + (["egg"] if any(e["parent"] == pet["id"] for e in eggs) else []),
         "beliefs": [b["id"] for b in beliefs], "make": [most, reach],   # the largest size its stage can make; the materials in reach
-        # a kind that takes something it does not hold is not offered, except a tool it wants (trying says what is missing);
-        # nor is a kind it has made twice today in that material (13 October 2026)
-        "kinds": {m: [k for k in things.kinds_for(cfg, m) if (not craft.lacking(cfg, k, pet["carrying"]) or (k in cfg["craft"]["tool"] and k in pet.get("lacks", {})))
-                      and things.made_today(house, pet).get("%s|%s" % (k, m), 0) < cfg["make"]["same_a_day"]] for m in reach},
+        # a kind that takes something it does not hold is not offered, except a tool it wants and has been to the book about
+        # (trying says what is missing); nor is a kind it has made twice in that material in the last three days (13 October 2026)
+        "kinds": {m: [k for k in things.kinds_for(cfg, m) if (not craft.lacking(cfg, k, pet["carrying"]) or (k in cfg["craft"]["tool"] and k in pet.get("lacks", {}) and wants.may_try(house, pet, k)))
+                      and things.made_lately(house, cfg, pet).get("%s|%s" % (k, m), 0) < cfg["make"]["same"]] for m in reach},
         "process": trying, "mendable": actions.mendable(room),
         "materials": sorted({objs[n]["made"]["recipe"]["material"] for n in free}),
         "offers": [actions.handle(house, pet, house["pets"][o["from"]]) for o in pet["offers"]

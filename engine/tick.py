@@ -666,6 +666,11 @@ class Engine:
                 order.give_box(h, cfg, room, stone)
         self.unwear()
         self.v341()
+        for pet in h["pets"].values():   # 13 October 2026: what it has made lately is counted over three world days, from the things themselves
+            if "made_at" not in pet and pet["stage"] not in ("egg", "dead"):
+                pet["made_at"] = sorted([o["made"]["tick"], "%s|%s" % (o["made"]["recipe"].get("kind"), o["made"]["recipe"].get("material"))]
+                                        for r in h["rooms"].values() if r["type"] for o in things.made(r).values() if o["made"]["by"] == pet["id"])
+                pet.pop("made_today", None)
         if "v34" not in h:   # SPEC-v3.4 §7.5 comes to a house already lived in, once
             h["v34"] = {"at": h["tick"]}
             for pet in h["pets"].values():   # skills from what each has done; no recipes: discovery starts fresh

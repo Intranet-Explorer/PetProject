@@ -22,7 +22,7 @@ def load_config(*a, body=False, **k):
     them); the body has its own checks at the end (SPEC-v3.3)."""
     cfg = world.load_config(*a, **k)
     cfg["body"]["on"] = body
-    cfg["make"]["same_a_day"] = 99   # (these checks make the same thing over and over; the rule that stops that has its own check)
+    cfg["make"]["same"] = 99   # (these checks make the same thing over and over; the rule that stops that has its own check)
     return cfg
 
 
@@ -1650,27 +1650,104 @@ async def main():
         pa["hints"] = []
         assert "what warmth does to clay" in wants.hinted(hA, cA, pa, *the_book.entry(cA, "what is a trowel"))
         pa["hints"] = []
-        # the same kind in the same material twice in a world day is enough: not again until tomorrow, and everything else stays open
-        cA["make"]["same_a_day"], pa["made_today"] = 2, None
+        # the same kind in the same material twice in three world days is enough: not a third, and everything else stays open
+        cA["make"]["same"], pa["made_at"] = 2, []
         for i in range(4):
             pa["carrying"], pa["needs"]["energy"] = ["fluff"], 80.0
             why, got = act({"type": "make", "recipe": dict(recipe, name="twin %d" % i, kind="cushion" if i == 3 else "nest"), "near": "here"})
-            assert bool(why) == (i == 2) and (not why or "until tomorrow" in why), "two of a kind in a material a day, and anything else is open: %d %s" % (i, why)
-        pa["made_today"][0] -= 1
-        pa["carrying"], pa["needs"]["energy"] = ["fluff"], 80.0
-        why = actions.check({"type": "make", "recipe": dict(recipe, name="twin 4"), "near": "here"}, hA, cA, pa, mA.mem)
-        assert "until tomorrow" not in (why or ""), "tomorrow it is open again: %s" % why
-        cA["make"]["same_a_day"] = 99
+            assert bool(why) == (i == 2) and (not why or "not another yet" in why), "two of a kind in a material, and anything else is open: %d %s" % (i, why)
+        for days, shut in ((2, True), (3.1, False)):
+            pa["made_at"] = [[hA["tick"] - int(days * cA["ticks_per_day"]), m[1]] for m in pa["made_at"]]
+            pa["carrying"], pa["needs"]["energy"] = ["fluff"], 80.0
+            why = actions.check({"type": "make", "recipe": dict(recipe, name="twin 4"), "near": "here"}, hA, cA, pa, mA.mem)
+            assert ("not another yet" in (why or "")) == shut, "not the next day or the one after; open again after three: %s %s" % (days, why)
+        cA["make"]["same"] = 99
         for n2 in [n2 for n2 in things.made(roomA) if n2.startswith("twin")]:
             del roomA["objects"][n2]
         # what the box says: a thing it could picture is wondered about; long and abstract words are not
         pa["box"], pa["box_seen"], pa["words"], pa["unknown"] = [{"tick": hA["tick"], "text": "The association subsequently established that two ships reached the lighthouse."}], LONG_AGO, [], []
         wants.hear(hA, cA, pa)
-        assert pa["unknown"] == ["ship"] and "lighthouse" in pa["words"], "a word from the box that is wondered about is a thing a pet could picture: %s" % pa["unknown"]
+        assert pa["unknown"][0] == "ship" and "lighthouse" in pa["words"], "a word from the box that is wondered about is a thing a pet could picture: %s" % pa["unknown"]
         pa["box"], pa["unknown"] = [], []
         # its body tries nothing by itself: only what one of its wants is about
         pa["wants"] = []
         assert not body.targets(hA, cA, pa, mA.mem, "try it", cA["activities"]["try it"]) and not body.targets(hA, cA, pa, mA.mem, "take to try", cA["activities"]["take to try"]), "with no want behind it, a body tries nothing"
+        # 13 October 2026, a second follow-up. A tool it wants: its body goes to the book before its mind may try to make
+        # one; the page says what one is made of; and a want that names what it has not got leads to a want to get it
+        spade, first_t = roomA["objects"].pop("spade"), hA.setdefault("firsts", {}).pop("trowel", None)
+        roomA["objects"]["hot pipe"], roomA["objects"]["heavy book"] = {"pos": [3, 3], "fix": {}}, {"pos": [6, 3], "fix": {"book": True}}
+        spot = lambda bit: roomA["spots"].append({"bit": bit, "pos": [5, 5], "ready": True, "back": None, "loose": True, "since": hA["tick"]})
+        spot("clay")
+        cA["wants"] = dict(cA["wants"], most=3)
+        hA.setdefault("v31", {}).setdefault("arrived", {})["book"] = 0
+        pa.update(wants=[], wanted={}, carrying=["pebble"], tried={}, hints=[], lacks={"trowel": hA["tick"]}, takes=[], asked_tool=[], asked=[], unknown=[], asked_at=LONG_AGO)
+        cands = lambda what: [c for c in wants.candidates(hA, cA, pa) if c["what"] == what]
+        offered = lambda: "trowel" in sum(mind.perceive(hA, cA, pa, mA.mem)[1]["kinds"].values(), [])
+        pa["wants"] = [dict(cands("tool")[0], since=hA["tick"])]
+        ask = ("ask", "how do you make something to dig with", "tool:trowel")
+        assert "might know what one is made of" in pa["wants"][0]["text"] and not cands("get") and not offered() and wants.lean(hA, cA, pa)["ask"] == ask \
+            and body.targets(hA, cA, pa, mA.mem, "go to the book", cA["activities"]["go to the book"])[0]["where"] == "ask " + ask[1], \
+            "a tool it wants and knows nothing of: the book first, and its mind is not offered the making yet: %s" % (wants.lean(hA, cA, pa)["ask"],)
+        why, got = act({"type": "ask_book", "question": ask[1]})
+        assert not why and "Digging" in got[0] and pa["takes"] == ["trowel"] and pa["asked_tool"] == ["trowel"] and offered() and wants.lean(hA, cA, pa)["ask"] is None, "the page says what one is made of: %s %s" % (why, got)
+        wants.refresh(hA, cA, pa)
+        clay = next(c for c in cands("get") if c["key"] == "get:clay|warm")
+        assert "a trowel takes fired clay or carved wood" in pa["wants"][0]["text"] and sum(w["what"] == "get" for w in pa["wants"]) == 1 and clay["text"] == "you want to find out what warmth does to clay" \
+            and all(c["key"] != "try:clay|warm" for c in cands("try")) and all(c["weight"] <= clay["weight"] for c in cands("get")), \
+            "what the tool takes becomes a want to get it, what can be done now first: %s" % [w["text"] for w in pa["wants"]]
+        pa["wants"] = [w for w in pa["wants"] if w["what"] != "get"] + [dict(clay, since=hA["tick"])]
+        assert sum(w["what"] != "get" for w in pa["wants"]) <= 3 and "clay" in wants.lean(hA, cA, pa)["gather"], "a step toward a want is not one of the three, and its body goes for the bit: %s %s" % ([w["text"] for w in pa["wants"]], wants.lean(hA, cA, pa))
+        pa["carrying"], roomA["spots"] = ["clay"], [s2 for s2 in roomA["spots"] if s2["bit"] != "clay"]
+        assert wants.lean(hA, cA, pa)["place"] == ("warm", "clay", "get:clay|warm"), "a step toward another want comes first: %s" % (wants.lean(hA, cA, pa)["place"],)
+        why, got = act({"type": "process", "what": "clay", "how": "warm"})
+        n_f = pa.get("fulfilled", 0)
+        wants.refresh(hA, cA, pa)
+        told = next(w["text"] for w in pa["wants"] if w["what"] == "tool")
+        assert not why and "fired clay" in pa["carrying"] and pa["fulfilled"] == n_f + 1 and "you carry what a trowel takes" in told, "with it in its paws the want says so: %s %s" % (why, told)
+        pa["carrying"] = []
+        spot("clay")
+        assert "you want to warm some clay, for the fired clay" in [c["text"] for c in cands("get")], "what it has found out it sets about: %s" % [c["text"] for c in cands("get")]
+        # something it wants to know, and the book is in the room: it is drawn to it (not while its eyes are tired)
+        pa.update(wants=[{"what": "word", "key": "word:ship", "text": "", "done": "", "word": "ship", "since": hA["tick"]}], asked_at=LONG_AGO)
+        assert wants.lean(hA, cA, pa)["ask"] == ("ask", "what is ship", "word:ship")
+        pa.update(wants=[{"what": "try", "key": "try:clay|soak", "text": "", "done": "", "bit": "clay", "how": "soak", "room": roomA["id"], "since": hA["tick"]}])
+        assert wants.lean(hA, cA, pa)["ask"] == ("ask", "what is clay", "try:clay|soak"), "a thing it wants to find out, with the book right there"
+        pa["asked_at"] = hA["tick"]
+        assert wants.lean(hA, cA, pa)["ask"] is None
+        del roomA["objects"]["heavy book"], roomA["objects"]["hot pipe"]
+        roomA["spots"] = [s2 for s2 in roomA["spots"] if s2["bit"] != "clay"]
+        # bare earth and a seed: it wants to plant, one who tends most of all; what is ripe it wants to pick, and eats of it or leaves it
+        bed = roomA["objects"]["herb patch"]
+        bed.pop("planted", None)
+        pa.update(wants=[], wanted={}, carrying=["seed"], lacks={}, takes=[])
+        plant = cands("plant")[0]
+        pa.setdefault("skill", {})["tending"] = pa["skill"].get("tending", 0) + 50
+        assert cands("plant")[0]["weight"] > plant["weight"] and "is bare: you want to plant a seed there" in plant["text"], plant
+        pa["wants"] = [dict(plant, since=hA["tick"])]
+        assert wants.lean(hA, cA, pa)["place"] == ("plant", "seed", plant["key"]) and body.targets(hA, cA, pa, mA.mem, "take to try", cA["activities"]["take to try"]), "its body takes the seed to the earth"
+        why, got = act({"type": "process", "what": "seed", "how": "plant"})
+        n_f = pa.get("fulfilled", 0)
+        wants.refresh(hA, cA, pa)
+        assert not why and bed["planted"]["by"] == pa["id"] and pa["fulfilled"] == n_f + 1 and not cands("plant"), "planted, by paw, and the want is met: %s" % (why,)
+        bed["planted"]["grow"] = 1.0
+        pick = cands("pick")[0]
+        pa.update(wants=[dict(pick, since=hA["tick"])], last_eat=hA["tick"])
+        t = body.targets(hA, cA, pa, mA.mem, "eat", cA["activities"]["eat"])
+        assert wants.lean(hA, cA, pa)["pick"] == {"herb patch"} and t and t[0]["what"] == "herb patch" and t[0]["bonus"], "its body goes to pick what is ripe, hungry or not: %s" % t
+        text, fx, _ = actions.use(hA, cA, pa, "herb patch")
+        wants.refresh(hA, cA, pa)
+        assert "for the others" in text and "energy" not in fx and "planted" not in bed and pa["fulfilled"] == n_f + 2 and sum(s2["bit"] == "bean" for s2 in roomA["spots"]) >= 2, "just fed, it picks and leaves it all: %s" % text
+        roomA["spots"] = [s2 for s2 in roomA["spots"] if s2["bit"] not in ("bean", "seed")]
+        # the forecast's words and the creatures it has been close to are things to wonder about too
+        fc = radio.parse("forecast", json.dumps({"daily": {"time": ["d"], "weather_code": [95], "temperature_2m_max": [3], "temperature_2m_min": [-2], "wind_speed_10m_max": [20]}}))[0]
+        pa.update(box=[{"tick": hA["tick"], "text": fc}], box_seen=LONG_AGO, words=[], unknown=[], met={"moth": 1}, creature_word=None, wants=[])
+        wants.hear(hA, cA, pa)
+        assert "Frost overnight" in fc and pa["unknown"] == ["thunderstorm", "moth"] and "frost" in pa["words"], "%s %s" % (fc, pa["unknown"])
+        assert any("what a moth is: you have been close to one" in c["text"] for c in cands("word")), [c["text"] for c in cands("word")]
+        pa.update(box=[], unknown=[], met={}, wants=[], wanted={}, carrying=[], lacks={}, takes=[], asked_tool=[])
+        roomA["objects"]["spade"] = spade
+        if first_t is not None:
+            hA["firsts"]["trowel"] = first_t
         # wants: made from where it is and what it has not done, told to its mind, met when the world shows it, and faded when left
         cA["wants"] = dict(cA["wants"], most=3)
         pa["wants"], pa["wanted"], pa["carrying"] = [], {}, []

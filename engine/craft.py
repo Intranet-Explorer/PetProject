@@ -348,7 +348,7 @@ def process(house, cfg, pet, a, norm):
         tried[key] = False
         return rule["says"], {}, None
     give(house, cfg, pet, room, rule["gives"])
-    tried[key] = rule["gives"]
+    tried[key], pet["got"] = rule["gives"], [rule["gives"], house["tick"]]
     new = learn(house, cfg, pet, key)
     for kid in [p for p in house["pets"].values() if p.get("parent") == pet["id"] and p["room"] == pet["room"] and p["stage"] not in ("egg", "dead") and not p["sleep"]]:
         if learn(house, cfg, kid, key, "watching %s" % label(pet)):   # a young one watching picks it up
@@ -505,6 +505,9 @@ def use_planted(house, cfg, pet, room, name):
     planter = house["pets"].get(p.get("by") or "")
     food = next((b for b in gives if "sweet" in cfg["house"]["bits"][b]["can"] and b != "seed"), None)
     fx, ate = {}, ""
+    pet["picked"] = {"tick": house["tick"], "thing": name}
+    if food and (house["tick"] - pet.get("last_eat", -10**9)) * cfg["clock"]["tick_seconds"] <= E["double_feed_seconds"]:
+        food, ate = None, "; you have only just eaten, so all of it is there for the others"   # (13 October 2026: picked to eat or to share)
     if food:
         gives.remove(food)
         fx = dict(E["ripe"])

@@ -1490,3 +1490,39 @@ sort is clutter, and tidying stacks it in storage. A thing whose home is a shelf
 corner, lies about while it is out, and is put back before anything else. A body taking something out to look at
 holds it up where it is kept and puts it back; a mind that takes a thing out leaves it out, and where it was kept
 becomes its home. Once, on arrival: every thing on a floor whose home was a keepsake box went back into it.
+
+## Wants that lead somewhere (13 October 2026, second follow-up)
+
+Tyler's six items after the follow-up's first day, where nobody made a tool, planted or asked the book.
+
+**A want that names a thing leads to a want to get it.** Two kinds of want name a thing a pet has not got: a tool
+whose makings it knows, and something a parent knew how to make. Each gives a step: "you want a pebble (there is
+some in the nursery)" if it lies about; "you want to find out what warmth does to clay" if something in reach
+becomes it and the pet has not found that out; "you want to warm some clay, for the fired clay" if it has. A step
+is not one of the three wants, a pet has one at a time, its body does it first, and meeting it keeps the want it
+serves from fading. A step that needs a tool nobody has is a long way down the list. One step deep: it does not
+plan a chain.
+
+**The book before the answer.** A tool kind is offered to a mind for making only once its pet has asked the book
+about it, or there is no book it can reach. Its body goes to the book and asks in the want's own words ("how do you
+make something that cuts"). The book's own pages now say what each tool is made of, and reading one tells the pet
+(the want then carries "a carver takes sharp stone or fired clay"). A page was added for the hammer. If the book
+finds nothing, the failed attempt still says what is missing.
+
+**Planting and picking.** Bare earth in a room it knows and a seed it carries or can find: a want to plant there,
+weighted by how practised it is at tending (1.5 times one plus its tending step). Something ripe: a want to pick
+it. Its body goes and picks, hungry or not; a pet that has only just eaten eats none and leaves it all beside the
+bed ("share" is that: what lies there is anyone's).
+
+**Repeats.** Two of a kind in a material within three world days (a rolling 5,400 ticks), counted on arrival from
+the things each pet has standing.
+
+**Words.** A forecast's words count like any broadcast's; the list gained frost, thunder, thunderstorm, fog, hail,
+drizzle, sleet, mist. The forecast only named a sky, so it now ends "Frost overnight." when the low is at or below
+zero. A creature a pet has been close to becomes a thing to wonder about, one a world day ("you want to know what a
+moth is: you have been close to one").
+
+**Drawn to the book.** A pet in the book's room with a want the book might answer (a word, a tool's makings, a bit
+it wants to try something on, a thing a parent knew how to make) goes over to it, is told 'the book is right here;
+you could ask it: "what is clay"', and left a while leafs through by itself. Not while its eyes are tired (once a
+world hour), and never the same question twice.

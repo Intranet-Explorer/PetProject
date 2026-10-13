@@ -104,7 +104,7 @@ def targets(house, cfg, pet, mem, name, A):
     near = lambda pos: None if dist(me, pos) <= 1 else beside(cfg, pos, me)
     if do == "self":
         return [{}]
-    L, W = wants.lean(house, cfg, pet) if do in ("go", "gather", "tail", "watch", "place", "try", "play", "inspect") else None, cfg["body"]["want"]   # SPEC-v3.4 §2.1: its body leans toward what serves its wants
+    L, W = wants.lean(house, cfg, pet) if do in ("go", "gather", "tail", "watch", "place", "try", "play", "inspect", "eat") else None, cfg["body"]["want"]   # SPEC-v3.4 §2.1: its body leans toward what serves its wants
     if do == "wander":   # somewhere a few steps off: the farthest of a few tries (or near what its mind is on)
         at = anchor(house, pet)
         tries = [[r.randrange(1, cfg["W"] - 1), r.randrange(1, cfg["H"] - 1)] for _ in range(4)] if not at else \
@@ -172,6 +172,9 @@ def targets(house, cfg, pet, mem, name, A):
         beds = [o["pos"] for o in objs.values() if "rest" in o.get("fix", {}) or o.get("fix", {}).get("cozy")]
         return [{"goal": near(min(beds, key=lambda t: dist(me, t))) if beds else None}]
     if do == "eat":
+        ripe = [n for n in L["pick"] if n in objs and (objs[n].get("planted") or {}).get("grow", 0) >= 1]   # what it wants to pick: hungry or not (13 October 2026)
+        if ripe:
+            return [{"what": ripe[0], "goal": near(objs[ripe[0]]["pos"]), "bonus": W}]
         if feel.level(pet, "energy") < 2 or (house["tick"] - pet.get("last_eat", LONG_AGO)) * cfg["clock"]["tick_seconds"] <= cfg["effects"]["double_feed_seconds"]:
             return []
         # what the family grew before the bowl the visitor fills (SPEC-v3.4 §3.5)
@@ -222,24 +225,22 @@ def targets(house, cfg, pet, mem, name, A):
         spots = sorted((s for s in room["spots"] if s["ready"] and not s.get("on")), key=lambda s: dist(me, s["pos"]))
         return [{"what": s["bit"], "goal": near(s["pos"]), "bonus": cfg["body"]["make_pull"] if making else 0.0} for s in spots[:1]]
     if do == "place":   # a bit it wants to try something on, carried to where that can be tried; there its mind is told, once, and thinks sooner
-        if not L["place"] or state(pet).get("placed") == [L["place"][2], room["id"]]:
+        P, slot = (L["ask"], "booked") if A.get("book") else (L["place"], "placed")   # (the book and the place a thing is tried are gone to separately)
+        if not P or state(pet).get(slot) == [P[2], room["id"]]:
             return []
-        how, bit, key = L["place"]
-        if (how == "ask") != bool(A.get("book")):
-            return []
-        if how == "ask":   # a word it wonders about, and the book is here: it goes over to it
+        how, bit, key = P
+        if how == "ask":   # something it wants to know, and the book is here: it goes over to it
             at = next((o["pos"] for o in objs.values() if o.get("fix", {}).get("book")), None)
             return [{"what": "heavy book", "where": "ask " + bit, "want": key, "goal": near(at), "bonus": W * 1.5}] if at else []
         at = craft.place(house, cfg, room, how)
         return [{"what": bit, "where": TO[how], "want": key, "how": how, "goal": near(at[1]) if at[1] else None, "bonus": W * 1.5}]
     if do == "try":   # it has stood where the thing can be tried long enough for its mind to take it up, and its mind has not: its paws try it
         b = state(pet)
-        if not L["place"] or b.get("placed") != [L["place"][2], room["id"]] or b.get("tried_at") == L["place"][2] \
-                or house["tick"] - b.get("placed_at", house["tick"]) < ticks(cfg, cfg["body"]["try_after_seconds"]):
+        P, slot, done = (L["ask"], "booked", "asked_at") if A.get("book") else (L["place"], "placed", "tried_at")
+        if not P or b.get(slot) != [P[2], room["id"]] or b.get(done) == P[2] \
+                or house["tick"] - b.get(slot + "_at", house["tick"]) < ticks(cfg, cfg["body"]["try_after_seconds"]):
             return []
-        how, bit, key = L["place"]
-        if (how == "ask") != bool(A.get("book")):
-            return []
+        how, bit, key = P
         if how == "ask":
             at = next((o["pos"] for o in objs.values() if o.get("fix", {}).get("book")), None)
             return [{"what": "heavy book", "where": "ask " + bit, "want": key, "goal": near(at), "bonus": W * 1.5}] if at else []
@@ -485,8 +486,8 @@ def finish(mind, now, cut=False):
                     add_event(h, other, "%s carried the %s over to you" % (actions.handle(h, other, pet), name))
             elif do == "try":
                 asking = now["where"].startswith("ask ")   # (the book: it turns the pages looking for the word it wondered about)
-                a = {"type": "ask_book", "question": "what is %s" % now["where"][4:]} if asking else {"type": "process", "what": name, "how": now["where"]}
-                b["tried_at"] = now["want"]
+                a = {"type": "ask_book", "question": now["where"][4:]} if asking else {"type": "process", "what": name, "how": now["where"]}
+                b["asked_at" if asking else "tried_at"] = now["want"]
                 why = actions.check(a, h, cfg, pet, mind.mem)
                 told, fx, key = (why, {}, None) if why else actions.apply(h, cfg, pet, a, mind.mem)
                 add_event(h, pet, told if asking else "you tried the %s: %s" % (name, told))
@@ -524,10 +525,11 @@ def finish(mind, now, cut=False):
             elif do == "tend" and o is not None and o.get("planted"):
                 craft.water(h, cfg, pet, room, name)
             elif do == "place":   # it is where the thing can be tried, with the thing: its mind is told, and thinks sooner
-                b["placed"], b["placed_at"], where = [now["want"], room["id"]], h["tick"], now["where"]
+                slot, where = "booked" if now["where"].startswith("ask ") else "placed", now["where"]
+                b[slot], b[slot + "_at"] = [now["want"], room["id"]], h["tick"]
                 if where.startswith("ask "):
                     where = ""
-                    add_event(h, pet, 'you are by the heavy book: you could ask it what "%s" is' % now["where"][4:])
+                    add_event(h, pet, 'the book is right here; you could ask it: "%s"' % now["where"][4:])
                 else:
                     add_event(h, pet, "you have carried the %s %s: you could try it now" % (name, where))
                 pet["ready"] = h["tick"]

@@ -83,10 +83,16 @@ def lookup(cfg, question):
     return None
 
 
-def entry(cfg, question):
-    """One of the book's own pages (crafting.toml [[entry]]), if the question has one of its words: (title, text)."""
+def page(cfg, question):
+    """One of the book's own pages (crafting.toml [[entry]]), if the question has one of its words."""
     asked = set(words(question))
-    return next(((e["title"], e["text"]) for e in cfg["craft"].get("entry", []) if asked & set(e["words"])), None)
+    return next((e for e in cfg["craft"].get("entry", []) if asked & set(e["words"])), None)
+
+
+def entry(cfg, question):
+    """... as (title, text)."""
+    e = page(cfg, question)
+    return (e["title"], e["text"]) if e else None
 
 
 def check_ask(a, house, cfg, pet, filled):
@@ -109,6 +115,16 @@ def ask(house, cfg, pet, a, clean):
     pet["asked"] = (pet.get("asked", []) + [q.lower()])[-12:]   # SPEC-v3.4 §4.1: a word it wondered about has been asked after
     craft.practise(house, cfg, pet, "reading")
     found = entry(cfg, q) or (lookup(cfg, q) if available(cfg) else None)
+    # a tool it wants (13 October 2026): it has been to the book about it; and a page that says what one is made of has told it
+    own, asked = page(cfg, q) or {}, set(words(q))
+    for tool, T in cfg["craft"]["tool"].items():
+        if own.get("tool") == tool or (tool in pet.get("lacks", {}) and asked & (set(words(T["want"])) - {"something"} | {tool})):
+            pet["asked_tool"] = list(dict.fromkeys(pet.get("asked_tool", []) + [tool]))
+        if own.get("tool") == tool:
+            pet["takes"] = list(dict.fromkeys(pet.get("takes", []) + [tool]))
+    for w in pet.get("wants", []):
+        if w["what"] in ("tool", "word"):
+            w["touched"] = house["tick"]
     house.setdefault("fresh_reads", []).append({"pet": pet["id"], "tick": house["tick"], "question": q,
                                                 "title": found[0] if found else None, "text": found[1] if found else None})
     if not found:
