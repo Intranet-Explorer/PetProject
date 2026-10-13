@@ -19,6 +19,7 @@ console: nothing is ever a hole.
 | `fx.ts` | the small moving things (sparkles, hearts, notes, z's, dust), pooled |
 | `marks.ts` | writing on the walls |
 | `bubbles.ts` | each pet's one line (the sign of what it is doing, its name), the caption of what it wants, speech bubbles, the box's words, the names of things, and whose turn it is to show |
+| `built.ts` | SPEC-v3.5 §4.2: the paint a room wears (`RoomV.painted`): a wash of the dye's colour on a stretch of wall, a patch of floor or a rug, with stripes, dots or a border in the painter's coat colour, fainter as it fades. (What is built is drawn by `still.ts` from the sprite the engine names in `Obj.build`: `fix.site*` while under way, `fix.built.<project>` once it stands.) |
 
 ## What the page gives the room, and gets back
 

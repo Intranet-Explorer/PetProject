@@ -1,6 +1,7 @@
 """What the house does on its own (SPEC-v3 §6.4, §6.5): the day's weather, the seasons, storms and power
 cuts, the events nobody caused, and the small creatures. All of it scripted; no model is ever asked."""
 from . import craft, genome, order, songs, things, walls
+from . import build
 from .world import (LONG_AGO, days as world_days, moving as on_the_move, add_event, alive, arrived, bit_kinds, clock, dist, family, free_tile, hours, in_room, label, moment,
                     new_pet, power_on, rnd, ticks, weather_of)
 
@@ -97,6 +98,7 @@ def hourly(house, cfg):
     from . import season
     season.hourly(house, cfg)   # SPEC-v3.5 §5: the season's own bits in the garden, and food left lying goes bad
     craft.lost(house, cfg)   # §3.3: what nobody living knows any more is lost
+    build.hourly(house, cfg)   # SPEC-v3.5 §4: what was built wears, paint fades, a room that leaks is remembered as one
     things.upkeep(house, cfg)
     walls.fade(house, cfg)
     order.keep(house, cfg)
@@ -150,7 +152,7 @@ def events(house, cfg):
             house["leak_due"] = {"room": room["id"], "at": tick + ticks(cfg, 60)}
         else:
             leak(house, cfg, room)
-    elif kind == "draught":
+    elif kind == "draught" and not build.proof(house, cfg, room, "draught"):   # (SPEC-v3.5 §4.1: unless something built here keeps it out)
         room["cold_until"] = tick + hours(cfg, r.uniform(*E["draught_hours"]))
         d = r.choice(list(room["doors"]))
         house["shut"]["%s|%s" % (room["id"], d)] = room["cold_until"]
@@ -235,6 +237,8 @@ def unstuck(house, key):
 
 
 def leak(house, cfg, room):
+    if build.proof(house, cfg, room, "leak"):   # SPEC-v3.5 §4.1: something built here keeps it out
+        return
     r, E = rnd(house, "leak", house["tick"]), cfg["house"]["events"]
     room["wet_until"] = house["tick"] + hours(cfg, r.uniform(*E["leak_hours"]))
     for n, o in things.made(room).items():   # the water shifts what is lying about

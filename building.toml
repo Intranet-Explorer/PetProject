@@ -1,0 +1,345 @@
+# Building that lasts, and decorating (SPEC-v3.5 §4). engine/build.py carries it out; no model is asked.
+# The pets are not told the numbers: a want names what a room lacks and what the thing takes, and the rest is done.
+#
+#   [project.<name>]   something built once in a room, that then stands there for good
+#     a         its article
+#     rooms     the room types it can be built in ("any", or a list)
+#     when      what about a room gives the want for it (engine/build.py WHEN): no_rest, no_bench, crowded, sleeps,
+#               leaks, draughty, cold, dark, tame, always
+#     want      the want in the pet's words; done: what is written down when it stands ({room}: the room's name)
+#     needs     what it is made of: bits carried to it and set in place, how many of each. Only the six base materials
+#               (SPEC-v3.5 §4.3: wood, stone, metal, clay, fibre, sand; two a day for each pet from the machine in the
+#               storeroom) and what one process makes of them (a clay tile). A small thing takes two or three pieces,
+#               the largest five: about half a day's materials for the whole house
+#     sessions  how many spells of work with the hammer it takes (two working together count for more: [build])
+#     at        the tile it stands on or near (the nearest free one); wall = true: it is on the north wall above that
+#               tile and takes no floor; flat = true: it lies on the floor and is walked over
+#     fix       what it is once it stands, in a fixture's own keys (house.toml): rest, cozy, store, bench;
+#               bed (a seed can be planted in it), glow (a soft light at night), hutch (a tamed creature's home)
+#     rules     the room's own rule (house.toml [rules.<type>]) as it is while this stands and is sound
+#     cold      how much of the night's and the winter's cold still gets in (1 all of it)
+#     proof     "leak" or "draught": what no longer comes into this room
+#     bits      bits the room now grows as well: bit -> how many; spots: where (else near the thing)
+#     says      what it is, for whoever looks at it
+#     weight    how strongly the want comes
+#   [activities.*]     what a body does at it by itself, laid in beside activities.toml (same keys; `mode` says which)
+#   [material.*], [[rule]], [bits.*]   dyes and where they come from, laid in beside crafting.toml and house.toml:
+#               found out like any other process
+#   [paint]            painting with a dye
+
+[build]
+most = 2                  # things being built in the house at once: past it no new one is begun
+rest_seconds = 360        # a pet rests its paws this long between two spells of work on one thing (two and a half world hours on the live clock)
+together = 1.6            # what a spell of work counts for when another is at it too
+near_seconds = 90         # "at it too": the other is hammering at it now, or was this lately
+effort = 1.0              # energy a spell of work takes
+started = 6.0             # how strongly the want comes for a thing already begun ...
+weight = 3.0              # ... and for one not begun, unless the project says otherwise
+recent_days = 8           # how long a room that leaked or took a draught is remembered as one that does
+wear_days = 14            # a built thing has worn after this many world days, and wants mending with the hammer
+company = 2.0             # what working side by side is worth to each
+lift = { comfort = 3.0, curiosity = 2.0 }   # what having had a paw in a finished thing is worth to whoever did not hold the want
+
+# ---- furniture ----
+
+[project.bench]
+a = "a"
+rooms = ["workshop", "greenhouse", "music"]
+when = "no_rest"
+want = "there is nowhere to sit in {room}: you want to build a bench there"
+done = "built a bench in {room}"
+needs = { wood = 2 }
+sessions = 5
+at = [3, 6]
+fix = { rest = 2.5, cozy = true }
+says = "a place to rest"
+weight = 3.5              # (the smallest thing there is to build: the likeliest first)
+
+[project.table]
+a = "a"
+rooms = ["nursery", "attic", "music", "greenhouse"]
+when = "no_bench"
+want = "there is nothing to work at in {room}: you want to build a table there"
+done = "built a table in {room}"
+needs = { wood = 2, stone = 1 }
+sessions = 6
+at = [6, 3]
+fix = { bench = true, store = 2 }
+says = "a table to work at: weaving and carving can be done here, and things kept on it"
+weight = 2.0
+
+["project"."big shelf"]
+a = "a"
+rooms = "any"
+when = "crowded"
+want = "the floor of {room} is crowded: you want to build a big shelf there"
+done = "built a big shelf in {room}"
+needs = { wood = 2, metal = 1 }
+sessions = 8
+at = [10, 1]
+fix = { store = 8 }
+says = "a place to keep things"
+
+["project"."bed frame"]
+a = "a"
+rooms = "any"
+when = "sleeps"
+want = "you sleep on the floor of {room}: you want to build a bed frame there"
+done = "built a bed frame in {room}"
+needs = { wood = 2, fibre = 2 }
+sessions = 8
+at = [9, 2]
+fix = { rest = 3.5, cozy = true }
+says = "a place to rest"
+weight = 2.5
+
+# ---- mending the house ----
+
+["project"."roof patch"]
+a = "a"
+rooms = "any"
+when = "leaks"
+want = "water comes into {room}: you want to stop the leak"
+done = "stopped the leak in {room}"
+needs = { clay = 2, fibre = 1 }
+sessions = 5
+at = [4, 0]
+wall = true
+proof = "leak"
+says = "clay and fibre packed where the water came in: it keeps the rain out"
+
+["project"."draught curtain"]
+a = "a"
+rooms = "any"
+when = "draughty"
+want = "a draught gets into {room}: you want to stop the cold coming in"
+done = "stopped the draught in {room}"
+needs = { fibre = 2, wood = 1 }
+sessions = 4
+at = [8, 0]
+wall = true
+proof = "draught"
+says = "a heavy curtain of fibre on a rod where the draught came in: it keeps the cold air out"
+
+# ---- improvements ----
+
+["project"."wall lining"]
+a = "a"
+rooms = ["cellar", "attic"]
+when = "cold"
+want = "the cold gets into {room}: you want to line its walls against it"
+done = "lined the walls of {room} against the cold"
+needs = { fibre = 2, "clay tile" = 2 }
+sessions = 10
+at = [6, 0]
+wall = true
+rules = { cold_night = 0.0 }
+cold = 0.3
+says = "fibre packed behind clay tiles along the wall: it keeps the cold out"
+weight = 2.5
+
+["project"."pond bridge"]
+a = "a"
+rooms = ["pond"]
+when = "always"
+want = "you want a way out over the water of {room}: a bridge"
+done = "built a bridge over the pond"
+needs = { wood = 3, stone = 1, sand = 1 }
+sessions = 12
+on = "water"                  # it stands where the room's water is
+flat = true
+bits = { lily = 2 }
+spots = [[5, 3], [6, 5]]
+says = "a bridge over the water: from it the lilies can be reached"
+weight = 2.0
+
+["project"."window box"]
+a = "a"
+rooms = ["nursery"]
+when = "always"
+want = "you want something growing at the window of {room}: a window box"
+done = "built a window box in {room}"
+needs = { wood = 1, clay = 1 }
+sessions = 4
+on = "window"                 # it hangs under the room's window
+wall = true
+fix = { bed = true }
+says = "a box of earth under the window: a seed could be planted in it"
+weight = 2.0
+
+["project"."lamp niche"]
+a = "a"
+rooms = ["cellar", "storeroom"]
+when = "always"
+want = "{room} is dark and harsh by turns: you want a small soft light set into its wall"
+done = "set a lamp niche into the wall of {room}"
+needs = { stone = 1, clay = 1, sand = 1 }
+sessions = 5
+at = [3, 0]
+wall = true
+fix = { cozy = true, glow = true }
+says = "a small flame in a hollow of the wall: a soft light that is not harsh at night"
+weight = 2.0
+
+[project.trellis]
+a = "a"
+rooms = ["greenhouse"]
+when = "always"
+want = "the vines of {room} have nothing to climb: you want to build a trellis"
+done = "built a trellis in {room}"
+needs = { wood = 2, metal = 1 }
+sessions = 6
+at = [6, 1]
+bits = { vine = 2 }
+says = "a frame for the vines to climb: more of them grow here now"
+weight = 2.0
+
+[project.hutch]
+a = "a"
+rooms = "any"
+when = "tame"
+want = "your animal has nowhere of its own: you want to build it a hutch in {room}"
+done = "built a hutch in {room}"
+needs = { wood = 2, fibre = 1 }
+sessions = 5
+at = [2, 6]
+fix = { hutch = true }
+says = "a small house for a tamed creature: one that has it does not go wild again"
+
+# ---- what a body does at it by itself ----
+
+[activities."carry to the build"]
+do = "build"
+mode = "place"
+doing = "carrying {where} over to the {what}"
+did = "set {where} in place at the {what}"
+icon = "box"
+seconds = [3, 5]
+base = 0.0
+stage = "child"
+handles = true
+
+[activities."build"]
+do = "build"
+mode = "work"
+doing = "hammering at the {what}"
+did = "worked on the {what} with the hammer"
+icon = "hammer"
+voice = "murmur"
+seconds = [10, 16]
+base = 0.4
+stage = "child"
+temper = { orderly = 0.6, patient = 0.3 }
+focus = ["project", "make", "be with"]
+handles = true
+
+[activities."mend what was built"]
+do = "build"
+mode = "mend"
+doing = "mending the {what}"
+did = "mended the {what}"
+icon = "hammer"
+voice = "murmur"
+seconds = [10, 14]
+base = 0.6
+stage = "child"
+temper = { orderly = 0.6 }
+focus = ["project", "tidy"]
+handles = true
+
+[activities."knock a hammer together"]
+do = "build"
+mode = "hammer"
+doing = "binding a stone to a stick"
+did = "bound a stone to a stick with cord"
+icon = "paws"
+seconds = [8, 12]
+base = 0.0
+stage = "child"
+
+[activities."paint"]
+do = "build"
+mode = "paint"
+doing = "painting the {what}"
+did = "painted the {what}"
+icon = "paws"
+voice = "hum"
+seconds = [10, 14]
+base = 0.6
+stage = "youngling"
+temper = { playful = 0.5, orderly = 0.3 }
+focus = ["project", "make", "play"]
+handles = true
+
+# ---- dyes (§4.2): what a bit gives up when the right thing is done to it. Petal dye and chalk dust (crafting.toml) are dyes too. ----
+
+[bits.lily]                # grows on the pond once there is a bridge to reach it from; never delivered, never in a storeroom
+late = "bridge"
+can = ["fragrant", "cool"]
+looks = { shape = "blob", color = "white" }
+
+[material."red dye"]
+can = ["bright", "fragrant"]
+like = "petal"
+tint = "#d9483b"
+[material."green dye"]
+can = ["cool", "bright"]
+like = "petal"
+tint = "#3f9b63"
+[material."black dye"]
+can = ["dark"]
+like = "soot"
+tint = "#26302c"
+[material."ochre dye"]
+can = ["warm", "bright"]
+like = "petal"
+tint = "#f08a2e"
+[material."blue dye"]
+can = ["cool", "bright"]
+like = "petal"
+tint = "#4a7fc1"
+
+[[rule]]
+bit = "berry"
+how = "press"
+gives = "red dye"
+says = "the berry burst under the weight and left a deep red that stains your paws: a colour that could be put on things"
+[[rule]]
+bit = "leaf"
+how = "soak"
+gives = "green dye"
+says = "the water round the leaf turned green: a colour that could be put on things"
+[[rule]]
+bit = "charcoal"
+how = "grind"
+gives = "black dye"
+says = "the charcoal ground to a fine black that clings to everything: a colour that could be put on things"
+[[rule]]
+bit = "soot"
+how = "soak"
+gives = "black dye"
+says = "the soot ran black in the water: a colour that could be put on things"
+[[rule]]
+bit = "clay"
+how = "grind"
+gives = "ochre dye"
+says = "the clay ground to a warm yellow-brown powder: a colour that could be put on things"
+[[rule]]
+bit = "lily"
+how = "press"
+gives = "blue dye"
+says = "the lily pressed out a clear blue: a colour that could be put on things"
+
+[paint]
+dyes = { "petal dye" = "pink", "chalk dust" = "white", "red dye" = "red", "green dye" = "green", "black dye" = "black", "ochre dye" = "orange", "blue dye" = "blue" }
+patterns = ["stripes", "dots", "border"]
+# a family's patterns echo its coats (§2.1): the coat's pattern -> how its owner paints by itself; anything else, `plain`
+echo = { plain = "border", spots = "dots", speckle = "dots", stripes = "stripes", stripe = "stripes", patch = "border", gradient = "stripes", "broken stripes" = "stripes", "faded patch" = "border", "dappled patch" = "dots", "banded gradient" = "stripes", "speckled fade" = "dots", "striped patch" = "stripes" }
+wall = 4                  # sections of the north wall a room has to paint, each three tiles wide ...
+floor = 2                 # ... and patches of floor, three tiles by two; a rug is painted whole
+family = 2                # one family paints this many places in a room by itself; its minds may paint more
+fade_days = 12            # paint fades over this many world days, unless it is done again
+felt_above = 0.25         # fainter than this it is no longer felt
+homely = 0.12             # comfort per 10 s in a room one's own family painted
+strange = -0.03           # ... and in one painted only by another family
+weight = 1.8              # how strongly the want to paint comes

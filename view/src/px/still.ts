@@ -6,7 +6,8 @@ import type { Texture } from "pixi.js";
 import { composeThing, inventedKind } from "../parts";
 import { PALETTE } from "../things";
 import type { Part, Recipe } from "../things";
-import type { Made, Obj, RoomV, Snap, Tile } from "../types";
+import type { Made, Obj, Painted, RoomV, Snap, Tile } from "../types";
+import { paintOn, paintRect } from "./built";
 import { addSprite, canvasOf, def, fromCanvas, fromParts, has, kind, pick, size, tex } from "./assets";
 import type { Layout } from "./assets";
 import { FAMILY, tagCanvas } from "./bubbles";
@@ -80,6 +81,8 @@ export class Still {
   scenery: { sprite: string; rect: Rect }[] = [];
   /** The places the room has grown ("sleeping corner"), each as the part of the floor it covers. */
   areas: { name: string; rect: Rect }[] = [];
+  /** SPEC-v3.5 §4.2: each painted place and where it is drawn, for the pointer. */
+  paints: { p: Painted; rect: Rect }[] = [];
 
   /** A sprite's name as this season draws it in this room (SPEC-v3.5 §5, view/assets/seasons.json); null: not there this season. */
   private swap: (name: string | null | undefined, x?: number, y?: number) => string | null | undefined = (n) => n;
@@ -88,6 +91,7 @@ export class Still {
     const L = layout ?? {};
     this.swap = (n, x, y) => seasonal(n, snap.clock.season, room.type, x, y);
     this.tiles(L, room);
+    this.paint(room, false);   // SPEC-v3.5 §4.2: paint on the wall and the floor, under everything that stands there
     const blocked: Tile[] = [...(L.blocked ?? [])];
     for (const d of L.decor ?? []) this.decor(d.sprite, d.at, d.layer);
     this.puddles(room);
@@ -109,13 +113,13 @@ export class Still {
       } else {
         if (o.water) blocked.push(...o.water);
         if (o.fix?.sun) this.sun = [OX + o.pos[0] * TILE + 8, OY + o.pos[1] * TILE + 8];
-        const base = lf ? lf.sprite : o.fix?.keepsake ? "fix.keepsake box" : pick(`fix.${name}`, `fix.${name.replace(/ /g, "_")}`, `fix.${name.replace(/ /g, "-")}`);
+        const base = o.build ? o.build.sprite : lf ? lf.sprite : o.fix?.keepsake ? "fix.keepsake box" : pick(`fix.${name}`, `fix.${name.replace(/ /g, "_")}`, `fix.${name.replace(/ /g, "-")}`);
         if (!base || ((o.fix?.sun || o.water) && !has(base))) continue;   // light and water may be part of the floor's own picture
         // how it looks just now: a bowl by what is left in it, a plant by how far it has grown, anything else by its state
         const dead = !!o.fix?.light && o.state === "on" && !snap.power;   // in a power cut no lamp is lit, whatever its switch says
         const state = dead ? "off" : o.servings != null ? (o.servings <= 0 ? "empty" : o.servings < 2 ? "half" : "full") : o.state === "ripe" ? "ripe" : o.grow != null ? (o.grow >= 0.4 ? "growing" : null) : o.state;
         const plain = pick(o.planted ? `${base}.bare` : null, state ? `${base}.${state}` : null, base), sprite = this.swap(plain) ?? plain, sz = size(sprite);
-        const flat = !!o.fix?.soft || !!o.fix?.sun || !!o.water || lf?.walk || lf?.layer === "floor", onWall = !!o.wall || !!lf?.wall || lf?.layer === "wall";   // (a recording from before the layouts has its window on a floor tile: it is hung on the wall above all the same)
+        const flat = !!o.fix?.soft || !!o.fix?.sun || !!o.water || lf?.walk || lf?.layer === "floor" || !!o.build?.flat, onWall = !!o.wall || !!lf?.wall || lf?.layer === "wall";   // (a recording from before the layouts has its window on a floor tile: it is hung on the wall above all the same)
         const t = this.put(name, o, sprite, slot ? "sorted" : flat ? "ground" : onWall ? "wall" : lf?.layer === "top" ? "top" : "sorted", undefined, undefined, slot ? this.small : 1, slot);
         if (o.fix?.window) this.windows.push({ name, rect: this.glass(sprite, t), open: o.state === "open" });
         else if (!flat && !onWall && !slot && !o.fix?.sun && !o.water) blocked.push(o.pos);
@@ -128,6 +132,8 @@ export class Still {
         }
         if (o.fix?.light && o.state === "on" && snap.power) this.lamps.push({ x: t.x, y: t.y - sz.h / 2, r: 50, color: [255, 226, 170], made: false });
         if (o.fix?.radio && o.state === "on" && snap.power) this.lamps.push({ x: t.x, y: t.y - 6, r: 12, color: [255, 214, 130], made: true });
+        if (o.build?.glow) this.lamps.push({ x: t.x, y: t.y - sz.h / 2, r: 24, color: [255, 206, 140], made: true });   // SPEC-v3.5 §4.1: a lamp niche's small flame (no power to cut)
+        if (o.build?.worn) t.s.tint = 0xb4a898;   // ... and what was built and has worn looks it
         t.on = (o.state === "on" && snap.power) || o.state === "playing";
       }
     }
@@ -155,6 +161,7 @@ export class Still {
       this.standing.push(sp);
       this.spots.push({ bit: s.bit, pos: s.pos, s: sp, bare: false, rect: { x: cx + 8 - 8 * f, y: cy + 14 - 16 * f, w: 16 * f, h: 16 * f } });
     }
+    this.paint(room, true);   // (and on the rugs, over them)
     for (const t of [...this.things.values()]) {   // what is kept inside a thing is not seen: a small number on it says how many
       const n = t.obj.store?.inside ? t.obj.store.holds.length : 0, F = Math.max(1, Math.round(K / 2));
       if (!n) continue;
@@ -225,6 +232,21 @@ export class Still {
       if (w) this.band.west = { x: w[0], y: OY, w: w[1] - w[0], h: FY * TILE };
       if (e) this.band.east = { x: (COLS - 1) * TILE + e[0], y: OY, w: e[1] - e[0], h: FY * TILE };
       if (so) this.band.south = { x: OX, y: (ROWS - 1) * TILE + so[0], w: FX * TILE, h: so[1] - so[0] };
+    }
+  }
+
+  /** SPEC-v3.5 §4.2: what is painted here (px/built.ts): on the wall and the floor, or (`rugs`) on the rugs. */
+  private paint(room: RoomV, rugs: boolean) {
+    for (const p of room.painted ?? []) {
+      if ((p.where === "rug") !== rugs) continue;
+      const t = rugs ? this.things.get(p.at as string) : undefined, r = paintRect(p, this.band.north, t?.rect);
+      if (!r) continue;
+      const g = new Graphics();
+      paintOn(g, r, p);
+      if (!t) this.ground.addChild(g);
+      else if (t.s.parent) t.s.parent.addChild(g);
+      else { g.zIndex = t.s.zIndex + 0.05; this.standing.push(g); }
+      this.paints.push({ p, rect: r });
     }
   }
 

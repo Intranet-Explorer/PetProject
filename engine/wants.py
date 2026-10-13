@@ -7,6 +7,7 @@ import re
 
 from . import craft, order, things
 from . import season
+from . import build
 from .world import LONG_AGO, add_event, days as world_days, label, moment, relation, rnd
 
 GROUPS = {"door": "know", "creature": "know", "bit": "know", "try": "know", "word": "know", "look": "know",
@@ -19,6 +20,8 @@ LEANS = {"curious": ("bit", "try", "word", "door", "creature", "look"), "bold": 
 TRY = {"soak": "what water does to %s", "warm": "what warmth does to %s", "melt": "what heat does to %s", "dry": "what becomes of %s left to dry",
        "press": "what becomes of %s under something heavy", "weave": "what comes of weaving %s", "carve": "what could be carved out of %s",
        "grind": "what grinding does to %s", "plant": "whether %s would grow in the earth"}
+GROUPS.update(build="build", paint="build")   # SPEC-v3.5 §4: to build what a room lacks, and to paint it (engine/build.py)
+LEANS.update(orderly=LEANS["orderly"] + ("build",), playful=LEANS["playful"] + ("paint",))
 RAIN = re.compile(r"\b(rain|drizzle|showers?|thunderstorms?|snow)\b", re.I)
 
 
@@ -106,7 +109,7 @@ def candidates(house, cfg, pet):
                     (4.0 if (bit, how) in hinted else 3.0 if toward else 1.6 if rule else 0.5) * (1.3 if bit in pet["carrying"] else 1.0), bit=bit, how=how, room=where[0], bit_room=grown.get(bit))
     # to get what another want names (13 October 2026): it lies about somewhere, or something it can reach becomes it
     mine = {w["key"] for w in pet.get("wants", [])}
-    for bit, parent in named(cfg, pet):
+    for bit, parent in named(cfg, pet) + build.named(house, cfg, pet):   # (SPEC-v3.5 §4: and a material that has to be made, a hammer's makings, a dye)
         if bit in grown:
             add("get", bit, "you want %s%s" % (some(bit), "" if grown[bit] == here["id"] else " (there is some in %s)" % rooms[grown[bit]]["name"]),
                 "has %s now" % some(bit), 4.0, bit=bit, gives=bit, room=grown[bit], parent=parent)
@@ -197,6 +200,7 @@ def candidates(house, cfg, pet):
     last = pet.get("last_made")
     if last and pet.get("made", 0) >= 2:
         add("finer", last["kind"], "you want to make something finer than your last %s" % last["kind"], "made a finer %s than its last" % last["kind"], 1.0, kind=last["kind"], at=last["tick"])
+    build.candidates(house, cfg, pet, add, known)   # SPEC-v3.5 §4: to build what a room lacks, to mend what was built, to paint
     return out
 
 
@@ -227,6 +231,8 @@ def question(house, cfg, pet, w):
     """What it could ask the book for the sake of this want, if it has not asked that already: a word, how a tool
     is made, the bit it wants to try something on, the thing a parent knew how to make."""
     t, C = w["what"], cfg["craft"]
+    if t in ("build", "paint"):   # SPEC-v3.5 §4.1: how a hammer is made, when that is what the thing it is building waits on
+        return build.question(house, cfg, pet, w)
     q = "what is %s" % w["word"] if t == "word" else "how do you %s" % C["tool"][w["tool"]]["want"] if t == "tool" and not asked_of(pet, w["tool"]) else \
         "what is %s" % w["bit"] if t == "try" or (t == "get" and w["text"].startswith("you want to find out")) else \
         "what is %s" % C["rules"][tuple(w["recipe"].split("|"))]["gives"] if t == "recipe" and "|" in w["recipe"] and not w["recipe"].endswith("|plant") else None
@@ -244,6 +250,8 @@ def warm(cfg, room):
 def met(house, cfg, pet, w):
     """Is this want met, as the world stands?"""
     t, rooms = w["what"], house["rooms"]
+    if t in ("build", "paint"):   # SPEC-v3.5 §4
+        return build.met(house, cfg, pet, w)
     if t == "door":
         return w["room"] in pet["rooms"]
     if t == "creature":
@@ -298,11 +306,15 @@ def met(house, cfg, pet, w):
 
 SERVED = ("door", "creature", "bit", "look", "try", "game", "word", "get", "plant", "pick", "keep")   # (and "tool", as far as the book: lean)   # the wants its body can do something about without being told
 
+SERVED += ("build",)   # SPEC-v3.5 §4
+
 
 def possible(house, cfg, pet, w):
     """Can this still be had? (The bit it was about may have been used up, the creature gone, the thing taken apart.)"""
     t, rooms = w["what"], [house["rooms"][r] for r in pet["rooms"] if house["rooms"][r]["type"]]
     lying = lambda bit: any(s["bit"] == bit and s["ready"] and not s.get("on") for r in rooms for s in r["spots"])
+    if t in ("build", "paint"):   # SPEC-v3.5 §4
+        return build.possible(house, cfg, pet, w)
     if t == "bit":
         return lying(w["bit"])
     if t == "try":
@@ -498,6 +510,8 @@ def lean(house, cfg, pet):
             out["play"].add(w["who"])
         elif t == "look":
             (out["look"].add(w["thing"]) if w["room"] == here else out["rooms"].add(w["room"]))
+        elif t in ("build", "paint"):   # SPEC-v3.5 §4: the bits it takes, the room it is in, the book about a hammer
+            build.lean(house, cfg, pet, w, out)
     out["rooms"].discard(None)
     out["rooms"].discard(here)
     return out

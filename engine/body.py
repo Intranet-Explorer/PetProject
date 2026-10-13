@@ -9,6 +9,7 @@ someone is carried there; being with someone is doing what they do; and a mind s
 that is not tired."""
 from . import actions, craft, feel, order, songs, story, things, wants
 from . import season
+from . import build
 from .world import LONG_AGO, STAGES, add_event, beside, dist, free_tile, here, label, relation, rnd, ticks
 
 URGENT = {"visitor", "woke", "hatched", "low", "spoken", "event"}   # what stops it in its tracks (as it hurries a thought)
@@ -105,6 +106,8 @@ def targets(house, cfg, pet, mem, name, A):
     near = lambda pos: None if dist(me, pos) <= 1 else beside(cfg, pos, me)
     if do == "self":
         return [{}]
+    if do == "build":   # SPEC-v3.5 §4: carrying to a thing being built, working on it, mending it, binding a hammer, painting
+        return build.targets(house, cfg, pet, A, near)
     L, W = wants.lean(house, cfg, pet) if do in ("go", "gather", "tail", "watch", "place", "try", "play", "inspect", "eat") else None, cfg["body"]["want"]   # SPEC-v3.4 §2.1: its body leans toward what serves its wants
     if do == "wander":   # somewhere a few steps off: the farthest of a few tries (or near what its mind is on)
         at = anchor(house, pet)
@@ -515,7 +518,7 @@ def finish(mind, now, cut=False):
                     craft.practise(h, cfg, pet, "tidying", 0.25)
             elif do == "gather":
                 if now.get("want") == "swap" and len(pet["carrying"]) >= cfg["make"]["carry"]:   # room in its arms for the bit it wants: the first thing it carries that no want of its is about
-                    keep = {w.get("bit") for w in pet.get("wants", [])}
+                    keep = {w.get("bit") for w in pet.get("wants", [])} | build.keep(h, cfg, pet)   # (nor what it is building with: SPEC-v3.5 §4)
                     spare = next((x for x in pet["carrying"] if x not in keep), pet["carrying"][0])
                     pet["carrying"].remove(spare)
                     things.drop_bits(h, cfg, room, pet["pos"], [spare])
@@ -541,6 +544,8 @@ def finish(mind, now, cut=False):
                     add_event(h, pet, ('%s is right here; you could ask out loud: "%s"' % (actions.handle(h, pet, other), now["where"][4:]) if other
                                        else 'the book is right here; you could ask it: "%s"' % now["where"][4:]) if asking
                               else "you have carried the %s %s: you could try it now" % (name, where))
+            elif do == "build":   # SPEC-v3.5 §4
+                told, done = build.finish(mind, now, A)
             elif do == "nap":
                 fx = {"energy": E["rest_per_10s"] * A["seconds"][1] / 10}
             elif do == "babble":
