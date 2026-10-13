@@ -287,7 +287,7 @@ sunrise = 6.0
 sunset = 18.5
 growth = 1.2
 cold = 0.0
-weather = { clear = 4, cloudy = 3, rain = 3, storm = 1 }
+weather = { clear = 4, cloudy = 2, rain = 5, storm = 1 }
 [seasons.summer]
 sunrise = 5.0
 sunset = 20.0

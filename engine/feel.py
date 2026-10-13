@@ -27,6 +27,7 @@ SIZES = [(8, "a lot"), (3, "clearly"), (0.5, "a little")]
 
 
 STEPS, SHIFT, TREND = [80, 60, 40, 20], 24, 0.8   # set from config.toml [feel] when the config is loaded (world.derive)
+SEASONS = {}   # what each season asks, in a few words (SPEC-v3.5 §5): set from seasons.toml when the config is loaded (season.load)
 
 
 def level(pet, need):
@@ -87,7 +88,8 @@ def when(house):
     part = "morning" if c["morning"] else "day" if c["phase"] == "day" else "dusk" if c["phase"] == "dusk" else "night"
     weather = {"clear": "the sky is clear", "cloudy": "the sky is grey", "rain": "it is raining", "storm": "there is a storm",
                "snow": "snow is falling", "heat": "the air is hot and still"}[sky]
-    return "%s, in %s; %s" % (part, c["season"], weather)
+    needs = SEASONS.get(c["season"])
+    return "%s, in %s%s; %s" % (part, c["season"], " (%s)" % needs if needs else "", weather)
 
 
 def ago(house, cfg, tick):

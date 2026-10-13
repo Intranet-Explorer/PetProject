@@ -45,6 +45,8 @@ def load_config(path=ROOT / "config.toml", profile=None):
     cfg["layouts"] = {f.stem: json.loads(f.read_text()) for f in sorted((art / "rooms").glob("*.json"))} if (art / "rooms").exists() else {}
     from . import craft   # SPEC-v3.4 §3: crafting.toml, laid into the bits and the properties
     craft.load(cfg, path.parent)
+    from . import season   # SPEC-v3.5 §5: seasons.toml, what each season asks of the house
+    season.load(cfg, path.parent)
     # the words from the box a pet may wonder about (picturable.txt): never what the house already has a word for
     own = set(cfg["house"]["bits"]) | set(cfg["kinds"]) | set(cfg["house"]["rooms"]) | {f["name"] for r in cfg["house"]["rooms"].values() for f in r["fixtures"]}
     listed = path.parent / "picturable.txt"
@@ -100,13 +102,18 @@ def clock(cfg, tick):
     """Life in the house starts at 08:00 on day 1 of spring."""
     at = 8 + wt(cfg, tick) / cfg["ticks_per_hour"]
     day, hour = 1 + int(at // 24), at % 24
-    names = list(cfg["house"]["seasons"])
-    span = cfg["house"]["house"]["season_days"]
-    season = names[((day - 1) // span) % len(names)]
+    season, span = season_of(cfg, day), cfg["house"]["house"]["season_days"] * len(cfg["house"]["seasons"])
     s = cfg["house"]["seasons"][season]
     phase = "day" if s["sunrise"] <= hour < s["sunset"] else "dusk" if s["sunset"] <= hour < s["sunset"] + 2.5 else "night"
     return {"hour": round(hour, 2), "day": day, "phase": phase, "season": season,
-            "morning": s["sunrise"] <= hour < s["sunrise"] + 3, "year": 1 + (day - 1) // (span * len(names))}
+            "morning": s["sunrise"] <= hour < s["sunrise"] + 3, "year": 1 + (day - 1 + cfg.get("season_off", 0)) // span}
+
+
+def season_of(cfg, day):
+    """The season on a world day (SPEC-v3.5 §5): the one forced for a test (`[season] force`), else by the world clock.
+    A house whose seasons were made longer keeps its place in the year (`season_off`, world days: season.settle)."""
+    names = list(cfg["house"]["seasons"])
+    return cfg.get("season", {}).get("force") or names[((day - 1 + cfg.get("season_off", 0)) // cfg["house"]["house"]["season_days"]) % len(names)]
 
 
 def weather_of(house, cfg, day):
@@ -114,9 +121,7 @@ def weather_of(house, cfg, day):
     real = house.get("real_weather")
     if real and real.get("day") == day:
         return real["kind"]
-    names = list(cfg["house"]["seasons"])
-    season = names[((day - 1) // cfg["house"]["house"]["season_days"]) % len(names)]
-    mix = cfg["house"]["seasons"][season]["weather"]
+    mix = cfg["house"]["seasons"][season_of(cfg, day)]["weather"]
     return rnd(house, "weather", day).choices(list(mix), weights=list(mix.values()))[0]
 
 

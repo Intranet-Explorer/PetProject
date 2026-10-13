@@ -8,6 +8,7 @@ tick, on the spot, between two activities), never the thing it chose to do; a th
 someone is carried there; being with someone is doing what they do; and a mind set on rest does not hold a body
 that is not tired."""
 from . import actions, craft, feel, order, songs, story, things, wants
+from . import season
 from .world import LONG_AGO, STAGES, add_event, beside, dist, free_tile, here, label, relation, rnd, ticks
 
 URGENT = {"visitor", "woke", "hatched", "low", "spoken", "event"}   # what stops it in its tracks (as it hurries a thought)
@@ -182,12 +183,12 @@ def targets(house, cfg, pet, mem, name, A):
             + [n for n, o in objs.items() if "meal" in o.get("fix", {}) and o.get("servings")]
         return [{"what": n, "goal": near(objs[n]["pos"]), "bonus": 0.5 if objs[n].get("planted") else 0.0} for n in food[:1]]
     if do == "tidy":
-        job = order.job(house, cfg, pet, room)   # the worse the mess, the more it pulls, on the orderly most of all
+        job = season.job(house, cfg, pet, room) or order.job(house, cfg, pet, room)   # the worse the mess, the more it pulls, on the orderly most of all (SPEC-v3.5 §5: food it wants put by comes first)
         if not job or any((state(p)["now"] or {}).get("do") == "tidy" and state(p)["now"].get("what") == job["what"] for p in here(house, pet)):
             return []   # nothing to put away, or someone is already putting that very thing away
         pull = order.clutter(house, cfg, room) * cfg["body"]["mess_pull"] * (0.4 + 1.2 * pet["temper"].get("orderly", 0.5))
         place = objs[job["job"][3]]["pos"] if job["job"][2] == "on" else job["job"][3]   # the shelf, the place on the wall or the tile it goes to: it is carried there
-        return [{"what": job["what"], "job": job["job"], "goal": near(job["pos"]), "to": None if dist(job["pos"], place) <= 1 else beside(cfg, place, job["pos"]), "bonus": pull}]
+        return [{"what": job["what"], "job": job["job"], "goal": near(job["pos"]), "to": None if dist(job["pos"], place) <= 1 else beside(cfg, place, job["pos"]), "bonus": pull + job.get("bonus", 0.0)}]
     if do == "seat":   # something to sit or lie on that nobody is on: it goes and settles on it
         S = cfg["body"]["seats"]
         seats = [n for n, o in objs.items() if ("rest" in o.get("fix", {}) or "soft" in o.get("fix", {}) or n in S or o.get("made", {}).get("recipe", {}).get("kind") in S)
@@ -258,7 +259,7 @@ def targets(house, cfg, pet, mem, name, A):
             return [{"what": bench, "goal": near(objs[bench]["pos"]), "bonus": cfg["body"]["make_pull"]}]
         return [{"where": "on the %s" % bench if bench else "on the floor", "bonus": cfg["body"]["make_pull"]}]
     if do == "tend":   # what is planted and not yet ripe, the driest first (SPEC-v3.4 §3.5: tending is watering)
-        plants = sorted((n for n, o in objs.items() if o.get("planted") and o["planted"]["grow"] < 1 and not o["planted"].get("wilted")), key=lambda n: objs[n]["planted"]["watered"])
+        plants = sorted((n for n, o in objs.items() if o.get("planted") and o["planted"]["grow"] < 1 and not o["planted"].get("wilted") and not o["planted"].get("dormant")), key=lambda n: objs[n]["planted"]["watered"])
         return [{"what": n, "goal": near(objs[n]["pos"]), "bonus": 0.6 if house["tick"] - objs[n]["planted"]["watered"] > cfg["ticks_per_day"] / 2 else 0.0} for n in plants[:2]]
     if do in ("follow", "sit with"):
         kin = kin_here(house, pet)
