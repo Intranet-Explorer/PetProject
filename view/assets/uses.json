@@ -1,0 +1,218 @@
+{
+ "about": "SPEC-v3.5 \u00a73.0: what an invention can be. An invented kind is one of these uses: its base part is one of `base`, and it has one part from each list in `add` (part names from parts.json); `may` lists a part it may also carry between the two (a fork under the flame). Nothing else is added: decoration is the material's. A combination that fits no use makes the larger kind, as before. `does` is what it does in the house; the engine's rule for it is keyed by the use's name. More uses can be added here.",
+ "uses": {
+  "carried light": {
+   "base": [
+    "stick"
+   ],
+   "add": [
+    [
+     "flame"
+    ]
+   ],
+   "may": [
+    "tines"
+   ],
+   "does": "a light that goes where its carrier goes"
+  },
+  "soft light": {
+   "base": [
+    "frame",
+    "bowl",
+    "block",
+    "ring"
+   ],
+   "add": [
+    [
+     "flame",
+     "gem"
+    ],
+    [
+     "cloth"
+    ]
+   ],
+   "may": [],
+   "does": "lights a room at night without harshness"
+  },
+  "cutter": {
+   "base": [
+    "stick"
+   ],
+   "add": [
+    [
+     "blade"
+    ]
+   ],
+   "may": [],
+   "does": "counts as a carver"
+  },
+  "digger": {
+   "base": [
+    "stick"
+   ],
+   "add": [
+    [
+     "spade"
+    ]
+   ],
+   "may": [],
+   "does": "counts as a trowel"
+  },
+  "pourer": {
+   "base": [
+    "bowl"
+   ],
+   "add": [
+    [
+     "spout"
+    ]
+   ],
+   "may": [],
+   "does": "carries water to plants"
+  },
+  "keeper": {
+   "base": [
+    "box",
+    "bowl"
+   ],
+   "add": [
+    [
+     "lid"
+    ]
+   ],
+   "may": [],
+   "does": "food inside doesn't spoil; things inside count as stored"
+  },
+  "cart": {
+   "base": [
+    "box",
+    "block"
+   ],
+   "add": [
+    [
+     "wheel"
+    ]
+   ],
+   "may": [],
+   "does": "carries several things at once"
+  },
+  "instrument": {
+   "base": [
+    "frame",
+    "bowl",
+    "box"
+   ],
+   "add": [
+    [
+     "strings",
+     "bell dome"
+    ]
+   ],
+   "may": [],
+   "does": "plays; can be learned to play like a song"
+  },
+  "reacher": {
+   "base": [
+    "stick"
+   ],
+   "add": [
+    [
+     "hook"
+    ]
+   ],
+   "may": [],
+   "does": "reaches high places"
+  },
+  "chime": {
+   "base": [
+    "ring",
+    "frame"
+   ],
+   "add": [
+    [
+     "chimes"
+    ]
+   ],
+   "may": [],
+   "does": "sounds in the wind; in the garden it tells the weather"
+  },
+  "seat or bed": {
+   "base": [
+    "frame",
+    "block"
+   ],
+   "add": [
+    [
+     "pad"
+    ]
+   ],
+   "may": [],
+   "does": "better rest than either part"
+  },
+  "planter": {
+   "base": [
+    "bowl"
+   ],
+   "add": [
+    [
+     "flower"
+    ]
+   ],
+   "may": [],
+   "does": "grows a plant indoors"
+  },
+  "boat": {
+   "base": [
+    "disc",
+    "bowl"
+   ],
+   "add": [
+    [
+     "sail"
+    ]
+   ],
+   "may": [],
+   "does": "floats on the pond; a toy"
+  },
+  "rolling toy": {
+   "base": [
+    "disc"
+   ],
+   "add": [
+    [
+     "bell dome"
+    ]
+   ],
+   "may": [],
+   "does": "rings when rolled; draws kin to play"
+  },
+  "feeder": {
+   "base": [
+    "bowl"
+   ],
+   "add": [
+    [
+     "seeds"
+    ]
+   ],
+   "may": [],
+   "does": "draws creatures; helps taming"
+  },
+  "keepsake": {
+   "base": [
+    "ring",
+    "disc",
+    "block"
+   ],
+   "add": [
+    [
+     "gem",
+     "studs",
+     "band"
+    ]
+   ],
+   "may": [],
+   "does": "no use but meaning: kept, given, inherited"
+  }
+ }
+}
