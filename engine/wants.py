@@ -277,7 +277,7 @@ def met(house, cfg, pet, w):
         o = rooms[w["room"]]["objects"].get(w["thing"])
         return not o or "made" not in o or bool(o["made"]["ups"] or o["made"].get("behavior"))
     if t == "tool":
-        return any(o["made"]["recipe"].get("kind") == w["tool"] for r in rooms.values() if r["type"] for o in things.made(r).values())
+        return any(craft.tool_kind(cfg, o) == w["tool"] for r in rooms.values() if r["type"] for o in things.made(r).values())
     if t == "window":
         return rooms[w["room"]]["objects"].get(w["thing"], {}).get("state") == "closed"
     if t in ("comfort", "toy"):

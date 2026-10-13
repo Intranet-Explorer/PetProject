@@ -931,6 +931,7 @@ class Engine:
         order.upkeep(h, cfg)
         director.begin(h, cfg)
         things.behave(h, cfg)
+        invent.tick(h, cfg)   # SPEC-v3.5 §3.0: what an invented thing does by itself (a carried light goes with its owner)
         radio.tick(h, cfg, self.radio_items)
         seconds = cfg["clock"]["tick_seconds"]
         for pet in list(h["pets"].values()):

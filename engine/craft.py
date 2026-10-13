@@ -102,15 +102,21 @@ def places(house, cfg, pet, how):
 
 # ---- tools ----
 
+def tool_kind(cfg, o):
+    """The tool a made thing is, or counts as (SPEC-v3.5 §3.0: an invented cutter is a carver, a digger a trowel)."""
+    k = o["made"]["recipe"].get("kind")
+    return cfg["kinds"].get(k, {}).get("counts", k)
+
+
 def lasts(cfg, o):
     """How many uses a tool is good for before it needs mending: more from a practised maker."""
-    return round(cfg["craft"]["tool"][o["made"]["recipe"]["kind"]]["uses"] * (1 + 0.5 * o["made"].get("fine", 0)))
+    return round(cfg["craft"]["tool"][tool_kind(cfg, o)]["uses"] * (1 + 0.5 * o["made"].get("fine", 0)))
 
 
 def tool_here(house, cfg, room, kind):
     """A tool of this kind in the room that still works: its name, or None. (A tool is used where it lies: nobody
     carries one, and anyone may use it.)"""
-    return next((n for n, o in things.made(room).items() if o["made"]["recipe"].get("kind") == kind and o["made"].get("wear", 0) < lasts(cfg, o)), None)
+    return next((n for n, o in things.made(room).items() if tool_kind(cfg, o) == kind and o["made"].get("wear", 0) < lasts(cfg, o)), None)
 
 
 def tool_for(house, cfg, pet, kind):
@@ -118,7 +124,7 @@ def tool_for(house, cfg, pet, kind):
     is fetched when it is used. ponytail: it comes by itself as the pet sets to work; walking it through the house is
     the upgrade."""
     rooms = [house["rooms"][pet["room"]]] + [house["rooms"][r] for r in pet["rooms"] if r != pet["room"] and house["rooms"][r]["type"]]
-    return next(((r, n) for r in rooms for n, o in things.made(r).items() if o["made"]["recipe"].get("kind") == kind and o["made"].get("wear", 0) < lasts(cfg, o)), None)
+    return next(((r, n) for r in rooms for n, o in things.made(r).items() if tool_kind(cfg, o) == kind and o["made"].get("wear", 0) < lasts(cfg, o)), None)
 
 
 def fetch(house, cfg, pet, kind):
@@ -432,7 +438,8 @@ def joined(house, cfg, pet, e):
 def plantable(cfg, name, o):
     """A bed or a pot of earth with nothing in it."""
     bed = "fix" in o and name in cfg["craft"]["growing"]["beds"]
-    return (bed or o.get("made", {}).get("recipe", {}).get("kind") == "plant pot") and not o.get("planted") and not o.get("on")
+    kind = o.get("made", {}).get("recipe", {}).get("kind")
+    return (bed or kind == "plant pot" or cfg["kinds"].get(kind, {}).get("plantable")) and not o.get("planted") and not o.get("on")   # (SPEC-v3.5 §3.0: or an invented planter)
 
 
 def stage(p):

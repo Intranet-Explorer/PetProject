@@ -1,5 +1,5 @@
 {
- "about": "SPEC-v3.5 \u00a73.0: what an invention does. Any two things may be combined into a new kind. If its base part is one of a use's `base` and it has one part from each list in `add` (part names from parts.json; `may` lists a part it may also carry), it is that use and has that use's effect: `does`, and the engine's rule keyed by the use's name. If it fits no use it is a curio: drawn from both things' parts, named by the pet, with its materials' properties and no special effect. More uses can be added here.",
+ "about": "SPEC-v3.5 \u00a73.0: what an invention does. Any two things may be combined into a new kind. If its base part is one of a use's `base` and it has one part from each list in `add` (part names from parts.json; `may` lists a part it may also carry), it is that use and has that use's effect: `does`, and the engine's rule keyed by the use's name. If it fits no use it is a curio: drawn from both things' parts, named by the pet, with its materials' properties and no special effect. More uses can be added here. `effect` (engine, helper B) is that rule as data: `prop` is laid over what the thing's materials do (materials.toml's own keys); `store`/`inside`: it keeps things; `tool`: the tool it counts as; `follows`: it goes from room to room with its owner; `plantable`: a seed can be planted in it; `floats`: water does not carry it off; and what using it does: `waters`, `plays`, `reaches` (a bit from a high place in that kind of room, every so many world hours), `sails` (curiosity, on water), `rolls` (kin in the room are drawn to play); by the hour: `wind` (it sounds in wind and rain; in the garden, once a day, it tells tomorrow's weather), `feeds` (creatures stay by it and come to trust its owner; now and then one is drawn to its room).",
  "uses": {
   "carried light": {
    "base": [
@@ -13,7 +13,13 @@
    "may": [
     "tines"
    ],
-   "does": "a light that goes where its carrier goes"
+   "does": "a light that goes where its carrier goes",
+   "effect": {
+    "prop": {
+     "light": true
+    },
+    "follows": true
+   }
   },
   "soft light": {
    "base": [
@@ -32,7 +38,14 @@
     ]
    ],
    "may": [],
-   "does": "lights a room at night without harshness"
+   "does": "lights a room at night without harshness",
+   "effect": {
+    "prop": {
+     "light": true,
+     "gentle": true,
+     "shade": true
+    }
+   }
   },
   "cutter": {
    "base": [
@@ -44,7 +57,10 @@
     ]
    ],
    "may": [],
-   "does": "counts as a carver"
+   "does": "counts as a carver",
+   "effect": {
+    "tool": "carver"
+   }
   },
   "digger": {
    "base": [
@@ -56,7 +72,10 @@
     ]
    ],
    "may": [],
-   "does": "counts as a trowel"
+   "does": "counts as a trowel",
+   "effect": {
+    "tool": "trowel"
+   }
   },
   "pourer": {
    "base": [
@@ -68,7 +87,10 @@
     ]
    ],
    "may": [],
-   "does": "carries water to plants"
+   "does": "carries water to plants",
+   "effect": {
+    "waters": true
+   }
   },
   "keeper": {
    "base": [
@@ -81,7 +103,11 @@
     ]
    ],
    "may": [],
-   "does": "food inside doesn't spoil; things inside count as stored"
+   "does": "food inside doesn't spoil; things inside count as stored",
+   "effect": {
+    "store": 3,
+    "inside": true
+   }
   },
   "cart": {
    "base": [
@@ -94,7 +120,11 @@
     ]
    ],
    "may": [],
-   "does": "carries several things at once"
+   "does": "carries several things at once",
+   "effect": {
+    "store": 4,
+    "follows": true
+   }
   },
   "instrument": {
    "base": [
@@ -109,7 +139,17 @@
     ]
    ],
    "may": [],
-   "does": "plays; can be learned to play like a song"
+   "does": "plays; can be learned to play like a song",
+   "effect": {
+    "plays": true,
+    "prop": {
+     "loud": true,
+     "use": {
+      "curiosity": 3.0,
+      "energy": -1.0
+     }
+    }
+   }
   },
   "reacher": {
    "base": [
@@ -121,7 +161,13 @@
     ]
    ],
    "may": [],
-   "does": "reaches high places"
+   "does": "reaches high places",
+   "effect": {
+    "reaches": {
+     "room": "attic",
+     "hours": 12
+    }
+   }
   },
   "chime": {
    "base": [
@@ -134,7 +180,17 @@
     ]
    ],
    "may": [],
-   "does": "sounds in the wind; in the garden it tells the weather"
+   "does": "sounds in the wind; in the garden it tells the weather",
+   "effect": {
+    "wind": [
+     "rain",
+     "storm",
+     "snow"
+    ],
+    "prop": {
+     "loud": true
+    }
+   }
   },
   "seat or bed": {
    "base": [
@@ -147,7 +203,16 @@
     ]
    ],
    "may": [],
-   "does": "better rest than either part"
+   "does": "better rest than either part",
+   "effect": {
+    "prop": {
+     "rest_bonus": 2.0,
+     "use": {
+      "comfort": 5.0
+     },
+     "by_size": true
+    }
+   }
   },
   "planter": {
    "base": [
@@ -159,7 +224,10 @@
     ]
    ],
    "may": [],
-   "does": "grows a plant indoors"
+   "does": "grows a plant indoors",
+   "effect": {
+    "plantable": true
+   }
   },
   "boat": {
    "base": [
@@ -172,7 +240,19 @@
     ]
    ],
    "may": [],
-   "does": "floats on the pond; a toy"
+   "does": "floats on the pond; a toy",
+   "effect": {
+    "floats": true,
+    "sails": {
+     "room": "pond",
+     "curiosity": 4.0
+    },
+    "prop": {
+     "use": {
+      "curiosity": 2.0
+     }
+    }
+   }
   },
   "rolling toy": {
    "base": [
@@ -184,7 +264,19 @@
     ]
    ],
    "may": [],
-   "does": "rings when rolled; draws kin to play"
+   "does": "rings when rolled; draws kin to play",
+   "effect": {
+    "rolls": {
+     "curiosity": 3.0
+    },
+    "prop": {
+     "loud": true,
+     "use": {
+      "curiosity": 4.0,
+      "energy": -1.0
+     }
+    }
+   }
   },
   "feeder": {
    "base": [
@@ -196,7 +288,14 @@
     ]
    ],
    "may": [],
-   "does": "draws creatures; helps taming"
+   "does": "draws creatures; helps taming",
+   "effect": {
+    "feeds": {
+     "hours": 24,
+     "trust": 0.2,
+     "drawn": 0.25
+    }
+   }
   },
   "keepsake": {
    "base": [
@@ -212,7 +311,8 @@
     ]
    ],
    "may": [],
-   "does": "no use but meaning: kept, given, inherited"
+   "does": "no use but meaning: kept, given, inherited",
+   "effect": {}
   }
  }
 }

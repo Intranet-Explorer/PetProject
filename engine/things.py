@@ -402,6 +402,10 @@ def use(house, cfg, pet, name):
     """What using a made thing does. Returns (what the pet is told, need effects, novelty key or None)."""
     room = house["rooms"][pet["room"]]
     o, m = room["objects"][name], prop(cfg, room["objects"][name])
+    own = invent.used(house, cfg, pet, room, name)   # SPEC-v3.5 §3.0: an invented thing's use may have its own way of being used
+    if own:
+        o["made"]["touched"] = o["made"]["used_at"] = house["tick"]
+        return own
     kind = "use a %s thing" % o["made"]["recipe"]["material"]
     o["made"]["touched"], was_dusty = house["tick"], o["made"].pop("dusty", False)
     o["made"]["used_at"] = house["tick"]
@@ -588,7 +592,7 @@ def upkeep(house, cfg):
                 m.pop("damp")   # used somewhere dry, it dries out
             if room["type"] == "attic" and idle >= room_rule(cfg, room, "dust_days", 2) * cfg["ticks_per_day"]:
                 m["dusty"] = True
-            if o["pos"] in water and not prop(cfg, o).get("fixed"):   # it floats away to some other room (§6.1)
+            if o["pos"] in water and not prop(cfg, o).get("fixed") and not invent.effect(cfg, o).get("floats"):   # it floats away to some other room (§6.1)
                 found = [r for r in house["rooms"].values() if r["type"] and r["id"] != room["id"]]
                 if found:
                     from .world import rnd
