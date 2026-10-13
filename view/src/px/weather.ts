@@ -95,6 +95,7 @@ export class Light {
     if (!night) a = mul(a, WEATHER[env.weather] ?? WHITE);
     if (!night && env.day && !env.lit) a = mix(a, DEEP, Math.min(1, env.day) * 0.6);   // a room with little daylight is dim by day too, unless a light is on
     a = mul(a, SEASON[env.season] ?? WHITE);
+    if (night && env.sky === "open" && env.season === "winter") a = mix(a, [180, 215, 255], 0.4);   // snow under the open sky gives the moon back: dim blue-white, its drifts still to be seen, never a flat dark wash
     if (!env.power) a = night || dusk ? mix(a, [8, 10, 34], 0.5) : mul(a, [226, 226, 238]);
     else if (env.lit && (night || dusk)) a = mix(a, [255, 236, 200], 0.14);
     if (env.cold) a = mul(a, [224, 238, 255]);

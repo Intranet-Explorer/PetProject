@@ -15,7 +15,9 @@ from build import ASSETS, Sheet, pic, rgba
 
 P = lambda ch: rgba(art.PAL[ch])
 OUT = P("#")
-SNOW, SNOW_SHADE, ICE = (240, 246, 250, 255), (201, 222, 233, 255), P("l")
+SNOW, SNOW_SHADE, SNOW_DEEP, ICE = (240, 246, 250, 255), (188, 213, 235, 255), (140, 174, 214, 255), P("l")
+TUFT = [(150, 146, 104, 255), (186, 180, 138, 255)]       # dry grass standing through the snow, dark and light
+EVERGREEN = [P("s"), P("s"), P("g")]                      # the green of a bush in winter, dark to light
 RUST = [P("B"), P("r"), P("R"), P("q")]                   # the green of a bush gone to autumn, dark to light
 LITTER = [P("q"), P("q"), P("y"), P("R")]                 # leaves lying on the grass
 PINK, PINK_DARK, WHITE, YOLK = P("p"), P("X"), P("w"), P("Y")
@@ -69,24 +71,58 @@ def tones(im, test):
     return sorted({round(hsv(im.getpixel((x, y)))[2], 2) for y in range(im.size[1]) for x in range(im.size[0]) if test(im.getpixel((x, y)))})
 
 
-def snowed(im, name, trodden=False):
-    """Ground under snow: everything green is snow (its darker blades the snow's own shadows, thinned out). Dug earth
-    is a hollow in it, in the snow's shadow, its furrows a little darker; a `trodden` path stays bare, and frosted."""
+# What lies on open snow, typed: w where the light catches a crest, s its shadow, d the deep of the shadow, t and T dry
+# grass. Shadows fall down and to the right, as they do under everything else in the pack.
+ON_SNOW = {"ripple": ["..wwwwwww...", "ss.......ss.", ".sssssssss.s", "...sdddds..."],
+           "drift": ["...wwwwww...", ".wwwwwwwwws.", "wwwwwwwwwwss", ".wwwwwwwwssd", "..sswwwsssdd", "...sssssddd.", ".....dddd..."],
+           "bump": [".www..", "w...s.", "..ssd.", ".sdd.."],
+           "tuft": ["T..t.", ".t.T.", ".tTt.", ".dss."],
+           "prints": ["dd......", "ds..dd..", "....ds..", "........", "dd......", "ds..dd..", "....ds.."]}
+INK = {"w": (255, 255, 255, 255), "s": SNOW_SHADE, "d": SNOW_DEEP, "t": TUFT[0], "T": TUFT[1]}
+
+
+def snowed(im, name, lay=(), trodden=False):
+    """Ground under snow: everything green is snow, with a grain to it and what `lay` names lying on it (ON_SNOW). The
+    darker blades of the grass are dry tufts standing through; beside earth they are the snow's edge, in shadow. Dug
+    earth is bare and frozen, frost along its furrows; a `trodden` path is pale, the snow half walked into it."""
     r = random.Random(name)
+    w, h = im.size
     lightest = (tones(im, green) or [1])[-1]
     earth = tones(im, lambda p: p[3] > 0 and p != OUT and not green(p))
 
     def fn(p, x, y):
         if green(p):
-            return SNOW if hsv(p)[2] >= lightest - 0.08 or r.random() < 0.45 else SNOW_SHADE
+            return SNOW if hsv(p)[2] >= lightest - 0.08 else SNOW_SHADE if earth else r.choice(TUFT + [SNOW_SHADE, SNOW])
         if p[3] and p != OUT:
-            return mix(p, SNOW, 0.18) if trodden else SNOW_SHADE if round(hsv(p)[2], 2) == earth[-1] else mix(SNOW_SHADE, P("u"), 0.18)
+            furrow = round(hsv(p)[2], 2) != earth[-1]
+            if trodden:
+                return SNOW if r.random() < 0.1 else mix(p, SNOW, 0.5 if furrow else 0.35)
+            crest = not furrow and y + 1 < h and round(hsv(im.getpixel((x, y + 1)))[2], 2) == earth[0] and len(earth) > 1
+            return SNOW if crest and r.random() < 0.75 else SNOW_SHADE if r.random() < 0.05 else mix(p, P("u"), 0.38 if furrow else 0.2)
         return p
-    return each(im, fn)
+    out = each(im, fn)
+    clear = lambda x, y: 0 <= x < w and 0 <= y < h and out.getpixel((x, y)) == SNOW
+    for what in lay:
+        rows = ON_SNOW[what]
+        for _ in range(12):   # (a few tries at a place where it lies on nothing but snow, and clear of the tile's edge: the next tile has its own)
+            x0, y0 = r.randrange(1, w - len(rows[0])), r.randrange(1, h - len(rows))
+            if all(clear(x0 + i, y0 + j) for j in range(-1, len(rows) + 1) for i in range(-1, len(rows[0]) + 1)):
+                for j, row in enumerate(rows):
+                    for i, ch in enumerate(row):
+                        if ch != ".":
+                            out.putpixel((x0 + i, y0 + j), INK[ch])
+                break
+    for _ in range(5 if not earth else 0):   # the grain of it: a speck of shadow here and there, each with a glint beside it
+        x, y = r.randrange(w - 1), r.randrange(h)
+        if clear(x, y) and clear(x + 1, y):
+            out.putpixel((x, y), SNOW_SHADE)
+            out.putpixel((x + 1, y), INK["w"])
+    return out
 
 
-def capped(im, deep=2, body=lambda p: p[3] > 0):
-    """A thing with snow lying on it: on each column, the first pixels under its top outline are snow."""
+def capped(im, deep=2, body=lambda p: p[3] > 0, share=0.0):
+    """A thing with snow lying on it: on each column, the first pixels under its top outline are snow, the last of them
+    in the snow's shadow. `share`: at least this much of the column's height (a bush under a cap of it)."""
     out = im.copy()
     w, h = im.size
     for x in range(w):
@@ -94,9 +130,10 @@ def capped(im, deep=2, body=lambda p: p[3] > 0):
         if top is None:
             continue
         y = top + 1 if im.getpixel((x, top)) == OUT else top
-        for i in range(deep):
+        n = max(deep, round(sum(1 for i in range(y, h) if im.getpixel((x, i))[3]) * share))
+        for i in range(n):
             if y + i < h and im.getpixel((x, y + i)) != OUT and im.getpixel((x, y + i))[3]:
-                out.putpixel((x, y + i), SNOW if i < deep - 1 or deep == 1 else SNOW_SHADE)
+                out.putpixel((x, y + i), SNOW if i < n - 1 or n == 1 else SNOW_SHADE)
     return out
 
 
@@ -107,10 +144,10 @@ def frozen(im):
 
 # ---- autumn: rust and fallen leaves ----
 
-def rusted(im):
-    """What was green has turned: the same shading, in the pack's oranges."""
+def turned(im, to=RUST):
+    """What was green has turned: the same shading, in the pack's oranges (or, `to`, a winter's dull green)."""
     vs = tones(im, green)   # (by rank, not by how far apart they are: a bush's greens are close, and must not all come out one orange)
-    return each(im, lambda p, x, y: RUST[round((vs.index(round(hsv(p)[2], 2)) + 1) / len(vs) * (len(RUST) - 1))] if green(p) else p)
+    return each(im, lambda p, x, y: to[round((vs.index(round(hsv(p)[2], 2)) + 1) / len(vs) * (len(to) - 1))] if green(p) else p)
 
 
 def littered(im, name, n=5):
@@ -225,11 +262,11 @@ PLAN = {
     "autumn": {"garden": dict({k: "litter" for k in GRASS + EARTH}, **{"tile.grass": ["litter", "leaf", "litter", "leaf", "leaves"], "tile.path": "leaf",
                                                                      "tile.sky.hedge": "rust", "decor.bush": "rust", "grows.leaf*": "rust"}),
                "*": WINDOWS},
-    "winter": {"garden": dict({k: "snow" for k in ["tile.grass"] + GRASS + EARTH}, **{"tile.path": "trodden",
-                   "tile.sky.hedge": "hedge", "tile.fence": "cap", "tile.fence.nw": "cap", "tile.fence.ne": "cap", "tile.fence.sw": "cap", "tile.fence.se": "cap",
-                   "decor.bush": "cap", "decor.stepping stone": "cap", "decor.sprout": None, "decor.flower.sun": "mound", "decor.flower.red": "mound", "decor.flower.white": "mound",
-                   "fix.bean row*": "cap", "fix.berry bush*": "cap", "fix.herb patch*": "cap", "fix.old bench": "cap", "fix.tool box": "cap", "fix.bird bath": "frozen",
-                   "grows.petal*": "cap", "grows.seed*": "cap", "grows.leaf*": "cap"}),
+    "winter": {"garden": dict({k: "snow" for k in GRASS + EARTH}, **{"tile.grass": ["ripple", "drift", "snow", "bump", "ripple", "tuft", "drift", "snow", "bump", "prints", "snow"], "tile.path": "trodden",
+                   "tile.sky.hedge": "hedge", "tile.fence": "fence", "tile.fence.nw": "fence", "tile.fence.ne": "fence", "tile.fence.sw": "fence", "tile.fence.se": "fence",
+                   "decor.bush": "bush", "decor.stepping stone": "cap", "decor.sprout": None, "decor.flower.sun": "mound", "decor.flower.red": "mound", "decor.flower.white": "mound",
+                   "fix.bean row*": "bare", "fix.berry bush*": "bush", "fix.herb patch*": "bush", "fix.old bench": "cap", "fix.tool box": "cap", "fix.bird bath": "frozen",
+                   "grows.petal*": "bare", "grows.seed*": "bare", "grows.leaf": "bush", "grows.leaf.bare": "cap"}),
                "*": WINDOWS},
 }
 
@@ -258,8 +295,11 @@ def mound():
 
 def draw(name, how, season, seed):
     im = source(name)
-    return {"snow": lambda: snowed(im, seed), "trodden": lambda: snowed(im, seed, True), "cap": lambda: capped(im), "frozen": lambda: frozen(im), "mound": mound,
-            "hedge": lambda: capped(im, 3, lambda p: green(p) or p == OUT), "rust": lambda: rusted(im),
+    if how in ON_SNOW:
+        return snowed(im, seed, [how])
+    return {"snow": lambda: snowed(im, seed), "trodden": lambda: snowed(im, seed, trodden=True), "cap": lambda: capped(im), "frozen": lambda: frozen(im), "mound": mound,
+            "hedge": lambda: capped(turned(im, EVERGREEN), 4, lambda p: green(p) or p == OUT), "rust": lambda: turned(im),
+            "bush": lambda: capped(turned(im, EVERGREEN), 2, share=0.42), "fence": lambda: capped(im, 3), "bare": lambda: capped(turned(im, EVERGREEN)),
             "leaf": lambda: littered(im, seed, 1), "litter": lambda: littered(im, seed, 3), "leaves": lambda: littered(im, seed, 6),
             "daisy": lambda: blossomed(im, seed, 1, small=True), "daisies": lambda: blossomed(im, seed, 2, small=True),
             "blossom": lambda: blossomed(im, seed, 5), "window": lambda: window(im, season)}[how]()

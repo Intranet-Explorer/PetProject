@@ -106,6 +106,7 @@ sessions = 5
 at = [4, 0]
 wall = true
 proof = "leak"
+weight = 11.0             # (water in the house comes before anything not yet begun: at 3 it was one of some twenty things to build, drawn alike, and nobody took it up)
 says = "clay and fibre packed where the water came in: it keeps the rain out"
 
 ["project"."draught curtain"]

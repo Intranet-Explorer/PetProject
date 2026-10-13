@@ -15,7 +15,7 @@ import { canvasOf, has, kind, layout, loadArt, pick, size, tex } from "./px/asse
 import type { Layout } from "./px/assets";
 import { Labels } from "./px/bubbles";
 import type { Tag, Who } from "./px/bubbles";
-import { Fx } from "./px/fx";
+import { Fx, fxTexture } from "./px/fx";
 import { loadSeasons } from "./px/season";
 import { clamp, FX, FY, H, idx, inside, OX, OY, onFloor, tileAt, TILE, W } from "./px/geom";
 import { Marks } from "./px/marks";
@@ -575,7 +575,10 @@ export class Room {
     }
     if (now > n.drip && (room.wet || room.cold || (still.sun && snap.clock.phase !== "night"))) {
       n.drip = now + 240;
-      if (room.wet && Math.random() < 0.5) fx.spawn("drop", OX + Math.random() * FX * TILE, OY - 4, { vy: 60, g: 160, life: 500 + Math.random() * 500 });
+      if (room.wet && still.drip && Math.random() < 0.2) {   // a leak drips in one place: a drop down from the top of the wall, a ring where it lands in the puddle
+        const [x, from, to] = still.drip;
+        fx.fly(fxTexture("drop"), [x, from], [x, to], 480, 1, () => fx.spawn("rain.splash", x, to, { life: 340, tint: 0xcfeaf6 }));
+      }
       if (room.cold) fx.spawn("speck", OX, OY + Math.random() * FY * TILE, { vx: 34, life: 3000, sway: 2, tint: 0xdcecff, alpha: 0.7 });   // a draught: pale wisps crossing the floor
       if (still.sun && snap.clock.phase !== "night" && Math.random() < 0.4) fx.spawn("speck", still.sun[0] + (Math.random() - 0.5) * 24, still.sun[1] + (Math.random() - 0.5) * 16, { vy: -3, life: 2600, sway: 2, tint: 0xfff2c0, alpha: 0.7 });
     }

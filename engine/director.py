@@ -243,6 +243,7 @@ def leak(house, cfg, room):
         return
     r, E = rnd(house, "leak", house["tick"]), cfg["house"]["events"]
     room["wet_until"] = house["tick"] + hours(cfg, r.uniform(*E["leak_hours"]))
+    room["leaked"] = house["tick"]   # (so the want to stop it can come at once, not at the next hour: build.py's "leaks")
     for n, o in things.made(room).items():   # the water shifts what is lying about
         if not things.prop(cfg, o).get("fixed") and r.random() < 0.5:
             o["pos"] = free_tile(house, cfg, room, [r.randrange(cfg["W"]), r.randrange(cfg["H"])], n)

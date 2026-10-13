@@ -52,6 +52,10 @@ export function drawnOf(m: Made): Drawn {
 const PLAIN = { floor: 0xd8c39a, wall: 0xa98f6f, trim: 0x6d5a48 };
 const SIZES = [0.75, 1, 1.25];
 const counts = new Map<string, Texture>();   // the small numbers on chests and crates, made once each
+/** Water lying on a floor, typed: # its darker rim, o the water, + where the light catches it. A large one, a middling one, a small one. */
+const POOLS = [["...#####......", ".##ooooo###...", "#oo++ooooooo#.", "#o+ooooooooo##", ".#oooooooo+oo#", "..##ooooooo##.", "....######...."],
+               ["..####...", ".#o++o##.", "#ooooooo#", ".##ooo+#.", "...###..."], [".##..", "#+o#.", ".#oo#", "..##."]];
+const WATER: Record<string, number> = { "#": 0x3f78a8, o: 0x79b8ce, "+": 0xe4f4fa };
 /** The colour a named place in a room is tinted (SPEC-v3.3 §2.3): the same for the same name, in every room. */
 export const areaColor = (name: string) => hslInt(seeded(name)() * 360, 0.7, 0.62);
 
@@ -73,6 +77,7 @@ export class Still {
   band: Record<string, Rect> = { north: { x: OX, y: 2, w: FX * TILE, h: OY - 5 }, south: { x: OX, y: OY + FY * TILE + 2, w: FX * TILE, h: TILE - 4 },
                                  west: { x: 2, y: OY, w: OX - 4, h: FY * TILE }, east: { x: OX + FX * TILE + 2, y: OY, w: OX - 4, h: FY * TILE } };
   sun: number[] | null = null;  // the attic's shaft of sun, if there is one: where it falls
+  drip: number[] | null = null; // a leak's one drip, if water is coming in: its x, where it leaves the top of the wall, where it lands
   /** What the room's floor and walls actually paint, as one picture: light and dark fall only there, never on the page beyond the walls. */
   shape: HTMLCanvasElement | null = null;
   /** The part of the canvas the room is drawn in (the art may leave a margin): lettering stays inside it. */
@@ -94,7 +99,7 @@ export class Still {
     this.paint(room, false);   // SPEC-v3.5 §4.2: paint on the wall and the floor, under everything that stands there
     const blocked: Tile[] = [...(L.blocked ?? [])];
     for (const d of L.decor ?? []) this.decor(d.sprite, d.at, d.layer);
-    this.puddles(room);
+    this.puddles(snap, room, L);
     this.places(room);
     for (const [dir, to] of Object.entries(room.doors)) this.door(snap, room, dir, to, L.doors);
 
@@ -264,17 +269,25 @@ export class Still {
     this.scenery.push({ sprite: named, rect: { x: s.x, y: s.y, w: sz.w, h: sz.h } });
   }
 
-  /** Water standing on the floor after a leak. */
-  private puddles(room: RoomV) {
+  /** Water on the floor after a leak: a few small puddles gathered under the one place it drips from, and a damp mark
+   *  down the wall above them where it comes in. The same for the same room. */
+  private puddles(snap: Snap, room: RoomV, L: Layout) {
     if (!room.wet) return;
-    const g = new Graphics(), r = seeded(room.id + "wet");
-    for (let i = 0; i < 7; i++) {
-      const [x, y, w] = [OX + 6 + Math.floor(r() * (FX * TILE - 40)), OY + 8 + Math.floor(r() * (FY * TILE - 20)), 10 + Math.floor(r() * 16)];
-      g.rect(x + 2, y, w - 4, 1).rect(x, y + 1, w, 3).rect(x + 3, y + 4, w - 5, 1).fill({ color: 0x4f9fe0, alpha: 0.72 });
-      g.rect(x + 1, y + 4, 2, 1).rect(x + 3, y + 5, w - 5, 1).fill({ color: 0x2f6fb0, alpha: 0.6 });   // its darker near edge
-      g.rect(x + 3, y + 1, Math.floor(w / 3), 1).rect(x + w - 5, y + 2, 2, 1).fill({ color: 0xffffff, alpha: 0.8 });
+    const r = seeded(room.id + "wet"), n = (k: number) => Math.floor(r() * k), busy = [...(L.blocked ?? []), ...Object.values(L.fixtures ?? {}).filter((f) => !f.wall).map((f) => f.pos), ...Object.values(snap.door_tiles)];
+    let at: Tile = [4, 1];
+    for (let i = 0; i < 12; i++) {   // by the north wall, where nothing of the room's own stands and no door is
+      const t: Tile = [2 + n(8), 1];
+      if (!busy.some((b) => Math.abs(b[0] - t[0]) <= 1 && Math.abs(b[1] - t[1]) <= 1)) { at = t; break; }
+    }
+    const [x, y] = [corner(at)[0] + 8, corner(at)[1] + 8], side = r() < 0.5 ? -1 : 1, g = new Graphics(), top = this.band.north.y + 1;
+    const pools = [[0, 0, 0], [1, side * (12 + n(4)), 5 + n(3)], [2, -side * (9 + n(4)), 4 + n(4)], [2, side * (2 + n(5)), -7 - n(2)]];   // which, and how far from the drip
+    for (const [ch, color] of Object.entries(WATER)) {
+      for (const [k, dx, dy] of pools) POOLS[k].forEach((row, j) => [...row].forEach((c, i) => c === ch && g.rect(x + dx - (row.length >> 1) + (side < 0 ? row.length - 1 - i : i), y + dy - (POOLS[k].length >> 1) + j, 1, 1)));
+      g.fill({ color, alpha: 0.92 });
     }
     this.flat.addChild(g);
+    this.ground.addChild(new Graphics().rect(x - 2, top, 5, 2).rect(x - 1, top + 2, 3, 1).rect(x, top + 3, 1, OY - top - 5).fill({ color: 0x2d4f78, alpha: 0.4 }));
+    this.drip = [x, top + 3, y];
   }
 
   /** The places a room has grown (SPEC-v3.3 §2.3): a faint tint on their tiles, with a line round the whole of each. */

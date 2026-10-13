@@ -212,6 +212,8 @@ async def main():
         assert shop["wet_until"] <= h["tick"] and any(m["kind"] == "held" for m in h["moments"]), "a roof patch keeps the leak out"
         director.leak(h, cfg, cellar)
         assert cellar["wet_until"] > h["tick"], "... of its own room only"
+        c, others = cand(h, cfg, pet, "build:%s|roof patch" % cellar["id"]), [x["weight"] for x in wants.candidates(h, cfg, pet) if x["what"] == "build" and x.get("project") != "roof patch" and x["weight"] < S["started"]]
+        assert c and "you want to stop the leak" in c["text"] and c["weight"] * 0.6 > max(others) * 1.4, "a leak gives the want to stop it at once, and it comes before anything not yet begun: %s" % c
         cellar["wet_until"] = LONG_AGO
         assert not build.proof(h, cfg, shop, "draught")
         put_up(h, cfg, pet, shop, "draught curtain")

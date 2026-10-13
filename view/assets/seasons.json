@@ -54,7 +54,6 @@
  },
  "winter": {
   "garden": {
-   "tile.grass": "season.winter.tile.grass",
    "tile.grass.1": "season.winter.tile.grass.1",
    "tile.grass.2": "season.winter.tile.grass.2",
    "tile.grass.3": "season.winter.tile.grass.3",
@@ -64,6 +63,19 @@
    "tile.soil.sw": "season.winter.tile.soil.sw",
    "tile.soil.s": "season.winter.tile.soil.s",
    "tile.soil.se": "season.winter.tile.soil.se",
+   "tile.grass": [
+    "season.winter.tile.grass",
+    "season.winter.tile.grass~1",
+    "season.winter.tile.grass~2",
+    "season.winter.tile.grass~3",
+    "season.winter.tile.grass~4",
+    "season.winter.tile.grass~5",
+    "season.winter.tile.grass~6",
+    "season.winter.tile.grass~7",
+    "season.winter.tile.grass~8",
+    "season.winter.tile.grass~9",
+    "season.winter.tile.grass~10"
+   ],
    "tile.path": "season.winter.tile.path",
    "tile.sky.hedge": "season.winter.tile.sky.hedge",
    "tile.fence": "season.winter.tile.fence",
