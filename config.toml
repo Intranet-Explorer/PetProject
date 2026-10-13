@@ -60,7 +60,7 @@ ask_book = 14
 endpoint = "http://localhost:11434/v1"   # must be localhost
 name = "pet-brain"        # qwen3.8:27b-mlx with a 16k context: ollama create pet-brain -f Modelfile
 max_tokens = 700
-timeout_seconds = 90
+timeout_seconds = 300     # long enough to wait its turn behind another house on the same model (a copy being measured)
 parallel = 1              # model calls in flight at once; 2 only if Ollama runs with OLLAMA_NUM_PARALLEL=2 and it measures faster
 night_tokens = 8000       # cap on a sleep call, thinking included
 calls_per_hour = 150      # across all pets; routine thoughts slow down to stay under it, urgent ones never wait for it

@@ -47,6 +47,7 @@ was made on the showcase's, so it is started with `live` (or `showcase`), never 
 | `./run.sh start showcase` | `config.showcase.toml`: short lives in turbo time (the world waits while the model thinks and otherwise runs straight on). About seven or eight real hours for five generations. Watch it afterwards with Replay. |
 | `PET_PROFILE=viewdev PET_DATA=data.viewdev PET_PORT=8002 uv run python -m engine.server` | scripted brains on a quick clock, every v3.1 discovery within minutes, for working on the view |
 | `PET_PROFILE=v31check PET_DATA=<a copy of data/> PET_PORT=8001 uv run python -m engine.server` | SPEC-v3.1 §9.2: v3.1 on a copy of the live house, in turbo, arrivals forced early. Never on `data/` itself. |
+| `PET_PROFILE=live PET_DATA=<a copy of data/> PET_PORT=8001 PET_YIELD_TO=$PWD/data/model.busy uv run python -m engine.server` | a real-model copy beside the living family, without pausing it: the copy holds each of its thoughts back while the family has one waiting or in flight (the family keeps `data/model.busy` while it does). A copy's thought already in flight is not stopped, so a family thought can wait behind one. |
 | `PET_PROFILE=showcase PET_DATA=data.showcase-3 PET_PAUSED=1 PET_PORT=8001 uv run python -m engine.server` | open an archived run (`data.showcase-1` to `-4`) to look at and replay (http://localhost:8001/?replay=1); nothing in it moves |
 
 ## Look at it
