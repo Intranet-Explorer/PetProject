@@ -18,7 +18,7 @@
   h1 { font-size: 18px; margin: 0 0 4px; } h2 { font-size: 15px; margin: 22px 0 10px; } p { margin: 0 0 10px; color: #5d5568; }
   canvas { image-rendering: pixelated; display: block; margin: 0 auto; }
   .grid { display: flex; flex-wrap: wrap; gap: 18px 14px; align-items: flex-end; }
-  figure { margin: 0; text-align: center; } figcaption { margin-top: 4px; max-width: 190px; } figcaption b { display: block; } figcaption span { color: #5d5568; font-size: 13px; }
+  figure { margin: 0; text-align: center; } figcaption { margin-top: 4px; max-width: 190px; } figcaption b { display: block; } figcaption span { color: #5d5568; font-size: 13px; } figcaption i { display: block; font-size: 13px; }
   .fam { margin-bottom: 8px; } .n { font: 700 20px/1 ui-monospace, Menlo, monospace; }
   table { border-collapse: collapse; margin-top: 8px; } td, th { padding: 2px 10px; text-align: left; font-size: 13px; border-bottom: 1px solid #0002; }
 </style>
@@ -85,6 +85,7 @@ if (only !== "pets" && things.length) {
     const f = el("figure", "", g), c = el("figcaption", "", f);
     f.prepend(big(composeThing(t), Z));
     el("b", "", c, `${blind ? `${i + 1}. ` : ""}${t.name}`);
+    if (!blind && t.use) el("i", "", c, t.use);   // what it is for (SPEC-v3.5 §3.0): never in the blind test
     if (!blind) el("span", "", c, [t.does, t.by ? `by ${label(t.by)}` : ""].filter(Boolean).join(" · "));
   });
 } else if (only === "things") el("p", "", out, "Nothing has been invented in this house yet.");

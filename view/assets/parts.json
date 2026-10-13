@@ -20,30 +20,30 @@
      "file": "own/parts/thing16.png",
      "rect": [0, 0, 16, 16],
      "at": {
-      "tip": [7, 7],
+      "tip": [7, 8],
       "base": [7, 15],
-      "side": [9, 11],
-      "face": [7, 11]
+      "side": [9, 12],
+      "face": [7, 12]
      }
     },
     "24": {
      "file": "own/parts/thing24.png",
      "rect": [0, 0, 24, 24],
      "at": {
-      "tip": [11, 11],
+      "tip": [11, 13],
       "base": [11, 22],
-      "side": [13, 17],
-      "face": [11, 17]
+      "side": [13, 18],
+      "face": [11, 18]
      }
     },
     "32": {
      "file": "own/parts/thing32.png",
      "rect": [0, 0, 32, 32],
      "at": {
-      "tip": [15, 15],
+      "tip": [15, 17],
       "base": [15, 30],
-      "side": [18, 23],
-      "face": [15, 23]
+      "side": [18, 24],
+      "face": [15, 24]
      }
     }
    }
@@ -174,7 +174,7 @@
      "file": "own/parts/thing16.png",
      "rect": [64, 0, 16, 16],
      "at": {
-      "top": [7, 6],
+      "top": [7, 7],
       "base": [7, 15],
       "side": [12, 11],
       "face": [7, 11],
@@ -185,10 +185,10 @@
      "file": "own/parts/thing24.png",
      "rect": [96, 0, 24, 24],
      "at": {
-      "top": [11, 9],
+      "top": [11, 11],
       "base": [11, 23],
-      "side": [18, 16],
-      "face": [11, 16],
+      "side": [17, 17],
+      "face": [11, 17],
       "inside": [11, 19]
      }
     },
@@ -196,10 +196,10 @@
      "file": "own/parts/thing32.png",
      "rect": [128, 0, 32, 32],
      "at": {
-      "top": [15, 13],
+      "top": [15, 15],
       "base": [15, 30],
-      "side": [24, 22],
-      "face": [15, 22],
+      "side": [23, 23],
+      "face": [15, 23],
       "inside": [15, 26]
      }
     }
@@ -214,7 +214,7 @@
      "file": "own/parts/thing16.png",
      "rect": [80, 0, 16, 16],
      "at": {
-      "top": [7, 6],
+      "top": [7, 7],
       "base": [7, 15],
       "side": [13, 11],
       "face": [7, 11],
@@ -225,10 +225,10 @@
      "file": "own/parts/thing24.png",
      "rect": [120, 0, 24, 24],
      "at": {
-      "top": [11, 10],
+      "top": [11, 11],
       "base": [11, 22],
-      "side": [19, 16],
-      "face": [11, 16],
+      "side": [19, 17],
+      "face": [11, 17],
       "inside": [11, 20]
      }
     },
@@ -236,10 +236,10 @@
      "file": "own/parts/thing32.png",
      "rect": [160, 0, 32, 32],
      "at": {
-      "top": [15, 13],
+      "top": [15, 15],
       "base": [15, 30],
-      "side": [26, 22],
-      "face": [15, 22],
+      "side": [26, 23],
+      "face": [15, 23],
       "inside": [15, 27]
      }
     }
@@ -385,7 +385,7 @@
   },
   "blade": {
    "role": "top",
-   "on": ["tip"],
+   "on": ["tip", "top"],
    "layer": "front",
    "px": {
     "16": {
@@ -413,19 +413,29 @@
     "16": {
      "file": "own/parts/thing16.png",
      "rect": [32, 16, 16, 16],
-     "pin": [7, 15]
+     "pin": [7, 15],
+     "at": {
+      "tip": [7, 13]
+     }
     },
     "24": {
      "file": "own/parts/thing24.png",
      "rect": [48, 24, 24, 24],
-     "pin": [11, 22]
+     "pin": [11, 22],
+     "at": {
+      "tip": [11, 19]
+     }
     },
     "32": {
      "file": "own/parts/thing32.png",
      "rect": [64, 32, 32, 32],
-     "pin": [15, 30]
+     "pin": [15, 30],
+     "at": {
+      "tip": [15, 26]
+     }
     }
-   }
+   },
+   "carries": ["tip"]
   },
   "bell dome": {
    "role": "top",
@@ -452,7 +462,7 @@
   },
   "lid": {
    "role": "top",
-   "on": ["top"],
+   "on": ["top", "tip"],
    "layer": "front",
    "px": {
     "16": {
@@ -480,17 +490,17 @@
     "16": {
      "file": "own/parts/thing16.png",
      "rect": [80, 16, 16, 16],
-     "pin": [4, 13]
+     "pin": [11, 12]
     },
     "24": {
      "file": "own/parts/thing24.png",
      "rect": [120, 24, 24, 24],
-     "pin": [6, 20]
+     "pin": [16, 18]
     },
     "32": {
      "file": "own/parts/thing32.png",
      "rect": [160, 32, 32, 32],
-     "pin": [9, 26]
+     "pin": [22, 25]
     }
    }
   },
@@ -533,17 +543,17 @@
     "16": {
      "file": "own/parts/thing16.png",
      "rect": [112, 16, 16, 16],
-     "pin": [7, 15]
+     "pin": [7, 12]
     },
     "24": {
      "file": "own/parts/thing24.png",
      "rect": [168, 24, 24, 24],
-     "pin": [11, 22]
+     "pin": [11, 18]
     },
     "32": {
      "file": "own/parts/thing32.png",
      "rect": [224, 32, 32, 32],
-     "pin": [15, 30]
+     "pin": [15, 24]
     }
    }
   },
@@ -637,7 +647,7 @@
   },
   "head": {
    "role": "top",
-   "on": ["tip"],
+   "on": ["tip", "top"],
    "layer": "front",
    "px": {
     "16": {
@@ -786,12 +796,106 @@
      "pin": [15, 16]
     }
    }
+  },
+  "spade": {
+   "role": "top",
+   "on": ["tip", "top"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [0, 48, 16, 16],
+     "pin": [7, 15]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [0, 72, 24, 24],
+     "pin": [11, 22]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [0, 96, 32, 32],
+     "pin": [15, 30]
+    }
+   }
+  },
+  "chimes": {
+   "role": "top",
+   "on": ["inside", "top", "tip"],
+   "layer": "front",
+   "sound": "ring",
+   "to": {
+    "inside": "base",
+    "top": "base",
+    "tip": "side"
+   },
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [16, 48, 16, 16],
+     "pin": [7, 10]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [24, 72, 24, 24],
+     "pin": [11, 15]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [32, 96, 32, 32],
+     "pin": [15, 20]
+    }
+   }
+  },
+  "pad": {
+   "role": "top",
+   "on": ["top", "tip"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [32, 48, 16, 16],
+     "pin": [7, 15]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [48, 72, 24, 24],
+     "pin": [11, 23]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [64, 96, 32, 32],
+     "pin": [15, 30]
+    }
+   }
+  },
+  "seeds": {
+   "role": "top",
+   "on": ["inside", "top", "tip"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [48, 48, 16, 16],
+     "pin": [7, 15]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [72, 72, 24, 24],
+     "pin": [11, 22]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [96, 96, 32, 32],
+     "pin": [15, 30]
+    }
+   }
   }
  },
  "kinds": {
   "cushion": {
    "base": "cushion",
-   "signature": "cloth"
+   "signature": "pad"
   },
   "rug": {
    "base": "disc",
@@ -799,7 +903,7 @@
   },
   "blanket": {
    "base": "cushion",
-   "signature": "cloth"
+   "signature": "sail"
   },
   "nest": {
    "base": "ring",
@@ -807,7 +911,7 @@
   },
   "bed-mat": {
    "base": "block",
-   "signature": "cloth"
+   "signature": "pad"
   },
   "doll": {
    "base": "bundle",
@@ -831,7 +935,7 @@
   },
   "drum": {
    "base": "block",
-   "signature": "band"
+   "signature": "strings"
   },
   "flute": {
    "base": "stick",
@@ -839,7 +943,7 @@
   },
   "wind chime": {
    "base": "frame",
-   "signature": "bell dome"
+   "signature": "chimes"
   },
   "ball": {
    "base": "disc",
@@ -851,7 +955,7 @@
   },
   "mobile": {
    "base": "frame",
-   "signature": "sail"
+   "signature": "chimes"
   },
   "jar": {
    "base": "bowl",
@@ -915,7 +1019,7 @@
   },
   "treat": {
    "base": "disc",
-   "signature": "gem"
+   "signature": "seeds"
   },
   "chest": {
    "base": "box",
@@ -939,7 +1043,7 @@
   },
   "trowel": {
    "base": "stick",
-   "signature": "blade"
+   "signature": "spade"
   },
   "hammer": {
    "base": "stick",

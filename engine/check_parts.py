@@ -1,6 +1,7 @@
 """The parts library checked against itself (SPEC-v3.5 §1, §7.1): every part has its drawing fields and its pixels,
 every spot named exists, every catalog kind's base and signature exist, every body slot's value has its pictures, and no
-thing the rules allow is put together from more than three parts, on a spot that is not there, or out of its square.
+use an invention can have (SPEC-v3.5 §3.0, uses.json) is put together from more than three parts, on a spot that is not
+there, or out of its square, and every part a use adds is given by some catalog kind.
 
     uv run python -m engine.check_parts
 
@@ -38,7 +39,8 @@ def png(path):
 def problems(lib, parts):
     """What is wrong with a thing made of these parts ([{"part", "at"}], the base first), by the rules in parts.json:
     at most `max_parts`, one base that everything else sits on, each on a spot the base has and the part may go on,
-    no spot used twice, and none of `no_stack` twice. An empty list: it may be made."""
+    no spot used twice (unless what is there `carries` it: a flame in a fork), and none of `no_stack` twice. An empty
+    list: it may be made."""
     T, R, out = lib["thing"], lib["rules"], []
     if not parts or any(p["part"] not in T for p in parts):
         return ["a part the library does not have"]
@@ -54,27 +56,38 @@ def problems(lib, parts):
             out.append("%s on %r, a spot the %s does not have" % (p["part"], p.get("at"), base["part"]))
         elif p["at"] not in T[p["part"]]["on"]:
             out.append("%s cannot go on a %s" % (p["part"], p["at"]))
-    if len({p.get("at") for p in rest}) < len(rest):
-        out.append("two parts on one spot")
+    for i, p in enumerate(rest):
+        if any(q.get("at") == p.get("at") and p.get("at") not in T[q["part"]].get("carries", []) for q in rest[:i]):
+            out.append("two parts on one spot")
     out += ["two of %s" % n for n in R["no_stack"] if sum(p["part"] == n for p in parts) > 1]
     return out
 
 
-def every(lib):
-    """Every thing the rules allow: a base alone, with one part, with two."""
-    T = lib["thing"]
-    for b in (n for n, p in T.items() if p["role"] == "base"):
-        on = [(n, s) for n, p in T.items() if p["role"] != "base" for s in p["on"] if s in T[b]["spots"]]
-        yield [{"part": b, "at": None}]
-        for k in (1, 2):
-            for combo in itertools.combinations(on, k):
-                parts = [{"part": b, "at": None}] + [{"part": n, "at": s} for n, s in combo]
-                if not problems(lib, parts):
-                    yield parts
+def place(lib, base, names):
+    """The parts of a thing on this base: each added part on the first spot of its `on` list that the base has free, or
+    that a part already there carries. None if one of them has nowhere to go. (The preview page places them so too.)"""
+    T, taken, parts = lib["thing"], {}, [{"part": base, "at": None}]
+    for n in names:
+        at = next((s for s in T[n]["on"] if s in T[base]["spots"] and (s not in taken or s in T[taken[s]].get("carries", []))), None)
+        if at is None:
+            return None
+        taken[at] = n
+        parts.append({"part": n, "at": at})
+    return parts
+
+
+def templates(uses):
+    """Every thing a use allows: (use, base, the parts added in order: the `may` part first, if it has it)."""
+    for name, u in uses.items():
+        for base in u["base"]:
+            for add in itertools.product(*u["add"]):
+                for may in [None] + list(u.get("may", [])):
+                    yield name, base, ([may] if may else []) + list(add)
 
 
 def main():
-    lib, bodies, kinds = (json.loads((ASSETS / f).read_text()) for f in ("parts.json", "bodies.json", "kinds.json"))
+    lib, bodies, kinds, uses = (json.loads((ASSETS / f).read_text()) for f in ("parts.json", "bodies.json", "kinds.json", "uses.json"))
+    uses = uses["uses"]
     T, R, pal = lib["thing"], lib["rules"], lib["palette"]
     known = {tuple(bytes.fromhex(h)) for v in pal.values() for h in ([v] if isinstance(v, str) else v)}
     sheets = {}
@@ -92,7 +105,7 @@ def main():
 
     # ---- thing parts: the names the spec asks for, each drawn at every size, with its spots or its pin ----
     for name in ("stick", "bowl", "box", "disc", "ring", "frame", "cushion", "block", "bundle", "flame", "blade", "tines", "bell dome", "lid", "spout", "strings", "wheel", "hook",
-                 "flower", "gem", "sail", "cord", "cloth", "band", "studs"):
+                 "flower", "gem", "sail", "cord", "cloth", "band", "studs", "spade", "chimes", "pad", "seeds"):
         assert name in T, "the library has no %s" % name
     assert 40 <= len(T) + sum(len(s["values"]) for s in lib["body"]["slots"].values()) + len(lib["body"]["plans"]) <= 60, "about 40 to 60 parts"
     sizes, drawn = sorted(set(R["px"].values())), {}
@@ -108,6 +121,7 @@ def main():
                 assert set(p["spots"]) | {"face", "base"} <= set(x["at"]) and all(inside(q) for q in x["at"].values()), "%s at %d: a spot of it has no place" % (name, S)
             else:
                 assert inside(x["pin"]), "%s at %d has no pin" % (name, S)
+                assert all(inside(x.get("at", {}).get(c, [])) for c in p.get("carries", [])), "%s at %d carries a spot it has no place for" % (name, S)
             drawn[name, S] = px
     bases = [n for n, p in T.items() if p["role"] == "base"]
     for name, p in T.items():
@@ -127,28 +141,43 @@ def main():
     # ---- composition: the rules refuse what they should, and everything they allow fits its square ----
     P = lambda *names: [{"part": n.split("@")[0], "at": (n.split("@") + [None])[1]} for n in names]
     assert not problems(lib, P("stick", "flame@tip", "band@side")) and not problems(lib, P("bowl"))
-    for bad in (P("stick", "flame@tip", "band@side", "cord@side"), P("stick", "lid@top"), P("stick", "lid@tip"), P("bowl", "flame@inside", "flame@top"), P("stick", "blade@tip", "blade@side"),
+    for bad in (P("stick", "flame@tip", "band@side", "cord@side"), P("stick", "lid@top"), P("stick", "spout@tip"), P("bowl", "flame@inside", "flame@top"), P("stick", "blade@tip", "blade@side"),
                 P("flame"), P("box", "bowl@top"), P("bowl", "lid@top", "flower@top"), P("box", "nothing@top"), []):
         assert problems(lib, bad), "the rules let through %s" % bad
-    count, worst = 0, {}
-    for parts in every(lib):
-        assert len(parts) <= R["max_parts"]
-        count += 1
+    assert not problems(lib, P("stick", "tines@tip", "flame@tip")) and problems(lib, P("stick", "flame@tip", "tines@tip")), "a flame stands in a fork, not a fork on a flame"
+
+    # ---- the uses (§3.0): every part of every template exists, each goes together within its square at every size, and
+    # every part a use adds is the signature of some kind, so the use can be reached from two things a pet can make ----
+    given, count = {k["signature"] for k in lib["kinds"].values()}, 0
+    for name, u in uses.items():
+        assert u["base"] and u["add"] and all(u["add"]) and u.get("does"), "the use %s is not whole" % name
+        assert all(T.get(b, {}).get("role") == "base" for b in u["base"]), "%s: a base that is not a base part" % name
+        for n in [x for l in u["add"] for x in l] + list(u.get("may", [])):
+            assert T.get(n, {}).get("role") in ("top", "wrap"), "%s: no part %r to add" % (name, n)
+        for n in (x for l in u["add"] for x in l):
+            assert n in given, "%s adds %s, which no catalog kind gives" % (name, n)
+    # ... and a curio (two things that fit no use): any kind's base with any other kind's signature part on its first free spot
+    shapes = [(name, base, names) for name, base, names in templates(uses)]
+    shapes += sorted({("curio", a["base"], (b["signature"],)) for a in lib["kinds"].values() for b in lib["kinds"].values()})
+    for name, base, names in shapes:
+        parts = place(lib, base, list(names))
+        assert parts and not problems(lib, parts), "%s: %s + %s cannot be put together (%s)" % (name, base, " + ".join(names), parts and problems(lib, parts))
+        count += name != "curio"
         for S in sizes:
-            B = T[parts[0]["part"]]["px"][str(S)]
-            xs, ys = [x for x, _ in drawn[parts[0]["part"], S]], [y for _, y in drawn[parts[0]["part"], S]]
+            B, held = T[base]["px"][str(S)], {}
+            xs, ys = [x for x, _ in drawn[base, S]], [y for _, y in drawn[base, S]]
             for p in parts[1:]:
-                t = T[p["part"]]
-                spot = B["at"][t.get("to", {}).get(p["at"], p["at"])]   # (a missing spot is a KeyError: it must not happen)
+                t, x = T[p["part"]], T[p["part"]]["px"][str(S)]
+                point = t.get("to", {}).get(p["at"], p["at"])
+                spot, pin = held.get(point) or B["at"][point], x["pin"]   # (a missing spot is a KeyError: it must not happen)
+                if point in t.get("carries", []):
+                    held[point] = [spot[0] - pin[0] + x["at"][point][0], spot[1] - pin[1] + x["at"][point][1]]
                 if t.get("clip"):
                     continue   # painted only on the base's own body
-                pin = t["px"][str(S)]["pin"]
-                xs += [x + spot[0] - pin[0] for x, _ in drawn[p["part"], S]]
-                ys += [y + spot[1] - pin[1] for _, y in drawn[p["part"], S]]
+                xs += [a + spot[0] - pin[0] for a, _ in drawn[p["part"], S]]
+                ys += [b + spot[1] - pin[1] for _, b in drawn[p["part"], S]]
             over = max(max(xs) - min(xs) + 1, max(ys) - min(ys) + 1) - S
-            if over > 0:
-                worst[over] = worst.get(over, []) + ["%d: %s" % (S, " + ".join("%s%s" % (p["part"], "@" + p["at"] if p["at"] else "") for p in parts))]
-    assert not worst, "%d things do not fit their square, e.g. %s" % (sum(map(len, worst.values())), worst[max(worst)][:6])
+            assert over <= 0, "%s: %s at %d pixels is %d too big for its square" % (name, " + ".join("%s%s" % (p["part"], "@" + p["at"] if p["at"] else "") for p in parts), S, over)
 
     # ---- body parts: every value of every slot has its pictures, every plan its proportions ----
     body = lib["body"]
@@ -169,7 +198,7 @@ def main():
                 pixels(body["file"], f["rect"], "%s %s %s" % (slot, v, name))
                 assert 0 <= f["pin"][0] < f["rect"][2] and 0 <= f["pin"][1] < f["rect"][3], "%s %s %s: its pin is outside it" % (slot, v, name)
                 n += 1
-    print("parts: %d thing parts at %s px, %d body pictures, %d kinds, %d things the rules allow, all within their squares" % (len(T), "/".join(map(str, sizes)), n, len(kinds), count))
+    print("parts: %d thing parts at %s px, %d body pictures, %d kinds, %d uses in %d shapes and %d curio shapes, all within their squares" % (len(T), "/".join(map(str, sizes)), n, len(kinds), len(uses), count, len(shapes) - count))
     print("parts check passed")
 
 
