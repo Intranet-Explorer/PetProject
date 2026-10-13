@@ -16,6 +16,7 @@ import type { Layout } from "./px/assets";
 import { Labels } from "./px/bubbles";
 import type { Tag, Who } from "./px/bubbles";
 import { Fx } from "./px/fx";
+import { loadSeasons } from "./px/season";
 import { clamp, FX, FY, H, idx, inside, OX, OY, onFloor, tileAt, TILE, W } from "./px/geom";
 import { Marks } from "./px/marks";
 import { nearestFree } from "./px/path";
@@ -134,7 +135,7 @@ export class Room {
   /** `el`: where the room goes. Give it a width (and, to limit its height, a CSS max-height): the canvas takes the
    *  largest whole-number scale that fits, and is centred in it. The size of the floor is the engine's (12 x 8). */
   async init(el: HTMLElement, _w = FX, _h = FY) {
-    await Promise.all([loadArt(), this.app.init({ width: W, height: H, backgroundAlpha: 0, antialias: false, roundPixels: true, resolution: 1, autoDensity: false })]);
+    await Promise.all([loadArt(), loadSeasons(), this.app.init({ width: W, height: H, backgroundAlpha: 0, antialias: false, roundPixels: true, resolution: 1, autoDensity: false })]);
     this.el = el;
     const cv = this.app.canvas;
     cv.style.display = "block";
@@ -220,7 +221,7 @@ export class Room {
     const keep = this.keep();
     const key = JSON.stringify([room.id, room.type, lay === undefined, room.areas, Object.entries(room.objects).map(([n, o]) => [n, o.pos, o.state, o.wall, o.on, o.store?.holds, o.servings === 0, o.grow != null && o.grow < 0.35, o.water, o.planted,
       o.made && [o.made.recipe, o.made.active, o.made.behavior?.do, o.made.worn, !!o.made.heirloom], !!o.memorial]), room.spots, room.paint, room.doors, room.shut, room.wet, snap.power,
-      snap.rooms.map((r) => r.type), room.marks, this.K, keep, snap.door_tiles]);
+      snap.rooms.map((r) => r.type), room.marks, this.K, keep, snap.door_tiles, snap.clock.season]);
     if (key !== this.built) {
       this.built = key;
       this.rebuild(sc, lay ?? null, keep, now);
