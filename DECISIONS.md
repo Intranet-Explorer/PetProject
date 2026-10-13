@@ -1535,3 +1535,71 @@ body does not ask for it, and nothing makes the elder answer: both are left to t
 
 **Rain Rest and the carver.** Its body gets what a carver takes and its mind puts it down, for its beliefs about
 stopping. Tyler: that is behaviour, not a bug. Left alone.
+
+## Part 17: v3.5, parts
+
+Built on 13 October 2026 by five helpers, each in its own worktree: the parts and the drawing; genes and
+inventions; building and paint; seasons and food; the vending machine and base materials (added for §4.3). The spec
+said two helpers at most; Tyler's message allowed three or more.
+
+**How it was run.** The live house was not paused for real-model copies (Tyler). It was restarted once before any
+copy ran, on a change that lets a copy share the model: a thought waits up to 300 seconds instead of 90, the family
+keeps `data/model.busy` while it has a thought waiting or in flight, and a copy started with `PET_YIELD_TO` holds
+each of its own thoughts back while that file is there. A copy's thought already in flight is not stopped.
+
+**The parts library (§1).** 31 thing parts at 16, 24 and 32 pixels and 16 body parts, drawn by
+`view/assets/own/src/parts.py`. Body plans are proportions in `parts.json`, not pictures, because every animation
+bends the body; thick fur and shade are drawn by rule. The parts preview is `view/parts.html`, built with the view,
+because it draws with the house's own code. An `inside` part is drawn behind its base. Four parts were added for
+the uses: spade, chimes, pad, seeds.
+
+**Bodies (§2).**
+- Nightly drift is gone; the night's "body" call remains for adults and elders, as a portrait only.
+- A genome with no `feet` key draws exactly as before. Once a pet has the new keys the old `limbs` gene is not
+  drawn.
+- The live families: the first gets a crest and a stub of a tail, the second long ears and a beak. That is more
+  than "nobody changes look much overnight", and is what "differ in at least two slots" needs.
+- Small steps never create a part the line never had; that is the rare thing. Ancestors buried long ago are
+  forgotten, so a part can count as new again.
+- Every body has one trait it can feel, so a plain pet meets the bar: it sleeps curled (comfort on waking) or
+  stretched (a spring in its step).
+- Dark coat: the moth is not disturbed by it, so trust builds. Small: a bit from behind the storeroom shelves every
+  12 world hours, not a visible spot.
+
+**Inventions (§3, as amended twice).**
+- The uses are `view/assets/uses.json`, not `uses.toml`, so the preview draws from the file the engine reads.
+- Any two things joined in a way the house has not seen make a new kind: a use if it fits one, else a curio.
+  A plain `make` never makes a kind.
+- A curio has three parts: the base thing's base, its own signature part, and the other thing's signature. With two
+  the base thing's half could not be recognised.
+- A recipe is the two kinds each in its material, so the same kinds in other materials are another kind.
+- A taken name is numbered. "Loudest part" is part order: the parts have no loudness.
+- Nearest existing effect: a carried light and a cart follow their owner between rooms; a keeper is a store that
+  keeps food; a seat or bed is a fixed rest bonus; a chime tells tomorrow's weather once a day; an instrument plays
+  the last song its user knows; a keepsake and a curio do nothing.
+- The want to join appears only for two things that would fit a use, and never names the use.
+
+**Building and paint (§4.1, §4.2).**
+- Twelve projects in `building.toml`, made of the six base materials. Materials go down before the hammer, so a
+  site shows on day one. The want to build leads to the hammer itself (the book, the makings), and a body binds the
+  hammer after 40 seconds if its mind has not.
+- With three or four pets a small project takes hours, not one to three world days; a solo big one takes days.
+- The moment kind "project" is shared with the projects chosen in sleep; a building one reads "X began a …".
+- The old `paint` (whole-room colours, no dye) is replaced: it needs a dye, a place and a pattern.
+- A hutch only stops a tame creature going wild. A worn thing keeps its store and bit spots.
+
+**The machine and base materials (§4.3).**
+- Wood has no "light" property (none exists). Stone and the things made of it are materials, so no room grows them.
+- Feeding never draws the stock down. A body with no use for what it is offered leaves it in the machine.
+- "Leave" from an owner means the owner is holding the thing out to that pet.
+- Stocking is a visitor message like the others; "all" fills it.
+- Beyond the spec's examples, a pet's own things put away and untouched for five days are spare (one per pet per
+  day), and three loose bits lying about are wanted fed.
+
+**Seasons and food (§5).**
+- Seasons are 42 world days on the live profile only (about three and a half real days); the default stays 6.
+  The live house keeps how far through its season it is: at day 46 it reopens in winter with 21 days left.
+- Spring rain is not raised: the live house uses the real sky.
+- Food keeps in any store, not only a crafted pot or basket. Spoiling only costs stock: loose food is never eaten
+  directly. Indoor pots still grow slowly in winter.
+- A bed's sleep is not in the snapshot; the view shows snow by season.
