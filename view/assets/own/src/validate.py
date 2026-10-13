@@ -200,6 +200,20 @@ for path in (ASSETS / "rooms").glob("*.json"):
     if path.stem not in house["rooms"]:
         bad("rooms/%s is a layout for a room type that does not exist" % path.name)
 
+# ---- the seasons (SPEC-v3.5 §5): their own bits have pictures, and every stand-in in seasons.json is for a name that exists ----
+turns = tomllib.loads((ROOT / "seasons.toml").read_text()) if (ROOT / "seasons.toml").exists() else {}
+for b in turns.get("bit", {}):
+    have("bit." + b)
+for season, rooms in (J("seasons.json") if (ASSETS / "seasons.json").exists() else {}).items():
+    if season not in house["seasons"]:
+        bad("seasons.json: there is no season %r" % season)
+    for kind, swaps in rooms.items():
+        if kind != "*" and kind not in house["rooms"]:
+            bad("seasons.json: there is no room type %r" % kind)
+        for name, to in swaps.items():
+            for n in [name] + (to if isinstance(to, list) else [to] if to else []):
+                have(n)
+
 # ---- sounds ----
 for name in "pickup drop make unmake combine door step eat write book call heart radio arrival".split():
     if name not in sounds["sfx"]:
