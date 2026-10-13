@@ -114,7 +114,7 @@ async def main():
         assert any(m["kind"] == "project" and m["text"] == "Lean began a bench in the workshop" for m in h["moments"]), "beginning one is a moment"
         v = {}
         build.view(h, cfg, shop, name, o, v)
-        assert v["build"]["sprite"] == "fix.site" and v["build"]["title"] == "a bench being built" and v["build"]["progress"] == 0, "under way it is drawn as a thing under way: %s" % v
+        assert v["build"]["sprite"] == "fix.site" and v["build"]["title"] == "a bench" and o["state"] == "being built" and v["build"]["progress"] == 0, "under way it is drawn as a thing under way: %s" % v
         assert "being built" in actions.fixture_says(o["fix"])
 
         # ---- nobody has a hammer: the want leads to one (the book, its makings, and its paws bind it) ----
@@ -125,6 +125,7 @@ async def main():
         assert not [x for x in body.targets(h, cfg, pet, None, "build", cfg["activities"]["build"])], "and there is no working on it without one"
         pet["takes"] = ["hammer"]   # (it has read the book's page)
         assert build.question(h, cfg, pet, w) is None
+        assert build.chain(h, cfg, pet, w), "the hammer is what it waits on"
         pet["carrying"] = ["pebble"]
         named = [b for b, k in build.named(h, cfg, pet) if k == key]
         assert "vine cord" in named and "rope" in named and "pebble" not in named, "what a hammer takes that has to be made first becomes a step: %s" % named

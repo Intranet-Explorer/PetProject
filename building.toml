@@ -26,9 +26,9 @@
 
 [build]
 most = 2                  # things being built in the house at once: past it no new one is begun
-rest_seconds = 110        # a pet rests its paws this long between two spells of work on one thing
+rest_seconds = 360        # a pet rests its paws this long between two spells of work on one thing (two and a half world hours on the live clock)
 together = 1.6            # what a spell of work counts for when another is at it too
-near_seconds = 60         # "at it too": the other is hammering at it now, or was this lately
+near_seconds = 90         # "at it too": the other is hammering at it now, or was this lately
 effort = 1.0              # energy a spell of work takes
 started = 6.0             # how strongly the want comes for a thing already begun ...
 weight = 3.0              # ... and for one not begun, unless the project says otherwise
@@ -50,6 +50,7 @@ sessions = 5
 at = [3, 6]
 fix = { rest = 2.5, cozy = true }
 says = "a place to rest"
+weight = 3.5              # (the smallest thing there is to build: the likeliest first)
 
 [project.table]
 a = "a"
@@ -87,6 +88,7 @@ sessions = 8
 at = [9, 2]
 fix = { rest = 3.5, cozy = true }
 says = "a place to rest"
+weight = 2.5
 
 # ---- mending the house ----
 
@@ -131,6 +133,7 @@ wall = true
 rules = { cold_night = 0.0 }
 cold = 0.3
 says = "moss and cloth packed behind tiles along the wall: it keeps the cold out"
+weight = 2.5
 
 ["project"."pond bridge"]
 a = "a"
@@ -336,4 +339,4 @@ fade_days = 12            # paint fades over this many world days, unless it is 
 felt_above = 0.25         # fainter than this it is no longer felt
 homely = 0.12             # comfort per 10 s in a room one's own family painted
 strange = -0.03           # ... and in one painted only by another family
-weight = 1.2              # how strongly the want to paint comes
+weight = 1.8              # how strongly the want to paint comes

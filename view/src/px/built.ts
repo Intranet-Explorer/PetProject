@@ -20,7 +20,7 @@ export function paintRect(p: Painted, north: Rect, rug?: Rect): Rect | null {
 /** One painted place, drawn into `g`. */
 export function paintOn(g: Graphics, r: Rect, p: Painted) {
   const base = parseInt((PALETTE[p.color] ?? PALETTE.grey).slice(1), 16), coat = hslInt(p.hue, 0.65, 0.62), k = Math.max(0.15, Math.min(1, p.strength ?? 1));
-  const wash = (p.where === "wall" ? 0.62 : 0.5) * k, mark = 0.9 * k, small = r.w < 20;
+  const wash = (p.where === "wall" ? 0.7 : 0.5) * k, mark = 0.9 * k, small = r.w < 20;
   g.rect(r.x, r.y, r.w, r.h).fill({ color: base, alpha: wash });
   if (p.pattern === "stripes") {   // up and down a wall, across a floor
     if (p.where === "wall") for (let x = r.x + 3; x + 3 <= r.x + r.w; x += 8) g.rect(x, r.y, 3, r.h);

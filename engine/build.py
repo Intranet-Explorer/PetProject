@@ -65,9 +65,10 @@ def spot(house, cfg, room, P):
     objs = room["objects"]
     if P.get("on"):
         return next((list(o["pos"]) for o in objs.values() if P["on"] in o.get("fix", {})), None)
-    if P.get("wall"):   # a free stretch of the north wall, as near its place as there is one (never over the door)
-        used = [o["pos"][0] for o in objs.values() if o.get("wall")] + [house["door_tiles"]["north"][0]]
-        return [min((x for x in range(1, cfg["W"] - 1) if x not in used), key=lambda x: abs(x - P["at"][0]), default=P["at"][0]), 0]
+    if P.get("wall"):   # a free stretch of the north wall, as near its place as there is one: never over the door, and not behind furniture if it can be helped
+        from .world import taken
+        used, hidden = [o["pos"][0] for o in objs.values() if o.get("wall")] + [house["door_tiles"]["north"][0]], [t[0] for t in taken(house, room) if t[1] == 0]
+        return [min((x for x in range(1, cfg["W"] - 1) if x not in used), key=lambda x: (x in hidden, abs(x - P["at"][0])), default=P["at"][0]), 0]
     return free_tile(house, cfg, room, P["at"])
 
 
@@ -127,13 +128,14 @@ def candidates(house, cfg, pet, add, known):
         return
     hammer, begun = craft.tool_for(house, cfg, pet, "hammer"), under_way(house)
     for r in known:
+        here_ = {record(o)["project"]: o for o in r["objects"].values() if record(o)}   # what is under way or stands here, by project
         for key, P in cfg["build"]["project"].items():
-            if P["rooms"] != "any" and r["type"] not in P["rooms"]:
+            if (P["rooms"] != "any" and r["type"] not in P["rooms"]) or (begun >= S["most"] and key not in here_):
                 continue
-            name, o = find(r, key)
+            o = here_.get(key)
             k, lack = "%s|%s" % (r["id"], key), missing(P, o)
             if o is None:
-                if begun >= S["most"] or not WHEN[P["when"]](house, cfg, pet, r) or spot(house, cfg, r, P) is None:
+                if not WHEN[P["when"]](house, cfg, pet, r) or (P.get("on") and spot(house, cfg, r, P) is None):
                     continue
                 text, done, weight = P["want"].format(room=r["name"]) + "; it takes %s, and a hammer" % some(P["needs"]), P["done"].format(room=r["name"]), P["weight"]
             elif "site" in o:
@@ -212,17 +214,16 @@ def lean(house, cfg, pet, w, out):
         return
     name, o = find(room, w["project"])
     lack = missing(cfg["build"]["project"][w["project"]], o)
-    step = fetch(house, cfg, pet, w, lack) if lack else None
+    step, hammer = fetch(house, cfg, pet, w, lack) if lack else None, craft.tool_for(house, cfg, pet, "hammer")
+    if not hammer and not wants.asked_of(pet, "hammer") and wants.book_room(house) in pet["rooms"]:
+        out["rooms"].add(wants.book_room(house))   # nobody has a hammer, and it does not know what one is made of: by way of the book
     if step and step[0] == "gather":
         out["gather"] |= step[1]
     elif step:
         out["rooms"].add(room["id"] if step[0] == "place" else step[1])
-    elif craft.tool_for(house, cfg, pet, "hammer"):
+    elif hammer:
         out["rooms"].add(room["id"])   # all it takes is there, or it has worn: to work
-    elif "hammer" not in pet.get("takes", []):   # nobody has a hammer, and it does not know what one is made of: to the book
-        if not wants.asked_of(pet, "hammer") and wants.book_room(house) in pet["rooms"]:
-            out["rooms"].add(wants.book_room(house))
-    else:   # it knows: whatever of a hammer's makings lies about is picked up as it comes to it (what has to be made first is a step: named)
+    elif "hammer" in pet.get("takes", []):   # it knows: whatever of a hammer's makings lies about is picked up as it comes to it (what has to be made first is a step: named)
         for alts in parts(cfg, pet):
             there = next((lying(house, pet, b) for b in alts if lying(house, pet, b)), None)
             if there == here_:
@@ -242,22 +243,24 @@ def named(house, cfg, pet):
     makings of a hammer, once it knows them and the hammer is all that is wanting; a dye. [(the bit, the want)]"""
     C, carry, out = cfg["craft"], pet["carrying"], []
     for w in pet.get("wants", []):
-        if w["what"] == "paint" and not dye_of(cfg, pet) and not any(x["what"] == "build" for x in pet["wants"]):   # (a thing being built comes first: one step at a time)
-            out += [(d, w["key"]) for d in cfg["build"]["paint"]["dyes"]]
-        elif w["what"] == "build":
+        if w["what"] == "build":
             name, o = find(house["rooms"][w["room"]], w["project"])
             out += [(b, w["key"]) for b in missing(cfg["build"]["project"][w["project"]], o) if cfg["house"]["bits"][b].get("made")]
             if "hammer" in pet.get("takes", []) and chain(house, cfg, pet, w):   # (what lies about it simply picks up: lean)
                 out += [(b, w["key"]) for alts in parts(cfg, pet) if not any(lying(house, pet, b) for b in alts) for b in alts]
-    return [(bit, key) for bit, key in out if bit not in carry]
+    out = [(bit, key) for bit, key in out if bit not in carry]
+    for w in pet.get("wants", []) if not out and not dye_of(cfg, pet) else ():   # (what a thing being built waits on comes first: one step at a time)
+        if w["what"] == "paint":
+            out += [(d, w["key"]) for d in cfg["build"]["paint"]["dyes"]]
+    return out
 
 
 def question(house, cfg, pet, w):
-    """What a want to build asks the book (one line in wants.question): how a hammer is made, once that is what it
-    waits on. Never twice."""
+    """What a want to build asks the book (one line in wants.question): how a hammer is made, while there is none
+    (it can find that out while it is still carrying what the thing takes). Never twice."""
     from . import wants
     q = "how do you " + cfg["craft"]["tool"]["hammer"]["want"]
-    return q if w["what"] == "build" and chain(house, cfg, pet, w) and not wants.asked_of(pet, "hammer") and q not in pet.get("asked", []) else None
+    return q if w["what"] == "build" and not craft.tool_for(house, cfg, pet, "hammer") and not wants.asked_of(pet, "hammer") and q not in pet.get("asked", []) else None
 
 
 def keep(house, cfg, pet):
@@ -570,7 +573,7 @@ def view(house, cfg, room, name, o, v):
     P = cfg["build"]["project"].get(key, {})
     if s:
         lack, part = missing(P, o), s["work"] / P["sessions"]
-        v["build"] = {"sprite": "fix.site%s%s" % (".wall" if P.get("wall") else "", ".half" if part >= 0.4 else ""), "title": "%s %s being built" % (P["a"], key),
+        v["build"] = {"sprite": "fix.site%s%s" % (".wall" if P.get("wall") else "", ".half" if part >= 0.4 else ""), "title": "%s %s" % (P["a"], key),
                       "progress": round(part, 2), "placed": s["placed"], "needs": P["needs"]}
         by = house["pets"].get(s["by"])
         v["says"] = "%s began it; %s" % (label(by) if by else "someone", "it wants %s yet" % some(lack) if lack else
