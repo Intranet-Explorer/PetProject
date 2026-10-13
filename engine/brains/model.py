@@ -255,8 +255,12 @@ class Model:
         return parse(await asyncio.to_thread(self.chat, ask, night_schema(asks, belief_ids, tellers), True, self.cfg["night_tokens"], 0.7, "night")) or {}
 
     async def body(self, body, options, portrait):
-        """§9.3: pick one of three ways its body can change; once grown, also a picture of itself."""
+        """§8: once grown, a picture of itself. (§9.3, picking one of three ways its body can change, went with SPEC-v3.5:
+        with no `options` it is asked for the picture alone.)"""
         part = obj(shape={"enum": SHAPES}, size={"enum": [1, 2, 3]}, color={"enum": COLORS}, at={"enum": PLACES})
+        if not options:
+            ask = 'This is your body: %s.\n\nReply with one JSON object and nothing else: {"portrait": [<a picture of yourself as you see yourself, from up to 8 parts, each %s>]}' % (body, PART)
+            return parse(await asyncio.to_thread(self.chat, ask, obj(portrait={"type": "array", "items": part, "minItems": 1, "maxItems": 8}), False, None, 0.7, "body")) or {}
         shape = obj(choice={"enum": [1, 2, 3]}, reason=text(200))
         ask = ("This is your body: %s.\nWhile you sleep it can change in one of these ways:\n%s\n\n"
                'Reply with one JSON object and nothing else: {"choice": <1, 2 or 3>, "reason": "<short>"'

@@ -1,7 +1,7 @@
 """Life and death, eggs and inheritance (SPEC-v3 §4, §5). A pet hatches, grows by what it has lived and made,
 grows old, and dies; before that it may lay eggs, and what it hands on is a body, a temperament, a message,
 and a couple of things."""
-from . import craft, genome, order, things
+from . import craft, genes, order, things
 from .feel import level
 from .world import (GENES, STAGES, days as world_days, add_event, alive, arrived, family, free_tile, hours, label, moment, new_pet, rnd, ticks)
 
@@ -107,7 +107,7 @@ def found(house, cfg, told=None, body=None):
     room = house["rooms"][house["start"]]
     rng = rnd(house, "founder", house["n"]["lineage"])
     pet = new_pet(house, cfg, room["id"], free_tile(house, cfg, room, [cfg["W"] // 2 - 1, cfg["H"] // 2 - 1]),
-                  genome=genome.child_of(body, rng) if body else None, told=told)
+                  genome=genes.child(body, rng)[0] if body else None, told=told)
     house["lineage"]["founder"] = pet["id"]
     moment(house, "egg", "an egg is lying in the nursery", pet["id"], room["id"])
     return pet
@@ -138,9 +138,12 @@ def lay_egg(house, cfg, pet, a, clean):
     room, rng = house["rooms"][pet["room"]], rnd(house, "egg", pet["id"], pet["eggs"])
     text, name = last_sentence(clean(a["message"], 640), 600), clean(a.get("name") or "", 16).strip() or None
     pet["message"].append({"tick": house["tick"], "text": text})
-    egg = new_pet(house, cfg, room["id"], free_tile(house, cfg, room, pet["pos"]), genome=genome.child_of(pet["genome"], rng),
+    body, new = genes.child(pet["genome"], rng, genes.line(house, pet))   # SPEC-v3.5 §2: its parent's body, a slot or two moved; rarely something new
+    egg = new_pet(house, cfg, room["id"], free_tile(house, cfg, room, pet["pos"]), genome=body,
                   temper=temper_of(pet["temper"], rng, cfg), parent=pet["id"], name=name,
                   told=[{"by": pet["id"], "who": pet["word"], "kind": "message", "text": text, "tick": house["tick"]}])
+    if new:
+        egg["mutation"] = new   # (the family tree marks the branch; it is a moment when it hatches)
     pet["eggs"] += 1
     moment(house, "egg", "%s laid an egg%s" % (label(pet), " and named it " + name if name else ""), pet["id"], room["id"])
     return "you laid an egg%s and told it what you want it to know" % (" and named it " + name if name else ""), {"energy": -cfg["life"]["egg_energy"]}, "lay egg"
@@ -168,6 +171,7 @@ def hatch(house, cfg, pet):
         add_event(house, parent, "the egg you laid has hatched%s" % (": " + pet["name"] if pet["name"] else ""))
         parent["news"].append("event")
     moment(house, "hatched", "%s hatched" % (pet["name"] or "an egg"), pet["id"], pet["room"])
+    genes.hatched(house, pet)
     craft.inherit(house, cfg, pet)   # SPEC-v3.4 §3.3: it starts out knowing some of what its parent knew
 
 
@@ -189,6 +193,8 @@ def grow(house, cfg, pet):
     if not stage:
         return None
     old, pet["stage"] = pet["stage"], stage
+    if stage == "elder":
+        genes.grey(pet)   # SPEC-v3.5 §2.1: a body changes at birth, and a little with age
     pet["stage_at"][stage], pet["bodies"][stage] = house["tick"], dict(pet["genome"])
     new = UNLOCKS[stage] + (["bigger things"] if cfg["make"]["parts"][stage] > cfg["make"]["parts"][old] else [])
     feel = "you feel older; your body is slower, and there are things only the old can do: " if stage == "elder" \

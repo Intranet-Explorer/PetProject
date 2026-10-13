@@ -10,7 +10,7 @@ import sqlite3
 import sys
 from pathlib import Path
 
-from . import story
+from . import genome, story
 from .world import GENES, ROOT, load_config
 
 EVENT_WORDS = {"power cut": r"went dark|gone dark|power|every light|lights? (went|are|is) (out|dark)|no light", "leak": r"water (is|was)? ?coming|wet floor|floor is wet|leak|shifted",
@@ -77,7 +77,7 @@ def main(data=ROOT / "data", profile=None):
         print("   %s: %.2f in %s -> %.2f in %s, %d generations on" % (g, av, a, bv, b, n - 1))
     for p in hatched:
         g = p["genome"]
-        print("   %-14s gen %d: hue %d, %s, %d limbs, roundness %.2f, stretch %.2f" % (p["label"], p["gen"], g["hue"], g["pattern"], g["limbs"], g["roundness"], g["stretch"]))
+        print("   %-14s gen %d: hue %d, %s, %s, roundness %.2f, stretch %.2f" % (p["label"], p["gen"], g["hue"], g["pattern"], ", ".join(genome.parts(g)) or "plain", g["roundness"], g["stretch"]))
     # Did the temperament show in how they lived? Beside each gene, the behaviour it is meant to lean (for a reader).
     for p in hatched:
         n = db.execute("SELECT count(*) FROM steps WHERE pet=?", (p["pet"],)).fetchone()[0] or 1

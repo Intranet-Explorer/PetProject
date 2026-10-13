@@ -52,7 +52,7 @@ def pet_view(p):
     """One pet as the view needs it. Numbers are for the view and the Lab; no pet ever sees them."""
     h = eng.house
     out = {k: p.get(k) for k in ("id", "name", "stage", "room", "pos", "gen", "parent", "children", "word", "genome", "temper", "eggs",
-                                 "laid", "born", "died", "cause", "lineage", "stage_before")}
+                                 "laid", "born", "died", "cause", "lineage", "stage_before", "mutation")}
     # the visitor's naming, for the pet's card: the name offered, and whether the pet has taken it
     out["naming"] = {"offered": p["called"], "took": (p.get("name") or "").lower() == p["called"].strip().lower(),
                      "at": (p.get("named") or {}).get("tick")} if p.get("called") else None
@@ -203,6 +203,7 @@ def snapshot():
                "radio": {"on": radio.is_on(h), "plays": h.get("radio", {}).get("plays") or "mix", "theirs": any(n != "little radio" for _, n, _ in radio.boxes(h)),
                          "rooms": [r["id"] for r, _, _ in radio.boxes(h)]}},
         "vox": recent(h.get("vox", []), 20),
+        "invented": h.get("invented", {}),   # SPEC-v3.5 §3: the kinds this house invented, each with its parts (the view draws them)
         "bursts": recent(h.get("bursts", []), 20),   # SPEC-v3.4 §5: a want fulfilled or a thing found out, each numbered, to be shown once
         "activities": {n: {"icon": a.get("icon"), "passive": bool(a.get("passive")), "rest": bool(a.get("rest"))} for n, a in cfg["activities"].items()},
         # SPEC-v3.2: the one plain sentence about the house now, and the steps finished in the last world minute or so

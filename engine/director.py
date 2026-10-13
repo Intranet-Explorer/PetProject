@@ -1,6 +1,6 @@
 """What the house does on its own (SPEC-v3 §6.4, §6.5): the day's weather, the seasons, storms and power
 cuts, the events nobody caused, and the small creatures. All of it scripted; no model is ever asked."""
-from . import craft, genome, order, songs, things, walls
+from . import craft, genes, genome, order, songs, things, walls
 from .world import (LONG_AGO, days as world_days, moving as on_the_move, add_event, alive, arrived, bit_kinds, clock, dist, family, free_tile, hours, in_room, label, moment,
                     new_pet, power_on, rnd, ticks, weather_of)
 
@@ -513,7 +513,7 @@ def trust(house, cfg, cr, pets):
     for p in pets:
         if dist(p["pos"], cr["pos"]) > 3:
             continue
-        moving = on_the_move(p)
+        moving = on_the_move(p) and not genes.unseen(house, cfg, cr, p)   # SPEC-v3.5 §2.3: the moth ignores a dark coat
         if p.get("following") == cr["id"]:
             trusts(cr, p, T["follow_per_minute"] * per)
         elif moving and p.get("spring"):
@@ -760,8 +760,8 @@ def arrive_strangers(house, cfg):
     homes = [house["rooms"][p["room"]]["cell"] for p in alive(house)]
     far = max(rooms, key=lambda x: (min(abs(x["cell"][0] - c[0]) + abs(x["cell"][1] - c[1]) for c in homes), x["id"]))
     rng = rnd(house, "foundling", house["tick"])
-    body = dict(genome.START, hue=rng.randrange(360), pattern=rng.choice(genome.PATTERNS), limbs=rng.randrange(5),
-                **{k: round(rng.uniform(*v), 2) for k, v in genome.RANGES.items()})
+    body = genes.apart(house, dict(genome.START, hue=rng.randrange(360), pattern=rng.choice(genome.PATTERNS),
+                                   **{k: round(rng.uniform(*v), 2) for k, v in genome.RANGES.items()}), rng)   # SPEC-v3.5 §2.4: a second family can be told from the first by its parts
     egg = new_pet(house, cfg, far["id"], free_tile(house, cfg, far, [cfg["W"] // 2, cfg["H"] // 2]), genome=body, family=2)
     for p in awake_pets(house, far["id"]):
         add_event(house, p, "there is an egg here that nobody you know laid")

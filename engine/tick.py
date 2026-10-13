@@ -15,7 +15,7 @@ import time
 from collections import Counter, deque
 from pathlib import Path
 
-from . import actions, body, craft, director, feel, genome, life, log, mind, order, physics, radio, sleep, story, things, wants, world
+from . import actions, body, craft, director, feel, genes, genome, invent, life, log, mind, order, physics, radio, sleep, story, things, wants, world
 from .memory import Memory
 from .world import LONG_AGO, NEEDS, add_event, alive, dist, family, here, hours, label, load_config, moment, new_house, relation, ticks
 
@@ -226,7 +226,7 @@ class Mind:
         pet = self.pet
         if pet["stage"] == "elder" and self.eng.house["tick"] % 3 == 0:
             return
-        for _ in range(2 if pet["spring"] else 1):
+        for _ in range((2 if pet["spring"] else 1) + genes.stride(self.eng.house, pet)):   # (SPEC-v3.5 §2.3: long legs walk faster)
             was, pet["pos"] = pet["pos"], [p + (g > p) - (g < p) for p, g in zip(pet["pos"], goal)]
             pet["walked"] = pet.get("walked", 0) + (pet["pos"] != was)   # tiles walked, all its life (SPEC-v3.4 §0)
         pet["spring"] = max(0, pet["spring"] - 1)
@@ -474,6 +474,7 @@ class Mind:
             return self.sleep_tick()
         before = {n: feel.level(pet, n) for n in NEEDS}
         self.live()
+        genes.live(h, self.cfg, pet)   # SPEC-v3.5 §2.3: what its body does for it, and how that feels
         if self.thought and self.thought.done():
             self.adopt()
         if world.busy(pet):
@@ -574,6 +575,7 @@ class Engine:
                 for k, v in (("family", 1), ("songs", []), ("read", []), ("box", []), ("with", {}), ("knows", []), ("chalked", 0), ("animals", [])):
                     pet.setdefault(k, v)
         self.radio_items = radio.items_in(cfg, self.dir / "radio")   # what the box has to say; the server keeps it fresh
+        invent.install(self.house, cfg)   # SPEC-v3.5 §3: the kinds this house invented are kinds here
         self.to_kinds()
         if not readonly:
             self.alive_migration()
@@ -666,6 +668,9 @@ class Engine:
                 order.give_box(h, cfg, room, stone)
         self.unwear()
         self.v341()
+        if genes.migrate(h, cfg):   # SPEC-v3.5 §2.4 comes to a house already lived in, once: everyone living gets their parts
+            for m in self.minds.values():
+                m.log_body("v3.5: parts")
         for pet in h["pets"].values():   # 13 October 2026: what it has made lately is counted over three world days, from the things themselves
             if "made_at" not in pet and pet["stage"] not in ("egg", "dead"):
                 pet["made_at"] = sorted([o["made"]["tick"], "%s|%s" % (o["made"]["recipe"].get("kind"), o["made"]["recipe"].get("material"))]
@@ -880,6 +885,8 @@ class Engine:
             log.put(db, "radio", **r)
         for r in h.pop("fresh_reads", []):
             log.put(db, "library", **r)
+        for t in h.pop("fresh_traits", []):     # SPEC-v3.5 §2.3: each body trait felt
+            log.put(db, "traits", **t)
         for room in h["rooms"].values():
             if room["type"] and not room.get("logged"):
                 room["logged"] = True

@@ -176,6 +176,9 @@ def words(cfg, key):
     C = cfg["craft"]
     if key.startswith("kind:"):
         k = key[5:]
+        if k not in C["needs"]:   # SPEC-v3.5 §3.3: a kind the house invented is a recipe like any other
+            from . import invent
+            return invent.words(cfg, k)
         return "%s %s can be made of %s" % (cfg["kinds"].get(k, {}).get("a", "a"), k, " and ".join(g.split("|")[0] for g in C["needs"][k]))
     if "+" in key:
         e = C["meets"][frozenset(key.split("+"))]

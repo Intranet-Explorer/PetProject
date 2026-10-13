@@ -1,13 +1,14 @@
 """Sleep (SPEC §9, SPEC-v3 §3.3, §5.2, §8.2): each night a pet stops, and thinks the day over once, with
 thinking on. It may change up to three beliefs, looks again at one old belief beside its own memories of it,
-decides about its project, may rewrite the message for its children, and dreams. Then its body changes."""
+decides about its project, may rewrite the message for its children, and dreams. Its body no longer changes in
+the night (SPEC-v3.5 §2.1: a body is settled at birth); once grown, it still draws itself."""
 import logging
 
 from . import genome, life, story, things
 from .actions import belief, clean, filled
 from .feel import ago
 from .log import put
-from .world import label, moment, rnd
+from .world import label, moment
 
 
 def should_sleep(house, cfg, pet):
@@ -128,14 +129,8 @@ async def night(mind):
             pet["my_life"] = life.last_sentence(clean(reply["my_life"], 860), 800)
     except Exception:
         logging.exception("sleep failed for %s", pet["id"])
-    try:   # §9.3: three ways its body can change, described in words; the pet picks one
-        options = genome.mutations(pet["genome"], rnd(house, "body", pet["id"], day), pet["stage"])
-        described = [genome.describe_change(pet["genome"], o) for o in options]
-        grown = pet["stage"] in ("adult", "elder")
-        reply = await eng.call(2, pet["id"], "body", "sleep", lambda: mind.brain.body(genome.describe(pet["genome"]), described, grown))
-        choice = reply["choice"] - 1
-        pet["genome"], out["body"], out["reason"] = options[choice], described[choice], clean(str(reply.get("reason", "")), 200)
-        mind.log_body("sleep: " + out["body"], out["reason"])
+    try:   # §8: how a grown pet sees itself. (v3 §9.3's nightly change of body is gone, and with it this call for the young.)
+        reply = await eng.call(2, pet["id"], "body", "sleep", lambda: mind.brain.body(genome.describe(pet["genome"]), [], True)) if pet["stage"] in ("adult", "elder") else {}
         parts = [{"shape": p["shape"], "size": p["size"], "color": p["color"], "at": p.get("at", "center")}
                  for p in (reply.get("portrait") or [])[:8] if isinstance(p, dict)
                  and p.get("shape") in things.SHAPES and p.get("size") in (1, 2, 3) and p.get("color") in things.COLORS

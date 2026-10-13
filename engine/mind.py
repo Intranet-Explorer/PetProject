@@ -2,7 +2,7 @@
 No numbers, no coordinates, no counts of anything, and no sentence telling the pet what it is or what it is
 like. Its temperament shows only in what is mentioned and how (§8.1). Alongside the text comes `ctx`: the
 names the packet shows, so a brain's reply can be held to things that are really there."""
-from . import actions, body, craft, feel, life, order, physics, songs, things, walls, wants
+from . import actions, body, craft, feel, genes, invent, life, order, physics, songs, things, walls, wants
 from .world import LONG_AGO, dist, family, here, neighbours, room_type
 
 BUSY = {"observe": "watching the room", "look": "looking at something", "move": "walking", "go": "heading for a door",
@@ -166,7 +166,7 @@ def perceive(house, cfg, pet, mem):
     doors = " · ".join(door_line(d, rid) for d, rid in room["doors"].items())
 
     # ---- what it notices: the feel of everything acting on it, plus what its temperament brings forward ----
-    senses = physics.senses(house, cfg, pet, acting) if cfg["senses"]["enabled"] else []
+    senses = physics.senses(house, cfg, pet, acting) + genes.senses(house, cfg, pet, acting) if cfg["senses"]["enabled"] else []   # SPEC-v3.5 §2.3: what its body does for it, felt
     if T["playful"] > 0.6 and any("toy" in o.get("fix", {}) or things.prop(cfg, o).get("use", {}).get("curiosity") if "made" in o
                                   else "toy" in o.get("fix", {}) for o in objs.values()):
         senses.append("something here looks like it wants to be played with")
@@ -344,6 +344,7 @@ def perceive(house, cfg, pet, mem):
         "hangable": [n for n, o in things.made(room).items() if order.can_hang(cfg, o)],
         "body": cfg["body"]["on"],
     }
+    ctx["kinds"] = invent.offered(house, cfg, pet, ctx["kinds"])   # SPEC-v3.5 §3.3: a kind the house invented, to one who knows how it is made
     return text, ctx
 
 

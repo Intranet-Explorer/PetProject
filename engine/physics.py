@@ -2,7 +2,7 @@
 
 One list serves both: every standing effect carries the words for how it feels, so nothing can act on a pet
 that the pet has no way to notice (FINDINGS: pressure it cannot perceive produces a stuck pet)."""
-from . import things
+from . import genes, things
 from .feel import level as feel_level
 from .world import dist, here, neighbours, power_on, sunny
 
@@ -102,6 +102,7 @@ def effects(house, cfg, pet):
     sheltered = kind in ("cellar", "storeroom")
     warm_by = bool(things.near(house, cfg, pet, "near")) or any(t["tag"] in ("cozy", "attic", "greenhouse") for t in out)
     cold = (R["seasons"][c["season"]]["cold"] if night else 0.0) + (W["snow_cold"] if house["weather"] == "snow" else 0.0)
+    cold = genes.fur(pet, cold, out)   # SPEC-v3.5 §2.3: thick fur keeps the worst of it off (and of the cellar's)
     if cold and not (kind == "greenhouse" and c["phase"] == "day"):
         out.append(effect("cold", "comfort", cold * (0.4 if warm_by else 1.0), "the cold gets into you"))
     if house["weather"] == "storm" and not sheltered and not any(dist(pet["pos"], o["pos"]) <= 3 for o in others):

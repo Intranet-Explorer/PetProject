@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS library (pet TEXT, tick INT, question TEXT, title TEX
 CREATE TABLE IF NOT EXISTS doing (pet TEXT, tick_from INT, tick_to INT, what TEXT, passive INT, by TEXT, text TEXT,
                                   still INT, rest INT, room TEXT, x INT, y INT, thing TEXT, walked INT);
     -- still: the ticks of it spent in one place; rest: in a resting pose; thing: what it handled (v3.4); walked: tiles walked since the row before
+CREATE TABLE IF NOT EXISTS traits (pet TEXT, tick INT, day INT, trait TEXT, text TEXT);   -- SPEC-v3.5 §2.3: a body trait felt (the same one once a world hour at most)
 CREATE INDEX IF NOT EXISTS doing_pet ON doing (pet, tick_from);
 CREATE INDEX IF NOT EXISTS steps_pet ON steps (pet, tick);
 CREATE INDEX IF NOT EXISTS intentions_pet ON intentions (pet, tick);

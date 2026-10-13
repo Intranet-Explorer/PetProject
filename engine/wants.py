@@ -5,13 +5,13 @@ take one up or leave them all; its body leans toward whatever serves one. A want
 another takes its place. One left alone for a world day fades."""
 import re
 
-from . import craft, order, things
+from . import craft, genes, invent, order, things
 from .world import LONG_AGO, add_event, days as world_days, label, moment, relation, rnd
 
 GROUPS = {"door": "know", "creature": "know", "bit": "know", "try": "know", "word": "know", "look": "know",
           "store": "better", "glow": "better", "warm": "better", "useless": "better", "tool": "better", "window": "better",
           "comfort": "someone", "toy": "someone", "tell": "someone", "game": "someone",
-          "recipe": "family", "song": "family", "finer": "skill", "get": "get", "plant": "tend", "pick": "tend"}
+          "recipe": "family", "song": "family", "finer": "skill", "get": "get", "plant": "tend", "pick": "tend", "join": "skill"}
 # which temperament leans toward which kind of want (§2.1): gene -> the wants it weights up
 LEANS = {"curious": ("bit", "try", "word", "door", "creature", "look"), "bold": ("door", "creature"), "orderly": ("store", "glow", "warm", "useless", "tool", "window"),
          "sociable": ("comfort", "toy", "tell"), "playful": ("toy", "game"), "patient": ("recipe", "song", "finer")}
@@ -195,6 +195,7 @@ def candidates(house, cfg, pet):
     last = pet.get("last_made")
     if last and pet.get("made", 0) >= 2:
         add("finer", last["kind"], "you want to make something finer than your last %s" % last["kind"], "made a finer %s than its last" % last["kind"], 1.0, kind=last["kind"], at=last["tick"])
+    invent.want(house, cfg, pet, add)   # SPEC-v3.5 §3: two things here that nobody has joined before
     return out
 
 
@@ -286,6 +287,8 @@ def met(house, cfg, pet, w):
         return w["recipe"] in pet.get("recipes", {})
     if t == "song":
         return any(e["id"] == w["song"] for e in pet.get("songs", []))
+    if t == "join":
+        return invent.want_met(house, pet, w)
     if t == "finer":
         last = pet.get("last_made") or {}
         return last.get("tick", LONG_AGO) > w["since"] and last.get("kind") == w["kind"] and bool(last.get("new"))
@@ -351,7 +354,7 @@ def refresh(house, cfg, pet):
                 continue
         except (KeyError, TypeError):
             continue
-        lean = 1.0 + sum((T.get(g, 0.5) - 0.5) * 2 for g, kinds in LEANS.items() if c["what"] in kinds)
+        lean = (1.0 + sum((T.get(g, 0.5) - 0.5) * 2 for g, kinds in LEANS.items() if c["what"] in kinds)) * genes.whiskers(pet, c)   # (SPEC-v3.5 §2.3: whiskers notice bits and creatures sooner)
         recent = sum(1 for k, at in wanted.items() if k.split(":")[0] == c["what"] and world_days(cfg, at, tick) < 1)   # the kinds it has just had come up less
         cands.append((c["weight"] * max(0.2, lean) / (1 + 0.5 * recent) * r.uniform(0.6, 1.4), c))
     ranked = sorted(cands, key=lambda x: -x[0])

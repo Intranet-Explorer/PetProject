@@ -1,5 +1,5 @@
 {
- "about": "SPEC-v3.5 \u00a72: body parts as genes. Each slot's values in order: a small mutation steps to a neighbouring value. A pet's genome carries one value per slot (genome.ears, genome.tail ...), genome.plan, genome.pattern (one of `patterns`) and genome.size (0.8 to 1.2). `pattern_mix`: what two patterns give when they combine. The engine inherits and mutates these; the view draws them.",
+ "about": "SPEC-v3.5 \u00a72: body parts as genes. Each slot's values in order: a small mutation steps to a neighbouring value. A pet's genome carries one value per slot (genome.ears, genome.tail ...), genome.plan, genome.pattern (one of `patterns`) and genome.size (0.8 to 1.2). `pattern_mix`: what two patterns give when they combine. The engine inherits and mutates these; the view draws them. SPEC-v3.5 \u00a72 (engine, helper B): `rates` are per birth (`step`: each slot's chance of a step to a neighbouring value; `new` + `plan`: the rare big mutations, together about 1 birth in 12); `parts`: the slots whose first value means it has none; `words`: how a value is said to a pet (the mirror, the once-a-day line); `traits`: what a body does for its pet and how that feels (never a number); `live`: how a family that lived before v3.5 is given its slots.",
  "slots": {
   "ears": [
    "none",
@@ -70,5 +70,125 @@
   "gradient+stripes": "banded gradient",
   "gradient+spots": "speckled fade",
   "patch+stripes": "striped patch"
+ },
+ "rates": {
+  "step": 0.05,
+  "pattern": 0.05,
+  "new": 0.06,
+  "plan": 0.025,
+  "nudge": 0.04,
+  "hue": 7,
+  "size": 0.03
+ },
+ "parts": [
+  "ears",
+  "tail",
+  "head",
+  "whiskers"
+ ],
+ "words": {
+  "ears": {
+   "round": "round ears",
+   "pointed": "pointed ears",
+   "long": "long ears"
+  },
+  "tail": {
+   "stub": "a stub of a tail",
+   "long": "a long tail",
+   "fluffy": "a fluffy tail"
+  },
+  "head": {
+   "horns": "small horns",
+   "antennae": "antennae",
+   "crest": "a crest"
+  },
+  "whiskers": {
+   "yes": "whiskers"
+  },
+  "feet": {
+   "paws": "paws",
+   "legs": "long legs"
+  },
+  "mouth": {
+   "wide": "a wide mouth",
+   "beak": "a beak"
+  },
+  "fur": {
+   "thick": "thick fur"
+  },
+  "shade": {
+   "dark": "a dark coat"
+  },
+  "plan": {
+   "head": "a head set on a body",
+   "segments": "a body in two parts",
+   "long": "a long, low body",
+   "tall": "a tall, thin body"
+  }
+ },
+ "traits": {
+  "fur": {
+   "cold": 0.5,
+   "feel": "your thick fur keeps the worst of the cold off",
+   "cellar": "your thick fur keeps the cellar's chill off"
+  },
+  "ears": {
+   "speech": "through the wall your long ears catch %s saying: \"%s\"",
+   "song": "your long ears catch a song from %s: \"%s\": %s",
+   "radio": "from %s your long ears make out what the box is saying: \"%s\""
+  },
+  "legs": {
+   "every": 2,
+   "tiles": 12,
+   "feel": "your long legs carry you across the room in a few strides"
+  },
+  "dark": {
+   "feel": "the moth circles on as if you were not there: your dark coat is nothing to it"
+  },
+  "small": {
+   "size": 0.9,
+   "room": "storeroom",
+   "under": "shelves",
+   "reach": 2,
+   "hours": 12,
+   "feel": "there is a gap under the shelves that only one as small as you could get through",
+   "found": "you squeezed through the gap under the shelves, where only one as small as you fits, and found %s in the corner behind"
+  },
+  "whiskers": {
+   "weight": 1.8,
+   "wants": [
+    "bit",
+    "creature"
+   ],
+   "feel": "your whiskers twitched before your eyes found it: %s"
+  },
+  "curled": {
+   "plans": [
+    "blob",
+    "segments"
+   ],
+   "roundness": 0.55,
+   "comfort": 3.0,
+   "feel": "you slept curled up tight, round as you are, and woke warm through"
+  },
+  "stretched": {
+   "spring": 8,
+   "feel": "you slept stretched out long, and woke loose and ready to run"
+  }
+ },
+ "live": {
+  "slots": [
+   "ears",
+   "tail",
+   "head",
+   "mouth"
+  ],
+  "feet": [
+   "nubs",
+   "nubs",
+   "paws",
+   "paws",
+   "legs"
+  ]
  }
 }

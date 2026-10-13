@@ -389,6 +389,10 @@ lift = { comfort = 4.0, curiosity = 5.0 }   # what a want fulfilled is worth
 cold_rooms = ["cellar", "attic"]            # where a pet at night wants something warm
 uneasy_below = 35         # comfort below which kin wants bringing something
 
+[invent]                  # SPEC-v3.5 §3
+per_day = 20              # new kinds a house can invent in a world day (§3.4)
+want = 1.6                # how much a pet with two things it could join into something nobody has made wants to find out what would come of it
+
 [music]                   # §3.1: the visitor's music, per 10 s to whoever hears it; never said as a number
 calm = { comfort = 0.15 }
 lively = { curiosity = 0.2 }

@@ -3,7 +3,7 @@ from them, and the thing takes one property its bits allow. What the thing then 
 materials.toml; the purpose the pet writes changes nothing. Taking a thing apart gives the bits back."""
 import re
 
-from . import craft
+from . import craft, invent
 from .world import LONG_AGO, add_event, days as world_days, dist, free_tile, hours, label, moment, sunny
 
 SHAPES = ["circle", "square", "triangle", "blob", "bar", "dot", "ring", "star"]
@@ -42,7 +42,8 @@ def free_to_change(house, pet, o):
 
 
 def prop(cfg, o):
-    return cfg["materials"][o["made"]["recipe"]["material"]]
+    r = o["made"]["recipe"]
+    return cfg["kinds"].get(r.get("kind"), {}).get("prop") or cfg["materials"][r["material"]]   # (SPEC-v3.5 §3.2: a kind the house invented does what both its parts did)
 
 
 def doing(cfg, o):
@@ -195,6 +196,8 @@ def check_make(a, house, cfg, pet):
     r, room = a.get("recipe"), house["rooms"][pet["room"]]
     if not isinstance(r, dict) or r.get("kind") not in cfg["kinds"]:
         return "no recipe"
+    if cfg["kinds"][r["kind"]].get("invented"):   # SPEC-v3.5 §3.3: a kind the house invented is made again by one who knows its recipe
+        return invent.check_make(a, house, cfg, pet)
     carrying = pet["carrying"] + [s["bit"] for s in to_pick_up(house, cfg, pet, r)]
     allowed = {p for b in carrying for p in cfg["house"]["bits"][b]["can"]}
     if not carrying:
@@ -229,6 +232,8 @@ def check_make(a, house, cfg, pet):
 
 def make(house, cfg, pet, a, clean):
     r, room = a["recipe"], house["rooms"][pet["room"]]
+    if cfg["kinds"][r["kind"]].get("invented"):
+        return invent.make(house, cfg, pet, a, clean)
     want, n = r["material"], 1   # one bit goes into a thing: the one that gives it its nature
     picked = to_pick_up(house, cfg, pet, r)
     for spot in picked:   # what it was short of, it picks up from the floor on the way
@@ -339,6 +344,8 @@ def combine(house, cfg, pet, a, clean, norm):
     kind = joined(cfg, [o["made"]["recipe"] for o in olds], r["material"])
     meets = craft.meet(cfg, *[o["made"]["recipe"]["material"] for o in olds])   # SPEC-v3.4 §3.2: two properties that meet make one neither had
     material = meets["name"] if meets else r["material"]
+    new = invent.born(house, cfg, pet, olds, r, meets)   # SPEC-v3.5 §3: two things joined can be a kind nobody drew, which the house then has
+    kind = new or kind
     if kind not in cfg["kinds"] or material in cfg["kinds"][kind].get("not", []):
         kind = "sculpture"
     recipe = {"name": name, "kind": kind, "material": material, "color": kept.get("color", "grey"), "size": max(size(o) for o in olds),
@@ -350,7 +357,7 @@ def combine(house, cfg, pet, a, clean, norm):
          "made": {"id": house["n"]["thing"], "recipe": recipe, "by": pet["id"], "owner": pet["id"], "tick": house["tick"],
                   "bits": [b for old in olds for b in old["made"]["bits"]][:6], "uses": 0, "ups": 0, "used_at": house["tick"],
                   "heirloom": None, "behavior": None, "from": [x, y]}}
-    if cfg["materials"][material].get("light"):
+    if prop(cfg, o).get("light"):
         o["state"] = "on"
     room["objects"][name] = o
     pet["made"] += 1
@@ -361,7 +368,7 @@ def combine(house, cfg, pet, a, clean, norm):
     moment(house, "made", "%s joined %s and %s into %s it calls '%s'" % (label(pet), was[0], was[1], a_thing(cfg, {"kind": kind}), name), pet["id"], room["id"])
     said = "you joined %s and %s into %s and called it %s; " % (x, y, a_thing(cfg, recipe), name)
     if not meets:
-        return said + "nothing new came of it", {"energy": -effort}, "combine " + material
+        return said + (invent.said(house, new) or "nothing new came of it"), {"energy": -effort}, "combine " + material
     return said + craft.joined(house, cfg, pet, meets), {"energy": -effort, "curiosity": cfg["craft"]["knowing"]["lift"]}, "combine " + material
 
 
