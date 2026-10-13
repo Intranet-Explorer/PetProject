@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <title>Pet parts</title>
 <!-- The parts library by itself (SPEC-v3.5 §1), for checking its style: every thing part at every size, every body
-     part and body plan on a pet, and random compositions of both. It draws with the house's own code (src/parts.ts,
+     part and body plan on a pet, every use an invention can have in five materials, and random bodies. It draws with the house's own code (src/parts.ts,
      src/petsprite.ts), so what is judged here is what the house shows. On a running house: /parts.html
-     ?seed=7 other random ones · ?z=4 zoom · ?t=1.5 freezes the clock at that second · #things #bodies #random, or nothing: all.
+     ?seed=7 other random bodies · ?z=4 zoom · ?t=1.5 freezes the clock at that second · #things #uses #bodies #anims #random, or nothing: all.
      The older page of the rest of the art is /art/preview.html. -->
 <style>
   body { margin: 12px; background: #2a2f33; color: #e8e2d6; font: 12px/1.3 ui-monospace, Menlo, monospace; }
@@ -32,7 +32,7 @@ const big = (src, z = Z) => { const c = el("canvas", "", document.createElement(
 const fig = (grid, caption, ...canvases) => { const f = el("figure", "", grid), s = el("div", "sand", f); s.append(...canvases); el("figcaption", "", f, caption); return s; };
 
 await loadParts("/art");
-const D = partsData(), bodies = await (await fetch("/art/bodies.json")).json();
+const D = partsData(), bodies = await (await fetch("/art/bodies.json")).json(), uses = (await (await fetch("/art/uses.json")).json()).uses;
 const COLOURS = ["red", "orange", "yellow", "green", "teal", "blue", "purple", "pink", "brown", "white", "grey", "black"];
 const MATERIALS = ["soft", "hard", "warm", "bright", "cool", "dark", "noisy", "quiet", "bouncy", "heavy", "sweet", "fragrant", "glassy", "springy"];
 const sizes = Object.keys(D.rules.px), bases = Object.keys(D.thing).filter((n) => D.thing[n].role === "base"), rest = Object.keys(D.thing).filter((n) => D.thing[n].role !== "base");
@@ -48,22 +48,31 @@ if (g) for (const [kind, k] of Object.entries(D.kinds)) {
   fig(g, `${kind}: ${k.base} + ${k.signature}${at ? ` @${at}` : " (no spot)"}`, big(composeThing({ parts: [{ part: k.base, at: null, color: "brown", material: "hard" }, ...(at ? [{ part: k.signature, at, color: "teal", material: "hard" }] : [])], size: "small" })));
 }
 
-/** A random thing the rules allow: a base, then one or two parts each on a spot of it that is still free. */
-function randomThing(size) {
-  const base = one(bases), free = [...D.thing[base].spots], parts = [{ part: base, at: null, color: one(COLOURS), material: one(MATERIALS) }];
-  for (let n = 1 + Math.floor(rnd() * 2), tries = 0; n > 0 && tries < 30; tries++) {
-    const name = one(rest), at = one(D.thing[name].on.filter((s) => free.includes(s)));
-    if (!at || parts.length >= D.rules.max_parts || (D.rules.no_stack.includes(name) && parts.some((p) => p.part === name))) continue;
-    free.splice(free.indexOf(at), 1);
-    parts.push({ part: name, at, color: one(COLOURS), material: one(MATERIALS) });
-    n--;
+// ---- what an invention can be (SPEC-v3.5 §3.0): each use's template, every base and added part it allows, in five materials ----
+/** The parts of a thing on this base: each added part on the first spot of its `on` list that the base has free (or that
+ *  a part already there carries: a flame in a fork). null if one of them has nowhere to go. */
+function put(base, names) {
+  const taken = {}, parts = [{ part: base, at: null }];
+  for (const n of names) {
+    const at = D.thing[n].on.find((s) => D.thing[base].spots.includes(s) && (!taken[s] || D.thing[taken[s]].carries?.includes(s)));
+    if (!at) return null;
+    taken[at] = n;
+    parts.push({ part: n, at });
   }
-  return { parts, size };
+  return parts;
 }
-g = section("random", "Random things", "Two or three parts each, in random materials and colours, small (16) on the floor colour and large (24) on wood.");
-if (g) for (let i = 0; i < 60; i++) {
-  const t = randomThing(i % 3 === 2 ? "large" : "small");
-  fig(g, t.parts.map((p) => `${p.color} ${p.part}${p.at ? "@" + p.at : ""}`).join(" + "), big(composeThing(t))).classList.toggle("wood", i % 3 === 2);
+const MADE = [["hard", "brown", "bright", "yellow"], ["heavy", "grey", "warm", "red"], ["glassy", "teal", "soft", "white"], ["soft", "pink", "hard", "blue"], ["dark", "purple", "noisy", "orange"]];   // the base's material and colour, then the added part's
+const combos = (lists) => lists.reduce((all, l) => all.flatMap((c) => l.map((x) => [...c, x])), [[]]);
+if (!want || want === "uses") for (const [name, u] of Object.entries(uses)) {
+  el("h2", "", out, name);
+  el("p", "", out, u.does);
+  const g = el("div", "grid");
+  for (const base of u.base) for (const add of combos(u.add)) for (const may of [null, ...(u.may ?? [])]) {
+    const names = [...(may ? [may] : []), ...add], parts = put(base, names);
+    if (!parts) { el("figcaption", "", el("figure", "", g), `${base} + ${names.join(" + ")}: CANNOT BE PUT TOGETHER`).style.color = "#ff9a8a"; continue; }
+    const made = (m, size) => composeThing({ parts: parts.map((p, i) => ({ ...p, material: m[i ? 2 : 0], color: m[i ? 3 : 1] })), size, glow: !!u.glow });
+    fig(g, parts.map((p) => `${p.part}${p.at ? "@" + p.at : ""}`).join(" + "), ...MADE.map((m) => big(made(m, "small"), 5)), big(made(MADE[0], "large"), 5));
+  }
 }
 
 // ---- bodies ----

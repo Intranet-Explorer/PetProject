@@ -5,7 +5,7 @@ import { PALETTE } from "./things";
 
 /** A kind the house invented (the snapshot's `invented`): up to three parts, the first on nothing (`at` null), the
  *  others each on one of its spots, every one in its own material and colour. */
-export type Invention = { name: string; a?: string; parts: { part: string; at: string | null; material?: string; color?: string }[]; size?: string;
+export type Invention = { name: string; a?: string; use?: string; parts: { part: string; at: string | null; material?: string; color?: string }[]; size?: string;
   does?: string; sound?: string | null; glow?: boolean; from?: string[]; by?: string; tick?: number };
 /** A body part's picture at one size from one side: `px` is a code for each pixel (0: nothing, or CODES' place + 1). */
 export type Stamp = { w: number; h: number; px: Uint8Array; pin: [number, number] };
@@ -14,7 +14,7 @@ export type Slot = { layer?: string; pair?: boolean; outline?: boolean; spread?:
 
 export const CODES = ["main0", "main1", "main2", "main3", "trim0", "trim1", "trim2", "trim3", "glow0", "glow1", "glow2", "ink", "white", "red"];
 type Px = { file: string; rect: number[]; at?: Record<string, number[]>; pin?: number[] };
-type ThingPart = { role: string; spots?: string[]; on?: string[]; glow?: boolean; sound?: string; clip?: boolean; outline?: boolean; to?: Record<string, string>; px?: Record<string, Px> };
+type ThingPart = { role: string; spots?: string[]; on?: string[]; glow?: boolean; sound?: string; clip?: boolean; outline?: boolean; to?: Record<string, string>; carries?: string[]; px?: Record<string, Px> };
 type Look = { sat?: number; light?: number; add?: number; cap?: number };
 type Data = { rules: { max_parts: number; px: Record<string, number>; behind?: string[] }; palette: Record<string, string | string[]>; looks?: Record<string, Look>;
   thing: Record<string, ThingPart>; kinds: Record<string, { base: string; signature: string }>;
@@ -117,7 +117,8 @@ function paint(c: number, hex: string | null, look: Look): number[] {
 }
 
 /** A thing put together from its parts (SPEC-v3.5 §1): the first part is what the others sit on, each with its pin on
- *  the spot it was given; a part put inside goes behind, a wrap only where the base's body is. The whole stands in
+ *  the spot it was given (or on a part already there that `carries` that spot: a flame in a fork); a part put inside
+ *  goes behind, a wrap only where the base's body is. The whole stands in
  *  the middle of the bottom edge of a square of the size's pixels. Anything that glows has a soft halo. */
 export function composeThing(rec: Pick<Invention, "parts" | "size" | "glow">): HTMLCanvasElement {
   const key = JSON.stringify([rec.parts, rec.size, rec.glow]);
@@ -132,11 +133,18 @@ export function composeThing(rec: Pick<Invention, "parts" | "size" | "glow">): H
   if (!base) return out;
   const B: Px = D.thing[base.part].px![S];
   const order = (p: (typeof list)[number]) => (p !== base && (D.rules.behind ?? []).includes(p.at ?? "") ? 0 : p === base ? 1 : D.thing[p.part].clip ? 2 : 3);
+  const where = new Map<(typeof list)[number], number[]>(), held: Record<string, number[]> = {};   // where each part goes, in the order they were given: a later one may stand on an earlier
+  for (const p of list) {
+    const T: ThingPart = D.thing[p.part], P: Px = T.px![S], point = T.to?.[p.at ?? ""] ?? p.at ?? "", spot = p === base ? [0, 0] : held[point] ?? B.at?.[point] ?? held.tip ?? B.at?.tip ?? B.at?.top, pin = p === base ? [0, 0] : P.pin ?? [0, 0];
+    if (!spot) continue;   // a spot the base does not have, and no top to fall back on: the part is left off, never drawn loose
+    where.set(p, [S + spot[0] - pin[0], S + spot[1] - pin[1]]);
+    if (p !== base && T.carries?.includes(point) && P.at?.[point]) held[point] = [spot[0] - pin[0] + P.at[point][0], spot[1] - pin[1] + P.at[point][1]];
+  }
   for (const p of [...list].sort((a, b) => order(a) - order(b))) {
     const T: ThingPart = D.thing[p.part], P: Px = T.px![S], hex = PALETTE[p.color ?? ""] ?? (/^#[0-9a-f]{6}$/i.test(p.color ?? "") ? p.color! : null), look = D.looks?.[p.material ?? ""] ?? {};
-    const spot: number[] | undefined = B.at?.[T.to?.[p.at ?? ""] ?? p.at ?? ""], pin = P.pin ?? [0, 0];
-    if (p !== base && !spot) continue;   // a spot the base does not have: the part is left off, never drawn loose
-    const dx: number = p === base ? S : S + spot![0] - pin[0], dy: number = p === base ? S : S + spot![1] - pin[1], px = codes(P.file, P.rect);
+    const at = where.get(p);
+    if (!at) continue;
+    const [dx, dy] = at, px = codes(P.file, P.rect);
     for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
       const c = px[y * S + x], k = (y + dy) * W + x + dx;
       if (!c || (T.clip && p !== base && what[k] !== 2 && what[k] !== 6)) continue;
