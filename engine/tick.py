@@ -701,6 +701,8 @@ class Engine:
         if genes.migrate(h, cfg):   # SPEC-v3.5 §2.4 comes to a house already lived in, once: everyone living gets their parts
             for m in self.minds.values():
                 m.log_body("v3.5: parts")
+        from . import machine
+        machine.migrate(h, cfg)   # SPEC-v3.5 §4.3: a house lived in before the vending machine gains it
         for pet in h["pets"].values():   # 13 October 2026: what it has made lately is counted over three world days, from the things themselves
             if "made_at" not in pet and pet["stage"] not in ("egg", "dead"):
                 pet["made_at"] = sorted([o["made"]["tick"], "%s|%s" % (o["made"]["recipe"].get("kind"), o["made"]["recipe"].get("material"))]

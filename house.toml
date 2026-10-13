@@ -44,7 +44,7 @@ fades_days = 1
 can = ["fragrant"]
 looks = { shape = "blob", color = "pink" }
 [bits.clay]
-can = ["hard", "cool"]
+can = ["soft", "cool"]          # SPEC-v3.5 §4.3: soft until it is warmed (fired clay is the hard one)
 looks = { shape = "square", color = "brown" }
 [bits.moss]
 fades_days = 1
@@ -78,7 +78,7 @@ looks = { shape = "bar", color = "green" }
 can = ["springy", "noisy"]
 looks = { shape = "ring", color = "grey" }
 [bits.metal]
-can = ["heavy", "noisy"]
+can = ["hard", "heavy", "noisy"]   # SPEC-v3.5 §4.3: hard, and it rings when struck
 looks = { shape = "triangle", color = "grey" }
 [bits.string]
 can = ["noisy", "springy"]
@@ -252,6 +252,7 @@ fixtures = [
   { name = "corner crates", pos = [10, 7], store = 8, inside = true },
   { name = "shelves", pos = [9, 2], store = 6 },
   { name = "old lantern", pos = [6, 1], light = "off" },
+  { name = "vending machine", pos = [8, 0], machine = true, says = "a machine with small lights: it gives out wood, stone, metal, clay, fibre and sand, and takes made things and bits back" },   # SPEC-v3.5 §4.3 (machine.toml)
 ]
 
 # ---- each room's own rule (§6.1): hidden, felt through senses ----

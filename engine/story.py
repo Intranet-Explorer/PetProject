@@ -223,7 +223,7 @@ def act_of(house, pet, a):
     from .actions import norm
     t, room = a.get("type"), house["rooms"][pet["room"]]
     what = a.get("target") or a.get("what") or a.get("object") or a.get("a") or a.get("song") or a.get("door") or (a.get("recipe") or {}).get("name")
-    to = a.get("to") or a.get("who") or a.get("from") or a.get("near") or a.get("on") or a.get("b") or a.get("where")
+    to = a.get("to") or a.get("who") or a.get("from") or a.get("near") or a.get("on") or a.get("b") or a.get("where") or a.get("for")
     o = room["objects"].get(norm(what)) if isinstance(what, str) else None
     if t == "take_out" and o:
         to = o.get("on")   # where it is taken down from

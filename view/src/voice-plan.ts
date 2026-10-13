@@ -208,7 +208,7 @@ export type Seen = { tick: number; said: Record<string, number>; moment: number;
 export type HouseSound = "powerdown" | "powerup" | "thunder" | "drip" | "whoosh" | "thud" | "chalk" | "chime" | "patter" | "tuning" | "pages" | "knock";
 const BY_PET: Record<string, SoundKind> = { hatched: "cry", stage: "stageup", made: "chirp", unmade: "blip", nuzzle: "trill", gift: "trill",
                                             named: "hm", death: "last", befriended: "trill", tamed: "trill" };
-const BY_HOUSE: Record<string, HouseSound> = { power: "powerdown", storm: "thunder", leak: "drip", draught: "whoosh", delivery: "thud",
+const BY_HOUSE: Record<string, HouseSound> = { power: "powerdown", storm: "thunder", leak: "drip", draught: "whoosh", delivery: "thud", stocked: "thud",
   // each discovery of SPEC-v3.1 §1 comes with a short sound of its own
   "arrival writing": "chalk", "arrival songs": "chime", "arrival taming": "patter", "arrival radio": "tuning", "arrival book": "pages", "arrival strangers": "knock" };
 

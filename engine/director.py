@@ -38,6 +38,8 @@ def begin(house, cfg):
             for o in room["objects"].values():
                 if "meal" in o.get("fix", {}):
                     o["servings"], o["state"] = o["fix"]["meal"], "full"
+        from . import machine
+        machine.morning(house, cfg)   # SPEC-v3.5 §4.3: and the delivery puts a little in the vending machine
     if house.get("power_was_out") and power_on(house):
         house["power_was_out"] = False
         tell_all(house, "the lights that went dark can be lit again")

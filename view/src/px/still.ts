@@ -134,6 +134,7 @@ export class Still {
         if (o.fix?.radio && o.state === "on" && snap.power) this.lamps.push({ x: t.x, y: t.y - 6, r: 12, color: [255, 214, 130], made: true });
         if (o.build?.glow) this.lamps.push({ x: t.x, y: t.y - sz.h / 2, r: 24, color: [255, 206, 140], made: true });   // SPEC-v3.5 §4.1: a lamp niche's small flame (no power to cut)
         if (o.build?.worn) t.s.tint = 0xb4a898;   // ... and what was built and has worn looks it
+        if (o.fix?.machine) this.lamps.push({ x: t.x, y: t.y - sz.h / 2, r: o.state === "lit" ? 34 : 14, color: [190, 235, 240], made: true });   // SPEC-v3.5 §4.3: the vending machine's own lights, up while it is in use
         t.on = (o.state === "on" && snap.power) || o.state === "playing";
       }
     }

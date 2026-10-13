@@ -149,6 +149,11 @@
    "pack": "ninja",
    "file": "Audio/Sounds/Hit & Impact/Hit5.wav",
    "gain": 0.19
+  },
+  "clunk": {
+   "pack": "ninja",
+   "file": "Audio/Sounds/Hit & Impact/Impact2.wav",
+   "gain": 0.3
   }
  },
  "music": {

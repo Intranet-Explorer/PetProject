@@ -66,6 +66,8 @@ WRITTEN = {   # how each action is written, shown only for the actions it can do
     "mend": '{"type": "mend", "target": a made thing here that is worn or spoiled}',
     "carry": '{"type": "carry", "door": one of the doors} (carry the heavy book through it, slowly; it stays where you put it down)',
 }
+from ..machine import WRITTEN as _machine, schema as machine_schema   # SPEC-v3.5 §4.3
+WRITTEN.update(_machine)
 FORMAT_OLD = """
 Reply with one JSON object and nothing else:
 {"thought": "<short, why>", "intention": "<what you mean to do, in a few words>", "steps": [<2 to 5 of the things you can do, carried out in order>], "expect": "<how you expect to feel once the steps are done, or what you expect to see>"}
@@ -161,6 +163,7 @@ def schema(ctx):
         "write_belief": [one("write_belief", statement=text(240), source={"enum": ["lived", "seen"] + ["told by " + t for t in c["tellers"]]})],
         "revise_belief": [one("revise_belief", id={"enum": c["beliefs"]}, statement=text(240))] if c["beliefs"] else [],
     }
+    v.update(machine_schema(c, one))
     step = {"anyOf": [x for a in c["allowed"] for x in v[a]]}
     if not step["anyOf"]:
         step = {"anyOf": v["observe"]}

@@ -10,6 +10,7 @@ that is not tired."""
 from . import actions, craft, feel, order, songs, story, things, wants
 from . import season
 from . import build
+from . import machine
 from .world import LONG_AGO, STAGES, add_event, beside, dist, free_tile, here, label, relation, rnd, ticks
 
 URGENT = {"visitor", "woke", "hatched", "low", "spoken", "event"}   # what stops it in its tracks (as it hurries a thought)
@@ -108,6 +109,8 @@ def targets(house, cfg, pet, mem, name, A):
         return [{}]
     if do == "build":   # SPEC-v3.5 §4: carrying to a thing being built, working on it, mending it, binding a hammer, painting
         return build.targets(house, cfg, pet, A, near)
+    if do in machine.DOS:   # SPEC-v3.5 §4.3: at the vending machine
+        return machine.targets(house, cfg, pet, A, near)
     L, W = wants.lean(house, cfg, pet) if do in ("go", "gather", "tail", "watch", "place", "try", "play", "inspect", "eat") else None, cfg["body"]["want"]   # SPEC-v3.4 §2.1: its body leans toward what serves its wants
     if do == "wander":   # somewhere a few steps off: the farthest of a few tries (or near what its mind is on)
         at = anchor(house, pet)
@@ -556,6 +559,9 @@ def finish(mind, now, cut=False):
                 songs.sing(h, cfg, pet, {"song": now["what"]}, actions.find, actions.handle, actions.bump)
             elif do == "watch":
                 pet["met"][now["what"]] = pet["met"].get(now["what"], 0) + 1
+            elif do in machine.DOS:   # SPEC-v3.5 §4.3: it takes from the machine, feeds it, or carries a thing a room nearer to it
+                told, fx, key, act = machine.finish(mind, now)
+                done = bool(told)
             for n, v in A.get("effects", {}).items():
                 fx[n] = fx.get(n, 0) + v
             if fx.get("curiosity") or key:

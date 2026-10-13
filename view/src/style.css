@@ -375,3 +375,12 @@ pre.packet { white-space: pre-wrap; font: 12px/1.5 var(--mono); margin: 6px 0 0;
 .card .txt :is(.focus, .habits) i { font-style: normal; color: var(--muted); }
 .card .txt .doing canvas, .who p > canvas { display: inline-block; vertical-align: -2px; margin-right: 3px; }
 
+
+/* SPEC-v3.5 §4.3: "Stock the machine", a small panel under the header's switches */
+#stockBox { inset: 46px 10px auto auto; margin: 0; padding: 10px 12px; width: 250px; color: var(--ink); background: var(--surface); border: 2px solid var(--edge); }
+#stockBox h2 { margin: 0; font-size: 14px; }
+#stockBox ul { list-style: none; margin: 8px 0; padding: 0; display: grid; gap: 3px; }
+#stockBox li { display: grid; grid-template-columns: 32px 44px 1fr 18px auto; align-items: center; gap: 6px; font-size: 13px; }
+#stockBox li canvas { margin: -8px 0 -2px; }
+#stockBox .n { text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }
+#stockBox button { min-height: 20px; padding: 0 6px; font-size: 12px; }

@@ -65,6 +65,7 @@ const KIND: Record<string, string> = {
   // SPEC-v3.4: a want met, a thing found out, the first tool, growing food, a recipe nobody knows any more, the book carried
   want: "star", discovery: "star", tool: "hammer", harvest: "leaf", planted: "leaf", forgotten: "stone", moved: "crate",
   built: "hammer", mended: "hammer", worn: "hammer", held: "drop",   // SPEC-v3.5 §4: a thing built, mended, worn; a leak or a draught kept out
+  machine: "crate", fed: "crate", stocked: "crate",   // SPEC-v3.5 §4.3: the vending machine gave, was fed, was stocked
   clear: "sun", cloudy: "cloud", "power cut": "bolt", "lost thing": "crate", "rule drift": "wind", surprise: "crate",
 };
 

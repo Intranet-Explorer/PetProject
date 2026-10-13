@@ -8,6 +8,7 @@ import re
 from . import craft, genes, invent, order, things
 from . import season
 from . import build
+from . import machine
 from .world import LONG_AGO, add_event, days as world_days, label, moment, relation, rnd
 
 GROUPS = {"door": "know", "creature": "know", "bit": "know", "try": "know", "word": "know", "look": "know",
@@ -88,6 +89,7 @@ def candidates(house, cfg, pet):
     had = held(pet)
     grown = {s["bit"]: r["id"] for r in reversed(known) for s in r["spots"] if s["ready"] and not s.get("on")}
     grown.update({s["bit"]: here["id"] for s in here["spots"] if s["ready"] and not s.get("on")})
+    via = machine.source(house, cfg, pet, known, grown)   # SPEC-v3.5 §4.3: a base material that is not lying about, or is short, is to be had from the machine
     for bit, rid in grown.items():
         if bit not in had:
             add("bit", bit, "you want to know what %s is like in your paws%s" % (a(bit), "" if rid == here["id"] else " (there is some in %s)" % rooms[rid]["name"]),
@@ -125,6 +127,7 @@ def candidates(house, cfg, pet):
                 "has %s now" % some(bit), (5.0 if knows else 4.0) * (0.2 if needs and not craft.tool_for(house, cfg, pet, needs) else 1.0), bit=src, how=how, gives=bit, room=where[0], bit_room=grown.get(src), parent=parent)
     stepped = {c["key"][4:] for c in out if c["what"] == "get"}
     out[:] = [c for c in out if c["what"] != "try" or c["key"][4:] not in stepped]   # (the same thing is not wanted twice over)
+    machine.wants(house, cfg, pet, known, out, add, via)   # SPEC-v3.5 §4.3: to see what the machine has; to feed it what is spare
     for w in pet.get("unknown", [])[-3:]:
         book = book_room(house)
         hint = "" if not book or pet.get("asked") else "; the heavy book in %s might know" % rooms[book]["name"]
@@ -253,6 +256,8 @@ def met(house, cfg, pet, w):
     t, rooms = w["what"], house["rooms"]
     if t in ("build", "paint"):   # SPEC-v3.5 §4
         return build.met(house, cfg, pet, w)
+    if t in machine.GROUPS:   # SPEC-v3.5 §4.3
+        return machine.met(house, cfg, pet, w)
     if t == "door":
         return w["room"] in pet["rooms"]
     if t == "creature":
@@ -310,14 +315,17 @@ def met(house, cfg, pet, w):
 SERVED = ("door", "creature", "bit", "look", "try", "game", "word", "get", "plant", "pick", "keep")   # (and "tool", as far as the book: lean)   # the wants its body can do something about without being told
 
 SERVED += ("build",)   # SPEC-v3.5 §4
+GROUPS.update(machine.GROUPS); LEANS["orderly"] += machine.ORDERLY; SERVED += machine.SERVED; ONE += machine.ONE   # SPEC-v3.5 §4.3: the machine's own wants
 
 
 def possible(house, cfg, pet, w):
     """Can this still be had? (The bit it was about may have been used up, the creature gone, the thing taken apart.)"""
     t, rooms = w["what"], [house["rooms"][r] for r in pet["rooms"] if house["rooms"][r]["type"]]
-    lying = lambda bit: any(s["bit"] == bit and s["ready"] and not s.get("on") for r in rooms for s in r["spots"])
+    lying = lambda bit: any(s["bit"] == bit and s["ready"] and not s.get("on") for r in rooms for s in r["spots"]) or machine.has(house, cfg, pet, bit)   # (SPEC-v3.5 §4.3: or in the machine)
     if t in ("build", "paint"):   # SPEC-v3.5 §4
         return build.possible(house, cfg, pet, w)
+    if t in machine.GROUPS:
+        return machine.possible(house, cfg, pet, w)
     if t == "bit":
         return lying(w["bit"])
     if t == "try":
@@ -515,6 +523,7 @@ def lean(house, cfg, pet):
             (out["look"].add(w["thing"]) if w["room"] == here else out["rooms"].add(w["room"]))
         elif t in ("build", "paint"):   # SPEC-v3.5 §4: the bits it takes, the room it is in, the book about a hammer
             build.lean(house, cfg, pet, w, out)
+    machine.lean(house, cfg, pet, out)   # SPEC-v3.5 §4.3: `vend`, `feed`, and the way to the machine
     out["rooms"].discard(None)
     out["rooms"].discard(here)
     return out

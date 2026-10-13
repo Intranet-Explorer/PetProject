@@ -21,6 +21,7 @@ from . import actions, body, craft, wants, director, feel, order, life, metrics,
 from .tick import Engine, model_brains, stub_brains
 from . import world
 from . import build
+from . import machine
 from .world import ROOT, STAGE_WORD, alive, label, load_config, power_on, relation
 
 cfg = load_config(profile=os.environ.get("PET_PROFILE") or None)
@@ -156,6 +157,8 @@ def room_view(r):
         else:
             v["fix"] = {k: (True if k == "water" else x) for k, x in o["fix"].items() if k != "states"}
             v["says"] = actions.fixture_says(o["fix"])   # what it is, for the visitor's hover card
+            if o["fix"].get("machine"):
+                v["state"] = machine.light(h, cfg)   # SPEC-v3.5 §4.3: its lights are up while it is in use
             if "water" in o["fix"]:
                 v["water"] = o["fix"]["water"]
             if o["fix"].get("plant"):
@@ -198,7 +201,7 @@ def snapshot():
         | {s["song"]: h["songs"][s["song"]] for s in recent(h.get("sung", []), 30)},
         "radio": {"on": radio.is_on(h), "here": bool(radio.boxes(h)), "said": recent(h.get("radio", {}).get("said", []), 45)},
         "arrived": h.get("v31", {}).get("arrived", {}), "read_glow": (h["tick"] - h.get("read_glow", -10**9)) * cfg["clock"]["tick_seconds"] <= 20,
-        "pace": cfg["pace"],
+        "pace": cfg["pace"], "machine": machine.view(h, cfg),   # SPEC-v3.5 §4.3: what the vending machine holds, for "Stock the machine"
         # SPEC-v3.3: the visitor's music and radio (§3), the small sounds pets make by themselves (§4: each numbered, to
         # be played once), and the body's activities with their icons (§1.1, §5.4)
         "dj": {"music": (h.get("dj") or {}).get("music"), "moods": list(cfg["music"]["tunes"]),

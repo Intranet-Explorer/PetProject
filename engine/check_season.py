@@ -229,9 +229,9 @@ async def run(d):
     force(eng, "winter")
     assert cold(eng, pet) == 0, "a room that is not a cold one is no colder by day"
     pet["carrying"], pet["needs"]["energy"] = ["wax"], 90.0
-    r = await do(eng, pet, {"type": "make", "recipe": {"name": "warm stone", "kind": "cushion", "material": "warm", "color": "red", "size": "medium", "purpose": "to be warm by"}, "near": "here"})
+    r = await do(eng, pet, {"type": "make", "recipe": {"name": "warm lump", "kind": "cushion", "material": "warm", "color": "red", "size": "medium", "purpose": "to be warm by"}, "near": "here"})
     assert not r[0]["reason"], r
-    pet["pos"] = list(h["rooms"][h["start"]]["objects"]["warm stone"]["pos"])
+    pet["pos"] = list(h["rooms"][h["start"]]["objects"]["warm lump"]["pos"])
     warm = {}
     for s in SEASONS:
         force(eng, s)

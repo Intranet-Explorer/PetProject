@@ -25,6 +25,9 @@ class Stub:
         anyone = c["pets"] + c["creatures"]
         if t in ("observe", "rest", "take_name"):
             return {"type": t}
+        if t.startswith("machine_"):   # SPEC-v3.5 §4.3
+            from ..machine import stub
+            return stub(t, c, pick)
         if t == "put_away":   # SPEC-v3.3 §2.2
             return {"type": t, "what": pick(c["loose"]), "where": pick(c["stores"])}
         if t == "take_out":

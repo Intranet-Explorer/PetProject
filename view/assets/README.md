@@ -81,6 +81,10 @@ A pack whose licence forbids redistribution lives outside the repository: give i
   needs a `bit.<name>`. Ours are drawn by `own/src/draw.py` at the end of `own/bits.png`, one for every material in
   that file: its own picture if `art.py`'s `BITS` has one, or else the bit it is `like` in its `tint`. After adding
   a material, draw the sheets again and give the new `bit.<name>` its entry here (validate.py asks for it).
+- A material that says `sheet = "machine"` in `crafting.toml` (SPEC-v3.5 §4.3: stone, plank, grit, cord…) is left out
+  of `bits.png`: `own/src/machine.py` draws it, with the vending machine (`fix.vending machine`, and
+  `fix.vending machine.lit` while it gives, takes or is stocked), into `own/machine.png`, and lays its entries into this
+  file as one block after `fix.bed`. Its picture is typed there (`BITS`), or is the bit it is `like` in its `tint`.
 - Something planted (SPEC-v3.4 §3.5) is drawn over the pot or bed it is in: `plant.<stage>` for each stage in
   `crafting.toml` (`planted`, `sprout`, `leaves`, `ripe`) and `plant.wilted`, or `plant.<what>.<stage>` where one
   plant should look different from the rest (`plant.bean.ripe`). The picture is set foot to foot and middle to
@@ -165,7 +169,7 @@ stand in for (snow laid on, the green turned, blossom dotted in); it writes this
 ```
 
 `sfx` names the view uses: pickup, drop, make, unmake, combine, door, step, eat, write, book, call, heart, radio,
-arrival (and `arrival.<discovery>`). `music` is one quiet track per room type, off unless the visitor turns it on.
+arrival (and `arrival.<discovery>`), clunk (the vending machine gives something). `music` is one quiet track per room type, off unless the visitor turns it on.
 
 Three more sections say what the house sounds like (SPEC-v3.3 §3 and §4):
 

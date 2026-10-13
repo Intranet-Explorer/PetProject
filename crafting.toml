@@ -146,7 +146,7 @@ can = ["hard", "heavy"]
 like = "pebble"
 tint = "#6a7a8a"
 [material.sand]
-can = ["hard", "glassy"]
+can = ["hard", "glassy", "heavy", "quiet"]   # (SPEC-v3.5 §4.3: for now a weight and a filler)
 like = "pebble"
 tint = "#e3d9b0"
 [material.glass]
@@ -547,7 +547,7 @@ rope = ["rope"]
 lantern = ["clear wax", "fired clay|glass|sharp stone|clay tile"]   # clear wax and something hard ("a|b": any one of these)
 carver = ["sharp stone|fired clay"]
 trowel = ["fired clay|carved wood"]
-hammer = ["sharp stone|pebble|mud brick", "wood|carved wood", "rope|vine cord"]
+hammer = ["sharp stone|pebble|mud brick|stone", "wood|carved wood|plank", "rope|vine cord|cord"]
 
 # ---- tools (§3.4): things like any other, that wear with use and can be mended ----
 
@@ -719,3 +719,140 @@ grown_lift = 3.0          # the comfort of eating what the family grew, on top o
 paw = 0.7                 # how fast a thing planted by paw grows, beside one planted with a trowel (13 October 2026: the trowel makes planting better, not possible)
 paw_plants = 1            # how many things planted by paw one pet can have coming up at a time; with a trowel, as many as there are beds
 beds = ["bean row", "herb patch", "melon bed", "tomato vine", "berry bush"]   # fixtures a seed can be planted in, besides a plant pot
+
+# ---- SPEC-v3.5 §4.3: the base materials the vending machine gives (machine.toml), and what the processes make of them ----
+# wood, metal and clay are bits the house always had (house.toml); fibre and sand are above; stone is new. `sheet`: its
+# picture is on a sheet of its own (view/assets/own/src/machine.py draws it), not at the end of bits.png.
+
+[material.stone]
+can = ["hard", "heavy"]
+like = "pebble"
+tint = "#8d977f"
+sheet = "machine"
+[material.plank]
+can = ["hard", "warm"]
+like = "wood"
+tint = "#d2b37d"
+sheet = "machine"
+[material.grit]
+can = ["hard", "noisy"]
+like = "pebble"
+tint = "#abc2bc"
+sheet = "machine"
+[material."warm stone"]
+can = ["warm", "heavy"]
+like = "stone"
+tint = "#bd7959"
+sheet = "machine"
+[material."warm metal"]
+can = ["warm", "heavy"]
+like = "metal"
+tint = "#ef914f"
+sheet = "machine"
+[material."metal plate"]
+can = ["hard", "noisy"]
+like = "metal"
+tint = "#abc2bc"
+sheet = "machine"
+[material."tempered metal"]
+can = ["hard", "bright"]
+like = "metal"
+tint = "#b8dce5"
+sheet = "machine"
+[material.cord]
+can = ["springy", "soft"]
+like = "string"
+tint = "#eecf9b"
+sheet = "machine"
+[material."packed sand"]
+can = ["heavy", "quiet"]
+like = "pebble"
+tint = "#d2b37d"
+sheet = "machine"
+
+[[rule]]
+bit = "wood"
+how = "grind"
+gives = "plank"
+says = "rubbed flat on the stone floor, the wood is a smooth plank: something to build with"
+[[rule]]
+bit = "plank"
+how = "warm"
+gives = "charcoal"
+says = "the plank blackened in the heat and did not burn away: it marks your paws black"
+[[rule]]
+bit = "stone"
+how = "grind"
+gives = "sharp stone"
+says = "ground on the stone floor, the stone took an edge that could cut"
+[[rule]]
+bit = "stone"
+how = "press"
+gives = "grit"
+says = "under the weight the stone cracked into grit that rattles in your paws"
+[[rule]]
+bit = "stone"
+how = "warm"
+gives = "warm stone"
+says = "the stone took the warmth slowly and holds it: it is warm right through"
+[[rule]]
+bit = "metal"
+how = "warm"
+gives = "warm metal"
+says = "the metal took the heat and holds it; it gives a little under your paws now"
+hint = "soft as it is, it might be pressed into a shape before it cools"
+[[rule]]
+bit = "warm metal"
+how = "press"
+gives = "metal plate"
+says = "the warm metal bent and flattened under the weight: a plate, that rings when you tap it"
+[[rule]]
+bit = "warm metal"
+how = "soak"
+gives = "tempered metal"
+says = "the warm metal hissed in the water and came out hard and shining"
+[[rule]]
+bit = "metal"
+how = "soak"
+spoils = true
+says = "the metal went brown and flaky in the water: it is spoiled"
+[[rule]]
+bit = "fibre"
+how = "weave"
+gives = "cord"
+says = "the two strands of fibre twisted together into a cord"
+hint = "two cords might twist into something stronger still"
+[[rule]]
+bit = "fibre"
+how = "press"
+gives = "felt"
+says = "pressed hard, the fibre matted together into felt"
+[[rule]]
+bit = "fibre"
+how = "warm"
+gives = "tinder"
+says = "the fibre dried and frizzed in the warmth: it would catch a spark"
+[[rule]]
+bit = "cord"
+how = "weave"
+gives = "rope"
+says = "the two cords twisted round each other into a rope, much stronger than either"
+[[rule]]
+bit = "sand"
+how = "press"
+gives = "packed sand"
+says = "the sand packed down hard under the weight: a heavy little block that deadens a knock"
+[[rule]]
+bit = "clay"
+how = "dry"
+spoils = true
+says = "the clay dried out and cracked to crumbs: it wants heat, not dry air"
+
+[[hint]]
+match = ["metal|iron|copper|forge|smith", "heat|hot|bend|hammer|fire"]
+bit = "metal"
+how = "warm"
+[[hint]]
+match = ["plank|board|timber|lumber", "wood|saw|smooth|build"]
+bit = "wood"
+how = "grind"

@@ -225,6 +225,8 @@ def bits():
         s.add("plant." + name, pic(rows))
     # Last, because crafting.toml may grow: a material's own picture if art.BITS has one, or else the bit it is like, tinted.
     for name, m in made.items():
+        if m.get("sheet"):   # (drawn on a sheet of its own: SPEC-v3.5 §4.3, machine.py)
+            continue
         assert name in art.BITS or m.get("like") in art.BITS, "the material %r is like %r, which art.BITS has no picture of" % (name, m.get("like"))
         s.add("bit." + name, pic(art.BITS[name]) if name in art.BITS else recoloured(pic(art.BITS[m["like"]]), m["tint"]))
     return s
