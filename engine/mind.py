@@ -3,6 +3,7 @@ No numbers, no coordinates, no counts of anything, and no sentence telling the p
 like. Its temperament shows only in what is mentioned and how (§8.1). Alongside the text comes `ctx`: the
 names the packet shows, so a brain's reply can be held to things that are really there."""
 from . import actions, body, craft, feel, life, order, physics, songs, things, walls, wants
+from . import machine
 from .world import LONG_AGO, dist, family, here, neighbours, room_type
 
 BUSY = {"observe": "watching the room", "look": "looking at something", "move": "walking", "go": "heading for a door",
@@ -16,6 +17,7 @@ BUSY = {"observe": "watching the room", "look": "looking at something", "move": 
         "write": "writing on something", "scrub": "rubbing out some words", "compose": "making up a tune", "sing": "singing",
         "teach_song": "teaching a song", "call": "calling", "name": "naming something", "ask_book": "reading the book",
         "process": "trying something with what it has", "mend": "mending something", "carry": "carrying the book"}
+BUSY.update(machine.BUSY)   # SPEC-v3.5 §4.3
 RECENT = 6          # how many earlier happenings are shown
 # What is cut first when the packet is over its budget (§8.3), least needed first. Never cut: how it feels, what
 # it notices, what is here, who is here, what just happened, what was said to it, its parent's words, what it can do.
@@ -173,6 +175,7 @@ def perceive(house, cfg, pet, mem):
     unseen = [d for d, rid in room["doors"].items() if rid not in pet["rooms"]]
     if unseen and feel.level(pet, "curiosity") >= (2 if T["bold"] < 0.4 else 1):   # boredom points at the one thing here not yet tried
         senses.append("you wonder what is through the %s door" % unseen[0])
+    senses += machine.sense(house, cfg, pet)   # SPEC-v3.5 §4.3: one line, only in the machine's room
     if actions.offered(pet):
         senses.append("the visitor calls you %s; you could take the name" % pet["called"])
     if "chalk" in pet["carrying"] and "write" in can:
@@ -344,6 +347,7 @@ def perceive(house, cfg, pet, mem):
         "hangable": [n for n, o in things.made(room).items() if order.can_hang(cfg, o)],
         "body": cfg["body"]["on"],
     }
+    ctx["machine"] = machine.ctx(house, cfg, pet)   # SPEC-v3.5 §4.3: what the machine's two actions can name
     return text, ctx
 
 

@@ -160,6 +160,18 @@ export function play(a: Act, c: Cast) {
       if (thing) wiggle(fx, thing);
       if (at) fx.burst("speck", at[0], at[1] - 6, 5, 14, { g: 60, life: 500, tint: 0xd9b36a });
       break;
+    case "machine_take": case "machine_feed": {   // SPEC-v3.5 §4.3: what is fed goes in; the machine shakes, and what it gives drops from its tray into the paws
+      const m = [...c.things.values()].find((t) => t.obj.fix?.machine), bit = a.type === "machine_take" ? a.what : a.to;
+      if (!m || !at) break;
+      const tray = [m.x, m.y - 6], paws = [at[0], at[1] - head * 0.6], fed = a.type === "machine_feed" ? picture(a.what) : null;
+      if (fed) fx.fly(fed[0], paws, [m.x, m.y - m.rect.h * 0.55], 450, fed[1]);
+      fx.after(fed ? 560 : 0, () => {
+        if (!m.s.destroyed) wiggle(fx, m);
+        fx.burst("glint", m.x, m.rect.y + 5, 4, 20);
+        if (bit && has(`bit.${bit}`)) fx.fly(tex(`bit.${bit}`), tray, paws, 560, 1, () => fx.burst("sparkle", paws[0], paws[1], 3, 14));
+      });
+      break;
+    }
     case "lay_egg": case "paint":
       if (at) fx.burst("sparkle", at[0], at[1] - 6, 8, 28);
       break;

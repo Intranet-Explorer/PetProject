@@ -31,7 +31,8 @@ const HOUSE: Record<HouseSound | Creature, string> = {
 export type Creature = "moth" | "beetle" | "mouse" | "bird";
 /** SPEC-v3.2 §8: the step a pet has just finished, as the name of a sound effect in the art data (sounds.json). */
 const SFX: Record<string, string> = { gather: "pickup", take: "pickup", accept: "pickup", drop: "drop", give: "drop", arrange: "drop", make: "make", unmake: "unmake",
-  combine: "combine", go: "door", eat: "eat", write: "write", scrub: "write", ask_book: "book", call: "call", nuzzle: "heart" };
+  combine: "combine", go: "door", eat: "eat", write: "write", scrub: "write", ask_book: "book", call: "call", nuzzle: "heart",
+  machine_take: "clunk", machine_feed: "clunk" };   // SPEC-v3.5 §4.3: the vending machine gives something
 // how much of the sky a kind of room hears: all of it, none of it, or (every other room) some, through the roof
 const OPEN = ["garden", "greenhouse", "attic", "pond"], SHUT_IN = ["cellar", "storeroom"];
 

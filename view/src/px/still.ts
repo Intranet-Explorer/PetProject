@@ -128,6 +128,7 @@ export class Still {
         }
         if (o.fix?.light && o.state === "on" && snap.power) this.lamps.push({ x: t.x, y: t.y - sz.h / 2, r: 50, color: [255, 226, 170], made: false });
         if (o.fix?.radio && o.state === "on" && snap.power) this.lamps.push({ x: t.x, y: t.y - 6, r: 12, color: [255, 214, 130], made: true });
+        if (o.fix?.machine) this.lamps.push({ x: t.x, y: t.y - sz.h / 2, r: o.state === "lit" ? 34 : 14, color: [190, 235, 240], made: true });   // SPEC-v3.5 §4.3: the vending machine's own lights, up while it is in use
         t.on = (o.state === "on" && snap.power) || o.state === "playing";
       }
     }

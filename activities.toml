@@ -460,3 +460,34 @@ seconds = [5, 8]
 base = 0.0
 handles = true
 
+# SPEC-v3.5 §4.3: the vending machine (engine/machine.py). A material one of its wants is about, and the machine has
+# it: it goes over and takes one (two a day). A spare thing it wants fed to the machine: it is carried there, a room
+# at a time if the machine is elsewhere, and fed in for a material back. Nothing to make with: it goes to see.
+["take from the machine"]
+do = "vend"
+doing = "getting some {what} from the machine"
+did = "took some {what} from the machine"
+icon = "paws"
+seconds = [3, 5]
+base = 0.0
+handles = true
+
+["look in the machine"]
+do = "vend"
+peek = true
+doing = "seeing what the machine has"
+did = "looked over what the machine holds"
+icon = "eye"
+seconds = [3, 5]
+base = 0.0
+handles = true
+
+["feed the machine"]
+do = "feed"
+doing = "taking the {what} to the machine"
+did = "took the {what} to the machine"
+icon = "box"
+voice = "murmur"
+seconds = [3, 5]
+base = 0.0
+handles = true

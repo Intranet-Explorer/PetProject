@@ -16,6 +16,8 @@
         <button id="soundBtn" aria-pressed="false">Sound off</button>
         <button id="ambBtn" aria-pressed="false" title="The room's own sound: its clock, its wind, its water, and the weather. Quiet, under everything else.">Ambience off</button>
         <input id="volume" type="range" min="0" max="100" value="80" aria-label="Volume">
+        <!-- SPEC-v3.5 §4.3: the visitor puts materials of their choice in the vending machine, up to its limit -->
+        <button id="stockBtn" popovertarget="stockBox">Stock the machine</button>
         <button id="themeBtn" aria-label="Switch between light and dark">Dark</button>
         <button id="replayBtn">Replay</button>
         <button id="drawerBtn" aria-expanded="false" aria-controls="drawer">Family, story, things</button>
@@ -29,6 +31,7 @@
         </select></label>
       </span>
     </div>
+    <div id="stockBox" popover aria-label="Stock the machine"></div>
   </header>
   <section id="replayBar" aria-label="Replay" hidden>
     <span class="chip on">Replay</span>

@@ -3,6 +3,7 @@ world before it happens and again when the pet gets there; what it does is decid
 import re
 
 from . import book, craft, feel, genome, life, order, songs, things, walls
+from . import machine
 from .world import (BACK, LONG_AGO, add_event, arrived, beside, dist, family, free_tile, generate_room, here, knows, label, moment,
                     power_on, relation, ticks, witness)
 
@@ -142,6 +143,7 @@ def allowed(house, cfg, pet, mem):
     extra = [a for a in ("put_away", "take_out", "hang") if "arrange" in life.unlocked(house, pet["stage"])] + (["take_name"] if offered(pet) else [])
     if offered(pet):   # only while the visitor has offered it a name it has not taken
         can["take_name"] = True
+    extra += machine.offered(house, cfg, pet, room)   # SPEC-v3.5 §4.3: only at the machine
     return [a for a in life.unlocked(house, pet["stage"]) + extra if can.get(a, True)]
 
 
@@ -193,6 +195,8 @@ def check(a, house, cfg, pet, mem):
     t, room = a.get("type"), house["rooms"][pet["room"]]
     if t in ("put_away", "take_out", "hang"):
         return order.check(a, house, cfg, pet, norm)
+    if t in machine.ACTIONS:   # SPEC-v3.5 §4.3
+        return machine.check(a, house, cfg, pet, norm)
     if t in ("process", "mend", "carry") and t not in life.unlocked(house, pet["stage"]):
         return "you cannot do that yet"
     if t == "process":
@@ -394,6 +398,8 @@ def destination(house, cfg, pet, a):
             "give": "to", "nuzzle": "who", "tell": "to", "chase": "who", "accept": "from", "arrange": "object",
             "combine": "a", "bequeath": "what", "make": "near", "write": "on", "sing": "to", "teach_song": "to", "name": "what",
             "put_away": "what", "take_out": "what", "hang": "what"}.get(t)
+    if t in machine.ACTIONS:
+        return machine.destination(house, cfg, pet)
     if t in ("ask_book", "carry"):
         at = next((o["pos"] for o in house["rooms"][pet["room"]]["objects"].values() if o.get("fix", {}).get("book")), None)
         return None if at is None or dist(pet["pos"], at) <= 1 else beside(cfg, at, pet["pos"])
@@ -440,7 +446,7 @@ def describe_thing(house, cfg, pet, name):
 
 def fixture_says(fix):
     """What a piece of the house is, in a few words: said to a pet that looks at it, and to the visitor who points at it."""
-    return ("its pages are full of small writing; it could be asked a question" if fix.get("book") else "a small box with a dial; it can be turned on or off" if fix.get("radio")
+    return fix["says"] if fix.get("says") else ("its pages are full of small writing; it could be asked a question" if fix.get("book") else "a small box with a dial; it can be turned on or off" if fix.get("radio")
             else "a light" if "light" in fix else "something to eat from" if "meal" in fix else "a place to rest" if "rest" in fix
             else "soft to lie on" if "soft" in fix else "something to play with" if "toy" in fix
             else "something growing" if fix.get("plant") else "you could see yourself in it" if fix.get("mirror")
@@ -456,6 +462,8 @@ def apply(house, cfg, pet, a, mem):
     name = label(pet)
     if t in ("put_away", "take_out", "hang"):
         return order.do(a, house, cfg, pet, norm)
+    if t in machine.ACTIONS:   # SPEC-v3.5 §4.3
+        return machine.apply(a, house, cfg, pet, norm)
     if t == "process":
         return craft.process(house, cfg, pet, a, norm)
     if t == "mend":
@@ -930,6 +938,8 @@ def lapse(house, cfg, pet):
 def visit(house, cfg, cmd):
     """What the visitor did. Returns an error string, or None."""
     rid, t = cmd.get("room"), cmd.get("type")
+    if t == "stock":   # SPEC-v3.5 §4.3: the machine is stocked from the header, whichever room is on screen
+        return machine.stock(house, cfg, cmd)
     room = house["rooms"].get(rid)
     if not room or not room["type"]:
         return "no such room"

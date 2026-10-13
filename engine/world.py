@@ -47,6 +47,8 @@ def load_config(path=ROOT / "config.toml", profile=None):
     craft.load(cfg, path.parent)
     from . import season   # SPEC-v3.5 §5: seasons.toml, what each season asks of the house
     season.load(cfg, path.parent)
+    from . import machine   # SPEC-v3.5 §4.3: machine.toml, the vending machine
+    machine.load(cfg, path.parent)
     # the words from the box a pet may wonder about (picturable.txt): never what the house already has a word for
     own = set(cfg["house"]["bits"]) | set(cfg["kinds"]) | set(cfg["house"]["rooms"]) | {f["name"] for r in cfg["house"]["rooms"].values() for f in r["fixtures"]}
     listed = path.parent / "picturable.txt"

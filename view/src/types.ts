@@ -121,6 +121,7 @@ export type Snap = {
   // SPEC-v3.3: the visitor's music and radio, the small sounds pets make, and every body activity with its icon
   dj?: Dj; vox?: Vox[]; activities?: Record<string, { icon: string | null; passive: boolean; rest: boolean }>;
   bursts?: Burst[];   // SPEC-v3.4 §5
+  machine?: { stock: Record<string, number>; limit: number; materials: string[]; room: string } | null;   // SPEC-v3.5 §4.3: what the vending machine holds (null: nobody has found it)
   invented?: Record<string, Invention>;   // SPEC-v3.5 §3: the kinds this house invented, by name: drawn from their parts
   hello?: Hello; error?: string;
 };

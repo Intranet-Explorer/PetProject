@@ -1,7 +1,7 @@
 // Wiring (SPEC-v3 §10, SPEC-v3.2 §7): one websocket to the engine (or a recorded run played back), snapshots in, the
 // visitor's actions out. Lays the page out round the room, decides which room is on screen, and keeps that choice
 // across a reload.
-import { $, doingOf, el, emoteOf, face, goodWord, hatchWords, moodWords, ownLabel, stageWord, wantWords, when, wishOf } from "./dom";
+import { $, bar, doingOf, el, emoteOf, face, goodWord, hatchWords, moodWords, ownLabel, stageWord, wantWords, when, wishOf } from "./dom";
 import type { Ctx, Kid } from "./dom";
 import { showRecord } from "./family";
 import { icon } from "./icons";
@@ -328,6 +328,7 @@ function header(s: Snap) {
     if (line.offsetHeight > now.clientHeight) line.querySelector(".here")?.remove();   // still more: the engine's sentence alone
   }
   dj(s);
+  stock(s);
   const pick = $<HTMLSelectElement>("follow"), options = s.pets.filter((p) => p.stage !== "dead");
   const key = options.map((p) => p.id + p.label + p.stage).join();
   if (pick.dataset.key !== key) {
@@ -455,6 +456,22 @@ function controls(s: Snap, here: RoomV) {
   $("room").classList.toggle("placing", !!thing);
 }
 
+/** "Stock the machine" (SPEC-v3.5 §4.3), in the header: what the vending machine holds, a material to a row, and a
+ *  button to put one more of it in (or fill it), up to its limit. It works whichever room is on screen. */
+function stock(s: Snap) {
+  const m = s.machine, btn = $<HTMLButtonElement>("stockBtn"), box = $("stockBox"), key = JSON.stringify(m ?? null);
+  btn.hidden = !!replayId || s.lineage.ended != null;
+  btn.disabled = !m;
+  btn.title = m ? "Put wood, stone, metal, clay, fibre or sand in the vending machine. The pets take from it, two a day each." : "Nobody has found the storeroom yet: the vending machine is in it.";
+  if (!m || box.dataset.key === key) return;
+  box.dataset.key = key;
+  const put = (what: string, text: string, off: boolean) => { const b = el("button", "", text) as HTMLButtonElement; b.disabled = off; b.onclick = () => send({ type: "stock", what, n: 1 }); return b; };
+  box.replaceChildren(el("h2", "", "The vending machine"), el("p", "hint", `in ${s.rooms.find((r) => r.id === m.room)?.name ?? "the storeroom"} · it holds ${m.limit} of each`),
+    el("ul", "", ...m.materials.map((x) => el("li", "", hasSprite(`bit.${x}`) ? sprite(`bit.${x}`, 2) : null, el("b", "", x), bar(m.stock[x] ?? 0, m.limit), el("span", "n", `${m.stock[x] ?? 0}`),
+      put(x, "+1", (m.stock[x] ?? 0) >= m.limit)))),
+    put("all", "Fill it", m.materials.every((x) => (m.stock[x] ?? 0) >= m.limit)));
+}
+
 /** The visitor's music and radio (SPEC-v3.3 §3), in the header. They show what the engine says is playing, so a
  *  reload or a second window agrees, and send what is chosen. Music plays in one room or through the house; the radio
  *  is the visitor's own little one, set down in the room on screen, until the pets have found theirs. */
@@ -515,6 +532,7 @@ const FIX: Record<string, string> = {
   toy: "something to play with", loud: "it is loud", cozy: "it is a comfort to be near", window: "a window: it can be opened and closed", mirror: "a mirror",
   plant: "it grows, and when it is ripe it is a meal", water: "water: things put in it drift off", bench: "a bench: a place to work at", sun: "a patch of sun that moves with the hour",
   keepsake: "a keepsake box: what someone who has died left lying about is kept in it, and can be taken out again",
+  machine: "it gives each pet two materials a day, of its choosing; fed a made thing, or three bits, it gives one back; it never takes an heirloom or what is someone else's",
   radio: "when it is on it speaks scraps of the real world outside", book: "it answers a question put to it, out of an encyclopedia",
 };
 
