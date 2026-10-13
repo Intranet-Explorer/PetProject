@@ -174,7 +174,7 @@
      "file": "own/parts/thing16.png",
      "rect": [64, 0, 16, 16],
      "at": {
-      "top": [7, 6],
+      "top": [7, 7],
       "base": [7, 15],
       "side": [12, 11],
       "face": [7, 11],
@@ -185,10 +185,10 @@
      "file": "own/parts/thing24.png",
      "rect": [96, 0, 24, 24],
      "at": {
-      "top": [11, 9],
+      "top": [11, 11],
       "base": [11, 23],
-      "side": [18, 16],
-      "face": [11, 16],
+      "side": [17, 17],
+      "face": [11, 17],
       "inside": [11, 19]
      }
     },
@@ -196,10 +196,10 @@
      "file": "own/parts/thing32.png",
      "rect": [128, 0, 32, 32],
      "at": {
-      "top": [15, 13],
+      "top": [15, 15],
       "base": [15, 30],
-      "side": [24, 22],
-      "face": [15, 22],
+      "side": [23, 23],
+      "face": [15, 23],
       "inside": [15, 26]
      }
     }
@@ -214,7 +214,7 @@
      "file": "own/parts/thing16.png",
      "rect": [80, 0, 16, 16],
      "at": {
-      "top": [7, 6],
+      "top": [7, 7],
       "base": [7, 15],
       "side": [13, 11],
       "face": [7, 11],
@@ -225,10 +225,10 @@
      "file": "own/parts/thing24.png",
      "rect": [120, 0, 24, 24],
      "at": {
-      "top": [11, 10],
+      "top": [11, 11],
       "base": [11, 22],
-      "side": [19, 16],
-      "face": [11, 16],
+      "side": [19, 17],
+      "face": [11, 17],
       "inside": [11, 20]
      }
     },
@@ -236,10 +236,10 @@
      "file": "own/parts/thing32.png",
      "rect": [160, 0, 32, 32],
      "at": {
-      "top": [15, 13],
+      "top": [15, 15],
       "base": [15, 30],
-      "side": [26, 22],
-      "face": [15, 22],
+      "side": [26, 23],
+      "face": [15, 23],
       "inside": [15, 27]
      }
     }
@@ -385,7 +385,7 @@
   },
   "blade": {
    "role": "top",
-   "on": ["tip"],
+   "on": ["tip", "top"],
    "layer": "front",
    "px": {
     "16": {
@@ -462,7 +462,7 @@
   },
   "lid": {
    "role": "top",
-   "on": ["top"],
+   "on": ["top", "tip"],
    "layer": "front",
    "px": {
     "16": {
@@ -490,17 +490,17 @@
     "16": {
      "file": "own/parts/thing16.png",
      "rect": [80, 16, 16, 16],
-     "pin": [5, 13]
+     "pin": [11, 12]
     },
     "24": {
      "file": "own/parts/thing24.png",
      "rect": [120, 24, 24, 24],
-     "pin": [8, 20]
+     "pin": [16, 18]
     },
     "32": {
      "file": "own/parts/thing32.png",
      "rect": [160, 32, 32, 32],
-     "pin": [11, 27]
+     "pin": [22, 25]
     }
    }
   },
@@ -543,17 +543,17 @@
     "16": {
      "file": "own/parts/thing16.png",
      "rect": [112, 16, 16, 16],
-     "pin": [7, 10]
+     "pin": [7, 12]
     },
     "24": {
      "file": "own/parts/thing24.png",
      "rect": [168, 24, 24, 24],
-     "pin": [11, 16]
+     "pin": [11, 18]
     },
     "32": {
      "file": "own/parts/thing32.png",
      "rect": [224, 32, 32, 32],
-     "pin": [15, 21]
+     "pin": [15, 24]
     }
    }
   },
@@ -647,7 +647,7 @@
   },
   "head": {
    "role": "top",
-   "on": ["tip"],
+   "on": ["tip", "top"],
    "layer": "front",
    "px": {
     "16": {
@@ -799,7 +799,7 @@
   },
   "spade": {
    "role": "top",
-   "on": ["tip"],
+   "on": ["tip", "top"],
    "layer": "front",
    "px": {
     "16": {
@@ -821,12 +821,13 @@
   },
   "chimes": {
    "role": "top",
-   "on": ["inside", "top"],
+   "on": ["inside", "top", "tip"],
    "layer": "front",
    "sound": "ring",
    "to": {
     "inside": "base",
-    "top": "base"
+    "top": "base",
+    "tip": "side"
    },
    "px": {
     "16": {
@@ -848,7 +849,7 @@
   },
   "pad": {
    "role": "top",
-   "on": ["top"],
+   "on": ["top", "tip"],
    "layer": "front",
    "px": {
     "16": {
@@ -870,7 +871,7 @@
   },
   "seeds": {
    "role": "top",
-   "on": ["inside", "top"],
+   "on": ["inside", "top", "tip"],
    "layer": "front",
    "px": {
     "16": {

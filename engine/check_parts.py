@@ -141,7 +141,7 @@ def main():
     # ---- composition: the rules refuse what they should, and everything they allow fits its square ----
     P = lambda *names: [{"part": n.split("@")[0], "at": (n.split("@") + [None])[1]} for n in names]
     assert not problems(lib, P("stick", "flame@tip", "band@side")) and not problems(lib, P("bowl"))
-    for bad in (P("stick", "flame@tip", "band@side", "cord@side"), P("stick", "lid@top"), P("stick", "lid@tip"), P("bowl", "flame@inside", "flame@top"), P("stick", "blade@tip", "blade@side"),
+    for bad in (P("stick", "flame@tip", "band@side", "cord@side"), P("stick", "lid@top"), P("stick", "spout@tip"), P("bowl", "flame@inside", "flame@top"), P("stick", "blade@tip", "blade@side"),
                 P("flame"), P("box", "bowl@top"), P("bowl", "lid@top", "flower@top"), P("box", "nothing@top"), []):
         assert problems(lib, bad), "the rules let through %s" % bad
     assert not problems(lib, P("stick", "tines@tip", "flame@tip")) and problems(lib, P("stick", "flame@tip", "tines@tip")), "a flame stands in a fork, not a fork on a flame"
@@ -156,10 +156,13 @@ def main():
             assert T.get(n, {}).get("role") in ("top", "wrap"), "%s: no part %r to add" % (name, n)
         for n in (x for l in u["add"] for x in l):
             assert n in given, "%s adds %s, which no catalog kind gives" % (name, n)
-    for name, base, names in templates(uses):
-        parts = place(lib, base, names)
+    # ... and a curio (two things that fit no use): any kind's base with any other kind's signature part on its first free spot
+    shapes = [(name, base, names) for name, base, names in templates(uses)]
+    shapes += sorted({("curio", a["base"], (b["signature"],)) for a in lib["kinds"].values() for b in lib["kinds"].values()})
+    for name, base, names in shapes:
+        parts = place(lib, base, list(names))
         assert parts and not problems(lib, parts), "%s: %s + %s cannot be put together (%s)" % (name, base, " + ".join(names), parts and problems(lib, parts))
-        count += 1
+        count += name != "curio"
         for S in sizes:
             B, held = T[base]["px"][str(S)], {}
             xs, ys = [x for x, _ in drawn[base, S]], [y for _, y in drawn[base, S]]
@@ -195,7 +198,7 @@ def main():
                 pixels(body["file"], f["rect"], "%s %s %s" % (slot, v, name))
                 assert 0 <= f["pin"][0] < f["rect"][2] and 0 <= f["pin"][1] < f["rect"][3], "%s %s %s: its pin is outside it" % (slot, v, name)
                 n += 1
-    print("parts: %d thing parts at %s px, %d body pictures, %d kinds, %d uses in %d shapes, all within their squares" % (len(T), "/".join(map(str, sizes)), n, len(kinds), len(uses), count))
+    print("parts: %d thing parts at %s px, %d body pictures, %d kinds, %d uses in %d shapes and %d curio shapes, all within their squares" % (len(T), "/".join(map(str, sizes)), n, len(kinds), len(uses), count, len(shapes) - count))
     print("parts check passed")
 
 

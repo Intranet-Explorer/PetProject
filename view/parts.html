@@ -6,7 +6,8 @@
 <!-- The parts library by itself (SPEC-v3.5 §1), for checking its style: every thing part at every size, every body
      part and body plan on a pet, every use an invention can have in five materials, and random bodies. It draws with the house's own code (src/parts.ts,
      src/petsprite.ts), so what is judged here is what the house shows. On a running house: /parts.html
-     ?seed=7 other random bodies · ?z=4 zoom · ?t=1.5 freezes the clock at that second · #things #uses #bodies #anims #random, or nothing: all.
+     ?seed=7 other random bodies · ?z=4 zoom · ?t=1.5 freezes the clock at that second · #things #uses #curios #bodies #anims #random, or nothing: all.
+     ?three=1 draws each curio with the base-giver's own signature part as well (three parts), to compare.
      The older page of the rest of the art is /art/preview.html. -->
 <style>
   body { margin: 12px; background: #2a2f33; color: #e8e2d6; font: 12px/1.3 ui-monospace, Menlo, monospace; }
@@ -73,6 +74,24 @@ if (!want || want === "uses") for (const [name, u] of Object.entries(uses)) {
     const made = (m, size) => composeThing({ parts: parts.map((p, i) => ({ ...p, material: m[i ? 2 : 0], color: m[i ? 3 : 1] })), size, glow: !!u.glow });
     fig(g, parts.map((p) => `${p.part}${p.at ? "@" + p.at : ""}`).join(" + "), ...MADE.map((m) => big(made(m, "small"), 5)), big(made(MADE[0], "large"), 5));
   }
+}
+
+// ---- curios (§3.0): two real things combined that fit no use: the first one's base with the other's signature part on its first free spot ----
+const PAIRS = [["basket", "candle"], ["cushion", "bell"], ["basket", "spinning top"], ["stool", "lantern"], ["drum", "garland"], ["jar", "flute"], ["box", "bell"], ["rug", "lamp"], ["vase", "rope"],
+  ["chest", "mirror"], ["stool", "blanket"], ["nest", "charm"], ["cup", "doll"], ["crate", "wind chime"], ["picture", "hammer"], ["shelf", "plant pot"], ["ball", "carver"], ["stone stack", "candle"],
+  ["sculpture", "rope"], ["wall hook", "bell"], ["trowel", "cushion"], ["mobile", "box"], ["bed-mat", "drum"], ["chest", "trowel"]];
+/** The use a base with these parts on it has, if it has one. */
+const useOf = (base, names) => Object.entries(uses).find(([, u]) => u.base.includes(base) && u.add.every((l) => l.some((n) => names.includes(n))) && names.every((n) => u.add.flat().includes(n) || u.may?.includes(n)))?.[0];
+if (!want || want === "curios") {
+  el("h2", "", out, "Curios: two things combined that fit no use");
+  el("p", "", out, "Each from two catalog kinds, both ways round: the first kind gives its base (parts.json, kinds), the second its signature part, on the first spot of the base it can go on. A pair that fits a use says which.");
+  const g = el("div", "grid");
+  PAIRS.flatMap(([a, b]) => [[a, b], [b, a]]).forEach(([a, b], i) => {
+    const A = D.kinds[a], B = D.kinds[b], parts = (q.has("three") && put(A.base, [A.signature, B.signature])) || put(A.base, [B.signature]), m = MADE[i % MADE.length], use = useOf(A.base, [B.signature]);   // ?three: the base-giver keeps its own signature part too, where there is a spot for both
+    if (!parts) { el("figcaption", "", el("figure", "", g), `${a} + ${b}: ${B.signature} has no spot on a ${A.base}`).style.color = "#ff9a8a"; return; }
+    const made = (size) => composeThing({ parts: parts.map((p, k) => ({ ...p, material: m[k ? 2 : 0], color: m[k ? 3 : 1] })), size });
+    fig(g, `${a} + ${b}${use ? ` = ${use}` : ""}\n${a}'s ${A.base}${parts.length > 2 ? ` and ${A.signature}` : ""}, ${b}'s ${B.signature}@${parts.at(-1).at}`, big(made("small"), 5), big(made("large"), 5));
+  });
 }
 
 // ---- bodies ----

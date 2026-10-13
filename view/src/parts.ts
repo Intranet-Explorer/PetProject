@@ -132,7 +132,7 @@ export function composeThing(rec: Pick<Invention, "parts" | "size" | "glow">): H
   const base = list.find((p) => D.thing[p.part].role === "base" && !p.at) ?? list[0];
   if (!base) return out;
   const B: Px = D.thing[base.part].px![S];
-  const order = (p: (typeof list)[number]) => (p !== base && (D.rules.behind ?? []).includes(p.at ?? "") ? 0 : p === base ? 1 : D.thing[p.part].clip ? 2 : 3);
+  const order = (p: (typeof list)[number]) => (p !== base && (D.rules.behind ?? []).includes(D.thing[p.part].to?.[p.at ?? ""] ?? p.at ?? "") ? 0 : p === base ? 1 : D.thing[p.part].clip ? 2 : 3);   // (a part its `to` sends elsewhere is not inside)
   const where = new Map<(typeof list)[number], number[]>(), held: Record<string, number[]> = {};   // where each part goes, in the order they were given: a later one may stand on an earlier
   for (const p of list) {
     const T: ThingPart = D.thing[p.part], P: Px = T.px![S], point = T.to?.[p.at ?? ""] ?? p.at ?? "", spot = p === base ? [0, 0] : held[point] ?? B.at?.[point] ?? held.tip ?? B.at?.tip ?? B.at?.top, pin = p === base ? [0, 0] : P.pin ?? [0, 0];
