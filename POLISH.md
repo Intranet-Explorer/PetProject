@@ -17,3 +17,10 @@ Small things Tyler has seen and set aside. No action until he says so. Newest at
   2026, from the fresh-eyes watch; the spec asks for the later label to wait, not move)
 - **Owner markers are unexplained**: the small coloured squares by made things and the faint tint of a named corner
   mean nothing to someone who has not been told. (12 October 2026, from the fresh-eyes watch)
+- **Notes keep rising from the drum and chimes in an empty music room** for a minute and a half after anything loud
+  was used there. (12 October 2026, from the second fresh-eyes watch)
+- **The storeroom's top row can be stood on** too: a pet is drawn up over the wall and the lamp. (12 October 2026)
+- **The "+" beside what a pet carries** (more than two bits) is unexplained. (12 October 2026)
+- **A mind's own words can end in a stray character** on a card ("inside the m宅"): the model wrote it. (12 October 2026)
+- **"Grey Light took a charm from Sven"** is said even when Sven is in another room: the charm was Sven's, not
+  in Sven's paws. (12 October 2026)

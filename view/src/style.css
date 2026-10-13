@@ -357,13 +357,14 @@ pre.packet { white-space: pre-wrap; font: 12px/1.5 var(--mono); margin: 6px 0 0;
 .card .txt .mood, .card .txt .wish, .card .txt .naming { display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; }
 .card .txt .mood { -webkit-line-clamp: 2; }
 .card .txt .wish { -webkit-line-clamp: 2; }
+.card .txt .want { display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; -webkit-line-clamp: 2; color: var(--ink); }   /* SPEC-v3.4: what it wants, whole, in two lines at most */
 .card .txt .naming { -webkit-line-clamp: 1; }
 /* SPEC-v3.3 §1: what its body is doing (with its sign), what its mind is on, its habits: a line each. With these a card
    has more lines than it is tall, so its words stand in a column that keeps whole lines only: the last ones (habits,
    animals) go first when there is no room, and are in the card's hover and in the pet's mind. */
 .card .txt { align-self: stretch; flex-wrap: wrap; align-content: flex-start; overflow: hidden; }
 .card .txt > span { width: 100%; }
-.card .txt :is(.doing, .focus, .want, .habits) { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 1; overflow: hidden; }
+.card .txt :is(.doing, .focus, .habits) { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 1; overflow: hidden; }
 .card .txt .focus { -webkit-line-clamp: 2; }
 .card .txt .mood { -webkit-line-clamp: 1; }   /* one line now that there are more of them: what is cut is the good word at its end */
 .card .txt :is(.focus, .want, .habits) { font-size: 11.5px; line-height: 13px; }   /* (.want, SPEC-v3.4 §2: the newest thing it wants, a line) */

@@ -17,7 +17,7 @@ import uvicorn
 from fastapi import FastAPI, HTTPException, Response, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
 
-from . import actions, body, craft, director, feel, order, life, metrics, mind, physics, radio, songs, story, things, walls
+from . import actions, body, craft, wants, director, feel, order, life, metrics, mind, physics, radio, songs, story, things, walls
 from .tick import Engine, model_brains, stub_brains
 from . import world
 from .world import ROOT, STAGE_WORD, alive, label, load_config, power_on, relation
@@ -81,7 +81,8 @@ def pet_view(p):
               "idle": bool(plan.get("idle"))} if plan else None,
         body=body.doing(cfg, h, p) if cfg["body"]["on"] and not p["sleep"] and not world.busy(p) else None,   # SPEC-v3.3 §1, §5.4
         # SPEC-v3.4: what it wants (in its mind's own words), how practised it is, what it has found out
-        wants=[{"text": w["text"], "what": w["what"], "since": w["since"]} for w in p.get("wants", [])], skills=craft.skills_line(cfg, p), recipes=craft.recipe_lines(cfg, p, 12),
+        wants=[{"text": w["text"], "what": w["what"], "since": w["since"]} for w in sorted(p.get("wants", []), key=lambda w: (
+            w["key"] != ((body.state(p)["now"] or {}).get("want") or ""), w["what"] not in wants.SERVED, -w["since"]))],   # the one its body is about just now first, then those its body can serve skills=craft.skills_line(cfg, p), recipes=craft.recipe_lines(cfg, p, 12),
         focus=focus_view(p), sign=sign_view(p), habits=body.habits(h, cfg, p), react=body.state(p).get("react"), orderly=p["temper"].get("orderly"),
         step=step and step.get("type"), last_plan=p["last_plan"], calls_hour=len(p["calls"]), spring=p["spring"] > 0,
         portrait=p["portraits"][-1] if p["portraits"] else None, old=life.span(cfg, p) - life.days(h, cfg, p) <= 1,

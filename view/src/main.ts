@@ -408,8 +408,8 @@ function cards(s: Snap) {
         doing ? el("span", "doing", el("i", "", "now "), sign, doing) : null,
         focus ? el("span", "focus", el("i", "", "mind on "), focus) : null,
         wish ? el("span", "wish", el("i", "", "wants "), el("q", "", wish)) : null,
-        wants.length ? el("span", "want", wants.at(-1)!) : null,
-        habits.length ? el("span", "habits", el("i", "", habits.length > 1 ? "habits " : "habit "), habits.join("; ")) : null,
+        wants.length ? el("span", "want", wants[0]) : null,   // (the one its body is about just now, if any: the engine sends that first; its habits are in the hover and its mind's panel)
+        habits.length && !wants.length ? el("span", "habits", el("i", "", habits.length > 1 ? "habits " : "habit "), habits.join("; ")) : null,
         animals ? el("span", "", icon("paw", 12), ` ${animals}`) : null));
     // the whole card is the button that follows this pet; "mind" inside it is a button of its own
     li.tabIndex = 0;

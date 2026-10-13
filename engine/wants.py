@@ -91,7 +91,7 @@ def candidates(house, cfg, pet):
     # to make better: somewhere to keep things, a light that is not harsh, a warm thing for a cold room, a thing that did nothing, a tool it lacked
     for r in known:
         if r.get("mess") == 2 and order.full(cfg, r):
-            add("store", r["id"], "you want somewhere to keep things in %s" % r["name"], "made somewhere to keep things in %s" % r["name"], 1.2, room=r["id"])
+            add("store", r["id"], "you want somewhere to keep things in %s" % r["name"], "has somewhere to keep things in %s now" % r["name"], 1.2, room=r["id"])
     night = house["clock"]["phase"] == "night"
     if night and things.light_on(house, cfg, here, harsh=True) and here["type"] not in ("cellar", "storeroom") and not gentle(cfg, here):
         add("glow", here["id"], "you want a light for %s that is not harsh at night" % here["name"], "has a light in %s that is not harsh at night" % here["name"], 1.3, room=here["id"])

@@ -198,8 +198,9 @@ export class Room {
   burst(pet: string, kind: string) {
     const a = this.pets.get(pet);
     if (!a) return;
-    const r = a.rect(), y = r.y - (14 * this.F) / this.K - 8;
-    this.over.spawn(`burst.${kind}`, r.x + r.w / 2, Math.max(this.fx.top + 9, y), { vy: -4, life: 900 });
+    const r = a.rect();
+    // three in a row over its own body (over its name it read as its neighbour's, and one was gone in a blink)
+    for (const [ms, dx, dy] of [[0, 0, 0], [450, -6, 3], [900, 6, -2]]) setTimeout(() => this.over.spawn(`burst.${kind}`, r.x + r.w / 2 + dx, Math.max(this.fx.top + 9, r.y + r.h / 3 + dy), { vy: -5, life: 1100 }), ms);
   }
 
   // ---- a snapshot arrives ----
