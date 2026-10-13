@@ -37,7 +37,14 @@ export type Obj = {
   on?: string; store?: Store; home?: { room: string; on?: string; pos?: Tile };
   // SPEC-v3.4 §3.5: something is planted in it (a pot, a planting bed): what, how far it has grown, and whether it has wilted
   planted?: { what: string; stage: "planted" | "sprout" | "leaves" | "ripe"; wilted: boolean };
+  // SPEC-v3.5 §4.1: it is being built, or was built by the pets: the picture to draw it with, what to call it ("the bench
+  // Lean built"), and, under way, how far along it is (0 to 1); `flat`: it lies on the floor; `glow`: a soft light at night
+  build?: { sprite: string; title: string; progress?: number; flat?: boolean; glow?: boolean; worn?: boolean };
 };
+/** SPEC-v3.5 §4.2: one painted place in a room: a stretch of the north wall or a patch of floor (`at`: its first tile; three
+ *  tiles wide, a floor patch two deep) or a rug (`at`: its name), in the dye's `color` with `pattern` (stripes, dots, border)
+ *  through it in the painter's coat colour (`hue`); `strength` 1 new to 0 faded away. */
+export type Painted = { where: "wall" | "floor" | "rug"; at: Tile | string; color: string; hue: number; pattern: string; by: string; name: string; family: number; tick: number; strength?: number };
 /** An inscription (SPEC-v3.1 §2): `on` is a wall or the name of a thing, `at` how far along the wall, `clarity` 1 new to 0 gone. */
 export type Mark = { id: number; text: string; by: string; by_name?: string; family?: number; on: string; medium: string; tick: number; fresh?: number; at?: number; clarity?: number };
 export type Note = [string, number];   // a pitch of the five-note scale ("low do" … "high la"), and whether it is held long
@@ -54,6 +61,7 @@ export type RoomV = {
   // SPEC-v3.3 §2: how much lies about (0 tidy, 1 a few things, 2 a mess) in the pets' own words, and the places the
   // room has grown ("sleeping corner", "making bench", "keepsake shelf"): a faint tint and a line in hover cards
   mess?: 0 | 1 | 2; mess_says?: string; areas?: { name: string; tiles: Tile[]; on?: string }[];
+  painted?: Painted[];   // SPEC-v3.5 §4.2
 };
 /** `idle` (SPEC-v3.3): every step it decided is done (or it decided none); the thought stays with it and its body carries on. */
 export type Plan = { intention: string; thought: string; expect: string; i: number; why: string; steps: string[]; acting: boolean; idle?: boolean };

@@ -64,7 +64,7 @@ class Stub:
             a, b = r.sample(c["free"], 2)
             return {"type": t, "a": a, "b": b, "recipe": {"name": "joined thing %d" % self.s["n"], "material": pick(c["materials"]), "purpose": "two in one"}}
         if t == "paint":
-            return {"type": t, "wall": pick(COLORS), "floor": pick(COLORS)}
+            return {"type": t, "where": pick(["wall", "floor"] + c.get("rugs", [])), "pattern": pick(["like your coat", "stripes", "dots", "border"])}
         if t == "teach":
             return {"type": t, "target": pick(c["mine"]), "behavior": {"when": pick(WHEN), "do": pick(DO)}}
         if t == "give":

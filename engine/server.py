@@ -20,6 +20,7 @@ from fastapi.staticfiles import StaticFiles
 from . import actions, body, craft, wants, director, feel, order, life, metrics, mind, physics, radio, songs, story, things, walls
 from .tick import Engine, model_brains, stub_brains
 from . import world
+from . import build
 from .world import ROOT, STAGE_WORD, alive, label, load_config, power_on, relation
 
 cfg = load_config(profile=os.environ.get("PET_PROFILE") or None)
@@ -161,6 +162,7 @@ def room_view(r):
                 v["grow"] = o["grow"]
             if "meal" in o["fix"]:
                 v["servings"] = o["servings"]
+        build.view(h, cfg, r, n, o, v)   # SPEC-v3.5 §4: a thing being built or built: its picture, its title, who built it
         if o.get("planted"):   # SPEC-v3.4 §3.5
             v["planted"] = {"what": o["planted"]["what"], "stage": craft.stage(o["planted"]), "wilted": bool(o["planted"].get("wilted"))}
         if o.get("wall"):
@@ -171,7 +173,7 @@ def room_view(r):
             v["store"] = {"cap": None if order.keeps(o) else order.cap(cfg, o), "holds": order.held(r, n), "bits": [s["bit"] for s in r["spots"] if s.get("on") == n],
                           "inside": bool(o.get("fix", {}).get("inside") or cfg["kinds"].get(o.get("made", {}).get("recipe", {}).get("kind"), {}).get("inside"))}
         objs[n] = v
-    return {"id": r["id"], "cell": r["cell"], "type": r["type"], "name": r["name"], "doors": r["doors"], "paint": r["paint"],
+    return {"id": r["id"], "cell": r["cell"], "type": r["type"], "name": r["name"], "doors": r["doors"], "paint": r["paint"], "painted": build.painted(h, cfg, r),
             "shut": [k.split("|")[1] for k, t in h["shut"].items() if k.startswith(r["id"] + "|") and t > h["tick"]],
             "wet": r["wet_until"] > h["tick"], "cold": r["cold_until"] > h["tick"], "lit": things.light_on(h, cfg, r),
             "marks": [dict(m, clarity=round(walls.clarity(cfg, r, m, h["tick"]), 2), by_name=mark_by(m)) for m in r.get("marks", [])],

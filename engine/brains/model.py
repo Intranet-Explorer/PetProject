@@ -31,7 +31,7 @@ WRITTEN = {   # how each action is written, shown only for the actions it can do
     "arrange": '{"type": "arrange", "object": something that can be moved, "near": a thing here, or "here"}',
     "combine": ('{"type": "combine", "a": a made thing, "b": another, "recipe": {"name": up to 24 chars, '
                 '"material": what either of them is like, "purpose": what it is for, up to 80 chars}} (the two become one thing; what kind it is follows from what they were)'),
-    "paint": '{"type": "paint", "wall": %s, "floor": one of the same}' % "|".join(COLORS),
+    "paint": '{"type": "paint", "where": "wall" | "floor" | a rug here, "pattern": "like your coat" | "stripes" | "dots" | "border"} (it uses up the dye you carry, and is in its colour)',
     "teach": ('{"type": "teach", "target": one of your things, "behavior": {"when": %s, "do": %s|change_color:<a color>}}'
               % ("|".join(WHEN), "|".join(d for d in DO if ":" not in d))),
     "give": '{"type": "give", "what": something you carry or a thing of yours, "to": someone here}',
@@ -133,7 +133,7 @@ def schema(ctx):
         "arrange": [one("arrange", object={"enum": c["movable"]}, near=near)] if c["movable"] else [],
         "combine": [one("combine", a={"enum": c["free"]}, b={"enum": c["free"]},
                         recipe=obj(name=text(24), material={"enum": c["materials"]}, purpose=text(80)))] if len(c["free"]) > 1 else [],
-        "paint": [one("paint", wall={"enum": COLORS}, floor={"enum": COLORS})],
+        "paint": [one("paint", where={"enum": ["wall", "floor"] + c.get("rugs", [])}, pattern={"enum": ["like your coat", "stripes", "dots", "border"]})],
         "teach": [one("teach", target={"enum": c["mine"]}, behavior=obj(when={"enum": WHEN}, do={"enum": DO}))] if c["mine"] else [],
         "give": [one("give", what={"enum": list(dict.fromkeys(c["carrying"] + c["bits"] + c["mine"]))}, to={"enum": awake + c["creatures"]})]
         if (awake or c["creatures"]) and (c["carrying"] or c["bits"] or c["mine"]) else [],

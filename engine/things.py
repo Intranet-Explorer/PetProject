@@ -384,6 +384,8 @@ def joined(cfg, recipes, material):
 def room_rule(cfg, room, key, default=None):
     """A number from the room's own rule, as it stands now: a rule can drift once in a lineage (§6.5)."""
     drift = room.get("drift") or {}
+    if key in room.get("rules", {}):   # SPEC-v3.5 §4.1: what was built here changes the room's rule for as long as it is sound (build.settle)
+        return room["rules"][key]
     if key in drift:
         return drift[key]
     return cfg["house"]["rules"].get(room["type"], {}).get(key, default)
