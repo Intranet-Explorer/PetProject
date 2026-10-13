@@ -1862,6 +1862,21 @@ async def main():
         # (a stub alone in a new house: every five minutes it walks far enough and is never stood still, and in nine windows of ten it handles three things. The bar itself, every window, is measured on a copy of the live house with the real model)
         assert out and all(m["walked"] >= watch.WALKED and m["still"] <= watch.STILL and m["handled_ok"] >= 0.9 and m["handled"] >= 2 for m in out.values()), \
             "in five minutes at least three things handled (nearly always) and fifteen tiles walked, and never still for thirty seconds: %s" % {k: {x: v[x] for x in ("handled", "handled_ok", "walked", "still")} for k, v in out.items()}
+    # two houses on one model: the one told to yield holds its call back while the other's mark is there
+    from .tick import Scheduler
+    mark, order_ = Path(tempfile.mkdtemp()) / "model.busy", []
+    first, second = Scheduler(mark), Scheduler(None, mark)
+
+    async def slow():
+        await asyncio.sleep(1.2)
+        order_.append("family")
+
+    async def quick():
+        order_.append("copy")
+    f1 = first.submit(0, slow)
+    assert mark.exists(), "a house with a thought in flight says so"
+    await asyncio.gather(f1, second.submit(0, quick))
+    assert order_ == ["family", "copy"] and not mark.exists(), "the copy's thought waited for the family's: %s" % order_
     print("self-check passed")
 
 

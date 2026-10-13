@@ -10,6 +10,7 @@ import hashlib
 import heapq
 import json
 import logging
+import os
 import tempfile
 import time
 from collections import Counter, deque
@@ -29,11 +30,33 @@ SEEN = {"use": "used the %s", "make": "made a %s", "unmake": "took apart the %s"
 class Scheduler:
     """One model call at a time across every pet, the most pressing first (§11.1)."""
 
-    def __init__(self):
-        self.queue, self.n, self.active, self.most = [], 0, 0, 1
+    def __init__(self, mark=None, yield_to=None):
+        """`mark`: a file kept while this house has a thought waiting or in flight. `yield_to`: another house's such
+        file: while it is there this house holds its own calls back, so a copy on the same model waits its turn
+        behind the living family (13 October 2026). A call already in flight is not stopped."""
+        self.queue, self.n, self.active, self.most, self.mark, self.yield_to = [], 0, 0, 1, mark, yield_to
+        self.note()
 
     def busy(self):
         return bool(self.queue or self.active)
+
+    def note(self):
+        try:
+            if self.mark:
+                self.mark.touch() if self.busy() else self.mark.unlink(missing_ok=True)
+        except OSError:
+            pass
+
+    async def wait_turn(self, most=120.0):
+        """Hold back while the other house is busy; at most two minutes, and not for a mark left by one that has stopped."""
+        t0 = time.monotonic()
+        while self.yield_to and time.monotonic() - t0 < most:
+            try:
+                if time.time() - self.yield_to.stat().st_mtime > 660:
+                    return
+            except OSError:
+                return
+            await asyncio.sleep(0.5)
 
     def submit(self, priority, fn):
         fut = asyncio.get_running_loop().create_future()
@@ -42,6 +65,7 @@ class Scheduler:
         if self.active < self.most:
             self.active += 1
             asyncio.create_task(self.run())
+        self.note()
         return fut
 
     async def run(self):
@@ -50,6 +74,8 @@ class Scheduler:
                 _, _, fn, fut = heapq.heappop(self.queue)
                 if fut.cancelled():
                     continue
+                await self.wait_turn()
+                self.note()
                 try:
                     out = await fn()
                     if not fut.cancelled():
@@ -59,6 +85,7 @@ class Scheduler:
                         fut.set_exception(e)
         finally:
             self.active -= 1   # counted down here, in step with the queue check, so a call queued now starts a worker
+            self.note()
 
 
 class Mind:
@@ -609,7 +636,8 @@ class Engine:
         if mapped:
             h["v32"]["kinds"] = dict(mapped)
             logging.info("v3.2: %d things became kinds: %s", sum(mapped.values()), dict(mapped))
-        self.sched, self.minds, self.db, self.narrator, self.present, self.tasks = Scheduler(), {}, None, None, None, set()
+        other = os.environ.get("PET_YIELD_TO")   # (a copy run beside the living family: the path of the family's data/model.busy)
+        self.sched, self.minds, self.db, self.narrator, self.present, self.tasks = Scheduler(None if self.readonly else self.dir / "model.busy", Path(other) if other else None), {}, None, None, None, set()
         self.sched.most = cfg["model"]["parallel"]
         if self.house["lineage"]:
             self.open_lineage()
