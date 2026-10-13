@@ -187,10 +187,11 @@ def bodies(data, since=0, show=True):
                 ", ".join("%s %d%s" % (p, sum(t.values()), " (%s)" % ", ".join("%s %d" % kv for kv in sorted(t.items())) if t else " NONE") for p, t in sorted(m["traits"].items())) or "nobody about",
                 m["born"], " (%d new: %s)" % (len(m["new"]), "; ".join(m["new"])) if m["new"] else ""))
         born, new = sum(m["born"] for m in out.values()), sum(len(m["new"]) for m in out.values())
-        print("  in all: %d kinds invented over %d days; %d births, %d with something new%s" % (sum(len(m["invented"]) for m in out.values()), len(out), born, new, " (1 in %.1f)" % (born / new) if new else ""))
+        print("  in all: %d kinds invented over %d days (%d with a use, the rest curios); %d births, %d with something new%s" % (
+            sum(len(m["invented"]) for m in out.values()), len(out), sum(1 for v in house.get("invented", {}).values() if v["tick"] > since and v["use"] != "curio"), born, new, " (1 in %.1f)" % (born / new) if new else ""))
         for name, v in house.get("invented", {}).items():
             if v["tick"] > since:
-                print("   %s %s: %s joined with %s; %s; %s" % (v["a"], name, *v["from"], " + ".join("%s %s%s" % (p["material"], p["part"], " on its " + p["at"] if p["at"] else "") for p in v["parts"]), v["does"]))
+                print("   %s %s (%s): %s joined with %s; %s; %s" % (v["a"], name, v["use"], *v["from"], " + ".join("%s %s%s" % (p["material"], p["part"], " on its " + p["at"] if p["at"] else "") for p in v["parts"]), v["does"]))
     return out
 
 
