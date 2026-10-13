@@ -95,7 +95,7 @@ def cold(house, cfg, pet, room, cold, out):
     by = S.get("warm_day", 1.0)
     for e in out if by != 1.0 and house["clock"]["phase"] == "day" else ():
         if e["tag"] == "warm" and e["need"] == "comfort" and e["rate"] < 0 and e.get("thing"):
-            e["rate"], e["feel"] = e["rate"] * by, S["warm_says"].format(thing=e["thing"])
+            e["rate"], e["feel"] = e["rate"] * by, S.get("warm_says", e["feel"]).format(thing=e["thing"])
     if dormant(house, cfg, room):
         feels.append("snow lies over %s: nothing planted out here grows until spring" % room["name"])
     food = loose_food(cfg, room)

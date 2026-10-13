@@ -19,18 +19,18 @@ garden = { petal = 2, seed = 2 }
 eggs = 1
 
 [summer]
-needs = "long days; warm things are too warm by day"
+needs = "warm things are too warm by day"
 warm_day = 1.6
 warm_says = "the {thing} beside you is too warm to be near in the heat of the day"
 
 [autumn]
-needs = "the harvest is heavy; what is not put by before winter spoils"
+needs = "food not put by spoils; winter is next"
 garden = { "fallen leaf" = 4 }
 harvest = 1
 stores = true
 
 [winter]
-needs = "nothing grows outdoors, only under glass; keep warm"
+needs = "only the greenhouse grows; keep warm"
 dormant = true
 warm_day = -1.0
 warm_says = "the {thing} beside you is warm against the winter"

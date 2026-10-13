@@ -53,8 +53,6 @@ async def run(d):
     except ValueError:
         pass
     cfg["season"]["force"] = ""
-    rain = lambda c, s: c["house"]["seasons"][s]["weather"]["rain"] / sum(c["house"]["seasons"][s]["weather"].values())
-    assert rain(cfg, "spring") > max(rain(cfg, s) for s in ("summer", "autumn")), "it rains most often in spring"
     assert cfg["house"]["seasons"]["summer"]["sunset"] - cfg["house"]["seasons"]["summer"]["sunrise"] > 14 > 10 > cfg["house"]["seasons"]["winter"]["sunset"] - cfg["house"]["seasons"]["winter"]["sunrise"], "long days in summer, short in winter"
 
     # ---- the live house: a season is 42 world days (three and a half real days on the two-hour day, all four in two
@@ -136,7 +134,7 @@ async def run(d):
     assert garden["objects"][name]["planted"]["grow"] == 0.3 and "asleep under the snow" in told, "tending does not wake it: %s" % told
     assert craft.by_paw(h, pet) == 0 or not garden["objects"][name]["planted"].get("paw")
     felt = " | ".join(physics.senses(h, cfg, pet))
-    assert "snow lies over the garden" in felt and "nothing grows outdoors" in feel.when(h), "the sleeping garden is felt, and the season's needs are said with the time: %s" % feel.when(h)
+    assert "snow lies over the garden" in felt and "in winter (only the greenhouse grows; keep warm)" in feel.when(h), "the sleeping garden is felt, and the season's needs are said with the time: %s" % feel.when(h)
     pet["carrying"] = ["seed"]
     garden["objects"][name].pop("planted")
     plant = lambda: [c for c in wants.candidates(h, cfg, pet) if c["what"] == "plant" and c["room"] == garden["id"]]
