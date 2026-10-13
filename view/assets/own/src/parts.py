@@ -155,8 +155,8 @@ def sill(p, v):
 
 @part("stick")
 def _(S):
-    p = Pic(S).piece(rect(7, 8, 9, 15)).outline()
-    return p, base_points(p, 11.5, 11.5)
+    p = Pic(S).piece(rect(7, 9, 9, 15)).outline()   # short: what it carries is the thing
+    return p, base_points(p, 12, 12)
 
 
 @part("bowl")
@@ -180,14 +180,14 @@ def _(S):
 
 @part("ring")
 def _(S):
-    p = Pic(S).piece(less(ell(8, 11, 4.15, 4.15), ell(8, 11, 2.4, 2.4))).outline()
-    return p, base_points(p, 11, 11, inside=sill(p, 11))
+    p = Pic(S).piece(less(ell(8, 11.5, 3.65, 3.65), ell(8, 11.5, 1.9, 1.9))).outline()
+    return p, base_points(p, 11.5, 11.5, inside=sill(p, 11.5))
 
 
 @part("frame")
 def _(S):
-    p = Pic(S).piece(less(rect(3, 7, 13, 15), rect(4.2, 8.2, 11.8, 13.8))).outline()
-    return p, base_points(p, 11, 11, inside=sill(p, 11))
+    p = Pic(S).piece(less(rect(3, 8, 13, 15), rect(4.2, 9.2, 11.8, 13.8))).outline()
+    return p, base_points(p, 11.5, 11.5, inside=sill(p, 11.5))
 
 
 @part("cushion")
@@ -229,8 +229,14 @@ def _(S):
 
 @part("tines")
 def _(S):
-    p = Pic(S).piece(either(rect(5, 13, 11, 15), rect(5, 9, 6, 14), rect(7, 9, 9, 14), rect(10, 9, 11, 14))).outline()
-    return top(p)
+    p = Pic(S).piece(either(rect(4, 13, 12, 15), rect(4, 10, 5, 14), rect(7, 10, 9, 14), rect(11, 10, 12, 14))).outline()
+    return p, {"pin": p.bottom(), "at": {"tip": [p.cx, p.row(13)]}}   # a flame given the same tip stands in the fork (EXTRA: carries)
+
+
+@part("spade")
+def _(S):   # flat and broad, its edge rounded: nothing like the blade
+    p = Pic(S).piece(poly((4.8, 9), (11.2, 9), (11.2, 12), (9, 14.9), (7, 14.9), (4.8, 12))).piece(rect(7.5, 9.5, 8.5, 13), flat=3)   # a square edge, shoulders, a rib
+    return top(p.dot(5.6, 9.6, "white").outline())
 
 
 @part("bell dome")
@@ -247,9 +253,10 @@ def _(S):
 
 
 @part("spout")
-def _(S):
-    p = Pic(S).piece(poly((5, 14.2), (5, 12.6), (6.6, 10.4), (8, 10.4), (8, 11.6), (6.4, 14.2))).outline()   # short: it must not reach out of the thing's square
-    return top(p, p.left(13.4))
+def _(S):   # what makes a pot a watering can: a spout rising from low on its side, and a handle arched over its top
+    p = Pic(S).piece(line(1.0, (3, 9.8), (3.6, 7.4), (5.5, 6.2), (7.5, 6.2), (9.4, 7.4), (10, 9.8)), "trim")
+    p.piece(poly((10, 11.5), (11.8, 11.5), (14.6, 8.8), (14.95, 9.9), (12.6, 14.4), (10, 14.4))).outline()
+    return top(p, [int(11 * S / 16), p.row(12.5)])   # its root lies over the pot's side
 
 
 @part("strings")
@@ -263,16 +270,16 @@ def _(S):
 
 @part("wheel")
 def _(S):
-    p = Pic(S).piece(rect(5, 12.9, 11, 14.1), "trim", flat=1)
-    for x in (4.5, 11.5):
-        p.piece(ell(x, 13.5, 1.48, 1.48)).piece(ell(x, 13.5, 0.5, 0.5), "trim", flat=3)
+    p = Pic(S)
+    for x in (4, 12):   # two dark tyres, each with a pale hub
+        p.piece(ell(x, 13, 1.95, 1.95), flat=1).piece(ell(x, 13, 0.8, 0.8), "trim", flat=3)
     p.outline()
-    return top(p, [p.cx, max(y for _, y in p.px)])   # their feet level with the foot of what they carry
+    return top(p, [p.cx, p.row(12.2)])   # low on its corners, most of each wheel under it
 
 
 @part("hook")
 def _(S):
-    p = Pic(S).piece(line(1.05, (7.5, 14.6), (7.5, 13), (9.5, 12), (9.5, 11.2), (8.5, 10.5), (7.2, 10.5), (6.3, 11.5)), "trim").outline()
+    p = Pic(S).piece(line(1.05, (7.5, 14.6), (7.5, 12.6), (9.5, 11.6), (9.5, 10.6), (8.5, 9.9), (7.2, 9.9), (6.3, 10.9)), "trim").outline()
     return top(p)
 
 
@@ -292,8 +299,32 @@ def _(S):
 
 @part("sail")
 def _(S):
-    p = Pic(S).piece(rect(7, 10, 8, 15), "trim", flat=1).piece(poly((8, 10.1), (8, 13.6), (12, 13.6))).outline()
-    return top(p)
+    p = Pic(S).piece(rect(7, 9, 8, 15), "trim", flat=1).piece(poly((8.2, 9.1), (8.2, 13.4), (12.8, 13.4))).piece(poly((6.8, 10.4), (6.8, 13.4), (4.2, 13.4)))   # a mast, a mainsail and a jib
+    return top(p.outline())
+
+
+@part("chimes")
+def _(S):   # three tubes of three lengths; they hang under what holds them (EXTRA: to), their tops over its foot
+    p = Pic(S)
+    for x, y in ((4, 14), (7, 15), (10, 13)):
+        p.piece(rect(x, 9, x + 2, y))
+    p.outline()
+    return top(p, [p.cx, p.row(10)])
+
+
+@part("pad")
+def _(S):   # a cushion to go on something: thick, soft at the corners, tufted
+    p = Pic(S).piece(lambda u, v: ((u - 8) / 5.3) ** 4 + ((v - 13.1) / 2.05) ** 4 < 1)
+    return top(p.dot(5.5, 13.5, "main1").dot(10.5, 13.5, "main1").outline())
+
+
+@part("seeds")
+def _(S):   # a heap, speckled; put inside a bowl it shows over the rim
+    p = Pic(S).piece(both(ell(8, 13, 4.5, 4.1), rect(0, 0, 16, 13)))
+    for (x, y) in list(p.px):
+        p.px[(x, y)] = "glow2" if (x * 3 + y * 5) % 7 == 0 else "main0" if (x * 5 + y * 3) % 7 == 3 else p.px[(x, y)]
+    p.outline()
+    return top(p, [p.cx, min(S - 1, p.bottom()[1] + round(2 * S / 16))])
 
 
 @part("head")
@@ -330,7 +361,15 @@ THING["cloth"] = cloth
 THING["weave"] = wrap(lambda x, y, n: "main%d" % (3 if (x // 2 + y // 2) % 2 else 2), 16)          # the whole of it, woven
 
 # what the composer needs to know about a part that the contract did not say
-EXTRA = {"strings": {"outline": False, "to": {"inside": "face", "side": "face"}}, "wheel": {"to": {"side": "base"}},
+# the parts SPEC-v3.5 §3.0's uses name that the first library did not have
+NEW = {"spade": {"role": "top", "on": ["tip", "top"], "layer": "front"}, "chimes": {"role": "top", "on": ["inside", "top", "tip"], "layer": "front", "sound": "ring"},
+       "pad": {"role": "top", "on": ["top", "tip"], "layer": "front"}, "seeds": {"role": "top", "on": ["inside", "top", "tip"], "layer": "front"}}
+# §3.0: any two things may be combined, so every part a kind gives must have a spot on every base: these go on one more
+ALSO_ON = {"blade": "top", "head": "top", "lid": "tip"}
+# ... and the catalog kinds that give them (and strings and a sail) to an invention, so every use can be reached from two things a pet can make
+SIGNATURE = {"trowel": "spade", "wind chime": "chimes", "mobile": "chimes", "cushion": "pad", "bed-mat": "pad", "treat": "seeds", "blanket": "sail", "drum": "strings"}
+EXTRA = {"strings": {"outline": False, "to": {"inside": "face", "side": "face"}}, "wheel": {"to": {"side": "base"}}, "tines": {"carries": ["tip"]},
+         "chimes": {"to": {"inside": "base", "top": "base", "tip": "side"}},
          "cord": {"clip": True, "to": {"side": "face"}}, "band": {"clip": True, "to": {"side": "face"}}, "studs": {"clip": True, "to": {"side": "face"}},
          "weave": {"clip": True, "to": {"side": "face"}}, "cloth": {"clip": True, "to": {"side": "face"}}}
 
@@ -427,6 +466,13 @@ def main():
     data = json.load(open(path))
     data["palette"] = PALETTE
     data["rules"]["behind"] = ["inside"]
+    for name, entry in NEW.items():
+        data["thing"][name] = dict(data["thing"].get(name, {}), **entry)
+    for name, spot in ALSO_ON.items():
+        if spot not in data["thing"][name]["on"]:
+            data["thing"][name]["on"].append(spot)
+    for kind, sig in SIGNATURE.items():
+        data["kinds"][kind]["signature"] = sig
     names = list(data["thing"])
     assert set(names) == set(THING), set(names) ^ set(THING)
     for S in SIZES:

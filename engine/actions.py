@@ -3,6 +3,7 @@ world before it happens and again when the pet gets there; what it does is decid
 import re
 
 from . import book, craft, feel, genome, life, order, songs, things, walls
+from . import build
 from .world import (BACK, LONG_AGO, add_event, arrived, beside, dist, family, free_tile, generate_room, here, knows, label, moment,
                     power_on, relation, ticks, witness)
 
@@ -139,6 +140,7 @@ def allowed(house, cfg, pet, mem):
     can["put_away"] = any(k > 0 for k in order.stores(cfg, room).values()) and any(not o.get("on") and not order.cap(cfg, o) for o in things.made(room).values())   # anyone's thing: tidying is not taking
     can["take_out"] = any(room["objects"][n].get("on") for n in movable_things)
     can["hang"] = bool(things.wall_slot(house, room)) and any(order.can_hang(cfg, o) for o in things.made(room).values())
+    can["paint"] = build.can_paint(house, cfg, pet)   # SPEC-v3.5 §4.2: only with a dye in its paws
     extra = [a for a in ("put_away", "take_out", "hang") if "arrange" in life.unlocked(house, pet["stage"])] + (["take_name"] if offered(pet) else [])
     if offered(pet):   # only while the visitor has offered it a name it has not taken
         can["take_name"] = True
@@ -256,8 +258,8 @@ def check(a, house, cfg, pet, mem):
         return None if find(house, pet, a.get("near"))[0] else "there is no such place to put it"
     if t == "combine":
         return things.check_combine(a, house, cfg, pet, norm)
-    if t == "paint":
-        return None if a.get("wall") in things.COLORS and a.get("floor") in things.COLORS else "unknown color"
+    if t == "paint":   # SPEC-v3.5 §4.2: with a dye, on a wall, the floor or a rug, in a pattern
+        return build.check_paint(a, house, cfg, pet, norm)
     if t == "teach":
         return things.check_teach(a, house, cfg, pet, norm)
     if t == "give":
@@ -440,6 +442,8 @@ def describe_thing(house, cfg, pet, name):
 
 def fixture_says(fix):
     """What a piece of the house is, in a few words: said to a pet that looks at it, and to the visitor who points at it."""
+    if "site" in fix or "built" in fix:   # SPEC-v3.5 §4.1: a thing being built, or built, and by whom
+        return build.says(fix)
     return ("its pages are full of small writing; it could be asked a question" if fix.get("book") else "a small box with a dial; it can be turned on or off" if fix.get("radio")
             else "a light" if "light" in fix else "something to eat from" if "meal" in fix else "a place to rest" if "rest" in fix
             else "soft to lie on" if "soft" in fix else "something to play with" if "toy" in fix
@@ -522,9 +526,7 @@ def apply(house, cfg, pet, a, mem):
     if t == "combine":
         return things.combine(house, cfg, pet, a, clean, norm)
     if t == "paint":
-        room["paint"] = {"wall": a["wall"], "floor": a["floor"]}
-        moment(house, "painted", "%s painted %s: %s walls, %s floor" % (name, room["name"], a["wall"], a["floor"]), pet["id"], room["id"])
-        return "you painted the walls %s and the floor %s" % (a["wall"], a["floor"]), dict(E["paint"]), "paint"
+        return build.do_paint(house, cfg, pet, a, norm)
     if t == "teach":
         return things.teach(house, pet, a, norm(a["target"]))
     if t == "give":

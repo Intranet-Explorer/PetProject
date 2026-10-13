@@ -4,6 +4,7 @@ like. Its temperament shows only in what is mentioned and how (§8.1). Alongside
 names the packet shows, so a brain's reply can be held to things that are really there."""
 from . import actions, body, craft, feel, genes, invent, life, order, physics, songs, things, walls, wants
 from .world import LONG_AGO, dist, family, here, neighbours, room_type
+from . import build
 
 BUSY = {"observe": "watching the room", "look": "looking at something", "move": "walking", "go": "heading for a door",
         "speak": "speaking", "rest": "resting", "use": "using something", "gather": "picking something up",
@@ -343,6 +344,7 @@ def perceive(house, cfg, pet, mem):
         "stored": [n for n, o in things.made(room).items() if o.get("on") and order.may_move(house, pet, o)],
         "hangable": [n for n, o in things.made(room).items() if order.can_hang(cfg, o)],
         "body": cfg["body"]["on"],
+        "rugs": build.rugs(cfg, room),   # SPEC-v3.5 §4.2: what besides a wall and the floor can be painted
     }
     ctx["kinds"] = invent.offered(house, cfg, pet, ctx["kinds"])   # SPEC-v3.5 §3.3: a kind the house invented, to one who knows how it is made
     return text, ctx

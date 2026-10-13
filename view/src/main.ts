@@ -524,7 +524,7 @@ function fixture(name: string, o: Obj, here: RoomV, s: Snap, shown: HTMLCanvasEl
   const does = Object.keys(FIX).filter((k) => k in fix && fix[k]).map((k) => FIX[k]);
   const said = fix.radio ? s.radio?.said.at(-1) : null;
   return [shown ?? (pic ? sprite(pic, 3) : null), el("div", "",
-    el("p", "", el("b", "", `the ${name}`), state ? el("span", "hint", ` · ${state}`) : null),
+    el("p", "", el("b", "", o.build?.title ?? `the ${name}`), state ? el("span", "hint", ` · ${state}`) : null),
     o.says ? el("p", "", `${cap(o.says)}.`) : null,
     said ? el("p", "", said.text ? `It just said: “${said.text}”` : "Only static just now.") : null,
     fix.book && s.read_glow ? el("p", "", "Someone is reading it.") : null,

@@ -21,6 +21,7 @@ import { clamp, FX, FY, H, idx, inside, OX, OY, onFloor, tileAt, TILE, W } from 
 import { Marks } from "./px/marks";
 import { nearestFree } from "./px/path";
 import { drawnOf, Still } from "./px/still";
+import { paintText, paintTitle } from "./px/built";
 import type { Thing } from "./px/still";
 import { hslInt } from "./px/tint";
 import { Light } from "./px/weather";
@@ -219,8 +220,8 @@ export class Room {
 
     const lay = layout(room.type, () => { this.built = ""; if (this.scene) this.update(this.scene); });
     const keep = this.keep();
-    const key = JSON.stringify([room.id, room.type, lay === undefined, room.areas, Object.entries(room.objects).map(([n, o]) => [n, o.pos, o.state, o.wall, o.on, o.store?.holds, o.servings === 0, o.grow != null && o.grow < 0.35, o.water, o.planted,
-      o.made && [o.made.recipe, o.made.active, o.made.behavior?.do, o.made.worn, !!o.made.heirloom], !!o.memorial]), room.spots, room.paint, room.doors, room.shut, room.wet, snap.power,
+    const key = JSON.stringify([room.id, room.type, lay === undefined, room.areas, Object.entries(room.objects).map(([n, o]) => [n, o.pos, o.state, o.wall, o.on, o.store?.holds, o.servings === 0, o.grow != null && o.grow < 0.35, o.water, o.planted, o.build,
+      o.made && [o.made.recipe, o.made.active, o.made.behavior?.do, o.made.worn, !!o.made.heirloom], !!o.memorial]), room.spots, room.paint, room.painted, room.doors, room.shut, room.wet, snap.power,
       snap.rooms.map((r) => r.type), room.marks, this.K, keep, snap.door_tiles, snap.clock.season]);
     if (key !== this.built) {
       this.built = key;
@@ -614,6 +615,8 @@ export class Room {
       let piece: Still["scenery"][number] | null = null;
       for (const s of still.scenery) if (inside(s.rect, x, y) && (!piece || s.rect.w * s.rect.h <= piece.rect.w * piece.rect.h)) piece = s;
       out.decor = piece?.sprite ?? (!out.pet && !out.creature && !out.mark ? (onTile ? room.paint?.floor && "room.floor" : room.paint?.wall && "room.wall") || undefined : undefined);   // a painted wall or floor says so
+      const pt = out.decor || out.pet || out.creature || out.mark ? -1 : still.paints.findIndex((q) => inside(q.rect, x, y));   // SPEC-v3.5 §4.2: and what the pets painted, by whom
+      if (pt >= 0) out.decor = `paint.${pt}`;
     }
     return out;
   }
@@ -683,7 +686,7 @@ export class Room {
                maker: snap.pets.find((q) => q.id === m.by)?.label ?? null, owner: m.owner_name, heirloom: !!m.heirloom, worn: m.worn, purpose: m.recipe.purpose,
                does: m.behavior ? `${m.behavior.do} when ${m.behavior.when}` : null, state: th.obj.state ?? null, notes: this.order(th.name, th.obj) };
     }
-    if (th) return { what: th.obj.memorial ? "stone" : "fixture", title: th.obj.memorial ? "a memorial stone" : `the ${th.name}`, sprite: th.canvas, name: th.name, text: th.obj.memorial?.text, does: th.obj.says ?? null,
+    if (th) return { what: th.obj.memorial ? "stone" : "fixture", title: th.obj.memorial ? "a memorial stone" : th.obj.build?.title ?? `the ${th.name}`, sprite: th.canvas, name: th.name, text: th.obj.memorial?.text, does: th.obj.says ?? null,
                      state: th.obj.fix?.light && !snap.power ? "dark: the power is out" : th.obj.state ?? null, notes: this.order(th.name, th.obj) };
     if (t.object && room.objects[t.object]) return { what: "fixture", title: `the ${t.object}`, sprite: null, name: t.object, state: room.objects[t.object].state ?? null, does: room.objects[t.object].says ?? null,
                                                      notes: this.order(t.object, room.objects[t.object]) };
@@ -696,6 +699,8 @@ export class Room {
       return { what: "door", title: to?.type ? `the door to ${to.name}` : "a door nobody has been through", sprite: null, state: room.shut.includes(t.door) ? "stuck shut" : to?.type ? "open" : "shut",
                text: to?.type ? `it leads to ${to.name}` : "nobody knows yet what is behind it" };
     }
+    const pt = t.decor?.startsWith("paint.") ? still.paints[Number(t.decor.slice(6))] : null;
+    if (t.decor?.startsWith("paint.")) return pt ? { what: "scenery", title: paintTitle(pt.p), sprite: null, text: paintText(pt.p), rect: undefined } : null;
     if (t.decor === "room.wall" || t.decor === "room.floor") { const wall = t.decor === "room.wall"; return { what: "scenery", title: wall ? "the wall" : "the floor", sprite: null, text: `painted ${wall ? room.paint.wall : room.paint.floor}` }; }
     if (t.decor) return { what: "scenery", title: sceneryName(t.decor), sprite: canvasOf(t.decor), text: "part of the room" };
     return null;

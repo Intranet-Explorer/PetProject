@@ -243,8 +243,14 @@ all on a running house at `/parts.html`; check them with `uv run python -m engin
   base, drawn where it is; each other is set with its `pin` on the base's `at` point for the spot it was given (`to`
   sends a spot to another point: a wrap on the side goes to the middle of the `face`). A part on a spot in
   `rules.behind` is drawn behind the base, so it shows over a rim or through a hole; a part with `clip` is painted
-  only on the base's own body; a part with `"outline": false` has no line of its own. The whole stands in the middle
+  only on the base's own body; a part with `"outline": false` has no line of its own. A part that `carries` a spot
+  has an `at` point of its own for it: a later part given the same spot stands there (a flame in a fork). The whole stands in the middle
   of the bottom of a square of `rules.px[size]` pixels, and anything with a part that has `glow` gets a soft halo.
+- What an invention may be is in `uses.json` (SPEC-v3.5 §3.0): each use's allowed `base` parts and the parts it adds.
+  Every part a use adds is the `signature` of some kind in `kinds`, so the use can be reached from two things a pet
+  can make, and every signature part has a spot on every base, so any two things make at least a curio (the first
+  one's base, the other's signature part on the first spot of its `on` list that the base has free).
+  `/parts.html#uses` and `#curios` show them all.
 - `body.slots.<slot>.values.<value>.frames`: a body part's picture from each side at each size (`front.l`, `side.s`
   …: the side view faces right; `s` is for a body under `body.small` pixels wide; a mouth has one for each thing a
   face does with it). `layer`: behind the body (it grows out of it), front, or on (only where the body is). `pair`:
