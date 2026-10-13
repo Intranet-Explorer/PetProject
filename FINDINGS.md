@@ -497,3 +497,54 @@ walked, and never 30 s in one spot outside a resting pose. Each row is the worst
 
 Not measured: the live house itself. In turbo the world waits while a thought is thought, so the copy's bodies
 had less of the time than the live house's will.
+
+## v3.4 Part B: wants, skills, making by discovery (12 October 2026). Not deployed
+
+Two world days on a copy of the live house with the real model (turbo, the live house paused), after one shorter
+run that was stopped at 1.3 days and adjusted. Day 36 is the evening the copy began on.
+
+| SPEC-v3.4 §0 | bar | day 37 | day 38 |
+|---|---|---|---|
+| wants fulfilled, each pet | 2 a day | Lean 5, Purple Camo 6, Sven 5 (Grey Light 1, and died of old age that day) | Lean 2, Purple Camo 4, Sven 3, grey seed 2 (hatched that day) |
+| discoveries, house-wide | 2 a day | 5 | 4 |
+| things made that repeat a kind and material | under half | 5 of 12 | **7 of 12** |
+| the book asked | once a day | 1 | 1 |
+| the box in a thought, a question or a telling | once a day | 19 | 5 |
+| thoughts per pet | not 10% up on 38 to 42 | 27 to 36 | 23 to 27 by 20:30 |
+| things handled, worst five minutes | 3 | **Purple Camo 1, Lean 2** (97% and 99% of their windows met it); Sven 3 | **Sven 2** (99%); the other three 3 |
+| tiles walked, worst five minutes | 15 | 19 to 26 | 15 to 28 |
+| longest still | 30 s | 24 s | 24 s |
+| a tool made | by the end of day three | none | none |
+| food grown and eaten | by the end of day four | none planted | none planted |
+
+- **Two bars missed.** *Repeats:* on the second day seven of twelve things made were a kind and material their
+  maker had made before, nearly all charms (Lean made its fifth springy charm). The pets are told "you have made
+  this before; it doesn't feel new", and it did not stop them. *Things handled:* one or two pets a day had a
+  five-minute window with one or two things handled, where a want had taken them across the house; after errands
+  were held back until a body had handled three things lately, day 38 had one such window (Sven's).
+- **Two bars not reached in two days, and not on the way.** Nobody made a tool and nobody planted anything. Purple
+  Camo wanted "to make something to dig with" and made a hard sculpture it called a digging stick, "to dig in the
+  garden or move earth": it had the want and not the material. Nobody warmed clay. Two of the house's own beds
+  ripened and were eaten; that is not food the family grew.
+- **The minds take the wants up.** Of 206 thoughts in which a mind was shown its wants, about two in three touched
+  one in the thought, the focus or the steps (a rough count, by shared words). Some act at once ("I want to test
+  what water does to the feather I am carrying, so I must go to the pond room"); some hold a want without acting
+  ("By holding the wanting for 'South Door' and the mystery of 'Indonesia' without acting on them, I let the hour
+  pass"); some turn one aside for a project of their own.
+- **Ten things were found out**, in order: cloth, warmed, makes tinder; reed, warmed, makes dry reed; wax, warmed,
+  makes clear wax; a candle can be made of clear wax; vine, soaked, makes supple reed; fluff, pressed, makes felt;
+  something hard joined with something springy snaps back; moss, warmed, makes tinder; string, woven, makes rope;
+  wire, woven, makes wire mesh. Six by a mind's own `process` or `combine`, four by a body that had waited for its
+  mind.
+- **The first run's lesson.** Minds try warming more than anything (a lit lamp is in most rooms), and the table
+  answered most warming with "it grew warm and that was all": one discovery in a day. Seven rules were added so
+  that warmth dries what the attic's air dries, and the second run found five on its first full day.
+- **The box and the book.** Each pet picked up words from the box ("association", "indonesia", "worldwide",
+  "heavyweight") and wanted to know them; two questions reached the book ("what is association", which found a
+  list of shooting sports organisations, and "What is worldwide?", which found "Worldwide"); two pets told another
+  what the box had said.
+- **The fresh-eyes watch** of day 37: "no standing about; the pets move and handle things constantly", six things
+  found out and a candle made while it watched, and the top line made those plain "without being too much". What
+  each pet was trying to do was plain for one pet, guessable for one, and not for two: the card showed the newest
+  want, cut short, in grey, where the pet was about another. Changed since: the card shows the want its body is
+  about, whole, and the burst lasts longer and sits over the pet it belongs to. Not watched again.
