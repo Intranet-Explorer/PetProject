@@ -1,5 +1,5 @@
 {
- "about": "SPEC-v3.5 \u00a73.0: what an invention can be. An invented kind is one of these uses: its base part is one of `base`, and it has one part from each list in `add` (part names from parts.json); `may` lists a part it may also carry between the two (a fork under the flame). Nothing else is added: decoration is the material's. A combination that fits no use makes the larger kind, as before. `does` is what it does in the house; the engine's rule for it is keyed by the use's name. More uses can be added here.",
+ "about": "SPEC-v3.5 \u00a73.0: what an invention does. Any two things may be combined into a new kind. If its base part is one of a use's `base` and it has one part from each list in `add` (part names from parts.json; `may` lists a part it may also carry), it is that use and has that use's effect: `does`, and the engine's rule keyed by the use's name. If it fits no use it is a curio: drawn from both things' parts, named by the pet, with its materials' properties and no special effect. More uses can be added here.",
  "uses": {
   "carried light": {
    "base": [

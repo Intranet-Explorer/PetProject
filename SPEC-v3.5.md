@@ -119,7 +119,10 @@ These are measured on a copy of the live house with the real model (in turbo whe
 **Why:** discovery should be able to produce new things, not only new materials and properties. A thing invented in one family should exist only in that house.
 
 ### 3.0 Amendment (Tyler, 13 October): inventions must have a use
-The parts preview's random sheet showed what parts can do with no meaning behind them: "teal ring + brown cloth + blue strings". That is a style test, but nothing in §3.1 stopped the house filling with things like it. So an invented kind must be one of a fixed set of **uses**, each with a parts template and a real effect in the house. A combination that fits no use doesn't make a new kind; it makes the larger kind, as now.
+The parts preview's random sheet showed what parts can do with no meaning behind them: "teal ring + brown cloth + blue strings". That is a style test, but nothing in §3.1 stopped the house filling with things like it. The difference that matters: the random sheet combined parts nobody chose. In the house, a pet chooses what to put together, and any combination is allowed. What the uses decide is what the result **does**:
+
+- **If it fits a use** (below), it's a new kind with that use's effect. A fork with a torch on it is a carried light.
+- **If it fits no use,** it's still a new thing: drawn from the two things' parts, named by the pet, with its materials' properties, but no special effect. It's a **curio**, like a bell sewn onto a cushion. Curios are kept, given and inherited like keepsakes, and can be fed to the vending machine (§4.3).
 
 | Use | Parts (base + what's added) | What it does in the house |
 |---|---|---|
@@ -141,12 +144,16 @@ The parts preview's random sheet showed what parts can do with no meaning behind
 | keepsake | ring, disc or block + gem, studs or band | no use but meaning: kept, given, inherited |
 
 - **Decoration stays in the material.** Studs, bands and colour come from the material and the maker, never as a random extra part.
-- **The parts preview's random sheet** is replaced by one sheet per use, showing it in five materials. A reviewer should say what each is for.
+- **The parts preview's random sheet** is replaced by two sheets:
+  - one per use, showing it in five materials;
+  - one of curios made from real pairs of existing kinds (fork + torch, bell + cushion, basket + wheel), not random parts.
+  
+  A reviewer should say what each use is for, and recognise both halves of each curio.
 - **The pet still names it** ("night fork" is a carried light), and the use decides what it does.
 - More uses can be added later in data (`uses.toml`).
 
 ### 3.1 When a new kind is born
-A new kind is created when a pet **combines** or **makes** with a recipe the house hasn't seen, **and** the result fits one of the **uses** in §3.0. Otherwise the result is the larger kind, as now.
+A new kind is created whenever a pet **combines** two things in a way the house hasn't seen. It gets a use if it fits one (§3.0); otherwise it's a curio.
 
 ### 3.2 What it is and does
 - **Its parts:** the base comes from the sturdier or larger thing. The other thing gives its **signature part** (the torch its flame, the bell its dome, the basket its weave), placed on the base's free attach spot. Up to 3 parts in all.
