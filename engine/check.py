@@ -1020,17 +1020,17 @@ async def main():
         glow["made"]["heirloom"] = None
         r = await do(e8, po, {"type": "combine", "a": "glow", "b": "ring-a", "recipe": {"name": "ringing light", "material": "noisy", "purpose": "both"}})
         both = room8["objects"]["ringing light"]["made"]["recipe"]
-        assert not r[0]["reason"] and both["kind"] == "mobile" and both["color"] == "blue" and both["size"] == 2 and "parts" not in both, both
-        assert any(m_["text"] == "Po joined a jar and a bell into a mobile it calls 'ringing light'" for m_ in h8["moments"][-3:]), h8["moments"][-1]["text"]   # (SPEC-v3.4: and what came of it, something bright and noisy, is a moment after it)
+        assert not r[0]["reason"] and both["kind"] == "ringing light" and both["color"] == "blue" and both["size"] == 2 and "parts" not in both, both
+        assert any(m_["text"] == "Po joined a jar and a bell into a ringing light it calls 'ringing light'" for m_ in h8["moments"][-3:]), h8["moments"][-1]["text"]   # (SPEC-v3.4: and what came of it, something bright and noisy, is a moment after it)
         assert not walls_.marks(room8), "what was written on a thing goes when the thing does"
         await e8.tick()
         assert e8.db.execute("SELECT count(*) FROM inscriptions WHERE what='gone with the thing'").fetchone()[0] == 1
         last = h8["acts"][-1]
-        assert last["type"] == "combine" and last["ok"] and last["what"] == "ringing light" and last["kind"] == "mobile" and last["from"] == ["glow", "ring-a"] and last["n"] == h8["n"]["act"]
+        assert last["type"] == "combine" and last["ok"] and last["what"] == "ringing light" and last["kind"] == "ringing light" and last["from"] == ["glow", "ring-a"] and last["n"] == h8["n"]["act"]
         assert story_.now(h8, c8).endswith("Not long ago, Bo hatched."), "a birth is in the headline for a while: %s" % story_.now(h8, c8)
         h8["moments"] = [m_ for m_ in h8["moments"] if m_["kind"] not in ("hatched", "storm", "power", "death") and not m_["kind"].startswith("arrival")]
         line = story_.now(h8, c8)
-        assert line.startswith("Po, an old one, is ") and "just joined two things into a blue mobile." in line and not re.search(r"\d|youngling|hatchling|elder\b", line), line
+        assert line.startswith("Po, an old one, is ") and "just joined two things into a blue ringing light." in line and not re.search(r"\d|youngling|hatchling|elder\b", line), line
         e8.close()
 
         # ---- §3.2: a house from before kinds. Every thing becomes a kind, once, and nothing else about it changes ----
@@ -1877,8 +1877,14 @@ async def main():
     assert mark.exists(), "a house with a thought in flight says so"
     await asyncio.gather(f1, second.submit(0, quick))
     assert order_ == ["family", "copy"] and not mark.exists(), "the copy's thought waited for the family's: %s" % order_
-    print("self-check passed")
 
 
 if __name__ == "__main__":
     asyncio.run(main())
+    # SPEC-v3.5 §7.1: each part's own checks (parts, bodies and inventions, building, seasons, the machine), each a module that can be run alone
+    import subprocess
+    import sys
+    for name in ("check_parts", "check_bodies", "check_build", "check_season", "check_machine"):
+        if (Path(__file__).parent / (name + ".py")).exists():
+            subprocess.run([sys.executable, "-m", "engine." + name], check=True)
+    print("self-check passed")
