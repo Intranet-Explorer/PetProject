@@ -142,7 +142,7 @@ def born(house, cfg, pet, olds, r, meets):
         if meets:   # (where nothing emerged, it is told what kind it is as the joining is: things.combine)
             add_event(house, pet, said(house, again))
         return again
-    taken = set(cfg["kinds"]) | set(inv) | set(cfg["house"]["bits"]) | {x.get("kind") for x in recs} | {x["name"] for x in recs}
+    taken = set(cfg["kinds"]) | set(inv) | set(cfg["house"]["bits"]) | {f["name"] for t in cfg["house"]["rooms"].values() for f in t["fixtures"]} | {x.get("kind") for x in recs} | {x["name"] for x in recs}
     own = name and name not in taken and purpose and purpose not in [x.get("purpose", "").strip().lower() for x in recs]
     if not made or not name or name in taken or not (meets or own) or (recs[0].get("kind") == recs[1].get("kind") and not meets) or today(house, cfg) >= cfg["invent"]["per_day"]:
         return None

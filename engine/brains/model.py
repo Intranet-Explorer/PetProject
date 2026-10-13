@@ -30,7 +30,7 @@ WRITTEN = {   # how each action is written, shown only for the actions it can do
     "unmake": '{"type": "unmake", "target": a made thing that is yours to take apart}',
     "arrange": '{"type": "arrange", "object": something that can be moved, "near": a thing here, or "here"}',
     "combine": ('{"type": "combine", "a": a made thing, "b": another, "recipe": {"name": up to 24 chars, '
-                '"material": what either of them is like, "purpose": what it is for, up to 80 chars}} (the two become one thing; what kind it is follows from what they were)'),
+                '"material": what either of them is like, "purpose": what it is for, up to 80 chars}} (the two become one thing; what kind it is follows from what they were, and if nobody here has made the like it is a new kind of thing, known by the name you give it: name it for what it does)'),
     "paint": '{"type": "paint", "wall": %s, "floor": one of the same}' % "|".join(COLORS),
     "teach": ('{"type": "teach", "target": one of your things, "behavior": {"when": %s, "do": %s|change_color:<a color>}}'
               % ("|".join(WHEN), "|".join(d for d in DO if ":" not in d))),
@@ -255,24 +255,11 @@ class Model:
         return parse(await asyncio.to_thread(self.chat, ask, night_schema(asks, belief_ids, tellers), True, self.cfg["night_tokens"], 0.7, "night")) or {}
 
     async def body(self, body, options, portrait):
-        """§8: once grown, a picture of itself. (§9.3, picking one of three ways its body can change, went with SPEC-v3.5:
-        with no `options` it is asked for the picture alone.)"""
+        """§8: once grown, a picture of itself. (§9.3, picking one of three ways its body could change in the night, went
+        with SPEC-v3.5: a body is settled at birth. `options` is always empty now; the shape of the call is kept.)"""
         part = obj(shape={"enum": SHAPES}, size={"enum": [1, 2, 3]}, color={"enum": COLORS}, at={"enum": PLACES})
-        if not options:
-            ask = 'This is your body: %s.\n\nReply with one JSON object and nothing else: {"portrait": [<a picture of yourself as you see yourself, from up to 8 parts, each %s>]}' % (body, PART)
-            return parse(await asyncio.to_thread(self.chat, ask, obj(portrait={"type": "array", "items": part, "minItems": 1, "maxItems": 8}), False, None, 0.7, "body")) or {}
-        shape = obj(choice={"enum": [1, 2, 3]}, reason=text(200))
-        ask = ("This is your body: %s.\nWhile you sleep it can change in one of these ways:\n%s\n\n"
-               'Reply with one JSON object and nothing else: {"choice": <1, 2 or 3>, "reason": "<short>"'
-               % (body, "\n".join("%d. %s" % (i + 1, o) for i, o in enumerate(options))))
-        if portrait:
-            shape["properties"]["portrait"] = {"type": "array", "items": part, "minItems": 1, "maxItems": 8}
-            shape["required"].append("portrait")
-            ask += ', "portrait": [<a picture of yourself as you see yourself, from up to 8 parts, each %s>]' % PART
-        reply = parse(await asyncio.to_thread(self.chat, ask + "}", shape, False, None, 0.7, "body")) or {}
-        if reply.get("choice") not in (1, 2, 3):
-            raise ValueError("no usable body choice: %r" % reply)
-        return reply
+        ask = 'This is your body: %s.\n\nReply with one JSON object and nothing else: {"portrait": [<a picture of yourself as you see yourself, from up to 8 parts, each %s>]}' % (body, PART)
+        return parse(await asyncio.to_thread(self.chat, ask, obj(portrait={"type": "array", "items": part, "minItems": 1, "maxItems": 8}), False, None, 0.7, "body")) or {}
 
     async def chronicle(self, day, lines):
         """§9.4: the house's day told as one paragraph. Not a pet's voice; nothing here reaches a pet."""

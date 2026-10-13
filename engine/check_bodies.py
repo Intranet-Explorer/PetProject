@@ -89,6 +89,7 @@ async def traits(d):
         await eng.tick()
     m, plain = eng.minds[pet["id"]], dict(pet["genome"])
     assert set(START) <= set(plain) and not genome.parts(plain), "a founder is plain"
+    assert any(e.startswith("your body is plain and smooth") for _, e in pet["events"]) and pet["body_day"] == h["clock"]["day"], "on the day it hatches it sees its own body: %s" % pet["events"]
     noted = lambda t: [x for x in h.get("fresh_traits", []) if x["trait"] == t] or eng.db.execute("SELECT count(*) FROM traits WHERE pet = ? AND trait = ?", (pet["id"], t)).fetchone()[0]
     # thick fur: the cellar's cold and the season's wear on it less, and it feels its fur do it
     room = h["rooms"][pet["room"]]
@@ -178,7 +179,7 @@ async def traits(d):
     room["type"] = was
     pet["genome"].update(plain)
     # every body: once a day, on waking, it sees itself and feels how it slept
-    pet["news"], pet["events"], pet["needs"]["comfort"] = ["woke"], [], 50.0
+    pet["news"], pet["events"], pet["needs"]["comfort"], pet["body_day"] = ["woke"], [], 50.0, None
     genes.live(h, cfg, pet)
     assert pet["events"][0][1].startswith("your body is plain and smooth") and genes.T["curled"]["feel"] in pet["events"][1][1] and pet["needs"]["comfort"] == 50.0 + genes.T["curled"]["comfort"] and noted("curled")
     genes.live(h, cfg, pet)

@@ -1,4 +1,4 @@
-"""How alive is the house (SPEC-v3.3 §0, §8; SPEC-v3.4 §0)? The §0 numbers, per pet per world day, from a house's own log.
+"""How alive is the house (SPEC-v3.3 §0, §8; SPEC-v3.4 §0; SPEC-v3.5 §0)? The §0 numbers, per pet per world day, from a house's own log.
 
     uv run python -m engine.alive DATA_DIR [--since TICK]                    # measure what its log already holds
     uv run python -m engine.alive DATA_DIR --stub DAYS [--profile v31check]  # first live it on with stub brains (a COPY only)
@@ -158,6 +158,42 @@ def purpose(data, since=0, show=True):
     return out
 
 
+def bodies(data, since=0, show=True):
+    """SPEC-v3.5 §0, by world day from a house's own log: the kinds invented (and their names), the body-trait sense
+    lines each pet felt (a pet is counted on the days it did anything; the same trait is noted once a world hour at
+    most), and the births, with those that brought something new. Returns {day: {invented, traits, born, new}}."""
+    db = sqlite3.connect("file:%s?mode=ro" % next(Path(data).glob("lineage-*/lineage.db")), uri=True)
+    house = json.loads((Path(data) / "house.json").read_text())
+    names = dict(db.execute("SELECT pet, coalesce(name, pet) FROM pets"))
+    names.update({i: p.get("name") or i for i, p in house["pets"].items()})
+    out = {}
+    day = lambda d: out.setdefault(d, {"invented": [], "traits": {}, "born": 0, "new": []})
+    for d, kind, text in db.execute("SELECT day, kind, text FROM moments WHERE tick > ? AND kind IN ('invented', 'mutation', 'hatched') ORDER BY tick", (since,)):
+        if kind == "hatched":
+            day(d)["born"] += 1
+        else:
+            day(d)["invented" if kind == "invented" else "new"].append(text)
+    for d, pet in db.execute("SELECT DISTINCT day, pet FROM steps WHERE tick > ? UNION SELECT DISTINCT day, pet FROM sleeps WHERE tick > ?", (since, since)):
+        day(d)["traits"].setdefault(names.get(pet, pet), {})
+    if db.execute("SELECT count(*) FROM sqlite_master WHERE name = 'traits'").fetchone()[0]:   # (a log from before v3.5 has no such table)
+        for d, pet, trait, n in db.execute("SELECT day, pet, trait, count(*) FROM traits WHERE tick > ? GROUP BY 1, 2, 3", (since,)):
+            day(d)["traits"].setdefault(names.get(pet, pet), {})[trait] = n
+    if show and out:
+        print("by world day: kinds invented (the bar: at least 1); body-trait lines felt by each pet (the bar: at least 1 each); births, and those with something new (about 1 in 12)")
+        for d in sorted(out):
+            m = out[d]
+            print("  day %d: invented %d%s | traits %s | births %d%s" % (
+                d, len(m["invented"]), " (%s)" % "; ".join(t.split(" invented the ")[-1].split(":")[0] for t in m["invented"]) if m["invented"] else "",
+                ", ".join("%s %d%s" % (p, sum(t.values()), " (%s)" % ", ".join("%s %d" % kv for kv in sorted(t.items())) if t else " NONE") for p, t in sorted(m["traits"].items())) or "nobody about",
+                m["born"], " (%d new: %s)" % (len(m["new"]), "; ".join(m["new"])) if m["new"] else ""))
+        born, new = sum(m["born"] for m in out.values()), sum(len(m["new"]) for m in out.values())
+        print("  in all: %d kinds invented over %d days; %d births, %d with something new%s" % (sum(len(m["invented"]) for m in out.values()), len(out), born, new, " (1 in %.1f)" % (born / new) if new else ""))
+        for name, v in house.get("invented", {}).items():
+            if v["tick"] > since:
+                print("   %s %s: %s joined with %s; %s; %s" % (v["a"], name, *v["from"], " + ".join("%s %s%s" % (p["material"], p["part"], " on its " + p["at"] if p["at"] else "") for p in v["parts"]), v["does"]))
+    return out
+
+
 def clutter(data, since=0, show=True):
     """What lay about in each room at each world hour since `since` (the house notes it: director.hourly): {room: [n, ...]}.
     Tidying that works shows as numbers that fall over a world day and stay down."""
@@ -209,4 +245,5 @@ if __name__ == "__main__":
     since = asyncio.run(stub(a.data, a.stub, a.profile)) if a.stub else a.since
     measure(a.data, since)
     purpose(a.data, since)
+    bodies(a.data, since)
     clutter(a.data, since)

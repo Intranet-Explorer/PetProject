@@ -204,14 +204,14 @@ def own(house, pet):
 
 
 def live(house, cfg, pet):
-    """Each waking tick: what its body does for it that needs no deciding. On waking, once a day, it sees its own body
-    and feels how it slept; long ears catch what is said, sung and broadcast next door; long legs, whiskers and a small
+    """Each waking tick: what its body does for it that needs no deciding. On waking (or hatching), once a day, it sees
+    its own body and feels how it slept; long ears catch what is said, sung and broadcast next door; long legs, whiskers and a small
     body are felt when they have just been of use."""
     from . import craft, songs
     from .actions import bump, handle
     g, tick = pet["genome"], house["tick"]
     since, pet["body_at"] = max(pet.get("body_at", tick - 1), tick - 3), tick   # (what happened on the tick before is whole by now)
-    if "woke" in pet["news"] and pet.get("body_day") != house["clock"]["day"]:
+    if {"woke", "hatched"} & set(pet["news"]) and pet.get("body_day") != house["clock"]["day"]:
         pet["body_day"] = house["clock"]["day"]
         add_event(house, pet, own(house, pet))
         if has(g, "curled"):
