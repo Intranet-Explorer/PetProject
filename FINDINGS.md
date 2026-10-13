@@ -572,3 +572,35 @@ Four pets by the end of it: Purple Camo died of old age at 14:40.
   music room has six made things on its floor (two baskets, a box Sven made that day, two heirlooms by Garry's
   stone, one loose lamp). A body took something out of a box and looked at it 41 times, and each ended with it back.
 - 155 model calls, none failed; no errors in the engine's log.
+
+## Wants that lead somewhere: the first world day (13 October 2026)
+
+Deployed at 11:27 (tick 50135, day 44 at 18:14); measured to tick 51950, day 45 at 18:10. Five pets by the end:
+Petal's Rest laid an egg at 08:06 and Grey Light's Hum hatched at 10:06.
+
+- **The first tool: a trowel, by Lean, day 45 at 09:54.** Lean planted a seed by paw at 07:30 and was told
+  something to dig with would plant deeper. Its body went to the attic; its mind asked the book "what is a beetle
+  made of and how do I make a digging tool?" and read the Digging page. It thought "The text in the book says fire
+  makes clay into a tool. I have clay and a lantern", warmed the clay and made a brown trowel, 'seed digger'. From
+  the reading to the tool was one world hour. The three seeds planted after that went in with the trowel.
+- **No carver, by choice.** Rain Rest's body did both steps: fired clay at 19:00 and again at 13:00, a sharp stone
+  at 12:00. Each time its mind put them down: "the urge to carve is strong, but my beliefs say that making prevents
+  the mutual stopping I seek." It dropped 23 things in the day and wrote a belief about open paws.
+- **Planted: all five beds.** Tomato vine (Sven, by paw, 20:48), bean row (Lean, by paw, 07:30), melon bed and
+  berry bush (Petal's Rest, 13:18 and 14:54), herb patch (Lean, 15:54). **Picked: four.** Rain Rest ate from the
+  melon bed, Lean from the herb patch, Petal's Rest from the berry bush; Lean, just fed, picked the bean row and
+  left all of it for the others.
+- **The book, four questions.** Lean: "what is resin" (Resin), the digging question (Digging), "what is mouse"
+  (Mouse). Petal's Rest: "what is seed" (Seed), and an hour later it soaked one. Two were asked by the body alone
+  and two by a mind whose body had brought it to the book. No forecast word came up: the four forecasts
+  said rain and grey skies. "Reef", from the news, is on Petal's Rest's list of words it does not know.
+- **Repeats: 2 of 6 things made** were a kind and material the maker had made before (6 of 11 the day before). No
+  make was turned away by the three-day rule; minds were not offered the closed pairs. Five makes failed for other
+  reasons, two of them Lean trying for a finer trowel without fired clay in its paws.
+- **Eight things found out**, five of them by a body carrying out a step or a try (fired clay, sharp stone, clay
+  tile, ink block, dry leaf) and three by a mind (that a seed grows, sprouting seed, the trowel).
+- **A fault, fixed in the code and not yet running.** A hatchling cannot read, but Grey Light's Hum was drawn to the
+  book and told it could ask "what is vine". It asked the room aloud instead, and Lean answered: "Vine is a long
+  green stem that climbs. It holds on to things." One too young to read is no longer drawn.
+- 149 model calls, none failed; no errors in the engine's log. Sven, an elder, handled two things in its slowest
+  five minutes where the body measure asks for three.
