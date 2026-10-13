@@ -9,12 +9,14 @@ restock = 2               # of each, by the delivery every morning
 free = 2                  # what it gives each pet in a world day
 bits = 3                  # bits fed for one material back (a made thing is one for one)
 lit_seconds = 8           # how long its lights stay up after it gives, takes or is stocked
-short = 2                 # with fewer than this many of a material lying about in the rooms a pet knows, the machine is where it goes for it
+short = 3                 # with fewer than this many of a material lying about in the rooms a pet knows, the machine is where it goes for it
 spare_days = 2            # a thing of its own lying about that nobody has touched this long is spare: something to feed to the machine
 spare_kind = 3            # ... and so is one where a room has this many of the kind (its third nest) ...
 spare_kind_days = 0.5     # ... once it has lain untouched this long: nothing just made is spare
+stored_days = 5           # a thing of its own put away on or in something, untouched this long, is spare too: one such a day from each pet
+stored_weight = 0.6       # ... wanted fed this much less than one that lies about
 feed_weight = 2.0         # how much a spare thing is wanted fed (the orderly lean toward it, like any want of theirs)
-bits_weight = 0.8         # ... and three loose bits lying about, beside a spare thing
+bits_weight = 0.8         # ... and three loose bits lying about in some other room than the machine's, beside a spare thing
 peek_weight = 1.2         # how much a pet with little in its paws to make anything of wants to see what the machine has
 
 # What a fed thing is like decides what the machine offers for it (a thing that came of two natures meeting offers

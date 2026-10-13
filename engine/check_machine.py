@@ -212,7 +212,7 @@ async def run(d):
     assert machine.view(h, cfg) == {"stock": S["stock"], "limit": M["limit"], "materials": SIX, "room": sr["id"]}
 
     # ---- wants: the machine is where a base material is to be had when none lies about; a spare thing is wanted fed; little in its paws, it wants to look ----
-    at(eng, 10, h["clock"]["day"] + 1)
+    at(eng, 10, h["clock"]["day"] + 10)
     go(nursery)
     pet.update(wants=[], wanted={}, gathered={}, tried={}, rooms={nursery["id"]: 0, sr["id"]: 0, cellar["id"]: 0})
     for r in (nursery, sr, cellar):
@@ -246,7 +246,16 @@ async def run(d):
     thing(eng, nursery, "its charm", "charm", "bright", other["id"], days=9)
     cands = {c["key"]: c for c in wants.candidates(h, cfg, pet)}
     assert [k for k in cands if k.startswith("feed:")] == ["feed:old charm"] and "nobody has touched your old charm" in cands["feed:old charm"]["text"], "a thing of its own nobody has touched in days: %s" % [k for k in cands if k.startswith("feed:")]
-    for n in ("old charm", "old heirloom", "its charm"):
+    chest = next(n for n, k in order.stores(cfg, nursery).items() if k > 0)
+    thing(eng, nursery, "kept charm", "charm", "bright", me, days=M["stored_days"] + 1, on=chest)
+    thing(eng, nursery, "shelved lately", "charm", "bright", me, days=M["stored_days"] - 1, on=chest)
+    nursery["objects"].pop("old charm")
+    cands = {c["key"]: c for c in wants.candidates(h, cfg, pet)}
+    assert [k for k in cands if k.startswith("feed:")] == ["feed:kept charm"] and "nobody has touched it" in cands["feed:kept charm"]["text"], "and one put away and not touched for longer: %s" % [k for k in cands if k.startswith("feed:")]
+    pet["fed"] = {"tick": h["tick"], "what": "x", "day": h["clock"]["day"]}
+    assert not [k for k in {c["key"] for c in wants.candidates(h, cfg, pet)} if k.startswith("feed:")], "one such a day: shelves are thinned, not emptied"
+    pet.pop("fed")
+    for n in ("kept charm", "shelved lately", "old heirloom", "its charm"):
         nursery["objects"].pop(n)
     for i in range(M["spare_kind"] - 1):
         thing(eng, nursery, "nest %d" % i, "nest", "soft", other["id"], days=0.2)
@@ -258,11 +267,11 @@ async def run(d):
         nursery["objects"].pop(n)
     for i, b in enumerate(["pebble", "pebble", "wax"]):
         nursery["spots"].append({"bit": b, "pos": [2 + i, 6], "ready": True, "back": None, "loose": True, "since": h["tick"]})
-    assert "feed:bits" in {c["key"] for c in wants.candidates(h, cfg, pet)}, "three loose bits lying about are wanted fed too"
+    assert "feed:bits 0" in {c["key"] for c in wants.candidates(h, cfg, pet)}, "three loose bits lying about are wanted fed too"
     nursery["spots"] = [s for s in nursery["spots"] if not s["loose"]]
 
     # ---- a body does both by itself: it goes to the machine and takes what a want of its is about ... ----
-    mind, A = eng.minds[me], cfg["activities"]
+    A = cfg["activities"]
     go(sr)
     pet["wants"] = [{"what": "bit", "key": "bit:sand", "text": "", "done": "held sand for the first time", "bit": "sand", "room": sr["id"], "since": h["tick"]}]
     assert wants.lean(h, cfg, pet)["vend"] == ("sand", "bit:sand")
@@ -277,7 +286,7 @@ async def run(d):
     assert any(a["type"] == "machine_take" and a["what"] == "sand" and a["pet"] == me and a["ok"] for a in h["acts"]), "and the page is told, so the machine lights and the sand drops into its paws"
     # ... and carries a spare thing to it from the next room, and feeds it in
     go(nursery)
-    pet.update(machine={})
+    pet.update(machine={}, gathered={}, tried={})   # (it has never held fibre: what the machine gives for the nest it will take)
     o = nursery["objects"]["third nest"]
     o["kept"] = LONG_AGO
     pet["wants"] = [{"what": "feed", "key": "feed:third nest", "text": "", "done": "fed the third nest to the machine", "thing": "third nest", "room": nursery["id"], "since": h["tick"]}]
@@ -293,6 +302,18 @@ async def run(d):
     for _ in range(12):
         await eng.tick()
     assert not any(w["what"] == "feed" and w.get("thing") == "third nest" for w in pet["wants"]) and any("fed the third nest" in m for m in moments(h, "want")), "and the want is met"
+    # what the machine gives back for a thing fed only to be rid of it, and that it has no use for, it leaves in the machine: nothing new lies about
+    go(sr)
+    thing(eng, sr, "old bell", "bell", "noisy", me, days=3)
+    S["stock"]["metal"] = 0   # (so no want of its can be about metal meanwhile)
+    pet["gathered"] = {sr["id"]: ["metal"]}
+    pet["wants"] = [{"what": "feed", "key": "feed:old bell", "text": "", "done": "fed the old bell to the machine", "thing": "old bell", "room": sr["id"], "since": h["tick"]}]
+    for _ in range(200):
+        await eng.tick()
+        if "old bell" not in sr["objects"]:
+            break
+    assert moments(h, "fed")[-1] == "Lean fed a noisy bell to the machine and left the metal in it" and S["stock"]["metal"] == 1 and "metal" not in pet["carrying"], (moments(h, "fed")[-1], S["stock"], pet["carrying"])
+    assert h["acts"][-1]["type"] != "machine_feed" or h["acts"][-1]["to"] is None
     # the scripted brain of the long runs can use both actions
     from .brains.stub import Stub
     go(sr)

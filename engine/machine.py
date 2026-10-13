@@ -205,24 +205,30 @@ def a_thing(cfg, recipe):
     return "%s %s" % ("an" if words.strip()[0] in "aeiou" else "a", words.strip())
 
 
+def got(house, cfg, pet, room, what):
+    """What the machine gives is in its paws (beside it, if its arms are full), and it has held it now."""
+    craft.give(house, cfg, pet, room, what)
+    pet["got"] = [what, house["tick"]]
+    if what not in pet["gathered"].setdefault(room["id"], []):
+        pet["gathered"][room["id"]].append(what)
+
+
 def take(house, cfg, pet, what):
     """One of a material out of the machine into its paws (beside it, if its arms are full)."""
     S, room = state(house, cfg), house["rooms"][pet["room"]]
     S["stock"][what] -= 1
     S["used"] = house["tick"]
     pet["machine"] = {"day": house["clock"]["day"], "took": cfg["machine"]["free"] - left(house, cfg, pet) + 1, "seen": house["tick"]}
-    craft.give(house, cfg, pet, room, what)
-    pet["got"] = [what, house["tick"]]
-    if what not in pet["gathered"].setdefault(room["id"], []):
-        pet["gathered"][room["id"]].append(what)
+    got(house, cfg, pet, room, what)
     moment(house, "machine", "%s took %s from the machine" % (label(pet), what), pet["id"], room["id"])
     more = left(house, cfg, pet)
     return "the machine clunked and dropped some %s into your paws; it will give you %s today" % (what, COUNT[more] if 0 <= more < len(COUNT) else "more"), dict(cfg["effects"]["gather"]), "machine " + what
 
 
-def feed(house, cfg, pet, what, back):
-    """A made thing here, or three of the bits it carries, into the machine, and one of `back` out. The stock does
-    not change: what goes in is what comes out, as something else."""
+def feed(house, cfg, pet, what, back, keep=False):
+    """A made thing here, or three of the bits it carries, into the machine, and one of `back` out: into its paws
+    (the stock does not change: what goes in is what comes out, as something else), or, when it has no use for it
+    (`keep`: a body feeding the machine only to be rid of the thing), left in the machine for whoever comes next."""
     S, room, M = state(house, cfg), house["rooms"][pet["room"]], cfg["machine"]
     if what == "bits":
         fed, said = pet["carrying"][:M["bits"]], "three bits"
@@ -237,10 +243,13 @@ def feed(house, cfg, pet, what, back):
             add_event(house, owner, "%s fed your %s to the machine" % (label(pet), what))
         things.gone(house, o, what, "fed to the machine", room)
         said, told = a_thing(cfg, o["made"]["recipe"]), "you fed the %s to the machine" % what
-    S["used"] = house["tick"]
-    craft.give(house, cfg, pet, room, back)
-    pet["got"], pet["fed"] = [back, house["tick"]], {"tick": house["tick"], "what": what}
+    S["used"], pet["fed"] = house["tick"], {"tick": house["tick"], "what": what, "day": house["clock"]["day"], "n": (pet.get("fed") or {}).get("n", 0) + 1}
     pet.setdefault("machine", {})["seen"] = house["tick"]
+    if keep:
+        fill(house, cfg, back, 1)
+        moment(house, "fed", "%s fed %s to the machine and left the %s in it" % (label(pet), said, back), pet["id"], room["id"])
+        return "%s; it whirred and clunked, and you left the %s it made of it in the machine" % (told, back), {}, "machine feed"
+    got(house, cfg, pet, room, back)
     moment(house, "fed", "%s fed %s to the machine for %s" % (label(pet), said, back), pet["id"], room["id"])
     return "%s; it whirred, clunked, and dropped some %s into your paws" % (told, back), {}, "machine feed"
 
@@ -322,7 +331,7 @@ def check(a, house, cfg, pet, norm):
 
 
 def apply(a, house, cfg, pet, norm):
-    return take(house, cfg, pet, norm(a["what"])) if a["type"] == "machine_take" else feed(house, cfg, pet, norm(a["what"]), norm(a["for"]))
+    return take(house, cfg, pet, norm(a["what"])) if a["type"] == "machine_take" else feed(house, cfg, pet, norm(a["what"]), norm(a["for"]), bool(a.get("leave")))
 
 
 def destination(house, cfg, pet):
@@ -354,21 +363,24 @@ def holds(house, pet, name):
 
 
 def spare(house, cfg, pet, room):
-    """Its own things lying about here that are spare: nobody has touched them for `spare_days`, or the room has
-    `spare_kind` or more of the kind and this one has lain a while. The longest untouched first. (Never a tool, never what the machine refuses,
-    and never what has only just been put down.)"""
-    M, objs, out = cfg["machine"], room["objects"], []
-    fresh = house["tick"] - ticks(cfg, cfg["order"]["just_out_seconds"])
+    """Its own things here that are spare. Lying about: nobody has touched it for `spare_days`, or the room has
+    `spare_kind` or more of the kind and this one has lain a while. Put away on or in something: nobody has touched
+    it for `stored_days` (one such a day from each pet: shelves are thinned, not emptied). The longest untouched
+    first. (Never a tool, something that keeps things, what hangs on a wall, what the machine refuses, or what has
+    only just been put down.) [(last touched, name, why: "old", "kept", or the kind there are too many of)]"""
+    M, out = cfg["machine"], []
+    fresh, loose = house["tick"] - ticks(cfg, cfg["order"]["just_out_seconds"]), set(order.loose(house, cfg, room))
     kinds = Counter(o["made"]["recipe"].get("kind") for o in things.made(room).values())
-    for n in order.loose(house, cfg, room):
-        o = objs[n]
-        kind = o["made"]["recipe"].get("kind")
-        if o["made"]["owner"] != pet["id"] or kind in cfg["craft"]["tool"] or o.get("kept", LONG_AGO) > fresh or refuses(house, cfg, pet, room, n):
+    today = (pet.get("fed") or {}).get("day") == house["clock"]["day"]
+    for n, o in things.made(room).items():
+        kind, kept = o["made"]["recipe"].get("kind"), bool(o.get("on")) and not o.get("wall")
+        if not (n in loose or kept) or o["made"]["owner"] != pet["id"] or kind in cfg["craft"]["tool"] or order.cap(cfg, o) or o.get("kept", LONG_AGO) > fresh \
+                or refuses(house, cfg, pet, room, n):
             continue
         idle = world_days(cfg, order.last_touch(o), house["tick"])
-        old = idle >= M["spare_days"]
-        if old or (kinds[kind] >= M["spare_kind"] and idle >= M["spare_kind_days"]):
-            out.append((order.last_touch(o), n, "old" if old else kind))
+        why = ("kept" if idle >= M["stored_days"] and not today else None) if kept else "old" if idle >= M["spare_days"] else kind if kinds[kind] >= M["spare_kind"] and idle >= M["spare_kind_days"] else None
+        if why:
+            out.append((order.last_touch(o), n, why))
     return sorted(out)
 
 
@@ -393,13 +405,14 @@ def wants(house, cfg, pet, known, out, add, via):
     named = {w.get("bit") for w in pet.get("wants", [])}
     mess = max(known, key=lambda r: len(order.loose_bits(r)))   # loose bits are fed three for one: where most of them lie (not while it carries a bit a want of its is about)
     if len(order.loose_bits(mess)) >= M["bits"] and not named & set(pet["carrying"]):
-        add("feed", "bits", "loose bits lie about in %s: you want to feed three of them to the machine%s" % (mess["name"], "" if at is mess else " in " + at["name"]),
-            "fed three loose bits to the machine", M["feed_weight"] * M["bits_weight"], thing="bits", room=mess["id"])
-    spares = sorted(((t, n, why, r) for r in known for t, n, why in spare(house, cfg, pet, r)), key=lambda x: x[:2])[:2]
-    for _, n, why, r in spares:
-        text = "nobody has touched your %s in %s for days" % (n, r["name"]) if why == "old" else "there are more %ss in %s than anyone needs" % (why, r["name"])
-        add("feed", n, "%s: you want to feed %s to the machine%s" % (text, "it" if why == "old" else "your " + n, "" if at is r else " in " + at["name"]),
-            "fed the %s to the machine" % n, M["feed_weight"] * (1.5 if r.get("mess") == 2 else 1.0), thing=n, room=r["id"])
+        add("feed", "bits %d" % (pet.get("fed") or {}).get("n", 0), "loose bits lie about in %s: you want to feed three of them to the machine%s" % (mess["name"], "" if at is mess else " in " + at["name"]),
+            "fed three loose bits to the machine", M["feed_weight"] * (1.0 if mess is at else M["bits_weight"]), thing="bits", room=mess["id"])
+    spares = sorted(((why == "kept", t, n, why, r) for r in known for t, n, why in spare(house, cfg, pet, r)), key=lambda x: x[:3])[:2]   # what lies about before what is put away
+    for _, _, n, why, r in spares:
+        text = "nobody has touched your %s in %s for days" % (n, r["name"]) if why == "old" else "there are more %ss in %s than anyone needs" % (why, r["name"]) if why != "kept" else \
+            "your %s has been %s in %s for days, and nobody has touched it" % (n, order.into(cfg, r, r["objects"][n]["on"]), r["name"])
+        add("feed", n, "%s: you want to feed %s to the machine%s" % (text, "it" if why in ("old", "kept") else "your " + n, "" if at is r else " in " + at["name"]),
+            "fed the %s to the machine" % n, M["feed_weight"] * (M["stored_weight"] if why == "kept" else 1.5 if r.get("mess") == 2 else 1.0), thing=n, room=r["id"])
 
 
 def met(house, cfg, pet, w):
@@ -470,9 +483,17 @@ def lean(house, cfg, pet, out):
 def choose(house, cfg, pet, back):
     """Which of the materials on offer its body takes: one a want of its names, one it has never held, else the one
     there is most of."""
+    S, had = state(house, cfg), wants_held(pet)
+    return min(back, key=lambda m: (not wanted(pet, m), m in had, -S["stock"].get(m, 0)))
+
+
+def wanted(pet, bit):
+    return any(w.get("bit") == bit or w.get("gives") == bit for w in pet.get("wants", []))
+
+
+def wants_held(pet):
     from .wants import held
-    S, named, had = state(house, cfg), [w.get("bit") for w in pet.get("wants", [])], held(pet)
-    return min(back, key=lambda m: (m not in named, m in had, -S["stock"].get(m, 0)))
+    return held(pet)
 
 
 def targets(house, cfg, pet, A, near):
@@ -510,7 +531,7 @@ def finish(mind, now):
             return None, {}, None, None
         if peek:
             pet.setdefault("machine", {})["seen"] = h["tick"]
-        can = takeable(h, cfg, pet)
+        can = [m for m in takeable(h, cfg, pet) if wanted(pet, m) or m not in wants_held(pet)]   # (having looked, it takes what a want of its is about, or what it has never held; else nothing)
         what = (choose(h, cfg, pet, can) if can else None) if peek else now["what"]
         a = {"type": "machine_take", "what": what}
         if not what or actions.check(a, h, cfg, pet, mind.mem):
@@ -530,12 +551,14 @@ def finish(mind, now):
         return None, {}, None, None
     if name == "bits" and (not spot(room) or len(pet["carrying"]) < M["bits"]):
         return None, {}, None, None
-    if spot(room):
-        a = {"type": "machine_feed", "what": name, "for": choose(h, cfg, pet, offers(h, cfg, pet, room, name))}
-        act = story.act_of(h, pet, a)
+    if spot(room):   # what it gives back it takes if a want of its is about that, or it has never held it; else it is left in the machine, where it is short
+        back, S = offers(h, cfg, pet, room, name), state(h, cfg)
+        mine = [m for m in back if wanted(pet, m) or m not in wants_held(pet)]
+        a = {"type": "machine_feed", "what": name, "for": choose(h, cfg, pet, mine) if mine else min(back, key=lambda m: S["stock"].get(m, 0)), "leave": not mine}
+        act = dict(story.act_of(h, pet, a), to=a["for"] if mine else None)
         text, fx, key = actions.apply(h, cfg, pet, a, mind.mem)
         add_event(h, pet, text)
-        return "fed %s to the machine for some %s" % ("three bits" if name == "bits" else "the " + name, a["for"]), fx, key, act
+        return "fed %s to the machine%s" % ("three bits" if name == "bits" else "the " + name, " for some %s" % a["for"] if mine else ""), fx, key, act
     door = now.get("door")   # the machine is elsewhere: it and the thing go through the door toward it, and the thing is set down there
     if door not in room["doors"] or actions.check({"type": "go", "door": door}, h, cfg, pet, mind.mem):
         return None, {}, None, None
