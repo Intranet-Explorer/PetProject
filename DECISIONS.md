@@ -1526,3 +1526,12 @@ moth is: you have been close to one").
 it wants to try something on, a thing a parent knew how to make) goes over to it, is told 'the book is right here;
 you could ask it: "what is clay"', and left a while leafs through by itself. Not while its eyes are tired (once a
 world hour), and never the same question twice.
+
+**Too young to read (13 October 2026, after the first day).** A hatchling cannot read, and was drawn to the book
+all the same; it asked the room out loud and an elder answered. So one too young to read is not drawn to the book:
+with something it wants to know it makes for the nearest elder that is up (with no elder, the nearest grown pet),
+goes over, and is told 'Sven is right here; you could ask out loud: "what is vine"'. Once for each question. Its
+body does not ask for it, and nothing makes the elder answer: both are left to their minds.
+
+**Rain Rest and the carver.** Its body gets what a carver takes and its mind puts it down, for its beliefs about
+stopping. Tyler: that is behaviour, not a bug. Left alone.

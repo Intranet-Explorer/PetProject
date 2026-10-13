@@ -209,6 +209,12 @@ def reads(house, pet):
     return "ask_book" in life.unlocked(house, pet["stage"])
 
 
+def elders(house, pet):
+    """Who one too young to read could ask: the elders that are up, or with no elder the grown ones."""
+    up = [p for p in house["pets"].values() if p is not pet and not p["sleep"] and p["stage"] in ("elder", "adult")]
+    return [p for p in up if p["stage"] == "elder"] or up
+
+
 def may_try(house, pet, tool):
     """May its mind try to make a tool it has not the stuff for? (Trying says what is missing.) Not before it has
     been to the book about it (13 October 2026), unless there is no book it can get to."""
@@ -442,11 +448,20 @@ def lean(house, cfg, pet):
     want) to carry a bit to in this room, play: who to play with}."""
     out = {"rooms": set(), "doors": set(), "gather": set(), "creatures": set(), "place": None, "play": set(), "look": set(), "pick": set(), "ask": None}
     here, book = pet["room"], book_room(house)
-    rested = reads(house, pet) and house["tick"] - pet.get("asked_at", LONG_AGO) >= cfg["book"]["per_hours"] * cfg["ticks_per_hour"]   # (its eyes are up to the small writing again)
+    young = not reads(house, pet)
+    rested = not young and house["tick"] - pet.get("asked_at", LONG_AGO) >= cfg["book"]["per_hours"] * cfg["ticks_per_hour"]   # (its eyes are up to the small writing again)
     for w in sorted(pet.get("wants", []), key=lambda w: w["what"] != "get"):   # (a step toward another want comes first)
         t = w["what"]
-        q = question(house, cfg, pet, w) if rested else None
-        if q and book == here:   # (13 October 2026) the book is in the room and might know: it is drawn over to it
+        q = question(house, cfg, pet, w) if rested or young else None
+        if q and young:   # too young to read: it goes to the nearest elder instead, to ask out loud; once for each thing it wants to know
+            if q not in pet.get("asked_aloud", []):
+                old = elders(house, pet)
+                near = next((p for p in old if p["room"] == here), None)
+                if near:
+                    out["ask"] = out["ask"] or ("ask", q, w["key"], near["id"])
+                else:
+                    out["rooms"] |= {p["room"] for p in old if p["room"] in pet["rooms"]}
+        elif q and book == here:   # (13 October 2026) the book is in the room and might know: it is drawn over to it
             out["ask"] = out["ask"] or ("ask", q, w["key"])
         elif q and t in ("word", "tool") and book in pet["rooms"]:   # ... and for a word or a tool it goes to where the book is
             out["rooms"].add(book)

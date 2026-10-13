@@ -1712,8 +1712,28 @@ async def main():
         assert wants.lean(hA, cA, pa)["ask"] == ("ask", "what is ship", "word:ship")
         pa.update(wants=[{"what": "try", "key": "try:clay|soak", "text": "", "done": "", "bit": "clay", "how": "soak", "room": roomA["id"], "since": hA["tick"]}])
         assert wants.lean(hA, cA, pa)["ask"] == ("ask", "what is clay", "try:clay|soak"), "a thing it wants to find out, with the book right there"
-        stage, pa["stage"] = pa["stage"], "hatchling"
+        # one too young to read is not drawn to the book: it goes to the nearest elder, and its mind is told it could ask out loud
+        stage, pa["stage"], booked = pa["stage"], "hatchling", body.state(pa).pop("booked", None)
         assert wants.lean(hA, cA, pa)["ask"] is None, "one too young to read is not drawn to the book"
+        hA["pets"]["old"] = dict(pa, id="old", name="Old", stage="elder", events=[])
+        key, going = "try:clay|soak", lambda name: body.targets(hA, cA, pa, mA.mem, name, cA["activities"][name])
+        assert wants.lean(hA, cA, pa)["ask"] == ("ask", "what is clay", key, "old") and going("go to ask")[0]["who"] == "old" \
+            and not going("go to the book") and not going("leaf through the book"), "with an elder in the room it goes over to ask"
+        ready = pa.pop("ready", None)   # (put back below: being told it could ask makes it think sooner)
+        now = dict(going("go to ask")[0], name="go to ask", do="place", began=hA["tick"], since=hA["tick"], icon="speech", passive=False, left=0, of=1)
+        body.finish(mA, dict(now))
+        assert any(e == 'Old is right here; you could ask out loud: "what is clay"' for _, e in pa["events"][-3:]), pa["events"][-3:]
+        assert wants.lean(hA, cA, pa)["ask"] is None and pa.pop("ready") == hA["tick"], "once for each thing it wants to know"
+        pa.update({"ready": ready} if ready is not None else {})
+        del body.state(pa)["booked"], pa["asked_aloud"]
+        hA["pets"]["old"]["room"], n_ev = "elsewhere", len(pa["events"])
+        pa["rooms"]["elsewhere"] = pa["rooms"][roomA["id"]]
+        L = wants.lean(hA, cA, pa)
+        body.finish(mA, dict(now))
+        assert L["ask"] is None and "elsewhere" in L["rooms"] and len(pa["events"]) == n_ev and "booked" not in body.state(pa), "an elder next door: it makes for that room, and is told nothing till it is there"
+        del pa["rooms"]["elsewhere"]
+        del hA["pets"]["old"]
+        body.state(pa).update({"booked": booked} if booked else {})
         pa.update(stage=stage, asked_at=hA["tick"])
         assert wants.lean(hA, cA, pa)["ask"] is None
         del roomA["objects"]["heavy book"], roomA["objects"]["hot pipe"]

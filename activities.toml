@@ -439,6 +439,17 @@ icon = "book"
 seconds = [2, 3]
 base = 0.0
 
+# (13 October 2026) one too young to read goes over to an elder instead, and its mind may ask out loud.
+["go to ask"]
+do = "place"
+book = true
+elder = true
+doing = "going over to {who}"
+did = "went over to {who}"
+icon = "speech"
+seconds = [2, 3]
+base = 0.0
+
 ["leaf through the book"]
 do = "try"
 book = true

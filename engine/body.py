@@ -226,9 +226,12 @@ def targets(house, cfg, pet, mem, name, A):
         return [{"what": s["bit"], "goal": near(s["pos"]), "bonus": cfg["body"]["make_pull"] if making else 0.0} for s in spots[:1]]
     if do == "place":   # a bit it wants to try something on, carried to where that can be tried; there its mind is told, once, and thinks sooner
         P, slot = (L["ask"], "booked") if A.get("book") else (L["place"], "placed")   # (the book and the place a thing is tried are gone to separately)
-        if not P or state(pet).get(slot) == [P[2], room["id"]]:
+        if not P or state(pet).get(slot) == [P[2], room["id"]] or (A.get("book") and bool(A.get("elder")) != (len(P) == 4)):
             return []
-        how, bit, key = P
+        how, bit, key = P[:3]
+        if how == "ask" and len(P) == 4:   # too young to read: it goes over to an elder, to ask out loud
+            who = house["pets"][P[3]]
+            return [{"who": who["id"], "where": "ask " + bit, "want": key, "goal": near(who["pos"]), "bonus": W * 1.5}] if who["room"] == room["id"] else []
         if how == "ask":   # something it wants to know, and the book is here: it goes over to it
             at = next((o["pos"] for o in objs.values() if o.get("fix", {}).get("book")), None)
             return [{"what": "heavy book", "where": "ask " + bit, "want": key, "goal": near(at), "bonus": W * 1.5}] if at else []
@@ -237,10 +240,10 @@ def targets(house, cfg, pet, mem, name, A):
     if do == "try":   # it has stood where the thing can be tried long enough for its mind to take it up, and its mind has not: its paws try it
         b = state(pet)
         P, slot, done = (L["ask"], "booked", "asked_at") if A.get("book") else (L["place"], "placed", "tried_at")
-        if not P or b.get(slot) != [P[2], room["id"]] or b.get(done) == P[2] \
+        if not P or len(P) == 4 or b.get(slot) != [P[2], room["id"]] or b.get(done) == P[2] \
                 or house["tick"] - b.get(slot + "_at", house["tick"]) < ticks(cfg, cfg["body"]["try_after_seconds"]):
             return []
-        how, bit, key = P
+        how, bit, key = P[:3]
         if how == "ask":
             at = next((o["pos"] for o in objs.values() if o.get("fix", {}).get("book")), None)
             return [{"what": "heavy book", "where": "ask " + bit, "want": key, "goal": near(at), "bonus": W * 1.5}] if at else []
@@ -526,13 +529,17 @@ def finish(mind, now, cut=False):
                 craft.water(h, cfg, pet, room, name)
             elif do == "place":   # it is where the thing can be tried, with the thing: its mind is told, and thinks sooner
                 slot, where = "booked" if now["where"].startswith("ask ") else "placed", now["where"]
-                b[slot], b[slot + "_at"] = [now["want"], room["id"]], h["tick"]
-                if where.startswith("ask "):
-                    where = ""
-                    add_event(h, pet, 'the book is right here; you could ask it: "%s"' % now["where"][4:])
+                other, asking = h["pets"].get(now.get("who") or ""), where.startswith("ask ")
+                where = "" if asking else where
+                if now.get("who") and (not other or other["room"] != pet["room"] or other["sleep"]):
+                    done = False   # (the elder it was going to ask has gone, or dropped off: another time)
                 else:
-                    add_event(h, pet, "you have carried the %s %s: you could try it now" % (name, where))
-                pet["ready"] = h["tick"]
+                    b[slot], b[slot + "_at"], pet["ready"] = [now["want"], room["id"]], h["tick"], h["tick"]
+                    if other:   # (an elder is gone to once for each thing it wants to know)
+                        pet["asked_aloud"] = (pet.get("asked_aloud", []) + [now["where"][4:]])[-12:]
+                    add_event(h, pet, ('%s is right here; you could ask out loud: "%s"' % (actions.handle(h, pet, other), now["where"][4:]) if other
+                                       else 'the book is right here; you could ask it: "%s"' % now["where"][4:]) if asking
+                              else "you have carried the %s %s: you could try it now" % (name, where))
             elif do == "nap":
                 fx = {"energy": E["rest_per_10s"] * A["seconds"][1] / 10}
             elif do == "babble":
