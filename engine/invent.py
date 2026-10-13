@@ -27,22 +27,28 @@ def kind_parts(cfg, kind):
     return got if got and all(p in PART for p in got) else None
 
 
-def fit(base, tops, anywhere=False):
-    """A spot of the base for each top part, one that takes it and no two on one spot: [spot, ...], or None.
-    `anywhere`: on any spot the base has left, whether or not the part is made for it."""
-    def place(i, used):
-        if i == len(tops):
-            return []
-        for s in PART[base]["spots"]:
-            rest = place(i + 1, used | {s}) if (anywhere or s in PART[tops[i]]["on"]) and s not in used else None
-            if rest is not None:
-                return [s] + rest
-        return None
-    return place(0, frozenset())
+def place(base, tops):
+    """A spot of the base for each part added, in order: the first in the part's own list that the base has free,
+    or that a part already there carries (a flame stands in a fork). [spot, ...], or None if one has nowhere to go.
+    (The view's preview and engine.check_parts place them the same way.)"""
+    taken, out = {}, []
+    for t in tops:
+        at = next((s for s in PART[t]["on"] if s in PART[base]["spots"] and (s not in taken or s in PART[taken[s]].get("carries", []))), None)
+        if at is None:
+            return None
+        taken[at] = t
+        out.append(at)
+    return out
 
 
 def look(part, at, r):
     return {"part": part, "at": at, "material": r["material"], "color": r.get("color", "grey")}
+
+
+def put(base, x, tops):
+    """The parts of a thing: x's base, and these [(part, the recipe it came from)] where they go. None if they do not."""
+    spots = place(base, [t for t, _ in tops])
+    return spots and ([look(base, None, x)] + [look(t, s, r) for (t, r), s in zip(tops, spots)])[:RULES["max_parts"]]
 
 
 def useful(cfg, x, y, uses=None):
@@ -61,30 +67,22 @@ def useful(cfg, x, y, uses=None):
             if 0 not in order or not all(have[i][0] in options for i, options in zip(order, U["add"])):
                 continue
             tops = [have[i] for i in order]
-            more = [h for i, h in enumerate(have) if i not in order and h[0] in U.get("may", []) and h[0] not in [t for t, _ in tops]]
-            spots = fit(base, [t for t, _ in tops + more]) or fit(base, [t for t, _ in tops])
-            if spots:
-                return name, ([look(base, None, x)] + [look(t, s, r) for (t, r), s in zip(tops + more, spots)])[:RULES["max_parts"]]
+            may = [h for i, h in enumerate(have) if i not in order and h[0] in U.get("may", []) and h[0] not in [t for t, _ in tops]]
+            parts = put(base, x, may + tops) or put(base, x, tops)   # (what it may carry goes on first: the flame stands in the fork)
+            if parts:
+                return name, parts
     return None
 
 
 def curio(cfg, x, y):
-    """(the parts, how far from whole) of a thing that fits no use, built on x with y's signature part: both halves
-    where they go together (0); else the nearest that can be put: x gives up its own part for y's (1), and at the
-    last y's part sits on whatever spot the base has left (2). A second flame or blade is left off. Never more than
-    three parts. (None, 9) for a kind that has no parts."""
+    """The parts of a thing that fits no use, built on x with y's signature part: x's base, x's own signature part,
+    then y's, so both halves can be told. Where the two are the same part, or there is no spot left for the third,
+    x gives up its own; y's is never left off. None for a kind that has no parts, or a part with nowhere to go."""
     a, b = kind_parts(cfg, x.get("kind")), kind_parts(cfg, y.get("kind"))
     if not a or not b:
-        return None, 9
+        return None
     (base, own), given = a, b[1]
-    if own == given and own in RULES["no_stack"]:
-        return [look(base, None, x), look(own, (fit(base, [own]) or fit(base, [own], True))[0], x)], 2
-    for worse, tops in enumerate(([(own, x), (given, y)], [(given, y)])):
-        spots = fit(base, [t for t, _ in tops])
-        if spots:
-            return ([look(base, None, x)] + [look(t, s, r) for (t, r), s in zip(tops, spots)])[:RULES["max_parts"]], worse
-    at = (fit(base, [own]) or fit(base, [own], True))[0]
-    return [look(base, None, x), look(own, at, x), look(given, next(s for s in PART[base]["spots"] if s != at), y)], 2
+    return (put(base, x, [(own, x), (given, y)]) if own != given else None) or put(base, x, [(given, y)])
 
 
 def sturdier(cfg, olds):
@@ -95,19 +93,15 @@ def sturdier(cfg, olds):
 
 def built(cfg, olds):
     """(the use or "curio", the parts, the base thing's recipe, the other's) for two things joined, or None if
-    either is of a kind with no parts. The uses are tried in the file's order (the plainest, a keepsake, is last),
-    each on the sturdier thing's base and then on the other's; a curio is built on the sturdier's unless only the
-    other's lets both halves show."""
+    they cannot be put together at all. The uses are tried in the file's order (the plainest, a keepsake, is
+    last), each on the sturdier thing's base and then on the other's; a curio is built on the sturdier's."""
     x, y = [o["made"]["recipe"] for o in sturdier(cfg, olds)]
     for use in USES:
         for a, b in ((x, y), (y, x)):
             got = useful(cfg, a, b, [use])
             if got:
                 return got[0], got[1], a, b
-    (parts, worse), (other, worse2) = curio(cfg, x, y), curio(cfg, y, x)
-    if parts is None:
-        return None
-    return ("curio", parts, x, y) if worse <= worse2 else ("curio", other, y, x)
+    return next((("curio", parts, a, b) for a, b in ((x, y), (y, x)) for parts in [curio(cfg, a, b)] if parts), None)
 
 
 def key_of(recipes):
@@ -223,8 +217,9 @@ def said(house, name, emerged=False):
     if rec["tick"] != house["tick"]:
         return "it is %s %s, like the one %s first made" % (rec["a"], name, label(house["pets"][rec["by"]]) if rec["by"] in house["pets"] else "someone")
     new = "nobody in the house has made the like of the %s" % name
-    if rec["use"] == "curio":   # a curio does what its halves did, and no more
-        return "%s: it is a new kind of thing, and you know how it is made" % new if emerged else "nothing new came of it but the thing itself: %s, and you know how it is made" % new
+    if not USES.get(rec["use"], {}).get("effect"):   # a curio does what its halves did and no more; a keepsake is for keeping
+        kept = " (a thing to keep)" * (rec["use"] != "curio")
+        return "%s: it is a new kind of thing%s, and you know how it is made" % (new, kept) if emerged else "nothing new came of it but the thing itself%s: %s, and you know how it is made" % (kept, new)
     return "%s: it is a new kind of thing (%s), and you know how it is made" % (new, USES[rec["use"]]["does"])
 
 

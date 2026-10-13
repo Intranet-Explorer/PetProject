@@ -57,36 +57,38 @@ def bodies():
 
 def composing():
     """§3.0, §3.4: any two kinds go together. What fits a use has the use's parts and no others; what fits none is a
-    curio with both halves; never more than three parts, never a spot the base has not, never two flames."""
+    curio with both halves; never more than three parts, never a spot the base has not, never two flames (the art's
+    own validator, check_parts.problems, says so of every one)."""
+    from .check_parts import problems
     cfg, P, U = load_config(), invent.P, invent.USES
-    T, sig = P["thing"], {v["signature"] for v in P["kinds"].values()}
     assert set(cfg["kinds"]) <= set(P["kinds"]), "every kind in the catalog has a base and a signature part: %s" % (set(cfg["kinds"]) - set(P["kinds"]))
-    reached = set()
+    reached, whole = set(), 0
+    thing = lambda k, m: {"made": {"recipe": {"kind": k, "material": m, "color": "grey", "size": 1}}}
     for a in cfg["kinds"]:
         for b in cfg["kinds"]:
-            x, y = {"kind": a, "material": "hard", "color": "grey"}, {"kind": b, "material": "soft", "color": "red"}
-            got, (parts, worse) = invent.useful(cfg, x, y), invent.curio(cfg, x, y)
-            for use, ps in ([got] if got else []) + [("curio", parts)]:
-                base, tops = ps[0], ps[1:]
-                assert 2 <= len(ps) <= P["rules"]["max_parts"] and base["at"] is None and T[base["part"]]["role"] == "base" and base["part"] == P["kinds"][a]["base"], (a, b, ps)
-                assert all(t["at"] in T[base["part"]]["spots"] for t in tops) and len({t["at"] for t in tops}) == len(tops), "a part sits on a spot the base has, no two on one: %s" % ps
-                assert all(sum(t["part"] == n for t in ps) <= 1 for n in P["rules"]["no_stack"]), "two flames or two blades do not stack: %s" % ps
-                if use == "curio":
-                    assert worse == 2 or all(t["at"] in T[t["part"]]["on"] for t in tops), "each part where it is made to go, unless there is nowhere: %s" % ps
-                    assert worse or [t["part"] for t in tops] == [P["kinds"][a]["signature"], P["kinds"][b]["signature"]], "a curio shows both halves: %s" % ps
-                    assert tops[-1]["material"] in ("soft", "hard") and base["material"] == "hard", "each part is of the thing it came from: %s" % ps
-                else:
-                    reached.add(use)
-                    names, added = [t["part"] for t in tops], len(U[use]["add"])
-                    assert base["part"] in U[use]["base"] and all(n in options for n, options in zip(names, U[use]["add"])) and all(n in U[use].get("may", []) for n in names[added:]), \
-                        "a use has its base and the parts it adds, and no others: %s %s" % (use, ps)
-                    assert all(t["at"] in T[t["part"]]["on"] for t in tops) and any(t["part"] == P["kinds"][b]["signature"] and t["material"] == "soft" for t in tops[:added]), "the other thing gives one of them: %s" % ps
-    can = {u for u, v in U.items() if all(set(o) & sig for o in v["add"]) and any(k["base"] in v["base"] for k in P["kinds"].values())}
-    assert can <= reached and len(reached) >= 10, "every use the catalog's kinds have the parts for can be reached by joining two of them: %s" % (can - reached)
-    if set(U) - reached:
-        print("  (uses no two catalog kinds make yet, for want of a kind with the part: %s)" % ", ".join(sorted(set(U) - reached)))
+            got = invent.built(cfg, [thing(a, "hard"), thing(b, "soft")])
+            assert got, "any two things can be joined: %s and %s" % (a, b)
+            use, ps, x, y = got
+            (base, own), given = P["kinds"][x["kind"]], P["kinds"][y["kind"]]["signature"]
+            base, own = P["kinds"][x["kind"]]["base"], P["kinds"][x["kind"]]["signature"]
+            names = [t["part"] for t in ps[1:]]
+            assert not problems(P, ps) and 2 <= len(ps) <= P["rules"]["max_parts"] and ps[0]["part"] == base and ps[0]["material"] == x["material"], "%s + %s: %s %s" % (a, b, ps, problems(P, ps))
+            assert all(t["material"] == (y if t["part"] == given and (t["part"] != own or t is ps[-1]) else x)["material"] for t in ps[1:]), "each part is of the thing it came from: %s" % ps
+            if use == "curio":
+                assert names[-1] == given and names in ([own, given], [given]), "a curio is its base-giver's base and own part, then the other's; the other's is never left off: %s + %s: %s" % (a, b, ps)
+                assert len(ps) == 3 or own == given or invent.place(base, [own, given]) is None, "and it has both unless they are one part or there is no room: %s" % ps
+                assert not invent.useful(cfg, x, y) and not invent.useful(cfg, y, x), "what fits a use is not a curio"
+                whole += len(ps) == 3
+            else:
+                reached.add(use)
+                adds = names[-len(U[use]["add"]):]
+                assert base in U[use]["base"] and all(n in options for n, options in zip(adds, U[use]["add"])) and all(n in U[use].get("may", []) for n in names[:-len(adds)]) and given in adds, \
+                    "a use has its base and the parts it adds (the other thing's among them), and no others: %s %s" % (use, ps)
+    assert reached == set(U), "every use can be reached by joining two things a pet can make: %s" % (set(U) - reached)
+    assert whole > 400, "most curios show both halves: %d" % whole
     assert invent.useful(cfg, {"kind": "jar", "material": "hard"}, {"kind": "bowl", "material": "hard"}) is None, "a base's own part alone is no new use: the other thing must give something"
-    assert invent.curio(cfg, {"kind": "nope", "material": "hard"}, {"kind": "lamp", "material": "warm"})[0] is None
+    assert invent.curio(cfg, {"kind": "nope", "material": "hard"}, {"kind": "lamp", "material": "warm"}) is None
+    assert invent.place("stick", ["tines", "flame"]) == ["tip", "tip"] and invent.place("stick", ["flame", "blade"]) is None, "a flame stands in a fork; nothing else shares a spot"
     assert all(set(v) >= {"base", "add", "does", "effect"} for v in U.values()), "every use says what it is built of and what it does"
 
 
@@ -281,7 +283,7 @@ async def inventing(d):
     assert not why and rec and RECORD <= set(rec) and rec["by"] == po["id"] and rec["tick"] == h["tick"] and rec["from"] == ["jar", "bell"], "the house registers the kind: %s %s" % (why, rec)
     assert o["made"]["recipe"]["kind"] == "ringing light" and "ringing light" not in json.loads((Path(__file__).parent.parent / "view" / "assets" / "kinds.json").read_text())
     assert rec["use"] == "instrument" and rec["does"] == U["instrument"]["does"], "it fits a use, and that is what it does: %s" % rec
-    assert [(p["part"], p["at"], p["material"], p["color"]) for p in rec["parts"]] == [("bowl", None, "bright", "yellow"), ("bell dome", "inside", "noisy", "blue")], "its parts are the base and what the use adds, no more: %s" % rec["parts"]
+    assert [(p["part"], p["at"], p["material"], p["color"]) for p in rec["parts"]] == [("bowl", None, "bright", "yellow"), ("bell dome", "top", "noisy", "blue")], "its parts are the base and what the use adds, no more: %s" % rec["parts"]
     assert rec["props"] == ["bright", "noisy", "signalling"] and rec["glow"] and rec["sound"] == "ring" and rec["size"] == "small" and not rec["wall"] and rec["a"] == "a", rec
     p = things.prop(cfg, o)
     assert p["light"] and p["loud"] and p["far"] and o["state"] == "on" and things.light_on(h, cfg, room), "what emerged where its materials met still holds (v3.4): %s" % p
@@ -315,14 +317,17 @@ async def inventing(d):
     rec2, o2, got = join("ring b", "bell", "noisy", "glow b", "jar", "bright", "dinner bell", "to say the food is ready")
     assert o2["made"]["recipe"]["kind"] == "ringing light" and len(h["invented"]) == 1 and any("like the one Po first made" in e for _, e in po["events"][-3:]), got
     # what fits no use is a curio: a new kind all the same, with both halves' parts, its materials' properties, and no effect of its own
-    cur, o3, got = join("pillow", "cushion", "soft", "ding", "bell", "noisy", "bell cushion", "to ring when sat on")
-    assert cur["use"] == "curio" and cur["name"] == "bell cushion" and [(p["part"], p["at"], p["material"]) for p in cur["parts"]] == [("cushion", None, "soft"), ("cloth", "side", "soft"), ("bell dome", "top", "noisy")], cur
+    cur, o3, got = join("rag baby", "doll", "soft", "ding", "bell", "noisy", "bell doll", "to ring when hugged")
+    assert cur["use"] == "curio" and cur["name"] == "bell doll" and [(p["part"], p["at"], p["material"]) for p in cur["parts"]] == [("bundle", None, "soft"), ("cloth", "side", "soft"), ("bell dome", "tip", "noisy")], cur
     cp = things.prop(cfg, o3)
     assert invent.effect(cfg, o3) == {} and cp["use"] == {"comfort": 4.0, "curiosity": 3.0, "energy": -1.0} and cp["loud"] and cur["sound"] == "ring" and "comfort when used" in cur["does"], "a curio does what its two halves did, and no more: %s" % cp
-    assert "nothing new came of it but the thing itself" in got[0] and any(x["text"] == "Po invented the bell cushion: to ring when sat on" for x in h["moments"][-3:]) and "kind:bell cushion" in po["recipes"], got
-    assert invent.used(h, cfg, po, room, "bell cushion") is None and not any(w["what"] == "join" and "pillow" in w["text"] for w in wants.candidates(h, cfg, po))
+    assert "nothing new came of it but the thing itself" in got[0] and any(x["text"] == "Po invented the bell doll: to ring when hugged" for x in h["moments"][-3:]) and "kind:bell doll" in po["recipes"], got
+    assert invent.used(h, cfg, po, room, "bell doll") is None
+    thing("rag baby b", "doll", "hard")
+    thing("ding x", "bell", "hard")
+    assert not any(w["what"] == "join" and "rag baby b" in w["text"] for w in wants.candidates(h, cfg, po)), "two things that would only make a curio are nothing to want: that is its mind's to think of"
     same, o4, got = join("soft a", "cushion", "soft", "soft b", "cushion", "soft", "big pile", "to fall into")
-    assert same["use"] == "curio" and o4["made"]["recipe"]["kind"] == "big pile" and len(same["parts"]) == 3 and len(h["invented"]) == 3, "two of a kind joined are a new kind too: %s" % same
+    assert same["use"] == "curio" and o4["made"]["recipe"]["kind"] == "big pile" and [q["part"] for q in same["parts"]] == ["cushion", "pad"] and len(h["invented"]) == 3, "two of a kind joined are a new kind too: %s" % same
     # a name that is a kind's already is told apart; past the day's limit a joining makes the larger kind, as before
     clear()
     taken, o5, got = join("taper", "lamp", "warm", "ding b", "bell", "noisy", "bell", "to ring by the fire")
@@ -354,9 +359,9 @@ async def inventing(d):
     po.update(room=room["id"], pos=[5, 5])
     invent.tick(h, cfg)
     clear()
-    soft, o, got = join("looking glass", "mirror", "glassy", "pillow b", "cushion", "soft", "moon glass", keep="glassy")
+    soft, o, got = join("looking glass", "mirror", "glassy", "mat", "rug", "soft", "moon glass", keep="glassy")
     only = {"objects": {"moon glass": o}}
-    assert soft["use"] == "soft light" and soft["wall"] and o.get("wall") and things.light_on(h, cfg, only) and not things.light_on(h, cfg, only, harsh=True) and wants.gentle(cfg, only), "a soft light lights a room at night without harshness: %s" % soft
+    assert soft["use"] == "soft light" and soft["glow"] and [q["part"] for q in soft["parts"]] == ["frame", "gem", "cloth"] and soft["wall"] and o.get("wall") and things.light_on(h, cfg, only) and not things.light_on(h, cfg, only, harsh=True) and wants.gentle(cfg, only), "a soft light lights a room at night without harshness: %s" % soft
     clear()
     cut, o, got = join("pipe b", "flute", "hard", "edge", "carver", "hard", "whittler")
     assert cut["use"] == "cutter" and craft.tool_here(h, cfg, room, "carver") == "whittler" and craft.lasts(cfg, o) > 0 and "carver" in h["firsts"] and craft.tool_here(h, cfg, room, "trowel") is None, "a cutter counts as a carver"
@@ -380,7 +385,7 @@ async def inventing(d):
     why, got = act({"type": "use", "target": "long arm"})
     assert reach["use"] == "reacher" and not why and "high shelf" in got[0] and len(po["carrying"]) == 1 and invent.used(h, cfg, po, room, "long arm") is None, "a reacher brings down what is on the attic's high shelf, now and then: %s" % (got,)
     room["type"] = "pond"
-    boat, o, got = join("puck", "ball", "bouncy", "hanger", "mobile", "springy", "leaf boat", keep="bouncy")
+    boat, o, got = join("puck", "ball", "bouncy", "throw", "blanket", "soft", "leaf boat", keep="bouncy")
     room["objects"]["pond"] = {"pos": [1, 6], "fix": {"water": [[1, 6]]}}
     o["pos"] = [1, 6]
     things.upkeep(h, cfg)
