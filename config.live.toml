@@ -23,6 +23,10 @@ child = 1.5
 youngling = 3
 adult = 5
 
+[house.house]             # SPEC-v3.5 §5: on the two-hour day a season is three and a half real days, so all four pass in two weeks
+season_days = 42
+was_season_days = 6       # ... and what it was: a house that lived by the short seasons keeps the season it is in (season.settle)
+
 [house.events]            # merged over house.toml: a short life should still meet a few events
 every_hours = 7
 drift_after_days = 6

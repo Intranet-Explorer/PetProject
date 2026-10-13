@@ -129,7 +129,8 @@ def can_lay(house, cfg, pet):
         return "there are no more eggs in you"
     if full(house, cfg, pet):
         return "the house is full"
-    if level(pet, "energy") > 1:
+    from . import season
+    if level(pet, "energy") > 1 + season.rule(house, cfg, "eggs", 0):   # (SPEC-v3.5 §5: in spring an egg comes a little easier)
         return "you are too tired to lay an egg"
     return None
 

@@ -6,14 +6,15 @@ another takes its place. One left alone for a world day fades."""
 import re
 
 from . import craft, order, things
+from . import season
 from .world import LONG_AGO, add_event, days as world_days, label, moment, relation, rnd
 
 GROUPS = {"door": "know", "creature": "know", "bit": "know", "try": "know", "word": "know", "look": "know",
           "store": "better", "glow": "better", "warm": "better", "useless": "better", "tool": "better", "window": "better",
           "comfort": "someone", "toy": "someone", "tell": "someone", "game": "someone",
-          "recipe": "family", "song": "family", "finer": "skill", "get": "get", "plant": "tend", "pick": "tend"}
+          "recipe": "family", "song": "family", "finer": "skill", "get": "get", "plant": "tend", "pick": "tend", "keep": "tend"}
 # which temperament leans toward which kind of want (§2.1): gene -> the wants it weights up
-LEANS = {"curious": ("bit", "try", "word", "door", "creature", "look"), "bold": ("door", "creature"), "orderly": ("store", "glow", "warm", "useless", "tool", "window"),
+LEANS = {"curious": ("bit", "try", "word", "door", "creature", "look"), "bold": ("door", "creature"), "orderly": ("store", "glow", "warm", "useless", "tool", "window", "keep"),
          "sociable": ("comfort", "toy", "tell"), "playful": ("toy", "game"), "patient": ("recipe", "song", "finer")}
 TRY = {"soak": "what water does to %s", "warm": "what warmth does to %s", "melt": "what heat does to %s", "dry": "what becomes of %s left to dry",
        "press": "what becomes of %s under something heavy", "weave": "what comes of weaving %s", "carve": "what could be carved out of %s",
@@ -132,12 +133,13 @@ def candidates(house, cfg, pet):
     for r in known:
         for n, o in r["objects"].items():
             p, at = o.get("planted"), "the %s in %s" % (n, r["name"])
-            if seeds and digs and craft.plantable(cfg, n, o):
+            if seeds and digs and craft.plantable(cfg, n, o) and not season.dormant(house, cfg, r):   # (SPEC-v3.5 §5: not in earth asleep under snow)
                 add("plant", "%s|%s" % (r["id"], n), "the earth of %s is bare: you want to plant %s there" % (at, a(seeds[0])), "planted %s in the %s" % (a(seeds[0]), n),
                     1.5 * (1 + craft.skill(cfg, pet, "tending")), bit=seeds[0], how="plant", room=r["id"], thing=n, bit_room=grown.get(seeds[0]))
             elif p and p["grow"] >= 1 and not p.get("wilted"):
                 add("pick", "%s|%s" % (r["id"], n), "what grows in %s is ripe: you want to pick it, and eat of it or leave some for the others" % at,
                     "picked what was ripe in the %s" % n, 1.5, room=r["id"], thing=n, at=p["at"])
+    season.wants(house, cfg, pet, known, add)   # SPEC-v3.5 §5: in autumn, food lying loose is wanted put by before winter
     # to make better: somewhere to keep things, a light that is not harsh, a warm thing for a cold room, a thing that did nothing, a tool it lacked
     for r in known:
         if r.get("mess") == 2 and order.full(cfg, r):
@@ -258,6 +260,8 @@ def met(house, cfg, pet, w):
         return p.get("by") == pet["id"] and p.get("at", LONG_AGO) >= w["since"]
     if t == "pick":
         return (pet.get("picked") or {}).get("tick", LONG_AGO) >= w["since"] and pet["picked"]["thing"] == w["thing"]
+    if t == "keep":
+        return season.kept(pet, w)
     if t == "word":
         return any(w["word"] in q for q in pet.get("asked", []))
     if t == "look":
@@ -292,7 +296,7 @@ def met(house, cfg, pet, w):
     return False
 
 
-SERVED = ("door", "creature", "bit", "look", "try", "game", "word", "get", "plant", "pick")   # (and "tool", as far as the book: lean)   # the wants its body can do something about without being told
+SERVED = ("door", "creature", "bit", "look", "try", "game", "word", "get", "plant", "pick", "keep")   # (and "tool", as far as the book: lean)   # the wants its body can do something about without being told
 
 
 def possible(house, cfg, pet, w):
@@ -313,6 +317,8 @@ def possible(house, cfg, pet, w):
         return p.get("at") == w["at"] and not p.get("wilted") or (pet.get("picked") or {}).get("tick", LONG_AGO) >= w["since"]
     if t == "creature":
         return any(c["kind"] == w["kind"] for c in house["creatures"])
+    if t == "keep":
+        return bool(season.loose_food(cfg, house["rooms"][w["room"]]))
     if t in ("game", "comfort", "toy"):
         return house["pets"].get(w["who"], {}).get("stage", "dead") not in ("egg", "dead")
     return True
@@ -486,7 +492,7 @@ def lean(house, cfg, pet):
                 out["place"] = out["place"] or (w["how"], w["bit"], w["key"])
             else:
                 out["rooms"].add(w["room"])
-        elif t in ("store", "glow", "warm", "window") and w.get("room") and w["room"] != here:
+        elif t in ("store", "glow", "warm", "window", "keep") and w.get("room") and w["room"] != here:
             out["rooms"].add(w["room"])
         elif t == "game":
             out["play"].add(w["who"])

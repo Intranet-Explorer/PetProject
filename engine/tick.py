@@ -592,6 +592,8 @@ class Engine:
                 raise ValueError("this house has changed the length of its day once already")
             self.house["shift"] = {"until": self.house["tick"], "by": cfg["ticks_per_day"] / was - 1}
         self.house["day_ticks"], cfg["shift"] = cfg["ticks_per_day"], self.house.get("shift")
+        from . import season
+        season.settle(self.house, cfg)   # SPEC-v3.5 §5: a house whose seasons were made longer keeps the season it is in; a forced season is said
         self.house["profile"] = cfg.get("profile")   # so the Lab and the showcase script read the logs on the same clock
         # SPEC-v3.1 comes to a house that is already lived in: the discoveries are counted from this tick, and everyone
         # in it is given the few things a pet now carries. Nothing else about the house or the family is touched.

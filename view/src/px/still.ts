@@ -15,6 +15,7 @@ import { COLS, corner, FX, FY, H, idx, OX, OY, onFloor, ROWS, seeded, TILE, W } 
 import type { Rect } from "./geom";
 import { grid } from "./path";
 import type { Grid } from "./path";
+import { seasonal } from "./season";
 import { hslInt, tinted } from "./tint";
 
 /** A made thing as it is drawn: its kind's sprite, its colour, its size (1 to 3). */
@@ -80,8 +81,12 @@ export class Still {
   /** The places the room has grown ("sleeping corner"), each as the part of the floor it covers. */
   areas: { name: string; rect: Rect }[] = [];
 
+  /** A sprite's name as this season draws it in this room (SPEC-v3.5 §5, view/assets/seasons.json); null: not there this season. */
+  private swap: (name: string | null | undefined, x?: number, y?: number) => string | null | undefined = (n) => n;
+
   constructor(snap: Snap, room: RoomV, readonly layout: Layout | null, readonly K: number) {
     const L = layout ?? {};
+    this.swap = (n, x, y) => seasonal(n, snap.clock.season, room.type, x, y);
     this.tiles(L, room);
     const blocked: Tile[] = [...(L.blocked ?? [])];
     for (const d of L.decor ?? []) this.decor(d.sprite, d.at, d.layer);
@@ -109,7 +114,7 @@ export class Still {
         // how it looks just now: a bowl by what is left in it, a plant by how far it has grown, anything else by its state
         const dead = !!o.fix?.light && o.state === "on" && !snap.power;   // in a power cut no lamp is lit, whatever its switch says
         const state = dead ? "off" : o.servings != null ? (o.servings <= 0 ? "empty" : o.servings < 2 ? "half" : "full") : o.state === "ripe" ? "ripe" : o.grow != null ? (o.grow >= 0.4 ? "growing" : null) : o.state;
-        const sprite = pick(o.planted ? `${base}.bare` : null, state ? `${base}.${state}` : null, base), sz = size(sprite);
+        const plain = pick(o.planted ? `${base}.bare` : null, state ? `${base}.${state}` : null, base), sprite = this.swap(plain) ?? plain, sz = size(sprite);
         const flat = !!o.fix?.soft || !!o.fix?.sun || !!o.water || lf?.walk || lf?.layer === "floor", onWall = !!o.wall || !!lf?.wall || lf?.layer === "wall";   // (a recording from before the layouts has its window on a floor tile: it is hung on the wall above all the same)
         const t = this.put(name, o, sprite, slot ? "sorted" : flat ? "ground" : onWall ? "wall" : lf?.layer === "top" ? "top" : "sorted", undefined, undefined, slot ? this.small : 1, slot);
         if (o.fix?.window) this.windows.push({ name, rect: this.glass(sprite, t), open: o.state === "open" });
@@ -130,7 +135,7 @@ export class Still {
       const [cx, cy] = corner(s.pos), bare = s.loose === false && s.ready === false;
       if (s.on || (s.ready === false && !bare)) continue;   // put away in something: that thing says so
       // a bit the room grows is drawn on what it grows on (SPEC-v3.4 §5): `grows.<bit>`, or `grows.<bit>.bare` while it grows back
-      const source = s.loose === false ? `grows.${s.bit}${bare ? ".bare" : ""}` : null;
+      const grows = s.loose === false ? `grows.${s.bit}${bare ? ".bare" : ""}` : null, source = has(grows) ? this.swap(grows) : null;
       if (source && has(source)) {
         const sz = size(source), sp = new Sprite(tex(source));
         sp.position.set(cx - sz.ax, cy - sz.ay);
@@ -187,7 +192,7 @@ export class Still {
     this.shape = shape;
     for (const [rows, color] of [[L.floor, paint.floor], [L.walls, paint.wall]] as const) {
       for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
-        const name = rows?.[y]?.[x];
+        const name = this.swap(rows?.[y]?.[x], x, y);
         if (!name) continue;
         // paint is a light wash (walls more than floors), and never on grass, soil, water, sky or glass: a painted room must not look flooded or dark
         const wash = color && has(name) && !/grass|soil|water|sky|glass|fence|path|hedge/.test(name) ? tinted(name, color, {}, rows === L.walls ? 0.3 : 0.2) : null;
@@ -223,7 +228,9 @@ export class Still {
     }
   }
 
-  private decor(sprite: string, at: Tile, layer?: string) {
+  private decor(named: string, at: Tile, layer?: string) {
+    const sprite = this.swap(named);
+    if (!sprite) return;
     const s = new Sprite(tex(sprite)), sz = size(sprite), [cx, cy] = corner(at);
     s.position.set(cx - sz.ax, cy - sz.ay);
     if (layer === "floor") this.flat.addChild(s);
@@ -231,7 +238,7 @@ export class Still {
     else if (layer === "wall" || at[1] < 0) this.wallLayer.addChild(s);
     else { s.zIndex = cy + TILE - 4; this.standing.push(s); }
     if (layer === "wall" || s.y < OY - 4) this.wallBusy.push({ x: s.x, y: s.y, w: sz.w, h: sz.h });   // on the wall, or tall enough to stand in front of it
-    this.scenery.push({ sprite, rect: { x: s.x, y: s.y, w: sz.w, h: sz.h } });
+    this.scenery.push({ sprite: named, rect: { x: s.x, y: s.y, w: sz.w, h: sz.h } });
   }
 
   /** Water standing on the floor after a leak. */

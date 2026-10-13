@@ -102,6 +102,7 @@ def effects(house, cfg, pet):
     sheltered = kind in ("cellar", "storeroom")
     warm_by = bool(things.near(house, cfg, pet, "near")) or any(t["tag"] in ("cozy", "attic", "greenhouse") for t in out)
     cold = (R["seasons"][c["season"]]["cold"] if night else 0.0) + (W["snow_cold"] if house["weather"] == "snow" else 0.0)
+    from . import season; cold = season.cold(house, cfg, pet, room, cold, out)   # SPEC-v3.5 §5: the season's own cold, and what a warm thing is by day
     if cold and not (kind == "greenhouse" and c["phase"] == "day"):
         out.append(effect("cold", "comfort", cold * (0.4 if warm_by else 1.0), "the cold gets into you"))
     if house["weather"] == "storm" and not sheltered and not any(dist(pet["pos"], o["pos"]) <= 3 for o in others):

@@ -11,6 +11,7 @@ view/assets/
   sprites.json         every picture the view can draw, by a name of ours -> a rectangle in some pack's file
   kinds.json           the catalog of things a pet can make (SPEC-v3.2 §3): rules for the engine, a sprite for the view
   rooms/<type>.json    one hand-designed layout per room type: floor, walls, furniture, where things can hang
+  seasons.json         which picture stands in for which, by season and room type (snow, blossom, fallen leaves)
   sounds.json          sound effects and music, by a name of ours -> a file in some pack
   parts.json           the parts library (SPEC-v3.5 §1): what an invented thing and a pet's body are put together from
   bodies.json          the body genes: each slot's values, the plans, the patterns (the engine inherits them; the view draws them)
@@ -138,6 +139,23 @@ A pack whose licence forbids redistribution lives outside the repository: give i
   `.growing`, `.ripe`).
 - `blocked` plus the fixtures' tiles plus the `wall` things is what the engine and the view both treat as not
   walkable. Keep every door tile, and a path between all doors, free.
+
+## seasons.json
+
+```json
+{ "winter": { "garden": { "tile.grass": "season.winter.tile.grass", "decor.sprout": null,
+                          "decor.flower.sun": "season.winter.snow mound" },
+              "*":      { "fix.window": "season.winter.fix.window" } },
+  "autumn": { "garden": { "tile.grass": ["season.autumn.tile.grass", "season.autumn.tile.grass~1", "tile.grass"] } } }
+```
+
+What the house looks like by season (SPEC-v3.5 §5): for a season and a room type (`"*"`: every room), the picture that
+stands in for one of the names above wherever the room draws it: a floor or wall tile, a piece of decor, a fixture in
+any of its states, what a bit grows on. `null`: it is not drawn that season. A list: one of them is taken by where the
+tile is, so a floor of one tile is not one picture repeated. A season, a room or a name that is not here is drawn as it
+always is (summer has nothing). Ours are in `own/seasons.png`, drawn by `own/src/seasons.py` from the pictures they
+stand in for (snow laid on, the green turned, blossom dotted in); it writes this file and its block of `sprites.json`
+(`season.<season>.<name>`, after the last `tile.*`), and the two bits the seasons bring (`seasons.toml`, `[bit.*]`).
 
 ## sounds.json
 

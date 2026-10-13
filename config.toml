@@ -199,6 +199,9 @@ surprises = false         # let the director drop a gift in the visitor's name n
 real = true               # §6.6: fetch the Twin Cities' current weather once an hour from one fixed host (on since 11 October 2026; the turbo and test profiles turn it off)
 real_url = "https://api.open-meteo.com/v1/forecast?latitude=44.98&longitude=-93.27&current=temperature_2m,precipitation,weather_code,cloud_cover"
 
+[season]                  # SPEC-v3.5 §5: seasons follow the world clock (house.toml, seasons.toml)
+force = ""                # for a test: a season's name holds the whole house in that season, whatever the clock says
+
 [replay]                  # what the view was shown, kept so a run can be played back (a turbo run is replayed, not watched)
 every_ticks = 5
 keep_days = 60

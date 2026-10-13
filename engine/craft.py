@@ -378,7 +378,7 @@ def takes(cfg, kind, bits=()):
 def by_paw(house, pet):
     """How many things it planted by paw are still coming up."""
     return sum(1 for r in house["rooms"].values() if r["type"] for o in r["objects"].values()
-               if o.get("planted") and o["planted"].get("paw") and o["planted"].get("by") == pet["id"] and o["planted"]["grow"] < 1 and not o["planted"].get("wilted"))
+               if o.get("planted") and o["planted"].get("paw") and o["planted"].get("by") == pet["id"] and o["planted"]["grow"] < 1 and not o["planted"].get("wilted") and not o["planted"].get("dormant"))
 
 
 def gated(cfg, kind):
@@ -444,13 +444,14 @@ def water(house, cfg, pet, room, name):
     """Tending a planted thing: it is watered, and whoever does it gets a little better at it."""
     p = room["objects"][name]["planted"]
     p["watered"] = house["tick"]
-    p["grow"] = round(min(1.0, p["grow"] + cfg["body"]["tend_grow"] * (1 + skill(cfg, pet, "tending"))), 3)
+    p["grow"] = round(min(1.0, p["grow"] + cfg["body"]["tend_grow"] * (1 + skill(cfg, pet, "tending")) * (not p.get("dormant"))), 3)   # (asleep under snow, it does not grow for being tended: season.py)
     practise(house, cfg, pet, "tending", 0.25)
 
 
 def grow(house, cfg):
     """Every world hour: what is planted grows (faster watered, by rain outdoors or by someone tending it), says so
     to whoever planted it as it comes on, and wilts if it is left dry."""
+    from .season import asleep
     G, H = cfg["craft"]["growing"], cfg["house"]
     season = H["seasons"][house["clock"]["season"]]
     for room in [r for r in house["rooms"].values() if r["type"]]:
@@ -460,6 +461,8 @@ def grow(house, cfg):
             if not p:
                 if "fix" in o and o["fix"].get("plant"):
                     o["grow"], o["state"] = 0.0, "bare"
+                continue
+            if asleep(house, cfg, room, name, p):   # SPEC-v3.5 §5: in winter what is planted outdoors neither grows nor wilts
                 continue
             if room["type"] == "garden" and house["weather"] in ("rain", "storm"):
                 p["watered"] = house["tick"]
@@ -495,10 +498,14 @@ def use_planted(house, cfg, pet, room, name):
     if p.get("wilted"):
         del o["planted"]
         return "you pulled the wilted plant out of the %s; the earth is bare again" % name, {}, None
+    if p["grow"] < 1 and p.get("dormant"):   # SPEC-v3.5 §5
+        return "what is planted in the %s lies asleep under the snow: there is nothing to do for it until spring" % name, {}, None
     if p["grow"] < 1:
         water(house, cfg, pet, room, name)
         return "you watered what is growing in the %s" % name, {}, "tend"
     gives = [b for b, n in cfg["craft"]["grow"][p["what"]]["gives"] for _ in range(n + (b != "seed" and skill(cfg, pet, "tending") >= 2))]
+    from . import season
+    gives = season.harvest(house, cfg, gives)   # SPEC-v3.5 §5: in autumn the harvest is plentiful
     del o["planted"]
     if "fix" in o:
         o["grow"], o["state"] = 0.0, "bare"
