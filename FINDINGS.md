@@ -548,3 +548,27 @@ run that was stopped at 1.3 days and adjusted. Day 36 is the evening the copy be
   each pet was trying to do was plain for one pet, guessable for one, and not for two: the card showed the newest
   want, cut short, in grey, where the pet was about another. Changed since: the card shows the want its body is
   about, whole, and the burst lasts longer and sits over the pet it belongs to. Not watched again.
+
+## The follow-up's first world day on the live house (13 October 2026)
+
+Part B went live at 07:41 and the follow-up at 07:57 (tick 46984). This is world day 43, measured to tick 48810.
+Four pets by the end of it: Purple Camo died of old age at 14:40.
+
+- **Twelve things found out in one day**, against one the day before: vine cord (warmed, and dried), clear wax,
+  pressed leaf, wet cloth, supple reed (from vine, and from reed), tinder from moss, charcoal, glue, quill, shell
+  dust. Seven were Lean's. 34 wants were met, 23 of them Lean's.
+- **No tool yet, and it is one step off.** Rain Rest wanted "to make something that cuts", tried, and was told "a
+  carver takes sharp stone or fired clay"; its want now carries those words. Nobody has ground a pebble or warmed
+  clay. The only pet that wanted to grind a pebble was Purple Camo.
+- **Nothing planted.** Purple Camo ate from the tomato vine at 14:20, which left the first bare bed; in the nine
+  world hours after it nobody tried a seed in it. No pet has a want that points at planting.
+- **The book was not asked.** The one tool want was answered by the failed attempt before the body went to the
+  book, so the four new pages were not read. Of five broadcasts that were not forecasts, one carried a picturable
+  noun ("queen"), at 06:54 while everyone slept.
+- **Repeats.** 11 things made; 6 were a kind and material the maker had made on an earlier day. Within the day no
+  pet made a pair a third time: Sven reached two soft nests and Petal's Rest two warm charms, and neither made
+  another.
+- **The mess.** Things lying about, start of day to end: storeroom 12 to 7, music room 6 to 1, cellar 8 to 1. The
+  music room has six made things on its floor (two baskets, a box Sven made that day, two heirlooms by Garry's
+  stone, one loose lamp). All 44 times a body took something out of a box it put it back.
+- 155 model calls, none failed; no errors in the engine's log.
