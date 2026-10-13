@@ -1712,7 +1712,9 @@ async def main():
         assert wants.lean(hA, cA, pa)["ask"] == ("ask", "what is ship", "word:ship")
         pa.update(wants=[{"what": "try", "key": "try:clay|soak", "text": "", "done": "", "bit": "clay", "how": "soak", "room": roomA["id"], "since": hA["tick"]}])
         assert wants.lean(hA, cA, pa)["ask"] == ("ask", "what is clay", "try:clay|soak"), "a thing it wants to find out, with the book right there"
-        pa["asked_at"] = hA["tick"]
+        stage, pa["stage"] = pa["stage"], "hatchling"
+        assert wants.lean(hA, cA, pa)["ask"] is None, "one too young to read is not drawn to the book"
+        pa.update(stage=stage, asked_at=hA["tick"])
         assert wants.lean(hA, cA, pa)["ask"] is None
         del roomA["objects"]["heavy book"], roomA["objects"]["hot pipe"]
         roomA["spots"] = [s2 for s2 in roomA["spots"] if s2["bit"] != "clay"]

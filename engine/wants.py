@@ -203,10 +203,16 @@ def asked_of(pet, tool):
     return tool in pet.get("takes", []) or tool in pet.get("asked_tool", [])
 
 
+def reads(house, pet):
+    """Is it old enough to read the book (and has the book come)? A hatchling is not."""
+    from . import life
+    return "ask_book" in life.unlocked(house, pet["stage"])
+
+
 def may_try(house, pet, tool):
     """May its mind try to make a tool it has not the stuff for? (Trying says what is missing.) Not before it has
     been to the book about it (13 October 2026), unless there is no book it can get to."""
-    return asked_of(pet, tool) or book_room(house) not in pet["rooms"]
+    return asked_of(pet, tool) or book_room(house) not in pet["rooms"] or not reads(house, pet)
 
 
 def question(house, cfg, pet, w):
@@ -436,7 +442,7 @@ def lean(house, cfg, pet):
     want) to carry a bit to in this room, play: who to play with}."""
     out = {"rooms": set(), "doors": set(), "gather": set(), "creatures": set(), "place": None, "play": set(), "look": set(), "pick": set(), "ask": None}
     here, book = pet["room"], book_room(house)
-    rested = house["tick"] - pet.get("asked_at", LONG_AGO) >= cfg["book"]["per_hours"] * cfg["ticks_per_hour"]   # (its eyes are up to the small writing again)
+    rested = reads(house, pet) and house["tick"] - pet.get("asked_at", LONG_AGO) >= cfg["book"]["per_hours"] * cfg["ticks_per_hour"]   # (its eyes are up to the small writing again)
     for w in sorted(pet.get("wants", []), key=lambda w: w["what"] != "get"):   # (a step toward another want comes first)
         t = w["what"]
         q = question(house, cfg, pet, w) if rested else None
