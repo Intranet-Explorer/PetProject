@@ -1,4 +1,4 @@
-// SPEC-v3.5.1 on the page round the room: the hover cards of the hub's own things (the lit sign's lines, a screen,
+// SPEC-v3.5.1 on the page round the room: the hover cards of the hub's own things (the board's lines, a screen,
 // the founder's statue), a large CRT panel to read a screen by, and the radio as a real station: the header's control
 // lists the stations and what is playing, and an <audio> element plays the chosen stream while the radio is on.
 import { $, el, when } from "./dom";
@@ -19,7 +19,7 @@ export function hubTip(name: string, o: Obj, s: Snap, pic: HTMLCanvasElement | n
       st.words ? el("blockquote", "chalk", st.words) : el("p", "hint", "Its last words are not known."),
       o.build?.title ? el("p", "hint", cap(o.build.title) + ".") : null)];
   }
-  if (o.fix?.sign) return [el("div", "", el("p", "", el("b", "", "the lit sign"), el("span", "hint", " · it runs, over and over:")),
+  if (o.fix?.sign) return [el("div", "", el("p", "", el("b", "", "the board"), el("span", "hint", " · what the house is proudest of, in turn:")),
     el("ul", "", ...tickerLines(s).map((l) => el("li", "", l))))];
   if (o.fix?.terminal) {
     const sc = o.screen, who = sc && (sc.by ?? s.pets.find((p) => p.id === sc.pet)?.label ?? "someone");

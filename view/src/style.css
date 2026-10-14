@@ -154,6 +154,13 @@ button.maproom:active:not(:disabled) { transform: none; box-shadow: none; }
 #happening li { display: flex; gap: 6px; align-items: flex-start; color: var(--muted); width: 100%; }
 #happening li .icon { margin-top: 2px; }
 #happening li.warn { color: var(--bad); }
+/* SPEC-v3.5.4 §11: the board's lines, as the machine room's board shows them, from any room */
+#board { flex: none; display: flex; flex-direction: column; gap: 1px; margin: 2px 0 0; padding: 4px 6px; background: #0b0806; border: 1px solid #4e484a; border-radius: 2px;
+  font-size: 11px; line-height: 1.35; letter-spacing: 0.02em; color: #ffa830; cursor: pointer; }
+#board li { display: flex; flex-wrap: wrap; gap: 0 6px; align-items: center; }
+#board li .who { color: #ffd38a; }
+#board li .bar { flex: 1 1 60px; max-width: 90px; }
+#tip .star, .tpage .starit { color: var(--accent); }
 #moments { flex: 1; min-height: 0; display: flex; flex-flow: column wrap; align-content: flex-start; overflow: hidden; }   /* the Story tab has them all */
 #moments li { width: 100%; }
 #side.slim { overflow-y: auto; scrollbar-width: thin; }   /* a narrow column may be taller than the room: it scrolls in its own box */
