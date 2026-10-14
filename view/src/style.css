@@ -42,7 +42,7 @@ p, ul, ol, dl, dd, figure, blockquote { margin: 0; padding: 0; list-style: none;
 header, #replayBar { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; padding: 2px 16px; flex: none; }
 #replayBar { padding-top: 0; }
 h1 { margin: 0; font: 24px/1 var(--pixel); }
-.pixel :is(h1, h2, h3, .tabs button, .treename) { word-spacing: 0.3em; }   /* the pixel face, once it has loaded, sets its words close */
+.pixel :is(h1, h2, h3, h4, .tab, .glabel, .tabs button, .treename) { word-spacing: 0.3em; }   /* the pixel face, once it has loaded, sets its words close */
 /* a box two lines high that is always there, so the sentence never moves the room */
 #now { flex: 1 1 520px; min-width: 0; height: 43px; padding: 0 10px; display: flex; align-items: center;
        background: var(--surface); border: 2px solid var(--edge); box-shadow: 2px 2px 0 var(--shadow); }

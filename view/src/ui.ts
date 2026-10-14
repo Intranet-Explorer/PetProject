@@ -69,7 +69,7 @@ export function petLink(p: Who & { name: string }, box = 0) {
 }
 
 /** A thing's name that goes to its page. */
-export const thingLink = (id: string, name: string) => a(name, href("thing", id), "thing");
+export const thingLink = (id: string, name: string) => a(name, href("thing", id), "thinglink");
 
 /** A made thing's picture. */
 export const thingPic = (recipe: Record<string, unknown>, scale = 2) => thingSprite(recipe as never, scale);
@@ -86,8 +86,14 @@ export async function getJSON<T = any>(url: string): Promise<T | null> {
 
 /** Every pet and thing named in a sentence, linked: a pet's name (longest first, so "Grey Light's Hum" before "Grey
  *  Light"), a thing's name between single quotes. */
-export function linked(text: string, pets: Record<string, Who & { name: string }>, things: Record<string, string> = {}): Node[] {
-  const byName = Object.values(pets).sort((x, y) => y.name.length - x.name.length);
+export function linked(text: string, pets: Record<string, Who & { name: string; born_day?: number | null }>, things: Record<string, string> = {},
+                       at: { day?: number | null; me?: string | null } = {}): Node[] {
+  // a name borne twice ("Grey Light", "Grey Light II") goes to `me` if it is one of them, else to whoever bore it on `day`
+  const plain = (p: { name: string }) => p.name.replace(/ [IVX]+$/, ""), same = new Map<string, (Who & { name: string; born_day?: number | null })[]>();
+  for (const p of Object.values(pets)) same.set(plain(p), [...(same.get(plain(p)) ?? []), p]);
+  const byName = [...same.values()].map((ps) => ps.find((p) => p.id === at.me)
+    ?? ps.filter((p) => at.day == null || (p.born_day ?? 0) <= at.day).sort((x, y) => (y.born_day ?? 0) - (x.born_day ?? 0))[0] ?? ps[0])
+    .sort((x, y) => plain(y).length - plain(x).length);
   const out: Node[] = [];
   let rest = text;
   while (rest) {
