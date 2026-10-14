@@ -87,6 +87,7 @@ export type PetV = {
   thinking?: string | null; carrying?: string[]; following?: string | null; weak?: boolean;
   said?: { text: string; tick: number; to: string | null; to_name: string | null; song?: string } | null;
   project?: { text: string; since: number } | null; plan?: Plan | null; step?: string | null;
+  ambition?: string | null;   // SPEC-v3.5.4 §9: what it means to do with its life
   last_plan?: { intention: string; ended: string; score: string } | null; calls_hour?: number; spring?: boolean;
   portrait?: { day: number; parts: Part[] } | null; old?: boolean;
   // the visitor's naming: the name offered, whether the pet has taken it, and the tick it did

@@ -425,3 +425,19 @@ board_hours = 1           # world hours between turns of the board (it turns at 
 board_days = 3            # world days a feat can be on the board, and a pet's turns up there are remembered
 board_named = 6           # each turn a pet has had on the board lately puts its next this many world hours back
 board_young = 3           # ... and a young one's comes this many world hours sooner (less than a turn: it is favoured, not always up)
+# §6 firsts (engine/firsts.py): judged by what was done, never by a name
+first_glow = { own = 1, family = 2, house = 3 }   # pride for its own first, its family's first, the house's first
+first_fade = 0.6          # each further first in the same world day is worth this much of the one before
+first_least = 0.5         # a first worth less than this gives no pride (and its own is not a moment)
+recent_days = 2           # world days the packet says the family's and the house's newest firsts
+# §7 bests
+best_own_glow = 1         # beating its own best (equalling it is nothing)
+best_elder_glow = 3       # beating a parent's or an ancestor's best: once per best
+# §9 a life's ambition
+ambition_glow = 3         # reaching it
+ambition_offers = 4       # ambitions a night is offered to choose from (and a hatchling is given one of)
+ambition_skill = 3        # "grow very sure at making" is reached at this step of craft's skills (1 some, 2 a good deal, 3 very)
+# §10 being noticed
+fine_thing = 3            # a made thing this fine (things.make's `fine`, the maker's practice) is noticed by whoever is in the room
+noticed_glow = 1          # the maker's pride at being seen
+notice_company = 4.0      # company the maker and each onlooker feel

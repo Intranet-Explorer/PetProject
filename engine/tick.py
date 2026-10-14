@@ -902,6 +902,7 @@ class Engine:
         keep = ("id", "name", "lineage", "gen", "parent", "children", "word", "stage", "stage_before", "laid", "born", "died", "cause",
                 "genome", "temper", "eggs", "made", "life", "buried", "room", "pos", "sleep", "said", "useful", "message", "told")
         kept = {k: pet[k] for k in keep}
+        kept.update({k: pet[k] for k in ("bests", "ambition") if k in pet})   # SPEC-v3.5.4 §7, §9: for its page, and its family's bests
         pet.clear()          # the dead need no working memory: what is left is the family tree and the life record
         pet.update(kept)
         dead = sorted((p for p in h["pets"].values() if p.get("buried")), key=lambda p: p["died"])

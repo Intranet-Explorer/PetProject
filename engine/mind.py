@@ -3,7 +3,7 @@ No numbers, no coordinates, no counts of anything, and no sentence telling the p
 like. Its temperament shows only in what is mentioned and how (§8.1). Alongside the text comes `ctx`: the
 names the packet shows, so a brain's reply can be held to things that are really there."""
 from . import actions, body, craft, feel, genes, invent, life, order, physics, songs, things, walls, wants
-from . import feats, hub, machine
+from . import feats, firsts, hub, machine
 from .world import LONG_AGO, dist, family, here, neighbours, room_type
 from . import build
 
@@ -279,6 +279,7 @@ def perceive(house, cfg, pet, mem):
         "animals": "your animals: " + "; ".join(animal(c) for c in animals),
         "offers": "offered to you: " + "; ".join(offers),
         "project": "your project: " + project,
+        "drive": firsts.lines(house, cfg, pet),   # SPEC-v3.5.4 §6, §7, §9: its ambition, firsts, a best to beat
         "beliefs": "your beliefs:" + ("".join("\n  %s (%s): %s" % (b["id"], b.get("source", "lived"), b["statement"]) for b in beliefs) or " none yet"),
         "parent": "".join("%s your %s %s you: \"%s\"\n" % ("what" if m["kind"] == "message" else "the last thing", m["who"],
                                                           "told" if m["kind"] == "message" else "said to", m["text"]) for m in parent_words).rstrip("\n"),
@@ -294,7 +295,7 @@ def perceive(house, cfg, pet, mem):
              "writing": "written in this room: ", "box": "what you heard the box say: ", "read": "", "songs": "songs you know: ",
              "animals": "your animals: ", "focus": "you have been about: ", "wants": "", "skills": "with practice: ",
              "try": "what could be tried here, and how: ", "recipes": "what you have found out: ",
-             "body": "since you last thought, without thinking about it, you: ", "habits": "your habits: "}
+             "body": "since you last thought, without thinking about it, you: ", "habits": "your habits: ", "drive": ""}
     for k, blank in empty.items():
         if sections[k] == blank:
             del sections[k]

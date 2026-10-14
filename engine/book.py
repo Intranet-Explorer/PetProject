@@ -4,7 +4,7 @@ import html
 import re
 from pathlib import Path
 
-from . import hub
+from . import firsts, hub
 from .world import ROOT, arrived
 
 STOP = set("a an the is are was were be been do does did what why how who where when which of in on to for and or it its this "
@@ -174,6 +174,7 @@ def ask(house, cfg, pet, a, clean):
     title, text = found
     pet.setdefault("read", []).insert(0, {"tick": house["tick"], "question": q, "title": title, "text": text})
     del pet["read"][6:]
+    firsts.read(house, cfg, pet, title)   # SPEC-v3.5.4 §6: a passage read for the first time
     house["read_glow"] = house["tick"]
     moment(house, "read", "%s asked %s \"%s\" and read about %s" % (label(pet), book, q, title), pet["id"], pet["room"])
     hint = wants.hinted(house, cfg, pet, title, text)   # what it read may point at something to try: a hint, never a recipe

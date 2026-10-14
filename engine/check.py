@@ -959,7 +959,7 @@ async def main():
         r = await do(e8, po, {"type": "make", "recipe": base, "near": "here"})
         glow = room8["objects"]["glow"]
         assert not r[0]["reason"] and glow["made"]["recipe"] == dict(base, size=1) and po["carrying"] == ["wax", "fluff"] and glow["state"] == "on", r
-        assert "a yellow jar" in r[0]["feedback"] and h8["moments"][-1]["text"] == "Po made a yellow jar it calls 'glow'", h8["moments"][-1]["text"]
+        assert "a yellow jar" in r[0]["feedback"] and "Po made a yellow jar it calls 'glow'" in [m["text"] for m in h8["moments"][-4:]], h8["moments"][-4:]   # (v3.5.4: a first or a best may follow it)
         packet = mind.perceive(h8, c8, po, pm.mem)[0]
         assert "glow (a yellow jar; yours" in packet, "a pet is told what a thing is, beside its name"
         slots = len(room8["wall_slots"])
@@ -1013,7 +1013,7 @@ async def main():
         r = await do(e8, po, {"type": "combine", "a": "glow", "b": "ring-a", "recipe": {"name": "ringing light", "material": "noisy", "purpose": "both"}})
         both = room8["objects"]["ringing light"]["made"]["recipe"]
         assert not r[0]["reason"] and both["kind"] == "ringing light" and both["color"] == "blue" and both["size"] == 2 and "parts" not in both, both
-        assert any(m_["text"] == "Po joined a jar and a bell into a ringing light it calls 'ringing light'" for m_ in h8["moments"][-3:]), h8["moments"][-1]["text"]   # (SPEC-v3.4: and what came of it, something bright and noisy, is a moment after it)
+        assert any(m_["text"] == "Po joined a jar and a bell into a ringing light it calls 'ringing light'" for m_ in h8["moments"][-6:]), h8["moments"][-1]["text"]   # (SPEC-v3.4: and what came of it, something bright and noisy, is a moment after it)
         assert not walls_.marks(room8), "what was written on a thing goes when the thing does"
         await e8.tick()
         assert e8.db.execute("SELECT count(*) FROM inscriptions WHERE what='gone with the thing'").fetchone()[0] == 1
@@ -1425,6 +1425,9 @@ async def main():
         for i in range(6):
             pa["carrying"], pa["needs"]["energy"] = ["fluff"], 80.0
             r = await do(eA, pa, {"type": "make", "recipe": dict(recipe, name="cot %d" % i), "near": "here"})
+        for i in range(6):   # (laid out once all are made: between one making and the next its paws may tidy an earlier one away)
+            for k in ("on", "home", "places", "kept"):
+                roomA["objects"]["cot %d" % i].pop(k, None)
             roomA["objects"]["cot %d" % i]["pos"] = [0, 1 + i]
         hA["pets"].update({"s%d" % i: dict(pa, id="s%d" % i, room="elsewhere", sleeps_in=roomA["id"]) for i in range(5)})
         corner = [a2 for a2 in order.areas(hA, cA, roomA) if a2["name"] == "sleeping corner"]
@@ -1873,7 +1876,7 @@ if __name__ == "__main__":
     # SPEC-v3.5 §7.1: each part's own checks (parts, bodies and inventions, building, seasons, the machine), each a module that can be run alone
     import subprocess
     import sys
-    for name in ("check_parts", "check_bodies", "check_build", "check_season", "check_machine", "check_hub", "check_works"):
+    for name in ("check_parts", "check_bodies", "check_build", "check_season", "check_machine", "check_hub", "check_works", "check_firsts"):
         if (Path(__file__).parent / (name + ".py")).exists():
             subprocess.run([sys.executable, "-m", "engine." + name], check=True)
     print("self-check passed")

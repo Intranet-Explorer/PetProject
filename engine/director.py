@@ -1,7 +1,7 @@
 """What the house does on its own (SPEC-v3 §6.4, §6.5): the day's weather, the seasons, storms and power
 cuts, the events nobody caused, and the small creatures. All of it scripted; no model is ever asked."""
 from . import craft, genes, genome, order, songs, things, walls
-from . import build
+from . import build, firsts
 from .world import (LONG_AGO, days as world_days, moving as on_the_move, add_event, alive, arrived, bit_kinds, clock, dist, family, free_tile, hours, in_room, label, moment,
                     new_pet, power_on, rnd, ticks, weather_of)
 
@@ -103,6 +103,7 @@ def hourly(house, cfg):
     craft.lost(house, cfg)   # §3.3: what nobody living knows any more is lost
     build.hourly(house, cfg)   # SPEC-v3.5 §4: what was built wears, paint fades, a room that leaks is remembered as one
     things.upkeep(house, cfg)
+    firsts.hourly(house, cfg)   # SPEC-v3.5.4 §7, §9: a skill past a best; an ambition to grow sure at something
     walls.fade(house, cfg)
     order.keep(house, cfg)
     for room in found(house):   # SPEC-v3.3 §2.3: the places a room has grown are named from what is in them

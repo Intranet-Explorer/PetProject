@@ -397,7 +397,7 @@ function cards(s: Snap) {
   // the visitor's naming: what was offered, and whether the pet has taken it (said for a quarter of a day after it does)
   const naming = (p: PetV) => !p.naming ? null : !p.naming.took ? `you called it ${p.naming.offered}; waiting to hear`
     : p.naming.at != null && (s.tick - p.naming.at) * s.tick_seconds < s.day_seconds / 4 ? `it took the name ${p.naming.offered}` : null;
-  const key = JSON.stringify(who.map((p) => [naming(p), p.id, p.label, p.stage, p.room, p.stage === "egg" ? hatchWords(p.hatches_in ?? 0) : [moodWords(p), goodWord(p), emoteOf(p), doingOf(p), wishOf(p), p.body?.icon, p.asleep || p.focus?.words, p.habits, p.wants?.map((w) => w.text), p.skills, p.recipes], p.genome, p.id === view.sel, p.family, p.animals]));
+  const key = JSON.stringify(who.map((p) => [naming(p), p.id, p.label, p.stage, p.room, p.stage === "egg" ? hatchWords(p.hatches_in ?? 0) : [moodWords(p), goodWord(p), emoteOf(p), doingOf(p), wishOf(p), p.body?.icon, p.asleep || p.focus?.words, p.habits, p.wants?.map((w) => w.text), p.skills, p.recipes, p.ambition], p.genome, p.id === view.sel, p.family, p.animals]));
   const box = $("cards");
   if (box.dataset.key === key) return;
   box.dataset.key = key;
@@ -420,12 +420,13 @@ function cards(s: Snap) {
         egg ? el("span", "mood", hatchWords(p.hatches_in ?? 0)) : null,
         naming(p) ? el("span", "naming", naming(p)!) : null,
         doing ? el("span", "doing", el("i", "", "now "), sign, doing) : null,
-        wants.length || wish ? el("span", "want", el("i", "", "wants "), wants[0]?.replace(/^wants /, "") ?? wish) : null));
+        wants.length || wish ? el("span", "want", el("i", "", "wants "), wants[0]?.replace(/^wants /, "") ?? wish) : null,
+        p.ambition && !egg ? el("span", "aim", el("i", "", "means to "), p.ambition) : null));   // SPEC-v3.5.4 §9
     li.tabIndex = 0;
     li.setAttribute("role", "link");
     li.title = `${egg ? "This egg" : p.label}'s page. It is in ${where(p)}; ${moodWords(p).join(", ") || "content"}` + (wish && !egg ? `\nIt wants: ${wish}` : "")
       + (focus ? `\nIts mind is on: ${focus}` : "") + wants.map((w) => `\n${w.startsWith("wants ") ? `It ${w}` : cap(w)}`).join("")
-      + (habits.length ? `\nIts habits: ${habits.join("; ")}` : "") + (animals ? `\nIts animals: ${animals}` : "");
+      + (p.ambition && !egg ? `\nIt means in its life to ${p.ambition}` : "") + (habits.length ? `\nIts habits: ${habits.join("; ")}` : "") + (animals ? `\nIts animals: ${animals}` : "");
     li.onclick = () => go("pet", p.id);
     li.onkeydown = (e) => { if (e.target === li && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); li.click(); } };
     return li;

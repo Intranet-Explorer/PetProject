@@ -3,7 +3,7 @@ world day, and everything made. Nothing here changes the house; it only gathers 
 import json
 import re
 
-from . import genome, things
+from . import firsts, genome, things
 from .world import clock, label, season_of
 
 ROMAN = ["", "", " II", " III", " IV", " V", " VI", " VII", " VIII", " IX", " X"]
@@ -213,7 +213,8 @@ def pet_page(eng, pid, beliefs_of):
             pass
     return {"pet": card, "named_after": named_after(h, p, names), "parent": par and par["id"], "siblings": sibs,
             "children": card["children"], "names": {k: names[k] for k in h["pets"]}, "traits": traits(h, p), "moments": moments,
-            "made": made, "words": words, "my_life": life.get("my_life"), "family_names": {}}
+            "made": made, "words": words, "my_life": life.get("my_life"), "family_names": {},
+            "bests": firsts.page(h, cfg, p)}   # SPEC-v3.5.4 §7, §9: its ambition, its bests and its family's
 
 
 def story_days(eng, before=None, n=7):

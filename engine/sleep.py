@@ -4,7 +4,7 @@ decides about its project, may rewrite the message for its children, and dreams.
 the night (SPEC-v3.5 §2.1: a body is settled at birth); once grown, it still draws itself."""
 import logging
 
-from . import genome, life, story, things
+from . import firsts, genome, life, story, things
 from .actions import belief, clean, filled
 from .feel import ago
 from .log import put
@@ -81,6 +81,8 @@ async def night(mind):
             text += "your project is not something you can do and finish: tonight you set a new one\n"
         if last_day:
             text += "you feel very old and tired.\n"
+        aim = firsts.offer(house, cfg, pet)   # SPEC-v3.5.4 §9: an ambition, when it has none (or its own can no longer be done)
+        asks, text = asks + ["ambition"] * bool(aim), text + aim
         tellers = sorted({m["who"] for m in pet["told"]})
         reply = await eng.call(2, pet["id"], "night", "sleep", lambda: mind.brain.night(text, asks, [b["id"] for b in mem.active()], tellers), len(text))
         p = reply.get("project")
@@ -135,6 +137,8 @@ async def night(mind):
             put(eng.db, "messages", pet=pet["id"], tick=house["tick"], kind="message", to_pet=None, text=msg)
             story.claims(eng, pet, "message", msg)
             moment(house, "message", "%s rewrote the message for its children" % label(pet), pet["id"], pet["room"])
+        if "ambition" in asks:
+            firsts.took(house, cfg, pet, reply.get("ambition"))
         if "my_life" in asks and filled(reply.get("my_life")):
             pet["my_life"] = life.last_sentence(clean(reply["my_life"], 860), 800)
     except Exception:

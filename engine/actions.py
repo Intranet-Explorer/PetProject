@@ -6,6 +6,7 @@ from . import book, craft, feel, genome, life, order, songs, things, walls
 from . import build
 from . import machine
 from . import hub
+from . import firsts
 from .world import (BACK, LONG_AGO, add_event, arrived, beside, dist, family, free_tile, generate_room, here, knows, label, moment,
                     power_on, relation, ticks, witness)
 
@@ -730,6 +731,7 @@ def go(house, cfg, pet, d):
     pet["came_from"] = [room["id"], house["tick"]]   # (SPEC-v3.5.4 §3: it does not go straight back without a reason)
     pet["room"], pet["pos"] = to["id"], list(house["door_tiles"][BACK[d]])
     pet["rooms"][to["id"]] = house["tick"]
+    firsts.entered(house, cfg, pet, to)   # SPEC-v3.5.4 §6: a room reached for the first time
     pet["scent"] = {}
     witness(house, pet, "%s came in through the %s door" % (label(pet), BACK[d]))
     pet["news"].append("arrived")

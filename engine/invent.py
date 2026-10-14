@@ -10,7 +10,7 @@ import itertools
 import json
 from pathlib import Path
 
-from . import craft, things
+from . import craft, firsts, things
 from .world import LONG_AGO, add_event, bit_kinds, clock, free_tile, hours, label, moment, rnd, ticks, weather_of
 
 ART = Path(__file__).parent.parent / "view" / "assets"
@@ -301,6 +301,7 @@ def make(house, cfg, pet, a, clean):
     pet.setdefault("made_at", []).append([house["tick"], "%s|%s" % (rec["name"], rec["material"])])
     craft.practise(house, cfg, pet, "making")
     moment(house, "made", "%s made %s it calls '%s'" % (label(pet), things.a_thing(cfg, recipe), name), pet["id"], room["id"])
+    firsts.made(house, cfg, pet, o, room)   # SPEC-v3.5.4 §6, §7, §10
     return "you made %s and called it %s, from %s, the way you know%s" % (things.a_thing(cfg, recipe), name, " and ".join(sorted(set(used))), "; it hangs on the wall" if rec["wall"] else ""), \
         {"energy": -(cfg["make"]["effort"] + len(used))}, "make " + rec["material"]
 

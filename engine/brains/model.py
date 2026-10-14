@@ -96,6 +96,7 @@ NIGHT_PARTS = {
     "people": '"people": [<for anyone you want to remember something about: {"who": "<who>", "line": "<one line, in your own words>"}>]',
     "message": '"message": "<your message for your children, written fresh in your own words: a few sentences, at most four, on what you have learned in your own life. Do not start from your old message or add to it>"',
     "my_life": '"my_life": "<the story of your life, in your own words, up to 800 characters>"',
+    "ambition": '"ambition": {"pick": <the number of the one you take, or 0 to keep your own>, "words": "<it in a few words of your own, a short line>"}',   # SPEC-v3.5.4 §9
 }
 
 
@@ -198,6 +199,7 @@ def night_schema(asks, belief_ids, tellers):
         "project": {"type": "object", "properties": {"decision": {"enum": ["keep", "set", "finish", "abandon"]}, "text": text(180, 0)}, "required": ["decision"]},
         "people": {"type": "array", "maxItems": 3, "items": obj(who={"type": "string"}, line=text(150))},
         "message": text(640), "my_life": text(860),
+        "ambition": {"type": "object", "properties": {"pick": {"type": "integer", "minimum": 0, "maximum": 9}, "words": text(140, 0)}, "required": ["pick"]},
     }
     return obj(**{k: parts[k] for k in asks})
 

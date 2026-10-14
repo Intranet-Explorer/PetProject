@@ -3,7 +3,7 @@ from them, and the thing takes one property its bits allow. What the thing then 
 materials.toml; the purpose the pet writes changes nothing. Taking a thing apart gives the bits back."""
 import re
 
-from . import craft, invent
+from . import craft, firsts, invent
 from .world import LONG_AGO, add_event, days as world_days, dist, free_tile, hours, label, moment, sunny
 
 SHAPES = ["circle", "square", "triangle", "blob", "bar", "dot", "ring", "star"]
@@ -271,6 +271,7 @@ def make(house, cfg, pet, a, clean):
     craft.practise(house, cfg, pet, "making")
     moment(house, "made", "%s made %s it calls '%s'" % (label(pet), a_thing(cfg, recipe), name), pet["id"], room["id"])   # §6: the kind, then the name
     craft.first_of(house, cfg, pet, r["kind"])
+    firsts.made(house, cfg, pet, o, room)   # SPEC-v3.5.4 §6, §7, §10: a first, a best, and who saw it
     how = "out of what you carried" if not picked else "from %s" % " and ".join(sorted(set(used)))
     said = "you made %s and called it %s, %s%s%s" % (a_thing(cfg, recipe), name, how, "; it hangs on the wall" if hangs else "", "; built with the hammer, it is bigger and sturdier" if built else "")
     if again:
@@ -364,6 +365,7 @@ def combine(house, cfg, pet, a, clean, norm):
     effort = (cfg["make"]["effort"] + 1) * (room_rule(cfg, room, "combine", 1.0) if room["type"] == "workshop" else 1.0)   # easier at a bench (§6.1)
     was = [a_thing(cfg, {"kind": old["made"]["recipe"].get("kind")}) for old in olds]
     moment(house, "made", "%s joined %s and %s into %s it calls '%s'" % (label(pet), was[0], was[1], a_thing(cfg, {"kind": kind}), name), pet["id"], room["id"])
+    firsts.made(house, cfg, pet, o, room)   # SPEC-v3.5.4 §6, §7, §10
     said = "you joined %s and %s into %s and called it %s; " % (x, y, a_thing(cfg, recipe), name)
     if not meets:
         return said + (invent.said(house, new) or "nothing new came of it"), {"energy": -effort}, "combine " + material
