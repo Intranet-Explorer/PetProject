@@ -326,8 +326,6 @@ def check_combine(a, house, cfg, pet, norm):
         return "an heirloom cannot be remade"
     if not isinstance(r, dict) or not isinstance(r.get("purpose"), str) or not clean_name(r.get("name")):
         return "it needs a name and a purpose"
-    if r.get("material") not in {things[n]["made"]["recipe"]["material"] for n in (x, y)}:
-        return "it has to keep the nature of one of the two"
     if pet["needs"]["energy"] < cfg["make"]["tired"]:
         return "you are too tired to do that"
     return None
@@ -337,6 +335,8 @@ def combine(house, cfg, pet, a, clean, norm):
     room = house["rooms"][pet["room"]]
     x, y, r = norm(a["a"]), norm(a["b"]), a["recipe"]
     olds = [room["objects"].pop(n) for n in (x, y)]
+    if r.get("material") not in [o["made"]["recipe"]["material"] for o in olds]:   # (13 October 2026) it keeps the nature of one of the two: named another, it keeps the first's, and is not turned away for it
+        r["material"] = olds[0]["made"]["recipe"]["material"]
     for n, o in zip((x, y), olds):
         gone(house, o, n, "combined", room)
     name = unique_name(house, cfg, clean_name(r["name"]))
