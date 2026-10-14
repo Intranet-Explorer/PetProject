@@ -392,4 +392,5 @@ pre.packet { white-space: pre-wrap; font: 12px/1.5 var(--mono); margin: 6px 0 0;
 .crt .crtshut { position: absolute; top: 4px; right: 8px; background: none; border: 0; color: inherit; font-size: 20px; cursor: pointer; }
 .crt .crtglass { margin: 0; height: min(300px, 44vh); overflow-y: auto; white-space: pre-wrap; overflow-wrap: anywhere; font: 17px/1.35 ui-monospace, "SF Mono", Menlo, monospace;
                  text-shadow: 0 0 6px var(--crt, #8dff9a); background: repeating-linear-gradient(transparent 0 2px, rgb(0 0 0 / 22%) 2px 3px); }
+.crt:not([hidden]) ~ #tip { display: none; }
 #radioNow { font-size: 12px; opacity: 0.85; }

@@ -52,7 +52,7 @@ export function closeScreen() {
 }
 /** Show a screen of the room on screen (`name`: its fixture's name) in the large panel; it types afresh. */
 export function openScreen(s: Snap, room: string, name: string) {
-  if (!panel.isConnected) $("stage").append(panel);
+  if (!panel.isConnected) $("tip").before(panel);   // (before the hover card: while it is open, the card keeps out of its way)
   open = { room, name, key: "", at: 0 };
   panel.hidden = false;
   screens(s, room);
