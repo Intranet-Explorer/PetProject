@@ -547,7 +547,7 @@ def finish(mind, now, cut=False):
                     if other:   # (an elder is gone to once for each thing it wants to know)
                         pet["asked_aloud"] = (pet.get("asked_aloud", []) + [now["where"][4:]])[-12:]
                     add_event(h, pet, ('%s is right here; you could ask out loud: "%s"' % (actions.handle(h, pet, other), now["where"][4:]) if other
-                                       else 'the book is right here; you could ask it: "%s"' % now["where"][4:]) if asking
+                                       else '%s is right here; you could ask it: "%s"' % ("the screen" if room["objects"].get(now.get("what") or "", {}).get("fix", {}).get("terminal") else "the book", now["where"][4:])) if asking
                               else "you have carried the %s %s: you could try it now" % (name, where))
             elif do == "build":   # SPEC-v3.5 §4
                 told, done = build.finish(mind, now, A)

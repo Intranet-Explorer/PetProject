@@ -153,6 +153,8 @@ def ask(house, cfg, pet, a, clean):
     pet["asked"] = (pet.get("asked", []) + [q.lower()])[-12:]   # SPEC-v3.4 §4.1: a word it wondered about has been asked after
     craft.practise(house, cfg, pet, "reading")
     found = entry(cfg, q) or (lookup(cfg, q) if available(cfg) else None)
+    at = hub.book_at(house, cfg, house["rooms"][pet["room"]], pet)[0]   # SPEC-v3.5.3 §10: a screen is a screen, not the book
+    book = "the screen" if house["rooms"][pet["room"]]["objects"].get(at or "", {}).get("fix", {}).get("terminal") else "the book"
     # a tool it wants (13 October 2026): it has been to the book about it; and a page that says what one is made of has told it
     own, asked = page(cfg, q) or {}, set(words(q))
     for tool, T in cfg["craft"]["tool"].items():
@@ -167,12 +169,12 @@ def ask(house, cfg, pet, a, clean):
     house.setdefault("fresh_reads", []).append({"pet": pet["id"], "tick": house["tick"], "question": q,
                                                 "title": found[0] if found else None, "text": found[1] if found else None})
     if not found:
-        moment(house, "read", "%s asked the book \"%s\" and found nothing" % (label(pet), q), pet["id"], pet["room"])
-        return "you turned the pages a long time and found nothing about that", {}, "ask book"
+        moment(house, "read", "%s asked %s \"%s\" and found nothing" % (label(pet), book, q), pet["id"], pet["room"])
+        return "you %s a long time and found nothing about that" % ("searched the screen" if book == "the screen" else "turned the pages"), {}, "ask book"
     title, text = found
     pet.setdefault("read", []).insert(0, {"tick": house["tick"], "question": q, "title": title, "text": text})
     del pet["read"][6:]
     house["read_glow"] = house["tick"]
-    moment(house, "read", "%s asked the book \"%s\" and read about %s" % (label(pet), q, title), pet["id"], pet["room"])
+    moment(house, "read", "%s asked %s \"%s\" and read about %s" % (label(pet), book, q, title), pet["id"], pet["room"])
     hint = wants.hinted(house, cfg, pet, title, text)   # what it read may point at something to try: a hint, never a recipe
-    return 'you read in the book, under "%s": "%s"%s' % (title, text, "; " + hint if hint else ""), dict(cfg["effects"]["read"]), "read " + title
+    return 'you read %s, under "%s": "%s"%s' % ("on the screen" if book == "the screen" else "in the book", title, text, "; " + hint if hint else ""), dict(cfg["effects"]["read"]), "read " + title

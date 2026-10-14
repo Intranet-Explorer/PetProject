@@ -1,0 +1,43 @@
+/* SPEC-v3.5.3 §3: the Family tab: the gallery and the tree */
+.familypage { display: flex; flex-direction: column; gap: var(--pad); }
+.fbars { display: flex; flex-wrap: wrap; gap: 6px 20px; }
+.fbar { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.fbar .glabel { min-width: 52px; }
+.familypage .hint, .between .hint { color: var(--muted); }
+
+.gallery { display: grid; gap: var(--gap); grid-template-columns: repeat(auto-fill, minmax(156px, 1fr)); }
+a.gcard { display: block; color: var(--ink); text-decoration: none; border-left: 6px solid var(--fam, var(--edge)); }
+a.gcard:hover { box-shadow: 2px 2px 0 var(--shadow); }
+.gcard-in { display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center; }
+.gface { height: 120px; display: flex; align-items: center; justify-content: center; }
+.gname { font-size: 15px; overflow-wrap: anywhere; }
+.gfam { color: var(--fam, var(--muted)); font-size: 12px; font-weight: 600; }
+.gdays, .gstage { color: var(--muted); font-size: 12px; display: inline-flex; gap: 4px; align-items: center; }
+.gcard.dead { background: color-mix(in srgb, var(--muted) 10%, var(--surface)); }
+.gcard.dead .gname { color: var(--muted); }
+
+/* the tree: a column per family, a row per generation; it scrolls sideways in its own box, the page never does */
+.tscroll { overflow-x: auto; border: var(--border) solid var(--line); background: var(--surface); }
+.trow { display: flex; min-width: min-content; }
+.thead { height: 44px; padding: 2px 4px; text-align: center; line-height: 1.1; word-spacing: 0.3em; display: flex; align-items: center; justify-content: center; font: 16px var(--pixel); color: var(--fam, var(--muted)); border-bottom: 1px solid var(--line); }
+.tgens { flex: none; width: 40px; border-right: 1px solid var(--line); }
+.tgen { height: 118px; padding: 4px; font-size: 11px; color: var(--muted); border-top: 1px dashed var(--line); }
+.tgen:first-child { border-top: 0; }
+.tcol + .tcol { border-left: var(--border) solid var(--line); }
+.tbox { position: relative; }
+.tlines { position: absolute; inset: 0; width: 100%; }
+.tlines path { fill: none; stroke: var(--fam, var(--line)); stroke-width: 2; }
+a.tnode { position: absolute; width: 96px; transform: translateX(-50%); padding-top: 4px; color: var(--ink); text-decoration: none; }
+.tnode-in { display: flex; flex-direction: column; align-items: center; text-align: center; font-size: 12px; line-height: 1.2; }
+.tnode-in canvas { margin-bottom: 4px; background: var(--surface); outline: 2px solid var(--fam, var(--edge)); }
+.tnode.dead .tnode-in canvas { outline-color: var(--line); }
+.tname, .tdays { background: var(--surface); padding: 0 3px; }
+.tname { padding-top: 3px; font-weight: 600; overflow-wrap: anywhere; }
+.tnode.dead .tname { color: var(--muted); }
+.tdays { color: var(--muted); font-size: 11px; display: inline-flex; gap: 2px; align-items: center; }
+a.tnode:hover .tname { text-decoration: underline; }
+
+.between h2, .petpage h2 { margin: 0 0 6px; font: 18px/1.2 var(--pixel); word-spacing: 0.3em; }
+.fbar .glabel { word-spacing: 0.3em; }
+.between ul { display: flex; flex-direction: column; gap: 4px; }
+.between li { line-height: 1.6; }
