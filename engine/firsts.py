@@ -22,6 +22,7 @@ PAST = {"weave": "wove"}   # (craft.DONE has the participle; "woven" will not do
 CATS = ("thing", "skill", "built", "firsts")
 FINE = ["", "well made", "finely made", "made with a master's paws"]
 # what each best is called on the pet's page (the page is the visitor's: it may count)
+PRACTISED = ["a little practised", "somewhat practised", "practised", "very practised"]
 BEST_PAGE = {"thing": "Finest thing made", "skill": "Surest skill", "built": "Biggest thing helped build", "firsts": "Most firsts in a day"}
 
 
@@ -354,7 +355,7 @@ def best_lines(cfg, B):
     for cat in CATS:
         b = B.get(cat)
         if b and b["v"]:
-            text = b["words"] if cat != "skill" else "%s (%s)" % (b["words"], craft.SKILLS.get(b["words"], [""] * 4)[step(cfg, b["v"])] or "a little")
+            text = b["words"] if cat != "skill" else "%s (%s)" % (b["words"], PRACTISED[step(cfg, b["v"])])
             if cat == "firsts":
                 text = "%d %s" % (b["v"], "new thing in one day" if b["v"] == 1 else "new things in one day")
             out.append({"what": BEST_PAGE[cat], "text": text, "by": b.get("by")})
@@ -402,11 +403,13 @@ def candidates(house, cfg, pet):
     a best of its line's to beat."""
     out, N, mine = [], state(house, cfg), pet.get("firsts", {})
     fam = N["family"].get(fam_of(house, pet), {})
-    add = lambda kind, key, text, **more: out.append(dict(more, kind=kind, key=key, text=text)) if not any(c["key"] == key for c in out) else None
+    # (only one can be first: a first another living pet means to be is not offered)
+    taken = {p["ambition"]["key"] for p in house["pets"].values() if p is not pet and p["stage"] not in ("egg", "dead") and (p.get("ambition") or {}).get("level") in ("house", "family")}
+    add = lambda kind, key, text, **more: out.append(dict(more, kind=kind, key=key, text=text)) if not any(c["key"] == key for c in out) and key not in taken else None
     parent = house["pets"].get(pet.get("parent") or "")
     if parent:
         A = parent.get("ambition")
-        if A and not A.get("done") and not unreachable(house, cfg, pet, A):
+        if A and not A.get("done") and parent["stage"] == "dead" and not unreachable(house, cfg, pet, A):   # (taking up what a parent who has died did not finish)
             add(A["kind"], A["key"], A.get("plain") or A["text"], **{k: A[k] for k in ("level", "room") if k in A})
         for w in parent.get("wants", []):
             what, key = w["key"].split(":", 1)
@@ -423,7 +426,7 @@ def candidates(house, cfg, pet):
     kinds = sorted("kind:" + k for k, v in cfg["kinds"].items() if not v.get("invented") and all(any(a in gettable for a in g.split("|")) for g in cfg["craft"].get("needs", {}).get(k, [])))
     for lvl, done in (("house", N["house"]), ("family", fam)):
         for pool in (rules, kinds):
-            left = [k for k in pool if k not in done]
+            left = [k for k in pool if k not in done and k not in taken]
             if left:
                 k = r.choice(left)
                 add("first", k, "be the first %s to %s" % ("in the house" if lvl == "house" else "of your family", words(house, cfg, k)["base"]), level=lvl)

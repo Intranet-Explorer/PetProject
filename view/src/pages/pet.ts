@@ -11,12 +11,15 @@ import { fam } from "../types";
 import { allPets, familyName, lifeDays, namesOn, stageText } from "./family";
 import type { Pet } from "./family";
 
+type Best = { what: string; text: string; by: string | null };
 type Moment = { tick: number; day: number; hour: number; kind: string; text: string };
 type Thing = { id: string; name: string; recipe: Record<string, unknown>; where: string; gone: string | null; day: number; invented: boolean; statue: boolean };
 type Page = {
   pet: Pet; named_after: { id: string; name: string } | null; parent: string | null; siblings: string[]; children: string[];
   traits: { body: { text: string; from: string | null }[]; temper: { text: string; from: string | null }[]; describe: string };
   moments: Moment[]; made: Thing[]; my_life: string | null;
+  // SPEC-v3.5.4 §7, §9: its ambition, its bests and its family's (`by`: whose, for the family's)
+  bests?: { ambition: { text: string; done: number | null } | null; own: Best[]; family: Best[] };
   words: { message: string[]; last_words: string | null; sayings: string[]; songs: { name: string; how: string }[]; walls: { text: string; place: string }[];
     beliefs: string[]; reads: { question: string; title: string; text: string; day: number }[] };
   now?: { feelings?: string; wants?: { text: string }[]; focus?: { words?: string } | null; doing?: string; asleep?: boolean; project?: { text: string } | null;
@@ -60,6 +63,7 @@ export async function render(root: HTMLElement, id: string | null) {
 
   // the jumps: on a phone the sections are a long way down
   const parts: [string, string][] = [["fam", "Family"], ["body", "Body"], ["words", "Words"], ["made", `Made (${page.made.length})`], ["life", "Life"]];   // (in the order of the page)
+  if (page.bests) parts.splice(parts.length - 2, 0, ["bests", "Bests"]);
   if (page.now) parts.splice(1, 0, ["now", "Now"]);
   const jumps = el("nav", "pjump", a("← everyone", href("family"), "small"),
     ...parts.map(([k, t]) => button(t, () => root.querySelector(`.psec.${k}`)?.scrollIntoView({ behavior: "smooth" }), "chip")));
@@ -111,11 +115,18 @@ export async function render(root: HTMLElement, id: string | null) {
       el("span", "hint", t.gone ?? t.where)))) : el("p", "hint", "Nothing yet."),
     page.made.length > MANY ? button(view.things ? "Show fewer" : `Show all ${page.made.length}`, () => { view.things = !view.things; redraw(); }, "chip") : null);
 
+  // SPEC-v3.5.4 §7, §9: what it means to do with its life, and the best it and its family have done
+  const B = page.bests, bestList = (bs: Best[]) => el("dl", "", ...bs.flatMap((b) => [el("dt", "", b.what), el("dd", "", b.text, ...(b.by && by.get(b.by) ? [" · ", petLink(by.get(b.by)!)] : []))]));
+  const bests = B && section("bests", "Ambition and bests",
+    el("h3", "", "Its ambition"), B.ambition ? el("p", "", ...say(B.ambition.text), B.ambition.done ? el("span", "hint", ` · done, day ${B.ambition.done}`) : null) : el("p", "hint", "None yet."),
+    el("h3", "", "Its bests"), B.own.length ? bestList(B.own) : el("p", "hint", "Nothing yet."),
+    B.family.length ? [el("h3", "", `Its family's bests`), bestList(B.family)] : null);
+
   const moments = view.all ? page.moments : page.moments.filter((m) => LIFE.has(m.kind));
   const life = section("life", "Its life",
     el("ol", "timeline", ...moments.map((m) => el("li", `k-${m.kind}`, icon(m.kind, 14), el("span", "when", `day ${m.day}`), el("span", "", ...say(m.text, m.day)))),
       !p.alive && lastSaid ? el("li", "k-death", icon("speech", 14), el("span", "when", `day ${p.died_day}`), el("span", "", "its last words: ", el("i", "", `“${lastSaid.split(/(?<=[.!?])\s/)[0]}”`))) : null),
     button(view.all ? "Show only the big moments" : `Show everything (${page.moments.length})`, () => { view.all = !view.all; redraw(); }, "chip"));
 
-  root.replaceChildren(el("div", "petpage", head, jumps, el("div", "pcols", family, now, body, words, made, life)));
+  root.replaceChildren(el("div", "petpage", head, jumps, el("div", "pcols", family, now, body, words, bests, made, life)));
 }
