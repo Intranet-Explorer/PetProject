@@ -306,7 +306,8 @@ function header(s: Snap) {
   if ($("family").dataset.key !== said) {
     $("family").dataset.key = said;
     $("family").replaceChildren(...(!alive.length ? ["Nobody is alive in the house."] : fams.length < 2 ? [`One family: ${count(alive)}`]
-      : [`${fams.length === 2 ? "Two" : fams.length} families: `, ...fams.flatMap((f, i) => [i ? "; " : "", el("b", fam(f), `the ${NTH[f] ?? `${f}th`}`), `, ${count(alive.filter((p) => (p.family ?? 1) === f))}`])]));
+      // (each family a line of its own that never breaks, so neither is ever cut in two at the panel's edge)
+      : [`${fams.length === 2 ? "Two" : fams.length} families:`, ...fams.map((f) => el("span", "fline", el("b", fam(f), `the ${NTH[f] ?? `${f}th`}`), `, ${count(alive.filter((p) => (p.family ?? 1) === f))}`))]));
   }
   const chip = (cls: string, ...kids: (Node | string)[]) => el("span", cls, ...kids);
   $("status").replaceChildren(

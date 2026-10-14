@@ -292,7 +292,7 @@ def now(house, cfg):
         return "%s Not long ago, %s." % (first, big["text"])
     if not last or who not in living:
         return first
-    to = house["pets"].get(last.get("to_id") or "")
+    to = house["pets"].get(last.get("to_id") or "") or house["pets"].get(str(last.get("to")))   # (a step may name a pet by its id: "p11")
     said = str(last.get("to") or "someone")
     told = {"thing": things.a_thing(cfg, {"kind": last.get("kind") or "thing", "color": last.get("color")}), "what": last.get("what") or "something",
             "to": name(to, who) if to else "someone" if said.startswith(("your ", "a stranger")) else said}

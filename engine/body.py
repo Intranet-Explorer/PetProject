@@ -397,7 +397,9 @@ def say(cfg, house, pet, now, form, where=""):
     o = house["rooms"][pet["room"]]["objects"].get(what, {})
     if form == "doing" and "made" in o and o["made"]["recipe"].get("kind") and o["made"]["recipe"]["kind"] not in what:
         what = "%s (a %s)" % (what, o["made"]["recipe"]["kind"])   # its maker's name for it says little to a stranger: what it is, too
-    return cfg["activities"][now["name"]][form].format(what=what, where=where or (now.get("where") if isinstance(now.get("where"), str) else ""),
+    A = cfg["activities"][now["name"]]
+    form = form + "_screen" if o.get("fix", {}).get("terminal") and form + "_screen" in A else form   # (a screen is not the heavy book)
+    return A[form].format(what=what, where=where or (now.get("where") if isinstance(now.get("where"), str) else ""),
                                                          who=(actions.handle(house, pet, who) if form == "did" else label(who)) if who else "someone")
 
 

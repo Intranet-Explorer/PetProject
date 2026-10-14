@@ -8,7 +8,8 @@
 .sday h3 .hint { margin-left: 4px; }
 .sday .sky { white-space: nowrap; }
 .sday .sky .icon { margin-right: 3px; }
-.chron { font-size: 14px; padding: 4px 10px; border-left: 3px solid var(--line); max-width: 72ch; }
+.chron { font-size: 14px; padding: 4px 10px 4px 26px; border-left: 3px solid var(--line); max-width: 72ch; display: grid; gap: 3px; }
+.chron li { list-style: disc; }
 .storylist { display: flex; flex-direction: column; }
 .storylist li, .rest { overflow-wrap: anywhere; }
 li.m { display: grid; grid-template-columns: 16px auto minmax(0, 1fr); gap: 6px; align-items: baseline; padding: 2px 4px; font-size: 14px; }

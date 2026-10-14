@@ -2,7 +2,7 @@
 // per family, generations as rows, a line only from a parent to its children; what passed between the families is
 // listed under it, never drawn across it. main.ts calls render() on every visit and every few seconds while shown.
 import "./family.css";
-import { el } from "../dom";
+import { el, stageName } from "../dom";
 import type { Kid } from "../dom";
 import { icon, svg } from "../icons";
 import { href } from "../router";
@@ -18,8 +18,8 @@ type Pets = { pets: Pet[]; links: Link[]; day: number };
 export const familyName = (n: number) => ["", "First family", "Second family", "Third family"][n] ?? `Family ${n}`;
 /** A pet's span in world days: "day 21 – 37" for the dead, "born day 48" for the living. */
 export const lifeDays = (p: Pet) => (p.alive ? `born day ${p.born_day}` : `day ${p.born_day} – ${p.died_day}`);
-const STAGES: Record<string, string> = { egg: "an egg", hatchling: "hatchling", child: "child", youngling: "youngling", adult: "grown", elder: "old" };
-export const stageText = (p: Pet) => (p.alive ? STAGES[p.stage] ?? p.stage : `lived ${Math.round(p.days ?? 0)} days`);
+// (one word for a stage everywhere: the cards' own, dom.ts stageName: little one, young one, grown, old one)
+export const stageText = (p: Pet) => (p.alive ? (p.stage === "egg" ? "an egg" : stageName(p.stage)) : `lived ${Math.round(p.days ?? 0)} days`);
 
 /** Who to link a name to in a sentence from world day `day`: when a name was used twice, only the one that bore it
  *  then (or `me`), so "Grey Light" in day 30's moment goes to the first Grey Light, not the one born on day 52. */

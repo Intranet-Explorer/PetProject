@@ -82,12 +82,22 @@ let filter = "main", drawn = "", busy = false;
 
 const ago = (d: number) => (d === today ? "Today" : d === today - 1 ? "Yesterday" : `Day ${d}`);
 
+/** The day's paragraph as short points: a sentence each, and a long sentence cut where it turns to another pet or
+ *  another thing ("; ", and ", and " before a name or "it"). */
+export function points(text: string): string[] {
+  return text.split(/(?<=[.!?])\s+(?=["“A-Z])/)
+    .flatMap((s) => s.split(/;\s+|,\s+and\s+(?=(?:it|its|they)\b|[A-Z])/))
+    .map((s) => s.trim().replace(/[,;:]$/, ""))
+    .filter((s) => s.length > 1)
+    .map((s) => s[0].toUpperCase() + s.slice(1) + (/[.!?”"]$/.test(s) ? "" : "."));
+}
+
 function dayBlock(d: Day, keep: (m: M) => boolean) {
   const shown = d.moments.filter(keep), rest = d.moments.length - shown.length;
   const sky = d.weather ? el("span", "sky", PATHS[d.weather] ? icon(d.weather) : null, d.weather) : null;
   return el("section", "sday",
     el("h3", "", ago(d.day), " ", el("span", "hint", d.day >= today - 1 ? `day ${d.day} · ` : "", d.season, sky ? " · " : "", sky)),
-    d.summary && (filter === "main" || filter === "all") ? el("p", "chron", ...told(d.summary, d.day, null, things)) : null,
+    d.summary && (filter === "main" || filter === "all") ? el("ul", "chron", ...points(d.summary).map((t) => el("li", "", ...told(t, d.day, null, things)))) : null,
     shown.length ? el("ol", "storylist", ...shown.map((m) => momentRow(m, things)))
       : el("p", "empty", d.day === today ? "Nothing worth telling yet today." : filter === "main" ? "A quiet day." : "Nothing of this kind."),
     filter === "main" && rest ? el("p", "rest", `and ${rest} smaller moment${rest === 1 ? "" : "s"} (making, wanting, comings and goings) `,
