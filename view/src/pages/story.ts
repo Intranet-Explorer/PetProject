@@ -29,20 +29,15 @@ export const petOf = (id: string | null | undefined) => (id ? pets[id] : undefin
 
 const plain = (n: string) => n.replace(/ [IVX]+$/, "");
 /** A moment's sentence with every pet and thing in it linked. A name two pets have had ("Grey Light") goes to the one
- *  who did it (the moment's `pet`), else the one alive that day, else the latest before it. A pet named in the sentence
+ *  who did it (the moment's `pet`), else the one born last by that day (ui.ts linked). A pet named in the sentence
  *  by what it was called before it had a name ("the seventh one") is the one who did it; one not named at all ("an egg
  *  hatched") is put after the sentence. */
 export function told(text: string, day: number, actor: string | null, things: Record<string, string>): Node[] {
-  const rank = (p: Pet) => {
-    const from = p.laid_day ?? p.born_day ?? 0, to = p.died_day ?? Infinity;
-    return p.id === actor ? 3e6 : from <= day && day <= to ? 2e6 + from : from <= day ? 1e6 + from : -from;
-  };
-  const one: Record<string, Pet> = {};
-  for (const p of Object.values(pets)) { const k = plain(p.name); if (!one[k] || rank(p) > rank(one[k])) one[k] = p; }
+  const one: Record<string, Pet> = { ...pets };
   const me = petOf(actor);
   const was = me && (/^(.+?) took the name /.exec(text)?.[1] ?? (text.includes(plain(me.name)) ? null : /\bthe (?:little|[a-z]+(?:st|nd|rd|th)) one\b(?!'s)/.exec(text)?.[0]));
   if (me && was) one[" was"] = { ...me, name: was };
-  const out = linked(whole(text), one, things);
+  const out = linked(whole(text), one, things, { day, me: actor });
   if (me && !out.some((n) => n instanceof HTMLAnchorElement && n.hash === `#/pet/${me.id}`)) out.push(document.createTextNode(" · "), petLink(me));
   return out;
 }
