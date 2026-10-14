@@ -71,6 +71,10 @@ A pack whose licence forbids redistribution lives outside the repository: give i
   small white plate so it reads on any floor) · `plant.<stage>` something growing (below) · `door.<state>` · `egg` ·
   `stone` (a memorial).
 - `fix.little radio` (`.on`, `.off`) is the visitor's own radio, set down in a room until the pets find theirs.
+- SPEC-v3.5.1, the machine room: `fix.terminal` is every screen (`terminal` in house.toml), whatever its name; its `glass`
+  ([x, y, w, h]) is where the view writes what was typed and read. `fix.radio set` (`.on`, `.off`) is the pets' radio while
+  it stands in the hub. Both are drawn by `own/src/hub.py` into `own/hub.png`. The lit sign and the statue are drawn by the
+  view in code; a layout's `fix.lit sign` only gives the sign its size and place.
 - A bit a room grows is drawn on its source, standing on the bit's tile like a fixture: `grows.<bit>` with the bit on
   it (petals on a flower, feathers in a nest, reed among the reeds), `grows.<bit>.bare` after it has been picked,
   until it grows back. Only a bit a pet dropped is drawn loose, as `bit.<bit>`. A bit with no `grows.*` sprite is

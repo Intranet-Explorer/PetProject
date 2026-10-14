@@ -18,7 +18,8 @@ console: nothing is ever a hole.
 | `acts.ts` | each finished step or body activity played once: pop, puff, slide together, heart, notes, dust, a thing flown to its shelf |
 | `fx.ts` | the small moving things (sparkles, hearts, notes, z's, dust), pooled |
 | `marks.ts` | writing on the walls |
-| `bubbles.ts` | each pet's one line (the sign of what it is doing, its name), the caption of what it wants, speech bubbles, the box's words, the names of things, and whose turn it is to show |
+| `bubbles.ts` | each pet's one line (the sign of what it is doing, its name), the caption of what it wants, speech bubbles, the names of things, and whose turn it is to show |
+| `hub.ts` | SPEC-v3.5.1, the machine room's own things: the lit sign as a dot-matrix ticker drawn in code (its lights at the screen's own pixels, cycling the time, the forecast and `snap.ticker`'s headlines with a pinball-display animation before each), each screen's glass (what was asked typed, what was read scrolling, green or amber by turns), the founder's statue (`obj.statue.genome` through `petsprite.ts`, in stone, twice a pet's size, on the layout's plinth; a rough block, then carved from the foot up in a scaffold while `build.progress` < 1), and the radio set. `still.ts` asks `hubSprite` what to draw them as; the room calls `Hub.build` and `Hub.step`. (The page's side, the cards, the big screen and the station, is `src/hub.ts`.) |
 | `built.ts` | SPEC-v3.5 §4.2: the paint a room wears (`RoomV.painted`): a wash of the dye's colour on a stretch of wall, a patch of floor or a rug, with stripes, dots or a border in the painter's coat colour, fainter as it fades. (What is built is drawn by `still.ts` from the sprite the engine names in `Obj.build`: `fix.site*` while under way, `fix.built.<project>` once it stands.) |
 
 ## What the page gives the room, and gets back
