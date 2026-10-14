@@ -59,7 +59,7 @@ export async function render(root: HTMLElement, id: string | null) {
       p.alive ? button("Watch now", () => go("house", p.id), "watch") : null));
 
   // the jumps: on a phone the sections are a long way down
-  const parts: [string, string][] = [["fam", "Family"], ["words", "Words"], ["made", `Made (${page.made.length})`], ["life", "Life"], ["body", "Body"]];
+  const parts: [string, string][] = [["fam", "Family"], ["body", "Body"], ["words", "Words"], ["made", `Made (${page.made.length})`], ["life", "Life"]];   // (in the order of the page)
   if (page.now) parts.splice(1, 0, ["now", "Now"]);
   const jumps = el("nav", "pjump", a("← everyone", href("family"), "small"),
     ...parts.map(([k, t]) => button(t, () => root.querySelector(`.psec.${k}`)?.scrollIntoView({ behavior: "smooth" }), "chip")));
@@ -91,7 +91,7 @@ export async function render(root: HTMLElement, id: string | null) {
   const quote = (text: string, day?: number) => el("blockquote", "", ...say(text, day));
   const message = w.message.at(-1)?.trim();
   const words = section("words", "Its words",
-    lastSaid ? [el("h3", "", message === lastSaid ? "Last words, and the message it left its children" : "Last words"), quote(lastSaid)] : null,
+    lastSaid ? [el("h3", "", message === lastSaid ? "Last words (the same words as the message it left its children)" : "Last words"), quote(lastSaid)] : null,
     message && message !== lastSaid ? [el("h3", "", "The message it left its children"), quote(message)] : null,
     w.beliefs.length ? [el("h3", "", "What it believed (latest first)"), el("ul", "bul", ...[...w.beliefs].reverse().map((b) => el("li", "", ...say(b))))] : null,
     w.sayings.length ? [el("h3", "", "Sayings"), el("ul", "bul", ...w.sayings.map((s) => el("li", "", ...say(s))))] : null,

@@ -253,6 +253,7 @@ a.link .who { display: inline-flex; align-items: center; gap: 4px; }
 .visit #volume { width: 64px; accent-color: var(--accent); }
 #visitBtn { display: none; }
 @media (max-width: 640px) {
+  .page.house #now { height: auto; min-height: 43px; padding-block: 4px; }   /* a phone: the sentence takes the lines it needs (the room is further down anyway) */
   #visitBtn { display: block; width: 100%; margin: 2px 0; }
   footer:not(.open) #controls { display: none; }
   main.stacked .top { display: contents; }
