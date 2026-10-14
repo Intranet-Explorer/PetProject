@@ -85,8 +85,9 @@ const ANIMS: Record<string, (b: Pen, k: number) => void> = {
   },
   star: (b, k) => {   // a burst: a star in the middle, rays thrown outward, sparkles after
     const cx = b.w / 2, cy = b.h / 2;
-    for (let i = 0; i < 12; i++) { const a = (i * Math.PI) / 6, d0 = k * 24; for (let d = d0; d < d0 + 3; d++) b.dot(cx + Math.cos(a) * d * 1.4, cy + Math.sin(a) * d * 0.7, 1 - k * 0.5); }
-    if (k < 0.5) for (let d = -3; d <= 3; d++) { b.dot(cx + d, cy, 1); b.dot(cx, cy + d * 0.7, 1); }
+    for (let i = 0; i < 12; i++) { const a = (i * Math.PI) / 6, d0 = k * 26; for (let d = Math.max(0, d0 - 7); d < d0; d += 0.5) b.dot(cx + Math.cos(a) * d * 1.5, cy + Math.sin(a) * d * 0.75, (1 - (d0 - d) / 7) * (1 - k * 0.4)); }   // rays thrown out, each with a fading tail
+    const g = Math.min(1, k * 4) * 4 * (k < 0.6 ? 1 : (1 - k) / 0.4);   // and a star that swells and goes
+    for (let d = -g; d <= g; d += 0.5) { b.dot(cx + d * 1.5, cy, 1); b.dot(cx, cy + d * 0.6, 1); b.dot(cx + d * 0.8, cy + d * 0.4, 0.7); b.dot(cx + d * 0.8, cy - d * 0.4, 0.7); }
     const r = seeded(`spark${Math.floor(k * 12)}`);
     if (k > 0.3) for (let i = 0; i < 10; i++) b.dot(r() * b.w, r() * b.h, r());
   },
