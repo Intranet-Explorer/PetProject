@@ -191,7 +191,7 @@ def perceive(house, cfg, pet, mem):
         senses.append("the egg here is nobody's, and nobody has given it a name")
     if "lay_egg" in can or ("name" in can and "egg" in actions.nameable(house, pet)):   # SPEC-v3.5.4 §5: the names its family has had
         fam = hub.family_of(house, pet)
-        used = list(dict.fromkeys(p["name"] for p in sorted(house["pets"].values(), key=lambda p: int(p["id"][1:])) if p.get("name") and hub.family_of(house, p) == fam))
+        used = list(dict.fromkeys(p["name"] for p in house["pets"].values() if p.get("name") and hub.family_of(house, p) == fam))
         if used:
             senses.append("names your family has had: %s; an egg can have a name of its own, or one that honours someone" % ", ".join(used))
 

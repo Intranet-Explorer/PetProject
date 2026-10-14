@@ -132,8 +132,8 @@ def targets(house, cfg, pet, mem, name, A):
             [[min(cfg["W"] - 2, max(1, at[0] + r.randint(-2, 2))), min(cfg["H"] - 2, max(1, at[1] + r.randint(-2, 2)))] for _ in range(4)]
         return [{"goal": free_tile(house, cfg, room, max(tries, key=lambda t: min(dist(me, t), 6)))}]
     if do in ("doorway", "peek", "go"):
-        if not doors_open(house, cfg, pet):
-            return []   # SPEC-v3.5.4 §3: a stay lasts long enough to do something before its body picks a door again
+        if not doors_open(house, cfg, pet) and not (do == "go" and state(pet).get("bare")):
+            return []   # SPEC-v3.5.4 §3: a stay lasts long enough to do something before its body picks a door again (unless there is nothing here it has not just handled: v3.4 §0)
         out, mess = [], order.way(house, cfg, pet) if do == "go" else None
         # may a mess elsewhere draw it out of this room? Not out of a mess, not from beside what its mind keeps it by, not when it is resting tired
         trip = state(pet).get("trip") or [None, True]   # [the world day it last set off for a mess, has it got there]: one such trip a day
@@ -159,8 +159,9 @@ def targets(house, cfg, pet, mem, name, A):
                 kin = [p for p in house["pets"].values() if p["room"] == rid and p["stage"] not in ("egg", "dead") and not p["sleep"] and relation(house, pet, p)]
                 called = (focus.get("type") == "be with" and want and want["room"] == rid) or house.get("visitor_room") == rid and house["tick"] - house["visitor_last"] < ticks(cfg, 60) \
                     or "event" in pet["news"]
-                if just_left(house, cfg, pet, rid) and not called:
-                    continue   # SPEC-v3.5.4 §3: not straight back to the room it has just left, unless something calls it there
+                cornered = state(pet).get("bare") and all(just_left(house, cfg, pet, x) or x not in pet["rooms"] for x in room["doors"].values())
+                if just_left(house, cfg, pet, rid) and not called and not cornered:
+                    continue   # SPEC-v3.5.4 §3: not straight back to the room it has just left, unless something calls it there (or it has handled all there is here, and there is nowhere else)
                 stale = min(1.0, (house["tick"] - pet["rooms"].get(rid, LONG_AGO)) / (cfg["body"]["stale_hours"] * cfg["ticks_per_hour"]))
                 stale = stale * (2.0 if feel.level(pet, "curiosity") >= 2 else 1.0) if stale >= 1.0 else 0.0   # a room not seen lately, the more so to a bored pet
                 if focus.get("type") == "be with" and want and want["room"] == rid:

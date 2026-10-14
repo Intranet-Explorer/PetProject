@@ -27,7 +27,7 @@ doing = "wandering about"
 did = "wandered about"
 icon = "walk"
 seconds = [3, 6]
-base = 0.1                       # (SPEC-v3.5.4 §3: was 0.5; wandering about is filler, not going anywhere)
+base = 0.5                       # (walking about the room, not through a door: it keeps v3.4's paws busy and legs moving)
 temper = { curious = 0.4, bold = 0.2 }
 focus = ["explore"]
 

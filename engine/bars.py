@@ -14,7 +14,7 @@ from pathlib import Path
 
 from .world import load_config
 
-DOORS = {"go next door", "peek next door", "explore a doorway", "wander", "go"}   # going, peeking, wandering (§0)
+DOORS = {"go next door", "peek next door", "explore a doorway", "go"}   # going, peeking, nosing at doors (§0); "wander" (walking about inside a room) is counted apart
 DONT = re.compile(r"^\W*(do not|don't|wait|attend|rest|lie|stay|hold|keep still|be still|let|not\b|never|avoid|refrain|listen|watch the|notice|sit)", re.I)
 STOP = set("a an the and or of to in on at for with by from as is are was were be it its this that these those you your we our i my me "
            "not do does did so but if then than when what which who into out up down over under about all any some no".split())
@@ -97,7 +97,7 @@ def measure(data, since, until):
 
     # rooms: stays, bounces, doors
     rows = db.execute("SELECT pet, tick_from, tick_to, what, room FROM doing WHERE tick_to BETWEEN ? AND ? ORDER BY pet, tick_to", (since, until)).fetchall()
-    stays, changes, back, door_t, awake_t = [], 0, 0, 0, 0
+    stays, changes, back, door_t, awake_t, wander_t = [], 0, 0, 0, 0, 0
     per = defaultdict(list)
     for r in rows:
         per[r[0]].append(r)
@@ -109,6 +109,7 @@ def measure(data, since, until):
                 continue
             awake_t += b - a
             door_t += (b - a) if what in DOORS else 0
+            wander_t += (b - a) if what == "wander" else 0
             if not visits or visits[-1][0] != room:
                 if visits:
                     visits[-1][2] = b
@@ -124,7 +125,7 @@ def measure(data, since, until):
         stays += [(v[2] - v[1]) * real for v in awake[1:-1]]   # (the first and last visits are cut by the window)
     out["stay in a room, median"] = "%.1f real min (%d stays)" % (statistics.median(stays) / 60, len(stays)) if stays else None
     out["straight back within 6 min"] = "%.0f%% of %d room changes" % (100 * back / changes, changes) if changes else None
-    out["waking time at doors"] = "%.0f%%" % (100 * door_t / awake_t) if awake_t else None
+    out["waking time at doors"] = "%.0f%% (and walking about inside a room %.0f%%)" % (100 * door_t / awake_t, 100 * wander_t / awake_t) if awake_t else None
 
     # crowding
     cap = live["make"]["crowded"]

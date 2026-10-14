@@ -169,9 +169,9 @@ async def main():
         for i in range(cfg["make"]["crowded"]):
             pet["carrying"] = ["fluff"]
             await do(eng, pet, {"type": "make", "recipe": dict(recipe, name="n%d" % i), "near": "here"}, {"type": "observe"})
-        assert len(things.made(room_of(eng, pet))) == cfg["make"]["crowded"], "a room only holds so many made things"
-        assert "crowded" in " ".join(physics.senses(h, cfg, pet)) and "something to keep things in" in " ".join(physics.senses(h, cfg, pet)), \
-            "the limit is felt, not counted; and what would ease it can still be made (12 October 2026)"
+        assert len(things.made(room_of(eng, pet))) == made0 + cfg["make"]["crowded"], "SPEC-v3.5.4 §1: a crowded room is no bar to making"
+        assert "cluttered with old things" in " ".join(physics.senses(h, cfg, pet)) and "no room" not in " ".join(physics.senses(h, cfg, pet)), \
+            "a crowded room is felt as untidy, not as a reason to stop"
         for n in [n for n in things.made(room_of(eng, pet)) if n != "nest"]:
             things.unmake(h, cfg, pet, n)
         room_of(eng, pet)["spots"] = [s for s in room_of(eng, pet)["spots"] if not s["loose"]]
@@ -344,9 +344,11 @@ async def main():
         assert rate() in (C["creature"], C["friend"])
         egg["room"], h["creatures"] = home, creatures
         # boredom can happen and cannot become misery: the figures a pet took in during the third run were 0.2 to 0.32
-        # of interest per 10 s awake, so a quiet life (0.15) has to settle below "bored" and a busy one (0.36) above "a bit bored"
+        # of interest per 10 s awake, so a quiet life (0.15) has to settle below "bored" and a busy one (0.36) above "a bit bored".
+        # SPEC-v3.5.4 §2: with what is new giving most and drift at 0.7, a stub day took in about 1.0 (median 73%); a quiet
+        # life at a third of that has to settle below "bored", a busy one at 0.9 above "a bit bored"
         k = -cfg["effects"]["drift"]["curiosity"]
-        assert 50 * 0.15 / k < feel.STEPS[2] and 50 * 0.36 / k >= feel.STEPS[1], "interest has to be able to run low, and to stay up"
+        assert 50 * 0.33 / k < feel.STEPS[2] and 50 * 0.9 / k >= feel.STEPS[1], "interest has to be able to run low, and to stay up"
         assert cfg["effects"]["restless_to"] > feel.STEPS[3] + feel.SHIFT / 2, "boredom alone never makes even the most sensitive pet miserable"
         egg["needs"]["curiosity"] = 10
         assert any("door is one you have never been through" in s for s in physics.senses(h, cfg, egg)), physics.senses(h, cfg, egg)
@@ -1329,7 +1331,7 @@ async def main():
         pa["carrying"], pa["needs"]["energy"] = ["fluff", "fluff"], 80.0
         r = await do(eA, pa, {"type": "make", "recipe": dict(recipe, name="one too many", kind="ball"), "near": "here"})
         r += await do(eA, pa, {"type": "make", "recipe": dict(recipe, name="keeper", kind="box"), "near": "here"})
-        assert "crowded" in (r[0]["reason"] or "") and not r[1]["reason"] and order.NOWHERE not in physics.senses(hA, cA, pa), "a crowded room still takes a box: %s" % r
+        assert not r[0]["reason"] and not r[1]["reason"] and order.NOWHERE not in physics.senses(hA, cA, pa), "a crowded room takes another thing, and a box: %s" % r
         assert order.job(hA, cA, pa, roomA)["job"][2:] == ["on", "keeper"], "and then there is somewhere to put things"
         # bits the house brings to the storeroom go into its crates
         clear()
@@ -1452,12 +1454,12 @@ async def main():
         hA["rooms"][far]["mess"] = 2
         was_far = {k: hA["rooms"][far].get(k) for k in ("objects", "spots")}
         hA["rooms"][far].update(objects={"shelf": {"pos": [1, 1], "state": None, "fix": {"store": 2}}}, spots=[])
-        pa["rooms"] = {roomA["id"]: 0, mid: 0, far: 0}
+        pa["rooms"] = {roomA["id"]: 0, mid: hA["tick"], far: hA["tick"]}   # (seen lately: SPEC-v3.5.4 §3's pull of a room not seen lately is not what this is about)
         assert order.way(hA, cA, pa) is None, "a mess where there is nothing it could put away is no reason to go"
         hA["rooms"][far]["objects"]["left about"] = left_about
         del pa["rooms"][far]
         assert order.way(hA, cA, pa) is None, "a mess in a room it has never been in is not one it knows of"
-        pa["rooms"][far] = 0
+        pa["rooms"][far] = hA["tick"]
         assert order.way(hA, cA, pa) == d1, "the first door on the way to the mess two rooms off: %s" % order.way(hA, cA, pa)
         pa["focus"] = {"type": "tidy", "words": "put things straight", "since": hA["tick"]}
         assert [t["what"] for t in body.targets(hA, cA, pa, mA.mem, "go next door", cA["activities"]["go next door"]) if t.get("bonus") == 2.0] == [d1], "with its mind on tidying and this room done, its body sets off that way"
