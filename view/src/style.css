@@ -171,23 +171,23 @@ div.moment { cursor: default; }
 
 /* ---- a card for everyone alive, and every egg: one row while they fit, then a second; every line wraps ---- */
 #cards { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; justify-content: center; flex: none; }
-.card { flex: 1 1 220px; max-width: 340px; min-width: 0; min-height: 96px; display: flex; gap: 8px; align-items: flex-start; padding: 3px 5px; cursor: pointer;
+#cards .card { flex: 1 1 220px; max-width: 340px; min-width: 0; min-height: 96px; display: flex; gap: 8px; align-items: flex-start; padding: 3px 5px; cursor: pointer;
         background: var(--surface); border: 2px solid var(--edge); border-left: 6px solid var(--fam, var(--edge)); box-shadow: 2px 2px 0 var(--shadow); }
-.card.egg { flex: 1 1 150px; max-width: 220px; }
-.card:hover { background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
-.card.chosen { outline: 2px solid var(--accent); outline-offset: 1px; }
-.card .pic { flex: none; width: 48px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
-.card .pic span { display: flex; gap: 3px; align-items: center; justify-content: center; min-height: 26px; }
-.card .pic .plate { min-height: 0; padding: 1px 2px; background: #2a2433; border: 1px solid #0c0b12; }   /* a dark plate: the pale faces show on it in either theme */
-.card .txt { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow-wrap: break-word; font-size: 12px; line-height: 15px; }
-.card .txt > span { color: var(--muted); }
-.card b { font-weight: 650; font-size: 14px; line-height: 17px; color: var(--ink); }
-.card .txt .mood, .card .txt .doing { color: var(--ink); }
-.card .txt .mood .good { color: var(--good); font-style: normal; }   /* one thing that is clearly good, in another tone */
-.card .txt .wish { color: var(--ink); font-size: 11.5px; line-height: 13px; }
-.card .txt :is(.doing, .wish) i { color: var(--muted); font-style: normal; }   /* "now" and "wants": which line is the deed and which the wish */
-.card .txt .wish q { font-style: italic; }
-.card .mind { font-size: 11px; line-height: 1; padding: 0 4px; min-height: 15px; box-shadow: none; vertical-align: 1px; border-width: 1px; color: var(--muted); }
+#cards .card.egg { flex: 1 1 150px; max-width: 220px; }
+#cards .card:hover { background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
+#cards .card.chosen { outline: 2px solid var(--accent); outline-offset: 1px; }
+#cards .card .pic { flex: none; width: 48px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+#cards .card .pic span { display: flex; gap: 3px; align-items: center; justify-content: center; min-height: 26px; }
+#cards .card .pic .plate { min-height: 0; padding: 1px 2px; background: #2a2433; border: 1px solid #0c0b12; }   /* a dark plate: the pale faces show on it in either theme */
+#cards .card .txt { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow-wrap: break-word; font-size: 12px; line-height: 15px; }
+#cards .card .txt > span { color: var(--muted); }
+#cards .card b { font-weight: 650; font-size: 14px; line-height: 17px; color: var(--ink); }
+#cards .card .txt .mood, .card .txt .doing { color: var(--ink); }
+#cards .card .txt .mood .good { color: var(--good); font-style: normal; }   /* one thing that is clearly good, in another tone */
+#cards .card .txt .wish { color: var(--ink); font-size: 11.5px; line-height: 13px; }
+#cards .card .txt :is(.doing, .wish) i { color: var(--muted); font-style: normal; }   /* "now" and "wants": which line is the deed and which the wish */
+#cards .card .txt .wish q { font-style: italic; }
+#cards .card .mind { font-size: 11px; line-height: 1; padding: 0 4px; min-height: 15px; box-shadow: none; vertical-align: 1px; border-width: 1px; color: var(--muted); }
 .empty-house { color: var(--muted); padding: 8px; }
 
 /* ---- the visitor's controls: one bar ---- */
@@ -203,18 +203,71 @@ footer { flex: none; padding: 2px 16px; border-top: 2px solid var(--edge); backg
 #ended { display: flex; gap: 16px; align-items: center; justify-content: center; color: var(--muted); }
 #ended button { color: var(--ink); }
 
-/* ---- the drawer: closed by default; pushes the house aside on a wide window, covers it on a narrow one ---- */
-/* the drawer: closed by default. It takes no width from the room: it lies over the column beside it, as tall as the
-   room (main.ts places it), or on a narrow window over the right of the whole page. */
-#drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(var(--drawer), 100vw); background: var(--surface); z-index: 3;
-          border-left: 2px solid var(--edge); box-shadow: -6px 0 0 var(--shadow); display: flex; flex-direction: column; }
-#drawer.beside { right: auto; bottom: auto; border: 2px solid var(--edge); box-shadow: 4px 4px 0 var(--shadow); }
-.tabs { display: flex; gap: 4px; border-bottom: 2px solid var(--edge); padding: 8px 12px 0; flex: none; }
-.tabs button { border: 2px solid var(--edge); border-bottom: 0; background: var(--bg); padding: 4px 12px; color: var(--muted); box-shadow: none; font: 16px var(--pixel); min-height: 30px; }
-.tabs button[aria-selected="true"] { color: var(--ink); background: var(--surface); margin-bottom: -2px; padding-bottom: 6px; }
-#drawerClose { margin-left: auto; border: 0; background: none; font-size: 18px; line-height: 1; padding: 2px 8px; }
-.panel { padding: 14px 16px 28px; overflow-y: auto; flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 12px; overflow-wrap: anywhere; }
-.panel > * { flex: none; }
+/* ---- SPEC-v3.5.3: the slim header and its tabs, the pages, and the shared building blocks ----
+   The skin that comes later (the Crusenho pack) replaces these few blocks, here: .panel, .card, .tab, .button, .chip,
+   .frame. Spacing and the font are variables like the colours; --pixel is the slot for a pixel face. */
+:root { --gap: 8px; --pad: 12px; --radius: 0; --border: 2px; --tab-h: 34px; --page-w: 1180px; }
+header { flex-wrap: nowrap; gap: 6px 12px; padding: 4px 16px; border-bottom: var(--border) solid var(--edge); background: var(--surface); }
+header h1 a { color: inherit; text-decoration: none; }
+#clock { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.tabs { display: flex; gap: 2px; flex: 1; justify-content: center; min-width: 0; }
+.tab { padding: 4px 12px; min-height: var(--tab-h); display: inline-flex; align-items: center; color: var(--muted); text-decoration: none;
+       font: 16px var(--pixel); border: var(--border) solid transparent; border-radius: var(--radius); }
+.tab:hover { color: var(--ink); }
+.tab.on { color: var(--ink); background: var(--bg); border-color: var(--edge); }
+#soundBtn { flex: none; }
+@media (max-width: 640px) {   /* a phone: the name and the sound on the first row, the tabs across the second, the time under */
+  header { flex-wrap: wrap; padding: 4px 8px; }
+  header h1 { font-size: 20px; }
+  .tabs { order: 3; flex-basis: 100%; justify-content: space-between; }
+  .tab { flex: 1; justify-content: center; padding: 4px 2px; font-size: 15px; }
+  #clock { order: 2; flex: 1; font-size: 12px; }
+}
+.page { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; }
+.page:not(.house) { padding: var(--pad) 16px 32px; }
+.page:not(.house) > * { max-width: var(--page-w); margin-inline: auto; }
+.page.house { display: flex; flex-direction: column; overflow: hidden; }
+.page.house #now { margin: 4px 16px 0; flex: none; }
+.page.house #replayBar { padding-top: 4px; }
+#page-lab { display: flex; flex-direction: column; }
+p.more { flex: none; text-align: center; padding: 2px; }
+body[data-page="house"] p.more { display: none; }
+.link.small, .more .link { font-size: 12px; color: var(--muted); }
+
+.panel { background: var(--surface); border: var(--border) solid var(--edge); border-radius: var(--radius); box-shadow: 2px 2px 0 var(--shadow); }
+.frame { border: var(--border) solid var(--line); border-radius: var(--radius); padding: var(--pad); }
+.card { background: var(--surface); border: var(--border) solid var(--edge); border-radius: var(--radius); padding: var(--gap); }
+.button { cursor: pointer; }
+.chip[aria-pressed] { cursor: pointer; border-radius: 999px; padding: 1px 10px; min-height: 24px; font-size: 12px; color: var(--muted); }
+.chip[aria-pressed="true"] { color: var(--ink); background: color-mix(in srgb, var(--accent) 18%, var(--surface)); border-color: var(--accent); }
+a.link { color: var(--ink); text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 2px; }
+a.link:hover { text-decoration-color: currentColor; }
+a.link.pet { color: var(--fam, var(--ink)); }
+a.link .who { display: inline-flex; align-items: center; gap: 4px; }
+
+/* the visitor's controls, grouped (SPEC-v3.5.3 §2): each group is labelled, and they wrap as the width allows */
+.visit { gap: 4px 14px; }
+.visit .group { flex-wrap: wrap; }
+.glabel { font: 13px var(--pixel); color: var(--muted); }
+.visit label { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--muted); }
+.visit #volume { width: 64px; accent-color: var(--accent); }
+#visitBtn { display: none; }
+@media (max-width: 640px) {
+  #visitBtn { display: block; width: 100%; margin: 2px 0; }
+  footer:not(.open) #controls { display: none; }
+  main.stacked .top { display: contents; }
+  main.stacked #stage { order: 1; }
+  main.stacked #cards { order: 2; }
+  main.stacked #side { order: 3; }
+  main { padding-inline: 8px; }
+  footer { max-height: 50vh; overflow-y: auto; padding: 2px 8px; }
+  .visit { justify-content: flex-start; }
+  #talkForm { flex-basis: 100%; }
+  #cards { flex-wrap: nowrap !important; overflow-x: auto; justify-content: flex-start !important; }
+  #cards .card { flex: 0 0 210px; }
+}
+[data-panel] { padding: 14px 16px 28px; overflow-y: auto; flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 12px; overflow-wrap: anywhere; }
+[data-panel] > * { flex: none; }
 h2 { margin: 0; font: 16px/1.3 var(--pixel); }
 h3 { margin: 8px 0 2px; font: 16px/1.3 var(--pixel); }
 h3 .hint, h3 .link { font: 13px/1.3 system-ui, -apple-system, sans-serif; word-spacing: normal; }
@@ -225,7 +278,7 @@ h4 { margin: 4px 0 0; font-size: 13px; font-weight: 650; color: var(--muted); }
 .bad { color: var(--bad); }
 details > summary { cursor: pointer; padding: 3px 0; }
 details[open] > summary { color: var(--ink); margin-bottom: 6px; }
-.panel section { display: flex; flex-direction: column; gap: 5px; }
+[data-panel] section { display: flex; flex-direction: column; gap: 5px; }
 blockquote { padding-left: 12px; border-left: 3px solid var(--line); font-size: 14px; }
 blockquote.thought { border-left-color: var(--accent); font-style: normal; }
 blockquote.thought::before, blockquote.thought::after { content: none; }
@@ -352,28 +405,28 @@ pre.packet { white-space: pre-wrap; font: 12px/1.5 var(--mono); margin: 6px 0 0;
 .arrivals .icon { align-self: center; color: var(--muted); }
 .arrivals li.come .icon { color: var(--good); }
 
-.card .naming { color: var(--accent); }
+#cards .card .naming { color: var(--accent); }
 
 /* A card is one height, always: a long thought used to wrap one more line and make the whole room step down a scale.
    What does not fit is cut at a whole line; the whole of it is in the card's hover and in the pet's mind. */
-.card { height: 96px; overflow: hidden; }
-.card .txt .mood, .card .txt .wish, .card .txt .naming { display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; }
-.card .txt .mood { -webkit-line-clamp: 2; }
-.card .txt .wish { -webkit-line-clamp: 2; }
-.card .txt .want { display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; -webkit-line-clamp: 2; color: var(--ink); }   /* SPEC-v3.4: what it wants, whole, in two lines at most */
-.card .txt .naming { -webkit-line-clamp: 1; }
+#cards .card { height: 96px; overflow: hidden; }
+#cards .card .txt .mood, .card .txt .wish, .card .txt .naming { display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; }
+#cards .card .txt .mood { -webkit-line-clamp: 2; }
+#cards .card .txt .wish { -webkit-line-clamp: 2; }
+#cards .card .txt .want { display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; -webkit-line-clamp: 2; color: var(--ink); }   /* SPEC-v3.4: what it wants, whole, in two lines at most */
+#cards .card .txt .naming { -webkit-line-clamp: 1; }
 /* SPEC-v3.3 §1: what its body is doing (with its sign), what its mind is on, its habits: a line each. With these a card
    has more lines than it is tall, so its words stand in a column that keeps whole lines only: the last ones (habits,
    animals) go first when there is no room, and are in the card's hover and in the pet's mind. */
-.card .txt { align-self: stretch; flex-wrap: wrap; align-content: flex-start; overflow: hidden; }
-.card .txt > span { width: 100%; }
-.card .txt :is(.doing, .focus, .habits) { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 1; overflow: hidden; }
-.card .txt .focus { -webkit-line-clamp: 2; }
-.card .txt .mood { -webkit-line-clamp: 1; }   /* one line now that there are more of them: what is cut is the good word at its end */
-.card .txt :is(.focus, .want, .habits) { font-size: 11.5px; line-height: 13px; }   /* (.want, SPEC-v3.4 §2: the newest thing it wants, a line) */
-.card .txt .focus { color: var(--ink); }
-.card .txt :is(.focus, .habits) i { font-style: normal; color: var(--muted); }
-.card .txt .doing canvas, .who p > canvas { display: inline-block; vertical-align: -2px; margin-right: 3px; }
+#cards .card .txt { align-self: stretch; flex-wrap: wrap; align-content: flex-start; overflow: hidden; }
+#cards .card .txt > span { width: 100%; }
+#cards .card .txt :is(.doing, .focus, .habits) { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 1; overflow: hidden; }
+#cards .card .txt .focus { -webkit-line-clamp: 2; }
+#cards .card .txt .mood { -webkit-line-clamp: 1; }   /* one line now that there are more of them: what is cut is the good word at its end */
+#cards .card .txt :is(.focus, .want, .habits) { font-size: 11.5px; line-height: 13px; }   /* (.want, SPEC-v3.4 §2: the newest thing it wants, a line) */
+#cards .card .txt .focus { color: var(--ink); }
+#cards .card .txt :is(.focus, .habits) i { font-style: normal; color: var(--muted); }
+#cards .card .txt .doing canvas, .who p > canvas { display: inline-block; vertical-align: -2px; margin-right: 3px; }
 
 
 /* SPEC-v3.5 §4.3: "Stock the machine", a small panel under the header's switches */

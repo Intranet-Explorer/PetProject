@@ -14,10 +14,10 @@ import time
 from contextlib import asynccontextmanager
 
 import uvicorn
-from fastapi import FastAPI, HTTPException, Response, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, Request, Response, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
 
-from . import actions, body, craft, wants, director, feel, hub, order, life, metrics, mind, physics, radio, songs, story, things, walls
+from . import actions, body, craft, wants, director, feel, hub, order, life, metrics, mind, pages, physics, radio, songs, story, things, walls
 from .tick import Engine, model_brains, stub_brains
 from . import world
 from . import build
@@ -504,6 +504,76 @@ def replay_lines(raw):
         out += got.split(b"\n")[:-1]          # what follows the last newline is a line cut short, or nothing
         at = min(len(raw), i + 1024) - len(d.unused_data) if d.eof else raw.find(b"\x1f\x8b\x08", max(at + 1, i)) if broken else -1
     return b"\n".join(out) + b"\n" if out else b""
+
+
+# ---- SPEC-v3.5.3: the page's tabs, read only ----
+
+@app.get("/api/pets")
+async def api_pets():
+    return pages.all_pets(eng)
+
+
+@app.get("/api/petpage/{pid}")
+async def api_petpage(pid: str):
+    out = pages.pet_page(eng, pid, beliefs_of)
+    if out is None:
+        raise HTTPException(404)
+    if pid in eng.minds:   # the living: how it is just now, as its card has it
+        out["now"] = pet_view(eng.house["pets"][pid])
+    return out
+
+
+@app.get("/api/days")
+async def api_days(before: int | None = None):
+    return pages.story_days(eng, before)
+
+
+@app.get("/api/allthings")
+async def api_allthings():
+    return pages.all_things(eng)
+
+
+@app.get("/api/thing/{key}")
+async def api_thing(key: str):
+    out = pages.thing_page(eng, key)
+    if out is None:
+        raise HTTPException(404)
+    return out
+
+
+# SPEC-v3.5.3 §8: each pet's portrait as a PNG. The page draws pets (view/src/petsprite.ts, from the genome); the first
+# page to draw one sends it here, and it is kept and served from then on. One file per pet per stage it is drawn at:
+# the living change as they grow; the dead are drawn as they were in life, and never again.
+PORTRAITS = DATA / "portraits"
+
+
+def portrait_file(pid, big):
+    p = eng.house["pets"].get(pid)
+    if not p:
+        raise HTTPException(404)
+    return PORTRAITS / ("%s-%s%s.png" % (pid, pages.life_stage(p), "@4x" if big else ""))
+
+
+@app.get("/portrait/{name}")
+async def portrait(name: str):
+    pid, big = name.removesuffix(".png").removesuffix("@4x"), name.endswith("@4x.png")
+    f = portrait_file(pid, big)
+    if not f.exists():
+        raise HTTPException(404)
+    return Response(f.read_bytes(), media_type="image/png", headers={"Cache-Control": "no-cache"})
+
+
+@app.post("/portrait/{name}")
+async def portrait_put(name: str, request: Request):
+    """Kept once: a PNG of at most 64 KB, for a pet that exists, at the stage it is drawn at, if there is none yet."""
+    pid, big = name.removesuffix(".png").removesuffix("@4x"), name.endswith("@4x.png")
+    f, body_ = portrait_file(pid, big), await request.body()
+    if len(body_) > 65536 or not body_.startswith(b"\x89PNG\r\n\x1a\n"):
+        raise HTTPException(400)
+    if not f.exists():
+        PORTRAITS.mkdir(parents=True, exist_ok=True)
+        f.write_bytes(body_)
+    return Response(status_code=204)
 
 
 # SPEC-v3.2: the art is data (view/assets/README.md): packs, sprite mappings, the kind catalog, room layouts, sounds

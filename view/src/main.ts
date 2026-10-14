@@ -10,6 +10,12 @@ import { drawMap } from "./minimap";
 import { noteInvented } from "./parts";
 import { renderDrawer, showMind, sources, truthOf } from "./panels";
 import { startReplay } from "./replay";
+import { go, onRoute } from "./router";
+import type { Route } from "./router";
+import * as familyPage from "./pages/family";
+import * as petPage from "./pages/pet";
+import * as storyPage from "./pages/story";
+import * as thingsPage from "./pages/things";
 import type { Replay } from "./replay";
 import { Room } from "./room";
 import type { Target } from "./room";
@@ -34,7 +40,7 @@ let sock: WebSocket | null = null;
 let lastInput = 0;                // presence needs real input, so a tab that was only opened does not count
 let tweak: Record<string, unknown> = {};
 // What is on screen. `follow` is "auto", a pet's id, or "" to stay in the room chosen by hand.
-const view = { room: recall("room") ?? "", follow: recall("follow") ?? "auto", sel: recall("sel"), tab: recall("tab") ?? "family", drawer: recall("drawer") === "1" };
+const view = { room: recall("room") ?? "", follow: recall("follow") ?? "auto", sel: recall("sel"), tab: "lab", drawer: false, page: "house" };
 let picked: string | null = null; // a thing clicked, waiting for a tile to be moved to or a name
 let autoAt = performance.now();   // when "auto" last changed rooms
 const api: Record<string, unknown> = {};
@@ -83,7 +89,9 @@ function layout() {
   else if (now - tallAt > 120_000) tall = 0;
   const stacked = W < 2 * w + SIDE_MIN + GAP, across = stacked ? W : W - SIDE_MIN - GAP;
   // a whole number of the screen's own pixels to each pixel of the art: on a sharp screen that allows 3.5 as well as 3 and 4
-  const dpr = devicePixelRatio || 1, k = Math.max(stacked ? 1 : 2, Math.floor(Math.min(across / w, (H - Math.max(allowed, tall) - GAP) / h) * dpr + 0.001) / dpr);
+  // SPEC-v3.5.3 §2: on a phone the room fills the width, and the page scrolls down to the cards and the rest
+  const dpr = devicePixelRatio || 1, phone = innerWidth <= 640;
+  const k = phone ? Math.max(1, Math.floor((across / w) * dpr + 0.001) / dpr) : Math.max(stacked ? 1 : 2, Math.floor(Math.min(across / w, (H - Math.max(allowed, tall) - GAP) / h) * dpr + 0.001) / dpr);
   sideWidth = stacked ? Math.min(W, SIDE_MAX) : Math.min(SIDE_MAX, W - w * k - GAP);
   main.classList.toggle("stacked", stacked);
   const set = (e: HTMLElement, width: number, height: number | null) => { e.style.width = `${width}px`; e.style.height = height ? `${height}px` : ""; };
@@ -93,16 +101,7 @@ function layout() {
   if (snap) drawMap($("map"), snap, view.room, view.sel, (id) => jump({ room: id }), mapWidth());
   placeDrawer();
 }
-/** The drawer takes nothing from the room: it lies over the column beside it (the map, the sky, Lately), as tall as
- *  the room, and the header, the cards and the controls stay as they were. Only where there is no such column to
- *  speak of (a narrow window) does it lie over the right of the whole page instead. */
-function placeDrawer() {
-  if (!view.drawer) return;
-  const d = $("drawer"), stage = $("stage").getBoundingClientRect(), left = Math.round(stage.right) + GAP, width = Math.min(620, innerWidth - 16 - left);
-  const beside = width >= 380 && stage.height > 100 && !document.querySelector("main")!.classList.contains("stacked");
-  d.classList.toggle("beside", beside);
-  d.style.cssText = beside ? `left:${left}px;top:${Math.round(stage.top)}px;width:${width}px;height:${Math.round(stage.height)}px` : "";
-}
+function placeDrawer() { /* SPEC-v3.5.3: the drawer is gone; its tabs are pages */ }
 const mapWidth = () => (sideWidth < 250 ? sideWidth : Math.min(190, sideWidth * 0.46));
 const watch = new ResizeObserver(() => { tall = 0; layout(); });   // a new window, or the drawer: measure afresh
 for (const e of [document.querySelector("header")!, document.querySelector("footer")!, document.querySelector("main")!, $("replayBar")]) watch.observe(e);
@@ -166,7 +165,7 @@ async function show(s: Snap) {
   }
   await ready;
   render();
-  if (!shown) { shown = true; void poll(); }   // the drawer was left open: fill it at once, not at the next poll
+  if (!shown) { shown = true; void poll(); }   // a page was opened by its address: fill it at once, not at the next poll
 }
 let shown = false;
 
@@ -297,6 +296,8 @@ function nowLine(s: Snap) {
 }
 
 function header(s: Snap) {
+  // SPEC-v3.5.3 §1: the world's time and season, in the slim header
+  $("clock").textContent = `day ${s.clock.day} · ${hhmm(s.clock.hour)} · ${s.clock.season ?? ""}${s.clock.phase === "night" ? " night" : ""}`;
   const alive = s.pets.filter((p) => p.stage !== "dead");
   // how many families live here and how many are alive in each, each family in its colour (SPEC-v3.1 §7.4)
   const fams = [...new Set(alive.map((p) => p.family ?? 1))].sort(), NTH = ["", "first", "second", "third"];
@@ -402,28 +403,20 @@ function cards(s: Snap) {
     const wants = (p.wants ?? []).map((w) => wantWords(w.text));
     if (feels) feels.title = `feeling ${emote}`;
     if (place) place.title = `in ${where(p)}`;
-    const mind = el("button", "mind", "mind") as HTMLButtonElement;
-    mind.title = egg ? "What it was left" : `${p.label}'s mind: what it believes, its project, what it has just done`;
-    mind.onclick = (e) => { e.stopPropagation(); openTab("mind", p.id); };
+    // SPEC-v3.5.3 §2: a short card: portrait, name, stage, one line for what it is doing and one for what it wants, a
+    // feeling as a small picture. The whole card goes to its page; the long words are there (and in the card's title).
     const li = el("li", `card ${fam(p.family)}${p.id === view.sel ? " chosen" : ""}${egg ? " egg" : ""}`, el("span", "pic", face(p, 48), el("span", "", feels ? el("span", "plate", feels) : null, place)),
-      el("span", "txt", el("span", "name", el("b", "", egg ? p.name ?? "An egg" : p.label), ` ${stageWord(p)} `, mind),
-        // how it feels: what is wrong, worst first, and after that one thing that is clearly good, in another tone
-        egg ? el("span", "mood", hatchWords(p.hatches_in ?? 0)) : el("span", "mood", moodWords(p).join(", "), good ? el("i", "good", ` · ${good}`) : null),
+      el("span", "txt", el("span", "name", el("b", "", egg ? p.name ?? "An egg" : p.label), ` ${stageWord(p)}`),
+        egg ? el("span", "mood", hatchWords(p.hatches_in ?? 0)) : null,
         naming(p) ? el("span", "naming", naming(p)!) : null,
-        // what it is doing now, then what it wants: the second is a wish and is marked as one, never shown as the deed
         doing ? el("span", "doing", el("i", "", "now "), sign, doing) : null,
-        focus ? el("span", "focus", el("i", "", "mind on "), focus) : null,
-        wish ? el("span", "wish", el("i", "", "wants "), el("q", "", wish)) : null,
-        wants.length ? el("span", "want", wants[0]) : null,   // (the one its body is about just now, if any: the engine sends that first; its habits are in the hover and its mind's panel)
-        habits.length && !wants.length ? el("span", "habits", el("i", "", habits.length > 1 ? "habits " : "habit "), habits.join("; ")) : null,
-        animals ? el("span", "", icon("paw", 12), ` ${animals}`) : null));
-    // the whole card is the button that follows this pet; "mind" inside it is a button of its own
+        wants.length || wish ? el("span", "want", el("i", "", "wants "), wants[0]?.replace(/^wants /, "") ?? wish) : null));
     li.tabIndex = 0;
-    li.setAttribute("role", "button");
-    li.title = `${egg ? "Look at this egg" : `Follow ${p.label}`}: it is in ${where(p)}` + (wish && !egg ? `\nIt wants: ${wish}` : "")   // in full: the card shows a line or two of each
+    li.setAttribute("role", "link");
+    li.title = `${egg ? "This egg" : p.label}'s page. It is in ${where(p)}; ${moodWords(p).join(", ") || "content"}` + (wish && !egg ? `\nIt wants: ${wish}` : "")
       + (focus ? `\nIts mind is on: ${focus}` : "") + wants.map((w) => `\n${w.startsWith("wants ") ? `It ${w}` : cap(w)}`).join("")
-      + (p.skills ? `\nIt feels: “${p.skills}”` : "") + (p.recipes?.length ? `\nIt has found out: ${p.recipes.join("; ")}` : "") + (habits.length ? `\nIts habits: ${habits.join("; ")}` : "");
-    li.onclick = () => jump({ pet: p.id, room: p.room });
+      + (habits.length ? `\nIts habits: ${habits.join("; ")}` : "") + (animals ? `\nIts animals: ${animals}` : "");
+    li.onclick = () => go("pet", p.id);
     li.onkeydown = (e) => { if (e.target === li && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); li.click(); } };
     return li;
   }) : [el("li", "empty-house", "Nobody is alive in the house.")]));
@@ -706,11 +699,15 @@ function connect() {
   };
 }
 
-// ---- the drawer: closed by default, so the room and the cards are the page ----
+// ---- the pages (SPEC-v3.5.3 §1): one is shown at a time, by the address ----
 
-/** A tab's extra facts are asked for only while it is open, every few seconds (not every tick). */
+const PAGES: Record<string, { render: (root: HTMLElement, id: string | null) => void }> = { family: familyPage, pet: petPage, story: storyPage, things: thingsPage, thing: thingsPage };
+let at: Route = { page: "house", id: null };
+/** The Lab's facts are asked for only while it is shown, every few seconds; another page draws itself again as often. */
 async function poll() {
-  if (!view.drawer || !snap || document.hidden) return;
+  if (!snap || document.hidden) return;
+  if (PAGES[at.page]) return PAGES[at.page].render($(`page-${at.page}`), at.id);
+  if (!view.drawer) return;
   const tab = view.tab;
   try {
     await Promise.all(Object.entries(sources(tab, ctx())).map(async ([key, url]) => {
@@ -720,31 +717,29 @@ async function poll() {
     if (view.drawer && view.tab === tab) renderDrawer(tab, ctx());
   } catch { /* the engine is away; the socket says so */ }
 }
-function setDrawer(open: boolean) {
-  view.drawer = open;
-  $("drawer").hidden = !open;
-  $("drawerBtn").setAttribute("aria-expanded", String(open));
-  document.body.classList.toggle("open", open);
-  remember("drawer", open ? "1" : "0");
-  placeDrawer();
-  if (open) showTab(view.tab);
+function showPage(r: Route) {
+  at = r;
+  view.page = r.page;
+  view.drawer = r.page === "lab";
+  document.body.dataset.page = r.page;
+  for (const e of document.querySelectorAll<HTMLElement>(".page")) e.hidden = e.id !== `page-${r.page}`;
+  for (const t of document.querySelectorAll<HTMLElement>("#tabs [data-page]")) {
+    const on = t.dataset.page === r.page || (t.dataset.page === "family" && r.page === "pet") || (t.dataset.page === "things" && r.page === "thing");
+    t.classList.toggle("on", on);
+    if (on) t.setAttribute("aria-current", "page"); else t.removeAttribute("aria-current");
+  }
+  if (r.page === "house" && r.id) jump({ pet: r.id });   // #/house/<pet>: watching it (a pet page's "Watch now")
+  if (r.page === "house") { tall = 0; layout(); render(); }
+  else $(`page-${r.page}`).scrollTop = 0;
+  void poll();
 }
-function showTab(name: string) {
-  view.tab = document.querySelector(`[data-tab="${name}"]`) ? name : "family";
-  for (const b of document.querySelectorAll<HTMLElement>("[data-tab]")) b.setAttribute("aria-selected", String(b.dataset.tab === view.tab));
-  for (const p of document.querySelectorAll<HTMLElement>("[data-panel]")) p.hidden = p.dataset.panel !== view.tab;
-  remember("tab", view.tab);
-  if (snap && view.drawer) renderDrawer(view.tab, ctx());
-  poll();
-}
-/** Open a tab of the drawer. "mind" is the Lab turned to one pet's mind (what a card's button opens). */
+const showTab = (name: string) => { view.tab = name; void poll(); };
+/** What used to open a tab of the drawer: a pet's page for a pet ("mind" or "family"), else that tab. */
 function openTab(name: string, who?: string) {
   if (who) view.sel = who;
-  if (who && name === "family") showRecord(who);
+  if (who && (name === "mind" || name === "family")) return go("pet", who);
   if (name === "mind") showMind();
-  view.tab = name === "mind" ? "lab" : name;
-  setDrawer(true);
-  render();
+  go(name === "mind" ? "lab" : name);
 }
 function theme(to?: string) {
   const now = document.documentElement.dataset.theme ?? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
@@ -755,12 +750,10 @@ function theme(to?: string) {
 }
 $("themeBtn").onclick = () => theme();
 $("themeBtn").textContent = (document.documentElement.dataset.theme ?? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")) === "dark" ? "Light" : "Dark";
-$("drawerBtn").onclick = () => setDrawer(!view.drawer);
-$("drawerClose").onclick = () => setDrawer(false);
 $("replayBtn").hidden = !!replayId;
 $("replayBtn").onclick = () => (location.search = `?replay=${snap?.lineage.id ?? 1}`);
-for (const b of document.querySelectorAll<HTMLElement>("[data-tab]")) b.onclick = () => showTab(b.dataset.tab!);
-setDrawer(view.drawer);
+onRoute(showPage);
+$("visitBtn").onclick = () => $("visitBtn").setAttribute("aria-expanded", String(document.querySelector("footer")!.classList.toggle("open")));
 setInterval(poll, 4000);
 
 for (const type of ["pointerdown", "keydown"]) {
@@ -778,18 +771,19 @@ const overlaps = () => {
   return r.reduce((n, a, i) => n + r.slice(i + 1).filter((b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h).length, 0);
 };
 /** Everything on the page whose words do not fit the box they are in: there must be none (SPEC-v3 §10.7). */
-const clipped = () => [...document.querySelectorAll<HTMLElement>("header *, #now, main *, footer *, #drawer *")].filter((e) => {
+const clipped = () => [...document.querySelectorAll<HTMLElement>("header *, #now, main *, footer *, .page:not([hidden]) *")].filter((e) => {
   if (!e.offsetParent || e.closest("#room") || e instanceof HTMLSelectElement || e instanceof HTMLInputElement || e instanceof SVGElement) return false;
   const o = getComputedStyle(e);
   if (e.id === "moments" || e.id === "happening") return false;   // these two show whole lines only: what does not fit is wrapped out of sight on purpose
-  if (e.closest(".card .txt")) return false;   // so does a card, which is one height always (SPEC-v3.2, v3.3): the whole of every line is in its hover and in the pet's mind
+  if (e.closest("#cards .card .txt")) return false;   // so does a card, which is one height always (SPEC-v3.2, v3.3): the whole of every line is in its hover and in the pet's mind
   return (o.overflowX !== "visible" && o.overflowX !== "auto" && e.scrollWidth > e.clientWidth + 1) || (o.overflowY !== "visible" && o.overflowY !== "auto" && e.scrollHeight > e.clientHeight + 1);
 }).map((e) => `${e.tagName.toLowerCase()}${e.id ? "#" + e.id : ""}.${e.className}: ${e.textContent?.slice(0, 40)}`);
 Object.assign(window, { petView: {
   lookAt: (id: string) => jump({ room: id }),
   follow: (who: string | null) => { view.follow = who ?? ""; if (pet(who)) view.sel = who; render(); },
   select: (id: string) => { view.sel = id; render(); poll(); },
-  openTab: (name: string | null, who?: string) => (name ? openTab(name, who) : setDrawer(false)),
+  openTab: (name: string | null, who?: string) => (name ? openTab(name, who) : go("house")),
+  go,
   theme,
   /** Lay something over every snapshot before it is drawn, e.g. {weather: "storm", power: false, clock: {phase: "night"}}. */
   tweak: (over: Record<string, unknown> | null) => { tweak = over ?? {}; if (raw) show(raw); },
@@ -801,7 +795,7 @@ Object.assign(window, { petView: {
   audioLog: voice.log,
   state: () => snap && {
     tick: snap.tick, clock: snap.clock, weather: snap.weather, power: snap.power, room: view.room, roomType: snap.rooms.find((r) => r.id === view.room)?.type,
-    follow: view.follow, selected: view.sel, tab: view.drawer ? view.tab : null, theme: document.documentElement.dataset.theme ?? "system",
+    follow: view.follow, selected: view.sel, tab: view.page, theme: document.documentElement.dataset.theme ?? "system",
     replay: replay?.state() ?? null, ended: snap.lineage.ended != null, petsHere: snap.pets.filter((p) => p.room === view.room && !(p.stage === "dead" && p.buried)).map((p) => p.id),
     creaturesHere: snap.creatures.filter((c) => c.room === view.room).map((c) => c.kind), rooms: found(snap).map((r) => `${r.id}:${r.type}`),
     labels: room.labels(), overlaps: overlaps(), clipped: clipped(), scrolls: document.querySelector("main")!.scrollHeight - document.querySelector("main")!.clientHeight,

@@ -309,7 +309,7 @@ def gone(house, o, name, how, room=None):
             house.setdefault("fresh_marks", []).append({"id": m["id"], "tick": house["tick"], "room": r["id"], "place": m["on"], "text": m["text"],
                                                         "by": m["by"], "medium": m["medium"], "what": "gone with the thing", "actor": None})
     house.setdefault("gone_things", []).append(
-        {"name": name, "recipe": o["made"]["recipe"], "by": o["made"]["by"], "owner": o["made"]["owner"],
+        {"id": o["made"].get("id"), "name": name, "recipe": o["made"]["recipe"], "by": o["made"]["by"], "owner": o["made"]["owner"],
          "uses": o["made"]["uses"], "ups": o["made"]["ups"], "made": o["made"]["tick"], "gone": [house["tick"], how]})
     del house["gone_things"][:-200]
 

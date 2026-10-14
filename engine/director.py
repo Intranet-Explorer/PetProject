@@ -96,6 +96,7 @@ def hourly(house, cfg):
             if o.get("fix", {}).get("sun"):   # the attic's shaft of sun crosses the floor with the hour
                 span = season["sunset"] - season["sunrise"]
                 o["pos"] = [max(1, min(cfg["W"] - 2, round(1 + (cfg["W"] - 3) * (c["hour"] - season["sunrise"]) / span))), o["pos"][1]]
+    house.setdefault("skies", {})[str(c["day"])] = house["weather"]   # (SPEC-v3.5.3 §5: the story heads each day with its weather; for the page only)
     craft.grow(house, cfg)   # SPEC-v3.4 §3.5: what is planted grows, watered or not, and wilts if left dry
     from . import season
     season.hourly(house, cfg)   # SPEC-v3.5 §5: the season's own bits in the garden, and food left lying goes bad
