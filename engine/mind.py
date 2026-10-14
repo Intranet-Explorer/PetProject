@@ -3,7 +3,7 @@ No numbers, no coordinates, no counts of anything, and no sentence telling the p
 like. Its temperament shows only in what is mentioned and how (§8.1). Alongside the text comes `ctx`: the
 names the packet shows, so a brain's reply can be held to things that are really there."""
 from . import actions, body, craft, feel, genes, invent, life, order, physics, songs, things, walls, wants
-from . import machine
+from . import feats, machine
 from .world import LONG_AGO, dist, family, here, neighbours, room_type
 from . import build
 
@@ -243,7 +243,7 @@ def perceive(house, cfg, pet, mem):
     sections = {
         "time": "it is %s" % feel.when(house),
         "room": "you are in %s%s" % (room["name"], ": %s walls, %s floor" % (room["paint"]["wall"], room["paint"]["floor"]) if room["paint"]["wall"] else ""),
-        "feel": "you feel: " + feel.feelings(pet),
+        "feel": "you feel: " + "; ".join(filter(None, [feel.feelings(pet), feats.felt(cfg, house, pet)])),   # SPEC-v3.5.4 §12: pride, while it glows
         "wants": "; ".join(wants.lines(pet)),
         "skills": "with practice: " + craft.skills_line(cfg, pet),
         "senses": "you notice: " + ("; ".join(senses) or "nothing in particular"),

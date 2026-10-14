@@ -405,3 +405,10 @@ mysterious = { curiosity = 0.1 }
 sad = { comfort = 0.05 }
 learn_minutes = 6         # world minutes of hearing a tune before a pet has it by ear, like any song
 tunes = { calm = ["mi long", "so long", "mi long", "re long", "do long"], lively = ["do short", "mi short", "so short", "high do short", "so short", "mi short", "so long"], mysterious = ["low la long", "do short", "low la short", "mi long", "re short", "low la long"], sad = ["la long", "so long", "mi long", "re short", "mi long"] }
+
+# ---- SPEC-v3.5.4: drive ----
+
+[drive]                   # what a pet can be proud of (engine/feats.py). Never said as a number.
+glow_hours = 4            # world hours a glow of pride takes to fade (§12)
+glow_curiosity = 3.0      # curiosity a glow lifts, per size (pleased 1, proud 2, very proud 3)
+keep_feats = 200          # feats the house keeps for the board and the packet
