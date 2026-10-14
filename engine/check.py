@@ -1871,7 +1871,7 @@ if __name__ == "__main__":
     # SPEC-v3.5 §7.1: each part's own checks (parts, bodies and inventions, building, seasons, the machine), each a module that can be run alone
     import subprocess
     import sys
-    for name in ("check_parts", "check_bodies", "check_build", "check_season", "check_machine"):
+    for name in ("check_parts", "check_bodies", "check_build", "check_season", "check_machine", "check_hub"):
         if (Path(__file__).parent / (name + ".py")).exists():
             subprocess.run([sys.executable, "-m", "engine." + name], check=True)
     print("self-check passed")

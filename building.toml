@@ -38,7 +38,8 @@ weight = 3.0              # ... and for one not begun, unless the project says o
 recent_days = 8           # how long a room that leaked or took a draught is remembered as one that does
 wear_days = 14            # a built thing has worn after this many world days, and wants mending with the hammer
 company = 2.0             # what working side by side is worth to each
-lift = { comfort = 3.0, curiosity = 2.0 }   # what having had a paw in a finished thing is worth to whoever did not hold the want
+lift = { comfort = 3.0, curiosity = 2.0 }
+honour_days = 3           # SPEC-v3.5.1 §4: the want to raise a founder's statue holds this long before it can fade   # what having had a paw in a finished thing is worth to whoever did not hold the want
 
 # ---- furniture ----
 

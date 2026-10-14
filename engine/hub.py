@@ -86,7 +86,8 @@ def headline(house, m):
 
 def forecast(house, cfg):
     from .world import weather_of
-    kind = weather_of(house, cfg, house["clock"]["day"] + 1)
+    real = house.get("real_forecast") or {}   # the real sky's tomorrow when the house uses the real sky (server.sky), else its own
+    kind = real["kind"] if real.get("day") == house["clock"]["day"] + 1 else weather_of(house, cfg, house["clock"]["day"] + 1)
     return {"text": "Tomorrow: %s" % SAID.get(kind, kind), "anim": ANIM.get(kind, "cloud"), "kind": kind}
 
 
@@ -184,7 +185,10 @@ def honour(house, cfg):
             continue
         pet = next((p for p in house["pets"].values() if p["stage"] not in ("egg", "dead") and honours(house, cfg, p, P)), None)
         k = "build:%s|%s" % (RID, key)
-        if not pet or pet["sleep"] or any(w["key"] == k for w in pet.get("wants", [])) \
+        held = next((w for w in (pet or {}).get("wants", []) if w["key"] == k), None)
+        if held and world_days(cfg, held["since"], house["tick"]) < cfg["build"]["build"]["honour_days"]:
+            held["touched"] = house["tick"]   # (it does not fade for a few days, though nothing comes of it yet)
+        if not pet or pet["sleep"] or held \
                 or world_days(cfg, pet.get("wanted", {}).get(k, LONG_AGO), house["tick"]) < cfg["wants"]["again_days"]:
             continue
         c = []
@@ -261,8 +265,9 @@ def candidates(house, cfg, pet, add, known):
     hub = found(house)
     for key, P in cfg["build"]["project"].items() if hub else ():
         if P.get("honours") and build.find(hub, key)[1] is None and honours(house, cfg, pet, P):
-            hammer = craft.tool_for(house, cfg, pet, "hammer")
-            add("build", "%s|%s" % (RID, key), P["want"].format(room=hub["name"]) + "; it takes %s, and a hammer" % build.some(P["needs"]) + ("" if hammer else build.hammer_words(house, cfg, pet)),
+            hammer, door = craft.tool_for(house, cfg, pet, "hammer"), next(iter(hub["doors"].values()))
+            where = "" if RID in pet["rooms"] else "; it is behind the %s door of %s" % (next(d for d, r in house["rooms"][door]["doors"].items() if r == RID), house["rooms"][door]["name"])
+            add("build", "%s|%s" % (RID, key), P["want"].format(room=hub["name"]) + where + "; it takes %s, and a hammer" % build.some(P["needs"]) + ("" if hammer else build.hammer_words(house, cfg, pet)),
                 P["done"].format(room=hub["name"]), P["weight"], room=RID, project=key)
     for r in known:
         for n, o in r["objects"].items():
