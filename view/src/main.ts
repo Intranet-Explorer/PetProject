@@ -462,11 +462,11 @@ function stock(s: Snap) {
   const m = s.machine, btn = $<HTMLButtonElement>("stockBtn"), box = $("stockBox"), key = JSON.stringify(m ?? null);
   btn.hidden = !!replayId || s.lineage.ended != null;
   btn.disabled = !m;
-  btn.title = m ? "Put wood, stone, metal, clay, fibre or sand in the vending machine. The pets take from it, two a day each." : "Nobody has found the storeroom yet: the vending machine is in it.";
+  btn.title = m ? "Put wood, stone, metal, clay, fibre or sand in the vending machine. The pets take from it, two a day each." : "Nobody has found the machine room yet: the vending machine is in it.";
   if (!m || box.dataset.key === key) return;
   box.dataset.key = key;
   const put = (what: string, text: string, off: boolean) => { const b = el("button", "", text) as HTMLButtonElement; b.disabled = off; b.onclick = () => send({ type: "stock", what, n: 1 }); return b; };
-  box.replaceChildren(el("h2", "", "The vending machine"), el("p", "hint", `in ${s.rooms.find((r) => r.id === m.room)?.name ?? "the storeroom"} · it holds ${m.limit} of each`),
+  box.replaceChildren(el("h2", "", "The vending machine"), el("p", "hint", `in ${s.rooms.find((r) => r.id === m.room)?.name ?? "the machine room"} · it holds ${m.limit} of each`),
     el("ul", "", ...m.materials.map((x) => el("li", "", hasSprite(`bit.${x}`) ? sprite(`bit.${x}`, 2) : null, el("b", "", x), bar(m.stock[x] ?? 0, m.limit), el("span", "n", `${m.stock[x] ?? 0}`),
       put(x, "+1", (m.stock[x] ?? 0) >= m.limit)))),
     put("all", "Fill it", m.materials.every((x) => (m.stock[x] ?? 0) >= m.limit)));

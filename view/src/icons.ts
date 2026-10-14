@@ -51,6 +51,7 @@ export const PATHS: Record<string, string> = {
   music: "M6 12.5V3.5l7-1.5v9M6 12.5a2 2 0 1 1-4 0 2 2 0 0 1 4 0ZM13 11a2 2 0 1 1-4 0 2 2 0 0 1 4 0Z",
   greenhouse: "M2.5 14V6.5L8 2l5.5 4.5V14ZM2.5 6.5h11M8 2v12M2.5 10.5h11",
   storeroom: "M2.5 5.5h11v8h-11ZM2.5 9.5h11M6.5 7.5h3M6.5 11.5h3M4 5.5v-3h8v3",
+  hub: "M2.5 5.5h11v8h-11ZM5 5.5V3h6v2.5M4.5 8h1M7.5 8h1M10.5 8h1M6 11h4",   // SPEC-v3.5.1: the machine room
 };
 
 const KIND: Record<string, string> = {

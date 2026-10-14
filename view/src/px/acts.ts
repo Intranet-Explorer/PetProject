@@ -10,6 +10,7 @@ import { has, tex } from "./assets";
 import type { Fx } from "./fx";
 import { OY } from "./geom";
 import type { Thing } from "./still";
+import { playMachine } from "./works";
 
 /** A made thing that was in the room a moment ago: what it looked like and where it stood. */
 export type Ghost = { texture: Texture; x: number; y: number; scale: number; h: number };
@@ -161,6 +162,7 @@ export function play(a: Act, c: Cast) {
       if (at) fx.burst("speck", at[0], at[1] - 6, 5, 14, { g: 60, life: 500, tint: 0xd9b36a });
       break;
     case "machine_take": case "machine_feed": {   // SPEC-v3.5 §4.3: what is fed goes in; the machine shakes, and what it gives drops from its tray into the paws
+      if (playMachine(a, c, picture)) break;   // SPEC-v3.5.1: The Works plays it out itself (px/works.ts)
       const m = [...c.things.values()].find((t) => t.obj.fix?.machine), bit = a.type === "machine_take" ? a.what : a.to;
       if (!m || !at) break;
       const tray = [m.x, m.y - 6], paws = [at[0], at[1] - head * 0.6], fed = a.type === "machine_feed" ? picture(a.what) : null;

@@ -201,6 +201,11 @@
    "pack": "ninja",
    "file": "Audio/Musics/26 - Lost Village.ogg",
    "gain": 0.1
+  },
+  "hub": {
+   "pack": "ninja",
+   "file": "Audio/Musics/30 - Ruins.ogg",
+   "gain": 0.1
   }
  },
  "moods": {
@@ -421,6 +426,19 @@
      "gain": 0.02,
      "rate": 0.02,
      "says": "near silence: a board settles about once a minute"
+    }
+   ],
+   "hub": [
+    {
+     "synth": "hum",
+     "gain": 0.03,
+     "says": "the machine's low hum, all the time"
+    },
+    {
+     "synth": "crackle",
+     "gain": 0.02,
+     "rate": 0.6,
+     "says": "now and then a small tick of something working inside it"
     }
    ]
   },
