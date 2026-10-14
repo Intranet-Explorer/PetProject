@@ -1,0 +1,25 @@
+/* SPEC-v3.5.3 §6: the Things tab (a grid of cards: picture, name, kind, maker, where) and a thing's page. */
+.things, .tpage { display: flex; flex-direction: column; gap: var(--gap); }
+.tfilters { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+.tfilters select { max-width: 100%; }
+.tgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: var(--gap); }
+.tcard { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; text-align: center; }
+.tcard.gone, .thead.gone .tbig { opacity: 0.6; }
+.tpic { display: flex; align-items: center; justify-content: center; width: 72px; height: 72px; }
+.tpic canvas, .tpic svg { max-width: 72px; max-height: 72px; }
+.ttxt { display: flex; flex-direction: column; gap: 1px; min-width: 0; width: 100%; overflow-wrap: anywhere; font-size: 13px; line-height: 1.3; }
+.ttxt > a.thing { font-weight: 650; font-size: 14px; }
+.ttxt .twhere { color: var(--muted); font-size: 12px; }
+.kind { color: var(--muted); font-size: 12px; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; justify-content: center; }
+.statuepic { color: var(--muted); display: block; }
+.back { font-size: 13px; }
+.thead { display: flex; gap: var(--pad); align-items: center; }
+.thead h2 { font-size: 22px; overflow-wrap: anywhere; }
+.thead .kind { justify-content: flex-start; font-size: 13px; }
+.tbig { flex: none; width: 128px; height: 128px; display: flex; align-items: center; justify-content: center; background: var(--surface); border: var(--border) solid var(--line); }
+.tbig canvas, .tbig svg { max-width: 120px; max-height: 120px; }
+.tfacts { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 12px; font-size: 14px; overflow-wrap: anywhere; }
+.tfacts dt { color: var(--muted); }
+.tfacts a.link .who { vertical-align: middle; }
+/* style.css's old drawer rule `.thing` (a grid row) also catches ui.ts thingLink's `link thing`: keep a thing's link inline */
+a.link.thing { display: inline; padding: 0; border: 0; font-size: inherit; }

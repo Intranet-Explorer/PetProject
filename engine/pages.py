@@ -142,12 +142,17 @@ def all_things(eng):
                         "invented": m["recipe"].get("kind") in h.get("invented", {}), "statue": False, "keepsake": bool(keep)})
         for n, o in r["objects"].items():
             if o.get("statue") or (o.get("fix", {}).get("built") and "statue" in n):
-                out.append({"id": "statue-" + re.sub(r"\W+", "-", n), "name": n, "recipe": {"kind": "statue"}, "by": (o.get("site") or {}).get("by"),
-                            "by_name": names.get((o.get("site") or {}).get("by")), "owner": None, "family": (o.get("statue") or {}).get("family"),
-                            "room": r["id"], "room_name": r["name"], "where": "in %s" % r["name"], "gone": None, "tick": (o.get("site") or {}).get("at", 0),
-                            "day": day_of(cfg, (o.get("site") or {}).get("at", 0)), "bits": [], "uses": 0, "heirloom": False, "invented": False, "statue": True,
+                # a statue standing has `fix.built` (who raised it, began and finished); one going up has `site`
+                built, site = o.get("fix", {}).get("built") or {}, o.get("site") or {}
+                by, began = built.get("by") or site.get("by"), built.get("began") or site.get("at")
+                paws = built.get("paws") or [k for k, v in (site.get("paws") or {}).items() if v] or ([by] if by else [])
+                out.append({"id": "statue-" + re.sub(r"\W+", "-", n), "name": n, "recipe": {"kind": "statue"}, "by": by,
+                            "by_name": names.get(by), "owner": None, "family": (o.get("statue") or {}).get("family"),
+                            "room": r["id"], "room_name": r["name"], "where": "in %s" % r["name"] if built else "going up in %s" % r["name"], "gone": None,
+                            "tick": began, "day": day_of(cfg, began), "bits": [], "uses": 0, "heirloom": False, "invented": False, "statue": True,
                             "keepsake": False, "of": (o.get("statue") or {}).get("of"), "of_name": names.get((o.get("statue") or {}).get("of")),
-                            "standing": bool(o.get("fix", {}).get("built")), "statue_name": (o.get("statue") or {}).get("name")})
+                            "standing": bool(built), "raised_day": day_of(cfg, built.get("at")), "makers": [{"id": k, "name": names.get(k)} for k in paws if k in names],
+                            "statue_name": (o.get("statue") or {}).get("name")})
     for g in h.get("gone_things", []):
         out.append({"id": thing_key(g, g["name"]), "name": g["name"], "recipe": g["recipe"], "by": g["by"], "by_name": names.get(g["by"]), "owner": g.get("owner"),
                     "family": fam.get(g["by"]), "room": None, "room_name": None, "where": GONE_WHERE.get(g["gone"][1], g["gone"][1]), "gone": g["gone"][1],
@@ -162,10 +167,17 @@ def thing_page(eng, key):
     t = next((t for t in all_things(eng)["things"] if t["id"] == key), None)
     if not t:
         return None
-    like = "%'" + t["name"].replace("%", "") + "'%"
-    moments = rows(eng.db, "SELECT tick, day, hour, kind, text, pet, room FROM moments WHERE (text LIKE ? OR text LIKE ?) AND tick >= ? ORDER BY tick LIMIT 200",
-                   like, "%" + t["name"] + "%", t["tick"] or 0) if eng.db else []
-    return dict(t, moments=moments, does=(t["recipe"] or {}).get("purpose"))
+    name = t["name"]
+    if t["statue"]:   # a statue is told of as "began a <name> in…" and "a statue of <pet>"
+        ok = lambda m: ("began a %s in" % name) in m["text"] or (t.get("of_name") and ("statue of %s" % t["of_name"].rstrip(" IVX")) in m["text"])
+        like = "%statue%"
+    else:   # by its name in quotes, or (older moments, and "invented the <name>:") bare and not the start of a longer name
+        bare = re.compile(r"(?<![\w'])%s(?=$|[:,.;!?]| it calls)" % re.escape(name))
+        ok = lambda m: ("'%s'" % name) in m["text"] or ("'" not in m["text"].replace("'s ", "") and bare.search(m["text"])) or (m["kind"] == "invented" and bare.search(m["text"]))
+        like = "%" + name.replace("%", "") + "%"
+    moments = rows(eng.db, "SELECT tick, day, hour, kind, text, pet, room FROM moments WHERE text LIKE ? AND tick >= ? ORDER BY tick LIMIT 400",
+                   like, t["tick"] or 0) if eng.db else []
+    return dict(t, moments=[m for m in moments if ok(m)][:200], does=(t["recipe"] or {}).get("purpose"))
 
 
 def pet_page(eng, pid, beliefs_of):
