@@ -203,6 +203,12 @@ async def run(d):
     jug = thing(eng, hb, "old jug", "charm", "hard", dead["id"], days=5)
     dead.pop("glow", None)
     assert board.star(h, cfg, str(jug["made"]["id"])) is None and jug["made"]["star"] and not dead.get("starred") and not dead.get("glow"), "a dead maker's thing can have a star"
+    # what the Works built is a feat on the board like any other, read like any other
+    feats.record(h, cfg, "works", None, "The Works built a lamp for the cellar, fed by P4", board="THE WORKS BUILT A LAMP FOR THE CELLAR: P4", pets=[pets[4]["id"]],
+                 **{"for": "feeding the Works for a lamp for the cellar"})
+    pets[4].update(glow=None, sign={"day": None, "n": 0})
+    hub.read_sign(h, cfg, pets[4])
+    assert pets[4]["glow"]["why"] == "your name is on the board for feeding the Works for a lamp for the cellar", pets[4]["glow"]
     eng.close()
 
 

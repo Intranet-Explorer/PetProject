@@ -81,7 +81,7 @@ def read(house, cfg, pet):
         return
     nudged = False
     for l in new[:2]:
-        if l["kind"] == "works":
+        if l["meter"]:   # (the Works' goal; what it built is a feat like any other)
             add_event(house, pet, "the board on the wall says the Works is gathering scrap to build %s, and %s" % (l["what"], l["says"]))
             continue
         add_event(house, pet, 'the board on the wall says: "%s"' % l["text"])

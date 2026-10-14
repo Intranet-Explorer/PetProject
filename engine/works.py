@@ -152,7 +152,7 @@ def sense(house, cfg, pet):
     g = goal(house, cfg)
     if not g:
         return []
-    return ["the Works (the machine here) is gathering scrap to build %s for the house; %s; old made things and loose bits fed to it are scrap for it"
+    return ["the Works (the machine here) is gathering scrap to build %s; %s; old made things and loose bits fed to it are scrap for it"
             % (g["what"], full(house, cfg))]
 
 
