@@ -202,8 +202,43 @@ def fetch(house, cfg, pet, w, lack):
         return "gather", here_
     if mine:
         return ("place",)
+    S = stacks(house, pet) if "stone" in short and cfg["build"]["project"][w["project"]].get("honours") and not full else []
+    if S:   # (14 October 2026) a stone stack made for a statue does for a piece of its stone: taken up where it lies (take_stack)
+        return ("stack", S[0][1]) if S[0][0] == pet["room"] else ("go", S[0][0])
     there = next((lying(house, pet, b) for b in short if lying(house, pet, b)), None)
     return ("go", there) if there else None
+
+
+def stacks(house, pet):
+    """Stone stacks named for a statue that it knows of and may take (its own, or nobody living's; not an
+    heirloom), those in its room first: [(room id, name)]."""
+    out = []
+    for rid in sorted(pet["rooms"], key=lambda r: r != pet["room"]):
+        for n, o in things.made(house["rooms"][rid]).items() if house["rooms"][rid]["type"] else ():
+            m = o["made"]
+            if "statue" in n and (m["recipe"].get("kind") == "stone stack" or "stone" in m["bits"]) and not m.get("heirloom") and things.free_to_change(house, pet, o):
+                out.append((rid, n))
+    return out
+
+
+def take_stack(house, cfg, pet):
+    """(Once a tick, from hub.tick.) A pet that wants a statue built, where a stone stack named for one lies, takes
+    it up: it carries it as a piece of stone and sets it on the plinth as it would any other."""
+    if pet["sleep"] or pet["stage"] in ("egg", "dead", "hatchling"):
+        return
+    for w in pet.get("wants", []):
+        if w["what"] != "build" or not cfg["build"]["project"].get(w.get("project"), {}).get("honours"):
+            continue
+        lack = missing(cfg["build"]["project"][w["project"]], find(house["rooms"][w["room"]], w["project"])[1])
+        step = fetch(house, cfg, pet, w, lack) if lack else None
+        if step and step[0] == "stack":
+            room = house["rooms"][pet["room"]]
+            o = room["objects"].pop(step[1])
+            things.gone(house, o, step[1], "set into a statue", room)
+            pet["carrying"].append("stone")
+            moment(house, "took", "%s took up the stone stack '%s' to set into the statue" % (label(pet), step[1]), pet["id"], room["id"])
+            add_event(house, pet, "you took up the %s: it will do for a piece of the statue's stone" % step[1])
+            return
 
 
 def lean(house, cfg, pet, w, out):
@@ -225,7 +260,7 @@ def lean(house, cfg, pet, w, out):
         out["rooms"].add(wants.book_room(house))   # nobody has a hammer, and it does not know what one is made of: by way of the book
     if step and step[0] == "gather":
         out["gather"] |= step[1]
-    elif step:
+    elif step and step[0] != "stack":   # (a stack where it stands is taken up within the tick)
         out["rooms"].add(room["id"] if step[0] == "place" else step[1])
     elif hammer:
         out["rooms"].add(room["id"])   # all it takes is there, or it has worn: to work

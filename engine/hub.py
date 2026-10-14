@@ -118,8 +118,10 @@ def read_sign(house, cfg, pet):
 
 
 def tick(house, cfg):
+    from . import build
     for p in house["pets"].values():
         read_sign(house, cfg, p)
+        build.take_stack(house, cfg, p)   # (14 October 2026) a stone stack made for a statue goes into it
     if house["tick"] % cfg["ticks_per_hour"] == 0:
         honour(house, cfg)
 

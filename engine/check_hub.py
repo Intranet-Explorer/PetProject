@@ -88,6 +88,7 @@ async def run(d):
     assert actions.check(dict(a), h, cfg, pet, eng.minds[pet["id"]].mem) is not None, "and not again so soon"
     assert not any(hub.heavy(o) for o in room["objects"].values()), "a screen is not the heavy book: it cannot be carried"
     sr["objects"]["heavy book"] = {"pos": [2, 2], "state": None, "fix": {"book": True}}
+    assert book.lookup(cfg, "what is shell")[0] != "Shell Oil Company" and book.lookup(cfg, "how to make supple reed")[0] == "Reed (plant)" if book.available(cfg) else True, "the everyday sense of the main noun"
     assert wants.book_room(h) == hub.RID and "the screens in" in wants.book_words(h, hub.RID), "a pet with a question is sent to the screens, not the heavy book"
 
     # ---- §4 the founder's statue ----
@@ -110,6 +111,14 @@ async def run(d):
                                    "tick": 0, "bits": [], "uses": 0, "ups": 0, "used_at": 0, "heirloom": None, "behavior": None}}
     name, o = build.begin(h, cfg, eldest, room, "statue")
     assert o["pos"] == list(P["at"]) and room["objects"]["lost cup"]["pos"] != o["pos"] and o["statue"]["of"] == f1["id"], "on its plinth, and nothing left lying on it"
+    # a stone stack named for the statue, lying here, is taken up and does for a piece of its stone
+    room["objects"]["statue stone"] = {"pos": [2, 6], "made": {"id": 98, "recipe": {"name": "statue stone", "kind": "stone stack", "material": "heavy", "color": "grey", "size": 2},
+                                       "by": eldest["id"], "owner": eldest["id"], "tick": 0, "bits": ["wood"], "uses": 0, "ups": 0, "used_at": 0, "heirloom": None, "behavior": None}}
+    eldest.update(room=hub.RID, pos=[3, 6], carrying=[], sleep=None)
+    eldest["rooms"][hub.RID] = h["tick"]
+    build.take_stack(h, cfg, eldest)
+    assert "statue stone" not in room["objects"] and eldest["carrying"] == ["stone"], "taken up as stone"
+    eldest["carrying"] = []
     v = {}
     hub.statue_view(h, cfg, o, v, d)
     assert v["statue"]["genome"] == f1["genome"] and v["statue"]["words"] == "Stay near the lamp."

@@ -58,29 +58,62 @@ def words(question):
     return [w for w in re.findall(r"[a-z][a-z'-]+", question.lower()) if w not in STOP and len(w) > 2]
 
 
+NATURAL = ["zoology", "animal", "plant", "botany", "biology", "material", "geology", "rock", "mineral", "weather", "food", "tool",
+           "insect", "bird", "fish", "fungus", "anatomy", "physics", "chemistry"]   # (in a title's brackets: the everyday or natural sense, best first)
+ODD = re.compile(r"\b(company|corporation|plc|brand|band|album|song|single|film|movie|television|tv series|video game|politician|footballer|"
+                 r"singer|actor|actress|rapper|businessman|businesswoman|wrestler|novel|magazine|newspaper)\b", re.I)
+
+
+def main_words(question):
+    """The words of what is asked about: question words and the rest of the asking stripped, and only the first
+    run of words before "of", "for", "to" and the like ("how to make supple reed" -> supple, reed)."""
+    for part in re.split(r"\b(?:of|for|in|on|with|from|into|to|about|by|at)\b", question.lower()):
+        if words(part):
+            return words(part)
+    return words(question)
+
+
+def read(a, path, cfg):
+    """(title, passage) of one article, or None: not a page of words, a list of meanings, or about a company, a
+    band, a film or a person of that kind (by its first sentence)."""
+    try:
+        entry = a.get_entry_by_path(path)
+        item = entry.get_item()
+        if not item.mimetype.startswith("text/html"):
+            return None
+        text = passage(bytes(item.content).decode("utf-8", "replace"), cfg)
+    except Exception:
+        return None
+    if not text or re.search(r"(may|can|could) (refer to|mean)", text) or ODD.search(text.split(". ")[0]):
+        return None
+    return entry.title, text
+
+
 def lookup(cfg, question):
-    """The best-matching article for a question: (its title, a passage), or None. Titles are tried first, the
-    question's own words in order, then the whole text of the book."""
+    """The best-matching article for a question: (its title, a passage), or None (14 October 2026). The thing asked
+    about is tried as a title (the whole of it, then its last word, the noun: "supple reed" -> "reed"), and where a
+    title is a list of meanings, its everyday or natural sense ("Shell (zoology)", not Shell plc); the whole text of
+    the book only after that, and never a company, a band or a film."""
     from libzim.search import Query, Searcher
     from libzim.suggestion import SuggestionSearcher
-    a, asked = archive(cfg), words(question)
-    tries = [" ".join(asked)] + asked + [w[:-1] for w in asked if w.endswith("s")]
-    paths = []
-    for q in dict.fromkeys(t for t in tries if t):
-        paths += [p for p in SuggestionSearcher(a).suggest(q).getResults(0, 1) if p.replace("_", " ").lower() in (q, q + "s", q.rstrip("s"))]
-    if asked:
-        paths += list(Searcher(a).search(Query().set_query(" ".join(asked))).getResults(0, 3))
-    for p in dict.fromkeys(paths):
-        try:
-            entry = a.get_entry_by_path(p)
-            item = entry.get_item()
-            if not item.mimetype.startswith("text/html"):
-                continue
-            text = passage(bytes(item.content).decode("utf-8", "replace"), cfg)
-        except Exception:
-            continue
-        if text:
-            return entry.title, text
+    a, asked = archive(cfg), main_words(question)
+    if not asked:
+        return None
+    head = asked[-1]
+    for q in dict.fromkeys([" ".join(asked), head] + ([head[:-1]] if head.endswith("s") else []) + asked):
+        hits = list(SuggestionSearcher(a).suggest(q).getResults(0, 40))
+        say = lambda p: p.replace("_", " ").lower()
+        exact = [p for p in hits if say(p) in (q, q + "s")]
+        kinds = {p: say(p)[len(q) + 2:-1] for p in hits if say(p).startswith(q + " (") and say(p).endswith(")")}
+        natural = sorted((p for p, k in kinds.items() if k in NATURAL), key=lambda p: NATURAL.index(kinds[p]))
+        for p in exact + natural:
+            got = read(a, p, cfg)
+            if got:
+                return got
+    for p in Searcher(a).search(Query().set_query(" ".join(asked))).getResults(0, 10):
+        got = read(a, p, cfg)
+        if got:
+            return got
     return None
 
 
