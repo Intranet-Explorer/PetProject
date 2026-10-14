@@ -7,7 +7,7 @@ import { inventedSound } from "./parts";
 import { clip, sound, sounds } from "./sprite";
 import type { Layer } from "./sprite";
 import { bodyStage } from "./types";
-import type { Heard, Note, PetV, Snap } from "./types";
+import type { Note, PetV, Snap } from "./types";
 
 const STORE = "sound";
 const AHEAD = 6;   // seconds of heartbeat, breathing or a room's ticks kept scheduled on the audio clock; a snapshot tops it up
@@ -267,17 +267,6 @@ export function ambient(ctx: BaseAudioContext, dest: AudioNode, L: Layer, load: 
   return { out, tick: (to: number) => tick(to), stop: (at: number) => { until = at; for (const n of live) n.stop(at); } };
 }
 
-/** An old radio's crackle (SPEC-v3.1 §5.3): the same noise as the rain, through a narrow band, jumping about. */
-function crackle(ctx: BaseAudioContext, dest: AudioNode, at: number, seconds: number, level: number) {
-  const src = new AudioBufferSourceNode(ctx, { buffer: hiss(ctx, 2), loop: true }), env = new GainNode(ctx, { gain: 0 });
-  for (let t = 0; t < seconds; t += 0.07) env.gain.setValueAtTime(level * (0.25 + Math.random() ** 3), at + t);
-  env.gain.setValueAtTime(0, at + seconds);
-  src.connect(new BiquadFilterNode(ctx, { type: "bandpass", frequency: 1900, Q: 0.7 })).connect(env).connect(dest);
-  src.start(at);
-  src.stop(at + seconds + 0.05);
-  return at + seconds;
-}
-
 /** A pet as the voice needs it. The real words it can say: its name, the things of its own that proved useful,
  *  and once grown the names of the others in the house (VOICE.md phase 2; phase 3's described voice is not in v3). */
 export function voiceInput(p: PetV, s?: Snap): VoiceInput {
@@ -468,20 +457,6 @@ export class Voice {
     return true;
   }
 
-  /** The box speaks (SPEC-v3.1 §5.3): quietly, in the browser's own voice made slow and low, under a crackle. Next
-   *  door it is the same, muffled, and the voice only quieter still (a browser's voice cannot be muffled). Nothing
-   *  to say is static. */
-  private wireless(h: Heard, dest: GainNode) {
-    const ctx = this.ctx!, at = ctx.currentTime + 0.05, far = dest === this.far;
-    if (!this.begin("radio", h.text || "static", dest, 0.35, { room: h.room }, h.text ? `the box${far ? ", next door" : ""}: “${h.text}”` : "static from the box")) return;
-    if (!far && h.text) this.sfx("radio", dest, "the box clicks");   // the pack's own sound for the box, if the data has one
-    crackle(ctx, dest, at, h.text ? Math.min(14, 0.6 + h.text.length * 0.07) : 1.8, h.text ? 0.035 : 0.12);
-    if (!h.text || typeof speechSynthesis === "undefined") return;
-    const u = new SpeechSynthesisUtterance(h.text);
-    [u.rate, u.pitch, u.volume] = [0.9, 0.7, this.volume * 0.35 * (far ? FAR : 1)];
-    speechSynthesis.speak(u);
-  }
-
   /** A thing humming by itself (README, instruments.hum): the data's layer, each thing on a note of its own. */
   private humOf(name: string, quiet = 1): Layer {
     const h = sounds().instruments?.hum, L: Layer = (typeof h === "string" ? sounds().sfx?.[h] : h) ?? { synth: "hum", gain: 0.04, pitch: 180 };
@@ -633,10 +608,6 @@ export class Voice {
       this.sing("the music box", song?.name ?? "the music box's tune", song?.notes ?? BOX_TUNE, "box", this.bus(playing.id, s, here)!, playing.id);
       this.boxAt = performance.now() + 12000;
     }
-    for (const h of t.heard) {
-      const dest = this.bus(h.room, s, here);
-      if (dest) this.wireless(h, dest);
-    }
     const house = (kind: HouseSound | Creature, dest: GainNode, room?: string | null) => { if (this.begin("sfx", kind, dest, 1, { room }, HOUSE[kind])) effect(ctx, dest, kind, now + 0.05); };
     for (const h of t.house.filter((h) => h.kind !== "powerdown")) {   // weather and events have sounds of their own
       // a discovery (SPEC-v3.1 §1) is heard all through the house: the pack's jingle for it if the data has one, else the sound made here
@@ -660,12 +631,11 @@ export class Voice {
       for (const L of A?.rooms?.[type] ?? []) if (!L.when || (L.when === "night") === night) want.set(`${type}|${JSON.stringify(L)}`, { L, dest: this.near, level: 1, what: "ambience", name: `${type}: ${called(L)}`, room: here });
       for (const L of sky ? A?.weather?.[s.weather] ?? [] : []) want.set(`${sky}|${JSON.stringify(L)}`, { L, dest: sky < 1 ? this.roof : this.near, level: sky, what: "ambience", name: `${s.weather}: ${called(L)}`, room: here });
     }
-    for (const r of s.rooms) {   // a thing humming by itself, and the box while it is on (between the things it says): from where it is
+    for (const r of s.rooms) {   // a thing humming by itself, from where it is (the radio is a real station now: hub.ts plays it)
       const dest = r.type ? this.bus(r.id, s, here) : null;
       for (const [name, o] of dest ? Object.entries(r.objects) : []) {
-        const box = !!o.fix?.radio && o.state === "on";
-        if (box || (o.made && (o.made.hums ?? (o.made.active && o.made.behavior?.do === "hum"))))
-          want.set(`hum|${r.id}|${name}|${dest === this.far}`, { L: this.humOf(name, box ? 0.3 : 1), dest: dest!, level: 1, what: box ? "radio" : "instrument", name: `hum: ${name}`, room: r.id });
+        if (o.made && (o.made.hums ?? (o.made.active && o.made.behavior?.do === "hum")))
+          want.set(`hum|${r.id}|${name}|${dest === this.far}`, { L: this.humOf(name), dest: dest!, level: 1, what: "instrument", name: `hum: ${name}`, room: r.id });
       }
     }
     this.keep(want);

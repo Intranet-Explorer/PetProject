@@ -16,6 +16,7 @@ import type { Layout } from "./px/assets";
 import { Labels } from "./px/bubbles";
 import type { Tag, Who } from "./px/bubbles";
 import { Fx, fxTexture } from "./px/fx";
+import { Hub } from "./px/hub";
 import { loadSeasons } from "./px/season";
 import { clamp, FX, FY, H, idx, inside, OX, OY, onFloor, tileAt, TILE, W } from "./px/geom";
 import { Marks } from "./px/marks";
@@ -119,8 +120,7 @@ export class Room {
   private crateFor = "";
   private hatched = new Map<string, number>();                 // who has just hatched here: its tag shows until then
   private shells = new Map<string, { c: Container; tick: number }>();   // the shell each left where its egg lay
-  private box: Thing | null = null;     // the box with a dial, if it is in this room
-  private boxAt = [0, 0];
+  private hub = new Hub();              // SPEC-v3.5.1: the lit sign, the screens, the statue, the radio set
   private roomBox: Rect = { x: 0, y: 0, w: W, h: H };
 
   constructor() {
@@ -277,7 +277,7 @@ export class Room {
     this.walls.addChild(s.wallLayer);
     this.flat.addChild(s.flat);
     this.top.addChild(s.top);
-    this.box = [...s.things.values()].find((t) => t.obj.fix?.radio) ?? null;
+    this.hub.build(s, this.K);
     this.marks.build(sc.room, s, this.F / this.K, keep, now);
     for (const c of s.standing) this.sorted.addChild(c);
   }
@@ -332,7 +332,7 @@ export class Room {
     }
   }
 
-  /** Each pet's line (its name and the sign of what it is doing), what it wants, its words, and what the box is saying. */
+  /** Each pet's line (its name and the sign of what it is doing), what it wants, and its words. */
   private say(sc: Scene) {
     const { snap, room } = sc, who: Who[] = [];
     for (const a of this.pets.values()) {
@@ -344,8 +344,7 @@ export class Room {
                  // the sign of what it is doing (SPEC-v3.3 §5): its body's by itself, or the step it decided on
                  icon: egg || dead || p.asleep ? null : p.body?.icon || p.sign?.icon || "" });
     }
-    const heard = (snap.radio?.said ?? []).filter((h) => h.room === room.id && ago(snap, h.tick) <= 30).at(-1);
-    this.words.sync(who, heard ? { key: `${heard.tick}${heard.text}`, text: heard.text, source: heard.source } : null, this.F, (W * this.K) / this.F);
+    this.words.sync(who, this.F, (W * this.K) / this.F);
   }
 
   /** What has just happened here: each finished step once (never twice, also after a reload), startles, a turn to the window. */
@@ -537,11 +536,10 @@ export class Room {
       this.avoid = this.clear.map((id) => document.getElementById(id)).filter((e): e is HTMLElement => !!e && !e.hidden && e.offsetParent !== null).map((e) => e.getBoundingClientRect())
         .map((b) => ({ x: (b.left - view.left) * s, y: (b.top - view.top) * s, w: b.width * s, h: b.height * s }));
     }
-    const box = this.box;
-    if (box) [this.boxAt[0], this.boxAt[1]] = [box.x * K, (box.y - box.rect.h / 2) * K];
+    this.hub.step(now, sc.snap, sc.room, this.fx);
     const b = still.bounds, rm = this.roomBox;
     [rm.x, rm.y, rm.w, rm.h] = [(b.x + 2) * K, (b.y + 1) * K, (b.w - 4) * K, (b.h - 3) * K];   // a little inside the room's edge: nothing hangs over its border
-    this.words.step(now, dt, this.heads, K, rm, this.avoid, box ? this.boxAt : null);
+    this.words.step(now, dt, this.heads, K, rm, this.avoid);
   }
 
   /** The small life of the room's things: glints on glass, a springy thing's bob, notes from what sounds, drips, a draught, dust in the sun. */

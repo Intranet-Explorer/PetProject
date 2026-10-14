@@ -4,6 +4,7 @@
 import { $, bar, doingOf, el, emoteOf, face, goodWord, hatchWords, moodWords, ownLabel, stageWord, wantWords, when, wishOf } from "./dom";
 import type { Ctx, Kid } from "./dom";
 import { showRecord } from "./family";
+import { hubTip, openScreen, radioChoice, radioControl, radioSound, screens } from "./hub";
 import { icon } from "./icons";
 import { drawMap } from "./minimap";
 import { noteInvented } from "./parts";
@@ -185,6 +186,8 @@ function render() {
   for (const [k, v] of Object.entries({ room: view.room, follow: view.follow, sel: view.sel ?? "" })) remember(k, v);
 
   voice.update(s, view.room, view.sel);
+  radioSound(s, view.room, voice, !!replayId);   // SPEC-v3.5.1 §5: the station plays here while the radio is on
+  screens(s, view.room);
   const burst = bursts(s);
   header(s);
   try {
@@ -358,7 +361,7 @@ function side(s: Snap, here: RoomV) {
       ...(r.wet ? [line("warn", "drop", `water is coming into ${r.name}`, r.id)] : []),
       ...(r.cold ? [line("warn", "wind", `a draught in ${r.name}${r.shut.length ? `; its ${r.shut.join(" and ")} door is shut` : ""}`, r.id)] : []),
     ]),
-    ...found(s).filter((r) => Object.values(r.objects).some((o) => o.fix?.radio && o.state === "on")).map((r) => line("", "radio", `the box is on in ${r.name}`, r.id)),
+    ...found(s).filter((r) => Object.values(r.objects).some((o) => o.fix?.radio && o.state === "on")).map((r) => line("", "radio", `the radio is on in ${r.name}${s.dj?.radio.now ? `: ${s.dj.radio.now.title}` : ""}`, r.id)),
     ...s.creatures.map((cr) => line("", cr.tame ? "paw" : "mouse", `${beast(cr)} in ${name(cr.room)}, ${cr.doing}`, cr.room)),
   );
   const key = `${s.moments.at(-1)?.n}`;
@@ -490,7 +493,7 @@ function dj(s: Snap) {
   $("radioWho").textContent = d.radio.theirs ? "Their radio" : "Your little radio";
   $("radioWho").parentElement!.title = d.radio.theirs ? "The pets' own radio: this switches it on or off and says what it plays, wherever it is. They can still switch it themselves."
     : "Your own little radio, set down in the room you are looking at while it is on. Once the pets have found a radio of their own, this switches theirs.";
-  $<HTMLSelectElement>("radioPlays").value = d.radio.on ? d.radio.plays : "off";
+  radioControl(s);
 }
 $("musicMood").onchange = $("musicScope").onchange = () => {
   const scope = $<HTMLSelectElement>("musicScope").value, at = snap?.dj?.music?.scope;
@@ -498,10 +501,7 @@ $("musicMood").onchange = $("musicScope").onchange = () => {
   // "there": it goes on playing in the room it is in, whatever is on screen
   send({ type: "music", mood: $<HTMLSelectElement>("musicMood").value, scope: scope === "house" ? "house" : "room", room: scope === "there" && at ? at : view.room });
 };
-$("radioPlays").onchange = () => {
-  const plays = $<HTMLSelectElement>("radioPlays").value;
-  act({ type: "radio", on: plays !== "off", plays: plays === "off" ? snap?.dj?.radio.plays : plays });
-};
+$("radioPlays").onchange = () => act(radioChoice(snap, $<HTMLSelectElement>("radioPlays").value));
 
 room.onClick = (t: Target) => {
   if (!snap) return;
@@ -513,6 +513,7 @@ room.onClick = (t: Target) => {
     picked = null;
   } else if (t.pet) jump({ pet: t.pet });
   else if (t.door) jump({ room: here?.doors[t.door] });
+  else if (o?.fix?.terminal) openScreen(snap, view.room, t.object!);   // SPEC-v3.5.1 §3: read what is on its screen
   else if (can && o && (o.made || o.fix?.movable)) picked = picked === t.object ? null : t.object!;
   else picked = null;
   render();
@@ -533,18 +534,16 @@ const FIX: Record<string, string> = {
   plant: "it grows, and when it is ripe it is a meal", water: "water: things put in it drift off", bench: "a bench: a place to work at", sun: "a patch of sun that moves with the hour",
   keepsake: "a keepsake box: what someone who has died left lying about is kept in it, and can be taken out again",
   machine: "it gives each pet two materials a day, of its choosing; fed a made thing, or three bits, it gives one back; it never takes an heirloom or what is someone else's",
-  radio: "when it is on it speaks scraps of the real world outside", book: "it answers a question put to it, out of an encyclopedia",
+  radio: "while it is on it plays a real radio station, which you hear too", book: "it answers a question put to it, out of an encyclopedia",
 };
 
 function fixture(name: string, o: Obj, here: RoomV, s: Snap, shown: HTMLCanvasElement | null, notes: Kid[]): Kid[] {
   const pic = [`fix.${name}.${o.state}`, `fix.${name}`].find(hasSprite), fix = o.fix ?? {};
   const state = o.state === "ripe" ? "ripe" : o.grow != null ? (o.grow > 0.7 ? "nearly ripe" : "growing") : o.servings != null ? (o.servings ? `${o.servings} left in it` : "empty") : o.state ?? "";
   const does = Object.keys(FIX).filter((k) => k in fix && fix[k]).map((k) => FIX[k]);
-  const said = fix.radio ? s.radio?.said.at(-1) : null;
   return [shown ?? (pic ? sprite(pic, 3) : null), el("div", "",
     el("p", "", el("b", "", o.build?.title ?? `the ${name}`), state ? el("span", "hint", ` · ${state}`) : null),
     o.says ? el("p", "", `${cap(o.says)}.`) : null,
-    said ? el("p", "", said.text ? `It just said: “${said.text}”` : "Only static just now.") : null,
     fix.book && s.read_glow ? el("p", "", "Someone is reading it.") : null,
     ...notes,
     does.length ? el("p", "truth", el("b", "", "What it really does: "), `${does.join("; ")}.`) : null,
@@ -603,6 +602,8 @@ function tipFor(t: Target): Kid[] | null {
   }
   if (o?.memorial) return [drawn(t) ?? (hasSprite("stone") ? sprite("stone", 3) : null), el("div", "", el("b", "", "a stone"), el("p", "", o.memorial.text), ...kept(t),
     ...(here.marks ?? []).filter((x) => x.on === t.object).flatMap(written))];
+  const hub = o && t.object ? hubTip(t.object, o, s, drawn(t)) : null;   // SPEC-v3.5.1: the lit sign, a screen, a statue
+  if (hub) return hub;
   if (o && t.object) return fixture(t.object, o, here, s, drawn(t), kept(t));
   if (t.bit) {
     const can = hello?.bits[t.bit]?.can ?? [];
