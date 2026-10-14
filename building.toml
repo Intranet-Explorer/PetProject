@@ -118,7 +118,7 @@ rooms = ["hub"]
 when = "honour"
 honours = 2               # the second family, that came from the foundling egg
 want = "the first of your family has no stone to remember it by: you want to raise a statue of the first one in {room}"
-done = "raised a statue of the first one in {room}"
+done = "raised the foundling's statue in {room}"
 needs = { stone = 5 }
 sessions = 16
 at = [7, 4]

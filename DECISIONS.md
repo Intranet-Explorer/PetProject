@@ -1701,3 +1701,36 @@ A stone stack with "statue" in its name (or anything with stone in it so named),
 for a piece of stone for a statue that still wants stone: a pet that wants the statue built goes to where one lies,
 takes it up as a piece of stone and sets it on the plinth like any other. Only while a statue lacks stone: on the
 day this went live both founders' statues had all five, so it waits for the next statue.
+
+## Part 19: v3.5.3, the page (14 October 2026)
+
+How it was run: the lead built the base (the tabs and addresses, the slim header, the House tab's shorter cards and
+grouped Visit controls, the shared building blocks, the read-only endpoints, the portraits, the two small fixes);
+one helper built the Family tab and the pet pages, another the Story and Things tabs. Tested on a paused copy of
+the live house, then on the live house.
+
+- **Addresses.** `#/house`, `#/house/<pet>` (watching that pet: a pet page's "Watch now"), `#/family`, `#/pet/<id>`,
+  `#/story`, `#/things`, `#/thing/<id>`, `#/lab`. The drawer is gone; the Lab is its own page, reached by a small link
+  at the foot of every page and in the Visit bar.
+- **The header** keeps the name, the world's day, time and season, and Sound. Ambience, volume, light/dark,
+  Replay and Stock the machine moved to the Visit bar, under "More".
+- **House.** The cards say who, stage, what it is doing and what it wants; a feeling is the small picture it was
+  before. A card now opens the pet's page instead of following it (following is the Follow menu, or clicking the
+  pet in the room). On a phone the room fills the width and the page scrolls down to the cards (a strip that
+  scrolls sideways) and the map; the Visit controls fold behind one button.
+- **Repeated names** are numbered by the order the pets came ("Grey Light II"); the stored name is untouched.
+  "Named after" is the nearest earlier pet of that name, its own line first. In a sentence, a repeated name links
+  to whoever bore it on that day, or to the pet whose page it is.
+- **Families** are worked out from the tree (the dead are put away without their own word for it): each first of
+  a line with no parent, in the order they came, is a family.
+- **Portraits** (§8): the engine has no picture library and the pets are drawn by the page (petsprite.ts, from the
+  genome), so the first page to draw a pet sends its PNG (1x and 4x) to `/portrait/<id>.png`, where the engine keeps
+  it under `data/portraits/`, one per pet per stage, and serves it from then on. The dead are drawn as they were in
+  life. The only thing the page can write there is a PNG of at most 64 KB for a pet that exists, once.
+- **Weather in the story** is recorded from today (`skies` in house.json, once a world hour; the page only reads it).
+  Earlier days show their season alone: the live house uses the real sky, so a weather for them cannot be worked out.
+- **Things** are keyed by their id; something made before today and since gone has none recorded, and is keyed by
+  when it was made and its name.
+- **§10:** a model reply with writing in another script is asked for once more; what is left of it after that is
+  taken out; each time is noted in `data/<lineage>/<pet>/foreign.jsonl` (beside training.jsonl). A pet at a screen is
+  told "the screen is right here", "you read on the screen", and the story says it "asked the screen".

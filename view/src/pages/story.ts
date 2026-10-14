@@ -49,7 +49,7 @@ export function momentRow(m: M, things: Record<string, string>, at = hhmm(m.hour
   const big = m.kind === "death" ? "death" : first ? "founding" : m.kind === "hatched" ? "birth" : "";
   const text = m.kind === "invented" && /: [^:]{78,}$/.test(m.text) ? `${m.text}…` : m.text;   // the engine keeps the purpose to 80 letters
   return el("li", `m ${big}`.trim(), icon(m.kind === "invented" ? "discovery" : m.kind === "statue" ? "built" : m.kind), el("span", "t", at),
-    el("span", "s", big && p ? portrait(p, 32) : null, ...told(text, m.day, m.pet, things),
+    el("span", "s", big && p ? portrait(p, 48) : null, ...told(text, m.day, m.pet, things),
       first && p ? el("span", "badge", `family ${p.family} begins`) : null));
 }
 
