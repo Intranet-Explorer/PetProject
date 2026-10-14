@@ -10,7 +10,7 @@ from . import season
 from . import build
 from . import machine
 from . import hub
-from .world import LONG_AGO, add_event, days as world_days, label, moment, relation, rnd
+from .world import LONG_AGO, add_event, arrived, days as world_days, label, moment, relation, rnd
 
 GROUPS = {"door": "know", "creature": "know", "bit": "know", "try": "know", "word": "know", "look": "know",
           "store": "better", "glow": "better", "warm": "better", "useless": "better", "tool": "better", "window": "better",
@@ -64,7 +64,16 @@ def door_words(house, pet, rid, d):
 
 
 def book_room(house):
-    return next((r["id"] for r in house["rooms"].values() if r["type"] and any(o.get("fix", {}).get("book") for o in r.get("objects", {}).values())), None)
+    """Where to go to look something up: the machine room's screens once they are found and lit (SPEC-v3.5.1 §3:
+    several can read there at once, and sooner again), else wherever the heavy book is."""
+    lit = arrived(house, "book")
+    rooms = [r for r in house["rooms"].values() if r["type"] and any(o.get("fix", {}).get("book") and (lit or not o["fix"].get("terminal")) for o in r.get("objects", {}).values())]
+    return next((r["id"] for r in sorted(rooms, key=lambda r: not any(o.get("fix", {}).get("terminal") for o in r["objects"].values()))), None)
+
+
+def book_words(house, rid):
+    return "the screens in %s" % house["rooms"][rid]["name"] if any(o.get("fix", {}).get("terminal") for o in house["rooms"][rid]["objects"].values()) \
+        else "the heavy book in %s" % house["rooms"][rid]["name"]
 
 
 def candidates(house, cfg, pet):
@@ -131,7 +140,7 @@ def candidates(house, cfg, pet):
     machine.wants(house, cfg, pet, known, out, add, via)   # SPEC-v3.5 §4.3: to see what the machine has; to feed it what is spare
     for w in pet.get("unknown", [])[-3:]:
         book = book_room(house)
-        hint = "" if not book or pet.get("asked") else "; the heavy book in %s might know" % rooms[book]["name"]
+        hint = "" if not book or pet.get("asked") else "; %s might know" % book_words(house, book)
         why = "you have been close to one" if w in pet["met"] else "the box said it"
         add("word", w, 'you want to know what %s is: %s%s' % ("a " + w if w in pet["met"] else '"%s"' % w, why, hint), 'asked what "%s" is' % w, 1.2, word=w, room=book if book in pet["rooms"] else None)
     # to tend (13 October 2026): bare earth and a seed to be had, and it wants to plant (one who tends, most); something ripe, and it wants to pick it
@@ -167,7 +176,7 @@ def candidates(house, cfg, pet):
             one = "%s %s" % ("an" if tool[0] in "aeiou" else "a", tool)
             takes = "; you carry what %s takes: you could make one now" % one if tool in pet.get("takes", []) and not craft.lacking(cfg, tool, pet["carrying"]) else \
                 "; %s takes %s" % (one, craft.takes(cfg, tool)) if tool in pet.get("takes", []) else \
-                "; the heavy book in %s might know what one is made of" % rooms[book]["name"] if book and not asked_of(pet, tool) else ""
+                "; %s might know what one is made of" % book_words(house, book) if book and not asked_of(pet, tool) else ""
             add("tool", tool, "you want to " + C["tool"][tool]["want"] + takes, "has a tool: " + a(tool), 2.5, tool=tool)
     box = [b for b in pet.get("box", []) if world_days(cfg, b["tick"], tick) < 0.4]
     if any("forecast" in b["text"].lower() and RAIN.search(b["text"].split("Tomorrow")[0]) for b in box) and house["weather"] not in ("rain", "storm"):
@@ -482,7 +491,8 @@ def lean(house, cfg, pet):
     out = {"rooms": set(), "doors": set(), "gather": set(), "creatures": set(), "place": None, "play": set(), "look": set(), "pick": set(), "ask": None}
     here, book = pet["room"], book_room(house)
     young = not reads(house, pet)
-    rested = not young and house["tick"] - pet.get("asked_at", LONG_AGO) >= cfg["book"]["per_hours"] * cfg["ticks_per_hour"]   # (its eyes are up to the small writing again)
+    waits = hub.wait_hours(cfg, house["rooms"][book]) if book else cfg["book"]["per_hours"]   # (less long, at a screen)
+    rested = not young and house["tick"] - pet.get("asked_at", LONG_AGO) >= waits * cfg["ticks_per_hour"]   # (its eyes are up to the small writing again)
     for w in sorted(pet.get("wants", []), key=lambda w: w["what"] != "get"):   # (a step toward another want comes first)
         t = w["what"]
         q = question(house, cfg, pet, w) if rested or young else None
@@ -494,7 +504,7 @@ def lean(house, cfg, pet):
                     out["ask"] = out["ask"] or ("ask", q, w["key"], near["id"])
                 else:
                     out["rooms"] |= {p["room"] for p in old if p["room"] in pet["rooms"]}
-        elif q and book == here:   # (13 October 2026) the book is in the room and might know: it is drawn over to it
+        elif q and any(o.get("fix", {}).get("book") for o in house["rooms"][here]["objects"].values()):   # (13 October 2026) a book is in the room and might know: it is drawn over to it
             out["ask"] = out["ask"] or ("ask", q, w["key"])
         elif q and t in ("word", "tool") and book in pet["rooms"]:   # ... and for a word or a tool it goes to where the book is
             out["rooms"].add(book)

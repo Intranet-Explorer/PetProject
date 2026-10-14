@@ -87,6 +87,8 @@ async def run(d):
     assert s["pet"] == pet["id"] and s["asked"] == "what is a hammer" and s["tick"] == h["tick"], "what it asked is on the glass"
     assert actions.check(dict(a), h, cfg, pet, eng.minds[pet["id"]].mem) is not None, "and not again so soon"
     assert not any(hub.heavy(o) for o in room["objects"].values()), "a screen is not the heavy book: it cannot be carried"
+    sr["objects"]["heavy book"] = {"pos": [2, 2], "state": None, "fix": {"book": True}}
+    assert wants.book_room(h) == hub.RID and "the screens in" in wants.book_words(h, hub.RID), "a pet with a question is sent to the screens, not the heavy book"
 
     # ---- §4 the founder's statue ----
     P = cfg["build"]["project"]["statue"]

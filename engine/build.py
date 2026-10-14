@@ -116,7 +116,7 @@ def hammer_words(house, cfg, pet):
     from . import wants
     if "hammer" not in pet.get("takes", []):
         book = wants.book_room(house)
-        return "; it wants knocking together and nobody has a hammer" + ("; the heavy book in %s might know what one is made of" % house["rooms"][book]["name"] if book and not wants.asked_of(pet, "hammer") else "")
+        return "; it wants knocking together and nobody has a hammer" + ("; %s might know what one is made of" % wants.book_words(house, book) if book and not wants.asked_of(pet, "hammer") else "")
     if not craft.lacking(cfg, "hammer", pet["carrying"]):
         return "; you carry what a hammer takes: you could make one now"
     return "; nobody has a hammer: one takes %s" % craft.takes(cfg, "hammer")
