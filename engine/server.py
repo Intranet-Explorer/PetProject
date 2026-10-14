@@ -17,7 +17,7 @@ import uvicorn
 from fastapi import FastAPI, HTTPException, Request, Response, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
 
-from . import actions, body, craft, wants, director, feel, hub, order, life, metrics, mind, pages, physics, radio, songs, story, things, walls
+from . import actions, body, craft, firsts, wants, director, feel, hub, order, life, metrics, mind, pages, physics, radio, songs, story, things, walls
 from .tick import Engine, model_brains, stub_brains
 from . import world
 from . import build
@@ -96,7 +96,7 @@ def pet_view(p):
         stage_word=STAGE_WORD.get(p["stage"], p["stage"]), mood=mood(p), emote=emote(p),
         act=story.act_of(h, p, plan["steps"][min(plan["i"], len(plan["steps"]) - 1)]) | {"since": plan.get("step_began", plan["started"])} if world.busy(p) else None,
     )
-    out["ambition"] = (p.get("ambition") or {}).get("text")   # SPEC-v3.5.4 §9: on its card
+    out["ambition"] = p.get("ambition") and firsts.third(p["ambition"])   # SPEC-v3.5.4 §9: on its card
     return out
 
 

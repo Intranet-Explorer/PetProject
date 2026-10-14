@@ -463,12 +463,18 @@ def unreachable(house, cfg, pet, A):
     return False
 
 
+def third(A):
+    """An ambition as others say it: the engine's plain words (the pet's own are for itself and its page)."""
+    return (A.get("plain") or A["text"]).replace("your family", "its family")
+
+
 def take(house, cfg, pet, c, text=None):
-    """It means to do this with its life."""
+    """It means to do this with its life. (Its own words, if it gave any, as words: no capital, no full stop.)"""
     was = pet.get("ambition")
-    pet["ambition"] = dict(c, plain=c["text"], text=text or c["text"], since=house["tick"], done=None, changed=bool(was))
-    moment(house, "ambition", "%s means to %s in its life" % (label(pet), pet["ambition"]["text"]) if not was else
-           "%s gave up meaning to %s, and means now to %s" % (label(pet), was["text"], pet["ambition"]["text"]), pet["id"], pet["room"])
+    text = (text or "").strip().rstrip(" .!;")
+    pet["ambition"] = dict(c, plain=c["text"], text=text[:1].lower() + text[1:] if text else c["text"], since=house["tick"], done=None, changed=bool(was))
+    moment(house, "ambition", "%s means to %s in its life" % (label(pet), third(pet["ambition"])) if not was else
+           "%s gave up meaning to %s, and means now to %s" % (label(pet), third(was), third(pet["ambition"])), pet["id"], pet["room"])
 
 
 def aimed(house, cfg, pet, kind, key, lvl=None):
@@ -481,8 +487,8 @@ def aimed(house, cfg, pet, kind, key, lvl=None):
     A["done"], A["done_day"] = house["tick"], house["clock"]["day"]
     who = label(pet)
     feats.glow(house, cfg, pet, cfg["drive"]["ambition_glow"], "you have done what you meant to do with your life: %s" % A["text"])
-    feats.record(house, cfg, "ambition", pet["id"], "%s did what it meant to do in its life: %s" % (who, A["text"]),
-                 board="%s DID WHAT IT SET OUT TO DO: %s" % (who.upper(), A["plain"].upper()), room=pet["room"])
+    feats.record(house, cfg, "ambition", pet["id"], "%s did what it meant to do in its life: %s" % (who, third(A)),
+                 board="%s DID WHAT IT SET OUT TO DO: %s" % (who.upper(), third(A).upper()), room=pet["room"])
     for c in pet.get("children", []):
         kid = house["pets"].get(c)
         if kid and kid["stage"] != "dead":
@@ -493,9 +499,9 @@ def tell(house, pet, kid):
     """The child hears it (the legacy): in what it was told, beside its parent's message."""
     A = pet.get("ambition")
     if A and A.get("done") and not any(t["kind"] == "ambition" and t["by"] == pet["id"] for t in kid["told"]):
-        kid["told"].append({"by": pet["id"], "who": pet["word"], "kind": "ambition", "text": "set out in life to %s, and did it" % A["text"], "tick": house["tick"]})
+        kid["told"].append({"by": pet["id"], "who": pet["word"], "kind": "ambition", "text": "set out in life to %s, and did it" % third(A), "tick": house["tick"]})
         if kid["stage"] != "egg":
-            add_event(house, kid, "your %s did what it set out to do in its life: %s" % (pet["word"], A["text"]))
+            add_event(house, kid, "your %s did what it set out to do in its life: %s" % (pet["word"], third(A)))
 
 
 def laid(house, cfg, pet, egg):
@@ -540,10 +546,15 @@ def took(house, cfg, pet, reply):
         pick = int(reply.get("pick", 0))
     except (TypeError, ValueError):
         pick = 0
+    taken = {p["ambition"]["key"] for p in house["pets"].values() if p is not pet and p["stage"] not in ("egg", "dead") and (p.get("ambition") or {}).get("level") in ("house", "family")}
+    if 1 <= pick <= len(cs) and cs[pick - 1].get("level") in ("house", "family") and cs[pick - 1]["key"] in taken:   # (another took that first tonight, after this was offered)
+        pick = 0
     if not 1 <= pick <= len(cs):
         if pet.get("ambition"):
             return
-        pick = 1
+        pick = next((i for i, c in enumerate(cs, 1) if not (c.get("level") in ("house", "family") and c["key"] in taken)), 0)
+        if not pick:
+            return
     text = last_sentence(clean(reply.get("words") or "", 140), 120).strip() or None
     take(house, cfg, pet, cs[pick - 1], text)
 

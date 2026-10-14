@@ -420,7 +420,7 @@ function cards(s: Snap) {
         egg ? el("span", "mood", hatchWords(p.hatches_in ?? 0)) : null,
         naming(p) ? el("span", "naming", naming(p)!) : null,
         doing ? el("span", "doing", el("i", "", "now "), sign, doing) : null,
-        wants.length || wish ? el("span", "want", el("i", "", "wants "), wants[0]?.replace(/^wants /, "") ?? wish) : null,
+        wants.length || wish ? el("span", "want", el("i", "", "wants "), wants[0]?.replace(/^.*\bit wants /, "").replace(/^wants /, "") ?? wish) : null,
         p.ambition && !egg ? el("span", "aim", el("i", "", "means to "), p.ambition) : null));   // SPEC-v3.5.4 §9
     li.tabIndex = 0;
     li.setAttribute("role", "link");
