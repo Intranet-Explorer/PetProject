@@ -604,3 +604,31 @@ Petal's Rest laid an egg at 08:06 and Grey Light's Hum hatched at 10:06.
   green stem that climbs. It holds on to things." One too young to read is no longer drawn.
 - 149 model calls, none failed; no errors in the engine's log. Sven, an elder, handled two things in its slowest
   five minutes where the body measure asks for three.
+
+## v3.5: parts. Its first world day on the live house (13 October 2026)
+
+Deployed at 17:33 (tick 55625, day 47 at 19:17, winter); measured to tick 57410, day 48 at 18:58. Tyler stopped the
+real-model copy after half a world day and had the bars measured on the live house instead. Sven died of old age
+at 05:22; Rain Rest laid an egg at 15:48 and Open Hand hatched at 17:48.
+
+| Bar | Result |
+|---|---|
+| Sprites sorted into families (6 of 8) | 8 of 8, on two sets |
+| Each child paired with its parent (3 of 4) | 6 of 6 on a set with honest ages; 1 of 6 on a first set where I had given children older bodies than their parents. Pairing leans on size and colour |
+| A new body part (about 1 birth in 12, never over 1 in 6) | stub, 1,000 births: 1 in 11.5; most in any first 40 births: 6 |
+| A body trait felt, per pet per day (1) | every living pet on day 48, 1 to 7 lines each |
+| Invented kinds per day (1) | **0.** One join was tried and turned away for naming a third material; that rule is gone as of 19:35 |
+| What each of 10 invented things is for (7 of 10) | 7 of the 9 a reviewer saw (I cropped the tenth). Template sprites with names that give nothing away, not real inventions: there were none |
+| A lasting project finished by day three | not due yet: the first hammer was made, and a bench and a roof patch are under way |
+| Winter: garden dormant, greenhouse grows | the three garden beds did not move; the melon bed went from 0.02 to 0.69 |
+| Model calls per pet per day (no more than 10% up) | 134 thoughts house-wide against 139 on the last v3.4 day |
+| v3.3 and v3.4 bars | two misses by a hair on the body numbers (Lean walked 12 tiles in its slowest five minutes for 15; Petal's Rest handled 2 things for 3). 25 wants met, 6 things found out, the first hammer and the first carver |
+| The machine used (3 a day) | 5 |
+| Something fed back (1 a day) | 1: three bits, for clay |
+| Things lying about do not rise over two days | 38 at the deploy, 47 a day later. One day only |
+
+- **Sharing the model.** While the copy ran beside the family (16:31 to 17:33) the family had 114 thoughts and lost
+  none. 25 took longer than the slowest before it (29.8 s; the worst 48 s); the mean went from 19.6 s to 26.4 s. The
+  copy got 50 thoughts in that hour, under half the family's rate.
+- **The leak.** It gave no want to mend it: the room was marked late, and the roof patch was one of about nineteen
+  equally weighted things to build. Both fixed at 18:32, with puddles under one drip and snow that reads as snow.
