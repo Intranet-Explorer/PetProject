@@ -142,15 +142,25 @@ async def run(d):
     make(egg, "cup", "Seen Once")
     assert len(pet["events"]) == had and any(e.startswith("you saw Open Leaf make the first cup") for t, e in other["events"]), "asleep, it sees nothing; awake, it does"
     pet["sleep"] = None
+    n8 = h["feats"]["n"]
+    for n in [n for n, o in room["objects"].items() if "made" in o]:   # (room to make more, for the check)
+        del room["objects"][n]
+    assert other["saw"] == {egg["id"]: h["clock"]["day"]}, "the second mobile was only fine, and was remarked on"
+    other["saw"], had = {}, len(other["events"])   # (a new day, for the check)
+    for material, name in (("warm", "Own First"), ("warm", "Plain One"), ("hard", "Plain Two")):   # (its own first is not seen; then fine, but nothing new: seen once a day by each onlooker, and no feat)
+        egg["skill"] = {"making": 40.0}
+        make(egg, "bowl", name, material)
+    plain = [e for t, e in other["events"][had:] if e.startswith("you saw Open Leaf make")]
+    assert len(plain) == 1 and not feat(h, "noticed", n8), "a fine thing is remarked on once a day, and is no feat: %s" % plain
 
     # ---- §9 an ambition: taken at hatching (no model), always in the packet, reached by what it does, heard by its child ----
     A = egg["ambition"]
     assert A and A["text"] and A["kind"] in ("first", "build", "skill", "best") and "your ambition for your life: " + A["text"] in firsts.lines(h, cfg, egg), "taken at hatching: %s" % A
     firsts.take(h, cfg, kid, {"kind": "first", "key": "kind:box", "level": "own", "text": "make a box"})
     kid["room"] = room["id"]
-    n8 = h["feats"]["n"]
+    n9 = h["feats"]["n"]
     make(kid, "box", "My Box")
-    a = feat(h, "ambition", n8)
+    a = feat(h, "ambition", n9)
     assert a and a[0]["text"] == "Open Stone did what it meant to do in its life: make a box" and a[0]["board"] and kid["ambition"]["done"] and kid["glow"]["size"] == D["ambition_glow"], a
     kid["needs"]["energy"] = 90.0
     life.lay_egg(h, cfg, kid, {"message": "Keep going."}, actions.clean)

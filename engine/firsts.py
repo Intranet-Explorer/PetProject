@@ -201,9 +201,10 @@ def first(house, cfg, pet, keys):
 def made(house, cfg, pet, o, room):
     """Hook (things.make, things.combine, invent.make): a thing was made. Firsts, bests, and who saw it."""
     seen = [best(house, cfg, pet, "thing", quality(cfg, o), thing_words(cfg, o), o["made"]["recipe"]["kind"]), first(house, cfg, pet, made_keys(o["made"]["recipe"]))]
-    if not any(seen) and o["made"].get("fine", 0) >= cfg["drive"]["fine_thing"]:   # (a fine thing, when it was nothing more)
-        seen.append("%s make %s" % (label(pet), thing_words(cfg, o)))
-    noticed(house, cfg, pet, *seen)
+    if any(seen):
+        noticed(house, cfg, pet, *seen)
+    elif o["made"].get("fine", 0) >= cfg["drive"]["fine_thing"]:   # a fine thing, when it was nothing more: seen, but not a feat, and once a day by each onlooker
+        noticed(house, cfg, pet, "%s make %s" % (label(pet), thing_words(cfg, o)), plain=True)
 
 
 def processed(house, cfg, pet, bit, how):
@@ -376,13 +377,15 @@ def page(house, cfg, pet):
 
 # ---- being noticed (§10, first half) ----
 
-def noticed(house, cfg, pet, *seen):
+def noticed(house, cfg, pet, *seen, plain=False):
     """Whoever is awake in the room saw it: each is told what it saw (each feat once: it is told as it happens), and
-    the maker that it was seen (a little pride, a little company)."""
-    seen = [s for s in seen if s]
+    the maker that it was seen (a little pride, a little company). `plain`: only a fine thing, which an onlooker
+    remarks on once a day for each maker, and which is not a feat."""
+    seen, day = [s for s in seen if s], house["clock"]["day"]
     if not seen:
         return
-    them = [p for p in house["pets"].values() if p["id"] != pet["id"] and p["room"] == pet["room"] and p["stage"] not in ("egg", "dead") and not p["sleep"]]
+    them = [p for p in house["pets"].values() if p["id"] != pet["id"] and p["room"] == pet["room"] and p["stage"] not in ("egg", "dead") and not p["sleep"]
+            and not (plain and p.get("saw", {}).get(pet["id"]) == day)]
     if not them:
         return
     for p in them:
@@ -392,6 +395,10 @@ def noticed(house, cfg, pet, *seen):
     names = and_([label(p) for p in them])
     feats.glow(house, cfg, pet, cfg["drive"]["noticed_glow"], "%s saw what you did" % names)
     pet["needs"]["company"] = min(100.0, pet["needs"]["company"] + cfg["drive"]["notice_company"])
+    if plain:
+        for p in them:
+            p.setdefault("saw", {})[pet["id"]] = day
+        return
     feats.record(house, cfg, "noticed", pet["id"], "%s saw %s" % (names, seen[0]), room=pet["room"], by=[p["id"] for p in them])
 
 

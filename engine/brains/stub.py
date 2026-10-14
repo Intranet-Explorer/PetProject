@@ -186,7 +186,7 @@ class Stub:
         if "message" in asks:
             out["message"] = self.message(text)
         if "ambition" in asks:   # SPEC-v3.5.4 §9
-            out["ambition"] = {"pick": r.randint(1, 2), "words": ""}
+            out["ambition"] = {"pick": 1, "words": ""}   # (the first offered: it draws nothing from the stub's own chances)
         if "my_life" in asks:
             out["my_life"] = "I hatched, I looked about, I made what I could and handed on what I knew."
         out["people"] = [{"who": t, "line": "told me things worth keeping"} for t in tellers[:1]]
