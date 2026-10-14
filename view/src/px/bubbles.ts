@@ -1,12 +1,12 @@
 // Words over the room (SPEC-v3.4 §5): over each pet's head one line, the sign of what it is doing and its name in its
 // family's colour. What it wants comes up over that line for six seconds when it changes, and while the pointer is on
-// the pet; a speech bubble only for words said (and for what the box says). Lettering is the room's pixel face at a
+// the pet; a speech bubble only for words said. Lettering is the room's pixel face at a
 // finer scale than the art, so it stays readable. Everything has one place and keeps it: nothing hunts for room. Where
 // two would lie on each other the later one waits its turn (a name line is simply not drawn meanwhile).
 import { Container, Graphics, Sprite, Texture } from "pixi.js";
 import { canvasOf, def, fromCanvas, has } from "./assets";
 import { draw, LINE, measure, plain, wrap } from "./font";
-import { clamp, hit, inside, seeded } from "./geom";
+import { clamp, hit, inside } from "./geom";
 import type { Rect } from "./geom";
 
 export type Label = Rect & { kind: string };
@@ -69,19 +69,14 @@ export function tagCanvas(text: string) {
   draw(x, [t], 3, 1, { color: "#f4f0e0" });
   return c;
 }
-function bubbleCanvas(lines: string[], o: { fill: string; ink: string; text: string; head?: string; headColor?: string; static?: string; art?: string }) {
+function bubbleCanvas(lines: string[], o: { fill: string; ink: string; text: string; head?: string; headColor?: string; art?: string }) {
   const head = o.head ? plain(o.head) : null, art = o.art && def(o.art)?.slice ? o.art : null, px = art ? 6 : 4, py = art ? 4 : 3;
-  const w = Math.max(...lines.map(measure), head ? measure(head) : 0, o.static != null ? 46 : 0) + 2 * px;
-  const rows = lines.length + (head ? 1 : 0) + (o.static != null ? 1 : 0), high = rows * LINE + 2 * py - 1 + (art ? 1 : 0), [c, x] = canvas(w, high);
+  const w = Math.max(...lines.map(measure), head ? measure(head) : 0) + 2 * px;
+  const rows = lines.length + (head ? 1 : 0), high = rows * LINE + 2 * py - 1 + (art ? 1 : 0), [c, x] = canvas(w, high);
   if (!art || !nine(x, art, c.width, high)) frame(x, c.width, high, o.fill, o.ink);
   if (head) draw(x, [head], px, py, { color: o.headColor ?? o.ink });
   const y = py + (head ? LINE : 0);
   draw(x, lines, px, y, { color: o.text });
-  if (o.static != null) {   // the box between stations: a jagged line
-    const r = seeded(o.static);
-    x.fillStyle = o.text;
-    for (let i = 0, yy = 3; i < w - 2 * px; i++) { yy = clamp(yy + Math.round(r() * 4 - 2), 0, 6); x.fillRect(px + i, y + lines.length * LINE + yy, 1, 1); }
-  }
   return c;
 }
 /** The colour inside a bubble of the art's, for the tail that runs from it. */
@@ -144,7 +139,6 @@ export class Labels {
   private links = new Container();   // tails, under the bubbles they come from
   private cards = new Container();
   private entries = new Map<string, Entry>();
-  private box: { card: Card; link: Graphics; key: string; read: number } | null = null;   // `read`: until then its words are new
   private tip: { card: Card; at: number[] } | null = null;
   private tags = new Map<string, { tag: Tag; card: Card; fits: boolean; lead: Graphics }>();
   /** Are the things' names showing just now (the room says so every frame). */
@@ -161,7 +155,7 @@ export class Labels {
   }
 
   /** What to say about whom, from a snapshot. `F`: screen pixels to a pixel of lettering. `wide`: the room's width in lettering pixels. */
-  sync(who: Who[], radio: { key: string; text: string; source: string } | null, F: number, wide: number) {
+  sync(who: Who[], F: number, wide: number) {
     this.F = F;
     const now = performance.now();
     for (const [id, e] of this.entries) if (!who.some((w) => w.id === id)) {
@@ -189,20 +183,6 @@ export class Labels {
         e.say.set(`${s.key}|${F}|${wide}`, F, () => bubbleCanvas(wrap(text, Math.round(wide * 0.3), 3), { fill: "#ffffff", ink: INK, text: INK, head: s.to ? `→ ${s.to}` : undefined, headColor: "#b3541e", art: "ui.bubble.say" }));
       }
     }
-    if (radio?.key !== this.box?.key) {
-      this.box?.card.destroy();
-      this.box?.link.destroy();
-      this.box = null;
-      if (radio) {
-        const card = new Card(), link = new Graphics();
-        card.set(radio.key + F, F, () => bubbleCanvas(radio.text ? wrap(`"${radio.text}"`, Math.round(wide * 0.34), 3) : ["only static"],
-          { fill: "#fbf0cf", ink: "#7a4a1e", text: radio.text ? INK : "#6b5a48", head: radio.text ? `the box - ${radio.source}` : "the box", headColor: "#7a4a1e", static: radio.text ? undefined : radio.key }));
-        card.want = 1;
-        this.cards.addChild(card.s);
-        this.links.addChild(link);
-        this.box = { card, link, key: radio.key, read: now + 8000 };
-      }
-    }
     this.laid = -1e9;
   }
 
@@ -228,11 +208,11 @@ export class Labels {
 
   /** Every frame: put each card at its place by its pet (`bodies`: each pet's body on screen), and every so often work
    *  out again which of them show. `K`: screen pixels to a pixel of the art. `room`: the part of the canvas the room is
-   *  drawn in. `avoid`: parts of it the page has covered. `boxAt`: where the box stands. */
-  step(now: number, dt: number, bodies: Map<string, Rect>, K: number, room: Rect, avoid: Rect[], boxAt: number[] | null) {
+   *  drawn in. `avoid`: parts of it the page has covered. */
+  step(now: number, dt: number, bodies: Map<string, Rect>, K: number, room: Rect, avoid: Rect[]) {
     if (now - this.laid > 140) {
       this.laid = now;
-      this.lay(now, bodies, room, avoid, boxAt);
+      this.lay(now, bodies, room, avoid);
     }
     for (const [id, e] of this.entries) {
       const b = bodies.get(id);
@@ -244,11 +224,6 @@ export class Labels {
         k.s.position.set(r.x, r.y);
         if (k !== e.line && k.want && k.alpha > 0.5) this.tail(g, r, e.under || !e.line.want ? b : line, k === e.say, k === e.say ? fillOf("ui.bubble.say", 0xffffff) : fillOf("ui.bubble.think", 0xfffdf2));
       }
-    }
-    if (this.box) {
-      const k = this.box.card, g = this.box.link.clear();
-      k.ease(dt);
-      if (boxAt && k.alpha > 0.5) this.tail(g, { x: k.s.x, y: k.s.y, w: k.w, h: k.h }, { x: boxAt[0] - 5 * K, y: boxAt[1] - 6 * K, w: 10 * K, h: 10 * K }, true, 0xfbf0cf);
     }
     for (const t of this.tags.values()) {   // names: on for a moment, or held; a stone keeps its own, faintly
       const k = t.card, r = t.tag.rect;
@@ -304,7 +279,7 @@ export class Labels {
   /** Decide what shows (SPEC-v3.4 §5). Every card has its one place (`spot`), so the only question is whose turn it is:
    *  a caption or bubble that would lie on one already up waits until that one has gone, and a name line that would lie
    *  on another line or under a bubble is not drawn meanwhile. Nothing moves to make room. */
-  private lay(now: number, bodies: Map<string, Rect>, room: Rect, avoid: Rect[], boxAt: number[] | null) {
+  private lay(now: number, bodies: Map<string, Rect>, room: Rect, avoid: Rect[]) {
     const F = this.F, p = this.pointer, placed: Label[] = avoid.map((r) => ({ ...r, kind: "page" })), up: Label[] = [], lines: Label[] = [];
     const list = [...this.entries.values()].filter((e) => bodies.has(e.who.id)), body = (e: Entry) => bodies.get(e.who.id)!, on = (e: Entry) => !!p && inside(body(e), p[0], p[1]);
     const solid = list.map(body);
@@ -335,17 +310,6 @@ export class Labels {
       else if (e.capAsk) e.capUntil ||= now + 6000;
       up.push({ ...r, kind: k === e.say ? "bubble" : "caption" });
     }
-    // the box speaks from where it stands, when no pet's words are in the way. Its words stay up a long while: new, they
-    // may lie on a name line like anybody's; after that (`late`) only where they cover no name
-    const speak = (late: boolean) => {
-      const box = this.box;
-      if (!box || late !== now > box.read) return;
-      const k = box.card, [x, y] = boxAt ?? [room.x + room.w / 2, room.y + room.h / 2], over = y - 15 * F - k.h, r = fitter(k.w, k.h)(x - k.w / 2, over < room.y ? y + 10 * F : over);
-      k.want = up.some((q) => hit(q, r)) || (late && lines.some((q) => hit(q, r))) ? 0 : 1;
-      k.s.position.set(r.x, r.y);
-      if (k.want) up.push({ ...r, kind: "bubble" });
-    };
-    speak(false);
     // the name lines: where two would lie on each other, or one under a bubble, the lesser is not drawn for now (first
     // whoever has a caption or bubble up, which is plainly its own over its name; then the one pointed at, the one
     // chosen, whoever stands in front)
@@ -355,7 +319,6 @@ export class Labels {
       e.line.want = up.some((q) => hit(q, r)) || lines.some((q) => hit(q, r)) ? 0 : 1;
       if (e.line.want) lines.push({ ...r, kind: "pet" });
     }
-    speak(true);
     placed.push(...up, ...lines);
     // the names of things, the most worth knowing first; what finds no clear place by its thing goes without
     // Each sits on bare floor or wall by its own thing, never on another thing or another name; in a cluster it goes to

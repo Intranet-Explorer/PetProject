@@ -29,7 +29,11 @@ export type Burst = { n: number; tick: number; pet: string; room: string; kind: 
 /** SPEC-v3.3 §3: the visitor's music (`scope` is "house" or a room id) and the radio control (`theirs`: the pets have
  *  found their own box, so the control switches that one; otherwise it is the visitor's "little radio"). */
 export type Dj = { music: { mood: string; scope: string; since: number } | null; moods: string[];
-  radio: { on: boolean; plays: "mix" | "news" | "forecast" | "on this day"; theirs: boolean; rooms: string[] } };
+  radio: { on: boolean; theirs: boolean; rooms: string[]; station: string; stations: Station[]; now: { title: string; at: number } | null } };
+/** SPEC-v3.5.1 §5: a real internet station the radio can play (`stream` is what the page plays; `home` its own page). */
+export type Station = { id: string; name: string; mood: string; sound: string; stream: string; home: string };
+/** SPEC-v3.5.1 §2: what the lit sign in the hub runs (the time it takes from the clock). */
+export type Ticker = { room: string | null; forecast: { text: string; anim: string }; cold: boolean; headlines: { n: number; tick: number; kind: string; text: string; anim: string | null }[] };
 export type Obj = {
   pos: Tile; state?: string | null; made?: Made; memorial?: { pet: string; text: string }; wall?: boolean; says?: string;   // wall: it hangs on the north wall above `pos`
   fix?: Record<string, unknown>; water?: Tile[]; grow?: number; servings?: number;
@@ -41,6 +45,9 @@ export type Obj = {
   // SPEC-v3.5 §4.1: it is being built, or was built by the pets: the picture to draw it with, what to call it ("the bench
   // Lean built"), and, under way, how far along it is (0 to 1); `flat`: it lies on the floor; `glow`: a soft light at night
   build?: { sprite: string; title: string; progress?: number; flat?: boolean; glow?: boolean; worn?: boolean };
+  // SPEC-v3.5.1 §3, §4: what is on a screen's glass (who asked what, and what it read); a statue of a family's founder
+  screen?: { pet: string; by?: string; asked: string; title: string | null; text: string | null; tick: number };
+  statue?: { of: string; family: number; genome: Genome | null; stage: string; name: string | null; words: string | null };
 };
 /** SPEC-v3.5 §4.2: one painted place in a room: a stretch of the north wall or a patch of floor (`at`: its first tile; three
  *  tiles wide, a floor patch two deep) or a rug (`at`: its name), in the dye's `color` with `pattern` (stripes, dots, border)
@@ -131,6 +138,7 @@ export type Snap = {
   bursts?: Burst[];   // SPEC-v3.4 §5
   machine?: { stock: Record<string, number>; limit: number; materials: string[]; room: string } | null;   // SPEC-v3.5 §4.3: what the vending machine holds (null: nobody has found it)
   invented?: Record<string, Invention>;   // SPEC-v3.5 §3: the kinds this house invented, by name: drawn from their parts
+  ticker?: Ticker;   // SPEC-v3.5.1 §2
   hello?: Hello; error?: string;
 };
 /** What /api/v31 answers: everything ever written, sung, asked and heard, and when each discovery comes. */

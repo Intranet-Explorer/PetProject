@@ -199,12 +199,11 @@ export type Ears = {
   pets: { id: string; room: string; said?: { text: string; tick: number; song?: string } | null }[];
   moments: { n: number; kind: string; pet: string | null; room: string | null }[];
   sung?: { tick: number; by: string; song: string; room: string }[];
-  radio?: { said: { tick: number; room: string | null; source: string; text: string }[] };
   // SPEC-v3.2: steps just finished, numbered. SPEC-v3.3: `kind` of a made thing, `loud` if what was used sounds
   acts?: { n: number; type: string; pet: string; what?: string | null; room: string; ok: boolean; kind?: string | null; loud?: boolean }[];
   vox?: { n: number; pet: string; room: string; kind: VoxKind }[];   // SPEC-v3.3 §4: the small sounds, numbered
 };
-export type Seen = { tick: number; said: Record<string, number>; moment: number; sung: number; radio: number; act: number; vox: number };
+export type Seen = { tick: number; said: Record<string, number>; moment: number; sung: number; act: number; vox: number };
 export type HouseSound = "powerdown" | "powerup" | "thunder" | "drip" | "whoosh" | "thud" | "chalk" | "chime" | "patter" | "tuning" | "pages" | "knock";
 const BY_PET: Record<string, SoundKind> = { hatched: "cry", stage: "stageup", made: "chirp", unmade: "blip", nuzzle: "trill", gift: "trill",
                                             named: "hm", death: "last", befriended: "trill", tamed: "trill" };
@@ -214,11 +213,11 @@ const BY_HOUSE: Record<string, HouseSound> = { power: "powerdown", storm: "thund
 
 /** Compare what was heard before with what is here now. On the first look nothing plays: old news is not announced. */
 export function news(seen: Seen | null, s: Ears) {
-  const sung = s.sung ?? [], said = s.radio?.said ?? [], acts = s.acts ?? [], vox = s.vox ?? [];
+  const sung = s.sung ?? [], acts = s.acts ?? [], vox = s.vox ?? [];
   // a replay wound back or scrubbed far ahead, or a tab left asleep: start listening afresh, announce nothing old
   if (seen && (s.tick < seen.tick || (s.tick - seen.tick) * (s.tick_seconds ?? 0) > 120)) seen = null;
   const now: Seen = { tick: s.tick, act: Math.max(seen?.act ?? 0, ...acts.map((a) => a.n)), vox: Math.max(seen?.vox ?? 0, ...vox.map((x) => x.n)), said: Object.fromEntries(s.pets.filter((p) => p.said).map((p) => [p.id, p.said!.tick])), moment: Math.max(0, ...s.moments.map((m) => m.n)),
-                      sung: Math.max(seen?.sung ?? 0, ...sung.map((x) => x.tick)), radio: Math.max(seen?.radio ?? 0, ...said.map((x) => x.tick)) };
+                      sung: Math.max(seen?.sung ?? 0, ...sung.map((x) => x.tick)) };
   const speak: { pet: string; text: string }[] = [], sounds: { kind: SoundKind; pet: string; room: string | null }[] = [], house: { kind: HouseSound; room: string | null; moment: string }[] = [];
   if (seen) {
     for (const p of s.pets) if (p.said && p.said.tick !== seen.said[p.id] && !p.said.song) speak.push({ pet: p.id, text: p.said.text });   // a song is played, not said
@@ -227,9 +226,8 @@ export function news(seen: Seen | null, s: Ears) {
       if (BY_HOUSE[m.kind]) house.push({ kind: BY_HOUSE[m.kind], room: m.room, moment: m.kind });
     }
   }
-  // songs sung and words from the box (SPEC-v3.1): each is heard once
-  // and each step a pet finishes (SPEC-v3.2 §8), by its running number
-  const [was, old] = [seen?.sung ?? 0, seen?.radio ?? 0], done = seen?.act ?? 0;
-  return { seen: now, speak, sounds, house, sing: seen ? sung.filter((x) => x.tick > was) : [], heard: seen ? said.filter((x) => x.tick > old) : [],
+  // songs sung (SPEC-v3.1): each is heard once; and each step a pet finishes (SPEC-v3.2 §8), by its running number
+  const was = seen?.sung ?? 0, done = seen?.act ?? 0;
+  return { seen: now, speak, sounds, house, sing: seen ? sung.filter((x) => x.tick > was) : [],
            acts: seen ? acts.filter((a) => a.n > done && a.ok) : [], vox: seen ? vox.filter((x) => x.n > seen.vox) : [] };
 }
