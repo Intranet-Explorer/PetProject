@@ -116,6 +116,13 @@ def read_sign(house, cfg, pet):
         seen["n"] = new[-1]["n"]
 
 
+def tick(house, cfg):
+    for p in house["pets"].values():
+        read_sign(house, cfg, p)
+    if house["tick"] % cfg["ticks_per_hour"] == 0:
+        honour(house, cfg)
+
+
 # ---- the screens (§3) ----
 
 def book_at(house, cfg, room, pet):
@@ -147,13 +154,16 @@ def show(house, cfg, pet, room, q, found_):
 
 # ---- the founder's statue (§4) ----
 
+def family_of(house, p):
+    """A pet's family: its own word for it, or (the dead are put away without it) that of the first of its line who has one."""
+    while p and "family" not in p:
+        p = next((house["pets"][k] for k in p.get("children", []) if k in house["pets"]), None)
+    return p.get("family", 1) if p else 1
+
+
 def founder(house, fam):
-    """The first of a family: the earliest pet with no parent whose family (its own, or its first child's) is this."""
-    for p in sorted(house["pets"].values(), key=lambda p: int(p["id"][1:])):
-        kid = house["pets"].get((p.get("children") or [None])[0] or "")
-        if not p.get("parent") and p.get("family", kid.get("family", 1) if kid else 1) == fam:
-            return p
-    return None
+    """The first of a family: the earliest pet with no parent of that family."""
+    return next((p for p in sorted(house["pets"].values(), key=lambda p: int(p["id"][1:])) if not p.get("parent") and family_of(house, p) == fam), None)
 
 
 def honours(house, cfg, pet, P):
@@ -161,6 +171,34 @@ def honours(house, cfg, pet, P):
     fam, f = P["honours"], founder(house, P["honours"])
     kin = [p for p in house["pets"].values() if p.get("family", 1) == fam and p["stage"] not in ("egg", "dead")]
     return bool(f and f["stage"] == "dead" and pet.get("family", 1) == fam and pet is min(kin, key=lambda p: (p["laid"], p["id"])))
+
+
+def honour(house, cfg):
+    """Once the hub is found, the eldest of a family whose founder is dead has the want to raise its statue: given
+    it outright (in place of its oldest want), not left to come up among the rest. Not again for a while if let go."""
+    from . import build
+    from .world import days as world_days
+    hub = found(house)
+    for key, P in cfg["build"]["project"].items() if hub else ():
+        if not P.get("honours") or build.find(hub, key)[1] is not None:
+            continue
+        pet = next((p for p in house["pets"].values() if p["stage"] not in ("egg", "dead") and honours(house, cfg, p, P)), None)
+        k = "build:%s|%s" % (RID, key)
+        if not pet or pet["sleep"] or any(w["key"] == k for w in pet.get("wants", [])) \
+                or world_days(cfg, pet.get("wanted", {}).get(k, LONG_AGO), house["tick"]) < cfg["wants"]["again_days"]:
+            continue
+        c = []
+        candidates(house, cfg, pet, lambda what, key_, text, done, weight=1.0, **more: c.append(dict(more, what=what, key="%s:%s" % (what, key_), text=text, done=done)), [])
+        c = next((x for x in c if x["key"] == k), None)
+        if not c:
+            continue
+        held = [w for w in pet.setdefault("wants", []) if w["what"] != "get"]
+        if len(held) >= cfg["wants"]["most"]:
+            old = min(held, key=lambda w: w["since"])
+            pet["wants"].remove(old)
+            pet.setdefault("wanted", {})[old["key"]] = house["tick"]
+        pet["wants"].append(dict(c, since=house["tick"]))
+        add_event(house, pet, c["text"])
 
 
 def begun(house, cfg, room, name, o, P):
@@ -216,7 +254,16 @@ def name_it(house, cfg, pet, name):
 
 
 def candidates(house, cfg, pet, add, known):
-    """The want to name the statue (wants.candidates)."""
+    """The want to raise the founder's statue: the eldest of the family has it from when the hub is found, whether
+    or not it has been in, and past however much else is being built (once begun, everyone has it: build.py). And
+    the want to name a statue that stands with no name (wants.candidates)."""
+    from . import build, craft
+    hub = found(house)
+    for key, P in cfg["build"]["project"].items() if hub else ():
+        if P.get("honours") and build.find(hub, key)[1] is None and honours(house, cfg, pet, P):
+            hammer = craft.tool_for(house, cfg, pet, "hammer")
+            add("build", "%s|%s" % (RID, key), P["want"].format(room=hub["name"]) + "; it takes %s, and a hammer" % build.some(P["needs"]) + ("" if hammer else build.hammer_words(house, cfg, pet)),
+                P["done"].format(room=hub["name"]), P["weight"], room=RID, project=key)
     for r in known:
         for n, o in r["objects"].items():
             if o.get("statue") and o.get("fix", {}).get("built") and not o["statue"].get("name") and o["statue"]["family"] == pet.get("family", 1) and pet["stage"] in ("adult", "elder"):

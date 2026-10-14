@@ -103,10 +103,11 @@ when = "honour"
 honours = 1               # the family whose first one it is
 want = "the first of your family has no stone to remember it by: you want to raise a statue of the first one in {room}"
 done = "raised a statue of the first one in {room}"
-needs = { stone = 6 }
+needs = { stone = 5 }
 sessions = 16
 at = [5, 4]
 exact = true
+fix = { cozy = true }      # (near the first one, a pet is easier)
 says = "the first one of the family, in stone, as it was"
 weight = 4.0
 
@@ -117,10 +118,11 @@ when = "honour"
 honours = 2               # the second family, that came from the foundling egg
 want = "the first of your family has no stone to remember it by: you want to raise a statue of the first one in {room}"
 done = "raised a statue of the first one in {room}"
-needs = { stone = 6 }
+needs = { stone = 5 }
 sessions = 16
 at = [7, 4]
 exact = true
+fix = { cozy = true }      # (near the first one, a pet is easier)
 says = "the first one of the family, in stone, as it was"
 weight = 4.0
 

@@ -68,7 +68,7 @@ async def main():
         assert P["when"] in build.WHEN and P["sessions"] >= 3 and 2 <= sum(P["needs"].values()) <= 5, "a project names a real cause, and takes a few pieces: %s" % key
         assert P["rooms"] == "any" or all(t in cfg["house"]["rooms"] for t in P["rooms"]), key
         assert P.get("fix") or P.get("rules") or P.get("proof") or P.get("bits"), "every project changes its room: %s" % key
-        assert not sprites or "fix.built." + key in sprites, "and has a picture: %s" % key
+        assert not sprites or "fix.built." + key in sprites or P.get("honours"), "and has a picture (a statue is drawn from its founder's body): %s" % key
         assert all(b in BASE or any(r.get("gives") == b and src in BASE for (src, how), r in cfg["craft"]["rules"].items()) for b in P["needs"]), \
             "a project is made of the six base materials, or of what one process makes of one (a want leads one step deep): %s" % key
     assert all(d in cfg["house"]["bits"] and (not sprites or "bit." + d in sprites) for d in B["paint"]["dyes"]), "every dye is a bit with a picture"
