@@ -1652,3 +1652,19 @@ screens are dark until the book has arrived in the house. What was asked and rea
   on the radio's allowlist (the weather host stays, for the real sky). A pet is told the kind of music on a station
   change or a new song, and feels it like the visitor's music of that mood; it may dance. Songs heard are kept in
   `pet["box"]` as the box's words were.
+
+**Art and view.**
+- The machine is option D built from Karsiori's pack (`view/assets/own/src/works.py`), taller, with a plain glowing
+  "THE WORKS" plate in place of the pack's lettering. It stands at the west end of the north wall, not the middle,
+  so the north door's tile stays clear; the landing pad is beside it. The pack is credited in
+  `view/assets/third_party/CREDITS.md`, with its itch.io page as the source (it came with no licence file).
+- The three screens stand under the lit sign at the east end of the north wall; the radio set is by the east wall.
+  The hub has a crate to keep things in, as every room does.
+- The ticker, the glass of the screens and the statue are drawn in code. The glass is too small to read in the
+  room: clicking a screen opens a large green or amber panel with the same text. The statue is the founder's elder
+  picture in a stone ramp at twice a pet's size, rising inside a scaffold while it is built.
+- The page plays the station only while the page's Sound is on; a browser that refuses to start it plays it on
+  the next click, and says so beside the control. It is quieter when another room is on screen.
+- The view no longer shows the box's speech; "What the box said" in the story keeps the record of the old radio.
+- The extra Karsiori packs the spec names (gears, pipes and cables, buttons, neon signs) were not in
+  `assets-incoming`, so none were used.

@@ -24,3 +24,7 @@ Small things Tyler has seen and set aside. No action until he says so. Newest at
 - **A mind's own words can end in a stray character** on a card ("inside the m宅"): the model wrote it. (12 October 2026)
 - **"Grey Light took a charm from Sven"** is said even when Sven is in another room: the charm was Sven's, not
   in Sven's paws. (12 October 2026)
+
+- A made thing carried toward the machine leaves its floor shadow and maker's pip where it lay until it is set
+  down (v3.5.1).
+- The ticker's clock is read at the start of each run of messages, so it can be a minute or two behind (v3.5.1).
