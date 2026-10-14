@@ -4,7 +4,8 @@ import html
 import re
 from pathlib import Path
 
-from .world import ROOT
+from . import hub
+from .world import ROOT, arrived
 
 STOP = set("a an the is are was were be been do does did what why how who where when which of in on to for and or it its this "
            "that there here can could would should will i me my you your we they them his her about from with into make made "
@@ -101,7 +102,11 @@ def check_ask(a, house, cfg, pet, filled):
         return "there is no book here"
     if not filled(a.get("question")):
         return "nothing to ask"
-    if house["tick"] - pet.get("asked_at", -10**9) < cfg["book"]["per_hours"] * cfg["ticks_per_hour"]:
+    if hub.book_at(house, cfg, room, pet)[0] is None:
+        return "someone else is at every screen here; wait for one"
+    if not arrived(house, "book") and not any(o.get("fix", {}).get("book") and not o["fix"].get("terminal") for o in room["objects"].values()):
+        return "the screen is dark: nothing comes up on it yet"   # SPEC-v3.5.1 §3: the screens read the book's encyclopedia, which has not come yet
+    if house["tick"] - pet.get("asked_at", -10**9) < hub.wait_hours(cfg, room) * cfg["ticks_per_hour"]:   # SPEC-v3.5.1 §3: less long at a screen
         return "your eyes are still tired from the small writing; later"
     return None
 
@@ -125,6 +130,7 @@ def ask(house, cfg, pet, a, clean):
     for w in pet.get("wants", []):
         if w["what"] in ("tool", "word"):
             w["touched"] = house["tick"]
+    hub.show(house, cfg, pet, house["rooms"][pet["room"]], q, found)   # SPEC-v3.5.1 §3: up on the screen's glass
     house.setdefault("fresh_reads", []).append({"pet": pet["id"], "tick": house["tick"], "question": q,
                                                 "title": found[0] if found else None, "text": found[1] if found else None})
     if not found:

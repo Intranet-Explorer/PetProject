@@ -11,6 +11,7 @@ from . import actions, craft, feel, order, songs, story, things, wants
 from . import season
 from . import build
 from . import machine
+from . import hub
 from .world import LONG_AGO, STAGES, add_event, beside, dist, free_tile, here, label, relation, rnd, ticks
 
 URGENT = {"visitor", "woke", "hatched", "low", "spoken", "event"}   # what stops it in its tracks (as it hurries a thought)
@@ -37,7 +38,8 @@ def phase(house):
 def music(house, pet):
     """Is there music where it is: the visitor's, or something ringing in the room?"""
     dj = (house.get("dj") or {}).get("music")
-    return bool(dj and dj.get("mood") and dj["scope"] in ("house", pet["room"])) or house["rooms"][pet["room"]].get("sounding_until", 0) > house["tick"]
+    return bool(dj and dj.get("mood") and dj["scope"] in ("house", pet["room"])) or house["rooms"][pet["room"]].get("sounding_until", 0) > house["tick"] \
+        or any(o.get("fix", {}).get("radio") and o.get("state") == "on" for o in house["rooms"][pet["room"]]["objects"].values())   # (SPEC-v3.5.1 §5: or the radio)
 
 
 def anchor(house, pet):
@@ -240,8 +242,8 @@ def targets(house, cfg, pet, mem, name, A):
             who = house["pets"][P[3]]
             return [{"who": who["id"], "where": "ask " + bit, "want": key, "goal": near(who["pos"]), "bonus": W * 1.5}] if who["room"] == room["id"] else []
         if how == "ask":   # something it wants to know, and the book is here: it goes over to it
-            at = next((o["pos"] for o in objs.values() if o.get("fix", {}).get("book")), None)
-            return [{"what": "heavy book", "where": "ask " + bit, "want": key, "goal": near(at), "bonus": W * 1.5}] if at else []
+            name, at = hub.book_at(house, cfg, room, pet)   # SPEC-v3.5.1 §3: a screen nobody else is at, or the heavy book
+            return [{"what": name, "where": "ask " + bit, "want": key, "goal": near(at), "bonus": W * 1.5}] if at else []
         at = craft.place(house, cfg, room, how)
         return [{"what": bit, "where": TO[how], "want": key, "how": how, "goal": near(at[1]) if at[1] else None, "bonus": W * 1.5}]
     if do == "try":   # it has stood where the thing can be tried long enough for its mind to take it up, and its mind has not: its paws try it
@@ -252,8 +254,8 @@ def targets(house, cfg, pet, mem, name, A):
             return []
         how, bit, key = P[:3]
         if how == "ask":
-            at = next((o["pos"] for o in objs.values() if o.get("fix", {}).get("book")), None)
-            return [{"what": "heavy book", "where": "ask " + bit, "want": key, "goal": near(at), "bonus": W * 1.5}] if at else []
+            name, at = hub.book_at(house, cfg, room, pet)   # SPEC-v3.5.1 §3: a screen nobody else is at, or the heavy book
+            return [{"what": name, "where": "ask " + bit, "want": key, "goal": near(at), "bonus": W * 1.5}] if at else []
         at = craft.place(house, cfg, room, how)
         return [{"what": bit, "where": how, "want": key, "how": how, "goal": near(at[1]) if at[1] else None, "bonus": W * 1.5}]
     if do in ("bench", "lay out"):   # (§1.2: the body works toward what the mind is about)

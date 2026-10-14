@@ -129,6 +129,11 @@ def effects(house, cfg, pet):
             out.append(effect("music", need, rate, "the visitor is playing %s music" % dj["mood"], False))
         if not cfg["music"].get(dj["mood"]):
             out.append(effect("music", "comfort", 0.0, "the visitor is playing %s music" % dj["mood"], False))
+    from . import radio
+    st = radio.playing(house, cfg, room["id"])   # SPEC-v3.5.1 §5: their radio's station, felt as the visitor's music is
+    if st:
+        for need, rate in cfg["music"].get(st["mood"], {}).items():
+            out.append(effect("radio", need, rate, "the radio is playing something %s" % st["sound"], False))
     return out
 
 

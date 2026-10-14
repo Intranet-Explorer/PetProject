@@ -736,7 +736,8 @@ def arrive_taming(house, cfg):
 def arrive_radio(house, cfg):
     for room in found(house):   # the visitor's own little radio is taken away: they have theirs now (SPEC-v3.3 §3.2)
         room["objects"].pop("little radio", None)
-    room = put_or_wait(house, cfg, "storeroom", "dial box", {"fix": {"radio": True, "movable": True, "states": ["off", "on"]}, "state": "off"},
+    from . import hub   # SPEC-v3.5.1 §5: once the machine room is found, the radio is its own and stays there
+    room = put_or_wait(house, cfg, "hub" if hub.found(house) else "storeroom", "dial box", {"fix": dict({"radio": True, "states": ["off", "on"]}, **({} if hub.found(house) else {"movable": True})), "state": "off"},
                        house["rooms"][house["start"]])
     for p in awake_pets(house):
         add_event(house, p, "a crate has appeared here; in it is a small box with a dial on its front" if room and p["room"] == room["id"]

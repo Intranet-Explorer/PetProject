@@ -6,7 +6,7 @@ With a dye a wall, a patch of floor or a rug is painted in a pattern; the paint 
 homely by the family that painted it. Everything is data (building.toml), and no model is asked."""
 import tomllib
 
-from . import craft, things
+from . import craft, hub, things
 from .world import LONG_AGO, STAGES, add_event, days as world_days, dist, family, free_tile, label, moment, ticks
 
 PROJECT = {}   # building.toml's projects, by name (the same in every config: fixture_says has no config to look in)
@@ -63,6 +63,8 @@ def missing(P, o):
 def spot(house, cfg, room, P):
     """The tile it stands on (or hangs above), or None if this room has not what it goes on."""
     objs = room["objects"]
+    if P.get("exact"):   # SPEC-v3.5.1 §4: a statue stands on its plinth and nowhere else
+        return list(P["at"])
     if P.get("on"):
         return next((list(o["pos"]) for o in objs.values() if P["on"] in o.get("fix", {})), None)
     if P.get("wall"):   # a free stretch of the north wall, as near its place as there is one: never over the door, and not behind furniture if it can be helped
@@ -93,6 +95,7 @@ def tamed(house, pet):
 
 WHEN = {
     "always": lambda house, cfg, pet, room: True,
+    "honour": lambda house, cfg, pet, room: True,   # SPEC-v3.5.1 §4: a statue; who wants it begun is hub.honours
     "no_rest": lambda house, cfg, pet, room: not any("rest" in o.get("fix", {}) for o in room["objects"].values()),
     "no_bench": lambda house, cfg, pet, room: not any(o.get("fix", {}).get("bench") for o in room["objects"].values()),
     "crowded": lambda house, cfg, pet, room: room.get("mess") == 2,
@@ -135,7 +138,7 @@ def candidates(house, cfg, pet, add, known):
             o = here_.get(key)
             k, lack = "%s|%s" % (r["id"], key), missing(P, o)
             if o is None:   # (not a thing made of something this house has never had: stone, before the machine came)
-                if not WHEN[P["when"]](house, cfg, pet, r) or (P.get("on") and spot(house, cfg, r, P) is None) or any(b not in cfg["house"]["bits"] for b in P["needs"]):
+                if not WHEN[P["when"]](house, cfg, pet, r) or (P.get("honours") and not hub.honours(house, cfg, pet, P)) or (P.get("on") and spot(house, cfg, r, P) is None) or any(b not in cfg["house"]["bits"] for b in P["needs"]):
                     continue
                 text, done, weight = P["want"].format(room=r["name"]) + "; it takes %s, and a hammer" % some(P["needs"]), P["done"].format(room=r["name"]), P["weight"]
             elif "site" in o:
@@ -177,7 +180,7 @@ def possible(house, cfg, pet, w):
     room, P = house["rooms"][w["room"]], cfg["build"]["project"][w["project"]]
     name, o = find(room, w["project"])
     if o is None:
-        return under_way(house) < cfg["build"]["build"]["most"] and WHEN[P["when"]](house, cfg, pet, room)
+        return under_way(house) < cfg["build"]["build"]["most"] and WHEN[P["when"]](house, cfg, pet, room) and (not P.get("honours") or hub.honours(house, cfg, pet, P))
     return "site" in o or bool(o["fix"]["built"].get("worn"))
 
 
@@ -443,6 +446,8 @@ def begin(house, cfg, pet, room, key):
                                  "site": {"project": key, "by": pet["id"], "at": house["tick"], "placed": {}, "work": 0.0, "paws": {}, "last": {}}}
     if P.get("wall"):
         o["wall"] = True
+    if P.get("honours"):
+        hub.begun(house, cfg, room, name, o, P)
     moment(house, "project", "%s began %s %s in %s" % (label(pet), P["a"], key, room["name"]), pet["id"], room["id"])
     for p in house["pets"].values():
         if p is not pet and p["room"] == room["id"] and p["stage"] not in ("egg", "dead") and not p["sleep"]:
@@ -467,6 +472,8 @@ def stand(house, cfg, pet, room, name):
             at = P["spots"][i] if i < len(P.get("spots", [])) else free_tile(house, cfg, room, o["pos"])
             room["spots"].append({"bit": bit, "pos": list(at), "ready": True, "back": None, "loose": False, "built": name})
     settle(room)
+    if o.get("statue"):
+        hub.stood(house, cfg, pet, room, name, o)
     text = "%s %s" % (and_(names), P["done"].format(room=room["name"]))
     craft.found(house, pet, text, "built")
     for pid in paws:

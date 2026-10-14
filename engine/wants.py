@@ -9,6 +9,7 @@ from . import craft, genes, invent, order, things
 from . import season
 from . import build
 from . import machine
+from . import hub
 from .world import LONG_AGO, add_event, days as world_days, label, moment, relation, rnd
 
 GROUPS = {"door": "know", "creature": "know", "bit": "know", "try": "know", "word": "know", "look": "know",
@@ -21,7 +22,7 @@ LEANS = {"curious": ("bit", "try", "word", "door", "creature", "look"), "bold": 
 TRY = {"soak": "what water does to %s", "warm": "what warmth does to %s", "melt": "what heat does to %s", "dry": "what becomes of %s left to dry",
        "press": "what becomes of %s under something heavy", "weave": "what comes of weaving %s", "carve": "what could be carved out of %s",
        "grind": "what grinding does to %s", "plant": "whether %s would grow in the earth"}
-GROUPS.update(build="build", paint="build")   # SPEC-v3.5 §4: to build what a room lacks, and to paint it (engine/build.py)
+GROUPS.update(build="build", paint="build", name="family")   # (name: SPEC-v3.5.1 §4, the founder's statue)   # SPEC-v3.5 §4: to build what a room lacks, and to paint it (engine/build.py)
 LEANS.update(orderly=LEANS["orderly"] + ("build",), playful=LEANS["playful"] + ("paint",))
 RAIN = re.compile(r"\b(rain|drizzle|showers?|thunderstorms?|snow)\b", re.I)
 
@@ -205,6 +206,7 @@ def candidates(house, cfg, pet):
         add("finer", last["kind"], "you want to make something finer than your last %s" % last["kind"], "made a finer %s than its last" % last["kind"], 1.0, kind=last["kind"], at=last["tick"])
     invent.want(house, cfg, pet, add)   # SPEC-v3.5 §3: two things here that nobody has joined before
     build.candidates(house, cfg, pet, add, known)   # SPEC-v3.5 §4: to build what a room lacks, to mend what was built, to paint
+    hub.candidates(house, cfg, pet, add, known)   # SPEC-v3.5.1 §4: to name the founder's statue
     return out
 
 
@@ -306,6 +308,8 @@ def met(house, cfg, pet, w):
         return any(e["id"] == w["song"] for e in pet.get("songs", []))
     if t == "join":
         return invent.want_met(house, pet, w)
+    if t == "name":   # SPEC-v3.5.1 §4
+        return not hub.unnamed(house, pet, house["rooms"][w["room"]])
     if t == "finer":
         last = pet.get("last_made") or {}
         return last.get("tick", LONG_AGO) > w["since"] and last.get("kind") == w["kind"] and bool(last.get("new"))

@@ -5,6 +5,7 @@ import re
 from . import book, craft, feel, genome, life, order, songs, things, walls
 from . import build
 from . import machine
+from . import hub
 from .world import (BACK, LONG_AGO, add_event, arrived, beside, dist, family, free_tile, generate_room, here, knows, label, moment,
                     power_on, relation, ticks, witness)
 
@@ -130,7 +131,7 @@ def allowed(house, cfg, pet, mem):
         "sing": bool(pet.get("songs")), "teach_song": bool(pet.get("songs")) and bool(others),
         # SPEC-v3.4 §3: something to hand that could be changed here; something here that wants mending; the book, and a door
         "process": bool(processes(house, cfg, pet)), "mend": bool(mendable(room)),
-        "carry": any(o.get("fix", {}).get("book") for o in room["objects"].values()),
+        "carry": any(hub.heavy(o) for o in room["objects"].values()),
         "call": any(c["room"] != room["id"] or dist(c["pos"], pet["pos"]) > 2 for c in pets_of_mine),
         "name": bool(nameable(house, pet)),
         "ask_book": any(o.get("fix", {}).get("book") for o in room["objects"].values()) and book.check_ask({"question": "?"}, house, cfg, pet, filled) is None,
@@ -179,6 +180,8 @@ def nameable(house, pet):
     out = [c["kind"] for c in house["creatures"] if c.get("tame") == pet["id"] and c["room"] == pet["room"] and not c.get("name")]
     if any(p["room"] == pet["room"] and p["stage"] == "egg" and not p["parent"] and not p["name"] for p in house["pets"].values()):
         out.append("egg")
+    if hub.unnamed(house, pet):   # SPEC-v3.5.1 §4: the statue of its family's founder, with no name on its plaque
+        out.append("statue")
     return out
 
 
@@ -207,7 +210,7 @@ def check(a, house, cfg, pet, mem):
         return craft.check_mend(a, house, cfg, pet, norm)
     if t == "carry":   # the heavy book, through a door (SPEC-v3.4 §4.1)
         d = norm(a.get("door")).replace(" door", "")
-        if not any(o.get("fix", {}).get("book") for o in room["objects"].values()):
+        if not any(hub.heavy(o) for o in room["objects"].values()):
             return "the book is not here"
         if d not in room["doors"]:
             return "there is no door that way"
@@ -336,6 +339,8 @@ def check(a, house, cfg, pet, mem):
             return "no name"
         if what == "egg":
             return None if "egg" in nameable(house, pet) else "there is no egg here that wants a name"
+        if what == "statue":
+            return None if hub.unnamed(house, pet) else "there is no statue here that wants a name"
         cr = tame(house, pet, what)
         return None if cr and cr["room"] == room["id"] else "you can only name an animal of your own that is here"
     if t == "ask_book":
@@ -403,7 +408,7 @@ def destination(house, cfg, pet, a):
     if t in machine.ACTIONS:
         return machine.destination(house, cfg, pet)
     if t in ("ask_book", "carry"):
-        at = next((o["pos"] for o in house["rooms"][pet["room"]]["objects"].values() if o.get("fix", {}).get("book")), None)
+        at = hub.book_at(house, cfg, house["rooms"][pet["room"]], pet)[1] if t == "ask_book" else next((o["pos"] for o in house["rooms"][pet["room"]]["objects"].values() if hub.heavy(o)), None)
         return None if at is None or dist(pet["pos"], at) <= 1 else beside(cfg, at, pet["pos"])
     if t == "process":   # to the water, the heat, the bench, the bed of earth
         at = craft.place(house, cfg, house["rooms"][pet["room"]], norm(a.get("how"))) if norm(a.get("how")) in craft.DONE else None
@@ -473,7 +478,7 @@ def apply(house, cfg, pet, a, mem):
     if t == "mend":
         return craft.mend(house, cfg, pet, a, norm)
     if t == "carry":   # it and the book go through together, slowly; the book stays where it is put down
-        book_name = next(n for n, o in room["objects"].items() if o.get("fix", {}).get("book"))
+        book_name = next(n for n, o in room["objects"].items() if hub.heavy(o))
         thing = room["objects"].pop(book_name)
         text, fx, _ = go(house, cfg, pet, norm(a["door"]).replace(" door", ""))
         to = house["rooms"][pet["room"]]
@@ -611,6 +616,8 @@ def apply(house, cfg, pet, a, mem):
         return director.come(house, cfg, tame(house, pet, a["who"]), pet), {}, None
     if t == "name":
         new = clean(a["name"], 16)
+        if norm(a["what"]) == "statue":
+            return hub.name_it(house, cfg, pet, new), {}, "name"
         if norm(a["what"]) == "egg":
             egg = next(p for p in house["pets"].values() if p["room"] == room["id"] and p["stage"] == "egg" and not p["parent"] and not p["name"])
             if any((p["name"] or "").lower() == new.lower() for p in life.alive(house)):
