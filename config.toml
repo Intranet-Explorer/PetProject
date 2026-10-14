@@ -6,6 +6,7 @@ day_seconds = 7200        # real seconds per world day (the showcase used 900)
 min_think_seconds = 70    # a pet thinks at most this often, scaled by how patient it is ...
 urgent_seconds = 20       # ... unless something urgent happened: a low need, being spoken to, an event
 max_idle_seconds = 180    # ... and at least this often
+idle_think = 1.4          # SPEC-v3.5.4: with nothing new since its last thought, it waits this much longer than min_think_seconds
 patient_spread = 0.4      # the most patient pet thinks this much less often than the least (§8.1)
 elder_think = 1.25        # an elder thinks this much less often (§4.1)
 walk_seconds = 90         # a step that cannot reach where it is going in this long happens where the pet stands
@@ -66,7 +67,8 @@ night_tokens = 8000       # cap on a sleep call, thinking included
 calls_per_hour = 150      # across all pets; routine thoughts slow down to stay under it, urgent ones never wait for it
 
 [effects]                 # what the plain actions do; a pet is told none of the numbers
-drift = { energy = -0.2, comfort = -0.1, curiosity = -0.25 }   # per 10 s, just from being awake; curiosity's is at half full, and in proportion elsewhere
+drift = { energy = -0.2, comfort = -0.35, curiosity = -0.7 }   # per 10 s, just from being awake; comfort's and curiosity's at half full, and in proportion elsewhere
+                          # (SPEC-v3.5.4 §2: they were -0.1, flat, and -0.25: everything gave a little, and both sat at the top)
 miserable = 0.4           # how much of the interest in a thing is left to a pet that is miserable
 cozy = 0.35                # comfort per 10 s beside a bed, a blanket, a rug
 restless = -0.3           # comfort per 10 s while bored, twice it while restless: staying put is not free
@@ -111,12 +113,13 @@ nuzzle_again_hours = 8    # SPEC-v3.2 §9: two that have leaned together do not 
 nuzzle_wear = 0.7         # each nuzzle with the same one is worth this much of the last, until a night eases it
 
 [novelty]                 # familiarity (SPEC-v2 §4): doing a thing again is worth less each time
-max = 2.0                 # curiosity for doing something not done for a while
-seconds = 300             # real seconds per point regained
+max = 2.0                 # curiosity for doing something not done for a while ...
+new_hours = 36            # ... in full once it has not done it for this many world hours, or ever (SPEC-v3.5.4 §2: it was a point every 300 s)
 fresh_seconds = 600       # a made thing gives its full curiosity only if left alone this long
-wear = 0.75               # each repeat is worth this much of the last (a curious pet tires of things faster) ...
-floor = 0.1               # ... down to this
+wear = 0.6                # each repeat is worth this much of the last (a curious pet tires of things faster) ...
+floor = 0.03              # ... down to this (SPEC-v3.5.4 §2: was 0.75 and 0.1; what it has handled many times gives almost nothing)
 cap = 10                  # repeats stop counting here
+per_kind = 4              # SPEC-v3.5.4 §2: handling this many things of one kind wears it like one repeat of the same thing
 eases = 2                 # repeats forgotten each night
 familiar = 4              # from this many repeats it is told the thing has grown familiar
 
@@ -163,7 +166,8 @@ same_days = 3             # ... within this many world days, that pair is not of
 effort = 2.0              # energy to make a thing, plus one per part; combining costs effort + 1 (halved at a workbench)
 tired = 8                 # too tired to make anything below this much energy
 loose_bits = 12           # dropped bits a room's floor holds before the oldest is swept away
-crowded = 10              # made things in one room before it is too crowded to make more
+crowded = 10              # made things on one room's floor before it feels cluttered (SPEC-v3.5.4 §1: no longer a bar to making) ...
+clutter_days = 1          # ... and its things nobody has used this long can go: to the machine, or a keepsake box
 parts = { hatchling = 2, child = 3, youngling = 3, adult = 3, elder = 3 }   # a made thing's parts; combining goes to 6
 
 [sleep]
@@ -301,7 +305,11 @@ passive_share = 0.10      # ... rises past this (a worn-out pet is let off some 
 passive_max = 0.18        # ... and past this share none of them is done at all
 window_ticks = 150        # the recent time that share is taken over
 walk_seconds = 30         # it gives up walking to where an activity is after this long, and does it where it stands
-go_again_seconds = 180    # it does not leave a room by itself sooner than this after coming in
+go_again_seconds = 180    # it does not leave a room by itself sooner than this after coming in, without a reason
+stay_seconds = 120        # SPEC-v3.5.4 §3: nor, for any reason of its body's, sooner than this (4 real minutes); its mind may send it any time
+back_seconds = 300        # ... and not back into the room it has just left for this long (10 real minutes), unless someone it is with, the visitor or an event calls it there
+stale_hours = 4           # a room it has not been in for this many world hours draws it ...
+stale = 1.5               # ... this much (twice that when it is bored)
 fidget = 0.3              # v3.4 §1: after an activity, this often a fidget (a stretch, a hum: one tick, on the spot) comes before the next; twice as often while a thought is on its way
 handle = 3.0              # what a thing it has not handled lately adds while it has handled fewer than three different things in the last handle_ticks ...
 handle_ticks = 50         # ... (three and a half minutes of watching), in full when it has handled one or none

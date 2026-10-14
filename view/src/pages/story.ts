@@ -56,12 +56,12 @@ export function momentRow(m: M, things: Record<string, string>, at = hhmm(m.hour
 // ---- which moments each chip shows ----
 
 const LIFE = new Set(["egg", "hatched", "death", "ended", "weak", "named", "stage", "heirloom", "arrival strangers"]);
-const FINDS = new Set(["discovery", "invented", "forgotten", "tool", "room", "taught", "read", "drift", "arrival writing", "arrival songs", "arrival taming", "arrival radio", "arrival book"]);
+const FINDS = new Set(["first", "best", "ambition", "works", "discovery", "invented", "forgotten", "tool", "room", "taught", "read", "drift", "arrival writing", "arrival songs", "arrival taming", "arrival radio", "arrival book"]);
 const BUILD = new Set(["built", "statue", "mended", "worn", "held", "moved"]);
 const WORDS = new Set(["saying", "crossed", "message", "words", "wrote", "song", "discarded", "scrubbed"]);
 /** The many small comings and goings: in "Everything", not in the main story. */
 const SMALL = new Set(["made", "unmade", "want", "entered", "nuzzle", "took", "machine", "fed", "stored", "told", "lost", "kept", "draught", "leak",
-  "power", "power back", "delivery", "stocked", "mark", "planted", "harvest", "project", "message", "song"]);
+  "power", "power back", "delivery", "stocked", "mark", "planted", "harvest", "project", "message", "song", "noticed"]);
 const visitor = (m: M) => /\bvisitor/i.test(m.text);
 const notable = (m: M) => (m.kind === "project" && /\bbegan an? /.test(m.text)) || (m.kind === "song" && /made up a song/.test(m.text)) || (m.kind === "message" && !/rewrote/.test(m.text));
 

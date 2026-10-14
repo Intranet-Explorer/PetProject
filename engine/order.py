@@ -92,6 +92,39 @@ def last_touch(o):
     return max(o["made"].get("touched", 0), o["made"].get("used_at", 0), o["made"]["tick"], o.get("kept", 0))
 
 
+def floor_count(cfg, room):
+    """SPEC-v3.5.4 §1: the made things on a room's floor (not hung up, not put away), boxes and all, as the crowding cap counts them."""
+    return len(things.on_floor(room))
+
+
+def crowded(cfg, room):
+    """SPEC-v3.5.4 §1: so many made things on the floor that the room feels cluttered (no longer a bar to making)."""
+    return floor_count(cfg, room) >= cfg["make"]["crowded"]
+
+
+def clutter_of(house, cfg, room):
+    """SPEC-v3.5.4 §1: in a crowded room, the old things that could go (to the machine, or a keepsake box), oldest
+    first. What stays: heirlooms, things the visitor named or starred, what is kept in a box or on anything, things on
+    a wall, a place to keep things with anything in it (an empty one can go), what is too heavy to move, anything used
+    in the last world day (put away or moved is not used), and the newest thing each pet made."""
+    if not crowded(cfg, room):
+        return []
+    newest = {}
+    for r in house["rooms"].values():
+        for o in things.made(r).values() if r["type"] else ():
+            newest[o["made"]["by"]] = max(newest.get(o["made"]["by"], 0), o["made"]["tick"])
+    used = lambda o: max(o["made"].get("touched", 0), o["made"].get("used_at", 0), o["made"]["tick"])
+    objs = room["objects"]
+    # what is in an ordinary box goes too (not what is in a keepsake box): emptied, the box itself can go. The box with
+    # least in it is emptied first.
+    out = [((len(held(room, o["on"])) if o.get("on") else 0, used(o)), n) for n, o in things.made(room).items()
+           if (not o.get("on") and not o.get("wall") or o.get("on") in objs and cap(cfg, objs[o["on"]]) and not keeps(objs[o["on"]]))
+           and not o["made"].get("heirloom") and not o["made"].get("called") and not o["made"].get("star") and not keeps(o) and not held(room, n)
+           and not things.prop(cfg, o).get("fixed") and not o.get("planted") and newest.get(o["made"]["by"]) != o["made"]["tick"]
+           and world_days(cfg, used(o), house["tick"]) >= cfg["make"]["clutter_days"]]
+    return [n for _, n in sorted(out)]
+
+
 def old(house, cfg, room, name):
     """Left lying: a made thing nobody has touched for `old_days`, that is not an heirloom, not up on a wall, not put
     away on anything, not itself a place where things are kept, and not too heavy to be moved."""
@@ -136,8 +169,9 @@ def keep(house, cfg):
     things stay where they are however long untouched, things on walls stay up, and no heirloom is moved."""
     went = {}
     for room in [r for r in house["rooms"].values() if r["type"]]:
+        clutter = clutter_of(house, cfg, room)
         for n, o in list(things.made(room).items()):
-            if old(house, cfg, room, n) and into_box(house, room, n):
+            if (old(house, cfg, room, n) or n in clutter) and into_box(house, room, n):   # (SPEC-v3.5.4 §1: and sooner from a cluttered room)
                 went.setdefault(o["made"]["owner"], []).append(n)
         room["areas"] = areas(house, cfg, room)
     for pid, names in went.items():

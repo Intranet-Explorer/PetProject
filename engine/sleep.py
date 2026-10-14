@@ -75,12 +75,22 @@ async def night(mind):
         text += "\nyour project: %s\n" % ("%s (started %s)" % (proj["text"], ago(house, cfg, proj["since"])) if proj else "none yet")
         for m in [m for m in pet["told"] if m["kind"] in ("message", "last words")][:1]:
             text += 'what your %s told you: "%s"\n' % (m["who"], m["text"])
-        if pet["message"]:
-            text += 'the message you wrote for your children: "%s"\n' % pet["message"][-1]["text"]
+        if pet["message"]:   # SPEC-v3.5.4 §4: its own old message is not shown: it writes the next one fresh
+            text += "you have children: tonight you write your message for them again, fresh, from your own life\n"
+        if proj and life.not_doing(proj["text"]):   # §4: a living pet whose project is a way to be gets a new one
+            text += "your project is not something you can do and finish: tonight you set a new one\n"
         if last_day:
             text += "you feel very old and tired.\n"
         tellers = sorted({m["who"] for m in pet["told"]})
         reply = await eng.call(2, pet["id"], "night", "sleep", lambda: mind.brain.night(text, asks, [b["id"] for b in mem.active()], tellers), len(text))
+        p = reply.get("project")
+        wrong = isinstance(p, dict) and (life.not_doing(p.get("text")) if p.get("decision") == "set" else p.get("decision") == "keep" and proj and life.not_doing(proj["text"]))
+        if wrong:   # SPEC-v3.5.4 §4: "wait", "do not make", "attend to the hour" are not projects: asked once more
+            again = text + '\nyou were going to take as your project: "%s". That is a way to be, or something not to do. A project is something you will do or find out over the coming days, and can finish.\n' % (p.get("text") or proj["text"])
+            r2 = await eng.call(2, pet["id"], "night", "project", lambda: mind.brain.night(again, ["project"], [], tellers), len(again))
+            if isinstance(r2.get("project"), dict) and not life.not_doing(r2["project"].get("text")):
+                reply["project"] = dict(r2["project"], decision="set")
+            pet["project_asked"] = pet.get("project_asked", 0) + 1
         out["changes"] = apply_changes(mind, reply.get("changes", []))
         out["dream"] = clean(reply.get("dream", ""), 500)
         r = reply.get("review")
@@ -116,7 +126,7 @@ async def night(mind):
                 names = {(other["name"] or "").lower(), "your " + (eng.relation(pet, other) or "?")}
                 if other["id"] != pet["id"] and name and (name in names or name.replace("my ", "your ") in names):
                     pet["known"][other["id"]] = life.last_sentence(clean(who.get("line", ""), 160), 120)
-        msg = life.last_sentence(clean(reply.get("message", ""), 640), 600)
+        msg = life.sentences(life.last_sentence(clean(reply.get("message", ""), 640), 600), 4)
         if pet["message"] and msg and msg != pet["message"][-1]["text"]:
             pet["message"].append({"tick": house["tick"], "text": msg})
             for kid in (house["pets"].get(c) for c in pet["children"]):   # an egg not yet hatched gets the words as they now stand

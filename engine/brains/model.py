@@ -43,8 +43,8 @@ WRITTEN = {   # how each action is written, shown only for the actions it can do
     "take": '{"type": "take", "what": a thing here that is someone else\'s}',
     "chase": '{"type": "chase", "who": a small creature here}',
     "tell": '{"type": "tell", "to": someone here, "text": something for them to keep, up to 400 chars}',
-    "lay_egg": ('{"type": "lay_egg", "name": a name for your child, up to 16 chars (or "" to leave it to them), '
-                '"message": what you want your child to know, in your own words, up to 600 chars; what you were told yourself is yours to pass on, change or leave out}'),
+    "lay_egg": ('{"type": "lay_egg", "name": a name for your child, up to 16 chars (or "" to leave it to them): a name of its own, or one that honours someone, '
+                '"message": a few sentences, at most four, in your own words, on what you have learned in your own life}'),
     "bequeath": '{"type": "bequeath", "what": a thing of yours here, "to": a child\'s name, or "my children"}',
     "write_belief": '{"type": "write_belief", "statement": one short sentence of at most 200 characters, "source": how you know it: lived | seen | told by <who>}',
     "revise_belief": '{"type": "revise_belief", "id": belief id, "statement": new text or "discard"}',
@@ -92,9 +92,9 @@ NIGHT_PARTS = {
     "changes": ('"changes": [<at most 3 of {"type": "write_belief", "statement": "<one short sentence of at most 200 characters, about how something works or about yourself or someone; '
                 'not a list of what happened>", "source": "lived | seen | told by <who>"} or {"type": "revise_belief", "id": "<belief id>", "statement": "<new text or discard>"}>]'),
     "review": '"review": {"decision": "keep | revise | discard", "statement": "<the new text, if you revise it>"}',
-    "project": '"project": {"decision": "keep | set | finish | abandon", "text": "<the project in a few of your own words, at most 130 characters, if you set one: something for the coming days>"}',
+    "project": '"project": {"decision": "keep | set | finish | abandon", "text": "<the project in a few of your own words, at most 130 characters, if you set one: something to do or find out over the coming days, that you can finish; not a way to be, and not something to wait for or not do>"}',
     "people": '"people": [<for anyone you want to remember something about: {"who": "<who>", "line": "<one line, in your own words>"}>]',
-    "message": '"message": "<your message for your children as you would have it now, up to 600 characters; the same words again if nothing has changed. What you were told yourself is yours to pass on, change or leave out>"',
+    "message": '"message": "<your message for your children, written fresh in your own words: a few sentences, at most four, on what you have learned in your own life. Do not start from your old message or add to it>"',
     "my_life": '"my_life": "<the story of your life, in your own words, up to 800 characters>"',
 }
 

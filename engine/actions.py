@@ -727,6 +727,7 @@ def go(house, cfg, pet, d):
         moment(house, "room", "%s found %s" % (label(pet), to["name"]), pet["id"], to["id"])
     witness(house, pet, "%s went out through the %s door" % (label(pet), d))
     first = to["id"] not in pet["rooms"]
+    pet["came_from"] = [room["id"], house["tick"]]   # (SPEC-v3.5.4 §3: it does not go straight back without a reason)
     pet["room"], pet["pos"] = to["id"], list(house["door_tiles"][BACK[d]])
     pet["rooms"][to["id"]] = house["tick"]
     pet["scent"] = {}

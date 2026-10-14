@@ -3,7 +3,7 @@ No numbers, no coordinates, no counts of anything, and no sentence telling the p
 like. Its temperament shows only in what is mentioned and how (§8.1). Alongside the text comes `ctx`: the
 names the packet shows, so a brain's reply can be held to things that are really there."""
 from . import actions, body, craft, feel, genes, invent, life, order, physics, songs, things, walls, wants
-from . import feats, machine
+from . import feats, hub, machine
 from .world import LONG_AGO, dist, family, here, neighbours, room_type
 from . import build
 
@@ -176,6 +176,10 @@ def perceive(house, cfg, pet, mem):
     unseen = [d for d, rid in room["doors"].items() if rid not in pet["rooms"]]
     if unseen and feel.level(pet, "curiosity") >= (2 if T["bold"] < 0.4 else 1):   # boredom points at the one thing here not yet tried
         senses.append("you wonder what is through the %s door" % unseen[0])
+    elif feel.level(pet, "curiosity") >= 2:   # SPEC-v3.5.4 §2: and a bored pet goes looking: somewhere it has not been for a long while
+        stale = min((r for r in pet["rooms"] if r != room["id"] and house["rooms"].get(r, {}).get("type")), key=lambda r: pet["rooms"][r], default=None)
+        if stale and tick - pet["rooms"][stale] >= cfg["body"]["stale_hours"] * cfg["ticks_per_hour"]:
+            senses.append("you have not been in %s for a long while" % house["rooms"][stale]["name"])
     senses += machine.sense(house, cfg, pet)   # SPEC-v3.5 §4.3: one line, only in the machine's room
     if actions.offered(pet):
         senses.append("the visitor calls you %s; you could take the name" % pet["called"])
@@ -185,6 +189,11 @@ def perceive(house, cfg, pet, mem):
         senses.append("something hard that you carry would scratch a mark into the wall, faintly")
     if "name" in can and "egg" in actions.nameable(house, pet):
         senses.append("the egg here is nobody's, and nobody has given it a name")
+    if "lay_egg" in can or ("name" in can and "egg" in actions.nameable(house, pet)):   # SPEC-v3.5.4 §5: the names its family has had
+        fam = hub.family_of(house, pet)
+        used = list(dict.fromkeys(p["name"] for p in sorted(house["pets"].values(), key=lambda p: int(p["id"][1:])) if p.get("name") and hub.family_of(house, p) == fam))
+        if used:
+            senses.append("names your family has had: %s; an egg can have a name of its own, or one that honours someone" % ", ".join(used))
 
     # ---- what happened ----
     since = [e for t, e in pet["events"] if t > pet["seen"]]

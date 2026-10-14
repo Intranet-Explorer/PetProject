@@ -372,7 +372,13 @@ def spare(house, cfg, pet, room):
     fresh, loose = house["tick"] - ticks(cfg, cfg["order"]["just_out_seconds"]), set(order.loose(house, cfg, room))
     kinds = Counter(o["made"]["recipe"].get("kind") for o in things.made(room).values())
     today = (pet.get("fed") or {}).get("day") == house["clock"]["day"]
+    clutter = order.clutter_of(house, cfg, room)   # SPEC-v3.5.4 §1: a cluttered room's old things, its own or nobody's, can go
+    out += [(order.last_touch(room["objects"][n]), n, "clutter") for n in clutter
+            if things.free_to_change(house, pet, room["objects"][n]) and room["objects"][n]["made"]["recipe"].get("kind") not in cfg["craft"]["tool"]
+            and not refuses(house, cfg, pet, room, n) and room["objects"][n].get("kept", LONG_AGO) <= fresh]
     for n, o in things.made(room).items():
+        if n in clutter:
+            continue
         kind, kept = o["made"]["recipe"].get("kind"), bool(o.get("on")) and not o.get("wall")
         if not (n in loose or kept) or o["made"]["owner"] != pet["id"] or kind in cfg["craft"]["tool"] or order.cap(cfg, o) or o.get("kept", LONG_AGO) > fresh \
                 or refuses(house, cfg, pet, room, n):
@@ -407,8 +413,13 @@ def wants(house, cfg, pet, known, out, add, via):
     if len(order.loose_bits(mess)) >= M["bits"] and not named & set(pet["carrying"]):
         add("feed", "bits %d" % (pet.get("fed") or {}).get("n", 0), "loose bits lie about in %s: you want to feed three of them to the machine%s" % (mess["name"], "" if at is mess else " in " + at["name"]),
             "fed three loose bits to the machine", M["feed_weight"] * (1.0 if mess is at else M["bits_weight"]), thing="bits", room=mess["id"])
-    spares = sorted(((why == "kept", t, n, why, r) for r in known for t, n, why in spare(house, cfg, pet, r)), key=lambda x: x[:3])[:2]   # what lies about before what is put away
-    for _, _, n, why, r in spares:
+    spares = sorted(((why != "clutter", why == "kept", t, n, why, r) for r in known for t, n, why in spare(house, cfg, pet, r)), key=lambda x: x[:4])[:2]   # clutter first, then what lies about, then what is put away
+    for _, _, _, n, why, r in spares:
+        mine = "your" if r["objects"][n]["made"]["owner"] == pet["id"] else "the"
+        if why == "clutter":   # SPEC-v3.5.4 §1
+            add("feed", n, "%s is cluttered with old things: you want to take %s %s to the machine%s" % (r["name"], mine, n, "" if at is r else " in " + at["name"]),
+                "fed the %s to the machine" % n, M["feed_weight"] * M["clutter_weight"], thing=n, room=r["id"])
+            continue
         text = "nobody has touched your %s in %s for days" % (n, r["name"]) if why == "old" else "there are more %ss in %s than anyone needs" % (why, r["name"]) if why != "kept" else \
             "your %s has been %s in %s for days, and nobody has touched it" % (n, order.into(cfg, r, r["objects"][n]["on"]), r["name"])
         add("feed", n, "%s: you want to feed %s to the machine%s" % (text, "it" if why in ("old", "kept") else "your " + n, "" if at is r else " in " + at["name"]),

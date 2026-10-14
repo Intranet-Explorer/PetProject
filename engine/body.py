@@ -87,6 +87,18 @@ def way_to(house, pet, targets):
     return None
 
 
+def just_left(house, cfg, pet, rid):
+    """SPEC-v3.5.4 §3: is this the room it came from, a short while ago?"""
+    back = pet.get("came_from") or [None, LONG_AGO]
+    return back[0] == rid and house["tick"] - back[1] < ticks(cfg, cfg["body"]["back_seconds"])
+
+
+def doors_open(house, cfg, pet):
+    """SPEC-v3.5.4 §3: has it been in this room long enough for its body to pick a door again? (Its mind may send it
+    any time; a thing it is carrying to the machine goes on its way.)"""
+    return house["tick"] - pet["rooms"].get(pet["room"], LONG_AGO) >= ticks(cfg, cfg["body"]["stay_seconds"])
+
+
 def handled_lately(house, cfg, pet):
     """How many different things it has had its paws on in the last while."""
     return len({th for tk, th in state(pet).get("handled", []) if house["tick"] - tk < cfg["body"]["handle_ticks"]})
@@ -120,6 +132,8 @@ def targets(house, cfg, pet, mem, name, A):
             [[min(cfg["W"] - 2, max(1, at[0] + r.randint(-2, 2))), min(cfg["H"] - 2, max(1, at[1] + r.randint(-2, 2)))] for _ in range(4)]
         return [{"goal": free_tile(house, cfg, room, max(tries, key=lambda t: min(dist(me, t), 6)))}]
     if do in ("doorway", "peek", "go"):
+        if not doors_open(house, cfg, pet):
+            return []   # SPEC-v3.5.4 §3: a stay lasts long enough to do something before its body picks a door again
         out, mess = [], order.way(house, cfg, pet) if do == "go" else None
         # may a mess elsewhere draw it out of this room? Not out of a mess, not from beside what its mind keeps it by, not when it is resting tired
         trip = state(pet).get("trip") or [None, True]   # [the world day it last set off for a mess, has it got there]: one such trip a day
@@ -132,29 +146,35 @@ def targets(house, cfg, pet, mem, name, A):
         for d, rid in room["doors"].items():
             stuck = house["shut"].get("%s|%s" % (room["id"], d), LONG_AGO) > house["tick"]
             to, been = house["rooms"][rid], rid in pet["rooms"]
-            if do == "go" and not stuck and (d in L["doors"] or d == toward) and not anchor(house, pet) and not tired(pet) and handled_lately(house, cfg, pet) >= 3:   # (not while it has had its paws on little: v3.4 §0 comes first)
+            back = do == "go" and just_left(house, cfg, pet, rid) and not any(w.get("room") == rid and w["since"] >= pet["came_from"][1] for w in pet.get("wants", []))   # (SPEC-v3.5.4 §3: a want it had when it left does not call it straight back)
+            if do == "go" and not stuck and (d in L["doors"] or d == toward) and not back and not anchor(house, pet) and not tired(pet) and handled_lately(house, cfg, pet) >= 3:   # (not while it has had its paws on little: v3.4 §0 comes first)
                 # a door it wants to know the other side of (the one way a body goes where it has never been), or the way to where a want takes it
                 out.append({"what": d, "goal": list(house["door_tiles"][d]), "bonus": W})
-            elif do == "doorway" and not been:
+            elif do == "doorway" and not been:   # (SPEC-v3.5.4 §3: a door it knows the other side of is no longer something to nose at)
                 out.append({"what": d, "goal": list(house["door_tiles"][d]), "bonus": 0.5})
-            elif do == "doorway":
-                out.append({"what": d, "goal": list(house["door_tiles"][d])})
-            elif do == "peek" and to["type"] and not stuck:
+            elif do == "peek" and to["type"] and not stuck and any(p["room"] == rid and p["stage"] not in ("egg", "dead") for p in house["pets"].values()):   # (SPEC-v3.5.4 §3: to see who is there)
                 out.append({"what": to["name"], "door": d, "goal": list(house["door_tiles"][d])})
             elif do == "go" and not stuck and to["type"] and been:   # only into rooms it knows: finding a room is its mind's to decide
                 want = house["pets"].get(focus.get("who") or "")
                 kin = [p for p in house["pets"].values() if p["room"] == rid and p["stage"] not in ("egg", "dead") and not p["sleep"] and relation(house, pet, p)]
+                called = (focus.get("type") == "be with" and want and want["room"] == rid) or house.get("visitor_room") == rid and house["tick"] - house["visitor_last"] < ticks(cfg, 60) \
+                    or "event" in pet["news"]
+                if just_left(house, cfg, pet, rid) and not called:
+                    continue   # SPEC-v3.5.4 §3: not straight back to the room it has just left, unless something calls it there
+                stale = min(1.0, (house["tick"] - pet["rooms"].get(rid, LONG_AGO)) / (cfg["body"]["stale_hours"] * cfg["ticks_per_hour"]))
+                stale = stale * (2.0 if feel.level(pet, "curiosity") >= 2 else 1.0) if stale >= 1.0 else 0.0   # a room not seen lately, the more so to a bored pet
                 if focus.get("type") == "be with" and want and want["room"] == rid:
                     out.append({"what": d, "goal": list(house["door_tiles"][d]), "bonus": 2.5})
                 elif focus.get("type") == "tidy" and d == mess and not order.job(house, cfg, pet, room):
                     out.append({"what": d, "goal": list(house["door_tiles"][d]), "bonus": 2.0})   # this room is done and there is a mess it knows of: tidying moves on, door by door
                 elif (minded(pet) in (None, "explore", "play", "project") or (focus.get("type") == "be with" and not (want and want["room"] == room["id"])) or (d == mess and drawn)
                       or (state(pet).get("bare") and not anchor(house, pet))) \
-                        and ((under_way and d == mess) or state(pet).get("bare") or house["tick"] - pet["rooms"].get(room["id"], LONG_AGO) >= ticks(cfg, cfg["body"]["go_again_seconds"])):
+                        and ((under_way and d == mess) or state(pet).get("bare") or house["tick"] - pet["rooms"].get(room["id"], LONG_AGO) >= ticks(cfg, cfg["body"]["go_again_seconds"])) \
+                        and (stale or (kin and not kin_here(house, pet)) or focus.get("type") in ("explore", "be with") or (d == mess and drawn) or state(pet).get("bare")):   # SPEC-v3.5.4 §3: for a reason, not at a flat rate
                     # (it stays where its mind put it a good while, and it never walks out on someone or something its mind
                     # keeps it by. Otherwise a mess it knows of draws it as one here would, the orderly most)
                     out.append({"what": d, "goal": list(house["door_tiles"][d]),
-                                "bonus": (0.6 if kin and not kin_here(house, pet) else 0.0) + (0.8 if focus.get("type") == "explore" else 0.0)
+                                "bonus": (0.6 if kin and not kin_here(house, pet) else 0.0) + (0.8 if focus.get("type") == "explore" else 0.0) + cfg["body"]["stale"] * stale
                                 + (cfg["body"]["mess_pull"] * 2 * (0.4 + 1.2 * pet["temper"].get("orderly", 0.5)) if d == mess and drawn else 0.0),
                                 "trip": d == mess and drawn})
         return out
@@ -568,8 +588,10 @@ def finish(mind, now, cut=False):
                 done = bool(told)
             for n, v in A.get("effects", {}).items():
                 fx[n] = fx.get(n, 0) + v
-            if fx.get("curiosity") or key:
-                mind.novelty(fx, key or "body " + now["name"], False, fx.pop("scale", 1.0))
+            if A.get("fidget"):   # SPEC-v3.5.4 §2: a stretch or a hum is nothing new (every fidget used to top curiosity up)
+                fx.pop("curiosity", None)
+            elif fx.get("curiosity") or key:
+                mind.novelty(fx, key or "body " + now["name"], False, fx.pop("scale", 1.0), (o.get("made") or {}).get("recipe", {}).get("kind") if A.get("handles") and o else None)
             fx.pop("scale", None)
             actions.bump(pet, cfg, {n: v for n, v in fx.items() if n in pet["needs"]})
             did = told or say(cfg, h, pet, now, "did", where)

@@ -27,7 +27,7 @@ doing = "wandering about"
 did = "wandered about"
 icon = "walk"
 seconds = [3, 6]
-base = 0.5
+base = 0.1                       # (SPEC-v3.5.4 §3: was 0.5; wandering about is filler, not going anywhere)
 temper = { curious = 0.4, bold = 0.2 }
 focus = ["explore"]
 
@@ -95,7 +95,7 @@ doing = "peeking into {what}"
 did = "peeked into {what}"
 icon = "door"
 seconds = [3, 6]
-base = 0.3
+base = 0.1                       # (SPEC-v3.5.4 §3: was 0.3)
 temper = { bold = 0.6, curious = 0.5, sociable = 0.3 }
 needs = { curiosity = 0.6, company = 0.5 }
 focus = ["explore", "be with"]
@@ -107,7 +107,7 @@ doing = "going through the {what} door"
 did = "went through the {what} door"
 icon = "door"
 seconds = [2, 3]
-base = 0.4                       # into rooms it knows, now and then; sooner to be with someone, or when its mind wants to explore
+base = 0.2                       # into rooms it knows, for a reason (SPEC-v3.5.4 §3: a room not seen lately, kin there, to be with someone, its mind wants to explore); was 0.4
 temper = { bold = 0.5, curious = 0.3 }
 focus = ["explore", "be with"]
 

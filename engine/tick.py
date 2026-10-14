@@ -160,10 +160,10 @@ class Mind:
             return None
         if not self.brain.instant and self.eng.over_budget():
             return None
-        if not world.busy(pet):
-            return "nothing to do"
-        if pet["news"]:
+        if pet["news"]:   # SPEC-v3.5.4 §0: something to think about (it came somewhere, grew bored, was pleased, was told something)
             return "something changed"
+        if not world.busy(pet):   # ... and with nothing new, it thinks less often for the sake of it
+            return "nothing to do" if quiet >= floor * c["idle_think"] else None
         return "a long quiet" if quiet >= c["max_idle_seconds"] else None
 
     def think(self, why):
@@ -300,14 +300,22 @@ class Mind:
         if plan["left"] <= 0:
             self.finish_step(a)
 
-    def novelty(self, fx, key, made_thing, scale):
-        """Doing something again is worth less each time (SPEC-v2 §4); a curious pet tires of things sooner."""
+    def novelty(self, fx, key, made_thing, scale, kind=None):
+        """Doing something again is worth less each time (SPEC-v2 §4); a curious pet tires of things sooner. SPEC-v3.5.4
+        §2: and a made thing of a kind it has handled many times (its twentieth charm) is not new either."""
         pet, h, N = self.pet, self.eng.house, self.cfg["novelty"]
         idle = (h["tick"] - pet["seen_at"].get(key, LONG_AGO)) * self.cfg["clock"]["tick_seconds"]
         done = min(pet["times"].get(key, 0), N["cap"])
-        wear = max(N["floor"], (N["wear"] - 0.15 * (pet["temper"]["curious"] - 0.5)) ** done)
+        kinds = min(pet["times"].get("kind " + kind, 0), N["cap"] * N["per_kind"]) if kind else 0
+        wear = max(N["floor"], (N["wear"] - 0.15 * (pet["temper"]["curious"] - 0.5)) ** (done + kinds / N["per_kind"]))
+        if kind:
+            pet["times"]["kind " + kind] = kinds + 1
         fresh = min(1.0, idle / N["fresh_seconds"]) if made_thing else 1.0   # a made thing also needs leaving alone a while
-        fx["curiosity"] = (fx.get("curiosity", 0) * fresh + min(N["max"], idle / N["seconds"])) * wear * scale
+        # SPEC-v3.5.4 §2: only what is new gives much. What it has not done for `new_hours` (or ever) gives up to `max`;
+        # what it does again and again, its own little bit worn down by each repeat. (It used to regain a point every
+        # five minutes, so every fidget topped it up: curiosity sat at 99%.)
+        new = min(1.0, idle / self.cfg["clock"]["tick_seconds"] / (N["new_hours"] * self.cfg["ticks_per_hour"]))
+        fx["curiosity"] = (fx.get("curiosity", 0) * fresh + N["max"] * new) * wear * scale
         pet["seen_at"][key], pet["times"][key] = h["tick"], min(N["cap"], done + 1)
         return done >= N["familiar"]
 
@@ -343,7 +351,7 @@ class Mind:
                         things.occasion(h, cfg, room["objects"][into], into, {"comfort": ease})
                 for n, v in share.items():   # what resting beside it added or took away counts as an occasion of use
                     things.occasion(h, cfg, room["objects"][n], n, {"energy": v * cfg["steps"]["rest"] / 10})
-            if key and self.novelty(fx, key, bool(thing), scale):
+            if key and self.novelty(fx, key, bool(thing), scale, thing["made"]["recipe"].get("kind") if thing else None):
                 text += " (this has grown familiar)"   # it can tell when something has stopped being new
             if fx.get("curiosity", 0) >= 1 and feel.level(pet, "comfort") == 4:   # a miserable creature does not play
                 fx["curiosity"] *= cfg["effects"]["miserable"]
@@ -485,6 +493,9 @@ class Mind:
                 pet["news"].append("low")   # running low cannot wait
             elif now < before[n] and now == 0:
                 pet["news"].append("need")
+            elif n == "curiosity" and now > before[n] and now == 2:   # SPEC-v3.5.4 §2: boredom is felt, and it sends the mind looking
+                add_event(h, pet, "you have grown bored: nothing here is new to you any more")
+                pet["news"].append("bored")
         if h["clock"]["phase"] != pet["phase_seen"]:
             pet["phase_seen"] = h["clock"]["phase"]
             add_event(h, pet, "it became " + pet["phase_seen"])
@@ -554,7 +565,7 @@ class Mind:
             self.eng.did(pet, pet["sleep"]["since"], h["tick"], "asleep", True, "sleep", "", still=h["tick"] - pet["sleep"]["since"], rest=True)
             pet["sleep"], pet["phase_seen"], self.night, self.today = None, h["clock"]["phase"], None, []
             N = cfg["novelty"]
-            pet["times"] = {k: min(n, N["cap"]) - N["eases"] for k, n in pet["times"].items() if n > N["eases"]}   # a little novelty comes back overnight
+            pet["times"] = {k: min(n, N["cap"] * (N["per_kind"] if k.startswith("kind ") else 1)) - N["eases"] for k, n in pet["times"].items() if n > N["eases"]}   # a little novelty comes back overnight
             pet["scent"] = {}
             pet["seen_at"] = {k: t for k, t in pet["seen_at"].items() if k in pet["times"]}
             old, new = pet["stage"], life.grow(h, cfg, pet)   # stages come with days lived, checked each morning (§4.1)

@@ -23,7 +23,7 @@ def effects(house, cfg, pet):
     # the plain wearing-down of being alive
     E, D = cfg["effects"], cfg["effects"]["drift"]
     out.append(effect("drift", "energy", D["energy"] * (1.5 if elder else 1) * (1.3 if pet["weak"] else 1), None, False))
-    out.append(effect("drift", "comfort", D["comfort"], None, False))
+    out.append(effect("drift", "comfort", D["comfort"] * pet["needs"]["comfort"] / 50, None, False))   # SPEC-v3.5.4 §2: like interest, ease wears off the more of it there is
     # Interest wears off faster the keener it is. A flat rate has no middle: a pet that earns a little less than
     # it loses sits at the bottom for life, and one that earns a little more sits at the top (both showcase runs).
     out.append(effect("drift", "curiosity", D["curiosity"] * pet["needs"]["curiosity"] / 50, None, False))
@@ -143,8 +143,9 @@ def senses(house, cfg, pet, acting=None):
     felt = [e["feel"] for e in (acting if acting is not None else effects(house, cfg, pet)) if e["feel"]]
     felt += life.body_feels(house, cfg, pet)
     room = house["rooms"][pet["room"]]
-    if len(things.on_floor(room)) >= cfg["make"]["crowded"]:
-        felt.append("this room is crowded with made things: there is no room to make another here unless one is taken apart or put away, or it is something to keep things in")
+    from . import order
+    if order.crowded(cfg, room):   # SPEC-v3.5.4 §1: untidy, not a reason to stop making
+        felt.append("this room is cluttered with old things; some could go to the machine, or into a box")
     from . import order
     mess = order.clutter(house, cfg, room)   # SPEC-v3.3 §2.1: clutter is felt, by those who mind it
     if mess == 2 or (mess == 0 and pet["temper"].get("orderly", 0.5) > 0.6 and things.made(room)):

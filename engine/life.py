@@ -1,6 +1,8 @@
 """Life and death, eggs and inheritance (SPEC-v3 §4, §5). A pet hatches, grows by what it has lived and made,
 grows old, and dies; before that it may lay eggs, and what it hands on is a body, a temperament, a message,
 and a couple of things."""
+import re
+
 from . import craft, genes, order, things
 from .feel import level
 from .world import (GENES, STAGES, days as world_days, add_event, alive, arrived, family, free_tile, hours, label, moment, new_pet, rnd, ticks)
@@ -137,7 +139,7 @@ def can_lay(house, cfg, pet):
 
 def lay_egg(house, cfg, pet, a, clean):
     room, rng = house["rooms"][pet["room"]], rnd(house, "egg", pet["id"], pet["eggs"])
-    text, name = last_sentence(clean(a["message"], 640), 600), clean(a.get("name") or "", 16).strip() or None
+    text, name = sentences(last_sentence(clean(a["message"], 640), 600), 4), clean(a.get("name") or "", 16).strip() or None
     pet["message"].append({"tick": house["tick"], "text": text})
     body, new = genes.child(pet["genome"], rng, genes.line(house, pet))   # SPEC-v3.5 §2: its parent's body, a slot or two moved; rarely something new
     egg = new_pet(house, cfg, room["id"], free_tile(house, cfg, room, pet["pos"]), genome=body,
@@ -148,6 +150,22 @@ def lay_egg(house, cfg, pet, a, clean):
     pet["eggs"] += 1
     moment(house, "egg", "%s laid an egg%s" % (label(pet), " and named it " + name if name else ""), pet["id"], room["id"])
     return "you laid an egg%s and told it what you want it to know" % (" and named it " + name if name else ""), {"energy": -cfg["life"]["egg_energy"]}, "lay egg"
+
+
+# SPEC-v3.5.4 §4: a project is something to do or find out, and finish. "Wait with the seed", "do not make",
+# "attend to the hour", "be like moss" are ways to be, not projects.
+NOT_DOING = re.compile(r"^\W*(do not|don't|never|wait|attend|let |be |stay|rest\b|lie |hold |keep still|listen|watch the|sit |notice|accept|allow|refrain|avoid)"
+                       r"|\b(do not|don't|not to|rather than|instead of) (make|making|plant|name|unmake|shape)", re.I)
+
+
+def not_doing(text):
+    return bool(NOT_DOING.search(text or ""))
+
+
+def sentences(text, most):
+    """At most `most` sentences of it (SPEC-v3.5.4 §4: a message is a few sentences, at most four)."""
+    parts = re.findall(r"[^.!?]+[.!?]+[\"'”’)]*\s*|[^.!?]+$", text.strip())
+    return "".join(parts[:most]).strip() or text
 
 
 def last_sentence(text, limit):

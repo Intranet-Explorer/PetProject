@@ -272,8 +272,6 @@ def check_make(a, house, cfg, pet):
         return "you have not got what %s is made of" % one
     if not things.clean_name(r.get("name")) or not isinstance(r.get("purpose"), str):
         return "it needs a name and a purpose"
-    if len(things.on_floor(room)) >= cfg["make"]["crowded"] and not rec["store"]:
-        return "this room is too crowded for another thing, unless it is something to keep things in"
     if rec["wall"] and not things.wall_slot(house, room):
         return "there is no free place on the wall here to hang it"
     if pet["needs"]["energy"] < cfg["make"]["tired"]:
