@@ -5,7 +5,7 @@ it, and what it found out is a recipe it knows, can pass on, and can lose. Skill
 practice at making is what most of them are for."""
 import tomllib
 
-from . import things
+from . import firsts, things
 from .world import add_event, days as world_days, dist, label, moment, rnd
 
 DONE = {"soak": "soaked", "warm": "warmed", "melt": "melted", "dry": "dried", "press": "pressed", "weave": "woven", "carve": "carved",
@@ -145,6 +145,7 @@ def wear(house, cfg, pet, room, name):
     o = room["objects"][name]
     o["made"]["wear"] = o["made"].get("wear", 0) + 1
     o["made"]["touched"] = house["tick"]
+    firsts.used(house, cfg, pet, tool_kind(cfg, o))   # SPEC-v3.5.4 §6: a tool used for the first time
     if o["made"]["wear"] >= lasts(cfg, o):
         add_event(house, pet, "the %s has worn with use: it will do no more until it is mended" % name)
 
@@ -358,6 +359,7 @@ def process(house, cfg, pet, a, norm):
         return rule["says"], {}, None
     give(house, cfg, pet, room, rule["gives"])
     tried[key], pet["got"] = rule["gives"], [rule["gives"], house["tick"]]
+    firsts.processed(house, cfg, pet, bit, how)   # SPEC-v3.5.4 §6: done to a bit for the first time
     new = learn(house, cfg, pet, key)
     for kid in [p for p in house["pets"].values() if p.get("parent") == pet["id"] and p["room"] == pet["room"] and p["stage"] not in ("egg", "dead") and not p["sleep"]]:
         if learn(house, cfg, kid, key, "watching %s" % label(pet)):   # a young one watching picks it up

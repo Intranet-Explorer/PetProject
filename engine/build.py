@@ -7,6 +7,7 @@ homely by the family that painted it. Everything is data (building.toml), and no
 import tomllib
 
 from . import craft, hub, things
+from . import firsts
 from .world import LONG_AGO, STAGES, add_event, days as world_days, dist, family, free_tile, label, moment, ticks
 
 PROJECT = {}   # building.toml's projects, by name (the same in every config: fixture_says has no config to look in)
@@ -514,6 +515,7 @@ def stand(house, cfg, pet, room, name):
         hub.stood(house, cfg, pet, room, name, o)
     text = "%s %s" % (and_(names), P["done"].format(room=room["name"]))
     craft.found(house, pet, text, "built")
+    firsts.built(house, cfg, paws, key)   # SPEC-v3.5.4 §7: the biggest thing each helped build
     for pid in paws:
         p = house["pets"].get(pid)
         if p and p["stage"] not in ("egg", "dead"):

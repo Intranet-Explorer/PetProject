@@ -96,6 +96,7 @@ def pet_view(p):
         stage_word=STAGE_WORD.get(p["stage"], p["stage"]), mood=mood(p), emote=emote(p),
         act=story.act_of(h, p, plan["steps"][min(plan["i"], len(plan["steps"]) - 1)]) | {"since": plan.get("step_began", plan["started"])} if world.busy(p) else None,
     )
+    out["ambition"] = (p.get("ambition") or {}).get("text")   # SPEC-v3.5.4 §9: on its card
     return out
 
 

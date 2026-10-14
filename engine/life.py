@@ -1,7 +1,7 @@
 """Life and death, eggs and inheritance (SPEC-v3 §4, §5). A pet hatches, grows by what it has lived and made,
 grows old, and dies; before that it may lay eggs, and what it hands on is a body, a temperament, a message,
 and a couple of things."""
-from . import craft, genes, order, things
+from . import craft, firsts, genes, order, things
 from .feel import level
 from .world import (GENES, STAGES, days as world_days, add_event, alive, arrived, family, free_tile, hours, label, moment, new_pet, rnd, ticks)
 
@@ -143,6 +143,7 @@ def lay_egg(house, cfg, pet, a, clean):
     egg = new_pet(house, cfg, room["id"], free_tile(house, cfg, room, pet["pos"]), genome=body,
                   temper=temper_of(pet["temper"], rng, cfg), parent=pet["id"], name=name,
                   told=[{"by": pet["id"], "who": pet["word"], "kind": "message", "text": text, "tick": house["tick"]}])
+    firsts.laid(house, cfg, pet, egg)   # SPEC-v3.5.4 §9: it hears of an ambition its parent reached
     if new:
         egg["mutation"] = new   # (the family tree marks the branch; it is a moment when it hatches)
     pet["eggs"] += 1
@@ -174,6 +175,7 @@ def hatch(house, cfg, pet):
     moment(house, "hatched", "%s hatched" % (pet["name"] or "an egg"), pet["id"], pet["room"])
     genes.hatched(house, pet)
     craft.inherit(house, cfg, pet)   # SPEC-v3.4 §3.3: it starts out knowing some of what its parent knew
+    firsts.hatched(house, cfg, pet)   # SPEC-v3.5.4 §7, §9: born knowing its line's bests, and with an ambition
 
 
 def earned(house, cfg, pet):

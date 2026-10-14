@@ -321,7 +321,7 @@ async def inventing(d):
     assert cur["use"] == "curio" and cur["name"] == "bell doll" and [(p["part"], p["at"], p["material"]) for p in cur["parts"]] == [("bundle", None, "soft"), ("cloth", "side", "soft"), ("bell dome", "tip", "noisy")], cur
     cp = things.prop(cfg, o3)
     assert invent.effect(cfg, o3) == {} and cp["use"] == {"comfort": 4.0, "curiosity": 3.0, "energy": -1.0} and cp["loud"] and cur["sound"] == "ring" and "comfort when used" in cur["does"], "a curio does what its two halves did, and no more: %s" % cp
-    assert "nothing new came of it but the thing itself" in got[0] and any(x["text"] == "Po invented the bell doll: to ring when hugged" for x in h["moments"][-3:]) and "kind:bell doll" in po["recipes"], got
+    assert "nothing new came of it but the thing itself" in got[0] and any(x["text"] == "Po invented the bell doll: to ring when hugged" for x in h["moments"][-6:]) and "kind:bell doll" in po["recipes"], got
     assert invent.used(h, cfg, po, room, "bell doll") is None
     thing("rag baby b", "doll", "hard")
     thing("ding x", "bell", "hard")
