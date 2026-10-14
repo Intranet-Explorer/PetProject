@@ -28,3 +28,5 @@ Small things Tyler has seen and set aside. No action until he says so. Newest at
 - A made thing carried toward the machine leaves its floor shadow and maker's pip where it lay until it is set
   down (v3.5.1).
 - The ticker's clock is read at the start of each run of messages, so it can be a minute or two behind (v3.5.1).
+- A pet at one of the hub's screens is told "the book is right here" and "you read in the book", and the story says it
+  "asked the book": the words of the heavy book, not of a screen (v3.5.1).

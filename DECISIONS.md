@@ -1668,3 +1668,21 @@ screens are dark until the book has arrived in the house. What was asked and rea
 - The view no longer shows the box's speech; "What the box said" in the story keeps the record of the old radio.
 - The extra Karsiori packs the spec names (gears, pipes and cables, buttons, neon signs) were not in
   `assets-incoming`, so none were used.
+
+### Deployed (13 to 14 October 2026)
+
+Deployed at 23:46 on 13 October (live tick 61195). Open Hand found the machine room at tick 62009, about 800 ticks
+after the restart (under half a world day), and took fibre from the machine at once; within a world day three of the five living pets had
+been in, the machine had been bought from and fed thirteen times, and three pets had heard the station's songs by
+name. Rain Rest, eldest of the second family now that Lean is dead, began Purple Camo's statue at 63792 and has two of its five stones on
+the plinth. Before it had the project it made three stone stacks it called "first one's mark", "first one's
+statue" and "foundling's third stone": the want was understood, and the making came first.
+
+No pet used a screen in the first world day. `wants.book_room` returned the first room with a book in it, which
+was the attic, so every hint and every walk to look something up led to the heavy book. Fixed on 14 October
+(03:21): the screens come first once they are found and the book has come, the hints name them, and a pet asks
+whichever book is in the room it is in. The heavy book is still read when a pet is in the attic.
+After the fix, at 65790, Rain Rest came for stone, took two, read the lit sign (tomorrow's cloud and two
+discoveries) and asked the left screen "what is stone"; the article stayed on the glass. A pet at a screen is
+still told it is at "the book" ("the book is right here", "you read in the book"): the same encyclopedia, but the
+words are left over from the heavy book (in POLISH.md).
