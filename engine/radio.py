@@ -1,14 +1,13 @@
-"""The radio (SPEC-v3.1 §5): a box that speaks scraps of the real outside world. The engine fetches them, from a
-short fixed list of sources on an allowlist, at most once an hour each; a pet never fetches anything and no pet
-action carries a word out of the house. What comes in is cleaned to plain text and is only ever shown to a pet
-quoted, as something the box said."""
+"""The radio (SPEC-v3.1 §5; SPEC-v3.5.1 §5): a real station. The page plays its stream for Tyler; the engine asks the
+station, on an allowlist, what song is on, at most once a minute while the radio is on; a pet never fetches anything
+and no pet action carries a word out of the house. What comes in is cleaned to plain text, and a pet is told the
+kind of music and the song's name. (Until 13 October 2026 it spoke scraps of news, the forecast and "on this day".)"""
 import datetime
 import json
 import logging
 import re
 import time
 import urllib.request
-import xml.etree.ElementTree as ET
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -48,58 +47,40 @@ def get(url, cfg, opener=urllib.request.urlopen):
         return r.read().decode("utf-8", "replace")
 
 
-def parse(kind, raw):
-    """A source's reply as short things for the box to say."""
-    if kind == "forecast":
-        d = json.loads(raw)["daily"]
-        names = ["Today", "Tomorrow", "The day after"]
-        return ["The forecast for the Twin Cities. %s: %s, a high of %d and a low of %d degrees, wind up to %d.%s" % (
-            names[i], WMO.get(d["weather_code"][i], "changeable weather"), round(d["temperature_2m_max"][i]), round(d["temperature_2m_min"][i]),
-            round(d["wind_speed_10m_max"][i]), " Frost overnight." if d["temperature_2m_min"][i] <= 0 else "") for i in range(min(3, len(d["time"])))]
-    if kind == "onthisday":
-        return ["On this day in %s: %s" % (e["year"], e["text"]) for e in json.loads(raw).get("selected", []) if e.get("text")]
-    if kind == "rss":
-        out = []
-        for item in ET.fromstring(raw).iter("item"):
-            title, about = (item.findtext("title") or "").strip(), (item.findtext("description") or "").strip()
-            out.append("In the news: %s. %s" % (title.rstrip("."), about) if about else "In the news: " + title)
-        return out
-    raise ValueError("unknown kind of source: %s" % kind)
+def station(house, cfg):
+    """The station their radio is tuned to (SPEC-v3.5.1 §5): the one chosen last, else the first."""
+    S = {x["id"]: x for x in cfg["radio"]["stations"]}
+    return S.get(house.get("radio", {}).get("station")) or cfg["radio"]["stations"][0]
 
 
-def refresh(cfg, directory, now=None, fetch=get):
-    """Ask each source that is due, keep what it said in `directory`/<name>.json, and write the whole of every
-    reply into fetched.log. A source that fails keeps its old words; with none, the radio plays static."""
+def now_playing(cfg, directory, st, now=None, fetch=get):
+    """The engine (never a pet) asks the station what it is playing, at most once a minute, and keeps it in
+    `directory`/now.json; the whole reply goes into fetched.log. None if it cannot be had (it plays all the same)."""
     directory, now = Path(directory), now or time.time()
     directory.mkdir(parents=True, exist_ok=True)
-    today = datetime.date.fromtimestamp(now)
-    for src in cfg["radio"]["sources"]:
-        cache = directory / ("%s.json" % re.sub(r"\W+", "-", src["name"]))
-        had = json.loads(cache.read_text()) if cache.exists() else {"at": 0, "items": []}
-        if now - had["at"] < cfg["radio"]["fetch_minutes"] * 60:
-            continue
-        url = src["url"].format(month="%02d" % today.month, day="%02d" % today.day)
-        try:
-            raw = fetch(url, cfg)
-            items = [c for c in (clean(x, cfg) for x in parse(src["kind"], raw)) if c]
-        except PermissionError:
-            raise
-        except Exception as e:
-            logging.warning("radio: %s not available: %r", src["name"], e)
-            raw, items = "FAILED %r" % e, had["items"]
-        with (directory / "fetched.log").open("a") as f:
-            f.write(json.dumps({"at": now, "source": src["name"], "url": url, "raw": raw}) + "\n")
-        cache.write_text(json.dumps({"at": now, "items": items}))
-    return items_in(cfg, directory)
+    cache = directory / "now.json"
+    had = json.loads(cache.read_text()) if cache.exists() else {}
+    if had.get("station") == st["id"] and now - had.get("at", 0) < cfg["radio"]["fetch_seconds"]:
+        return had.get("song")
+    url = cfg["radio"]["now_url"].format(chan=st["chan"])
+    try:
+        raw = fetch(url, cfg)
+        d = json.loads(raw)
+        song = {"artist": clean(d.get("artist") or "", cfg, 80), "title": clean(d.get("title") or "", cfg, 120)}
+        song = song if song["title"] else None
+    except PermissionError:
+        raise
+    except Exception as e:
+        logging.warning("radio: %s not available: %r", st["id"], e)
+        raw, song = "FAILED %r" % e, had.get("song") if had.get("station") == st["id"] else None
+    with (directory / "fetched.log").open("a") as f:
+        f.write(json.dumps({"at": now, "source": st["id"], "url": url, "raw": raw}) + "\n")
+    cache.write_text(json.dumps({"at": now, "station": st["id"], "song": song}))
+    return song
 
 
-def items_in(cfg, directory):
-    out = []
-    for src in cfg["radio"]["sources"]:
-        cache = Path(directory) / ("%s.json" % re.sub(r"\W+", "-", src["name"]))
-        if cache.exists():
-            out += [{"source": src["name"], "text": t} for t in json.loads(cache.read_text())["items"]]
-    return out
+def song_words(song):
+    return '"%s"%s' % (song["title"], " by " + song["artist"] if song.get("artist") else "") if song else None
 
 
 def boxes(house):
@@ -110,50 +91,46 @@ def is_on(house):
     return any(o["state"] == "on" for _, _, o in boxes(house))
 
 
-def tick(house, cfg, items):
-    """While a box is on it says one thing every so often to whoever is in the room, and static if it has nothing."""
-    R = cfg["radio"]
+def playing(house, cfg, rid):
+    """The station playing in this room, or None."""
+    return station(house, cfg) if any(room["id"] == rid and o["state"] == "on" for room, _, o in boxes(house)) else None
+
+
+def tick(house, cfg, song):
+    """While their radio is on it plays the station: whoever is in the room hears what kind of music it is, and the
+    song's name each time a new one begins (physics feels the music; a body may dance to it)."""
     st = house.setdefault("radio", {"next": 0, "told": [], "said": []})
+    S = station(house, cfg)
     on = sorted("%s|%s" % (room["id"], name) for room, name, o in boxes(house) if o["state"] == "on")
-    if set(on) - set(st.get("on", [])):   # just switched on, by the visitor or a pet: it speaks straight away, not at the next slot
-        st["next"] = house["tick"]
-    st["on"] = on
+    key = [S["id"], (song or {}).get("title")] if on else None
+    if key == st.get("heard"):
+        return
+    fresh = set(on) - set(st.get("on", [])) or (st.get("heard") or [None])[0] != S["id"]
+    st["on"], st["heard"] = on, key
     for room, name, o in boxes(house):
         if o["state"] != "on":
             continue
-        if house["tick"] < st["next"]:
-            continue
-        if not items and house["tick"] - st["next"] < 60 / (cfg["clock"]["tick_seconds"] * cfg["pace"]):
-            continue   # nothing has come in yet (a box only just set down): it warms up for a minute before it gives static
-        st["next"] = house["tick"] + max(1, round(R["every_minutes"] * 60 / (cfg["clock"]["tick_seconds"] * cfg["pace"])))
-        plays = st.get("plays") or "mix"   # news, forecast, on this day, or a mix (SPEC-v3.3 §3.2)
-        of = [i for i in items if plays == "mix" or i["source"] == plays] or items
-        fresh = [i for i in of if i["text"] not in st["told"]] or of
-        pick = fresh[(house["tick"] // 7) % len(fresh)] if fresh else None   # a different source each time, by the clock
-        if pick:
-            st["told"] = (st["told"] + [pick["text"]])[-300:]
-        rec = {"tick": house["tick"], "room": room["id"], "source": pick["source"] if pick else "static", "text": pick["text"] if pick else ""}
-        st["said"] = (st["said"] + [rec])[-40:]
+        words = "the radio is playing something %s%s" % (S["sound"], ": " + song_words(song) if song else "")
+        rec = {"tick": house["tick"], "room": room["id"], "source": S["id"], "text": song_words(song) or S["sound"]}
         house.setdefault("fresh_radio", []).append(rec)
         for p in house["pets"].values():
             if p["room"] == room["id"] and p["stage"] not in ("egg", "dead") and not p["sleep"]:
-                if pick:
-                    p.setdefault("box", []).insert(0, {"tick": house["tick"], "text": pick["text"]})
-                    del p["box"][R["keep"]:]
+                if song:
+                    p.setdefault("box", []).insert(0, {"tick": house["tick"], "text": "%s, %s" % (song_words(song), S["sound"])})
+                    del p["box"][cfg["radio"]["keep"]:]
+                if fresh:
                     p["news"].append("heard")
-                p["events"].append([house["tick"], 'the box says: "%s"' % pick["text"] if pick else STATIC])
+                p["events"].append([house["tick"], words])
 
 
 def visitor(house, cfg, room, on, plays):
-    """The Radio control (SPEC-v3.3 §3.2). Once the pets have found their box, this turns THEIR box on or off, wherever
-    it is, and says what it plays. Before that it is the visitor's own little radio, set down in the room being
-    looked at. Returns the room the box is in. Pets can still switch theirs themselves."""
+    """The Radio control (SPEC-v3.3 §3.2; SPEC-v3.5.1 §5: `plays` is a station). Once the pets have found their box,
+    this turns THEIR box on or off, wherever it is, and tunes it. Before that it is the visitor's own little radio,
+    set down in the room being looked at. Returns the room the box is in. Pets can still switch theirs themselves."""
     from .world import add_event, free_tile
     st = house.setdefault("radio", {"next": 0, "told": [], "said": []})
-    if plays in ("mix", "news", "forecast", "on this day"):
-        if on and st.get("plays", "mix") != plays:
-            st["next"] = house["tick"]   # asked for something else: it gives some of that now
-        st["plays"] = plays
+    if plays in [x["id"] for x in cfg["radio"]["stations"]]:
+        st["station"] = plays
     theirs = [(r, n, o) for r, n, o in boxes(house) if n != "little radio"]
     if not theirs:   # the visitor's own: set down where the visitor is looking while it plays, taken away when it is switched off
         for r in house["rooms"].values():
@@ -168,7 +145,7 @@ def visitor(house, cfg, room, on, plays):
             o["state"] = "on" if on else "off"
             for p in house["pets"].values():
                 if p["room"] == r["id"] and p["stage"] not in ("egg", "dead") and not p["sleep"]:
-                    add_event(house, p, "the visitor turned the box %s" % ("on" if on else "off"))
+                    add_event(house, p, "the visitor turned the radio %s" % ("on" if on else "off"))
                     p["news"].append("visitor")
     return theirs[0][0]["id"] if theirs else None
 

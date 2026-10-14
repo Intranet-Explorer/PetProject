@@ -16,7 +16,7 @@ import time
 from collections import Counter, deque
 from pathlib import Path
 
-from . import actions, body, craft, director, feel, genes, genome, invent, life, log, mind, order, physics, radio, sleep, story, things, wants, world
+from . import actions, body, craft, director, feel, genes, genome, hub, invent, life, log, mind, order, physics, radio, sleep, story, things, wants, world
 from .memory import Memory
 from .world import LONG_AGO, NEEDS, add_event, alive, dist, family, here, hours, label, load_config, moment, new_house, relation, ticks
 
@@ -603,7 +603,7 @@ class Engine:
             if pet["stage"] != "dead":
                 for k, v in (("family", 1), ("songs", []), ("read", []), ("box", []), ("with", {}), ("knows", []), ("chalked", 0), ("animals", [])):
                     pet.setdefault(k, v)
-        self.radio_items = radio.items_in(cfg, self.dir / "radio")   # what the box has to say; the server keeps it fresh
+        self.radio_song = None   # SPEC-v3.5.1 §5: the song the station is playing, kept fresh by the server
         invent.install(self.house, cfg)   # SPEC-v3.5 §3: the kinds this house invented are kinds here
         self.to_kinds()
         if not readonly:
@@ -702,7 +702,9 @@ class Engine:
             for m in self.minds.values():
                 m.log_body("v3.5: parts")
         from . import machine
+        hub.migrate(h, cfg)   # SPEC-v3.5.1: a house lived in before the machine room gains it: the machine leaves the storeroom for it
         machine.migrate(h, cfg)   # SPEC-v3.5 §4.3: a house lived in before the vending machine gains it
+        hub.settle_radio(h, cfg)
         for pet in h["pets"].values():   # 13 October 2026: what it has made lately is counted over three world days, from the things themselves
             if "made_at" not in pet and pet["stage"] not in ("egg", "dead"):
                 pet["made_at"] = sorted([o["made"]["tick"], "%s|%s" % (o["made"]["recipe"].get("kind"), o["made"]["recipe"].get("material"))]
@@ -934,7 +936,9 @@ class Engine:
         director.begin(h, cfg)
         things.behave(h, cfg)
         invent.tick(h, cfg)   # SPEC-v3.5 §3.0: what an invented thing does by itself (a carried light goes with its owner)
-        radio.tick(h, cfg, self.radio_items)
+        radio.tick(h, cfg, self.radio_song)
+        for pet in h["pets"].values():   # SPEC-v3.5.1 §2: whoever is in the machine room reads its lit sign
+            hub.read_sign(h, cfg, pet)
         seconds = cfg["clock"]["tick_seconds"]
         for pet in list(h["pets"].values()):
             if pet["stage"] == "egg":

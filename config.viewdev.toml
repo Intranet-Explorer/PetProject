@@ -29,8 +29,6 @@ drift_after_days = 3
 [arrivals]
 force = true
 
-[radio]
-every_minutes = 1
 
 [weather]
 real = false
