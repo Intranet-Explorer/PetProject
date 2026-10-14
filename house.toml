@@ -263,11 +263,12 @@ regrow_hours = 24
 bits = {}
 rule = "hub"
 fixtures = [
-  { name = "vending machine", pos = [4, 0], machine = true, says = "a great machine with lit windows: it gives out wood, stone, metal, clay, fibre and sand, and takes made things and bits back" },   # SPEC-v3.5 §4.3 (machine.toml), moved here
-  { name = "lit sign", pos = [9, 0], sign = true, says = "a long sign of small lights on the wall: words run across it, the time, what the weather will do tomorrow, and what has happened in the house" },
-  { name = "left screen", pos = [1, 3], terminal = true, book = true, says = "a glass screen with keys under it: ask it something and the words of the book come up on the glass" },
-  { name = "middle screen", pos = [1, 5], terminal = true, book = true, says = "a glass screen with keys under it: ask it something and the words of the book come up on the glass" },
-  { name = "right screen", pos = [10, 5], terminal = true, book = true, says = "a glass screen with keys under it: ask it something and the words of the book come up on the glass" },
+  { name = "vending machine", pos = [1, 0], machine = true, says = "a great machine with lit windows: it gives out wood, stone, metal, clay, fibre and sand, and takes made things and bits back" },   # SPEC-v3.5 §4.3 (machine.toml), moved here
+  { name = "lit sign", pos = [8, 0], sign = true, says = "a long sign of small lights on the wall: words run across it, the time, what the weather will do tomorrow, and what has happened in the house" },
+  { name = "left screen", pos = [9, 0], terminal = true, book = true, says = "a glass screen with keys under it: ask it something and the words of the book come up on the glass" },
+  { name = "middle screen", pos = [10, 0], terminal = true, book = true, says = "a glass screen with keys under it: ask it something and the words of the book come up on the glass" },
+  { name = "right screen", pos = [11, 0], terminal = true, book = true, says = "a glass screen with keys under it: ask it something and the words of the book come up on the glass" },
+  { name = "crates", pos = [11, 6], store = 6, inside = true },
 ]
 
 # ---- each room's own rule (§6.1): hidden, felt through senses ----
