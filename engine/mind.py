@@ -176,9 +176,13 @@ def perceive(house, cfg, pet, mem):
     unseen = [d for d, rid in room["doors"].items() if rid not in pet["rooms"]]
     if unseen and feel.level(pet, "curiosity") >= (2 if T["bold"] < 0.4 else 1):   # boredom points at the one thing here not yet tried
         senses.append("you wonder what is through the %s door" % unseen[0])
-    elif feel.level(pet, "curiosity") >= 2:   # SPEC-v3.5.4 §2: and a bored pet goes looking: somewhere it has not been for a long while
+    elif feel.level(pet, "curiosity") >= 2:   # SPEC-v3.5.4 §2: and a bored pet goes looking: a door it knows of and has never been through, or somewhere it has not been for a long while
         stale = min((r for r in pet["rooms"] if r != room["id"] and house["rooms"].get(r, {}).get("type")), key=lambda r: pet["rooms"][r], default=None)
-        if stale and tick - pet["rooms"][stale] >= cfg["body"]["stale_hours"] * cfg["ticks_per_hour"]:
+        door = next(((r, d) for r in pet["rooms"] if house["rooms"].get(r, {}).get("type") for d, to in house["rooms"][r]["doors"].items()
+                     if to not in pet["rooms"] and house["shut"].get("%s|%s" % (r, d), LONG_AGO) <= tick), None)
+        if door:
+            senses.append("you have never been through the %s door of %s" % (door[1], house["rooms"][door[0]]["name"]))
+        elif stale and tick - pet["rooms"][stale] >= cfg["body"]["stale_hours"] * cfg["ticks_per_hour"]:
             senses.append("you have not been in %s for a long while" % house["rooms"][stale]["name"])
     senses += machine.sense(house, cfg, pet)   # SPEC-v3.5 §4.3: one line, only in the machine's room
     if actions.offered(pet):
