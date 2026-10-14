@@ -303,7 +303,10 @@ async def sky():
     while cfg["weather"]["real"] and not PAUSED:
         try:
             raw = await asyncio.to_thread(lambda: urllib.request.urlopen(cfg["weather"]["real_url"], timeout=20).read())
-            director.real_weather(eng.house, director.real_kind(json.loads(raw)["current"]))
+            d = json.loads(raw)
+            director.real_weather(eng.house, director.real_kind(d["current"]))
+            if d.get("hourly", {}).get("weather_code", [])[2:]:   # SPEC-v3.5.1 §2: the sky two real hours on (the house's tomorrow, on the live clock), for the lit sign
+                eng.house["real_forecast"] = {"day": eng.house["clock"]["day"] + 1, "kind": director.real_kind({"weather_code": d["hourly"]["weather_code"][2], "temperature_2m": d["hourly"]["temperature_2m"][2]})}
         except Exception as e:
             logging.warning("real weather not available: %r", e)
         await asyncio.sleep(3600)

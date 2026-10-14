@@ -33,9 +33,10 @@ names there. `view/assets/third_party/CREDITS.md` credits what is used.
 
 **The book** reads `book/wikipedia_en-simple_all_maxi_2026-09.zim` (Simple English Wikipedia from
 download.kiwix.org, 2.9 GB, not in the repository). Without it the book never arrives and nothing else minds.
-**The radio** asks three fixed hosts, at most once an hour each and only once there is a radio in the house:
-the list and the allowlist are `[radio]` in `config.toml`, and everything it was ever sent is in
-`data/radio/fetched.log`. No pet action reaches the network.
+**The radio** (since v3.5.1) is a real station, Radio Paradise: while the pets' radio is on, the page plays the
+chosen mix's stream and the engine asks `api.radioparadise.com` what song is on, at most once a minute. The
+stations and the allowlist are `[radio]` in `config.toml`; every reply is in `data/radio/fetched.log`. The old
+news, spoken forecast and "on this day" are gone. No pet action reaches the network.
 
 **Profiles** are laid over `config.toml`. A house keeps to the world clock it was made on: the living family
 was made on the showcase's, so it is started with `live` (or `showcase`), never with no profile.
@@ -61,7 +62,7 @@ was made on the showcase's, so it is started with `live` (or `showcase`), never 
 - **You are the visitor**, in whichever room you are looking at: feed, talk, give a bit, move things, poke,
   open the window, name a pet or a thing. **Music** in the header plays calm, lively, mysterious or sad music
   to the room or the whole house (the pets feel it, may dance, and can pick the tune up); **Radio** switches
-  the pets' radio on and chooses what it plays, or sets down your own little one until they have found theirs.
+  the pets' radio on and chooses the station, or sets down your own little one until they have found theirs.
 - **Stock the machine** in the header puts base materials of your choice (wood, stone, metal, clay, fibre, sand)
   into the vending machine in the storeroom, up to its limit of 12 each. The pets are told you did.
 - **Sheets** (v3.5): `/sheet.html` shows every living pet's sprite by family and every thing invented in the

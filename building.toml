@@ -38,7 +38,8 @@ weight = 3.0              # ... and for one not begun, unless the project says o
 recent_days = 8           # how long a room that leaked or took a draught is remembered as one that does
 wear_days = 14            # a built thing has worn after this many world days, and wants mending with the hammer
 company = 2.0             # what working side by side is worth to each
-lift = { comfort = 3.0, curiosity = 2.0 }   # what having had a paw in a finished thing is worth to whoever did not hold the want
+lift = { comfort = 3.0, curiosity = 2.0 }
+honour_days = 3           # SPEC-v3.5.1 §4: the want to raise a founder's statue holds this long before it can fade   # what having had a paw in a finished thing is worth to whoever did not hold the want
 
 # ---- furniture ----
 
@@ -103,10 +104,11 @@ when = "honour"
 honours = 1               # the family whose first one it is
 want = "the first of your family has no stone to remember it by: you want to raise a statue of the first one in {room}"
 done = "raised a statue of the first one in {room}"
-needs = { stone = 6 }
+needs = { stone = 5 }
 sessions = 16
 at = [5, 4]
 exact = true
+fix = { cozy = true }      # (near the first one, a pet is easier)
 says = "the first one of the family, in stone, as it was"
 weight = 4.0
 
@@ -117,10 +119,11 @@ when = "honour"
 honours = 2               # the second family, that came from the foundling egg
 want = "the first of your family has no stone to remember it by: you want to raise a statue of the first one in {room}"
 done = "raised a statue of the first one in {room}"
-needs = { stone = 6 }
+needs = { stone = 5 }
 sessions = 16
 at = [7, 4]
 exact = true
+fix = { cozy = true }      # (near the first one, a pet is easier)
 says = "the first one of the family, in stone, as it was"
 weight = 4.0
 

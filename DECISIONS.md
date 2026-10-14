@@ -1603,3 +1603,52 @@ the uses: spade, chimes, pad, seeds.
 - Food keeps in any store, not only a crafted pot or basket. Spoiling only costs stock: loose food is never eaten
   directly. Indoor pots still grow slowly in winter.
 - A bed's sleep is not in the snapshot; the view shows snow by season.
+
+## Part 18: v3.5.1, the hub (13 October 2026)
+
+How it was run: the engine by the lead, the art and view by two helpers (the machine and its room; the sign, the
+screens, the statue and the radio). Tested on a copy with stub minds for the moves (the machine and radio change
+rooms), then deployed to the live house with a backup, as the spec says.
+
+**The room (§1).**
+- The hub is not one of the nine room types: it is hung on afterwards, on the outside of the storeroom (north if
+  free, else west, east, south), as room `rhub`. On the live house that is cell [0, -1], north of the storeroom.
+  A new house gets it at birth; a lived-in one on load.
+- The machine leaves the storeroom at the restart, not when the hub is found: whoever is in the storeroom is told
+  a door stands where it stood, and the door is wanted like any untried door. Until someone goes in, "Stock the
+  machine" says nobody has found it.
+- The radio moves into the hub when the hub is found (and a radio that arrives later goes straight there), and is
+  no longer movable. Its name stays "dial box": the pets know it by that name.
+
+**The lit sign (§2).** The engine keeps the last eight headlines from moments (inventions, discoveries, hatchings,
+deaths, things built, statues, rooms found) and tomorrow's weather; the view draws the time from the clock. On the
+live house, which uses the real sky, "tomorrow" is the real forecast two hours on (one world day on the live
+clock), from the same weather host as before. A pet in the hub reads tomorrow's weather once a day and each new
+headline once (two at most at a time), as events: no thought is woken for it.
+
+**The screens (§3).** Three screens, each a "book" that cannot be carried. A pet uses one nobody else has used in
+the last world hour; at a screen it may ask again after a quarter hour (the heavy book still asks an hour). The
+screens are dark until the book has arrived in the house. What was asked and read stays on the glass.
+
+**The statue (§4).**
+- Two projects in `building.toml`, one per family, on fixed plinths ([5, 4] and [7, 4]); five stone, sixteen
+  spells with a hammer. A statue eases whoever is near it (cozy).
+- The eldest living of a family whose founder is dead is given the want outright once the hub is found (in place
+  of its oldest want) and holds it three days before it can fade; it is told where the hub is if it has not been.
+  Once begun, everyone has the want to work on it, as for any project.
+- A founder's family is traced through its children (the dead are put away without it). On the live house the
+  founders are the little one (family 1, never named) and Purple Camo (family 2).
+- A statue of an unnamed founder gets a name through the `name` action ("statue"), wanted by the grown of that
+  family; Purple Camo's statue carries its own name. The plaque's words are the founder's last words.
+
+**The radio (§5).**
+- SomaFM was ruled out: its terms forbid playing its streams in any other site or app without written permission,
+  and its API is closed to third parties.
+- Chosen: Radio Paradise's four mixes, Serenity, Mellow, Main and Rock (mellow to lively). Listener-supported,
+  no ads; its FAQ recommends other players (VLC, "just about any other radio app") and gives direct stream links.
+  It says nothing about web pages either way: the house's page is a player on Tyler's own Mac, for him alone.
+  Its now-playing address (`api.radioparadise.com`) is public but undocumented. Tyler should confirm or veto.
+- The engine asks what song is on at most once a minute while the radio is on; it replaces the three old hosts
+  on the radio's allowlist (the weather host stays, for the real sky). A pet is told the kind of music on a station
+  change or a new song, and feels it like the visitor's music of that mood; it may dance. Songs heard are kept in
+  `pet["box"]` as the box's words were.
