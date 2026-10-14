@@ -4,6 +4,7 @@ import asyncio
 import json
 import logging
 import re
+import time
 import urllib.request
 from pathlib import Path
 from urllib.parse import urlparse
@@ -201,6 +202,16 @@ def night_schema(asks, belief_ids, tellers):
     return obj(**{k: parts[k] for k in asks})
 
 
+# SPEC-v3.5.3 §10: a reply with writing in another script ("resist the冲动") is asked for again, once; whatever of it is
+# still there after that is taken out. Each time is noted in foreign.jsonl beside training.jsonl, to count how often.
+FOREIGN = re.compile(r"[\u0370-\u03ff\u0400-\u052f\u0590-\u08ff\u0900-\u0dff\u0e00-\u0eff\u1100-\u11ff\u3000-\u30ff\u3400-\u4dbf"
+                     r"\u4e00-\u9fff\ua000-\ua4cf\uac00-\ud7af\uf900-\ufaff\uff00-\uffef]+")
+
+
+def foreign(text):
+    return bool(FOREIGN.search(text or ""))
+
+
 def parse(reply):
     try:
         d = json.loads(re.sub(r"^```(?:json)?\s*|\s*```$", "", reply.strip()))
@@ -231,8 +242,15 @@ class Model:
             body["response_format"] = {"type": "json_schema", "json_schema": {"name": "reply", "schema": schema}}
         req = urllib.request.Request(self.cfg["endpoint"] + "/chat/completions", json.dumps(body).encode(),
                                      {"Content-Type": "application/json"})
-        with urllib.request.urlopen(req, timeout=600 if think else self.cfg["timeout_seconds"]) as r:
-            reply = json.load(r)["choices"][0]["message"]["content"] or ""
+        for again in (False, True):
+            with urllib.request.urlopen(req, timeout=600 if think else self.cfg["timeout_seconds"]) as r:
+                reply = json.load(r)["choices"][0]["message"]["content"] or ""
+            if not foreign(reply):
+                break
+            logging.warning("model reply in another script (%s)%s", kind, ", again" if again else "; asking once more")
+            with (self.training.parent / "foreign.jsonl").open("a") as f:
+                f.write(json.dumps({**self.tag, "kind": kind, "at": time.time(), "again": again, "bits": FOREIGN.findall(reply)[:5]}) + "\n")
+        reply = FOREIGN.sub("", reply)
         with self.training.open("a") as f:   # every prompt and reply, tagged with whose it is, for a later LoRA (§14)
             f.write(json.dumps({**self.tag, "kind": kind, "prompt": prompt, "response": reply}) + "\n")
         return reply

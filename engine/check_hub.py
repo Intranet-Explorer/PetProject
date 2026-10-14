@@ -83,6 +83,7 @@ async def run(d):
     pet["asked_at"] = h["tick"] - round(cfg["book"]["terminal_hours"] * cfg["ticks_per_hour"]) - 1
     assert book.check_ask(a, h, cfg, pet, lambda x: bool(x)) is None, "a quarter hour at a screen, not an hour"
     text, fx, key = book.ask(h, cfg, pet, a, lambda x, n: x)
+    assert "on the screen" in text or "searched the screen" in text, text   # SPEC-v3.5.3 §10: a screen is not the book
     s = room["objects"][n1]["screen"]
     assert s["pet"] == pet["id"] and s["asked"] == "what is a hammer" and s["tick"] == h["tick"], "what it asked is on the glass"
     assert actions.check(dict(a), h, cfg, pet, eng.minds[pet["id"]].mem) is not None, "and not again so soon"
@@ -142,6 +143,8 @@ async def run(d):
     radio.tick(h, cfg, {"artist": "A", "title": "Song"})
     radio.tick(h, cfg, {"artist": "A", "title": "Song"})
     assert sum("the radio is playing" in e for _, e in pet["events"]) == 1 and "loud and driving" in pet["events"][0][1]
+    from .brains.model import FOREIGN, foreign   # SPEC-v3.5.3 §10
+    assert foreign("resist the冲动") and not foreign("a café — “naïve”, it's 3°C") and FOREIGN.sub("", "resist the冲动") == "resist the"
     print("hub check passed")
 
 
