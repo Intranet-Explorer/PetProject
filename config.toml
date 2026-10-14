@@ -420,3 +420,8 @@ tunes = { calm = ["mi long", "so long", "mi long", "re long", "do long"], lively
 glow_hours = 4            # world hours a glow of pride takes to fade (§12)
 glow_curiosity = 3.0      # curiosity a glow lifts, per size (pleased 1, proud 2, very proud 3)
 keep_feats = 200          # feats the house keeps for the board and the packet
+board_rows = 4            # SPEC-v3.5.4 §11: feats the board shows at once, beside the Works (one line to a pet)
+board_hours = 1           # world hours between turns of the board (it turns at once for a new feat)
+board_days = 3            # world days a feat can be on the board, and a pet's turns up there are remembered
+board_named = 6           # each turn a pet has had on the board lately puts its next this many world hours back
+board_young = 3           # ... and a young one's comes this many world hours sooner (less than a turn: it is favoured, not always up)

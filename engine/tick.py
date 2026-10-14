@@ -712,9 +712,10 @@ class Engine:
         if genes.migrate(h, cfg):   # SPEC-v3.5 §2.4 comes to a house already lived in, once: everyone living gets their parts
             for m in self.minds.values():
                 m.log_body("v3.5: parts")
-        from . import machine
+        from . import machine, works
         hub.migrate(h, cfg)   # SPEC-v3.5.1: a house lived in before the machine room gains it: the machine leaves the storeroom for it
         machine.migrate(h, cfg)   # SPEC-v3.5 §4.3: a house lived in before the vending machine gains it
+        works.lay(h, cfg)   # SPEC-v3.5.4 §8: what the Works has built stays built
         hub.settle_radio(h, cfg)
         for pet in h["pets"].values():   # 13 October 2026: what it has made lately is counted over three world days, from the things themselves
             if "made_at" not in pet and pet["stage"] not in ("egg", "dead"):

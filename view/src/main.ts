@@ -5,6 +5,7 @@ import { $, bar, doingOf, el, emoteOf, face, goodWord, hatchWords, moodWords, ow
 import type { Ctx, Kid } from "./dom";
 import { showRecord } from "./family";
 import { hubTip, openScreen, radioChoice, radioControl, radioSound, screens } from "./hub";
+import { boardRows } from "./px/hub";
 import { icon } from "./icons";
 import { drawMap } from "./minimap";
 import { noteInvented } from "./parts";
@@ -21,6 +22,7 @@ import { Room } from "./room";
 import type { Target } from "./room";
 import { artReady, aThing, firstSprite, hasSprite, sprite, thingSprite } from "./sprite";
 import { momentRow } from "./story";
+import { giveStar } from "./ui";
 import { ago, fam, hhmm } from "./types";
 import { voiceInput } from "./voice";
 import { initVoice } from "./voicelab";
@@ -366,6 +368,13 @@ function side(s: Snap, here: RoomV) {
     ...found(s).filter((r) => Object.values(r.objects).some((o) => o.fix?.radio && o.state === "on")).map((r) => line("", "radio", `the radio is on in ${r.name}${s.dj?.radio.now ? `: ${s.dj.radio.now.title}` : ""}`, r.id)),
     ...s.creatures.map((cr) => line("", cr.tame ? "paw" : "mouse", `${beast(cr)} in ${name(cr.room)}, ${cr.doing}`, cr.room)),
   );
+  const B = (s.ticker?.board ?? []).slice(0, 4), hubRoom = s.ticker?.room ?? null;   // SPEC-v3.5.4 §11: the board's lines, seen from any room
+  $("board").hidden = !B.length;
+  $("board").replaceChildren(...B.map((l) => {
+    const li = el("li", l.kind, el("span", "", boardRows(l)[0]), l.meter ? bar(l.meter[0], l.meter[1]) : null, el("span", "who", l.meter ? `${l.meter[0]} of ${l.meter[1]} scrap` : boardRows(l)[1] ?? ""));
+    if (hubRoom) li.onclick = () => jump({ room: hubRoom });
+    return li;
+  }));
   const key = `${s.moments.at(-1)?.n}`;
   if ($("moments").dataset.key !== key) {
     $("moments").dataset.key = key;
@@ -450,6 +459,10 @@ function controls(s: Snap, here: RoomV) {
   $<HTMLInputElement>("nameText").disabled = !can;
   $<HTMLInputElement>("nameText").title = $("nameBtn").title;
   $("chosenDone").hidden = !thing;
+  const star = $<HTMLButtonElement>("starBtn");   // SPEC-v3.5.4 §10: the visitor's star, one to a thing
+  star.hidden = !thing?.made;
+  star.disabled = !!thing?.made?.star;
+  star.textContent = thing?.made?.star ? "★ Starred" : "★ Star";
   $("room").classList.toggle("placing", !!thing);
 }
 
@@ -589,9 +602,10 @@ function tipFor(t: Target): Kid[] | null {
       el("b", "", aThing(m.recipe)), el("p", "", `“${m.called ?? t.object}”`),
       el("p", "hint", [`made by ${maker}`, m.owner_name && m.owner_name !== maker ? `${m.owner_name}'s now` : !m.owner_name ? "nobody's now" : null, m.heirloom ? "an heirloom" : null].filter(Boolean).join(" · ")),
       el("p", "hint", `${m.recipe.material}${m.recipe.purpose ? ` · for “${m.recipe.purpose}”` : ""}`),
+      m.star ? el("p", "star", "★ The visitor gave it a star.") : null,
       ...kept(t),
       el("p", "truth", el("b", "", "What it really does: "), `${truthOf({ hello }, m).join("; ")}.`),
-      replayId ? null : el("p", "hint", "Click to move or name it."),
+      replayId ? null : el("p", "hint", m.star ? "Click to move or name it." : "Click to move, name or star it."),
       ...(here.marks ?? []).filter((x) => x.on === t.object).flatMap(written))];
   }
   if (o?.memorial) return [drawn(t) ?? (hasSprite("stone") ? sprite("stone", 3) : null), el("div", "", el("b", "", "a stone"), el("p", "", o.memorial.text), ...kept(t),
@@ -651,6 +665,11 @@ $("window").onclick = () => act({ type: "window" });
 $("giveBtn").onclick = () => act({ type: "give", bit: $<HTMLSelectElement>("giveBit").value });
 $("poke").onclick = () => act({ type: "poke", pet: view.sel });
 $("chosenDone").onclick = () => { picked = null; render(); };
+$("starBtn").onclick = async () => {
+  const m = picked ? snap?.rooms.find((r) => r.id === view.room)?.objects[picked]?.made : null;
+  const why = m ? await giveStar(String(m.id)) : null;
+  if (why) flash(why, true);
+};
 $("newLineage").onclick = () => send({ type: "new_lineage" });
 $("talkForm").onsubmit = (e) => {
   e.preventDefault();

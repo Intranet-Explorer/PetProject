@@ -1,0 +1,47 @@
+# The Works (SPEC-v3.5.4 §8): what the machine in the machine room builds for the whole house from the scrap it is
+# fed (engine/works.py). The pets are told none of these numbers: they hear what it is building and how near it is in
+# words ("the Works is nearly full"). Tune here.
+
+[works]
+thing = 1                 # scrap a made thing fed to the machine counts for
+bits = 1                  # ... and three loose bits
+age_hours = 12            # a made thing counts only once it is this many world hours old: nothing straight from the machine and back
+nearly = 0.75             # from this much of its goal the Works is "nearly full"
+weight = 1.5              # a spare thing is wanted fed this much more while the Works has a goal
+nearly_weight = 2.0       # nearly full: how much a pet wants to feed it an old thing of its own that nobody has touched lately
+idle_days = 1             # ... "lately": this long
+keep = 400                # the things it has counted, kept so that none counts twice
+
+# What it builds, in this order, cheapest first. `what` is said to the pets and on the board; `scrap` is its goal.
+# What it does, one of:
+#   fixture   a fixture for every room of that type, found or not (as in house.toml, with `room` = the room type)
+#   machine   bigger numbers in machine.toml's [machine] (never smaller)
+#   material  one more material the machine holds and hands out (a bit from house.toml)
+# (A new part in the parts library needs its picture drawn: not one of these yet.)
+# The first goal is sized for the live house to reach in about a world day: some two to seven things a day were fed
+# to the machine before v3.5.4, and clearing crowded rooms (§1) sends it their old things.
+
+[[build]]
+what = "a lamp for the cellar"
+scrap = 12
+fixture = { room = "cellar", name = "lamp", pos = [7, 0], light = "on" }
+
+[[build]]
+what = "a shelf for the music room"
+scrap = 18
+fixture = { room = "music", name = "shelf", pos = [7, 0], store = 4 }
+
+[[build]]
+what = "a bigger morning delivery for the machine"
+scrap = 24
+machine = { restock = 3 }
+
+[[build]]
+what = "wax in the machine"
+scrap = 30
+material = "wax"
+
+[[build]]
+what = "a third thing a day from the machine for everyone"
+scrap = 40
+machine = { free = 3 }

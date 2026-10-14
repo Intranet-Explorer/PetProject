@@ -146,7 +146,7 @@ def room_view(r):
             owner = h["pets"].get(m["owner"])
             v["made"] = {"id": m["id"], "recipe": m["recipe"], "owner": m["owner"], "owner_name": label(owner) if owner else None, "by": m["by"],
                          "heirloom": m.get("heirloom"), "behavior": m.get("behavior"), "active": bool(o.get("active")), "uses": m["uses"],
-                         "ups": m["ups"], "useful": things.useful(m, cfg), "called": m.get("called"), "tick": m["tick"],
+                         "ups": m["ups"], "useful": things.useful(m, cfg), "called": m.get("called"), "tick": m["tick"], "star": m.get("star"),   # (SPEC-v3.5.4 §10)
                          "worn": [k for k in ("damp", "dusty", "eaten") if m.get(k)],
                          "loud": bool(things.prop(cfg, o).get("loud")),                           # it sounds when used (SPEC-v3.3 §4)
                          "hums": bool(o.get("active") and things.doing(cfg, o).get("loud"))}     # it is making a noise by itself now
@@ -539,6 +539,20 @@ async def api_thing(key: str):
     if out is None:
         raise HTTPException(404)
     return out
+
+
+@app.post("/api/star/{key}")
+async def api_star(key: str, request: Request):
+    """SPEC-v3.5.4 §10: the visitor gives a thing a star (one to a thing). From the house's own pages only."""
+    from . import board
+    if request.headers.get("origin") not in cfg["server"]["origins"]:
+        raise HTTPException(403)
+    error = "this is a finished run, opened to look at: nothing in it can be changed" if PAUSED else board.star(eng.house, cfg, key)
+    if error:
+        return Response(json.dumps({"error": error}), status_code=409, media_type="application/json")
+    eng.save()
+    await broadcast()
+    return {"ok": True}
 
 
 # SPEC-v3.5.3 §8: each pet's portrait as a PNG. The page draws pets (view/src/petsprite.ts, from the genome); the first

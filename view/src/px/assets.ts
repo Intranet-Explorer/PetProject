@@ -18,7 +18,7 @@ export type Decor = { sprite: string; at: Tile; layer?: string };
  *  A fixture's `wall`: it hangs on the wall (its sprite's anchor says where); `walk`: it can be stood on.
  *  `light.day`: how dim the room is by day. `light.sky` ("open": weather falls in the room; "glass": it shows on a glass roof). */
 export type Layout = { type?: string; floor?: (string | null)[][]; walls?: (string | null)[][]; decor?: Decor[]; doors?: string;
-  fixtures?: Record<string, { pos: Tile; sprite?: string | null; wall?: boolean; walk?: boolean; layer?: string }>; blocked?: Tile[]; wall_slots?: Tile[];
+  fixtures?: Record<string, { pos: Tile; sprite?: string | null; wall?: boolean; walk?: boolean; layer?: string; size?: [number, number]; anchor?: [number, number] }>; blocked?: Tile[]; wall_slots?: Tile[];
   bit_spots?: Record<string, Tile[]>; light?: { window?: Tile[]; night?: number; day?: number; sky?: string } };
 export type FromParts = { shape?: Record<string, string>; material?: Record<string, Record<string, string>>; many?: { hanging?: string[]; then?: string; else?: string }; pair?: Record<string, string> };
 

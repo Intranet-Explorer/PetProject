@@ -7,7 +7,7 @@ import { svg } from "../icons";
 import { href } from "../router";
 import { artReady } from "../sprite";
 import { hhmm } from "../types";
-import { a, button, chip, getJSON, petLink, thingLink, thingPic } from "../ui";
+import { a, button, chip, getJSON, giveStar, petLink, thingLink, thingPic } from "../ui";
 import { loadPets, momentRow, petOf } from "./story";
 import type { M } from "./story";
 
@@ -16,6 +16,7 @@ type Thing = {
   room: string | null; room_name: string | null; where: string; gone: string | null; tick: number | null; day: number | null; bits: string[];
   uses: number; heirloom: boolean; invented: boolean; statue: boolean; keepsake: boolean;
   of?: string; standing?: boolean; raised_day?: number | null; makers?: { id: string; name: string }[];
+  star?: number | null;   // SPEC-v3.5.4 §10: the tick the visitor gave it a star
 };
 type All = { things: Thing[]; kinds: string[]; rooms: string[] };
 
@@ -38,7 +39,7 @@ const by = (id: string | null, name: string | null, box = 0) => { const p = petO
 /** The engine keeps a purpose to 80 letters; one cut there trails off. */
 const purpose = (s: string | undefined) => (!s ? null : s.length >= 78 && !/[.!?]$/.test(s) ? `${s}…` : s);
 const kindLine = (t: Thing) => [t.statue ? "statue" : t.recipe.kind === t.name && t.invented ? null : t.recipe.kind ?? "thing", t.invented ? el("span", "badge gold", "invented") : null,
-  t.heirloom ? el("span", "badge", "heirloom") : null, t.gone ? el("span", "tag", "gone") : null];
+  t.heirloom ? el("span", "badge", "heirloom") : null, t.star != null ? el("span", "badge gold", "★ starred") : null, t.gone ? el("span", "tag", "gone") : null];
 
 // ---- the grid ----
 
@@ -56,7 +57,7 @@ function grid(root: HTMLElement, d: All) {
   const T = d.things, inv = new Set(T.filter((t) => t.invented).map((t) => t.recipe.kind));
   const list = T.filter((t) => (!kind || (t.statue ? "statue" : t.recipe.kind) === kind) && (!fam || t.family === fam) &&
     (!place || (place === "gone" ? !!t.gone : place === "keepsake" ? t.keepsake : t.room_name === place)) &&
-    (!mark || (mark === "invented" ? t.invented : t.statue)));
+    (!mark || (mark === "invented" ? t.invented : mark === "star" ? t.star != null : t.statue)));
   const redo = () => { shown = STEP; drawn = ""; grid(root, d); };
   const pick = (label: string, value: string, opts: [string, string][], set: (v: string) => void) => {
     const s = el("select", "", el("option", "", label), ...opts.map(([v, text]) => Object.assign(el("option", "", text), { value: v }))) as HTMLSelectElement;
@@ -75,7 +76,8 @@ function grid(root: HTMLElement, d: All) {
       pick("Everywhere", place, [...d.rooms.map((r): [string, string] => [r, r]), ["keepsake", "in a keepsake box"], ["gone", "gone (taken apart, joined, traded…)"]], (v) => (place = v)),
       el("span", "chips", chip("Both families", !fam, () => { fam = 0; redo(); }), chip("Family 1", fam === 1, () => { fam = 1; redo(); }), chip("Family 2", fam === 2, () => { fam = 2; redo(); }),
         chip("Invented kinds", mark === "invented", () => { mark = mark === "invented" ? "" : "invented"; redo(); }),
-        chip("Statues", mark === "statue", () => { mark = mark === "statue" ? "" : "statue"; redo(); }))),
+        chip("Statues", mark === "statue", () => { mark = mark === "statue" ? "" : "statue"; redo(); }),
+        chip("★ Starred", mark === "star", () => { mark = mark === "star" ? "" : "star"; redo(); }))),
     list.length !== T.length ? el("p", "hint", `${plural(list.length, "thing")} like that.`) : null,
     list.length ? el("div", "tgrid", ...list.slice(0, shown).map(card)) : el("p", "empty", "Nothing made like that."),
     list.length > shown ? el("p", "earlier", button(`Show more (${list.length - shown} left)`, () => { shown += STEP * 2; drawn = ""; grid(root, d); }, "button")) : null));
@@ -109,11 +111,26 @@ function thingPage(root: HTMLElement, t: Page) {
   root.replaceChildren(el("div", "tpage",
     el("p", "back", a("← All things", href("things"), "small")),
     el("div", `thead${t.gone ? " gone" : ""}`, el("div", "tbig", pic(t, 4)),
-      el("div", "", el("h2", "", t.name), el("p", "kind", ...kindLine(t)))),
+      el("div", "", el("h2", "", t.name), el("p", "kind", ...kindLine(t)), starButton(root, t))),
     facts(t),
     el("h3", "", "Its story"),
     t.moments.length ? el("ol", "storylist", ...t.moments.map((m) => momentRow(m, map, `day ${m.day}, ${hhmm(m.hour)}`)))
       : el("p", "empty", "Nothing told of it beyond its making.")));
+}
+
+/** SPEC-v3.5.4 §10: the visitor's star, one to a thing, for a thing still about the house (not a statue). */
+function starButton(root: HTMLElement, t: Page) {
+  if (t.gone || t.statue || t.star != null) return null;
+  const why = el("span", "hint", ""), b = button("★ Give it a star", async () => {
+    b.disabled = true;
+    const err = await giveStar(t.id);
+    if (err) { why.textContent = ` ${err}`; b.disabled = false; return; }
+    t.star = 0;
+    allAt = 0;
+    thingPage(root, t);
+  }, "button") as HTMLButtonElement;
+  b.title = "Its maker will feel it the next time it is awake, and it goes on the board in the machine room";
+  return el("p", "starit", b, why);
 }
 
 export async function render(root: HTMLElement, id: string | null): Promise<void> {
@@ -127,14 +144,14 @@ export async function render(root: HTMLElement, id: string | null): Promise<void
       if (page?.id !== id) { root.replaceChildren(el("p", "empty", "There is no such thing.")); drawn = ""; }
       return;
     }
-    const key = JSON.stringify(["page", p.id, p.where, p.moments.length, p.uses, !!d]);
+    const key = JSON.stringify(["page", p.id, p.where, p.moments.length, p.uses, p.star, !!d]);
     if (key === drawn && root.childElementCount) return;
     page = p;
     drawn = key;
     return thingPage(root, p);
   }
   if (!d) return;
-  const key = JSON.stringify(["grid", d.things.length, d.things[0]?.tick, d.things.filter((t) => t.gone).length, kind, fam, place, mark, shown]);
+  const key = JSON.stringify(["grid", d.things.length, d.things[0]?.tick, d.things.filter((t) => t.gone).length, d.things.filter((t) => t.star != null).length, kind, fam, place, mark, shown]);
   if (key === drawn) return;
   drawn = key;
   grid(root, d);

@@ -95,30 +95,26 @@ def ticker(house, cfg):
     """For the page: what the sign runs. The time it draws from the clock itself."""
     f = forecast(house, cfg)
     cold = house["clock"]["phase"] == "night" and cfg["house"]["seasons"][house["clock"]["season"]]["cold"] < 0
+    from . import board
     return {"room": RID if found(house) else None, "forecast": {"text": f["text"], "anim": f["anim"]}, "cold": cold,
-            "headlines": house.get("ticker", {}).get("lines", [])}
+            "headlines": house.get("ticker", {}).get("lines", []), "board": board.lines(house, cfg)}   # SPEC-v3.5.4 §11: what the board shows
 
 
 def read_sign(house, cfg, pet):
-    """A pet awake in the hub reads the sign (physics, once a tick): tomorrow's weather once a day, and each headline
-    once. It is told, not woken: what it read waits for its next thought."""
+    """A pet awake in the hub reads the sign (physics, once a tick). SPEC-v3.5.4 §11: the sign is the board now, of
+    what the house is proudest of, not news and weather (board.read). It is told, not woken: what it read waits for
+    its next thought."""
+    from . import board
     hub = found(house)
     if not hub or pet["room"] != RID or pet["sleep"] or pet["stage"] in ("egg", "dead", "hatchling") \
             or not any(o.get("fix", {}).get("sign") for o in hub["objects"].values()):
         return
-    seen = pet.setdefault("sign", {"day": None, "n": 0})
-    if seen["day"] != house["clock"]["day"]:
-        seen["day"] = house["clock"]["day"]
-        add_event(house, pet, 'the lit sign on the wall runs: "%s"' % forecast(house, cfg)["text"])
-    new = [l for l in house.get("ticker", {}).get("lines", []) if l["n"] > seen["n"]]
-    for l in new[-2:]:
-        add_event(house, pet, 'the lit sign on the wall runs: "%s"' % l["text"])
-    if new:
-        seen["n"] = new[-1]["n"]
+    board.read(house, cfg, pet)
 
 
 def tick(house, cfg):
-    from . import build
+    from . import board, build
+    board.tick(house, cfg)   # SPEC-v3.5.4 §10: a star reaches its maker when it is awake
     for p in house["pets"].values():
         read_sign(house, cfg, p)
         build.take_stack(house, cfg, p)   # (14 October 2026) a stone stack made for a statue goes into it

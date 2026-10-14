@@ -1,11 +1,11 @@
-// SPEC-v3.5.1, the hub's own things as the view draws them: the lit sign (a dot-matrix ticker, all in code), what is
+// SPEC-v3.5.1, the hub's own things as the view draws them: the lit sign (a dot-matrix board, all in code: SPEC-v3.5.4 §11), what is
 // on each screen's glass (typed, then scrolling, green or amber), the founder's statue (its own body from its genome,
 // through petsprite.ts, in a stone ramp, going up while it is built), and the radio set. still.ts asks `hubSprite` what
 // to draw a hub thing as; the room calls `Hub.build` after each rebuild and `Hub.step` every frame.
 import { Sprite } from "pixi.js";
 import { petSheet } from "../petsprite";
 import { hhmm } from "../types";
-import type { Obj, RoomV, Snap } from "../types";
+import type { BoardLine, Obj, RoomV, Snap } from "../types";
 import { addSprite, canvasOf, def, fromCanvas, has, size } from "./assets";
 import type { Layout } from "./assets";
 import { textCanvas } from "./font";
@@ -17,38 +17,46 @@ import type { Still, Thing } from "./still";
  *  (own/src/hub.py); the sign's case and the statue are drawn here. */
 export function hubSprite(o: Obj, type: string | null, L: Layout | null): string | null {
   if (o.statue) return statueSprite(o, L);
-  if (o.fix?.sign) return caseSprite();
+  if (o.fix?.sign) return caseSprite(L);
   if (o.fix?.terminal && has("fix.terminal")) return "fix.terminal";
   if (o.fix?.radio && type === "hub" && has("fix.radio set")) return "fix.radio set";
   return null;
 }
 
-// ---- the lit sign ----
+// ---- the lit sign: the board (SPEC-v3.5.1 §2, SPEC-v3.5.4 §11) ----
 
-/** Its case: the size of the layout's stand-in `fix.lit sign` if the art has one (about four tiles), a dark frame
- *  round a black face. The lights are laid over it at the screen's own pixels (`Ticker`). */
-function caseSprite() {
-  if (has("hub.sign")) return "hub.sign";
-  const stand = def("fix.lit sign"), w = stand ? Math.max(40, stand.rect[2]) : 64, h = stand ? Math.max(13, stand.rect[3]) : 17;
+/** Its case: the size the layout gives the board (`size`, `anchor` on its `lit sign`), else that of the art's stand-in
+ *  `fix.lit sign` (about four tiles); a dark frame round a black face. The lights are laid over it at the screen's own
+ *  pixels (`Board`). */
+function caseSprite(L: Layout | null) {
+  const f = L?.fixtures?.["lit sign"], stand = def("fix.lit sign");
+  const [w, h] = f?.size ?? [stand ? Math.max(40, stand.rect[2]) : 64, stand ? Math.max(13, stand.rect[3]) : 17], name = `hub.sign.${w}x${h}`;
+  if (has(name)) return name;
   const c = Object.assign(document.createElement("canvas"), { width: w, height: h }), x = c.getContext("2d")!;
   x.fillStyle = "#141b1b"; x.fillRect(0, 0, w, h);
   x.fillStyle = "#4e484a"; x.fillRect(1, 1, w - 2, h - 2);
   x.fillStyle = "#695953"; x.fillRect(1, 1, w - 2, 1);
   x.fillStyle = "#0b0806"; x.fillRect(2, 2, w - 4, h - 4);
-  addSprite("hub.sign", c);
-  def("hub.sign")!.anchor = stand?.anchor ?? [0, 27];   // hung on the north wall, its top a few pixels under the ceiling
-  return "hub.sign";
+  addSprite(name, c);
+  def(name)!.anchor = f?.anchor ?? stand?.anchor ?? [0, 27];   // hung on the north wall, its top a few pixels under the ceiling
+  return name;
 }
 
 type Buf = Float32Array;
-type Item = { anim?: string; text?: string; ms: number };
+type Item = { anim?: string; rows?: string[]; meter?: [number, number]; ms: number };
 const LIT: [number, number, number] = [255, 168, 48], OFF = "#2b1709", GAP = "#0b0806";
 const lerp = (a: number, b: number, k: number) => a + (b - a) * clamp(k, 0, 1);
+const PROUD = new Set(["first", "best", "ambition", "star", "invention", "discovery", "statue", "works"]);
 
-/** The lines the sign runs, in plain words, in the order it runs them: the time, the forecast, the news (newest first). */
+/** A board line's two rows: what, then who ("FIRST BOWL IN THE HOUSE" / "OPEN STONE"); the Works' goal and its meter. */
+export function boardRows(l: BoardLine): string[] {
+  if (l.meter && l.what) return [`THE WORKS: ${l.what.toUpperCase()}`, `${l.meter[0]} OF ${l.meter[1]} SCRAP`];
+  const i = l.text.indexOf(": ");
+  return i < 0 ? [l.text] : [l.text.slice(0, i), l.text.slice(i + 2)];
+}
+/** What the board shows, in plain words, in the order it runs it: the time, then its lines. */
 export function tickerLines(s: Snap): string[] {
-  const t = s.ticker;
-  return [`Day ${s.clock.day}, ${hhmm(s.clock.hour)}`, ...(t ? [t.forecast.text, ...[...t.headlines].reverse().map((h) => h.text)] : [])];
+  return [`Day ${s.clock.day}, ${hhmm(s.clock.hour)}`, ...(s.ticker?.board ?? []).map((l) => boardRows(l).join(": "))];
 }
 
 /** A pinball machine's dot display, between the messages: each draws one moment `k` (0 to 1) of itself. */
@@ -126,9 +134,10 @@ function bitmap(text: string) {
   return m;
 }
 
-/** The sign's lights at the screen's own pixels (one light to a pixel of the art, a dark gap round each), cycling the
- *  time, the forecast and the headlines with an animation before each. */
-class Ticker {
+/** The board's lights at the screen's own pixels (one light to a pixel of the art, a dark gap round each): the time,
+ *  then each line of the board in two rows (what, then who; each row stands still if it fits, else scrolls by), the
+ *  Works' with its meter, a little animation before each. A board too low for two rows runs them as one. */
+class Board {
   s: Sprite;
   private c: HTMLCanvasElement;
   private pen: Pen;
@@ -136,23 +145,40 @@ class Ticker {
   private i = -1;
   private at = 0;
   private last = "";
+  private two: boolean;
   constructor(readonly t: Thing, readonly K: number) {
     const w = Math.round(t.rect.w) - 4, h = Math.round(t.rect.h) - 4;
     this.pen = new Pen(w, h);
+    this.two = h >= 15;
     this.c = Object.assign(document.createElement("canvas"), { width: w * K, height: h * K });
     this.s = new Sprite(fromCanvas(this.c));
     this.s.scale.set(1 / K);
     this.s.position.set(Math.round(t.rect.x) + 2, Math.round(t.rect.y) + 2);
   }
-  /** One run through: rebuilt from the latest snapshot each time round, so the time and the news are current. */
+  /** One run through: rebuilt from the latest snapshot each time round, so the time and the lines are current. */
   private plan(s: Snap) {
-    const t = s.ticker, night = s.clock.phase === "night", lines = tickerLines(s);
-    this.items = [{ anim: t?.cold && night ? "fire" : night ? "moon" : "sun", ms: 1800 }, { text: lines[0], ms: 0 }];
-    if (t) {
-      this.items.push({ anim: t.forecast.anim in ANIMS ? t.forecast.anim : "cloud", ms: 1800 }, { text: t.forecast.text, ms: 0 });
-      for (const h of [...t.headlines].reverse()) this.items.push({ anim: h.anim && h.anim in ANIMS ? h.anim : "wipe", ms: h.anim ? 1600 : 500 }, { text: h.text, ms: 0 });
+    const night = s.clock.phase === "night", time = [`DAY ${s.clock.day}`, hhmm(s.clock.hour)];
+    this.items = [{ anim: s.ticker?.cold && night ? "fire" : night ? "moon" : "sun", ms: 1400 }, { rows: this.two ? time : [time.join(" ")], ms: 0 }];
+    for (const l of s.ticker?.board ?? []) {
+      const rows = boardRows(l);
+      this.items.push({ anim: PROUD.has(l.kind) && l.kind !== "works" ? "star" : "wipe", ms: PROUD.has(l.kind) && l.kind !== "works" ? 1400 : 500 },
+        { rows: this.two ? (l.meter ? rows.slice(0, 1) : rows) : [rows.join(": ")], meter: l.meter && this.two ? l.meter : undefined, ms: 0 });
     }
-    for (const it of this.items) if (it.text != null) { const w = bitmap(it.text).w; it.ms = w <= this.pen.w ? 3200 : ((this.pen.w + w) / 26) * 1000; }   // what fits stands still; the rest scrolls by
+    for (const it of this.items) if (it.rows) {   // what fits stands still; the rest scrolls by
+      const w = Math.max(...it.rows.map((r) => bitmap(r).w));
+      it.ms = Math.max(it.meter ? 4200 : 3200, w <= this.pen.w ? 3200 : ((this.pen.w + w) / 26) * 1000);
+    }
+  }
+  private row(text: string, y0: number, k: number, ms: number) {
+    const m = bitmap(text), p = this.pen, run = ((p.w + m.w) / 26) * 1000;   // a row scrolls at its own pace, and then waits
+    const x0 = m.w <= p.w ? Math.floor((p.w - m.w) / 2) : Math.round(p.w - Math.min(1, (k * ms) / run) * (p.w + m.w));
+    for (let y = 0; y < 9; y++) for (let x = 0; x < m.w; x++) if (m.on[y * m.w + x]) p.dot(x0 + x, y0 + y, 1);
+  }
+  /** The Works' meter: a bar along the bottom row, lit as far as it is full, faint beyond, and how much in figures. */
+  private meter([have, need]: [number, number], y0: number, k: number) {
+    const p = this.pen, label = `${have}/${need}`, m = bitmap(label), bar = p.w - m.w - 3, upto = Math.round(bar * clamp(have / Math.max(1, need), 0, 1) * Math.min(1, k * 3));
+    for (let x = 0; x < bar; x++) for (let y = 1; y < 6; y++) p.dot(x, y0 + y, x < upto ? 1 : y === 1 || y === 5 || x === 0 || x === bar - 1 ? 0.34 : 0);
+    for (let y = 0; y < 9; y++) for (let x = 0; x < m.w; x++) if (m.on[y * m.w + x]) p.dot(bar + 3 + x, y0 + y, 1);
   }
   step(now: number, s: Snap) {
     if (this.i < 0 || now - this.at > this.items[this.i].ms) {
@@ -163,9 +189,10 @@ class Ticker {
     const it = this.items[this.i], k = (now - this.at) / it.ms, p = this.pen;
     p.b.fill(0);
     if (it.anim) ANIMS[it.anim](p, k);
-    else if (it.text != null) {
-      const m = bitmap(it.text), x0 = m.w <= p.w ? Math.floor((p.w - m.w) / 2) : Math.round(p.w - k * (p.w + m.w)), y0 = Math.max(0, Math.floor((p.h - 7) / 2));
-      for (let y = 0; y < 9; y++) for (let x = 0; x < m.w; x++) if (m.on[y * m.w + x]) p.dot(x0 + x, y0 + y, 1);
+    else if (it.rows) {
+      const tops = it.rows.length + (it.meter ? 1 : 0) >= 2 ? [0, p.h - 7] : [Math.max(0, Math.floor((p.h - 7) / 2))];
+      it.rows.forEach((r, j) => this.row(r, tops[j], k, it.ms));
+      if (it.meter) this.meter(it.meter, tops[1], k);
     }
     const key = Array.from(p.b, (v) => Math.ceil(v * 3)).join("");   // four steps of brightness, as such a display has
     if (key === this.last) return;
@@ -302,7 +329,7 @@ function statueSprite(o: Obj, L: Layout | null): string {
 
 /** What the hub's things do between snapshots. One per room view; built again with the room's still parts. */
 export class Hub {
-  private signs: Ticker[] = [];
+  private signs: Board[] = [];
   private glass: Glass[] = [];
   private sites: Thing[] = [];
   private radio: Thing | null = null;
@@ -315,7 +342,7 @@ export class Hub {
     const things = [...still.things.values()], objects = Object.fromEntries(things.map((t) => [t.name, t.obj]));
     for (const t of things) {
       if (t.obj.fix?.sign) {
-        const s = new Ticker(t, K);
+        const s = new Board(t, K);
         (t.s.parent ?? still.wallLayer).addChild(s.s);
         this.signs.push(s);
         still.lamps.push({ x: t.x, y: t.rect.y + t.rect.h / 2, r: Math.max(30, t.rect.w * 0.6), color: [255, 170, 80], made: true });

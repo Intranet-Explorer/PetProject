@@ -84,6 +84,16 @@ export async function getJSON<T = any>(url: string): Promise<T | null> {
   }
 }
 
+/** SPEC-v3.5.4 §10: the visitor gives a thing a star (one to a thing). Returns why it could not be, or null. */
+export async function giveStar(id: string): Promise<string | null> {
+  try {
+    const r = await fetch(`/api/star/${encodeURIComponent(id)}`, { method: "POST" });
+    return r.ok ? null : ((await r.json().catch(() => ({}))).error ?? "the star could not be given");
+  } catch {
+    return "the house is not answering";
+  }
+}
+
 /** Every pet and thing named in a sentence, linked: a pet's name (longest first, so "Grey Light's Hum" before "Grey
  *  Light"), a thing's name between single quotes. */
 export function linked(text: string, pets: Record<string, Who & { name: string; born_day?: number | null }>, things: Record<string, string> = {},

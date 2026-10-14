@@ -13,6 +13,7 @@ export type Made = {
   behavior: { when: string; do: string } | null; active: boolean; uses: number; ups: number; useful: boolean;
   called: string | null; tick: number; worn: string[];
   loud?: boolean; hums?: boolean;   // SPEC-v3.3 §4: it sounds when used; it is making a noise by itself right now
+  star?: number | null;   // SPEC-v3.5.4 §10: the tick the visitor gave it a star
 };
 /** SPEC-v3.3 §2. A thing that keeps things: how many, which (by name), and whether they go in it (a chest) or on it (a shelf). */
 export type Store = { cap: number | null; holds: string[]; inside: boolean; bits?: string[] };   // `bits`: the loose bits tidied into it, by name ("string", "bell")
@@ -33,7 +34,10 @@ export type Dj = { music: { mood: string; scope: string; since: number } | null;
 /** SPEC-v3.5.1 §5: a real internet station the radio can play (`stream` is what the page plays; `home` its own page). */
 export type Station = { id: string; name: string; mood: string; sound: string; stream: string; home: string };
 /** SPEC-v3.5.1 §2: what the lit sign in the hub runs (the time it takes from the clock). */
-export type Ticker = { room: string | null; forecast: { text: string; anim: string }; cold: boolean; headlines: { n: number; tick: number; kind: string; text: string; anim: string | null }[] };
+export type Ticker = { room: string | null; forecast: { text: string; anim: string }; cold: boolean; headlines: { n: number; tick: number; kind: string; text: string; anim: string | null }[];
+  board?: BoardLine[] };   // SPEC-v3.5.4 §11
+/** A line of the board: "WHAT: WHO" in its capitals; the Works' has its meter ([have, need]) and its fullness in words. */
+export type BoardLine = { key: string; text: string; kind: string; pets: string[]; meter: [number, number] | null; says?: string; what?: string };
 export type Obj = {
   pos: Tile; state?: string | null; made?: Made; memorial?: { pet: string; text: string }; wall?: boolean; says?: string;   // wall: it hangs on the north wall above `pos`
   fix?: Record<string, unknown>; water?: Tile[]; grow?: number; servings?: number;

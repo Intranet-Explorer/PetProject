@@ -139,7 +139,7 @@ def all_things(eng):
             out.append({"id": thing_key(m, n), "name": n, "recipe": m["recipe"], "by": m["by"], "by_name": names.get(m["by"]), "owner": m.get("owner"),
                         "family": fam.get(m["by"]), "room": r["id"], "room_name": r["name"], "where": where, "gone": None, "tick": m["tick"],
                         "day": day_of(cfg, m["tick"]), "bits": m.get("bits", []), "uses": m.get("uses", 0), "heirloom": bool(m.get("heirloom")),
-                        "invented": m["recipe"].get("kind") in h.get("invented", {}), "statue": False, "keepsake": bool(keep)})
+                        "invented": m["recipe"].get("kind") in h.get("invented", {}), "statue": False, "keepsake": bool(keep), "star": m.get("star")})
         for n, o in r["objects"].items():
             if o.get("statue") or (o.get("fix", {}).get("built") and "statue" in n):
                 # a statue standing has `fix.built` (who raised it, began and finished); one going up has `site`
@@ -157,7 +157,7 @@ def all_things(eng):
         out.append({"id": thing_key(g, g["name"]), "name": g["name"], "recipe": g["recipe"], "by": g["by"], "by_name": names.get(g["by"]), "owner": g.get("owner"),
                     "family": fam.get(g["by"]), "room": None, "room_name": None, "where": GONE_WHERE.get(g["gone"][1], g["gone"][1]), "gone": g["gone"][1],
                     "tick": g["made"], "day": day_of(cfg, g["made"]), "bits": [], "uses": g.get("uses", 0), "heirloom": False,
-                    "invented": g["recipe"].get("kind") in h.get("invented", {}), "statue": False, "keepsake": False})
+                    "invented": g["recipe"].get("kind") in h.get("invented", {}), "statue": False, "keepsake": False, "star": g.get("star")})
     out.sort(key=lambda t: -(t["tick"] or 0))
     return {"things": out, "kinds": sorted({t["recipe"].get("kind") for t in out if t["recipe"].get("kind")}),
             "rooms": sorted({t["room_name"] for t in out if t["room_name"]})}
