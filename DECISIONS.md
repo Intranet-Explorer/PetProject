@@ -1686,3 +1686,18 @@ After the fix, at 65790, Rain Rest came for stone, took two, read the lit sign (
 discoveries) and asked the left screen "what is stone"; the article stayed on the glass. A pet at a screen is
 still told it is at "the book" ("the book is right here", "you read in the book"): the same encyclopedia, but the
 words are left over from the heavy book (in POLISH.md).
+
+### The book's matching, and stacks made for a statue (14 October 2026)
+
+Tyler asked for both. The book (the screens and the heavy book alike) now looks up the main noun of a question: the
+words before "of", "for", "to" and the like, less the question words, tried whole and then by the last of them
+("how to make supple reed" -> "reed"). Where a title is only a list of meanings, it takes the everyday or natural
+sense from the title's brackets (zoology, plant, material, rock, weather and so on, in that order); full-text search
+comes last and skips any article whose first sentence is about a company, a band, a film or a person of that kind.
+The house's own pages (crafting.toml [[entry]]) are still read first. Of the last ten questions, three answers
+changed: Shell Oil Company became Shell (zoology), and Immunity (medical), twice, became Reed (plant).
+
+A stone stack with "statue" in its name (or anything with stone in it so named), that a pet may take apart, does
+for a piece of stone for a statue that still wants stone: a pet that wants the statue built goes to where one lies,
+takes it up as a piece of stone and sets it on the plinth like any other. Only while a statue lacks stone: on the
+day this went live both founders' statues had all five, so it waits for the next statue.
