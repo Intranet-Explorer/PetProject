@@ -73,8 +73,8 @@ def sounds(house, cfg, pet):
             out.append("a bird is singing %s" % where)
         if any(s["room"] == rid and (tick - s["tick"]) * cfg["clock"]["tick_seconds"] <= 40 for s in house.get("sung", [])):
             out.append("you hear a tune %s" % where)
-        if any(s["room"] == rid and (tick - s["tick"]) * cfg["clock"]["tick_seconds"] <= 60 for s in house.get("radio", {}).get("said", [])):
-            out.append("something is talking %s, too muffled to make out" % where)   # the box, through a door: sound and no words (§5.1)
+        if any(o.get("fix", {}).get("radio") and o.get("state") == "on" for o in house["rooms"][rid].get("objects", {}).values()):
+            out.append("you hear music %s, too muffled to make out" % where)   # the radio, through a door (SPEC-v3.5.1 §5)
     return out
 
 

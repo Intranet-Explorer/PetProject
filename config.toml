@@ -252,17 +252,18 @@ creatures = 3             # in the house at once from then on, of which one wild
 lifespan_days = { mouse = 40, beetle = 32, moth = 26, bird = 48 }   # longer than a pet's
 young_at = 0.4            # the share of its life at which a tame creature has young, once
 
-[radio]                   # §5. The engine fetches; a pet never does.
-every_minutes = 20        # real minutes between snippets while it is on
-fetch_minutes = 60        # each source at most this often
+[radio]                   # §5; SPEC-v3.5.1 §5: a real station. The page plays its stream; the engine asks what song is on. A pet fetches nothing.
+fetch_seconds = 60        # what song is on, at most this often, and only while the radio is on
 max_chars = 200
-keep = 3                  # the box's last words a pet in the room still has in its head
-allow = ["api.open-meteo.com", "api.wikimedia.org", "feeds.npr.org"]   # the only hosts ever asked
-blocklist = []            # words Tyler does not want in the house: a snippet with one of them is dropped
-sources = [               # confirmed by Tyler on 11 October 2026
-  { name = "forecast", kind = "forecast", url = "https://api.open-meteo.com/v1/forecast?latitude=44.98&longitude=-93.27&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max&timezone=America%2FChicago&forecast_days=3" },
-  { name = "on this day", kind = "onthisday", url = "https://api.wikimedia.org/feed/v1/wikipedia/en/onthisday/selected/{month}/{day}" },
-  { name = "news", kind = "rss", url = "https://feeds.npr.org/1001/rss.xml" },
+keep = 3                  # the songs a pet in the room still has in its head
+allow = ["api.radioparadise.com"]   # the only host the engine asks (the page itself plays the stream from stream.radioparadise.com)
+blocklist = []            # words Tyler does not want in the house: a song's name with one of them is not told
+now_url = "https://api.radioparadise.com/api/now_playing?chan={chan}"
+stations = [              # Radio Paradise's four mixes, mellow to lively (listener-supported, no ads); chosen 13 October 2026, see DECISIONS
+  { id = "serenity", name = "Serenity", chan = 42, mood = "mysterious", sound = "slow and dreamy", stream = "https://stream.radioparadise.com/serenity", home = "https://radioparadise.com" },
+  { id = "mellow", name = "Mellow Mix", chan = 1, mood = "calm", sound = "soft and easy", stream = "https://stream.radioparadise.com/mellow-128", home = "https://radioparadise.com" },
+  { id = "main", name = "Main Mix", chan = 0, mood = "lively", sound = "with a bit of everything in it", stream = "https://stream.radioparadise.com/aac-128", home = "https://radioparadise.com" },
+  { id = "rock", name = "Rock Mix", chan = 2, mood = "lively", sound = "loud and driving", stream = "https://stream.radioparadise.com/rock-128", home = "https://radioparadise.com" },
 ]
 
 [book]                    # §6. An offline copy of Simple English Wikipedia; nothing leaves the Mac when a pet asks.
@@ -270,6 +271,7 @@ zim = "book/wikipedia_en-simple_all_maxi_2026-09.zim"
 chars = 400               # about how much of an article a pet reads
 max_question = 80
 per_hours = 1             # each pet at most once a world hour
+terminal_hours = 0.25     # SPEC-v3.5.1 §3: at one of the machine room's screens, once a quarter hour
 keep = 2                  # the passages a pet still has in its head
 
 [strangers]               # §7

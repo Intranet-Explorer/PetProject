@@ -17,7 +17,7 @@ import uvicorn
 from fastapi import FastAPI, HTTPException, Response, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
 
-from . import actions, body, craft, wants, director, feel, order, life, metrics, mind, physics, radio, songs, story, things, walls
+from . import actions, body, craft, wants, director, feel, hub, order, life, metrics, mind, physics, radio, songs, story, things, walls
 from .tick import Engine, model_brains, stub_brains
 from . import world
 from . import build
@@ -166,6 +166,9 @@ def room_view(r):
             if "meal" in o["fix"]:
                 v["servings"] = o["servings"]
         build.view(h, cfg, r, n, o, v)   # SPEC-v3.5 §4: a thing being built or built: its picture, its title, who built it
+        hub.statue_view(h, cfg, o, v, DATA)   # SPEC-v3.5.1 §4: whose statue, in stone, its name and last words
+        if o.get("screen"):   # SPEC-v3.5.1 §3: what was last asked at this screen and read on it
+            v["screen"] = dict(o["screen"], by=label(h["pets"][o["screen"]["pet"]]) if o["screen"]["pet"] in h["pets"] else "someone")
         if o.get("planted"):   # SPEC-v3.4 §3.5
             v["planted"] = {"what": o["planted"]["what"], "stage": craft.stage(o["planted"]), "wilted": bool(o["planted"].get("wilted"))}
         if o.get("wall"):
@@ -205,9 +208,12 @@ def snapshot():
         # SPEC-v3.3: the visitor's music and radio (§3), the small sounds pets make by themselves (§4: each numbered, to
         # be played once), and the body's activities with their icons (§1.1, §5.4)
         "dj": {"music": (h.get("dj") or {}).get("music"), "moods": list(cfg["music"]["tunes"]),
-               "radio": {"on": radio.is_on(h), "plays": h.get("radio", {}).get("plays") or "mix", "theirs": any(n != "little radio" for _, n, _ in radio.boxes(h)),
-                         "rooms": [r["id"] for r, _, _ in radio.boxes(h)]}},
+               "radio": {"on": radio.is_on(h), "theirs": any(n != "little radio" for _, n, _ in radio.boxes(h)), "rooms": [r["id"] for r, _, _ in radio.boxes(h)],
+                         # SPEC-v3.5.1 §5: the station it is tuned to (the page plays its stream), the others, and the song on now
+                         "station": radio.station(h, cfg)["id"], "stations": [{k: x[k] for k in ("id", "name", "mood", "sound", "stream", "home")} for x in cfg["radio"]["stations"]],
+                         "now": {"title": radio.song_words(eng.radio_song).strip('"').replace('" by ', " - "), "at": h["tick"]} if eng.radio_song and radio.is_on(h) else None}},
         "vox": recent(h.get("vox", []), 20),
+        "ticker": hub.ticker(h, cfg),   # SPEC-v3.5.1 §2: what the machine room's lit sign runs
         "invented": h.get("invented", {}),   # SPEC-v3.5 §3: the kinds this house invented, each with its parts (the view draws them)
         "bursts": recent(h.get("bursts", []), 20),   # SPEC-v3.4 §5: a want fulfilled or a thing found out, each numbered, to be shown once
         "activities": {n: {"icon": a.get("icon"), "passive": bool(a.get("passive")), "rest": bool(a.get("rest"))} for n, a in cfg["activities"].items()},
@@ -304,15 +310,17 @@ async def sky():
 
 
 async def wireless():
-    """SPEC-v3.1 §5.2: the engine (never a pet) asks the radio's few fixed sources what is new, each at most once an hour,
-    and only once there is a box in the house. Any failure leaves the box with what it had; with nothing, it plays static."""
+    """SPEC-v3.5.1 §5: while their radio is on, the engine (never a pet) asks the station what song is on, at most once
+    a minute. Any failure leaves the last song (or none: it plays all the same)."""
     while True:
-        if radio.boxes(eng.house) and not PAUSED:
+        if radio.is_on(eng.house) and not PAUSED:
             try:
-                eng.radio_items = await asyncio.to_thread(radio.refresh, cfg, DATA / "radio")
+                eng.radio_song = await asyncio.to_thread(radio.now_playing, cfg, DATA / "radio", radio.station(eng.house, cfg))
             except Exception as e:
                 logging.warning("radio not refreshed: %r", e)
-        await asyncio.sleep(300 if eng.radio_items or not radio.is_on(eng.house) else 10)   # a box on with nothing to say yet: look again soon (each source is still asked at most once an hour)
+        else:
+            eng.radio_song = None
+        await asyncio.sleep(cfg["radio"]["fetch_seconds"] if radio.is_on(eng.house) else 5)
 
 
 @asynccontextmanager

@@ -234,11 +234,13 @@ def new_house(cfg, seed=None):
         "shut": {},                         # "room|direction" -> the tick a draught lets go of that door
         "names": {},                        # every thing's name ever used -> how many times, so names stay unique
     }
-    types = [t for t in cfg["house"]["rooms"] if t != "nursery"]
+    types = [t for t in cfg["house"]["rooms"] if t != "nursery" and not cfg["house"]["rooms"][t].get("extra")]   # (SPEC-v3.5.1: the hub is hung on afterwards)
     rnd(house, "types").shuffle(types)
     house["unused_types"] = types
     house["weather"] = weather_of(house, cfg, 1)
     generate_room(house, cfg, start, "nursery")
+    from . import hub
+    hub.migrate(house, cfg)   # SPEC-v3.5.1: the machine room, behind the storeroom
     return house
 
 
@@ -289,6 +291,9 @@ def generate_room(house, cfg, rid, kind=None, by=None):
     if kinds == "any":
         kinds = {b: 1 for b in rng.sample(sorted(b for b, v in cfg["house"]["bits"].items() if not v.get("late")), 4)}
     layout(cfg, room)
+    if spec.get("extra"):   # SPEC-v3.5.1: the hub, walked into for the first time
+        from . import hub
+        hub.arrived(house, cfg, room)
     for bit, n in kinds.items():
         for _ in range(n):
             spot = free_tile(house, cfg, room, [rng.randrange(cfg["W"]), rng.randrange(cfg["H"])])
@@ -504,3 +509,5 @@ def moment(house, kind, text, pet=None, room=None):
     del house["moments"][:-400]
     house["last_moment"] = house["tick"]
     house["fresh_moments"].append(m)   # drained by the logger
+    from . import hub
+    hub.headline(house, m)   # SPEC-v3.5.1 §2: and the lit sign runs it

@@ -93,6 +93,37 @@ fix = { rest = 3.5, cozy = true }
 says = "a place to rest"
 weight = 2.5
 
+# ---- the founder's statue (SPEC-v3.5.1 §4): wanted begun by the eldest of the family it honours, once its founder
+# is dead; it stands on its plinth in the machine room (exact). engine/hub.py keeps whose it is and its name ----
+
+[project.statue]
+a = "a"
+rooms = ["hub"]
+when = "honour"
+honours = 1               # the family whose first one it is
+want = "the first of your family has no stone to remember it by: you want to raise a statue of the first one in {room}"
+done = "raised a statue of the first one in {room}"
+needs = { stone = 6 }
+sessions = 16
+at = [5, 4]
+exact = true
+says = "the first one of the family, in stone, as it was"
+weight = 4.0
+
+["project"."foundling's statue"]
+a = "a"
+rooms = ["hub"]
+when = "honour"
+honours = 2               # the second family, that came from the foundling egg
+want = "the first of your family has no stone to remember it by: you want to raise a statue of the first one in {room}"
+done = "raised a statue of the first one in {room}"
+needs = { stone = 6 }
+sessions = 16
+at = [7, 4]
+exact = true
+says = "the first one of the family, in stone, as it was"
+weight = 4.0
+
 # ---- mending the house ----
 
 ["project"."roof patch"]
