@@ -1,0 +1,35 @@
+{
+ "type": "hub",
+ "floor": [
+  [null, null, null, null, null, null, null, null, null, null, null, null, null, null],
+  [null, null, null, null, null, null, null, null, null, null, null, null, null, null],
+  [null, "tile.floor.cobble.dark.nw", "tile.floor.cobble.dark.n", "tile.floor.cobble.dark.n", "tile.floor.cobble.dark.n", "tile.floor.cobble.dark.n", "tile.floor.cobble.dark.n", "tile.floor.cobble.dark.n", "tile.floor.cobble.dark.n", "tile.floor.cobble.dark.n", "tile.floor.cobble.dark.n", "tile.floor.cobble.dark.n", "tile.floor.cobble.dark.ne", null],
+  [null, "tile.floor.cobble.dark.w", "tile.floor.cobble.dark.c", "tile.floor.cobble.dark.c", "tile.floor.cobble.dark.c", "tile.floor.cobble.dark.c", "tile.floor.cobble.dark.c", "tile.floor.cobble.dark.c", "tile.floor.cobble.dark.c", "tile.floor.cobble.dark.c", "tile.floor.cobble.dark.c", "tile.floor.cobble.dark.c", "tile.floor.cobble.dark.e", null],
+  [null, "tile.floor.cobble.dark.w", "tile.floor.cobble.dark.c", "tile.floor.cobble.dark.c", "tile.floor.cobble.dark.c", "tile.carpet.green.nw", "tile.carpet.green.n", "tile.carpet.green.n", "tile.carpet.green.n", "tile.carpet.green.ne", "tile.floor.cobble.dark.c", "tile.floor.cobble.dark.c", "tile.floor.cobble.dark.e", null],
+  [null, "tile.floor.cobble.dark.w", "tile.floor.cobble.dark.c", "tile.floor.cobble.dark.c", "tile.floor.cobble.dark.c", "tile.carpet.green.w", "tile.carpet.green.c", "tile.carpet.green.c", "tile.carpet.green.c", "tile.carpet.green.e", "tile.floor.cobble.dark.c", "tile.floor.cobble.dark.c", "tile.floor.cobble.dark.e", null],
+  [null, "tile.floor.cobble.dark.w", "tile.floor.cobble.dark.c", "tile.floor.cobble.dark.c", "tile.floor.cobble.dark.c", "tile.carpet.green.w", "tile.carpet.green.c", "tile.carpet.green.c", "tile.carpet.green.c", "tile.carpet.green.e", "tile.floor.cobble.dark.c", "tile.floor.cobble.dark.c", "tile.floor.cobble.dark.e", null],
+  [null, "tile.floor.cobble.dark.w", "tile.floor.cobble.dark.c", "tile.floor.cobble.dark.c", "tile.floor.cobble.dark.c", "tile.carpet.green.w", "tile.carpet.green.c", "tile.carpet.green.c", "tile.carpet.green.c", "tile.carpet.green.e", "tile.floor.cobble.dark.c", "tile.floor.cobble.dark.c", "tile.floor.cobble.dark.e", null],
+  [null, "tile.floor.cobble.dark.w", "tile.floor.cobble.dark.c", "tile.floor.cobble.dark.c", "tile.floor.cobble.dark.c", "tile.carpet.green.w", "tile.carpet.green.c", "tile.carpet.green.c", "tile.carpet.green.c", "tile.carpet.green.e", "tile.floor.cobble.dark.c", "tile.floor.cobble.dark.c", "tile.floor.cobble.dark.e", null],
+  [null, "tile.floor.cobble.dark.sw", "tile.floor.cobble.dark.s", "tile.floor.cobble.dark.s", "tile.floor.cobble.dark.s", "tile.carpet.green.sw", "tile.carpet.green.s", "tile.carpet.green.s", "tile.carpet.green.s", "tile.carpet.green.se", "tile.floor.cobble.dark.s", "tile.floor.cobble.dark.s", "tile.floor.cobble.dark.se", null],
+  [null, null, null, null, null, null, null, null, null, null, null, null, null, null]
+ ],
+ "walls": [
+  ["tile.wall.paper.nw", "tile.wall.paper.n0", "tile.wall.paper.n0", "tile.wall.paper.n0", "tile.wall.paper.n0", "tile.wall.paper.n0", "tile.wall.paper.n0", "tile.wall.paper.n0", "tile.wall.paper.n0", "tile.wall.paper.n0", "tile.wall.paper.n0", "tile.wall.paper.n0", "tile.wall.paper.n0", "tile.wall.paper.ne"],
+  ["tile.wall.paper.w", "tile.wall.paper.n1", "tile.wall.paper.n1", "tile.wall.paper.n1", "tile.wall.paper.n1", "tile.wall.paper.n1", "tile.wall.paper.n1", "tile.wall.paper.n1", "tile.wall.paper.n1", "tile.wall.paper.n1", "tile.wall.paper.n1", "tile.wall.paper.n1", "tile.wall.paper.n1", "tile.wall.paper.e"],
+  ["tile.wall.paper.w", null, null, null, null, null, null, null, null, null, null, null, null, "tile.wall.paper.e"],
+  ["tile.wall.paper.w", null, null, null, null, null, null, null, null, null, null, null, null, "tile.wall.paper.e"],
+  ["tile.wall.paper.w", null, null, null, null, null, null, null, null, null, null, null, null, "tile.wall.paper.e"],
+  ["tile.wall.paper.w", null, null, null, null, null, null, null, null, null, null, null, null, "tile.wall.paper.e"],
+  ["tile.wall.paper.w", null, null, null, null, null, null, null, null, null, null, null, null, "tile.wall.paper.e"],
+  ["tile.wall.paper.w", null, null, null, null, null, null, null, null, null, null, null, null, "tile.wall.paper.e"],
+  ["tile.wall.paper.w", null, null, null, null, null, null, null, null, null, null, null, null, "tile.wall.paper.e"],
+  ["tile.wall.paper.w", null, null, null, null, null, null, null, null, null, null, null, null, "tile.wall.paper.e"],
+  ["tile.wall.paper.sw", "tile.wall.paper.s", "tile.wall.paper.s", "tile.wall.paper.s", "tile.wall.paper.s", "tile.wall.paper.s", "tile.wall.paper.s", "tile.wall.paper.s", "tile.wall.paper.s", "tile.wall.paper.s", "tile.wall.paper.s", "tile.wall.paper.s", "tile.wall.paper.s", "tile.wall.paper.se"]
+ ],
+ "decor": [{"sprite": "decor.banner.6", "at": [6, -1], "layer": "wall"}, {"sprite": "decor.machine pad", "at": [6, 1], "layer": "floor"}, {"sprite": "decor.plinth", "at": [5, 4], "layer": "floor"}, {"sprite": "decor.plinth", "at": [7, 4], "layer": "floor"}, {"sprite": "decor.urn.tall", "at": [0, 7], "layer": "floor"}, {"sprite": "decor.plant", "at": [11, 7], "layer": "floor"}, {"sprite": "decor.plant", "at": [0, 2], "layer": "floor"}, {"sprite": "decor.urn", "at": [5, 7], "layer": "floor"}, {"sprite": "decor.urn", "at": [9, 7], "layer": "floor"}],
+ "fixtures": {"vending machine": {"pos": [1, 0], "sprite": "fix.vending machine"}, "lit sign": {"pos": [8, 0], "sprite": "fix.lit sign", "wall": true}, "left screen": {"pos": [9, 0], "sprite": "fix.left screen"}, "middle screen": {"pos": [10, 0], "sprite": "fix.middle screen"}, "right screen": {"pos": [11, 0], "sprite": "fix.right screen"}, "dial box": {"pos": [11, 2], "sprite": "fix.dial box"}},
+ "blocked": [[2, 0], [3, 0], [4, 0], [5, 0], [0, 7], [11, 7], [0, 2], [5, 7], [9, 7]],
+ "wall_slots": [[0, 0], [7, 0]],
+ "bit_spots": {},
+ "light": {"window": [], "night": 0.6, "day": 0.12}
+}

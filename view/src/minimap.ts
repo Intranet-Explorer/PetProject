@@ -10,7 +10,8 @@ const tint = (p: { genome: { hue: number; saturation: number } }) => `hsl(${p.ge
 
 /** Drawn again only when what it shows has changed. `width` is the room there is for it, in screen pixels. */
 export function drawMap(box: HTMLElement, s: Snap, viewed: string, chosen: string | null, look: (room: string) => void, width: number) {
-  const [gx, gy] = [Math.max(...s.rooms.map((r) => r.cell[0])) + 1, Math.max(...s.rooms.map((r) => r.cell[1])) + 1];
+  const [x0, y0] = [Math.min(...s.rooms.map((r) => r.cell[0])), Math.min(...s.rooms.map((r) => r.cell[1]))];   // SPEC-v3.5.1: the hub hangs outside the 3 x 3 grid (a cell of -1 or 3)
+  const [gx, gy] = [Math.max(...s.rooms.map((r) => r.cell[0])) + 1 - x0, Math.max(...s.rooms.map((r) => r.cell[1])) + 1 - y0];
   const scale = Math.max(1, Math.min(3, Math.floor((width / gx - 10) / 16))), cell = 16 * scale + 4, gap = scale > 1 ? 6 : 4;
   const key = JSON.stringify([scale, viewed, chosen, s.rooms.map((r) => [r.type, r.wet, r.cold, r.sounding, r.shut, r.name]),
     s.pets.map((p) => [p.id, p.room, p.stage, p.buried, p.label]), s.creatures.map((c) => [c.id, c.room, c.tame, c.name])]);
@@ -18,7 +19,7 @@ export function drawMap(box: HTMLElement, s: Snap, viewed: string, chosen: strin
   box.dataset.key = key;
   const map = el("div", "map");
   map.style.cssText = `width:${gx * (cell + gap) - gap}px;height:${gy * (cell + gap) - gap}px;--cell:${cell}px`;
-  const at = (c: number[]) => [c[0] * (cell + gap), c[1] * (cell + gap)];
+  const at = (c: number[]) => [(c[0] - x0) * (cell + gap), (c[1] - y0) * (cell + gap)];
   const put = (e: HTMLElement, x: number, y: number) => { e.style.left = `${x}px`; e.style.top = `${y}px`; return e; };
   for (const r of s.rooms) {
     const [x, y] = at(r.cell);

@@ -82,9 +82,14 @@ A pack whose licence forbids redistribution lives outside the repository: give i
   that file: its own picture if `art.py`'s `BITS` has one, or else the bit it is `like` in its `tint`. After adding
   a material, draw the sheets again and give the new `bit.<name>` its entry here (validate.py asks for it).
 - A material that says `sheet = "machine"` in `crafting.toml` (SPEC-v3.5 §4.3: stone, plank, grit, cord…) is left out
-  of `bits.png`: `own/src/machine.py` draws it, with the vending machine (`fix.vending machine`, and
-  `fix.vending machine.lit` while it gives, takes or is stocked), into `own/machine.png`, and lays its entries into this
-  file as one block after `fix.bed`. Its picture is typed there (`BITS`), or is the bit it is `like` in its `tint`.
+  of `bits.png`: `own/src/machine.py` draws it into `own/machine.png`, and lays its entries into this file as one block
+  after `fix.bed`.
+- The vending machine (SPEC-v3.5.1: "The Works", in the machine room) is drawn by `own/src/works.py` into
+  `own/works.png`, with the plain stand-ins for the room's other new pieces (`fix.lit sign`, the three `fix.… screen`s,
+  `decor.plinth`, `decor.machine pad`, `icon.room.hub`). `fix.vending machine` has an animation for each of `idle`,
+  `take` (the hopper gulps), `work`, `drop` (the belt runs) and `lit`; `fix.vending machine.lit` (while it gives, takes
+  or is stocked) is the same sheet with `lit` as its idle. Its `works` field says where on the picture its six windows
+  are (in `materials` order), the hopper's mouth and the belt (`[x0, y0, x1, y1]`), for the view (px/works.ts). Its picture is typed there (`BITS`), or is the bit it is `like` in its `tint`.
 - Something planted (SPEC-v3.4 §3.5) is drawn over the pot or bed it is in: `plant.<stage>` for each stage in
   `crafting.toml` (`planted`, `sprout`, `leaves`, `ripe`) and `plant.wilted`, or `plant.<what>.<stage>` where one
   plant should look different from the rest (`plant.bean.ripe`). The picture is set foot to foot and middle to

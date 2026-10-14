@@ -11,5 +11,11 @@
   "tile": 16,
   "licence": "CC0",
   "by": "this project"
+ },
+ "karsiori": {
+  "dir": "third_party/karsiori_vending",
+  "tile": 16,
+  "licence": "CC0",
+  "by": "Karsiori"
  }
 }

@@ -25,6 +25,7 @@ import { paintText, paintTitle } from "./px/built";
 import type { Thing } from "./px/still";
 import { hslInt } from "./px/tint";
 import { Light } from "./px/weather";
+import { step as works } from "./px/works";
 
 export type Rect = { x: number; y: number; w: number; h: number };
 /** What is under the pointer. */
@@ -523,6 +524,7 @@ export class Room {
     this.fx.top = still.bounds.y + 1;
     this.alive(sc, still, now);
     this.light.step(now);
+    works(still, sc.snap, now);   // SPEC-v3.5.1: the machine room's machine, alive
     if (this.light.flashing && !this.flashing) { this.startle(now, 0.3); this.shakeUntil = now + 130; }   // thunder: some of them jump, and every room feels it
     this.world.y = now < this.shakeUntil ? K : 0;
     this.flashing = this.light.flashing;

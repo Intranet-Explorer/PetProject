@@ -150,7 +150,7 @@ def sheet():
 
 
 if __name__ == "__main__":
-    own = sheet().save()
+    own = {n: e for n, e in sheet().save().items() if not n.startswith("fix.vending machine")}   # (the machine itself is works.py's now: its old picture stays in the sheet so nothing moves)
     # sprites.json is kept by hand, one name to a line: this sheet's lines go in as one block right after "fix.bed"
     path = os.path.join(ASSETS, "sprites.json")
     lines = [l for l in open(path).read().split("\n") if not re.match(r' "(%s)":' % "|".join(re.escape(n) for n in own), l)]
