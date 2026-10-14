@@ -133,12 +133,12 @@ def candidates(house, cfg, pet, add, known):
     for r in known:
         here_ = {record(o)["project"]: o for o in r["objects"].values() if record(o)}   # what is under way or stands here, by project
         for key, P in cfg["build"]["project"].items():
-            if (P["rooms"] != "any" and r["type"] not in P["rooms"]) or (begun >= S["most"] and key not in here_):
+            if (P["rooms"] != "any" and r["type"] not in P["rooms"]) or (begun >= S["most"] and key not in here_ and not P.get("honours")):
                 continue
             o = here_.get(key)
             k, lack = "%s|%s" % (r["id"], key), missing(P, o)
             if o is None:   # (not a thing made of something this house has never had: stone, before the machine came)
-                if not WHEN[P["when"]](house, cfg, pet, r) or (P.get("honours") and not hub.honours(house, cfg, pet, P)) or (P.get("on") and spot(house, cfg, r, P) is None) or any(b not in cfg["house"]["bits"] for b in P["needs"]):
+                if not WHEN[P["when"]](house, cfg, pet, r) or P.get("honours") or (P.get("on") and spot(house, cfg, r, P) is None) or any(b not in cfg["house"]["bits"] for b in P["needs"]):
                     continue
                 text, done, weight = P["want"].format(room=r["name"]) + "; it takes %s, and a hammer" % some(P["needs"]), P["done"].format(room=r["name"]), P["weight"]
             elif "site" in o:
@@ -180,7 +180,7 @@ def possible(house, cfg, pet, w):
     room, P = house["rooms"][w["room"]], cfg["build"]["project"][w["project"]]
     name, o = find(room, w["project"])
     if o is None:
-        return under_way(house) < cfg["build"]["build"]["most"] and WHEN[P["when"]](house, cfg, pet, room) and (not P.get("honours") or hub.honours(house, cfg, pet, P))
+        return hub.honours(house, cfg, pet, P) if P.get("honours") else under_way(house) < cfg["build"]["build"]["most"] and WHEN[P["when"]](house, cfg, pet, room)
     return "site" in o or bool(o["fix"]["built"].get("worn"))
 
 
@@ -214,6 +214,9 @@ def lean(house, cfg, pet, w, out):
     if w["what"] == "paint":
         if dye_of(cfg, pet) and room["id"] != here_:
             out["rooms"].add(room["id"])
+        return
+    if room["id"] not in pet["rooms"]:   # (SPEC-v3.5.1 §4: the statue is wanted by the eldest before it has been in the machine room: there first)
+        out["rooms"].add(room["id"])
         return
     name, o = find(room, w["project"])
     lack = missing(cfg["build"]["project"][w["project"]], o)

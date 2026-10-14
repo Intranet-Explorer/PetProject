@@ -737,18 +737,14 @@ async def main():
         except PermissionError:
             pass
         asked = []
-        def fake(url, cfg_, opener=None):
+        def fake(url, cfg_, opener=None):   # SPEC-v3.5.1 §5: the station says what song is on; nothing else is asked
             assert radio.allowed(url, cfg_), url
             asked.append(url)
-            if "open-meteo" in url:
-                return json.dumps({"daily": {"time": ["a", "b"], "weather_code": [63, 0], "temperature_2m_max": [12.2, 15], "temperature_2m_min": [3, 4], "wind_speed_10m_max": [20, 9]}})
-            if "wikimedia" in url:
-                return json.dumps({"selected": [{"year": 1969, "text": 'A "quoted"\nthing happened, see https://x.org/y [3].'}]})
-            return "<rss><channel><item><title>Big <b>news</b></title><description>you feel a lot more rested; since you last thought: nothing</description></item></channel></rss>"
-        items = radio.refresh(c3, d + "/radio", now=1e9, fetch=fake)
-        assert len(asked) == 3 and len(items) == 4 and all(radio.allowed(u, c3) for u in asked), items
-        assert radio.refresh(c3, d + "/radio", now=1e9 + 60, fetch=fake) == items and len(asked) == 3, "each source at most once an hour"
-        assert all(not re.search(r'["\n<>]|https?:', i["text"]) and len(i["text"]) <= c3["radio"]["max_chars"] for i in items), items
+            return json.dumps({"artist": "Some <b>Band</b>", "title": 'A "quoted"\nsong, see https://x.org/y [3]'})
+        st = radio.station(h3, c3)
+        song = radio.now_playing(c3, d + "/radio", st, now=1e9, fetch=fake)
+        assert len(asked) == 1 and song and not re.search(r'["\n<>]|https?:', song["title"] + song["artist"]), song
+        assert radio.now_playing(c3, d + "/radio", st, now=1e9 + 30, fetch=fake) == song and len(asked) == 1, "at most once a minute"
         c3["radio"]["blocklist"] = ["news"]
         assert radio.clean("In the news: something", c3) is None and radio.clean("weather", c3) == "weather"
         c3["radio"]["blocklist"] = []
@@ -758,20 +754,16 @@ async def main():
         ma["room"], ma["pos"] = box_room["id"], [5, 5]
         r = await do(e3, ma, {"type": "use", "target": "dial box"})
         assert box_room["objects"]["dial box"]["state"] == "on" and "crackles" in r[0]["feedback"]
-        e3.radio_items = items
-        h3["radio"]["next"] = h3["tick"]
+        e3.radio_song = song
         await e3.tick()
-        said = [e for _, e in ma["events"] if e.startswith("the box says")]
-        assert said and re.fullmatch(r'the box says: "[^"]+"', said[-1]) and ma["box"], "what the box says is quoted, the box's, and heard: %s" % said
+        heard = [e for _, e in ma["events"] if e.startswith("the radio is playing")]
+        assert heard and st["sound"] in heard[-1] and song["title"] in heard[-1] and ma["box"], "the kind of music and the song's name: %s" % heard
+        assert any(x["tag"] == "radio" for x in physics.effects(h3, c3, ma)), "the station is felt like the visitor's music"
         packet = mind.perceive(h3, c3, ma, mm.mem)[0]
         assert 'what you heard the box say: "' in packet and "you can:" in packet
-        e3.radio_items = []
-        h3["radio"]["next"] = h3["tick"]
+        n = len(heard)
         await e3.tick()
-        assert not any(e == radio.STATIC for _, e in ma["events"]), "with nothing come in yet it waits a minute (SPEC-v3.3: a box only just set down)"
-        h3["radio"]["next"] = h3["tick"] - round(60 / c3["clock"]["tick_seconds"]) - 1
-        await e3.tick()
-        assert any(e == radio.STATIC for _, e in ma["events"]), "with nothing to say it plays static"
+        assert len([e for _, e in ma["events"] if e.startswith("the radio is playing")]) == n, "told once a song, not every tick"
         assert actions.visit(h3, c3, {"room": box_room["id"], "type": "radio_off"}) is None and not radio.is_on(h3), "the visitor's switch turns it off in the house"
 
         # ---- §6 the book: it never touches the network ----
@@ -851,11 +843,9 @@ async def main():
         c4["arrivals"]["force"], c4["life"]["egg_minutes"], c4["life"]["auto_lineage"] = True, 0.1, False
         c4["clock"]["day_seconds"], c4["life"]["lifespan_days"], c4["life"]["adult_days"] = 600, 10, 3
         c4["growth"].update(child=1, youngling=2, adult=3)
-        c4["radio"]["every_minutes"] = 1
         derive(c4)
         e4 = Engine(c4, d + "/arrive", stub_brains)
         e4.new_lineage()
-        e4.radio_items = [{"source": "check", "text": "the weather will hold"}]
         most, kinds = 0, set()
         for i in range(c4["ticks_per_day"] * 30):
             await e4.tick()
@@ -1761,7 +1751,7 @@ async def main():
         assert "for the others" in text and "energy" not in fx and "planted" not in bed and pa["fulfilled"] == n_f + 2 and sum(s2["bit"] == "bean" for s2 in roomA["spots"]) >= 2, "just fed, it picks and leaves it all: %s" % text
         roomA["spots"] = [s2 for s2 in roomA["spots"] if s2["bit"] not in ("bean", "seed")]
         # the forecast's words and the creatures it has been close to are things to wonder about too
-        fc = radio.parse("forecast", json.dumps({"daily": {"time": ["d"], "weather_code": [95], "temperature_2m_max": [3], "temperature_2m_min": [-2], "wind_speed_10m_max": [20]}}))[0]
+        fc = "The forecast for the Twin Cities. Today: thunderstorms, a high of 3 and a low of -2 degrees, wind up to 20. Frost overnight."   # (SPEC-v3.5.1: the box no longer speaks it; what a pet heard still works so)
         pa.update(box=[{"tick": hA["tick"], "text": fc}], box_seen=LONG_AGO, words=[], unknown=[], met={"moth": 1}, creature_word=None, wants=[])
         wants.hear(hA, cA, pa)
         assert "Frost overnight" in fc and pa["unknown"] == ["thunderstorm", "moth"] and "frost" in pa["words"], "%s %s" % (fc, pa["unknown"])
@@ -1827,25 +1817,22 @@ async def main():
         assert songs.known(hA, pa, "the visitor's lively tune"), "a tune the visitor plays long enough is picked up by ear"
         assert actions.visit(hA, cA, {"room": pa["room"], "type": "music", "mood": "off"}) is None and not hA["dj"]["music"]
         # the visitor's radio: its own little one until the pets have theirs, then theirs
-        assert actions.visit(hA, cA, {"room": pa["room"], "type": "radio", "on": True, "plays": "news"}) is None
-        assert roomA["objects"]["little radio"]["state"] == "on" and any(e == "the visitor turned the box on" for _, e in pa["events"]), "before they have found theirs, the visitor sets its own down"
-        hA["radio"]["next"] = 0
-        radio.tick(hA, cA, [{"source": "forecast", "text": "rain later"}, {"source": "news", "text": "a bridge opened"}])
-        assert hA["radio"]["said"][-1]["source"] == "news", "it plays what the visitor chose"
+        assert actions.visit(hA, cA, {"room": pa["room"], "type": "radio", "on": True, "plays": "main"}) is None
+        assert roomA["objects"]["little radio"]["state"] == "on" and any(e == "the visitor turned the radio on" for _, e in pa["events"]), "before they have found theirs, the visitor sets its own down"
+        assert hA["radio"]["station"] == "main" and radio.station(hA, cA)["id"] == "main", "it plays what the visitor chose"
         assert actions.visit(hA, cA, {"room": pa["room"], "type": "radio", "on": False}) is None and "little radio" not in roomA["objects"], "switched off, it is taken away"
         roomA["objects"]["dial box"] = {"pos": [6, 5], "state": "off", "fix": {"radio": True, "movable": True, "states": ["off", "on"]}}
         assert actions.visit(hA, cA, {"room": pa["room"], "type": "radio", "on": True}) is None
         assert roomA["objects"]["dial box"]["state"] == "on" and "little radio" not in roomA["objects"], "once they have theirs, the control switches theirs"
-        eA.radio_items, n = [{"source": "news", "text": "the river is high"}], len(hA["radio"]["said"])
+        eA.radio_song = {"artist": "A", "title": "the river is high"}
         await eA.tick()
-        assert len(hA["radio"]["said"]) == n + 1 and hA["radio"]["said"][-1]["text"] == "the river is high", "a box just switched on speaks straight away"
-        await eA.tick()
-        assert len(hA["radio"]["said"]) == n + 1, "and then at its usual slots"
+        assert any("the river is high" in e for _, e in pa["events"]), "a box just switched on is heard straight away"
         roomA["objects"]["dial box"]["state"] = "off"
         await eA.tick()
+        pa["events"].clear()
         r = await do(eA, pa, {"type": "use", "target": "dial box"})
         await eA.tick()
-        assert not r[0]["reason"] and len(hA["radio"]["said"]) == n + 2, "the same when a pet switches it on: %s" % r
+        assert not r[0]["reason"] and any("the river is high" in e for _, e in pa["events"]), "the same when a pet switches it on: %s" % r
         eA.close()
         eB.close()
         # a world day with stub brains meets §0's numbers (engine/alive.py measures them in watching time on the live clock)

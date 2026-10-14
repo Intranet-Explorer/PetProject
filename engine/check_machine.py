@@ -68,11 +68,11 @@ async def run(d):
     pet["stage_at"]["adult"] = h["tick"]
     mem = eng.minds[pet["id"]].mem
     nursery = h["rooms"][pet["room"]]
-    sr = generate_room(h, cfg, next(iter(nursery["doors"].values())), "storeroom")   # the storeroom, next door to the nursery
+    sr = generate_room(h, cfg, next(iter(nursery["doors"].values())), "hub")   # a machine room (SPEC-v3.5.1: it moved there from the storeroom), next door to the nursery for the check
     cellar = generate_room(h, cfg, next(rid for rid, x in h["rooms"].items() if not x["type"]), "cellar")
     shop = generate_room(h, cfg, next(rid for rid, x in h["rooms"].items() if not x["type"]), "workshop")
     name = machine.spot(sr)
-    assert name == "vending machine" and sr["objects"][name]["pos"] == cfg["layouts"]["storeroom"]["fixtures"][name]["pos"], "the machine stands in the storeroom, where its layout puts it"
+    assert name == "vending machine" and sr["objects"][name]["pos"] == ((cfg["layouts"].get("hub") or {}).get("fixtures", {}).get(name) or {"pos": [4, 0]})["pos"], "the machine stands in its room, where its layout puts it"
     assert sr["objects"][name]["pos"] not in [list(t) for t in h["door_tiles"].values()] and "machine" in actions.fixture_says(sr["objects"][name]["fix"])
     S = machine.state(h, cfg)
     assert S["stock"] == {m: M["start"] for m in SIX} and M["start"] <= M["limit"] and 10 <= M["limit"] <= 14, "about twelve of each"
@@ -219,11 +219,11 @@ async def run(d):
     for r in (nursery, sr, cellar):
         r["spots"] = [s for s in r["spots"] if s["bit"] not in SIX and not s["loose"]]
     cands = {c["key"]: c for c in wants.candidates(h, cfg, pet)}
-    assert cands["bit:stone"]["room"] == sr["id"] and "the machine in the storeroom has some" in cands["bit:stone"]["text"], cands.get("bit:stone")
+    assert cands["bit:stone"]["room"] == sr["id"] and "the machine in the machine room has some" in cands["bit:stone"]["text"], cands.get("bit:stone")
     assert cands["peek:%d" % h["clock"]["day"]]["room"] == sr["id"], "with little in its paws it wants to see what the machine has"
     pet.update(wants=[{"what": "tool", "key": "tool:hammer", "text": "", "done": "", "tool": "hammer", "since": h["tick"]}], takes=["hammer"], lacks={"hammer": h["tick"]}, tried={"stone|grind": "sharp stone"})
     cands = {c["key"]: c for c in wants.candidates(h, cfg, pet)}
-    assert cands["get:wood"]["text"] == "you want some wood from the machine in the storeroom" and cands["get:wood"]["room"] == sr["id"], "a want that names a material leads to the machine: %s" % cands.get("get:wood")
+    assert cands["get:wood"]["text"] == "you want some wood from the machine in the machine room" and cands["get:wood"]["room"] == sr["id"], "a want that names a material leads to the machine: %s" % cands.get("get:wood")
     step = cands["get:stone|grind"]
     assert step["bit_room"] == sr["id"] and step["room"] == cellar["id"] and step["text"] == "you want to grind a stone, for the sharp stone", "and to what the material becomes: %s" % step
     get = dict(cands["get:wood"], since=h["tick"])
@@ -335,9 +335,9 @@ async def run(d):
     assert minds.perceive(h, cfg, pet, mem)[1]["machine"] is None and "the machine" not in minds.perceive(h, cfg, pet, mem)[0].split("you can:")[0].split("you notice")[1].split("\n")[0], "away from it nothing is added to its packet"
     eng.close()
 
-    # ---- an old saved house gains the machine on load, and loads without error: one whose storeroom was found before there was one ----
+    # ---- an old saved house gains the machine on load, and loads without error: one whose machine room was found before there was one ----
     old = json.loads((eng.path).read_text())
-    rid = next(rid for rid, r in old["rooms"].items() if r["type"] == "storeroom")
+    rid = sr["id"]
     del old["rooms"][rid]["objects"]["vending machine"]
     del old["machine"]
     old["rooms"][rid]["objects"]["left here"] = {"pos": [7, 1], "made": dict(old["rooms"][rid]["objects"]["drum one"]["made"])}
@@ -347,20 +347,20 @@ async def run(d):
     eng.path.write_text(json.dumps(old))
     again = Engine(cfg, d + "/a", scripted)
     room = again.house["rooms"][rid]
-    assert machine.spot(room) == "vending machine" and room["objects"]["vending machine"]["pos"] == [8, 0] and again.house["machine"]["stock"] == {m: M["start"] for m in SIX}, "the machine comes to a house already lived in"
+    assert machine.spot(room) == "vending machine" and room["objects"]["vending machine"]["pos"] == sr["objects"]["vending machine"]["pos"] and again.house["machine"]["stock"] == {m: M["start"] for m in SIX}, "the machine comes to a house already lived in"
     assert "left here" in room["objects"] and room["objects"]["left here"]["pos"] != room["objects"]["vending machine"]["pos"]
     for _ in range(30):
         await again.tick()
     assert machine.view(again.house, cfg)["room"] == rid
     again.close()
-    # ... and one whose storeroom nobody has found yet: nothing to gain until it is, and then it is there
+    # ... and one whose machine room nobody has found yet: nothing to gain until it is, and then it is there
     fresh, _ = engine(cfg, d + "/b")
     assert machine.view(fresh.house, cfg) is None and machine.found(fresh.house) is None and actions.visit(fresh.house, cfg, {"type": "stock", "what": "wood"}) == "nobody has found the machine yet"
     director.begin(fresh.house, cfg)
     fresh.close()
     back = Engine(cfg, d + "/b", scripted)
     assert "machine" not in back.house or machine.found(back.house) is None
-    assert machine.spot(generate_room(back.house, cfg, next(rid for rid, x in back.house["rooms"].items() if not x["type"]), "storeroom")) == "vending machine"
+    assert machine.spot(generate_room(back.house, cfg, "rhub")) == "vending machine"
     back.close()
 
 

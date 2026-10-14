@@ -937,8 +937,7 @@ class Engine:
         things.behave(h, cfg)
         invent.tick(h, cfg)   # SPEC-v3.5 §3.0: what an invented thing does by itself (a carried light goes with its owner)
         radio.tick(h, cfg, self.radio_song)
-        for pet in h["pets"].values():   # SPEC-v3.5.1 §2: whoever is in the machine room reads its lit sign
-            hub.read_sign(h, cfg, pet)
+        hub.tick(h, cfg)   # SPEC-v3.5.1: whoever is in the machine room reads its lit sign; the eldest wants the founder's statue
         seconds = cfg["clock"]["tick_seconds"]
         for pet in list(h["pets"].values()):
             if pet["stage"] == "egg":
