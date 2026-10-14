@@ -68,8 +68,9 @@ async def run(d):
     pet["events"].clear()
     hub.read_sign(h, cfg, pet)
     hub.read_sign(h, cfg, pet)
-    read = [e for _, e in pet["events"] if e.startswith("the lit sign")]
-    assert len(read) == 3 and "Tomorrow" in read[0] and "Sven" in read[-1], "it reads tomorrow's weather and what is new, once: %s" % read
+    read = [e for _, e in pet["events"] if e.startswith("the board on the wall")]   # SPEC-v3.5.4 §11: the sign is a board of what the house is proud of
+    assert len(read) == 2 and "the Works" in read[0] and "WARM REACHER" in read[1] and not any("Sven" in e or "Tomorrow" in e for e in read), \
+        "it reads the board, once: the Works, and (while the house has few feats) an invention; not news or weather: %s" % read
 
     # ---- §3 the screens ----
     other = world.new_pet(h, cfg, hub.RID, [8, 4])

@@ -310,7 +310,7 @@ def gone(house, o, name, how, room=None):
                                                         "by": m["by"], "medium": m["medium"], "what": "gone with the thing", "actor": None})
     house.setdefault("gone_things", []).append(
         {"id": o["made"].get("id"), "name": name, "recipe": o["made"]["recipe"], "by": o["made"]["by"], "owner": o["made"]["owner"],
-         "uses": o["made"]["uses"], "ups": o["made"]["ups"], "made": o["made"]["tick"], "gone": [house["tick"], how]})
+         "uses": o["made"]["uses"], "ups": o["made"]["ups"], "made": o["made"]["tick"], "gone": [house["tick"], how], "star": o["made"].get("star")})
     del house["gone_things"][:-200]
 
 

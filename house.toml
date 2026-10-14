@@ -264,7 +264,7 @@ bits = {}
 rule = "hub"
 fixtures = [
   { name = "vending machine", pos = [1, 0], machine = true, says = "a great machine with lit windows: it gives out wood, stone, metal, clay, fibre and sand, and takes made things and bits back" },   # SPEC-v3.5 §4.3 (machine.toml), moved here
-  { name = "lit sign", pos = [8, 0], sign = true, says = "a long sign of small lights on the wall: words run across it, the time, what the weather will do tomorrow, and what has happened in the house" },
+  { name = "lit sign", pos = [8, 0], sign = true, says = "a board of small lights on the wall: it shows what the house is proudest of and who did it, and what the Works is building" },
   { name = "left screen", pos = [9, 0], terminal = true, book = true, says = "a glass screen with keys under it: ask it something and the words of the book come up on the glass" },
   { name = "middle screen", pos = [10, 0], terminal = true, book = true, says = "a glass screen with keys under it: ask it something and the words of the book come up on the glass" },
   { name = "right screen", pos = [11, 0], terminal = true, book = true, says = "a glass screen with keys under it: ask it something and the words of the book come up on the glass" },

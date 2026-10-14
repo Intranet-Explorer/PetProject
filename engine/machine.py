@@ -7,7 +7,7 @@ the other modules call in here with a line each."""
 import tomllib
 from collections import Counter
 
-from . import craft, order, things
+from . import craft, order, things, works
 from .world import LONG_AGO, add_event, beside, days as world_days, dist, free_tile, label, moment, ticks
 
 ACTIONS = ("machine_take", "machine_feed")   # what a mind can decide, at the machine
@@ -179,8 +179,8 @@ def leave(pet, name, o):
 
 
 def refuses(house, cfg, pet, room, name):
-    """Why the machine will not take this from this pet, or None. Never an heirloom, a memorial stone, anything in a
-    keepsake box, or what belongs to another living pet without that pet's leave."""
+    """Why the machine will not take this from this pet, or None. Never an heirloom, a starred thing, a memorial
+    stone, anything in a keepsake box, or what belongs to another living pet without that pet's leave."""
     o = room["objects"].get(name)
     if not o:
         return "that is not here"
@@ -190,6 +190,8 @@ def refuses(house, cfg, pet, room, name):
         return "the machine only takes made things and bits"
     if o["made"].get("heirloom"):
         return "the machine will not take an heirloom"
+    if o["made"].get("star") is not None:   # SPEC-v3.5.4 §10
+        return "the machine will not take a thing the visitor gave a star"
     if o.get("on") and order.keeps(room["objects"].get(o["on"], {})):
         return "the machine will not take what is kept in a keepsake box"
     if not things.free_to_change(house, pet, o) and not leave(pet, name, o):
@@ -229,7 +231,7 @@ def feed(house, cfg, pet, what, back, keep=False):
     """A made thing here, or three of the bits it carries, into the machine, and one of `back` out: into its paws
     (the stock does not change: what goes in is what comes out, as something else), or, when it has no use for it
     (`keep`: a body feeding the machine only to be rid of the thing), left in the machine for whoever comes next."""
-    S, room, M = state(house, cfg), house["rooms"][pet["room"]], cfg["machine"]
+    S, room, M, o = state(house, cfg), house["rooms"][pet["room"]], cfg["machine"], None
     if what == "bits":
         fed, said = pet["carrying"][:M["bits"]], "three bits"
         del pet["carrying"][:M["bits"]]
@@ -245,13 +247,14 @@ def feed(house, cfg, pet, what, back, keep=False):
         said, told = a_thing(cfg, o["made"]["recipe"]), "you fed the %s to the machine" % what
     S["used"], pet["fed"] = house["tick"], {"tick": house["tick"], "what": what, "day": house["clock"]["day"], "n": (pet.get("fed") or {}).get("n", 0) + 1}
     pet.setdefault("machine", {})["seen"] = house["tick"]
+    scrap, fx = works.fed(house, cfg, pet, o)   # SPEC-v3.5.4 §8: scrap for the Works, and what helping fill it is worth
     if keep:
         fill(house, cfg, back, 1)
         moment(house, "fed", "%s fed %s to the machine and left the %s in it" % (label(pet), said, back), pet["id"], room["id"])
-        return "%s; it whirred and clunked, and you left the %s it made of it in the machine" % (told, back), {}, "machine feed"
+        return "%s; it whirred and clunked, and you left the %s it made of it in the machine%s" % (told, back, scrap), fx, "machine feed"
     got(house, cfg, pet, room, back)
     moment(house, "fed", "%s fed %s to the machine for %s" % (label(pet), said, back), pet["id"], room["id"])
-    return "%s; it whirred, clunked, and dropped some %s into your paws" % (told, back), {}, "machine feed"
+    return "%s; it whirred, clunked, and dropped some %s into your paws%s" % (told, back, scrap), fx, "machine feed"
 
 
 # ---- a mind at the machine (actions.py, mind.py, the brains) ----
@@ -288,7 +291,7 @@ def sense(house, cfg, pet):
         return []
     S, more = state(house, cfg), max(0, left(house, cfg, pet))
     return ["the machine here holds %s; it will give you %s today; fed a made thing, or three bits, it gives one back"
-            % (listed([m for m in cfg["machine"]["materials"] if S["stock"].get(m, 0) > 0]), COUNT[more] if more < len(COUNT) else "more")]
+            % (listed([m for m in cfg["machine"]["materials"] if S["stock"].get(m, 0) > 0]), COUNT[more] if more < len(COUNT) else "more")] + works.sense(house, cfg, pet)   # SPEC-v3.5.4 §8
 
 
 def schema(c, one):
@@ -413,6 +416,7 @@ def wants(house, cfg, pet, known, out, add, via):
             "your %s has been %s in %s for days, and nobody has touched it" % (n, order.into(cfg, r, r["objects"][n]["on"]), r["name"])
         add("feed", n, "%s: you want to feed %s to the machine%s" % (text, "it" if why in ("old", "kept") else "your " + n, "" if at is r else " in " + at["name"]),
             "fed the %s to the machine" % n, M["feed_weight"] * (M["stored_weight"] if why == "kept" else 1.5 if r.get("mess") == 2 else 1.0), thing=n, room=r["id"])
+    works.wants(house, cfg, pet, known, out, add)   # SPEC-v3.5.4 §8: the Works wants scrap
 
 
 def met(house, cfg, pet, w):
