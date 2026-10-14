@@ -1734,3 +1734,44 @@ the live house, then on the live house.
 - **§10:** a model reply with writing in another script is asked for once more; what is left of it after that is
   taken out; each time is noted in `data/<lineage>/<pet>/foreign.jsonl` (beside training.jsonl). A pet at a screen is
   told "the screen is right here", "you read on the screen", and the story says it "asked the screen".
+
+## Part 20: v3.5.4, drive (14 October 2026)
+
+How it was run: the lead built the shared pride and feats (`engine/feats.py`), clearing, curiosity, doors, messages,
+projects, names and the bars (`engine/bars.py`); one helper built firsts, bests, ambitions and pets noticing
+(`engine/firsts.py`), another the Works, the board and the visitor's star (`engine/works.py`, `engine/board.py`).
+Tested with the scripted brain on copies of the live house, then for one world day on a copy with the real model.
+
+- **Clearing (§1).** "No room to make" is gone. A room with `make.crowded` made things on its floor (boxes count,
+  as they did for the old cap) feels "cluttered with old things". Its clutter is what may go by §1's list, oldest
+  first; what is in an ordinary box goes too, the emptiest box first, and an emptied box can then go. A pet's own
+  clutter, or a dead pet's, becomes a want to take it to the machine, weighted above other spare things
+  (`machine.clutter_weight`); the body carries it there like any want it serves. A dead pet's clutter goes into its
+  keepsake box at the hourly sweep instead of being carried, as before. A bored pet that knows of a door it has never
+  been through is told so, wherever it is, so a pet that has not found the machine room goes looking.
+- **Curiosity (§2).** Novelty wears off by kind as well as by thing (`novelty.per_kind`): ten bowls are as familiar as
+  one bowl handled ten times. Something not handled for `new_hours` is new again. Fidgets give none. A pet that grows
+  bored is told so once ("nothing here is new to you any more") and thinks. **Comfort** was pinned by every warm or
+  fragrant thing nearby; its drift is now in proportion to how comfortable it is, so it settles lower instead of at
+  the top.
+- **Doors (§3).** A pet that has just come through a door does not go straight back for `body.back_seconds` unless
+  something calls it (someone it wants to be with, the visitor, an event, a want that began after it left), or it is
+  cornered. A pet stays `body.stay_seconds` before the body moves it on unless the mind sends it. Going next door
+  needs a reason: a room not seen for `stale_hours`, kin there and nobody here, a mess it minds, nothing to do here.
+  Walking about inside a room ("wander") is counted apart from doors in the bars: it is not a door.
+- **Messages and projects (§4).** The night no longer shows a pet its own last message; it writes fresh from its
+  life, at most four sentences (the engine cuts to four). A project that is a "don't" (a way to be, not a thing to
+  do) is asked again once that night, with why.
+- **Names (§5).** The parent is shown the family's names and told an egg can have one of its own or honour someone.
+- **Firsts, bests, ambitions (§6, §7, §9).** A first is keyed by what was done: a kind, a kind with its nature, a
+  process, a tool, a room, a passage. The record was filled from what the house still has (things in rooms, the last
+  200 things gone, each pet's kinds and tries, recipes, tool firsts), so a kind made and gone before `gone_things` was
+  kept can be a first again. A kind with a nature ("the first noisy bowl in the house") is a first too, which makes
+  house firsts common at first; they thin as the house fills its record. Bests sum the maker's practice, size,
+  sturdiness, the kind's rank, and newness, so beating a parent needs a harder or newer thing, not just more practice.
+  The ambition is chosen by the engine at hatching (no call) and from numbered offers at night.
+- **The Works (§8).** The first goal is 12 scrap (a lamp for the cellar), not the spec's example 30: at today's
+  feeding rate that is about a world day. A thing counts once, and only if it is at least 12 world hours old.
+- **The board (§11)** replaces the sign's forecast and headlines: the Works line and its meter first, then up to four
+  feats, one to a pet, the young and the rarely named sooner. It turns every world hour, or at once for a new feat.
+- **Numbers** are in `config.toml [drive]`, `[novelty]`, `[body]`, `[make]` and `works.toml`.

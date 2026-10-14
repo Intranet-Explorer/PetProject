@@ -20,6 +20,14 @@ def norm(s):
     return re.sub(r"^(the|my|your|a|an) ", "", s)
 
 
+def norm_in(room, pet):
+    """norm, except that a name that is itself something here or in its paws keeps its article ("the letting go")."""
+    def n(s):
+        whole = re.sub(r"\s+", " ", s.strip().lower()) if isinstance(s, str) else ""
+        return whole if whole in room["objects"] or whole in pet["carrying"] else norm(s)
+    return n
+
+
 def clean(text, limit):
     return re.sub(r"\s+", " ", str(text)).strip()[:limit]
 
@@ -199,6 +207,7 @@ def words(a):
 def check(a, house, cfg, pet, mem):
     """None if the action can happen now, else why not, in words the pet can use."""
     t, room = a.get("type"), house["rooms"][pet["room"]]
+    norm = norm_in(room, pet)
     if t in ("put_away", "take_out", "hang"):
         return order.check(a, house, cfg, pet, norm)
     if t in machine.ACTIONS:   # SPEC-v3.5 §4.3
@@ -470,6 +479,7 @@ def apply(house, cfg, pet, a, mem):
     Effects may carry "tags" (hidden physics that fired) and "scale" (a room's rule on what it is worth)."""
     t, room, E = a["type"], house["rooms"][pet["room"]], cfg["effects"]
     name = label(pet)
+    norm = norm_in(room, pet)
     if t in ("put_away", "take_out", "hang"):
         return order.do(a, house, cfg, pet, norm)
     if t in machine.ACTIONS:   # SPEC-v3.5 §4.3

@@ -244,7 +244,7 @@ def feed(house, cfg, pet, what, back, keep=False):
         if owner and owner is not pet and owner["stage"] != "dead":
             add_event(house, owner, "%s fed your %s to the machine" % (label(pet), what))
         things.gone(house, o, what, "fed to the machine", room)
-        said, told = a_thing(cfg, o["made"]["recipe"]), "you fed the %s to the machine" % what
+        said, told = a_thing(cfg, o["made"]["recipe"]), "you fed %s to the machine" % (what if what.startswith("the ") else "the " + what)
     S["used"], pet["fed"] = house["tick"], {"tick": house["tick"], "what": what, "day": house["clock"]["day"], "n": (pet.get("fed") or {}).get("n", 0) + 1}
     pet.setdefault("machine", {})["seen"] = house["tick"]
     scrap, fx = works.fed(house, cfg, pet, o)   # SPEC-v3.5.4 §8: scrap for the Works, and what helping fill it is worth
@@ -573,7 +573,7 @@ def finish(mind, now):
         act = dict(story.act_of(h, pet, a), to=a["for"] if mine else None)
         text, fx, key = actions.apply(h, cfg, pet, a, mind.mem)
         add_event(h, pet, text)
-        return "fed %s to the machine%s" % ("three bits" if name == "bits" else "the " + name, " for some %s" % a["for"] if mine else ""), fx, key, act
+        return "fed %s to the machine%s" % ("three bits" if name == "bits" else name if name.startswith("the ") else "the " + name, " for some %s" % a["for"] if mine else ""), fx, key, act
     door = now.get("door")   # the machine is elsewhere: it and the thing go through the door toward it, and the thing is set down there
     if door not in room["doors"] or actions.check({"type": "go", "door": door}, h, cfg, pet, mind.mem):
         return None, {}, None, None

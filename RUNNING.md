@@ -79,6 +79,7 @@ uv run python -m engine.check               # the engine's self-check (about two
 uv run python -m engine.tick --days 40      # a headless lineage with scripted brains
 uv run python -m engine.metrics [data dir]  # the Lab's numbers for a run
 uv run python -m engine.alive <data dir>    # SPEC-v3.4 §0, from a house's own log: things handled, tiles walked, wants met, discoveries, tools, food grown, the book, the box
+uv run python -m engine.bars <data dir> --since T [--until T]   # SPEC-v3.5.4 §0, the drive bars; a copy's sampler (bars.sample, every world minute) writes the bars.jsonl it reads curiosity and crowding from
 uv run python -m engine.check               # (the self-check takes about ten minutes now)
 uv run python -m engine.showcase [data dir] # the evidence for SPEC-v3 §12's bar, from a run's logs
 uv run python -m engine.genes [data dir]    # SPEC-v3.5 §7.2: mutation rates, body plans and how far apart the two families stay, over 1,000 births
