@@ -12,7 +12,7 @@ const tint = (p: { genome: { hue: number; saturation: number } }) => `hsl(${p.ge
 export function drawMap(box: HTMLElement, s: Snap, viewed: string, chosen: string | null, look: (room: string) => void, width: number) {
   const [x0, y0] = [Math.min(...s.rooms.map((r) => r.cell[0])), Math.min(...s.rooms.map((r) => r.cell[1]))];   // SPEC-v3.5.1: the hub hangs outside the 3 x 3 grid (a cell of -1 or 3)
   const [gx, gy] = [Math.max(...s.rooms.map((r) => r.cell[0])) + 1 - x0, Math.max(...s.rooms.map((r) => r.cell[1])) + 1 - y0];
-  const scale = Math.max(1, Math.min(3, Math.floor((width / gx - 10) / 16))), cell = 16 * scale + 4, gap = scale > 1 ? 6 : 4;
+  const scale = Math.max(1, Math.min(3, Math.floor((width / gx - 22) / 16))), cell = 16 * scale + 16, gap = scale > 1 ? 6 : 4;   // (v3.5.6: a slot round each room, 8 px a side)
   const key = JSON.stringify([scale, viewed, chosen, s.rooms.map((r) => [r.type, r.wet, r.cold, r.sounding, r.shut, r.name]),
     s.pets.map((p) => [p.id, p.room, p.stage, p.buried, p.label]), s.creatures.map((c) => [c.id, c.room, c.tame, c.name])]);
   if (box.dataset.key === key) return;

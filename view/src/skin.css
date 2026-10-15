@@ -36,7 +36,8 @@ body :where(:not(#page-lab, #page-lab *, svg, svg *, canvas)) { font-size: 16px 
 img.px, .px, canvas { image-rendering: pixelated; }
 :focus-visible { outline: 2px solid var(--amber); outline-offset: 1px; }
 .hint, .empty, details > summary { color: var(--ink2); }
-b, strong { font-weight: normal; }   /* (a pixel face has no bold: a name stands out by its colour) */
+b, strong { font-weight: normal; }
+.tag, .badge { font-family: var(--pixel); }   /* (a pixel face has no bold: a name stands out by its colour) */
 
 /* ---- §3 the building blocks ---- */
 /* paper strip (Travel Book Popup01a, slice 6, x2) */
@@ -78,7 +79,7 @@ button[aria-pressed="true"], button[aria-expanded="true"] { background: none; co
 @keyframes wob { 0% { transform: rotate(0); } 25% { transform: rotate(-2.5deg) scale(1.04); } 50% { transform: rotate(0) scale(1.04); }
                  75% { transform: rotate(2.5deg) scale(1.04); } 100% { transform: rotate(0); } }
 /* plain links and icon buttons keep no wood */
-.link, button.link, button.moment, button.maproom, button.node, .crt button, button.icon, #tip button { border: 0; border-image: none; min-height: 0; animation: none !important; filter: none; }
+.link:not(.card, .slot), button.link, button.moment, button.maproom, button.node, .crt button, button.icon, #tip button { border: 0; border-image: none; min-height: 0; animation: none !important; filter: none; }
 button.icon { padding: 0; background: none; }
 /* fields and choices: a Travel Book frame (Frame04a, slice 4, x2) */
 select, input:not([type]), input[type="text"], input[type="search"], textarea { border-style: solid; border-width: 8px; border-image: url("../assets/third_party/crusenho/UI_TravelBook_Frame04a.png") 4 fill stretch;
@@ -182,7 +183,7 @@ main { flex: 1; min-height: 0; overflow: visible; padding: 0; display: block; }
 
 /* beside the room: the map as slots, the room on paper, the board in Holo */
 #mapframe { padding: 2px; display: flex; justify-content: center; }
-button.maproom, .maproom { border-style: solid; border-width: 6px; border-image: url("../assets/third_party/crusenho/UI_TravelBook_Slot01a.png") 4 fill stretch; background: none; outline: none; }
+button.maproom, .maproom { border-style: solid; border-width: 8px; border-image: url("../assets/third_party/crusenho/UI_TravelBook_Slot01a.png") 4 fill stretch; background: none; outline: none; }
 button.maproom.viewed { border-image-source: url("../assets/third_party/crusenho/UI_TravelBook_Slot03a.png"); filter: drop-shadow(0 0 3px var(--amber)); outline: none; }
 .maproom.unfound { border: 2px dashed var(--on-page); border-image: none; color: var(--on-page); }
 .map .way { background: var(--on-page); opacity: 0.8; }
@@ -191,7 +192,7 @@ button.maproom.viewed { border-image-source: url("../assets/third_party/crusenho
 #sky .mess.much { color: var(--bad); }
 #sky .mess:empty { display: none; }
 #family b { color: var(--fam); }
-#status .chip { border-width: 6px; border-image-slice: 4; }
+#status .chip { border-width: 8px; }
 #status .chip:not(.warn, .down) { display: none; }   /* (only what is wrong: the power, the engine away) */
 #happening { display: flex; flex-direction: column; gap: 2px; overflow: visible; }
 #happening li { color: var(--ink2); }
@@ -212,14 +213,16 @@ footer.paper { padding: 0 4px; }
 #talkForm { flex: 1 1 300px; max-width: none; }
 #talkText { flex: 1; min-width: 120px; }
 .visit button { min-width: 80px; }
-.pop { margin: 0; padding: 4px 8px; inset: auto; position: fixed; color: var(--ink); max-width: min(360px, 96vw); }
+#stockBox, #musicBox, #moreBox { margin: auto; inset: 0; height: fit-content; padding: 4px 8px; position: fixed; color: var(--ink); width: max-content; max-width: min(360px, 94vw);
+  border-style: solid; border-width: 12px; border-image: url("../assets/third_party/crusenho/UI_TravelBook_Popup01a.png") 6 fill stretch; background: none; box-shadow: 4px 4px 0 rgb(0 0 0 / 35%); }
+#stockBox { width: 330px; }
+#stockBox .bar { height: 8px; background: #e5b67f; }
+#stockBox .bar b { background: var(--good); }
 .pop:popover-open { display: flex; flex-direction: column; gap: 6px; }
 #musicBox .group, #moreBox { flex-direction: column; align-items: flex-start; }
 #dj { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
 #dj label, #moreBox label { display: flex; gap: 6px; align-items: center; color: var(--ink2); }
-#stockBox { inset: auto; width: 300px; border: 0; background: none; }
 #stockBox li { grid-template-columns: 32px 52px 1fr 24px auto; }
-#stockBox .bar { height: 8px; }
 #ended { color: var(--ink2); }
 
 /* ---- §5 a desktop: a game screen, three columns over the toolbar, nothing below the fold ---- */
@@ -243,21 +246,22 @@ footer.paper { padding: 0 4px; }
   header.banner h1, header.banner h1 *, header .tab, .head, #sky h2, .cards .card.here .n { font-size: 32px !important; line-height: 32px; }
   #sign { top: -20px; }   /* (x2, 16 px words, as the mockup: it sits on the frame's top edge and only a little of the wall) */
   #board { flex: 1 0 auto; }
-  .cards .card.away { grid-template-columns: auto minmax(0, 1fr); align-items: center; border-width: 10px; }
-  .cards .card.away .pic canvas { width: 32px !important; height: 32px !important; }
+  .cards .card.away { grid-template-columns: auto minmax(0, 1fr); align-items: center; border-width: 7px; padding: 2px 6px; }
   .cards .card.away .pic .plate, .cards .card.away .doing, .cards .card.away .want, .cards .card.away .bars, .cards .card.away .naming { display: none; }
   .cards .card.away .where { display: block; }
   .cards .card.away .wholine { flex-direction: row; gap: 0 6px; flex-wrap: wrap; align-items: baseline; }
   .cards .card.away .where { grid-column: 2; }
-  #chosen { margin-top: auto; }
-  p.more { position: fixed; right: 16px; bottom: 0; margin: 0; padding: 0; }
+  #chosen { order: -1; }   /* at the top of the column, while a pet or a thing is chosen (a click in the room) */
+  #chosen:has(#chosenWhat.none) { display: none; }
+  #stockBox, #musicBox, #moreBox { inset: auto 16px 84px auto; margin: 0; }   /* above the toolbar's right end, under the buttons that open them */
+  body[data-page="house"] p.more { position: fixed; right: 16px; bottom: 0; margin: 0; padding: 0; }
 }
 /* ---- §4 a phone (and anything narrower than a desktop): one column, the page scrolls ---- */
 @media (max-width: 999.98px) {
   body { height: auto; min-height: 100dvh; overflow: auto; display: block; }
   header.banner { flex-wrap: wrap; margin: 10px 12px 0; padding: 12px 14px 0; min-height: 0; }
   header.banner::before { bottom: auto; height: 66px; }
-  #soundBtn { width: 42px; height: 42px; background-size: 42px 42px; }
+  #soundBtn { width: 50px; height: 50px; margin: -4px 0; }
   header.banner h1, header.banner h1 * { font-size: 32px !important; line-height: 28px; }
   header.banner h1 { flex: 1; }
   header.banner #clock { order: 2; }

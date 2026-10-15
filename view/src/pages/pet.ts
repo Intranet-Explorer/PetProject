@@ -74,8 +74,8 @@ export async function render(root: HTMLElement, id: string | null) {
 
   // the jumps: on a phone the sections are a long way down
   const parts: [string, string][] = [["fam", "Family"], ["body", "Body"], ["words", "Words"], ["made", `Made (${page.made.length})`], ["life", "Life"]];   // (in the order of the page)
-  if (page.bests) parts.splice(parts.length - 2, 0, ["bests", "Bests"]);
-  if (page.now) parts.splice(1, 0, ["now", "Now"]);
+  if (page.bests) parts.unshift(["bests", "Ambition"]);   // (SPEC-v3.5.6 §6: ambition and bests first)
+  if (page.now) parts.splice(page.bests ? 2 : 1, 0, ["now", "Now"]);
   const jumps = el("nav", "pjump", a("← everyone", href("family"), "small"),
     ...parts.map(([k, t]) => button(t, () => root.querySelector(`.psec.${k}`)?.scrollIntoView({ behavior: "smooth" }), "chip")));
 
@@ -140,5 +140,5 @@ export async function render(root: HTMLElement, id: string | null) {
       !p.alive && lastSaid ? el("li", "k-death", icon("speech", 14), el("span", "when", `day ${p.died_day}`), el("span", "", "its last words: ", el("i", "", `“${lastSaid.split(/(?<=[.!?])\s/)[0]}”`))) : null),
     button(view.all ? "Show only the big moments" : `Show everything (${page.moments.length})`, () => { view.all = !view.all; redraw(); }, "chip"));
 
-  root.replaceChildren(el("div", "book petpage", head, jumps, el("div", "pcols", family, now, body, words, bests, made, life)));
+  root.replaceChildren(el("div", "book petpage", head, jumps, el("div", "pcols", bests, family, now, body, words, made, life)));
 }

@@ -385,7 +385,7 @@ function cards(s: Snap) {
   const naming = (p: PetV) => !p.naming ? null : !p.naming.took ? `you called it ${p.naming.offered}; waiting to hear`
     : p.naming.at != null && (s.tick - p.naming.at) * s.tick_seconds < s.day_seconds / 4 ? `it took the name ${p.naming.offered}` : null;
   const level = (p: PetV, n: Need) => Math.round(p.needs?.[n] ?? 0);
-  const key = JSON.stringify([view.room, who.map((p) => [naming(p), p.id, p.label, p.stage, p.room, p.stage === "egg" ? hatchWords(p.hatches_in ?? 0) : [moodWords(p), emoteOf(p), doingOf(p), wishOf(p), p.body?.icon, p.asleep, p.wants?.map((w) => w.text), p.ambition, BARS.map(([n]) => level(p, n))], p.genome, p.id === view.sel, p.family])]);
+  const desk = innerWidth >= DESKTOP, key = JSON.stringify([view.room, desk, who.map((p) => [naming(p), p.id, p.label, p.stage, p.room, p.stage === "egg" ? hatchWords(p.hatches_in ?? 0) : [moodWords(p), emoteOf(p), doingOf(p), wishOf(p), p.body?.icon, p.asleep, p.wants?.map((w) => w.text), p.ambition, BARS.map(([n]) => level(p, n))], p.genome, p.id === view.sel, p.family])]);
   if ($("cardsHere").dataset.key === key) return;
   $("cardsHere").dataset.key = key;
   const one = (p: PetV) => {
@@ -396,7 +396,7 @@ function cards(s: Snap) {
     const want = wants[0]?.replace(/^.*\bit wants /, "").replace(/^wants /, "") ?? wish;
     if (feels) feels.title = `feeling ${emote}`;
     const li = el("li", `card ${fam(p.family)}${p.id === view.sel ? " chosen" : ""}${egg ? " egg" : ""}${p.room === view.room ? " here" : " away"}`,
-      el("span", "pic", face(p, 48)),
+      el("span", "pic", face(p, desk && p.room !== view.room ? 32 : 48)),   // (a desktop's line for one elsewhere has a small portrait, drawn at its size)
       el("span", "wholine", el("span", "n", egg ? p.name ?? "An egg" : p.label), el("span", "s", stageWord(p), feels)),
       egg ? el("span", "doing", hatchWords(p.hatches_in ?? 0)) : null,
       naming(p) ? el("span", "naming", naming(p)!) : null,
