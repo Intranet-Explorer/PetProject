@@ -1977,3 +1977,10 @@ and the visitor's controls, whose pet they act on is not obvious). Acted on: the
 the phone's choices are no longer cut short, a count in a title is "Made: 48" (Toriko draws brackets like C and J).
 Noted, not changed: Pixelify's 5 reads like an S; a board line mid-scroll is cut at the panel's edges by design; the
 tree on a phone scrolls sideways in its own box, and its families' names are cut there until scrolled to.
+
+**The watch** (the live House tab, 75 real minutes from house hour 23.8 to about 14, a browser that never clicked,
+so no visitor): while any pet was awake (265 samples of 10 s, about 44 minutes), an awake pet was on screen 96.2% of
+the time. Asleep, the page stayed on the room where they slept and did not move. 16 room changes; every one that was
+not an event came 120 s or more after the last (most at exactly 120 s: the house is busy enough that a better room is
+always waiting, so the page moves about every two minutes by day). Three big moments in the window (two house firsts,
+a family first): three banners, the page taken to each room first.
