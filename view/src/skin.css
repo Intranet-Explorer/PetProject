@@ -42,7 +42,8 @@ button, select, input, textarea, input:not([type]), input[type="text"] { font: v
 /* Two faces and two sizes, everywhere but the Lab (which stays plain): what is read in Pixelify at --text; the short
    words (below) in Toriko at 32 px, the only size it is drawn for besides 16. (:where gives the first rule no weight,
    so the short words' rule, later, wins.) */
-body :where(:not(#page-lab, #page-lab *, svg, svg *, canvas)) { font-family: var(--read) !important; font-size: var(--text) !important; line-height: var(--lh) !important; letter-spacing: 0; }
+body :where(:not(#page-lab, #page-lab *, svg, svg *, canvas)) { font-family: var(--read) !important; font-size: var(--text) !important; line-height: var(--lh) !important; letter-spacing: 0;
+  font-variant-ligatures: none !important; }   /* (a `font:` shorthand anywhere would turn Pixelify's broken "fi" back on) */
 /* SPEC-v3.5.7 §1: Toriko is for titles (names, tabs, signs, section headings, banners); buttons and chips read in Pixelify */
 body :is(header.banner h1, header.banner h1 *, .tab, .head, h1, h2, h3, #sign, .title, 
          .cards .card .n, .gname, .tname, .thead, .treename, .sday > h3, .sday > h3 *):not(#page-lab *) {
@@ -432,3 +433,5 @@ button.followchip.off { background: var(--paper); }
 /* §5 a thing's card in the room's hover: the card is its own paper panel */
 #tip.holdscard { border: 0; border-image: none; background: none; padding: 0; display: block; width: max-content; max-width: min(430px, calc(100vw - 24px)); z-index: 6; }
 #tip.holdscard .cardhint { text-align: right; color: var(--ink2); margin: -10px 14px 0 0; position: relative; }
+p.more .fonts { color: var(--on-page); }
+@media (min-width: 1000px) { body[data-page="house"] p.more .fonts { display: none; } }   /* (the House tab's foot is the credit alone: the fonts are on every other page's foot) */

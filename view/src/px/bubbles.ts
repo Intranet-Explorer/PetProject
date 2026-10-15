@@ -97,6 +97,7 @@ function dot() {
 }
 const gap = (a: Rect, b: Rect) => Math.hypot(Math.max(0, a.x - b.x - b.w, b.x - a.x - a.w), Math.max(0, a.y - b.y - b.h, b.y - a.y - a.h));
 
+const REDUCE = matchMedia("(prefers-reduced-motion: reduce)");
 /** One piece of lettering as a sprite; its texture is made again only when what it says changes. */
 class Card {
   s = new Sprite();
@@ -107,16 +108,23 @@ class Card {
   dx = 0;           // where a thing's name sits, from the top middle of its thing
   dy = 0;
   private key = "";
+  private F = 1;
+  private popAt = -1e9;   // SPEC-v3.5.7 §9: when it last came up, for a small bounce
   set(key: string, F: number, make: () => HTMLCanvasElement) {
     if (key === this.key) return;
     this.key = key;
     if (this.s.texture !== Texture.EMPTY) this.s.texture.destroy(true);
     const c = make();
     this.s.texture = fromCanvas(c);
+    this.F = F;
     this.s.scale.set(F);
     [this.w, this.h] = [c.width * F, c.height * F];
   }
   ease(dt: number) {
+    const now = performance.now();
+    if (this.want > 0 && this.alpha <= 0.01 && !REDUCE.matches) this.popAt = now;   // it pops in with a small bounce
+    const k = (now - this.popAt) / 280;
+    this.s.scale.set(k < 1 ? this.F * (1 + 0.14 * Math.sin(k * Math.PI) * (1 - k)) : this.F);
     this.alpha += clamp(this.want - this.alpha, -dt / 350, dt / 220);
     this.s.alpha = this.alpha;
     this.s.visible = this.alpha > 0.01;
