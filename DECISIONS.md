@@ -1915,8 +1915,10 @@ View only: the engine is unchanged.
 - **Following (§2).** Rooms score by what happened there in the last minute of the house (something made, found out or
   a first; pets together; the visitor's doings), what each awake pet is at (making, or carrying two bits to make with;
   talking), and one point for any pet awake; at night, where most of them sleep. "About to reach a first" has nothing
-  to go on but a pet carrying the makings, so that is what counts. The page leaves an empty room 20 seconds after it
-  came there (two minutes otherwise), never while a banner is up, and never within a minute of a click or a key.
+  to go on but a pet carrying the makings, so that is what counts. The page changes room at most once in two minutes
+  (an event excepted), never while a banner is up, and never within a minute of a click or a key; only its first
+  look, when the page opens on an empty room, goes to the action at once. (A first build left an emptied room after
+  20 seconds; the watch caught two changes 68 seconds apart, so that went.)
   Clicking a pet in the room follows it, as before; a room on the map turns following off; the chip's pop-up picks
   the house, a pet or nobody. Every change is written with its reason (`petView.follows()`).
 - **The console (§3).** Its map is the old map recoloured blue, with every pet a dot in its family's colour placed

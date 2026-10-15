@@ -150,7 +150,7 @@ function auto(s: Snap) {
   followNow = false;
   let to: { room: string; why: string } | null = null;
   if (pending && pending.room !== view.room && still) to = pending;
-  else if (best && best[0] !== view.room && still && !banners.showing && (due || (mine < 0 && now - autoAt > 20_000)) && best[1].n >= mine + 10) to = { room: best[0], why: best[1].why };   // (an empty room is left soon, but not the moment an event has brought the page to it)
+  else if (best && best[0] !== view.room && still && !banners.showing && (due || (mine < 0 && !follows.length)) && best[1].n >= mine + 10) to = { room: best[0], why: best[1].why };   // (at most once in two minutes; only the page's first look leaves an empty room at once)
   if (pending && (pending.room === view.room || to)) pending = null;
   if (!to) return view.room;
   follows.push({ at: Date.now(), tick: s.tick, from: view.room, to: to.room, why: to.why });
