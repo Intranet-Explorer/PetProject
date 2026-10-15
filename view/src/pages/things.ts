@@ -9,6 +9,7 @@ import { artReady } from "../sprite";
 import { hhmm } from "../types";
 import { a, button, chip, getJSON, giveStar, petLink, thingLink, thingPic } from "../ui";
 import { loadPets, momentRow, petOf } from "./story";
+import { tipOn } from "./tip";
 import type { M } from "./story";
 
 type Thing = {
@@ -46,11 +47,14 @@ const kindLine = (t: Thing) => [t.statue ? "statue" : t.recipe.kind === t.name &
 const STEP = 60;
 let kind = "", fam = 0, place = "", mark = "", shown = STEP, drawn = "", busy = false;
 
+/** SPEC-v3.5.6 §6: a thing is its sprite in a slot (a dark slot when it is gone); its name and the rest are in its tip. */
 function card(t: Thing) {
-  return el("div", `card tcard${t.gone ? " gone" : ""}`,
-    a(pic(t, 3), href("thing", t.id), "tpic"),
-    el("div", "ttxt", thingLink(t.id, t.name), el("span", "kind", ...kindLine(t)),
-      el("span", "", "by ", by(t.by, t.by_name)), el("span", "twhere", t.where)));
+  const s = el("a", `slot tslot${t.gone ? " dark gone" : ""}`, pic(t, innerWidth < 640 ? 2 : 3)) as HTMLAnchorElement;   // (not a.link: that has no frame)
+  s.href = href("thing", t.id);
+  s.setAttribute("aria-label", t.name);
+  tipOn(s, () => [el("div", "ttxt", thingLink(t.id, t.name), el("span", "kind", ...kindLine(t)),
+    el("span", "", "by ", by(t.by, t.by_name)), el("span", "twhere", t.where))]);
+  return s;
 }
 
 function grid(root: HTMLElement, d: All) {
@@ -69,7 +73,7 @@ function grid(root: HTMLElement, d: All) {
   };
   const kinds = [...new Set([...d.kinds.filter((k) => k !== "statue"), ...(T.some((t) => t.statue) ? ["statue"] : [])])].sort();
   const standing = T.filter((t) => !t.gone).length;
-  root.replaceChildren(el("div", "things",
+  root.replaceChildren(el("div", "things", el("div", "paper tbar",
     el("p", "hint", `${plural(T.length, "thing")} made in the house: ${standing} still about, ${T.length - standing} gone.`),
     el("div", "tfilters",
       pick("Every kind", kind, kinds.map((k) => [k, inv.has(k) ? `${k} (invented)` : k]), (v) => (kind = v)),
@@ -78,7 +82,7 @@ function grid(root: HTMLElement, d: All) {
         chip("Invented kinds", mark === "invented", () => { mark = mark === "invented" ? "" : "invented"; redo(); }),
         chip("Statues", mark === "statue", () => { mark = mark === "statue" ? "" : "statue"; redo(); }),
         chip("★ Starred", mark === "star", () => { mark = mark === "star" ? "" : "star"; redo(); }))),
-    list.length !== T.length ? el("p", "hint", `${plural(list.length, "thing")} like that.`) : null,
+    list.length !== T.length ? el("p", "hint", `${plural(list.length, "thing")} like that.`) : null),
     list.length ? el("div", "tgrid", ...list.slice(0, shown).map(card)) : el("p", "empty", "Nothing made like that."),
     list.length > shown ? el("p", "earlier", button(`Show more (${list.length - shown} left)`, () => { shown += STEP * 2; drawn = ""; grid(root, d); }, "button")) : null));
 }
@@ -108,9 +112,9 @@ function facts(t: Page) {
 
 function thingPage(root: HTMLElement, t: Page) {
   const map = names();
-  root.replaceChildren(el("div", "tpage",
+  root.replaceChildren(el("div", "book tpage",
     el("p", "back", a("← All things", href("things"), "small")),
-    el("div", `thead${t.gone ? " gone" : ""}`, el("div", "tbig", pic(t, 4)),
+    el("div", `thead${t.gone ? " gone" : ""}`, el("div", `tbig slot${t.gone ? " dark" : ""}`, pic(t, 4)),
       el("div", "", el("h2", "", t.name), el("p", "kind", ...kindLine(t)), starButton(root, t))),
     facts(t),
     el("h3", "", "Its story"),

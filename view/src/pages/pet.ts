@@ -10,6 +10,17 @@ import { a, button, getJSON, linked, petLink, portrait, thingLink, thingPic } fr
 import { fam } from "../types";
 import { allPets, familyName, lifeDays, namesOn, stageText } from "./family";
 import type { Pet } from "./family";
+import heart from "../../assets/third_party/crusenho/UI_TravelBook_IconHeart01a.png";
+import star from "../../assets/third_party/crusenho/UI_TravelBook_IconStar01a.png";
+
+/** A Travel Book icon at x2 (skin.css img.ticon). */
+function ticon(src: string, w: number) {
+  const i = el("img", "ticon") as HTMLImageElement;
+  i.src = src;
+  i.alt = "";
+  i.style.setProperty("--w", String(w));
+  return i;
+}
 
 type Best = { what: string; text: string; by: string | null };
 type Moment = { tick: number; day: number; hour: number; kind: string; text: string };
@@ -47,7 +58,7 @@ export async function render(root: HTMLElement, id: string | null) {
   const today = p.died_day ?? data.day, things = Object.fromEntries(page.made.map((t) => [t.name, t.id]));
   const say = (text: string, day = today) => linked(text, namesOn(data.pets, day, p.id), things);
   const chips = (ids: (string | null)[]) => ids.map((i) => (i ? by.get(i) : null)).filter((q): q is Pet => !!q).map((q) => petLink(q, 64));
-  const section = (cls: string, title: string, ...kids: (Kid | Kid[])[]) => el("section", `panel psec ${cls}`, el("h2", "", title), ...kids.flat());
+  const section = (cls: string, title: string, ...kids: (Kid | Kid[])[]) => el("section", `psec ${cls}`, el("h2", "", title), ...kids.flat());
   const w = page.words, lastSaid = w.last_words?.trim();
 
   // the header
@@ -110,15 +121,16 @@ export async function render(root: HTMLElement, id: string | null) {
   const MANY = 24, shown = view.things ? page.made : page.made.slice(0, MANY);
   const made = section("made", `What it made (${page.made.length})`,
     page.made.length ? el("div", "pthings", ...shown.map((t) => el("div", `pthing${t.gone ? " gone" : ""}`,
-      a(thingPic(t.recipe, 2), href("thing", t.id), "pic"),
+      Object.assign(el("a", "pic slot", thingPic(t.recipe, 2)), { href: href("thing", t.id) }),
       el("span", "", thingLink(t.id, t.name), t.invented ? " (invented)" : "", t.statue ? " (statue)" : ""),
       el("span", "hint", t.gone ?? t.where)))) : el("p", "hint", "Nothing yet."),
     page.made.length > MANY ? button(view.things ? "Show fewer" : `Show all ${page.made.length}`, () => { view.things = !view.things; redraw(); }, "chip") : null);
 
   // SPEC-v3.5.4 §7, §9: what it means to do with its life, and the best it and its family have done
-  const B = page.bests, bestList = (bs: Best[]) => el("dl", "", ...bs.flatMap((b) => [el("dt", "", b.what), el("dd", "", b.text, ...(b.by && by.get(b.by) ? [" · ", petLink(by.get(b.by)!)] : []))]));
+  const B = page.bests, bestList = (bs: Best[]) => el("ul", "iconed", ...bs.map((b) => el("li", "", ticon(heart, 13),
+    el("span", "", `${b.what}: `, b.text, ...(b.by && by.get(b.by) ? [" · ", petLink(by.get(b.by)!)] : [])))));
   const bests = B && section("bests", "Ambition and bests",
-    el("h3", "", "Its ambition"), B.ambition ? el("p", "", ...say(B.ambition.text), B.ambition.done ? el("span", "hint", ` · done, day ${B.ambition.done}`) : null) : el("p", "hint", "None yet."),
+    el("h3", "", "Its ambition"), B.ambition ? el("p", "iconed", ticon(star, 12), el("span", "", ...say(B.ambition.text), B.ambition.done ? el("span", "hint", ` · done, day ${B.ambition.done}`) : null)) : el("p", "hint", "None yet."),
     el("h3", "", "Its bests"), B.own.length ? bestList(B.own) : el("p", "hint", "Nothing yet."),
     B.family.length ? [el("h3", "", `Its family's bests`), bestList(B.family)] : null);
 
@@ -128,5 +140,5 @@ export async function render(root: HTMLElement, id: string | null) {
       !p.alive && lastSaid ? el("li", "k-death", icon("speech", 14), el("span", "when", `day ${p.died_day}`), el("span", "", "its last words: ", el("i", "", `“${lastSaid.split(/(?<=[.!?])\s/)[0]}”`))) : null),
     button(view.all ? "Show only the big moments" : `Show everything (${page.moments.length})`, () => { view.all = !view.all; redraw(); }, "chip"));
 
-  root.replaceChildren(el("div", "petpage", head, jumps, el("div", "pcols", family, now, body, words, bests, made, life)));
+  root.replaceChildren(el("div", "book petpage", head, jumps, el("div", "pcols", family, now, body, words, bests, made, life)));
 }

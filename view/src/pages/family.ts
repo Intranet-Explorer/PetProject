@@ -60,7 +60,7 @@ export async function render(root: HTMLElement, _id: string | null) {
     row("Family", chip("All", !view.fam, set({ fam: 0 })), ...fams.map((n) => chip(familyName(n), view.fam === n, set({ fam: n })))),
     row("Who", chip("All", !view.life, set({ life: "" })), chip("Living", view.life === "living", set({ life: "living" })), chip("Dead", view.life === "dead", set({ life: "dead" }))),
     row("Sort", chip("By birth", view.sort === "birth", set({ sort: "birth" })), chip("By generation", view.sort === "gen", set({ sort: "gen" }))));
-  root.replaceChildren(el("div", "familypage", el("div", "fbars", ...bars), view.tree ? tree(data, fams) : gallery(data)));
+  root.replaceChildren(el("div", "familypage", el("div", "paper fbars", ...bars), view.tree ? tree(data, fams) : gallery(data)));
 }
 
 function gallery(data: Pets) {
@@ -68,13 +68,16 @@ function gallery(data: Pets) {
     .filter((p) => (!view.fam || p.family === view.fam) && (!view.life || p.alive === (view.life === "living")))
     .sort((x, y) => (view.sort === "gen" ? x.gen - y.gen : 0) || x.born_day - y.born_day || Number(x.id.slice(1)) - Number(y.id.slice(1)));
   if (!pets.length) return el("p", "hint", "No pet like that.");
-  return el("div", "gallery", ...pets.map((p) => a(el("span", "gcard-in",
-    el("span", "gface", portrait(p, 112)),
-    el("b", "gname", p.name),
-    el("span", "gfam", familyName(p.family), ` · gen ${p.gen}`),
-    el("span", "gdays", p.alive ? null : icon("stone", 14), lifeDays(p)),
-    el("span", "gstage", p.alive ? stageText(p) : p.cause ? `died of ${p.cause}` : "dead")),
-  href("pet", p.id), `card gcard ${fam(p.family)} ${p.alive ? "alive" : "dead"}`)));
+  return el("div", "gallery", ...pets.map((p) => {
+    const c = el("a", `card gcard ${fam(p.family)} ${p.alive ? "alive" : "dead"}`, el("span", "gcard-in",   // (not a.link: that has no frame)
+      el("span", "gface", portrait(p, 112)),
+      el("b", "gname", p.name),
+      el("span", "gfam", familyName(p.family), ` · gen ${p.gen}`),
+      el("span", "gdays", p.alive ? null : icon("stone", 14), lifeDays(p)),
+      el("span", "gstage", p.alive ? stageText(p) : p.cause ? `died of ${p.cause}` : "dead"))) as HTMLAnchorElement;
+    c.href = href("pet", p.id);
+    return c;
+  }));
 }
 
 const CH = 118;   // a generation's row, in pixels
@@ -109,7 +112,7 @@ function tree(data: Pets, fams: number[]) {
     col.style.flex = `${slots} 0 ${slots * 104}px`;
     return col;
   });
-  return el("div", "treepage", el("div", "tscroll", el("div", "trow", gens, ...cols)), between(data));
+  return el("div", "treepage", el("div", "tscroll paper", el("div", "trow", gens, ...cols)), between(data));
 }
 
 const DID: Record<string, string> = { nuzzle: "nuzzled", give: "gave things", "teach song": "taught songs", tell: "told things" };
@@ -129,6 +132,6 @@ function between(data: Pets) {
   for (const { a: x, b: y, kinds } of pairs.values())
     lines.push(el("li", "", petLink(x, 24), " and ", petLink(y, 24), ": ",
       [...kinds].map(([kind, n]) => `${DID[kind] ?? kind}${n > 1 ? ` ×${n}` : ""}`).join(", ")));
-  return el("section", "between", el("h2", "", "Between the families"),
+  return el("section", "paper between", el("h2", "", "Between the families"),
     lines.length ? el("ul", "", ...lines) : el("p", "hint", "Nothing has passed between the families yet."));
 }
