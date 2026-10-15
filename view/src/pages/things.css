@@ -4,7 +4,7 @@
 .tfilters select { max-width: 100%; }
 .tgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: var(--gap); }
 .tcard { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; text-align: center; }
-.tcard.gone, .thead.gone .tbig { opacity: 0.6; }
+.tcard.gone, .thead.gone .tbig > * { opacity: 0.7; }
 .tpic { display: flex; align-items: center; justify-content: center; width: 72px; height: 72px; }
 .tpic canvas, .tpic svg { max-width: 72px; max-height: 72px; }
 .ttxt { display: flex; flex-direction: column; gap: 1px; min-width: 0; width: 100%; overflow-wrap: anywhere; font-size: 13px; line-height: 1.3; }
@@ -16,8 +16,38 @@
 .thead { display: flex; gap: var(--pad); align-items: center; }
 .thead h2 { font-size: 22px; overflow-wrap: anywhere; }
 .thead .kind { justify-content: flex-start; font-size: 13px; }
-.tbig { flex: none; width: 128px; height: 128px; display: flex; align-items: center; justify-content: center; background: var(--surface); border: var(--border) solid var(--line); }
+.tbig { flex: none; width: 128px; height: 128px; display: flex; align-items: center; justify-content: center; }
 .tbig canvas, .tbig svg { max-width: 120px; max-height: 120px; }
 .tfacts { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 12px; font-size: 14px; overflow-wrap: anywhere; }
 .tfacts dt { color: var(--muted); }
 .tfacts a.link .who { vertical-align: middle; }
+
+/* SPEC-v3.5.6 §6: the skin. The filters on a paper strip; the grid as slots, each thing's sprite in one (its name in its
+   tip, tip.ts); a thing's page is a book page. */
+.tbar { display: flex; flex-direction: column; gap: 4px; }
+.tbar .hint { margin: 0; }
+.tgrid { --s: 88px; grid-template-columns: repeat(auto-fill, var(--s)); justify-content: center; gap: 4px; }
+@media (max-width: 640px) { .tgrid { --s: 64px; } }
+a.tslot { width: var(--s); height: var(--s); display: flex; align-items: center; justify-content: center; text-decoration: none; color: var(--ink); }
+a.tslot.dark { color: var(--on-page); }
+a.tslot.gone > * { opacity: 0.7; }
+a.tslot:hover, a.tslot:focus-visible { filter: brightness(1.08); }
+a.tslot > * { max-width: 100%; max-height: 100%; }
+.things > .empty { color: var(--on-page); text-align: center; }
+/* the tip's lines (tip.ts) */
+.ptip .ttxt { display: flex; flex-direction: column; gap: 0; text-align: left; overflow-wrap: anywhere; }
+.ptip .ttxt > a.thinglink { color: var(--ink); }
+.ptip .kind { justify-content: flex-start; color: var(--ink2); }
+.ptip .twhere { color: var(--ink2); }
+/* a thing's page */
+.tpage { gap: 8px; }
+.tpage .thead { gap: 12px; height: auto; border: 0; padding: 0; justify-content: flex-start; font: inherit; color: var(--ink); }   /* (not the tree's .thead, family.css) */
+#page-thing .thead h2 { font-size: 32px !important; line-height: 32px; word-spacing: 0; }   /* (an id, to beat skin.css's 16 px rule) */
+.tpage .tbig { width: 144px; height: 144px; }
+.tpage .tbig.dark { color: var(--on-page); }
+.tpage > h3 { color: var(--ink2); text-transform: uppercase; letter-spacing: 1px; word-spacing: 0; margin: 8px 0 0; }
+.tfacts dt { color: var(--ink2); }
+@media (max-width: 640px) { .tpage .tbig { width: 112px; height: 112px; } }
+/* the pixel face for the small labels too (style.css sets them in a monospace) */
+:is(.things, .tpage, .ptip, .story, .petpage) :is(.badge, .tag) { font-family: var(--pixel); line-height: 16px; }
+#page-thing > .tpage { max-width: 760px; }

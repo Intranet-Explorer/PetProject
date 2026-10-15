@@ -6,7 +6,7 @@
 .familypage .hint, .between .hint { color: var(--muted); }
 
 .gallery { display: grid; gap: var(--gap); grid-template-columns: repeat(auto-fill, minmax(156px, 1fr)); }
-a.gcard { display: block; color: var(--ink); text-decoration: none; border-left: 6px solid var(--fam, var(--edge)); }
+a.gcard { display: block; color: var(--ink); text-decoration: none; }
 a.gcard:hover { box-shadow: 2px 2px 0 var(--shadow); }
 .gcard-in { display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center; }
 .gface { height: 120px; display: flex; align-items: center; justify-content: center; }
@@ -17,7 +17,7 @@ a.gcard:hover { box-shadow: 2px 2px 0 var(--shadow); }
 .gcard.dead .gname { color: var(--muted); }
 
 /* the tree: a column per family, a row per generation; it scrolls sideways in its own box, the page never does */
-.tscroll { overflow-x: auto; border: var(--border) solid var(--line); background: var(--surface); }
+.tscroll { overflow-x: auto; }
 .trow { display: flex; min-width: min-content; }
 .thead { height: 44px; padding: 2px 4px; text-align: center; line-height: 1.1; word-spacing: 0.3em; display: flex; align-items: center; justify-content: center; font: 16px var(--pixel); color: var(--fam, var(--muted)); border-bottom: 1px solid var(--line); }
 .tgens { flex: none; width: 40px; border-right: 1px solid var(--line); }
@@ -41,3 +41,31 @@ a.tnode:hover .tname { text-decoration: underline; }
 .fbar .glabel { word-spacing: 0.3em; }
 .between ul { display: flex; flex-direction: column; gap: 4px; }
 .between li { line-height: 1.6; }
+
+/* SPEC-v3.5.6 §6: the skin. The filters on a paper strip, as Travel Book frames (skin.css .chip); the gallery as Wood
+   cards, the name in its family's colour; the dead greyed (the wood frame, not the words: those keep their colours and
+   their contrast) with their stone. The tree on paper, its lines in the wood's colour (Wood Textfield_03's #a9553b). */
+.fbars { gap: 4px 20px; padding: 0 4px; }
+.fbar .glabel { color: var(--ink2); }
+.gallery { gap: 4px; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); }
+a.gcard { position: relative; isolation: isolate; padding: 4px 2px 10px; }
+a.gcard:hover { box-shadow: none; filter: brightness(1.05); }
+.gname { color: var(--fam, var(--ink)); }
+.gfam, .gdays, .gstage { color: var(--ink2); font-weight: normal; }
+.gcard.dead { background: none; border-image-source: none; border-color: transparent; }
+.gcard.dead::before { content: ""; position: absolute; inset: -14px; z-index: -1; border: 14px solid transparent;
+  border-image: url("../../assets/third_party/crusenho/UI_Wood_Textfield_03.png") 7 fill stretch; image-rendering: pixelated; filter: grayscale(1) brightness(1.12); }
+.gcard.dead .gname { color: var(--fam, var(--ink)); }
+.familypage > .hint { color: var(--on-page); }
+
+.thead { color: var(--fam, var(--ink2)); border-bottom-color: #a9553b; }
+.tgens { border-right-color: #a9553b; }
+.tgen { border-top-color: #c98f62; color: var(--ink2); }
+.tcol + .tcol { border-left-color: #a9553b; }
+.tlines path { stroke: #a9553b; }
+.tnode-in canvas { background: none; }
+.tname, .tdays { background: #ffd7a8; }
+.tname { color: var(--fam, var(--ink)); }
+.tnode.dead .tname { color: var(--fam, var(--ink)); }
+.tdays { color: var(--ink2); }
+.between h2 { color: var(--ink2); text-transform: uppercase; letter-spacing: 1px; word-spacing: 0; }

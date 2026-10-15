@@ -95,7 +95,7 @@ export function points(text: string): string[] {
 function dayBlock(d: Day, keep: (m: M) => boolean) {
   const shown = d.moments.filter(keep), rest = d.moments.length - shown.length;
   const sky = d.weather ? el("span", "sky", PATHS[d.weather] ? icon(d.weather) : null, d.weather) : null;
-  return el("section", "sday",
+  return el("section", "book sday",
     el("h3", "", ago(d.day), " ", el("span", "hint", d.day >= today - 1 ? `day ${d.day} · ` : "", d.season, sky ? " · " : "", sky)),
     d.summary && (filter === "main" || filter === "all") ? el("ul", "chron", ...points(d.summary).map((t) => el("li", "", ...told(t, d.day, null, things)))) : null,
     shown.length ? el("ol", "storylist", ...shown.map((m) => momentRow(m, things)))
@@ -111,7 +111,7 @@ function draw(root: HTMLElement) {
   // under a chip, a day with nothing of that kind is left out (today and yesterday are always there)
   const list = days.filter((d) => filter === "main" || filter === "all" || d.day >= today - 1 || d.moments.some(keep));
   root.replaceChildren(el("div", "story",
-    el("div", "chips filters", ...FILTERS.map(([k, label]) => chip(label, filter === k, () => setFilter(k)))),
+    el("div", "paper chips filters", ...FILTERS.map(([k, label]) => chip(label, filter === k, () => setFilter(k)))),
     ...list.map((d) => dayBlock(d, keep)),
     more ? el("p", "earlier", button(`Earlier days (before day ${days.at(-1)!.day})`, () => void earlier(root), "button")) : el("p", "hint earlier", "That is the start of the house.")));
 }
