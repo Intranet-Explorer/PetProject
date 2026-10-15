@@ -245,22 +245,6 @@ a.link .who { display: inline-flex; align-items: center; gap: 4px; }
 .glabel { font: 13px var(--pixel); color: var(--muted); }
 .visit label { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--muted); }
 .visit #volume { width: 64px; accent-color: var(--accent); }
-#visitBtn { display: none; }
-@media (max-width: 640px) {
-  .page.house #now { height: auto; min-height: 43px; padding-block: 4px; }   /* a phone: the sentence takes the lines it needs (the room is further down anyway) */
-  #visitBtn { display: block; width: 100%; margin: 2px 0; }
-  footer:not(.open) #controls { display: none; }
-  main.stacked .top { display: contents; }
-  main.stacked #stage { order: 1; }
-  main.stacked #cards { order: 2; }
-  main.stacked #side { order: 3; }
-  main { padding-inline: 8px; }
-  footer { max-height: 50vh; overflow-y: auto; padding: 2px 8px; }
-  .visit { justify-content: flex-start; }
-  #talkForm { flex-basis: 100%; }
-  #cards { flex-wrap: nowrap !important; overflow-x: auto; justify-content: flex-start !important; }
-  #cards .card { flex: 0 0 210px; }
-}
 [data-panel] { padding: 14px 16px 28px; overflow-y: auto; flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 12px; overflow-wrap: anywhere; }
 [data-panel] > * { flex: none; }
 h2 { margin: 0; font: 16px/1.3 var(--pixel); }

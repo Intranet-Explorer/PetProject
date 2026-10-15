@@ -25,10 +25,10 @@ body { background: var(--page); color: var(--ink);
                     linear-gradient(45deg, var(--page2) 25%, transparent 25%, transparent 75%, var(--page2) 75%);
   background-size: 48px 48px; background-position: 0 0, 24px 24px;
   font: 16px/18px var(--pixel); -webkit-font-smoothing: none; font-smooth: never; }
-button, select, input, textarea { font: 16px/18px var(--pixel); color: var(--ink); }
+button, select, input, textarea, input:not([type]), input[type="text"] { font: 16px/18px var(--pixel); color: var(--ink); }
 /* §1: the pixel face at 16 px and 32 px only. Everything is 16 px; what is a name, a tab or a heading on a desktop is 32
    (below). The Lab stays plain and keeps its own sizes. */
-body :not(#page-lab, #page-lab *, svg, svg *, canvas) { font-size: 16px !important; letter-spacing: 0; }
+body :where(:not(#page-lab, #page-lab *, svg, svg *, canvas)) { font-size: 16px !important; }   /* (:where: no weight of its own, so any rule naming 32 px wins) */
 #page-lab, #page-lab :not(svg, svg *) { font-family: system-ui, -apple-system, sans-serif; -webkit-font-smoothing: auto; }
 #page-lab { background: var(--paper); }
 img.px, .px, canvas { image-rendering: pixelated; }
@@ -118,3 +118,172 @@ img.ticon { width: calc(var(--w) * 2px); height: auto; image-rendering: pixelate
 p.more { color: var(--on-page); opacity: 0.8; display: flex; gap: 16px; justify-content: center; }
 p.more a, p.more .link { color: var(--on-page) !important; }
 body[data-page="house"] p.more { display: flex; }
+
+/* ---- §4, §5 the header: one Travel Book banner (Banner01a, slice 8, x2) ---- */
+header.banner { position: relative; border: 0; background: none; display: flex; align-items: center; gap: 8px 16px; padding: 7px 22px; margin: 8px 12px 0; min-height: 64px; flex: none; flex-wrap: nowrap; }
+header.banner::before { content: ""; position: absolute; inset: 0; z-index: -1; box-sizing: border-box; border-style: solid; border-width: 16px;
+  border-image: url("../assets/third_party/crusenho/UI_TravelBook_Banner01a.png") 8 fill stretch; image-rendering: pixelated; }
+body { isolation: isolate; }
+header.banner h1 { margin: 0; flex: none; }
+header.banner h1 a { color: var(--ink); text-decoration: none; }
+#clock { color: var(--ink2); text-align: right; flex: none; white-space: nowrap; }
+header .tabs { display: flex; gap: 6px; flex: 1; justify-content: center; min-width: 0; }
+header .tab { width: 150px; min-height: 0; line-height: 18px; display: block; text-align: center; }
+#soundBtn { flex: none; width: 50px; height: 50px; min-height: 0; padding: 0; border: 0; border-image: none;
+  background: url("../assets/third_party/crusenho/UI_TravelBook_ButtonSoundOff01a.png") center / 50px 50px no-repeat; image-rendering: pixelated; }
+#soundBtn[aria-pressed="true"] { background-image: url("../assets/third_party/crusenho/UI_TravelBook_ButtonSoundOn01a.png"); background-size: 42px 42px; }
+#soundBtn:hover { animation: none; filter: brightness(1.1); }
+
+/* ---- the House tab ---- */
+.page.house { overflow: visible; }
+#left, #side, #centre { min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.head { color: var(--on-page); letter-spacing: 1px; padding-left: 4px; margin: 0; }
+#now { margin: 0; height: auto; min-height: 0; padding: 0 4px; display: block; background: none; box-shadow: none; flex: none;
+  border-style: solid; border-width: 12px; border-image: url("../assets/third_party/crusenho/UI_TravelBook_Popup01a.png") 6 fill stretch; }
+#now > span { font-size: 16px; line-height: 18px; }
+#now .here { color: var(--ink2); }
+#now:is(.want, .find) { border-image-source: url("../assets/third_party/crusenho/UI_TravelBook_FrameSelect01a.png"); border-image-slice: 4; border-width: 8px; padding: 4px 8px; }
+#now .icon { color: var(--accent); }
+main { flex: 1; min-height: 0; overflow: visible; padding: 0; display: block; }
+#roomwrap { position: relative; display: flex; justify-content: center; padding-top: 18px; }
+#frame { padding: 0; flex: none; line-height: 0; }
+#stage { position: relative; }
+#sign { position: absolute; left: 50%; top: 0; transform: translateX(-50%); width: 192px; height: 46px; padding-top: 6px; text-align: center; line-height: 30px;
+  background: url("../assets/third_party/crusenho/UI_Wood_Banner_Downward_01.png") center / 100% 100% no-repeat; image-rendering: pixelated; color: var(--ink); letter-spacing: 1px; pointer-events: none; white-space: nowrap; }
+#banner { border-style: solid; border-width: 12px; border-image: url("../assets/third_party/crusenho/UI_TravelBook_Popup01a.png") 6 fill stretch; background: none; color: var(--ink); box-shadow: none; padding: 0 6px; }
+#banner.error { color: var(--bad); }
+#banner.death, #banner.arrival { border-image-source: url("../assets/third_party/crusenho/UI_HoloBook_Textfield02a.png"); color: var(--holo); text-shadow: 0 0 4px var(--holo-glow); }
+#banner.arrival { color: var(--amber); text-shadow: 0 0 4px var(--amber-glow); }
+
+/* the cards: Wood, a portrait, the name in its family's colour, the stage, what it is doing, three bars */
+.cards { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.cards .card { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 6px; align-items: center; cursor: pointer; min-width: 0; overflow-wrap: anywhere; }
+.cards .card > :not(.pic, .wholine) { grid-column: 1 / -1; }
+.cards .card .wholine { display: flex; flex-direction: column; min-width: 0; }
+.cards .card .wholine canvas { display: inline-block; vertical-align: -3px; margin-left: 4px; }
+.cards .card.chosen { filter: drop-shadow(0 0 3px var(--amber)); }
+.cards .card .pic { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.cards .card .pic .plate { line-height: 0; }
+
+.cards .card .n { color: var(--fam, var(--ink)); }
+.cards .card .s, .cards .card .want, .cards .card .naming { color: var(--ink2); }
+.cards .card .doing canvas { display: inline-block; vertical-align: -2px; margin-right: 3px; }
+.cards .card .where { display: none; }
+.cards .card .bars { grid-column: 1 / -1; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 6px; align-items: center; color: var(--ink2); }
+.empty-house { color: var(--on-page); padding: 4px; }
+#chosen { display: flex; flex-wrap: wrap; gap: 4px 6px; align-items: center; }
+#chosen .glabel { color: var(--ink2); }
+#chosenWhat { color: var(--accent); }
+#chosenWhat.none { color: var(--ink2); }
+#nameForm { display: flex; gap: 6px; }
+#nameText { width: 110px; }
+
+/* beside the room: the map as slots, the room on paper, the board in Holo */
+#mapframe { padding: 2px; display: flex; justify-content: center; }
+button.maproom, .maproom { border-style: solid; border-width: 6px; border-image: url("../assets/third_party/crusenho/UI_TravelBook_Slot01a.png") 4 fill stretch; background: none; outline: none; }
+button.maproom.viewed { border-image-source: url("../assets/third_party/crusenho/UI_TravelBook_Slot03a.png"); filter: drop-shadow(0 0 3px var(--amber)); outline: none; }
+.maproom.unfound { border: 2px dashed var(--on-page); border-image: none; color: var(--on-page); }
+.map .way { background: var(--on-page); opacity: 0.8; }
+#info { display: flex; flex-direction: column; gap: 4px; }
+#sky h2 { margin: 0; color: var(--ink); text-transform: none; }
+#sky .mess.much { color: var(--bad); }
+#sky .mess:empty { display: none; }
+#family b { color: var(--fam); }
+#status .chip { border-width: 6px; border-image-slice: 4; }
+#status .chip:not(.warn, .down) { display: none; }   /* (only what is wrong: the power, the engine away) */
+#happening { display: flex; flex-direction: column; gap: 2px; overflow: visible; }
+#happening li { color: var(--ink2); }
+#happening li.warn { color: var(--bad); }
+#playing { color: var(--ink2); min-height: 0; }
+#board { display: flex; flex-direction: column; gap: 2px; margin: 0; cursor: pointer; font-family: var(--pixel); background: none; color: var(--holo); border-radius: 0; padding: 0 4px; letter-spacing: 0;
+  border-style: solid; border-width: 12px; border-image: url("../assets/third_party/crusenho/UI_HoloBook_Textfield02a.png") 6 fill stretch; }
+#board p { margin: 0; }
+#board .gap { margin-top: 10px; }
+
+/* the toolbar: the visitor's controls, a group each */
+footer { border-top: 0; background: none; flex: none; }
+footer.paper { padding: 0 4px; }
+.controls.visit { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; justify-content: flex-start; }
+.visit .group { display: flex; flex-wrap: nowrap; gap: 6px; align-items: center; }
+.visit .glabel { color: var(--ink2); }
+.visit .pair { display: flex; gap: 2px; align-items: center; }
+#talkForm { flex: 1 1 300px; max-width: none; }
+#talkText { flex: 1; min-width: 120px; }
+.visit button { min-width: 80px; }
+.pop { margin: 0; padding: 4px 8px; inset: auto; position: fixed; color: var(--ink); max-width: min(360px, 96vw); }
+.pop:popover-open { display: flex; flex-direction: column; gap: 6px; }
+#musicBox .group, #moreBox { flex-direction: column; align-items: flex-start; }
+#dj { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+#dj label, #moreBox label { display: flex; gap: 6px; align-items: center; color: var(--ink2); }
+#stockBox { inset: auto; width: 300px; border: 0; background: none; }
+#stockBox li { grid-template-columns: 32px 52px 1fr 24px auto; }
+#stockBox .bar { height: 8px; }
+#ended { color: var(--ink2); }
+
+/* ---- §5 a desktop: a game screen, three columns over the toolbar, nothing below the fold ---- */
+@media (min-width: 1000px) {
+  body { height: 100dvh; overflow: hidden; }
+  .page.house { display: grid; grid-template-columns: 256px minmax(0, 1fr) 262px; grid-template-rows: minmax(0, 1fr) auto;
+    grid-template-areas: "left centre side" "foot foot foot"; gap: 8px 10px; padding: 10px 16px 0; min-height: 0; flex: 1; }
+  #roomwrap { padding-top: 0; }   /* the sign hangs over the room's top wall, as in the mockup: the room gets the height */
+  #left { grid-area: left; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--ink2) transparent; }
+  .cards .card.here .want { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }   /* (whole in the card's hover and on its page) */
+  #centre { grid-area: centre; min-height: 0; }
+  #side { grid-area: side; min-height: 0; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--ink2) transparent; }
+  #family .fline { display: inline; white-space: normal; }
+  #family .fline::before { content: " "; }
+  #family .fline + .fline::before { content: "; "; }
+  #info { flex-direction: row; flex-wrap: wrap; column-gap: 8px; }
+  #info > * { flex-basis: 100%; }
+  #info > .look, #info > #status { flex-basis: auto; }
+  footer { grid-area: foot; }
+  /* names, tabs and headings at 32 px (the rest 16) */
+  header.banner h1, header.banner h1 *, header .tab, .head, #sky h2, .cards .card.here .n { font-size: 32px !important; line-height: 32px; }
+  #sign { top: -20px; }   /* (x2, 16 px words, as the mockup: it sits on the frame's top edge and only a little of the wall) */
+  #board { flex: 1 0 auto; }
+  .cards .card.away { grid-template-columns: auto minmax(0, 1fr); align-items: center; border-width: 10px; }
+  .cards .card.away .pic canvas { width: 32px !important; height: 32px !important; }
+  .cards .card.away .pic .plate, .cards .card.away .doing, .cards .card.away .want, .cards .card.away .bars, .cards .card.away .naming { display: none; }
+  .cards .card.away .where { display: block; }
+  .cards .card.away .wholine { flex-direction: row; gap: 0 6px; flex-wrap: wrap; align-items: baseline; }
+  .cards .card.away .where { grid-column: 2; }
+  #chosen { margin-top: auto; }
+  p.more { position: fixed; right: 16px; bottom: 0; margin: 0; padding: 0; }
+}
+/* ---- §4 a phone (and anything narrower than a desktop): one column, the page scrolls ---- */
+@media (max-width: 999.98px) {
+  body { height: auto; min-height: 100dvh; overflow: auto; display: block; }
+  header.banner { flex-wrap: wrap; margin: 10px 12px 0; padding: 12px 14px 0; min-height: 0; }
+  header.banner::before { bottom: auto; height: 66px; }
+  #soundBtn { width: 42px; height: 42px; background-size: 42px 42px; }
+  header.banner h1, header.banner h1 * { font-size: 32px !important; line-height: 28px; }
+  header.banner h1 { flex: 1; }
+  header.banner #clock { order: 2; }
+  header.banner #soundBtn { order: 3; }
+  header .tabs { order: 4; flex-basis: 100%; gap: 4px; margin: 20px -14px 0; }
+  header .tab { flex: 1; width: auto; }
+  .page.house { display: flex; flex-direction: column; gap: 10px; padding: 10px 12px 12px; overflow: visible; }
+  #left, #side, #centre { display: contents; }
+  #now { order: 1; } #replayBar { order: 2; } main { order: 3; } #board { order: 4; } #cardsHere { order: 5; } #cardsElse { order: 6; }
+  #chosen { order: 7; } footer { order: 8; } #mapframe { order: 9; } #info { order: 10; }
+  .head { display: none; }
+  .cards { grid-template-columns: 1fr 1fr; }
+  #cardsHere:has(> .empty-house) { grid-template-columns: 1fr; }
+  .visit .group { flex-wrap: wrap; }
+  .controls.visit { gap: 6px; }
+  .visit .group { display: grid; grid-template-columns: repeat(3, 1fr); width: 100%; gap: 6px; }
+  .visit .glabel { grid-column: 1 / -1; }
+  .visit .pair { display: contents; }
+  #giveBit { order: 5; grid-column: 1 / -1; }
+  #talkForm { display: grid; grid-template-columns: repeat(3, 1fr); }
+  #talkText { grid-column: 1 / -1; }
+  .visit button { min-width: 0; }
+  .page:not(.house) { padding-inline: 12px; }
+}
+
+/* §1 the machine room's screens (SPEC-v3.5.1 §3), in the Holo Book: glowing blue, or amber for an amber screen */
+.crt { border-radius: 0; box-shadow: none; background: none; border-style: solid; border-width: 12px;
+  border-image: url("../assets/third_party/crusenho/UI_HoloBook_Textfield02a.png") 6 fill stretch; color: var(--holo); }
+.crt.amber { color: var(--amber); }
+.crt .crtglass { font-family: var(--pixel); background: none; text-shadow: 0 0 4px currentColor; color: inherit; }
+.crt .crthead { opacity: 1; color: var(--holo-dim); }

@@ -54,9 +54,9 @@ export function initVoice(who: () => { pet: PetV; snap: Snap } | null) {
   let fade: ReturnType<typeof setTimeout> | undefined;
   const show = () => {
     const waiting = voice.on && !voice.live;   // left on from last time; the browser wants a click first
-    $("soundBtn").textContent = !voice.on ? "Sound off" : waiting ? "Sound on (click)" : "Sound on";
+    $("soundBtn").setAttribute("aria-label", !voice.on ? "Sound off" : waiting ? "Sound on (click)" : "Sound on");   // (v3.5.6: the button is the Travel Book's sound icon)
     $("soundBtn").setAttribute("aria-pressed", String(voice.on));
-    $("soundBtn").title = waiting ? "Sound was left on. A browser plays nothing until the page has been clicked: click anywhere." : "";
+    $("soundBtn").title = waiting ? "Sound was left on. A browser plays nothing until the page has been clicked: click anywhere." : voice.on ? "Sound on" : "Sound off";
     $("ambBtn").textContent = voice.on && voice.ambience ? "Ambience on" : "Ambience off";
     $("ambBtn").setAttribute("aria-pressed", String(voice.on && voice.ambience));
     const latest = voice.heard[0];   // say what just played, so silence and "nothing happening" can be told apart

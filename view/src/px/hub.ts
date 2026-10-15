@@ -211,7 +211,7 @@ class Board {
 
 // ---- the screens ----
 
-const INKS = [{ on: "#8dff9a", dim: "#2f7a3a", bg: "#0d1a10" }, { on: "#ffc94a", dim: "#8a5a14", bg: "#1a1206" }];   // green on one, amber on the next
+export const INKS = [{ on: "#8dff9a", dim: "#2f7a3a", bg: "#0d1a10" }, { on: "#ffc94a", dim: "#8a5a14", bg: "#1a1206" }];   // green on one, amber on the next
 /** When each screen's question was first seen here: its typing starts then (kept across rebuilds of the room). */
 const since = new Map<string, number>();
 export const screenKey = (o: Obj) => (o.screen ? `${o.screen.tick}|${o.screen.asked}` : "");

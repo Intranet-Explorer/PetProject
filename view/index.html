@@ -8,107 +8,119 @@
   <link rel="stylesheet" href="/src/skin.css">
 </head>
 <body>
-  <!-- SPEC-v3.5.3 §1: a slim header (the house, the world's time and season, sound) and four tabs; the Lab is a small link -->
-  <header>
+  <!-- SPEC-v3.5.6 §4, §5: the header is a Travel Book banner: the name, the four tabs (in the middle on a desktop, a row
+       of their own on a phone), the world's time and season, and sound as a Travel Book icon -->
+  <header class="banner">
     <h1><a href="#/house" class="home">Pet</a></h1>
-    <span id="clock" class="hint"></span>
     <nav id="tabs" class="tabs" aria-label="The page">
       <a class="tab" href="#/house" data-page="house">House</a>
       <a class="tab" href="#/family" data-page="family">Family</a>
       <a class="tab" href="#/story" data-page="story">Story</a>
       <a class="tab" href="#/things" data-page="things">Things</a>
     </nav>
-    <button id="soundBtn" class="button" aria-pressed="false">Sound off</button>
+    <span id="clock"></span>
+    <button id="soundBtn" class="icon" aria-pressed="false" aria-label="Sound"></button>
   </header>
   <div id="page-house" class="page house">
-    <p id="now" role="status" aria-label="What is happening now"><span></span></p>
-    <section id="replayBar" aria-label="Replay" hidden>
-      <span class="chip on">Replay</span>
-      <select id="replayLineage" aria-label="Family"></select>
-      <button id="replayPlay" aria-pressed="false">Play</button>
-      <input id="replayScrub" type="range" min="0" max="1000" value="0" aria-label="Where in the run">
-      <span id="replayWhen"></span>
-      <select id="replaySpeed" aria-label="Speed"></select>
-      <button id="replayLive">Back to now</button>
-    </section>
-    <main>
-      <div class="top">
-        <div id="stage">
-          <div id="room" aria-label="The room"></div>
-          <p id="banner" role="status" hidden></p>
-          <div id="tip" hidden></div>
-        </div>
-        <aside id="side" aria-label="The house">
-          <div class="where">
-            <div id="map" role="group" aria-label="Rooms of the house"></div>
-            <div class="here">
-              <div id="sky"></div>
-              <p id="family" class="hint"></p>
-              <div class="look">
-                <label class="follow">Follow <select id="follow" aria-label="Follow"></select></label>
-                <button id="namesBtn" aria-pressed="false" title="Show what each thing in the room is called, for as long as this is on">Names</button>
-              </div>
-              <div id="status" class="chips"><span class="chip">connecting…</span></div>
+    <!-- the left column on a desktop: everyone in the room on screen, in full; everyone else, a line each -->
+    <aside id="left" aria-label="Who is where">
+      <h2 class="head">In this room</h2>
+      <ul id="cardsHere" class="cards" aria-label="In this room"></ul>
+      <h2 class="head">Elsewhere</h2>
+      <ul id="cardsElse" class="cards" aria-label="Elsewhere in the house"></ul>
+      <!-- the visitor's naming (SPEC-v3.5.3 §2), for whoever or whatever is chosen -->
+      <span id="chosen" class="group paper" role="group" aria-label="Name">
+        <span class="glabel">Name</span>
+        <span id="chosenWhat"></span>
+        <button id="poke">Poke</button>
+        <form id="nameForm"><input id="nameText" maxlength="16" placeholder="a name" aria-label="A name"><button id="nameBtn">Name</button></form>
+        <button id="starBtn" title="Give this thing the visitor's star: its maker will feel it, and it goes on the board" hidden>Star</button>
+        <button id="chosenDone" aria-label="Let go" hidden>Let go</button>
+      </span>
+    </aside>
+    <section id="centre" aria-label="The room">
+      <p id="now" class="paper" role="status" aria-label="What is happening now"><span></span></p>
+      <section id="replayBar" class="paper" aria-label="Replay" hidden>
+        <span class="chip on">Replay</span>
+        <select id="replayLineage" aria-label="Family"></select>
+        <button id="replayPlay" aria-pressed="false">Play</button>
+        <input id="replayScrub" type="range" min="0" max="1000" value="0" aria-label="Where in the run">
+        <span id="replayWhen"></span>
+        <select id="replaySpeed" aria-label="Speed"></select>
+        <button id="replayLive">Back to now</button>
+      </section>
+      <main>
+        <div id="roomwrap">
+          <div id="frame" class="wood">
+            <div id="stage">
+              <div id="room" aria-label="The room"></div>
+              <p id="banner" role="status" hidden></p>
+              <div id="tip" hidden></div>
             </div>
           </div>
-          <ul id="happening"></ul>
-          <ul id="board" aria-label="On the board in the machine room" title="On the board in the machine room: what the house is proudest of" hidden></ul>
-          <h2>Lately</h2>
-          <ol id="moments" aria-label="Moments"></ol>
-          <p id="playing" role="status"></p>
-        </aside>
+          <div id="sign" aria-hidden="true"></div>
+        </div>
+      </main>
+    </section>
+    <aside id="side" aria-label="The house">
+      <div id="mapframe" class="wood"><div id="map" role="group" aria-label="Rooms of the house"></div></div>
+      <div id="info" class="paper">
+        <div id="sky"></div>
+        <p id="family"></p>
+        <div class="look">
+          <label class="follow">Follow <select id="follow" aria-label="Follow"></select></label>
+          <button id="namesBtn" aria-pressed="false" title="Show what each thing in the room is called, for as long as this is on">Names</button>
+        </div>
+        <div id="status" class="chips"><span class="chip">connecting…</span></div>
+        <ul id="happening"></ul>
+        <p id="playing" role="status"></p>
       </div>
-      <ul id="cards" aria-label="Everyone in the house"></ul>
-    </main>
-    <!-- SPEC-v3.5.3 §2: the visitor's controls, grouped: care, talk, name, music and the radio, the machine -->
-    <footer>
-      <button id="visitBtn" class="button" aria-expanded="false" aria-controls="controls">Visit: feed, talk, name, music…</button>
+      <!-- SPEC-v3.5.4 §11, v3.5.6 §1: the machine room's board, in the Holo Book -->
+      <div id="board" class="holo" aria-label="On the board in the machine room" title="On the board in the machine room: what the house is proudest of" hidden></div>
+    </aside>
+    <!-- SPEC-v3.5.3 §2, v3.5.6 §5: the visitor's controls in one toolbar on a paper strip: Care, Talk, More -->
+    <footer class="paper">
       <section id="controls" class="controls visit" aria-label="Visit">
         <span class="group" role="group" aria-label="Care">
           <span class="glabel">Care</span>
           <button id="feed">Feed</button>
-          <button id="window">Open window</button>
-          <select id="giveBit" aria-label="What to give"></select>
-          <button id="giveBtn">Give</button>
+          <span class="pair"><select id="giveBit" aria-label="What to give"></select><button id="giveBtn">Give</button></span>
+          <button id="window">Window</button>
         </span>
         <form id="talkForm" class="group" aria-label="Talk">
           <span class="glabel">Talk</span>
           <input id="talkText" maxlength="200" placeholder="Something to say, or to write on a wall" aria-label="Something to say or to write">
           <button>Say</button>
-          <select id="writeOn" aria-label="Which wall to write on">
+          <span class="pair"><select id="writeOn" aria-label="Which wall to write on">
             <option value="north wall">north wall</option>
             <option value="south wall">south wall</option>
             <option value="west wall">west wall</option>
             <option value="east wall">east wall</option>
-          </select>
-          <button id="writeBtn" type="button">Write</button>
+          </select><button id="writeBtn" type="button">Write</button></span>
         </form>
-        <span id="chosen" class="group" role="group" aria-label="Name">
-          <span class="glabel">Name</span>
-          <span id="chosenWhat"></span>
-          <button id="poke">Poke</button>
-          <form id="nameForm"><input id="nameText" maxlength="16" placeholder="a name" aria-label="A name"><button id="nameBtn">Name</button></form>
-          <button id="starBtn" title="Give this thing the visitor's star: its maker will feel it, and it goes on the board" hidden>★ Star</button>
-          <button id="chosenDone" aria-label="Let go" hidden>×</button>
-        </span>
-        <!-- SPEC-v3.3 §3: what the visitor plays for the pets. They hear it whether or not this page's sound is on. -->
-        <span id="dj" class="group" role="group" aria-label="Music and the radio" hidden>
-          <span class="glabel">Music</span>
-          <select id="musicMood" aria-label="Music for the pets"></select>
-          <select id="musicScope" aria-label="Where the music plays"></select>
-          <label><span id="radioWho">Your little radio</span> <select id="radioPlays" aria-label="Which station the radio plays"><option value="off">off</option></select></label>
-          <span id="radioNow" role="status"></span>
-        </span>
-        <span class="group" role="group" aria-label="The machine and the page">
+        <span class="group" role="group" aria-label="More">
           <span class="glabel">More</span>
           <!-- SPEC-v3.5 §4.3: the visitor puts materials of their choice in the vending machine, up to its limit -->
-          <button id="stockBtn" popovertarget="stockBox">Stock the machine</button>
-          <button id="ambBtn" aria-pressed="false" title="The room's own sound: its clock, its wind, its water, and the weather. Quiet, under everything else.">Ambience off</button>
-          <input id="volume" type="range" min="0" max="100" value="80" aria-label="Volume">
-          <button id="replayBtn">Replay</button>
-          <a class="link small" href="#/lab">Lab</a>
+          <button id="stockBtn" popovertarget="stockBox">Stock</button>
+          <button id="musicBtn" popovertarget="musicBox">Music</button>
+          <button id="moreBtn" popovertarget="moreBox">More</button>
         </span>
-        <div id="stockBox" popover aria-label="Stock the machine"></div>
+        <div id="stockBox" class="paper pop" popover aria-label="Stock the machine"></div>
+        <!-- SPEC-v3.3 §3: what the visitor plays for the pets. They hear it whether or not this page's sound is on. -->
+        <div id="musicBox" class="paper pop" popover aria-label="Music and the radio">
+          <span id="dj" class="group" role="group" aria-label="Music and the radio" hidden>
+            <label>Music <select id="musicMood" aria-label="Music for the pets"></select></label>
+            <select id="musicScope" aria-label="Where the music plays"></select>
+            <label><span id="radioWho">Your little radio</span> <select id="radioPlays" aria-label="Which station the radio plays"><option value="off">off</option></select></label>
+            <span id="radioNow" role="status"></span>
+          </span>
+        </div>
+        <div id="moreBox" class="paper pop" popover aria-label="More">
+          <button id="ambBtn" aria-pressed="false" title="The room's own sound: its clock, its wind, its water, and the weather. Quiet, under everything else.">Ambience off</button>
+          <label>Volume <input id="volume" type="range" min="0" max="100" value="80" aria-label="Volume"></label>
+          <button id="replayBtn">Replay</button>
+          <a class="link" href="#/lab">Lab</a>
+        </div>
       </section>
       <section id="ended" hidden>
         <p>The house is quiet. Nobody is left of this family; their stones and their things are still here.</p>
@@ -122,7 +134,8 @@
   <div id="page-things" class="page" hidden></div>
   <div id="page-thing" class="page" hidden></div>
   <div id="page-lab" class="page" hidden><section class="panel lab" data-panel="lab"></section></div>
-  <p class="more"><a class="link small" href="#/lab">Lab</a></p>
+  <!-- SPEC-v3.5.6 §10 -->
+  <p class="more"><a class="link" href="https://crusenho.itch.io" target="_blank" rel="noopener">UI art: Crusenho</a><a class="link" href="#/lab">Lab</a></p>
   <script type="module" src="/src/main.ts"></script>
 </body>
 </html>

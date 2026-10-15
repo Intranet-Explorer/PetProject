@@ -21,12 +21,11 @@ import type { Replay } from "./replay";
 import { Room } from "./room";
 import type { Target } from "./room";
 import { artReady, aThing, firstSprite, hasSprite, sprite, thingSprite } from "./sprite";
-import { momentRow } from "./story";
 import { giveStar } from "./ui";
 import { ago, fam, hhmm } from "./types";
 import { voiceInput } from "./voice";
 import { initVoice } from "./voicelab";
-import type { Burst, Creature, Hello, Mark, Moment, Note, Obj, PetV, RoomV, Snap } from "./types";
+import type { Burst, Creature, Hello, Mark, Moment, Need, Note, Obj, PetV, RoomV, Snap } from "./types";
 
 const remember = (key: string, value: string) => { try { localStorage.setItem(key, value); } catch { /* private window */ } };
 const recall = (key: string) => { try { return localStorage.getItem(key); } catch { return null; } };
@@ -68,46 +67,26 @@ function hear(notes: Note[], by: string) {
 
 // ---- the page round the room (SPEC-v3.2 §7) ----
 
-const [SIDE_MIN, SIDE_MAX, GAP, CARD_ROW] = [150, 420, 5, 96];
-const BASIS = (p: PetV) => (p.stage === "egg" ? 150 : 220);   // style.css: the least width a card is given before the strip takes another row
-let sideWidth = 0;
-let tall = 0, tallAt = 0;   // how tall the cards have really been lately, when that is more than a row of them is allowed for
-/** The room is drawn at the largest whole-number scale that leaves the header, the cards and the controls all on the
- *  screen: nothing on the page is ever below the fold. Beside the room are the map and what happened lately; on a
- *  narrow window they go underneath. Only what seldom changes decides the scale (the window, the drawer, how many are
- *  alive); cards grown unusually tall can make the room step down, and it steps up again only after they have been
- *  their usual height for a while, so the room never jumps about. */
+/** The room is drawn at the largest whole-number scale its box allows (SPEC-v3.5.6 §5): on a desktop the centre of a
+ *  game screen with nothing below the fold, so as large as the space left by the header, the "now" strip and the
+ *  toolbar; on a phone the width (the page scrolls down to the rest). A whole number of the screen's own pixels to each
+ *  pixel of the art: on a sharp screen that allows 3.5 as well as 3 and 4. */
+const DESKTOP = 1000;   // skin.css: from this width the House tab is a game screen in three columns
+const FRAME = 14;       // the wood frame round the room (Textfield_03, slice 7, x2)
 function layout() {
-  const main = document.querySelector("main")!, pad = getComputedStyle(main);
-  const W = main.clientWidth - parseFloat(pad.paddingLeft) - parseFloat(pad.paddingRight), H = main.clientHeight - parseFloat(pad.paddingTop) - parseFloat(pad.paddingBottom);
+  const main = document.querySelector("main")!;
   const [w, h] = snap ? [(snap.size[0] + 2) * 16, (snap.size[1] + 3) * 16] : [224, 176];   // the floor, a wall each side, two rows of wall above and one below
-  let rows = 1, used = -8;   // how many rows the cards will take, as the stylesheet wraps them
-  for (const p of snap?.pets.filter((p) => p.stage !== "dead") ?? []) {
-    if (used + 8 + BASIS(p) > W) [rows, used] = [rows + 1, -8];
-    used += 8 + BASIS(p);
-  }
-  const allowed = rows * CARD_ROW + (rows - 1) * 8, strip = $("cards").offsetHeight, now = performance.now();
-  if (strip > allowed) [tall, tallAt] = [Math.max(tall, strip), now];
-  else if (now - tallAt > 120_000) tall = 0;
-  const stacked = W < 2 * w + SIDE_MIN + GAP, across = stacked ? W : W - SIDE_MIN - GAP;
-  // a whole number of the screen's own pixels to each pixel of the art: on a sharp screen that allows 3.5 as well as 3 and 4
-  // SPEC-v3.5.3 §2: on a phone the room fills the width, and the page scrolls down to the cards and the rest
-  const dpr = devicePixelRatio || 1, phone = innerWidth <= 640;
-  const k = phone ? Math.max(1, Math.floor((across / w) * dpr + 0.001) / dpr) : Math.max(stacked ? 1 : 2, Math.floor(Math.min(across / w, (H - Math.max(allowed, tall) - GAP) / h) * dpr + 0.001) / dpr);
-  sideWidth = stacked ? Math.min(W, SIDE_MAX) : Math.min(SIDE_MAX, W - w * k - GAP);
-  main.classList.toggle("stacked", stacked);
-  const set = (e: HTMLElement, width: number, height: number | null) => { e.style.width = `${width}px`; e.style.height = height ? `${height}px` : ""; };
-  set($("stage"), Math.ceil(w * k), Math.ceil(h * k));
-  set($("side"), sideWidth, stacked ? null : Math.ceil(h * k));
-  $("side").classList.toggle("slim", sideWidth < 250);
+  const dpr = devicePixelRatio || 1, desk = innerWidth >= DESKTOP, sign = parseFloat(getComputedStyle($("roomwrap")).paddingTop) || 0;   // (the sign hangs over the frame's top edge)
+  const W = main.clientWidth - 2 * FRAME, H = main.clientHeight - 2 * FRAME - sign;
+  const fit = desk ? Math.min(W / w, H / h) : W / w;
+  const k = Math.max(1, Math.floor(fit * dpr + 0.001) / dpr);
+  $("stage").style.width = `${Math.ceil(w * k)}px`;
+  $("stage").style.height = `${Math.ceil(h * k)}px`;
   if (snap) drawMap($("map"), snap, view.room, view.sel, (id) => jump({ room: id }), mapWidth());
-  placeDrawer();
 }
-function placeDrawer() { /* SPEC-v3.5.3: the drawer is gone; its tabs are pages */ }
-const mapWidth = () => (sideWidth < 250 ? sideWidth : Math.min(190, sideWidth * 0.46));
-const watch = new ResizeObserver(() => { tall = 0; layout(); });   // a new window, or the drawer: measure afresh
-for (const e of [document.querySelector("header")!, document.querySelector("footer")!, document.querySelector("main")!, $("replayBar")]) watch.observe(e);
-document.querySelector("main")!.addEventListener("scroll", placeDrawer);
+const mapWidth = () => Math.min($("mapframe").clientWidth, innerWidth >= DESKTOP ? 170 : 300);   // (two of the art's pixels to one on a desktop: the board has the rest of the column)
+const watch = new ResizeObserver(() => layout());   // a new window, or the toolbar wrapping: measure afresh
+for (const e of [document.querySelector("header")!, document.querySelector("footer")!, document.querySelector("main")!, $("replayBar"), $("now")]) watch.observe(e);
 
 // ---- which room to show ----
 
@@ -299,7 +278,7 @@ function nowLine(s: Snap) {
 
 function header(s: Snap) {
   // SPEC-v3.5.3 §1: the world's time and season, in the slim header
-  $("clock").textContent = `day ${s.clock.day} · ${hhmm(s.clock.hour)} · ${s.clock.season ?? ""}${s.clock.phase === "night" ? " night" : ""}`;
+  $("clock").replaceChildren(`day ${s.clock.day} - ${hhmm(s.clock.hour)}`, el("br"), `${s.clock.season ?? ""}${s.clock.phase === "night" ? " night" : ""} - year ${s.clock.year}`);
   const alive = s.pets.filter((p) => p.stage !== "dead");
   // how many families live here and how many are alive in each, each family in its colour (SPEC-v3.1 §7.4)
   const fams = [...new Set(alive.map((p) => p.family ?? 1))].sort(), NTH = ["", "first", "second", "third"];
@@ -348,11 +327,11 @@ function header(s: Snap) {
 /** Beside the room: where this is and what the sky is doing, the map, what is going on in the house, and the last few moments. */
 function side(s: Snap, here: RoomV) {
   const c = s.clock, name = (id: string | null) => s.rooms.find((r) => r.id === id)?.name ?? "the house";
-  $("sky").replaceChildren(el("h2", "", cap(here.name)),
+  $("sky").replaceChildren(el("h2", "", here.name.toUpperCase()),
     // SPEC-v3.3 §2: how the room is kept, in the pets' own words, when things lie about in it
-    ...(here.mess != null ? [el("p", `hint mess${here.mess === 2 ? " much" : ""}`, here.mess && here.mess_says ? `${cap(here.mess_says)}.` : "")] : []),
-    el("p", "", icon(c.phase === "night" && s.weather === "clear" ? "moon" : s.weather, 18), ` ${cap(c.season)}, ${s.weather}`),
-    el("p", "hint", `day ${c.day}, ${hhmm(c.hour)}${c.phase === "day" ? "" : ` · ${c.phase}`} · year ${c.year}`));
+    ...(here.mess != null ? [el("p", `mess${here.mess === 2 ? " much" : ""}`, here.mess && here.mess_says ? `${cap(here.mess_says)}.` : "")] : []),
+    el("p", "", icon(c.phase === "night" && s.weather === "clear" ? "moon" : s.weather, 18), ` ${c.season}, ${s.weather} - ${c.phase}`));
+  if ($("sign").textContent !== here.name.toUpperCase()) $("sign").textContent = here.name.toUpperCase();   // SPEC-v3.5.6 §4: the room's name on the hanging wood sign
   const line = (cls: string, pic: string, text: string, to: string | null) => {
     const li = el("li", cls, icon(pic), el("span", "", text));
     if (to) { li.style.cursor = "pointer"; li.onclick = () => jump({ room: to }); }
@@ -368,18 +347,23 @@ function side(s: Snap, here: RoomV) {
     ...found(s).filter((r) => Object.values(r.objects).some((o) => o.fix?.radio && o.state === "on")).map((r) => line("", "radio", `the radio is on in ${r.name}${s.dj?.radio.now ? `: ${s.dj.radio.now.title}` : ""}`, r.id)),
     ...s.creatures.map((cr) => line("", cr.tame ? "paw" : "mouse", `${beast(cr)} in ${name(cr.room)}, ${cr.doing}`, cr.room)),
   );
-  const B = (s.ticker?.board ?? []).slice(0, 4), hubRoom = s.ticker?.room ?? null;   // SPEC-v3.5.4 §11: the board's lines, seen from any room
-  $("board").hidden = !B.length;
-  $("board").replaceChildren(...B.map((l) => {
-    const li = el("li", l.kind, el("span", "", boardRows(l)[0]), l.meter ? bar(l.meter[0], l.meter[1]) : null, el("span", "who", l.meter ? `${l.meter[0]} of ${l.meter[1]} scrap` : boardRows(l)[1] ?? ""));
-    if (hubRoom) li.onclick = () => jump({ room: hubRoom });
-    return li;
-  }));
-  const key = `${s.moments.at(-1)?.n}`;
-  if ($("moments").dataset.key !== key) {
-    $("moments").dataset.key = key;
-    $("moments").replaceChildren(...[...s.moments].reverse().slice(0, 30).map((m: Moment) => momentRow({ jump }, m, m.day !== c.day)));
-  }
+  board(s);
+}
+
+/** SPEC-v3.5.4 §11, v3.5.6 §1: the machine room's board, seen from any room, in the Holo Book: its newest line in amber,
+ *  the others in blue, then the Works' goal and a glowing meter of segments, one to a scrap. */
+function board(s: Snap) {
+  const B = (s.ticker?.board ?? []).slice(0, 4), hubRoom = s.ticker?.room ?? null, box = $("board"), key = JSON.stringify(B);
+  box.hidden = !B.length;
+  if (box.dataset.key === key) return;
+  box.dataset.key = key;
+  const lines = B.filter((l) => !l.meter), works = B.find((l) => l.meter);
+  const cells = (have: number, of: number) => { const n = Math.min(of, 30), on = Math.round((Math.min(have, of) / of) * n); return el("div", "meter-cells", ...Array.from({ length: n }, (_, i) => el("i", i < on ? "on" : ""))); };
+  box.replaceChildren(
+    el("p", "dim", "THE BOARD"),
+    ...lines.map((l, i) => el("p", i ? "" : "amber", boardRows(l).join(": ").toUpperCase())),
+    ...(works ? [el("p", "dim gap", "THE WORKS"), el("p", "", `${works.meter![0]} OF ${works.meter![1]} SCRAP${works.what ? `: ${works.what.toUpperCase()}` : ""}`), cells(works.meter![0], works.meter![1])] : []));
+  box.onclick = hubRoom ? () => jump({ room: hubRoom }) : null;
 }
 
 /** A creature in a few words: "a moth"; once tame, whose it is and what it is called (SPEC-v3.1 §4.4). Never how far it trusts anyone. */
@@ -388,50 +372,52 @@ function beast(c: Creature) {
   return c.name ? `${c.name}${owner ? `, ${owner}'s ${c.kind},` : ` the ${c.kind}`}` : `a ${c.kind}${owner ? `, tame to ${owner},` : ""}`;
 }
 
-/** A card for every living pet and every egg (SPEC-v3.2 §7): its picture, name, stage in a plain word, a small
- *  picture of how it feels when that is strong, at most two feelings in words, and what it is thinking of doing.
- *  Every line wraps; nothing is cut. Rebuilt only when what they show changes. */
+/** A card for every living pet and every egg (SPEC-v3.2 §7, v3.5.6 §4, §5): its portrait, name in its family's colour,
+ *  stage, what it is doing, what it wants, and three Wood bars (energy, curiosity, company) in place of the feeling
+ *  words; the feeling stays as its small picture. Those in the room on screen first, in full; the rest after, which a
+ *  desktop shows as a line each (portrait, name, stage, where and what). A card opens the pet's page. Rebuilt only
+ *  when what they show changes. */
+const BARS: [Need, string, string][] = [["energy", "energy", ""], ["curiosity", "curious", "blue"], ["company", "company", "red"]];
 function cards(s: Snap) {
   const who = s.pets.filter((p) => p.stage !== "dead").sort((a, b) => a.laid - b.laid);
   const where = (p: PetV) => s.rooms.find((r) => r.id === p.room)?.name ?? "";
   // the visitor's naming: what was offered, and whether the pet has taken it (said for a quarter of a day after it does)
   const naming = (p: PetV) => !p.naming ? null : !p.naming.took ? `you called it ${p.naming.offered}; waiting to hear`
     : p.naming.at != null && (s.tick - p.naming.at) * s.tick_seconds < s.day_seconds / 4 ? `it took the name ${p.naming.offered}` : null;
-  const key = JSON.stringify(who.map((p) => [naming(p), p.id, p.label, p.stage, p.room, p.stage === "egg" ? hatchWords(p.hatches_in ?? 0) : [moodWords(p), goodWord(p), emoteOf(p), doingOf(p), wishOf(p), p.body?.icon, p.asleep || p.focus?.words, p.habits, p.wants?.map((w) => w.text), p.skills, p.recipes, p.ambition], p.genome, p.id === view.sel, p.family, p.animals]));
-  const box = $("cards");
-  if (box.dataset.key === key) return;
-  box.dataset.key = key;
-  box.replaceChildren(...(who.length ? who.map((p) => {
-    const egg = p.stage === "egg", emote = egg ? null : emoteOf(p), doing = doingOf(p), good = goodWord(p), type = s.rooms.find((r) => r.id === p.room)?.type;
-    const animals = (p.animals ?? []).map((a) => a.name ?? `a ${a.kind}`).join(", ");   // SPEC-v3.1 §4.4
-    const feels = emote ? sprite(`emote.${emote}`, 2) : null, place = type ? sprite(`icon.room.${type}`, 1) : null;
-    // SPEC-v3.3 §1: the sign of what its body is doing by itself (the one over its head in the room), what its mind is on, and its habits
-    const sign = !egg && p.body?.icon && hasSprite(`icon.act.${p.body.icon}`) ? sprite(`icon.act.${p.body.icon}`, 1) : null;
-    const focus = egg || p.asleep ? "" : p.focus?.words ?? "", habits = egg ? [] : p.habits ?? [];
-    const wish = wishOf(p) === focus ? "" : wishOf(p);   // since v3.3 what it means to do is what its mind is on, in the same words: said once
-    // SPEC-v3.4 §2: its wants, said of it ("wants to know what is behind the north door"). The card has a line for the newest; all of them are in its hover
-    const wants = (p.wants ?? []).map((w) => wantWords(w.text));
+  const level = (p: PetV, n: Need) => Math.round(p.needs?.[n] ?? 0);
+  const key = JSON.stringify([view.room, who.map((p) => [naming(p), p.id, p.label, p.stage, p.room, p.stage === "egg" ? hatchWords(p.hatches_in ?? 0) : [moodWords(p), emoteOf(p), doingOf(p), wishOf(p), p.body?.icon, p.asleep, p.wants?.map((w) => w.text), p.ambition, BARS.map(([n]) => level(p, n))], p.genome, p.id === view.sel, p.family])]);
+  if ($("cardsHere").dataset.key === key) return;
+  $("cardsHere").dataset.key = key;
+  const one = (p: PetV) => {
+    const egg = p.stage === "egg", emote = egg ? null : emoteOf(p), doing = p.asleep ? "asleep" : doingOf(p);
+    const feels = emote ? sprite(`emote.${emote}`, 1) : null;
+    const sign = !egg && !p.asleep && p.body?.icon && hasSprite(`icon.act.${p.body.icon}`) ? sprite(`icon.act.${p.body.icon}`, 1) : null;   // SPEC-v3.3 §1: the sign of what its body is doing
+    const wish = wishOf(p), wants = (p.wants ?? []).map((w) => wantWords(w.text));
+    const want = wants[0]?.replace(/^.*\bit wants /, "").replace(/^wants /, "") ?? wish;
     if (feels) feels.title = `feeling ${emote}`;
-    if (place) place.title = `in ${where(p)}`;
-    // SPEC-v3.5.3 §2: a short card: portrait, name, stage, one line for what it is doing and one for what it wants, a
-    // feeling as a small picture. The whole card goes to its page; the long words are there (and in the card's title).
-    const li = el("li", `card ${fam(p.family)}${p.id === view.sel ? " chosen" : ""}${egg ? " egg" : ""}`, el("span", "pic", face(p, 48), el("span", "", feels ? el("span", "plate", feels) : null, place)),
-      el("span", "txt", el("span", "name", el("b", "", egg ? p.name ?? "An egg" : p.label), ` ${stageWord(p)}`),
-        egg ? el("span", "mood", hatchWords(p.hatches_in ?? 0)) : null,
-        naming(p) ? el("span", "naming", naming(p)!) : null,
-        doing ? el("span", "doing", el("i", "", "now "), sign, doing) : null,
-        wants.length || wish ? el("span", "want", el("i", "", "wants "), wants[0]?.replace(/^.*\bit wants /, "").replace(/^wants /, "") ?? wish) : null,
-        p.ambition && !egg ? el("span", "aim", el("i", "", "means to "), p.ambition) : null));   // SPEC-v3.5.4 §9
+    const li = el("li", `card ${fam(p.family)}${p.id === view.sel ? " chosen" : ""}${egg ? " egg" : ""}${p.room === view.room ? " here" : " away"}`,
+      el("span", "pic", face(p, 48)),
+      el("span", "wholine", el("span", "n", egg ? p.name ?? "An egg" : p.label), el("span", "s", stageWord(p), feels)),
+      egg ? el("span", "doing", hatchWords(p.hatches_in ?? 0)) : null,
+      naming(p) ? el("span", "naming", naming(p)!) : null,
+      !egg && doing ? el("span", "doing", sign, doing) : null,
+      !egg ? el("span", "where", `${doing || "awake"} in ${where(p)}`) : null,
+      !egg && want ? el("span", "want", `wants: ${want}`) : null,
+      egg || !p.needs ? null : el("span", "bars", ...BARS.flatMap(([n, word, cls]) => [el("span", "", word), el("span", `wbar ${cls}`, el("i", "", ""))])));
+    li.querySelectorAll<HTMLElement>(".wbar > i").forEach((b, i) => (b.style.width = `${level(p, BARS[i][0])}%`));
     li.tabIndex = 0;
     li.setAttribute("role", "link");
     li.title = `${egg ? "This egg" : p.label}'s page. It is in ${where(p)}; ${moodWords(p).join(", ") || "content"}` + (wish && !egg ? `\nIt wants: ${wish}` : "")
-      + (focus ? `\nIts mind is on: ${focus}` : "") + wants.map((w) => `\n${w.startsWith("wants ") ? `It ${w}` : cap(w)}`).join("")
-      + (p.ambition && !egg ? `\nIt means in its life to ${p.ambition}` : "") + (habits.length ? `\nIts habits: ${habits.join("; ")}` : "") + (animals ? `\nIts animals: ${animals}` : "");
+      + (p.focus?.words && !p.asleep ? `\nIts mind is on: ${p.focus.words}` : "") + wants.map((w) => `\n${w.startsWith("wants ") ? `It ${w}` : cap(w)}`).join("")
+      + (p.ambition && !egg ? `\nIt means in its life to ${p.ambition}` : "") + (p.habits?.length ? `\nIts habits: ${p.habits.join("; ")}` : "");
     li.onclick = () => go("pet", p.id);
     li.onkeydown = (e) => { if (e.target === li && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); li.click(); } };
     return li;
-  }) : [el("li", "empty-house", "Nobody is alive in the house.")]));
-  layout();   // a birth, a death or an unusually long thought may change how much room the cards need
+  };
+  const here = who.filter((p) => p.room === view.room), away = who.filter((p) => p.room !== view.room);
+  $("cardsHere").replaceChildren(...(here.length ? here.map(one) : [el("li", "empty-house", who.length ? "Nobody is in this room just now." : "Nobody is alive in the house.")]));
+  $("cardsElse").replaceChildren(...away.map(one));
+  $("cardsElse").previousElementSibling!.toggleAttribute("hidden", !away.length);
 }
 
 // ---- the visitor (§7.5): acts only in the room being looked at ----
@@ -750,7 +736,7 @@ function showPage(r: Route) {
     if (on) t.setAttribute("aria-current", "page"); else t.removeAttribute("aria-current");
   }
   if (r.page === "house" && r.id) jump({ pet: r.id });   // #/house/<pet>: watching it (a pet page's "Watch now")
-  if (r.page === "house") { tall = 0; layout(); render(); }
+  if (r.page === "house") { layout(); render(); }
   else $(`page-${r.page}`).scrollTop = 0;
   void poll();
 }
@@ -765,7 +751,14 @@ function openTab(name: string, who?: string) {
 $("replayBtn").hidden = !!replayId;
 $("replayBtn").onclick = () => (location.search = `?replay=${snap?.lineage.id ?? 1}`);
 onRoute(showPage);
-$("visitBtn").onclick = () => $("visitBtn").setAttribute("aria-expanded", String(document.querySelector("footer")!.classList.toggle("open")));
+// SPEC-v3.5.6 §7: a press plays the Wood button's own four frames, then it springs back
+addEventListener("pointerdown", (e) => {
+  const b = (e.target as HTMLElement).closest?.("button");
+  if (!b || b.disabled || getComputedStyle(b).borderImageSource === "none") return;
+  let f = 1;
+  const step = () => { b.classList.remove("press1", "press2", "press3", "press4"); if (f <= 4) { b.classList.add(`press${f++}`); setTimeout(step, 45); } };
+  step();
+});
 setInterval(poll, 4000);
 
 for (const type of ["pointerdown", "keydown"]) {
@@ -787,7 +780,7 @@ const clipped = () => [...document.querySelectorAll<HTMLElement>("header *, #now
   if (!e.offsetParent || e.closest("#room") || e instanceof HTMLSelectElement || e instanceof HTMLInputElement || e instanceof SVGElement) return false;
   const o = getComputedStyle(e);
   if (e.id === "moments" || e.id === "happening") return false;   // these two show whole lines only: what does not fit is wrapped out of sight on purpose
-  if (e.closest("#cards .card .txt")) return false;   // so does a card, which is one height always (SPEC-v3.2, v3.3): the whole of every line is in its hover and in the pet's mind
+  if (e.closest(".cards .card")) return false;   // so does a card, which is one height always (SPEC-v3.2, v3.3): the whole of every line is in its hover and in the pet's mind
   return (o.overflowX !== "visible" && o.overflowX !== "auto" && e.scrollWidth > e.clientWidth + 1) || (o.overflowY !== "visible" && o.overflowY !== "auto" && e.scrollHeight > e.clientHeight + 1);
 }).map((e) => `${e.tagName.toLowerCase()}${e.id ? "#" + e.id : ""}.${e.className}: ${e.textContent?.slice(0, 40)}`);
 Object.assign(window, { petView: {

@@ -3,7 +3,7 @@
 // lists the stations and what is playing, and an <audio> element plays the chosen stream while the radio is on.
 import { $, el, when } from "./dom";
 import type { Kid } from "./dom";
-import { screenInk, screenKey, tickerLines } from "./px/hub";
+import { INKS, screenInk, screenKey, tickerLines } from "./px/hub";
 import type { Obj, Snap } from "./types";
 
 const cap = (t: string) => t.slice(0, 1).toUpperCase() + t.slice(1);
@@ -67,6 +67,7 @@ export function screens(s: Snap, room: string) {
   if (key !== open.key || !open.at) [open.key, open.at] = [key, performance.now()];
   const ink = screenInk(r, open.name), sc = o.screen, who = sc && (sc.by ?? s.pets.find((p) => p.id === sc.pet)?.label ?? "someone");
   panel.style.setProperty("--crt", ink.on);
+  panel.classList.toggle("amber", ink === INKS[1]);   // (v3.5.6 §1: the Holo panel glows blue, or amber for the amber screen)
   head.textContent = `${r.name}: the ${open.name}${sc ? ` · ${who}, ${when(s, sc.tick)}` : ""}`;
   clearInterval(timer);
   const asked = sc ? `> ${sc.asked}\n\n` : "", body = sc ? (sc.text ? `${sc.title ? sc.title.toUpperCase() + "\n\n" : ""}${sc.text}` : "NOTHING FOUND.") : "READY.";
