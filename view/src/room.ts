@@ -590,7 +590,7 @@ export class Room {
   private point(at: number[] | null = this.pointer) {
     this.pointer = at;
     const t = at && this.under(at[0], at[1]), cv = this.app.canvas;
-    cv.parentElement?.classList.toggle("over", !!(t && (t.pet || t.object || t.door)));   // (skin.css: the hand over what can be clicked)
+    cv.style.cursor = t?.pet ? "var(--hand, pointer)" : t?.object || t?.door ? "var(--arrow, pointer)" : "";   // (skin.css, SPEC-v3.5.6 §8: the hand over a pet; inline, as the canvas sets its own)
     const beast = t?.creature && !t.pet ? this.beasts.get(t.creature) : null;   // a creature wears its name only while it is pointed at
     if (beast) { const r = beast.rect(); this.words.hover(beast.cr.name ?? `a ${beast.cr.kind}`, (r.x + r.w / 2) * this.K, (r.y + r.h + 1) * this.K); }
     else this.words.hover(null);

@@ -109,11 +109,14 @@ img.ticon { width: calc(var(--w) * 2px); height: auto; image-rendering: pixelate
 #tip { border-style: solid; border-width: 12px; border-image: url("../assets/third_party/crusenho/UI_TravelBook_Popup01a.png") 6 fill stretch; background: none; box-shadow: none; padding: 0 4px; }
 #tip .nib { display: none; }
 
-/* §8 cursors, desktop only: the Travel Book arrow; a hand over pets and cards; the Papernote pencil in the text box */
-#room.over canvas { cursor: pointer; }
+/* §8 cursors, desktop only: the Travel Book arrow everywhere (buttons and links too); a hand over the pets in the room
+   and over the cards; the Papernote pencil in the text box */
+@media (hover: hover) and (pointer: fine) { a, button, select, .tab, .chip, .maproom { cursor: inherit; } }
 @media (hover: hover) and (pointer: fine) {
-  html { cursor: image-set(url("../assets/third_party/crusenho/UI_TravelBook_Cursor01a@1x.png") 1x, url("../assets/third_party/crusenho/UI_TravelBook_Cursor01a@2x.png") 2x) 3 0, auto; }
-  a, button, select, .card, [role="link"], .maproom, #room.over canvas, .tab, .chip { cursor: image-set(url("../assets/third_party/crusenho/Icon_Cursor_02a@1x.png") 1x, url("../assets/third_party/crusenho/Icon_Cursor_02a@2x.png") 2x) 4 0, pointer; }
+  html { cursor: var(--arrow); }
+  :root { --hand: image-set(url("../assets/third_party/crusenho/Icon_Cursor_02a@1x.png") 1x, url("../assets/third_party/crusenho/Icon_Cursor_02a@2x.png") 2x) 4 0, pointer;
+          --arrow: image-set(url("../assets/third_party/crusenho/UI_TravelBook_Cursor01a@1x.png") 1x, url("../assets/third_party/crusenho/UI_TravelBook_Cursor01a@2x.png") 2x) 3 0, auto; }
+  .card, .card * { cursor: var(--hand); }
   #talkText, textarea, input:not([type]), input[type="text"] { cursor: image-set(url("../assets/third_party/crusenho/UI_Papernote_CursorPencil01@1x.png") 1x, url("../assets/third_party/crusenho/UI_Papernote_CursorPencil01@2x.png") 2x) 2 2, text; }
 }
 
@@ -160,7 +163,7 @@ main { flex: 1; min-height: 0; overflow: visible; padding: 0; display: block; }
 
 /* the cards: Wood, a portrait, the name in its family's colour, the stage, what it is doing, three bars */
 .cards { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
-.cards .card { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 6px; align-items: center; cursor: pointer; min-width: 0; overflow-wrap: anywhere; }
+.cards .card { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 6px; align-items: center; min-width: 0; overflow-wrap: anywhere; }
 .cards .card > :not(.pic, .wholine) { grid-column: 1 / -1; }
 .cards .card .wholine { display: flex; flex-direction: column; min-width: 0; }
 .cards .card .wholine canvas { display: inline-block; vertical-align: -3px; margin-left: 4px; }
@@ -198,7 +201,7 @@ button.maproom.viewed { border-image-source: url("../assets/third_party/crusenho
 #happening li { color: var(--ink2); }
 #happening li.warn { color: var(--bad); }
 #playing { color: var(--ink2); min-height: 0; }
-#board { display: flex; flex-direction: column; gap: 2px; margin: 0; cursor: pointer; font-family: var(--pixel); background: none; color: var(--holo); border-radius: 0; padding: 0 4px; letter-spacing: 0;
+#board { display: flex; flex-direction: column; gap: 2px; margin: 0; font-family: var(--pixel); background: none; color: var(--holo); border-radius: 0; padding: 0 4px; letter-spacing: 0;
   border-style: solid; border-width: 12px; border-image: url("../assets/third_party/crusenho/UI_HoloBook_Textfield02a.png") 6 fill stretch; }
 #board p { margin: 0; }
 #board .gap { margin-top: 10px; }
