@@ -15,6 +15,7 @@ from pathlib import Path
 from .world import load_config
 
 DOORS = {"go next door", "peek next door", "explore a doorway", "go"}   # going, peeking, nosing at doors (§0); "wander" (walking about inside a room) is counted apart
+EMPTY = DOORS | {"wander", "look about", "follow kin"}   # (v3.5.5) a visit with nothing but these is an empty trip
 DONT = re.compile(r"^\W*(do not|don't|wait|attend|rest|lie|stay|hold|keep still|be still|let|not\b|never|avoid|refrain|listen|watch the|notice|sit)", re.I)
 STOP = set("a an the and or of to in on at for with by from as is are was were be it its this that these those you your we our i my me "
            "not do does did so but if then than when what which who into out up down over under about all any some no".split())
@@ -30,7 +31,7 @@ def sample(house, cfg, path):
     from . import feel, order
     pets = {p["id"]: {"cur": round(p["needs"]["curiosity"], 1), "com": round(p["needs"]["comfort"], 1), "bored": feel.level(p, "curiosity") >= 2, "room": p["room"]}
             for p in house["pets"].values() if p["stage"] not in ("egg", "dead") and not p["sleep"]}
-    floors = {r["id"]: order.floor_count(cfg, r) for r in house["rooms"].values() if r["type"]}
+    floors = {r["id"]: order.floor_count(house, cfg, r) for r in house["rooms"].values() if r["type"]}
     with open(path, "a") as f:
         f.write(json.dumps({"tick": house["tick"], "pets": pets, "floors": floors}) + "\n")
 
@@ -97,15 +98,15 @@ def measure(data, since, until):
 
     # rooms: stays, bounces, doors
     rows = db.execute("SELECT pet, tick_from, tick_to, what, room FROM doing WHERE tick_to BETWEEN ? AND ? ORDER BY pet, tick_to", (since, until)).fetchall()
-    stays, changes, back, door_t, awake_t, wander_t = [], 0, 0, 0, 0, 0
+    stays, changes, back, empty, door_t, awake_t, wander_t = [], 0, 0, 0, 0, 0, 0
     per = defaultdict(list)
     for r in rows:
         per[r[0]].append(r)
     for pet, rs in per.items():
-        visits = []   # [room, arrived, left]
+        visits = []   # [room, arrived, left, did something there]
         for _, a, b, what, room in rs:
             if what == "asleep":
-                visits.append([None, b, b])
+                visits.append([None, b, b, True])
                 continue
             awake_t += b - a
             door_t += (b - a) if what in DOORS else 0
@@ -113,18 +114,21 @@ def measure(data, since, until):
             if not visits or visits[-1][0] != room:
                 if visits:
                     visits[-1][2] = b
-                visits.append([room, b, b])
+                visits.append([room, b, b, what not in EMPTY])
             else:
                 visits[-1][2] = b
+                visits[-1][3] = visits[-1][3] or what not in EMPTY
         awake = [v for v in visits if v[0]]
         for i in range(1, len(visits)):
             if visits[i][0] and visits[i - 1][0] and visits[i][0] != visits[i - 1][0]:
                 changes += 1
                 if i >= 2 and visits[i - 2][0] == visits[i][0] and visits[i - 1][2] - visits[i - 1][1] <= 360 / real:
                     back += 1
+                    empty += not visits[i - 1][3]
         stays += [(v[2] - v[1]) * real for v in awake[1:-1]]   # (the first and last visits are cut by the window)
     out["stay in a room, median"] = "%.1f real min (%d stays)" % (statistics.median(stays) / 60, len(stays)) if stays else None
     out["straight back within 6 min"] = "%.0f%% of %d room changes" % (100 * back / changes, changes) if changes else None
+    out["of those, empty trips (nothing done there)"] = "%.0f%% of %d room changes" % (100 * empty / changes, changes) if changes else None
     out["waking time at doors"] = "%.0f%% (and walking about inside a room %.0f%%)" % (100 * door_t / awake_t, 100 * wander_t / awake_t) if awake_t else None
 
     # crowding
@@ -141,7 +145,7 @@ def measure(data, since, until):
         out["rooms at the cap over a world hour"] = "%d %s" % (len(over), over or "")
     else:
         from . import order
-        full = {r["name"]: order.floor_count(live, r) for r in house["rooms"].values() if r["type"] and order.floor_count(live, r) >= cap}
+        full = {r["name"]: order.floor_count(house, live, r) for r in house["rooms"].values() if r["type"] and order.floor_count(house, live, r) >= cap}
         out["rooms at the cap now"] = "%d %s" % (len(full), full)
 
     # "no room to make"

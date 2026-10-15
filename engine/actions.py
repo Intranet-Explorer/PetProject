@@ -80,6 +80,40 @@ def find(house, pet, name):
     return None, None
 
 
+GONE = ("that is not here", "there is nobody like that here", "there is nobody awake like that here", "that is not a made thing here")
+
+
+def stand_in(house, cfg, pet, a):
+    """SPEC-v3.5.5: what it meant went away before it got there. A pet that left is followed, one door on; a thing
+    that has gone is stood in for by the nearest made thing of its kind here, or gone after when it is next door.
+    Returns (the steps instead, or None; what to tell it if none)."""
+    room = house["rooms"][pet["room"]]
+    for f in ("target", "who", "to", "what", "object"):
+        name = a.get(f)
+        if not filled(name) or find(house, pet, name)[0]:
+            continue
+        n = norm(name)
+        other = next((p for p in life.alive(house) if p is not pet and p["stage"] != "egg" and norm(handle(house, pet, p)) == n), None)
+        where = other and other["room"]
+        if not other:
+            o = next(((r, x) for r in house["rooms"].values() for m, x in r.get("objects", {}).items() if m == n and "made" in x), None)
+            g = o or next(((None, {"made": {"recipe": x["recipe"]}}) for x in reversed(house.get("gone_things", [])) if x["name"] == n), None)
+            if not g:
+                continue
+            kind = g[1]["made"]["recipe"].get("kind")
+            same = [(dist(x["pos"], pet["pos"]), m) for m, x in things.made(room).items() if x["made"]["recipe"].get("kind") == kind and m != n]
+            if same:
+                return [dict(a, **{f: min(same)[1]})], None
+            where = g[0] and g[0]["id"]
+        door = next((d for d, rid in room["doors"].items() if rid == where), None)
+        if door and check({"type": "go", "door": door}, house, cfg, pet, None) is None:
+            return [{"type": "go", "door": door}, a], None
+        if where and where != room["id"]:
+            return None, "%s is in %s now" % (name.strip(), house["rooms"][where]["name"] if where in pet.get("rooms", {}) else "another room")
+        return None, None
+    return None, None
+
+
 def pos_of(house, cfg, pet, name):
     kind, ref = find(house, pet, name)
     room = house["rooms"][pet["room"]]

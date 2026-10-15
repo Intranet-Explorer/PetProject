@@ -1,10 +1,12 @@
 """Firsts, bests, a life's ambition, and being noticed (SPEC-v3.5.4 §6, §7, §9, §10 first half).
 
-A first is judged by what was done, never by what anything is called: the kind and nature of a made thing, the
-process done to a bit, the tool used, the room gone into, the passage read. Each is a key ("kind:bowl",
-"make:bowl|soft", "process:clay|warm", "tool:hammer", "room:r21", "read:moss"), and the house keeps who did each
-first in the house and in each family (house["new"]), and each pet what it has done (pet["firsts"]). An old house is
-seeded once from its history, so a bowl made last week is not a first today.
+A first is judged by what was done, never by what anything is called: the kind of a made thing, the process done
+to a bit and what it gave, the tool used, the room gone into, the passage read. Each is a key ("kind:bowl",
+"process:clay|warm", "got:felt", "tool:hammer", "room:r21", "read:moss"), and the house keeps who did each first in
+the house and in each family (house["new"]), and each pet what it has done (pet["firsts"]). An old house is seeded
+once from its history, so a bowl made last week is not a first today. (v3.5.5) A thing's nature is an adjective, not
+what it is: a bouncy charm ("make:charm|bouncy") is at most its maker's own first; a kind invented by joining is new
+to the house only as the first joining of those two kinds ("join:charm+charm").
 
 A best is kept per pet (pet["bests"]): its finest made thing, its surest skill, the biggest thing it helped build,
 the most firsts in a day. A child is born with its line's (pet["elders"]) and beating one is a big moment.
@@ -31,8 +33,10 @@ BEST_PAGE = {"thing": "Finest thing made", "skill": "Surest skill", "built": "Bi
 def state(house, cfg):
     """house["new"]: {"house": {key: {pet, tick}}, "family": {family: {key: {pet, tick}}}}, seeded once from history."""
     if "new" not in house:
-        house["new"] = {"house": {}, "family": {}}
+        house["new"] = {"house": {}, "family": {}, "v": 2}
         seed(house, cfg)
+    elif house["new"].get("v") != 2:
+        derive(house, cfg)
     return house["new"]
 
 
@@ -40,23 +44,49 @@ def fam_of(house, pet):
     return str(hub.family_of(house, pet))
 
 
+def also(cfg, key):
+    """The key a key also stands for: an invented kind's joining, what a process gives. None if none."""
+    sort, what = key.split(":", 1)
+    K = cfg["kinds"].get(what, {}) if sort == "kind" else {}
+    if K.get("invented"):
+        return "join:" + "+".join(sorted(K["from"]))
+    gives = cfg["craft"]["rules"].get(tuple(what.split("|")), {}).get("gives") if sort == "process" else None
+    return "got:" + gives if gives else None
+
+
 def level(house, cfg, pet, key):
     """How new this would be if this pet did it now: "house", "family", "own" or None."""
-    N = state(house, cfg)
-    if key not in N["house"]:
+    N, mine = state(house, cfg), key not in pet.get("firsts", {})
+    if key.startswith("make:"):   # a new nature on an old kind
+        return "own" if mine else None
+    test = also(cfg, key) if key.startswith("kind:") else None
+    test = test or key
+    if test not in N["house"]:
         return "house"
-    if key not in N["family"].get(fam_of(house, pet), {}):
+    if test not in N["family"].get(fam_of(house, pet), {}):
         return "family"
-    return "own" if key not in pet.get("firsts", {}) else None
+    return "own" if mine else None
 
 
 def mark(house, cfg, pet, key, tick, pid=None):
     """It has been done, by this pet (or, from history, by someone the house no longer knows)."""
     N, pid = state(house, cfg), pet["id"] if pet else pid
-    N["house"].setdefault(key, {"pet": pid, "tick": tick})
-    if pet:
-        N["family"].setdefault(fam_of(house, pet), {}).setdefault(key, {"pet": pid, "tick": tick})
-        pet.setdefault("firsts", {}).setdefault(key, tick)
+    for k in filter(None, [key, also(cfg, key)]):
+        N["house"].setdefault(k, {"pet": pid, "tick": tick})
+        if pet:
+            N["family"].setdefault(fam_of(house, pet), {}).setdefault(k, {"pet": pid, "tick": tick})
+            pet.setdefault("firsts", {}).setdefault(k, tick)
+
+
+def derive(house, cfg):
+    """Once, for a house that kept firsts before v3.5.5: the joinings and substances its keys already stand for."""
+    N = house["new"]
+    for done in [N["house"], *N["family"].values()] + [p.get("firsts", {}) for p in house["pets"].values()]:
+        for k, v in list(done.items()):
+            k2 = also(cfg, k)
+            if k2:
+                done.setdefault(k2, v)
+    N["v"] = 2
 
 
 def made_keys(recipe):
@@ -131,12 +161,13 @@ def words(house, cfg, key):
     if sort in ("kind", "make"):
         kind, _, material = what.partition("|")
         a = things.a_thing(cfg, {"kind": kind, "material": material}, bool(material))
-        return {"base": "make " + a, "did": "made " + a, "ever": "made " + a, "noun": a.split(" ", 1)[1]}
-    if sort == "process":
+        return {"base": "make " + a, "did": "made " + a, "ever": "made " + a, "noun": a.split(" ", 1)[1], "a": a.split(" ", 1)[0]}
+    if sort == "got":   # (what a process gave: "the first felt")
+        return {"base": "make " + what, "did": "made " + what, "ever": "made " + what, "noun": what, "a": ""}
+    if sort == "process":   # (its noun is the got: key's, so a second way to felt is not a second first felt)
         bit, how = what.split("|")
-        gives = cfg["craft"]["rules"].get((bit, how), {}).get("gives")
         part, bit = craft.DONE.get(how, how), wants.a(bit)
-        return {"base": "%s %s" % (how, bit), "did": "%s %s" % (PAST.get(how, part), bit), "ever": "%s %s" % (part, bit), "noun": gives}
+        return {"base": "%s %s" % (how, bit), "did": "%s %s" % (PAST.get(how, part), bit), "ever": "%s %s" % (part, bit), "noun": None}
     if sort == "tool":
         a = cfg["kinds"].get(what, {}).get("a", "a")
         return {"base": "use %s %s" % (a, what), "did": "used %s %s" % (a, what), "ever": "used %s %s" % (a, what), "noun": None}
@@ -146,6 +177,14 @@ def words(house, cfg, key):
     return {"base": "read about " + what, "did": "read about " + what, "ever": "read about " + what, "noun": None}
 
 
+def the_first(w, where):
+    """"the first bowl in the house"; a kind whose own name begins "first" is "a first clear wax base, the first in
+    the house"."""
+    if w["noun"].startswith("first "):
+        return "%s %s, the first %s" % (w["a"] or "some", w["noun"], where)
+    return "the first %s %s" % (w["noun"], where)
+
+
 def said(lvl, w, who, you=False):
     """A first in words: "Open Stone made the first bowl in the house" (or, `you`, "you made the first bowl in your
     family"); its own: "Grey Light warmed clay for the first time"."""
@@ -153,13 +192,14 @@ def said(lvl, w, who, you=False):
         return "%s %s for the first time" % (who, w["did"])
     where = "in the house" if lvl == "house" else "in your family" if you else "in its family"
     if w["noun"]:
-        return "%s made the first %s %s" % (who, w["noun"], where)
+        return "%s made %s" % (who, the_first(w, where))
     return "%s %s the first %s to have %s" % (who, "were" if you else "was", "in the house" if lvl == "house" else "of your family" if you else "of its family", w["ever"])
 
 
 def board(lvl, w, who):
     where = "THE HOUSE" if lvl == "house" else "THE FAMILY"
-    line = "FIRST %s IN %s" % (w["noun"], where) if w["noun"] else "FIRST IN %s TO HAVE %s" % (where, w["ever"])
+    line = the_first(w, "in " + where.lower()) if w["noun"] else "FIRST IN %s TO HAVE %s" % (where, w["ever"])
+    line = line[4:] if line.startswith("the ") else line
     return ("%s: %s" % (line, who)).upper()
 
 
@@ -195,7 +235,7 @@ def first(house, cfg, pet, keys):
     if lvl == "own":
         return None
     where = "in the house" if lvl == "house" else "in its family"
-    return "%s make the first %s %s" % (who, w["noun"], where) if w["noun"] else "%s %s, the first time anyone %s had" % (who, w["base"], where)
+    return "%s make %s" % (who, the_first(w, where)) if w["noun"] else "%s %s, the first time anyone %s had" % (who, w["base"], where)
 
 
 def made(house, cfg, pet, o, room):
@@ -209,7 +249,8 @@ def made(house, cfg, pet, o, room):
 
 def processed(house, cfg, pet, bit, how):
     """Hook (craft.process): something was done to a bit and something came of it."""
-    noticed(house, cfg, pet, first(house, cfg, pet, ["process:%s|%s" % (bit, how)]))
+    k = "process:%s|%s" % (bit, how)
+    noticed(house, cfg, pet, first(house, cfg, pet, list(filter(None, [also(cfg, k), k]))))   # (the substance first: on a tie it has the words)
 
 
 def used(house, cfg, pet, kind):

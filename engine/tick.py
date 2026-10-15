@@ -286,8 +286,9 @@ class Mind:
         if plan["left"] is None:
             if plan["step_needs0"] is None:   # the step begins
                 plan["step_needs0"], plan["step_tags"], plan["step_began"] = dict(pet["needs"]), [], h["tick"]
-                if actions.check(a, h, self.cfg, pet, self.mem):
-                    return self.finish_step(a)
+                reason = actions.check(a, h, self.cfg, pet, self.mem)
+                if reason:
+                    return None if self.redirect(a, reason) else self.finish_step(a)
             goal = actions.destination(h, self.cfg, pet, a)
             if goal and pet["pos"] != goal and h["tick"] - plan["step_began"] < ticks(self.cfg, self.cfg["clock"]["walk_seconds"]):   # nobody is chased for ever
                 return self.walk(goal)
@@ -319,11 +320,28 @@ class Mind:
         pet["seen_at"][key], pet["times"][key] = h["tick"], min(N["cap"], done + 1)
         return done >= N["familiar"]
 
+    def redirect(self, a, reason):
+        """SPEC-v3.5.5: what the step was about has gone (actions.stand_in): the step goes after it or what stands in
+        for it instead, once. True if it does."""
+        pet, h, plan = self.pet, self.eng.house, self.pet["plan"]
+        if a.get("again") or reason not in actions.GONE:
+            return False
+        steps, why = actions.stand_in(h, self.cfg, pet, a)
+        if not steps:
+            a["gone"] = why   # (what it is told instead of "nobody like that here")
+            return False
+        steps[-1] = dict(steps[-1], again=True)
+        plan["steps"][plan["i"]:plan["i"] + 1] = steps
+        plan["left"], plan["step_needs0"] = None, None
+        return True
+
     def finish_step(self, a):
         """The step happens now (or turns out not to be possible), and is written down."""
         pet, h, cfg, eng = self.pet, self.eng.house, self.cfg, self.eng
         plan, t = pet["plan"], a["type"]
         reason = actions.check(a, h, cfg, pet, self.mem)   # checked again: the room may have changed while it walked
+        if reason and self.redirect(a, reason):
+            return
         text, used, tags = "nothing happened", None, []
         act = story.act_of(h, pet, a)   # for whoever is watching (SPEC-v3.2 §5.2): what it was about, before it happens
         arrived, room = dict(pet["needs"]), h["rooms"][pet["room"]]
@@ -363,7 +381,7 @@ class Mind:
                 pet["exploits"][used] = pet["exploits"].get(used, 0) + 1
             self.after(a, room)
         else:
-            text = "you could not %s (%s)" % (actions.words(a), reason)
+            text = "you could not %s (%s)" % (actions.words(a), a.pop("gone", None) or reason)
         for tag in tags:
             plan["tag_need"].setdefault(tag, {"double_feed": "comfort", "pond": "energy", "storeroom": "curiosity"}.get(tag, things.TAG_NEED.get(tag)))
         tags = list(dict.fromkeys(plan["step_tags"] + tags))

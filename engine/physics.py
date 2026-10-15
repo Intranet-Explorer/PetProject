@@ -144,7 +144,7 @@ def senses(house, cfg, pet, acting=None):
     felt += life.body_feels(house, cfg, pet)
     room = house["rooms"][pet["room"]]
     from . import order
-    if order.crowded(cfg, room):   # SPEC-v3.5.4 §1: untidy, not a reason to stop making
+    if order.crowded(house, cfg, room):   # SPEC-v3.5.4 §1: untidy, not a reason to stop making
         felt.append("this room is cluttered with old things; some could go to the machine, or into a box")
     from . import order
     mess = order.clutter(house, cfg, room)   # SPEC-v3.3 §2.1: clutter is felt, by those who mind it

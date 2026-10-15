@@ -1795,3 +1795,29 @@ reached at 12) were fixed as above and checked on the copy's own nursery and scr
 Charms were 6 of 13 things made (Tyler: too few to judge; watched on live). v3.4's busy paws is a near-miss: its
 bar takes each pet's worst five minutes, and four of the five pets handled two things there; 96% to 99% of their
 five-minute windows had three or more, Open Stone's 86% (the live house misses it on some days too).
+
+## Part 21: v3.5.5, a small round (15 October 2026)
+
+Tyler's five points after v3.5.4's first live days, built together and tested on a copy with the real model.
+
+- **Firsts count what a thing is.** A house or family first is a new kind, process, tool or substance. A new nature
+  on an old kind ("make:charm|bouncy") is now at most its maker's own first. A kind invented by joining counts as new
+  only as the first joining of those two kinds ("join:charm+charm"): on live, charm joined with charm under new names
+  had been a house first each time. What a process gives is its own key ("got:felt"), and the words "the first felt"
+  belong to that key alone, so pressing fibre after fluff is "the first of its family to have pressed fibre", not a
+  second first felt (Green Seed, days 61 and 66). A house that kept firsts before this derives the new keys once from
+  the ones it has.
+- **"the first first clear wax base"**: a kind whose own name begins "first" is said "a first clear wax base, the
+  first in the house".
+- **A target that left (fix b).** When a step's pet or thing is not there when it begins or when the pet arrives, the
+  step goes after it once instead of failing: through the door to the room the pet went into, if that room is next
+  door; for a thing that has gone, to the nearest made thing of the same kind in the room, or through the door to the
+  thing if it was only moved next door. Otherwise it is told where the other went ("Green Seed is in the music room
+  now", or "another room" for a room it has not been in), not "there is nobody like that here".
+- **Cluttered counts loose things.** The nursery felt "cluttered with old things" with ten things on its floor and
+  none of them loose: crowding counted boxes, baskets, stools and sculptures. It now counts made things lying loose
+  (order.loose: not furniture, nothing that keeps things, not on or in anything, not one of a corner), less statues and
+  sculptures. The cap stays at 10.
+- **Going straight back** is reported both ways: every return within six real minutes, and the empty trips among
+  them, in and straight out with nothing done there but doors, walking about, looking about or following kin. On the
+  live house's five and a half v3.5.4 days that was 25% and 3%.

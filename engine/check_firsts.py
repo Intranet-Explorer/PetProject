@@ -57,7 +57,8 @@ async def run(d):
     assert not feat(h, "first", n1), "the same kind in the same nature with another name is no first: %s" % feat(h, "first", n1)
     make(pet, "bowl", "Warm One", "warm", ("wood", "wood"))
     f = feat(h, "first", n1)
-    assert len(f) == 1 and f[0]["key"] == "make:bowl|warm" and f[0]["text"] == "Open Hand made the first warm bowl in the house", "a bowl of another nature is a smaller first: %s" % f
+    assert len(f) == 1 and f[0]["key"] == "make:bowl|warm" and f[0]["level"] == "own" and f[0]["text"] == "Open Hand made a warm bowl for the first time", \
+        "v3.5.5: a bowl of another nature is only its own first: %s" % f
 
     other = new_pet(h, cfg, room["id"], [3, 3], family=2)
     other.update(stage="adult", name="Stranger", laid=-10**6, born=h["tick"])
@@ -205,6 +206,40 @@ async def run(d):
         assert k in S["house"], "seeded: %s" % k
     assert firsts.level(old, cfg, old["pets"]["p2"], "kind:cup") == "own" and firsts.level(old, cfg, old["pets"]["p2"], "kind:vase") is None
     assert old["pets"]["p2"]["elders"]["thing"]["who"] == "Old" and old["pets"]["p1"]["bests"]["thing"]["v"] > 0, "the bests of what is left"
+
+    # ---- v3.5.5: a substance is one first however it is got; a kind whose name begins "first" ----
+    felt = [(b, how) for (b, how), rule in cfg["craft"]["rules"].items() if rule.get("gives") == "felt"]
+    if len(felt) >= 2:
+        n10 = h["feats"]["n"]
+        for b, how in felt[:2]:
+            firsts.processed(h, cfg, kid, b, how)
+        f = feat(h, "first", n10)
+        assert [x["text"] for x in f if "felt" in x["text"]] == ["Open Stone made the first felt in the house"], "the second way to felt is no second first felt: %s" % f
+    w = {"noun": "first clear wax base", "a": "a"}
+    assert firsts.said("house", w, "Grey Light") == "Grey Light made a first clear wax base, the first in the house", firsts.said("house", w, "Grey Light")
+    assert firsts.board("house", w, "Grey Light") == "A FIRST CLEAR WAX BASE, THE FIRST IN THE HOUSE: GREY LIGHT", firsts.board("house", w, "Grey Light")
+    old2 = {"new": {"house": {"process:clay|warm": {"pet": "p1", "tick": 5}}, "family": {}}, "pets": {}}
+    firsts.state(old2, cfg)
+    gives = cfg["craft"]["rules"].get(("clay", "warm"), {}).get("gives")
+    assert not gives or old2["new"]["house"].get("got:" + gives), "a house that kept firsts before v3.5.5 knows what its processes gave"
+
+    # ---- v3.5.5: a pet that left is followed one door on; a thing that went is stood in for by one of its kind ----
+    door, rid = next(iter(room["doors"].items()))
+    if not h["rooms"][rid]["type"]:
+        generate_room(h, cfg, rid, "attic")
+    other.update(room=rid, sleep=None)
+    pet.update(room=room["id"], sleep=None)
+    steps, _ = actions.stand_in(h, cfg, pet, {"type": "nuzzle", "who": actions.handle(h, pet, other)})
+    assert steps and steps[0] == {"type": "go", "door": door} and steps[1]["type"] == "nuzzle", "after the pet that left: %s" % steps
+    make(pet, "cup", "Cup A")
+    make(pet, "cup", "Cup B")
+    from . import things
+    things.gone(h, room["objects"]["cup a"], "cup a", "combined", room)
+    del room["objects"]["cup a"]
+    steps, _ = actions.stand_in(h, cfg, pet, {"type": "use", "target": "cup a"})
+    assert steps == [{"type": "use", "target": "cup b"}], "the nearest of its kind stands in: %s" % steps
+    steps, why = actions.stand_in(h, cfg, pet, {"type": "use", "target": "nothing at all"})
+    assert steps is None and why is None
 
     # ---- the pet's page: its ambition, its bests and its family's ----
     pg = firsts.page(h, cfg, egg)

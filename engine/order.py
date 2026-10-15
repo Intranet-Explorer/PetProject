@@ -92,14 +92,15 @@ def last_touch(o):
     return max(o["made"].get("touched", 0), o["made"].get("used_at", 0), o["made"]["tick"], o.get("kept", 0))
 
 
-def floor_count(cfg, room):
-    """SPEC-v3.5.4 §1: the made things on a room's floor (not hung up, not put away), boxes and all, as the crowding cap counts them."""
-    return len(things.on_floor(room))
+def floor_count(house, cfg, room):
+    """SPEC-v3.5.4 §1, as v3.5.5 counts it: the made things lying loose on a room's floor (`loose`), not its furniture,
+    its boxes and baskets, its statues or its sculptures."""
+    return sum(1 for n in loose(house, cfg, room) if not statue(n, room["objects"][n]) and room["objects"][n]["made"]["recipe"].get("kind") != "sculpture")
 
 
-def crowded(cfg, room):
+def crowded(house, cfg, room):
     """SPEC-v3.5.4 §1: so many made things on the floor that the room feels cluttered (no longer a bar to making)."""
-    return floor_count(cfg, room) >= cfg["make"]["crowded"]
+    return floor_count(house, cfg, room) >= cfg["make"]["crowded"]
 
 
 def statue(name, o):
@@ -112,7 +113,7 @@ def clutter_of(house, cfg, room):
     first. What stays: heirlooms, statues, things the visitor named or starred, what is kept in a box or on anything, things on
     a wall, a place to keep things with anything in it (an empty one can go), what is too heavy to move, anything used
     in the last world day (put away or moved is not used), and the newest thing each pet made."""
-    if not crowded(cfg, room):
+    if not crowded(house, cfg, room):
         return []
     newest = {}
     for r in house["rooms"].values():
