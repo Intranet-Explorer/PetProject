@@ -43,7 +43,7 @@ export async function allPets() {
 }
 
 const view = { tree: false, fam: 0, life: "", sort: "birth" };
-let drawn = "";
+let drawn = "", treeShown = false;
 
 export async function render(root: HTMLElement, _id: string | null) {
   const data = await allPets();
@@ -60,7 +60,9 @@ export async function render(root: HTMLElement, _id: string | null) {
     row("Family", chip("All", !view.fam, set({ fam: 0 })), ...fams.map((n) => chip(familyName(n), view.fam === n, set({ fam: n })))),
     row("Who", chip("All", !view.life, set({ life: "" })), chip("Living", view.life === "living", set({ life: "living" })), chip("Dead", view.life === "dead", set({ life: "dead" }))),
     row("Sort", chip("By birth", view.sort === "birth", set({ sort: "birth" })), chip("By generation", view.sort === "gen", set({ sort: "gen" }))));
-  root.replaceChildren(el("div", "familypage", el("div", "paper fbars", ...bars), view.tree ? tree(data, fams) : gallery(data)));
+  const opening = view.tree && !treeShown;   // SPEC-v3.5.7 §8: the lines draw themselves in when the tree opens (not on every redraw)
+  treeShown = view.tree;
+  root.replaceChildren(el("div", "familypage", el("div", "paper fbars", ...bars), view.tree ? tree(data, fams, opening) : gallery(data)));
 }
 
 function gallery(data: Pets) {
@@ -80,9 +82,10 @@ function gallery(data: Pets) {
   }));
 }
 
-const CH = 118;   // a generation's row, in pixels
+// a generation's row and a pet's column, in pixels: room for a name at 32 px on two lines under the portrait (v3.5.7)
+const CH = 196, SW = 176, FOOT = 152;   // FOOT: below a node's name and days, where the line to its children starts
 /** The tree: each family its own column, so no line ever crosses into another family; each parent's children under it. */
-function tree(data: Pets, fams: number[]) {
+function tree(data: Pets, fams: number[], opening = false) {
   const rows = Math.max(...data.pets.map((p) => p.gen));
   const gens = el("div", "tgens", el("div", "thead"), el("div", "tgen-in", ...Array.from({ length: rows }, (_, i) => el("div", "tgen", `gen ${i + 1}`))));
   const cols = fams.map((n) => {
@@ -95,24 +98,43 @@ function tree(data: Pets, fams: number[]) {
       x.set(p.id, ch.length ? (x.get(ch[0].id)! + x.get(ch.at(-1)!.id)!) / 2 : slots++);
     };
     pets.filter((p) => !pets.some((q) => q.id === p.parent)).sort((a, b) => a.born_day - b.born_day).forEach(place);
-    const W = slots * 100, X = (p: Pet) => (x.get(p.id)! + 0.5) * 100, Y = (p: Pet) => (p.gen - 1) * CH;
+    const W = slots * SW, X = (p: Pet) => (x.get(p.id)! + 0.5) * SW, Y = (p: Pet) => (p.gen - 1) * CH;
     const lines = svg("svg", { class: "tlines", viewBox: `0 0 ${W} ${rows * CH}`, preserveAspectRatio: "none", height: rows * CH });
     for (const p of pets) for (const c of kids(p.id)) {
-      const mid = Y(c) - 10;
-      lines.append(svg("path", { d: `M${X(p)} ${Y(p) + 62}V${mid}H${X(c)}V${Y(c) + 2}`, "vector-effect": "non-scaling-stroke" }));
+      const mid = Y(c) - 14;
+      const line = svg("path", { d: `M${X(p)} ${Y(p) + FOOT}V${mid}H${X(c)}V${Y(c) + 2}`, "vector-effect": "non-scaling-stroke", pathLength: 1, "data-p": p.id, "data-c": c.id });
+      line.style.animationDelay = `${(p.gen - 1) * 0.18}s`;   // (a generation after another)
+      lines.append(line);
     }
     const box = el("div", "tbox", lines, ...pets.map((p) => {
       const n = a(el("span", "tnode-in", portrait(p, 56), el("span", "tname", p.name), el("span", "tdays", p.alive ? null : icon("stone", 12), lifeDays(p))),
         href("pet", p.id), `tnode ${fam(p.family)} ${p.alive ? "alive" : "dead"}`);
       n.style.cssText = `left:${X(p) / W * 100}%;top:${Y(p)}px`;
+      n.dataset.pet = p.id;
       return n;
     }));
     box.style.height = `${rows * CH}px`;
     const col = el("div", `tcol ${fam(n)}`, el("div", "thead", familyName(n)), box);
-    col.style.flex = `${slots} 0 ${slots * 104}px`;
+    col.style.flex = `${slots} 0 ${slots * SW}px`;
     return col;
   });
-  return el("div", "treepage", el("div", "tscroll paper", el("div", "trow", gens, ...cols)), between(data));
+  const page = el("div", `treepage${opening ? " tdraw" : ""}`, el("div", "tscroll paper", el("div", "trow", gens, ...cols)), between(data));
+  // hovering (or focusing) a pet lights its line: everyone it came from, and everyone who came from it
+  const byId = new Map(data.pets.map((p) => [p.id, p]));
+  const light = (id: string | null) => {
+    const line = new Set<string>();
+    for (let q = id ? byId.get(id) : undefined; q; q = q.parent ? byId.get(q.parent) : undefined) line.add(q.id);
+    const down = id ? [id] : [];
+    while (down.length) for (const k of byId.get(down.pop()!)?.children ?? []) if (!line.has(k)) { line.add(k); down.push(k); }
+    page.classList.toggle("lighting", !!id);
+    page.querySelectorAll<HTMLElement>("a.tnode").forEach((n) => n.classList.toggle("lit", line.has(n.dataset.pet!)));
+    page.querySelectorAll<SVGPathElement>(".tlines path").forEach((l) => l.classList.toggle("lit", line.has(l.dataset.p!) && line.has(l.dataset.c!)));
+  };
+  page.addEventListener("pointerover", (e) => light((e.target as Element).closest<HTMLElement>("a.tnode")?.dataset.pet ?? null));
+  page.addEventListener("pointerleave", () => light(null));
+  page.addEventListener("focusin", (e) => light((e.target as Element).closest<HTMLElement>("a.tnode")?.dataset.pet ?? null));
+  page.addEventListener("focusout", () => light(null));
+  return page;
 }
 
 const DID: Record<string, string> = { nuzzle: "nuzzled", give: "gave things", "teach song": "taught songs", tell: "told things" };

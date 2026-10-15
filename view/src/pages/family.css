@@ -69,3 +69,16 @@ a.gcard:hover { box-shadow: none; filter: brightness(1.05); }
 .tnode.dead .tname { color: var(--fam, var(--ink)); }
 .tdays { color: var(--ink2); }
 .between h2 { color: var(--ink2); text-transform: uppercase; letter-spacing: 1px; word-spacing: 0; }
+
+/* SPEC-v3.5.7 §8: the tree's lines draw themselves in when it opens, a generation after another; hovering a pet lights
+   its line up and down (everyone it came from and everyone from it) and the rest of the tree steps back */
+.tdraw .tlines path { stroke-dasharray: 1; animation: tdraw 0.9s ease-out both; }
+.tgen { height: 196px; }   /* (family.ts CH) */
+a.tnode { width: 168px; }
+@keyframes tdraw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+.tlines path { transition: stroke 0.15s, opacity 0.15s; }
+.lighting .tlines path:not(.lit) { opacity: 0.3; }
+.lighting .tlines path.lit { stroke: var(--amber-glow); stroke-width: 3; }
+.lighting a.tnode:not(.lit) { opacity: 0.55; }
+.lighting a.tnode.lit .tnode-in canvas { outline-color: var(--amber-glow); }
+@media (prefers-reduced-motion: reduce) { .tdraw .tlines path { animation: none; } .tlines path { transition: none; } }
