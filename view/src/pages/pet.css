@@ -1,77 +1,108 @@
-/* SPEC-v3.5.3 §4: a pet's page */
-.petpage { display: flex; flex-direction: column; gap: var(--pad); }
-.phead { display: flex; gap: var(--pad); align-items: center; }
-.pface { flex: none; }
-.pwho { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.pwho h1 { font-size: 28px; line-height: 1.1; overflow-wrap: anywhere; }
-.pwho .pfam { color: var(--fam, var(--muted)); font-weight: 600; }
-.phead.dead h1 { color: var(--muted); }
-.pwho .watch { align-self: flex-start; margin-top: 6px; font-size: 15px; padding: 4px 16px; background: var(--accent); color: var(--surface); }
-.pjump { display: flex; flex-wrap: wrap; gap: 4px 6px; align-items: center; }
-.pjump .small { margin-right: 6px; }
+/* SPEC-v3.5.7 §6: a pet's page as a character sheet (pet_sheet.png, sheet.html). The Travel Book open across the page:
+   the cover (BookCover01a, slice 12, x2) and the two pages (BookPageLeft01a / Right01a, 8 8 12 8, x2), a spread of two
+   pages on a wide screen, one page at a time on a phone (left page first). Bookmark tabs (Marker01a, slice 4, x2) stand
+   on the book's top edge. Headings are titles (Toriko 32, skin.css) with a Book Styles icon inked brown. */
+.sheet, .sheet * { font-variant-ligatures: none; }   /* (a "font:" shorthand, as on .badge in style.css, turns Pixelify's broken "fi" back on) */
+.sheet { position: relative; max-width: 1240px; margin: 0 auto; padding-top: 34px; }
+.marks { position: absolute; top: 0; left: 24px; right: 24px; display: flex; gap: 6px; justify-content: flex-end; }
+.sheet .mark, .sheet .mark[class] { border-style: solid; border-width: 8px 8px 0; border-image: url("../../assets/third_party/crusenho/UI_TravelBook_Marker01a.png") 4 4 0 4 fill stretch !important;
+  min-height: 0; height: 34px; padding: 0 8px; color: var(--ink); text-decoration: none; animation: none !important; transform: none !important; filter: none; display: inline-flex; align-items: center; }
+.sheet .mark:hover { filter: brightness(1.06); }
+.sheet .mark.back { margin-right: auto; color: var(--ink2); }
 
-/* the sections flow in columns on a wide screen, one under another on a phone */
-.pcols { columns: 2 460px; column-gap: var(--pad); }
-.psec { break-inside: avoid; margin-bottom: var(--pad); padding: var(--pad); min-width: 0; overflow-wrap: anywhere; }
-.psec.life, .psec.made { break-inside: auto; }
-.psec h3 { word-spacing: 0.3em; margin: 10px 0 4px; font-size: 13px; color: var(--muted); }
-.psec h2 + h3 { margin-top: 0; }
-.psec dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 12px; margin: 0; align-items: start; }
-.psec dt { color: var(--muted); font-size: 12px; padding-top: 2px; }
-.psec dd ul { display: flex; flex-direction: column; gap: 2px; }
-.psec p + dl { margin-top: 8px; }
-.psec .hint { color: var(--muted); font-size: 12px; }
-.chipsrow { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: flex-start; }
-.chipsrow a.link .who { flex-direction: column; gap: 2px; text-align: center; max-width: 96px; }
-.psec blockquote { border-left: 3px solid var(--fam, var(--line)); padding: 2px 0 2px 10px; font-style: italic; }
+.spread { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); border-style: solid; border-width: 24px;
+  border-image: url("../../assets/third_party/crusenho/UI_TravelBook_BookCover01a.png") 12 fill stretch; image-rendering: pixelated; }
+.spread.further { margin-top: 16px; }
+.pg { min-width: 0; border-style: solid; border-width: 16px 16px 24px; padding: 0 10px; overflow-wrap: anywhere;
+  border-image: url("../../assets/third_party/crusenho/UI_TravelBook_BookPageLeft01a.png") 8 8 12 8 fill stretch; display: flex; flex-direction: column; gap: 10px; }
+.pg.right { border-image-source: url("../../assets/third_party/crusenho/UI_TravelBook_BookPageRight01a.png"); }
+.psec { min-width: 0; scroll-margin-top: 12px; }
+.shead { display: flex; gap: 8px; align-items: center; color: var(--ink2); margin: 0 0 4px; word-spacing: 0; }
+.sicon { width: 24px; height: auto; flex: none; image-rendering: pixelated;
+  filter: brightness(0) saturate(100%) invert(26%) sepia(40%) saturate(900%) hue-rotate(340deg); }   /* (the white Book Styles icon, inked --ink2) */
+.psec h3 { color: var(--ink2); margin: 8px 0 2px; word-spacing: 0; }
+.psec .hint, .pwho p, .qwhen, .role, .psec dt { color: var(--ink2); }
+
+/* the left page: the portrait on a lit pedestal (Slot01b, slice 4, x2), slowly breathing, blinking and bobbing */
+.hero { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: flex-start; }
+.ped { position: relative; flex: none; line-height: 0; border-width: 8px; border-image-source: url("../../assets/third_party/crusenho/UI_TravelBook_Slot01b.png") !important; }
+.ped::before { content: ""; position: absolute; left: 22%; right: 22%; bottom: 6px; height: 12px; border-radius: 50%; background: rgb(0 0 0 / 30%); }
+.ped canvas { position: relative; background: radial-gradient(closest-side, rgb(255 226 170 / 60%), rgb(255 226 170 / 15%) 70%, transparent); }
+.ped canvas.bob { animation: bob 3.2s steps(1) infinite; }
+@keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+.pwho { min-width: 0; flex: 1 1 220px; display: flex; flex-direction: column; gap: 2px; }
+.pname { margin: 0 0 4px; color: var(--fam, var(--ink)); overflow-wrap: anywhere; }
+.badges { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.badges .chip { color: var(--ink); display: inline-flex; gap: 4px; align-items: center; }
+.badges .chip.gold { text-transform: uppercase; }
+.badges .chip.gold { border-image-source: url("../../assets/third_party/crusenho/UI_TravelBook_FrameSelect01a.png"); color: #6b4300; }
+.pwho .watch { align-self: flex-start; margin-top: 8px; padding: 0 12px; }
+
+.needs { display: grid; grid-template-columns: max-content minmax(0, 1fr) 3ch; gap: 4px 10px; align-items: center; }
+.needs .num { text-align: right; font-variant-numeric: tabular-nums; }
+.needs .wbar > i { transition: width 0.8s ease-out; }
+.needs .wbar.jump { animation: jump 0.3s steps(1) 3; }
+@keyframes jump { 50% { filter: brightness(1.5); } }
+.psec.now dl { display: grid; grid-template-columns: max-content 1fr; gap: 2px 12px; margin: 6px 0 0; }
+
+.traits { display: flex; flex-wrap: wrap; gap: 4px; }
+.traits .chip { color: var(--ink); }
+.describe { margin-top: 4px; color: var(--ink2); }
+.kins { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: flex-start; }
+.kin { display: flex; flex-direction: column; align-items: center; text-align: center; max-width: 112px; }
+.kin a.link .who { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+
+/* the right page: the quest log (Popup01a, slice 6, x2), the inventory slots (Slot01b), its words */
+.qlist { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.quest { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 0 10px; align-items: start; border-style: solid; border-width: 12px; padding: 0 4px;
+  border-image: url("../../assets/third_party/crusenho/UI_TravelBook_Popup01a.png") 6 fill stretch; }
+.quest .box { width: 24px; height: 24px; margin-top: 2px; border: 3px solid var(--ink2); background: #fff3d6; display: flex; align-items: center; justify-content: center; }
+.quest .box img.ticon { width: 18px; }
+.quest .qtag { color: var(--ink2); text-transform: uppercase; letter-spacing: 1px; }
+.quest p { margin: 0; }
+.qwhen { display: block; }
+.islots { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 6px; }
+a.islot { position: relative; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-width: 8px; min-width: 0;
+  border-image-source: url("../../assets/third_party/crusenho/UI_TravelBook_Slot01b.png") !important; }
+a.islot img.ticon { position: absolute; left: -8px; top: -8px; }
+a.islot.gone canvas { opacity: 0.55; }
+a.islot:hover { filter: brightness(1.15); }
+.psec blockquote { margin: 0; padding: 0 0 0 10px; border-left: 2px solid var(--fam, var(--line)); }
+.stone .grave { display: flex; gap: 10px; align-items: center; color: var(--ink2); }
+.stone .grave p { margin: 0; color: var(--ink); }
+.stone h3.lw { margin-top: 4px; }
+
+/* the further pages */
 .bul { display: flex; flex-direction: column; gap: 4px; }
 .bul li { padding-left: 10px; border-left: 2px solid var(--line); }
-.bul .read { color: var(--muted); font-size: 12px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-
-.pthings { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: var(--gap); margin-bottom: 8px; }
-.pthing { display: flex; flex-direction: column; align-items: stretch; overflow-wrap: break-word; gap: 2px; text-align: center; font-size: 12px; line-height: 1.25; }
-/* the old drawer's ".thing" rule (style.css) also matches thingLink()'s class: undo it here */
-.petpage a.link.thing { display: inline; padding: 0; border: 0; font-size: inherit; }
-.pthing .pic { height: 40px; display: flex; align-items: center; justify-content: center; }
-.pthing.gone { opacity: 0.6; }
-
+.bul .read { color: var(--ink2); }
+.iconed { display: flex; flex-direction: column; gap: 4px; }
+.iconed li { display: flex; gap: 8px; align-items: flex-start; }
+.iconed img.ticon { flex: none; margin-top: -2px; }
+.pthings { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 8px; margin-bottom: 8px; }
+.pthing { display: flex; flex-direction: column; align-items: stretch; gap: 2px; text-align: center; overflow-wrap: break-word; }
+.pthing .islot { height: 72px; aspect-ratio: auto; }
+.sheet a.link.thing { display: inline; padding: 0; border: 0; font-size: inherit; }   /* (style.css's old drawer ".thing" also matches thingLink) */
 .timeline { display: flex; flex-direction: column; gap: 3px; margin-bottom: 8px; }
-.timeline li { display: grid; grid-template-columns: 16px 52px 1fr; gap: 6px; align-items: baseline; font-size: 13px; }
-.timeline .icon { color: var(--muted); }
-.timeline .when { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
-.timeline :is(.k-death, .k-hatched, .k-named, .k-invented, .k-discovery, .k-statue) { font-weight: 600; }
+.timeline li { display: grid; grid-template-columns: 16px 64px minmax(0, 1fr); gap: 6px; align-items: baseline; }
+.timeline .icon, .timeline .when { color: var(--ink2); }
 .timeline .k-death .icon, .timeline .k-hatched .icon { color: var(--accent); }
 
-@media (max-width: 640px) {
-  .phead { align-items: flex-start; }
+/* a bookmark turns to a page */
+.psec.turned { animation: turn 0.45s ease-out; transform-origin: 0 50%; }
+@keyframes turn { from { transform: perspective(900px) rotateY(-28deg); opacity: 0.3; } to { transform: none; opacity: 1; } }
+
+/* the dead: the same sheet in sepia */
+.sheet.dead .spread { filter: sepia(0.6) saturate(0.85); }
+
+@media (prefers-reduced-motion: reduce) {
+  .ped canvas.bob, .needs .wbar.jump, .psec.turned { animation: none; }
+  .needs .wbar > i { transition: none; }
 }
 
-/* SPEC-v3.5.6 §6: the skin (A_travel_wood.png). One page of the Travel Book: the big portrait, the name large in its
-   family's colour, family and generation, "Watch now" as a wood button; then the sections, headed in small capitals in
-   ink 2. On a wide screen the sections flow in two columns on the page. */
-.petpage { gap: 8px; padding: 0 12px; }
-#page-pet .pwho h1 { font-size: 32px !important; line-height: 32px; word-spacing: 0; color: var(--fam, var(--ink)); margin-bottom: 4px; }
-.pwho p { color: var(--ink2); line-height: 18px; }
-.pwho .pfam { color: var(--ink2); }
-.phead.dead h1 { opacity: 1; }
-.pwho .watch { background: none; color: var(--ink); padding: 0 12px; margin-top: 8px; font-size: 16px; }
-.pjump { gap: 4px; }
-.pjump .small { color: var(--ink2); }
-.pcols { column-gap: 32px; }
-.psec { padding: 0; margin-bottom: 12px; background: none; border: 0; box-shadow: none; }
-.psec h2 { color: var(--ink2); text-transform: uppercase; letter-spacing: 1px; word-spacing: 0; margin: 4px 0 6px; font: inherit; }
-.psec h3 { color: var(--ink2); margin: 8px 0 2px; word-spacing: 0; }
-.psec dt, .psec .hint, .bul .read, .timeline .icon, .timeline .when { color: var(--ink2); }
-.psec blockquote { font-style: normal; }
-.bul li { border-left-color: var(--line); }
-.iconed { display: flex; flex-direction: column; gap: 4px; }
-p.iconed, .iconed li { flex-direction: row; display: flex; gap: 8px; align-items: flex-start; }
-.iconed img.ticon { flex: none; margin-top: -2px; }
-.pthings { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); }
-.pthing a.pic.slot { height: 64px; display: flex; align-items: center; justify-content: center; }
-.pthing .hint { color: var(--ink2); }
-.pthing.gone { opacity: 1; }
-.pthing.gone .pic > * { opacity: 0.6; }
-.timeline li { grid-template-columns: 16px 64px 1fr; }
-.timeline .when { font-family: var(--pixel); }
-.bul .read { display: block; overflow: visible; }   /* (cut to a few lines in pet.ts, not clipped by its box) */
+/* a phone: one page at a time, the left page first; the cover at x1 */
+@media (max-width: 899.98px) {
+  .spread { grid-template-columns: minmax(0, 1fr); border-width: 12px; row-gap: 8px; }
+  .pg { padding: 0 2px; }
+  .marks { left: 12px; right: 12px; }
+}

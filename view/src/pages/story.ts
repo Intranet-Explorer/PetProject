@@ -3,7 +3,7 @@
 // pet and thing in a sentence a link. Older days come on demand. main.ts calls render() on every visit and every 4 s.
 import "./story.css";
 import { el, whole } from "../dom";
-import { icon, PATHS } from "../icons";
+import { icon } from "../icons";
 import { artReady } from "../sprite";
 import { hhmm } from "../types";
 import { button, chip, getJSON, linked, petLink, portrait } from "../ui";
@@ -77,10 +77,16 @@ const FILTERS: [string, string, (m: M) => boolean][] = [
 
 // ---- the page ----
 
-let days: Day[] = [], more = false, today = 0, things: Record<string, string> = {};
-let filter = "main", drawn = "", busy = false;
+// ---- the page: a book, a world day to a page (SPEC-v3.5.7 §8). On a desktop two pages side by side (yesterday and
+// today, to begin with), on a phone one. Arrows or a swipe turn the pages; a strip of day markers jumps to any day. ----
+
+const days = new Map<number, Day>();
+let today = 0, things: Record<string, string> = {}, at = 0;   // `at`: the day on the right-hand page (a phone's one page)
+let filter = "main", drawn = "", busy = false, turning = "";
 
 const ago = (d: number) => (d === today ? "Today" : d === today - 1 ? "Yesterday" : `Day ${d}`);
+const wide = () => innerWidth >= 900;
+const still = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /** The day's paragraph as short points: a sentence each, and a long sentence cut where it turns to another pet or
  *  another thing ("; ", and ", and " before a name or "it"). */
@@ -92,11 +98,14 @@ export function points(text: string): string[] {
     .map((s) => s[0].toUpperCase() + s.slice(1) + (/[.!?”"]$/.test(s) ? "" : "."));
 }
 
-function dayBlock(d: Day, keep: (m: M) => boolean) {
+function dayPage(n: number, keep: (m: M) => boolean, side: string) {
+  const d = days.get(n);
+  if (n < 1) return el("section", `book sday ${side}`, el("p", "empty", "That is the start of the house."));
+  if (!d) return el("section", `book sday ${side}`, el("h3", "", ago(n)), el("p", "empty", "Turning to it…"));
   const shown = d.moments.filter(keep), rest = d.moments.length - shown.length;
-  const sky = d.weather ? el("span", "sky", PATHS[d.weather] ? icon(d.weather) : null, d.weather) : null;
-  return el("section", "book sday",
-    el("h3", "", ago(d.day), " ", el("span", "hint", d.day >= today - 1 ? `day ${d.day} · ` : "", d.season, sky ? " · " : "", sky)),
+  return el("section", `book sday ${side}`,
+    el("h3", "", ago(d.day)),
+    el("p", "sline", d.day >= today - 1 ? `day ${d.day} - ` : "", d.season, ...(d.weather ? [" - ", el("span", "sky", icon(d.weather, 20), d.weather)] : [])),
     d.summary && (filter === "main" || filter === "all") ? el("ul", "chron", ...points(d.summary).map((t) => el("li", "", ...told(t, d.day, null, things)))) : null,
     shown.length ? el("ol", "storylist", ...shown.map((m) => momentRow(m, things)))
       : el("p", "empty", d.day === today ? "Nothing worth telling yet today." : filter === "main" ? "A quiet day." : "Nothing of this kind."),
@@ -106,29 +115,59 @@ function dayBlock(d: Day, keep: (m: M) => boolean) {
 
 function setFilter(f: string) { filter = f; drawn = ""; draw(document.getElementById("page-story")!); }
 
-function draw(root: HTMLElement) {
-  const keep = FILTERS.find((f) => f[0] === filter)![2];
-  // under a chip, a day with nothing of that kind is left out (today and yesterday are always there)
-  const list = days.filter((d) => filter === "main" || filter === "all" || d.day >= today - 1 || d.moments.some(keep));
-  root.replaceChildren(el("div", "story",
-    el("div", "paper chips filters", ...FILTERS.map(([k, label]) => chip(label, filter === k, () => setFilter(k)))),
-    ...list.map((d) => dayBlock(d, keep)),
-    more ? el("p", "earlier", button(`Earlier days (before day ${days.at(-1)!.day})`, () => void earlier(root), "button")) : el("p", "hint earlier", "That is the start of the house.")));
+/** The week of days up to `n`, if it is not here yet. */
+async function fetchUpTo(n: number) {
+  if (n < 1 || days.has(n)) return;
+  const d = await getJSON<Page>(`/api/days?before=${n + 1}`);
+  for (const x of d?.days ?? []) days.set(x.day, x);
 }
 
-async function earlier(root: HTMLElement) {
-  if (busy || !more) return;
-  busy = true;
-  // under a chip, a week can hold nothing of that kind: go back four at a time
-  for (let i = 0; i < (filter === "main" || filter === "all" ? 1 : 4) && more; i++) {
-    const d = await getJSON<Page>(`/api/days?before=${days.at(-1)!.day}`);
-    if (!d) break;
-    days.push(...d.days.filter((x) => x.day < days.at(-1)!.day));
-    more = d.more;
-  }
-  busy = false;
+/** Turn to the spread (or page) whose right-hand day is `n`: the page turns, and the book says so (§9 "flip"). */
+async function turnTo(n: number, root: HTMLElement) {
+  n = Math.max(wide() ? 2 : 1, Math.min(today, n));
+  if (n === at) return;
+  turning = n < at ? "back" : "on";
+  at = n;
+  dispatchEvent(new CustomEvent("pet:sound", { detail: "flip" }));
   drawn = "";
   draw(root);
+  await Promise.all([fetchUpTo(n), wide() ? fetchUpTo(n - 1) : null]);
+  drawn = "";
+  draw(root);
+}
+
+function draw(root: HTMLElement) {
+  const keep = FILTERS.find((f) => f[0] === filter)![2], two = wide(), step = two ? 2 : 1;
+  const shown = two ? [at - 1, at] : [at];
+  const pages = el("div", `sspread${turning && !still() ? ` turn-${turning}` : ""}`, ...shown.map((n, i) => dayPage(n, keep, two && i === 0 ? "left" : "right")));
+  turning = "";
+  const back = Math.max(step, at - step), on = Math.min(today, at + step);
+  const prev = button(`‹ ${ago(two ? back - 1 : back)}`, () => void turnTo(back, root), "turn prev");
+  const next = button(`${ago(on)} ›`, () => void turnTo(on, root), "turn next");
+  prev.disabled = shown[0] <= 1;
+  next.disabled = at >= today;
+  prev.setAttribute("aria-label", "Turn back a page");
+  next.setAttribute("aria-label", "Turn on a page");
+  const strip = el("nav", "daystrip", ...Array.from({ length: today }, (_, i) => {
+    const n = i + 1, b = button(String(n), () => void turnTo(two && n < today ? n + 1 : n, root), `dmark${shown.includes(n) ? " on" : ""}`);
+    b.setAttribute("aria-label", ago(n));
+    if (shown.includes(n)) b.setAttribute("aria-current", "page");
+    return b;
+  }));
+  strip.setAttribute("aria-label", "Turn to a day");
+  const book = el("div", "sbook", pages);
+  // a swipe across the book turns its pages (sideways only: up and down still scroll the page)
+  let x0 = 0, y0 = 0;
+  book.onpointerdown = (e) => { x0 = e.clientX; y0 = e.clientY; };
+  book.onpointerup = (e) => {
+    const dx = e.clientX - x0, dy = e.clientY - y0;
+    if (e.pointerType !== "mouse" && Math.abs(dx) > 60 && Math.abs(dx) > 2 * Math.abs(dy)) void turnTo(dx > 0 ? back : on, root);
+  };
+  root.replaceChildren(el("div", "story",
+    el("div", "paper chips filters", ...FILTERS.map(([k, label]) => chip(label, filter === k, () => setFilter(k)))),
+    el("div", "turns", prev, next), book, strip));
+  const cur = strip.querySelector<HTMLElement>(".dmark.on:last-of-type") ?? strip.querySelector<HTMLElement>(".dmark.on");
+  if (cur) strip.scrollLeft = cur.offsetLeft - strip.clientWidth / 2;
 }
 
 export async function render(root: HTMLElement, _id: string | null): Promise<void> {
@@ -138,13 +177,12 @@ export async function render(root: HTMLElement, _id: string | null): Promise<voi
   const [d] = await Promise.all([getJSON<Page>("/api/days"), loadPets(), artReady]);
   busy = false;
   if (!d) return;
-  // the newest week replaces what we had of those days; older weeks fetched earlier stay
-  const low = d.days.at(-1)!.day;
-  days = [...d.days, ...days.filter((x) => x.day < low)];
-  if (days.length === d.days.length) more = d.more;
+  for (const x of d.days) days.set(x.day, x);   // the newest week replaces what we had of those days
+  if (!at || at === today) at = d.today;   // (reading today's page: a new day turns to it)
   today = d.today;
   things = d.things;
-  const key = JSON.stringify([filter, Object.values(pets).map((p) => p.stage), days.map((x) => [x.day, x.moments.length, x.weather, !!x.summary])]);
+  const shown = wide() ? [at - 1, at] : [at];
+  const key = JSON.stringify([filter, at, wide(), today, Object.values(pets).map((p) => p.stage), shown.map((n) => days.get(n)).map((x) => x && [x.moments.length, x.weather, !!x.summary])]);
   if (key === drawn) return;
   drawn = key;
   draw(root);

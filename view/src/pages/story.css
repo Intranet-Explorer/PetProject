@@ -40,3 +40,29 @@ li.m.death { color: var(--ink2); }
 .rest { color: var(--ink2); }
 .rest .link { font-family: var(--pixel); }
 .story > .earlier, .story > .hint.earlier { color: var(--on-page); }
+
+/* SPEC-v3.5.7 §8: Story as a book. The cover (BookCover01a, slice 12, x2) holds a spread of two pages (BookPageLeft01a /
+   Right01a, 8 8 12 8, x2) on a desktop, yesterday and today to begin with; one page on a phone. Arrows above, a swipe,
+   or the strip of day markers below turn the pages; a turn is a page swinging over (none with reduce motion). */
+.story, .story * { font-variant-ligatures: none; }   /* (a "font:" shorthand, as on .badge, turns Pixelify's broken "fi" back on) */
+.turns { display: flex; justify-content: space-between; gap: 8px; padding: 0 4px; }
+.turns .turn { padding: 0 10px; }
+.sbook { border-style: solid; border-width: 24px; border-image: url("../../assets/third_party/crusenho/UI_TravelBook_BookCover01a.png") 12 fill stretch;
+  image-rendering: pixelated; touch-action: pan-y; }
+.sbook .sspread { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); perspective: 1600px; }
+.sbook .sspread:has(> :only-child) { grid-template-columns: minmax(0, 1fr); }
+.sbook .sday { min-width: 0; padding: 0 10px; }
+.sbook .sday.right { border-image-source: url("../../assets/third_party/crusenho/UI_TravelBook_BookPageRight01a.png"); }
+.sday .sline { margin: -6px 0 4px; color: var(--ink2); display: flex; flex-wrap: wrap; gap: 0 4px; align-items: center; }
+.sday .sky { display: inline-flex; gap: 4px; align-items: center; white-space: nowrap; }
+.sday .sky .icon { color: var(--accent); }
+.sspread.turn-on > .right, .sspread.turn-on:has(> :only-child) > * { animation: turn-on 0.5s ease-out; transform-origin: 0 50%; }
+.sspread.turn-back > .left, .sspread.turn-back:has(> :only-child) > * { animation: turn-back 0.5s ease-out; transform-origin: 100% 50%; }
+@keyframes turn-on { from { transform: rotateY(-75deg); opacity: 0.4; } to { transform: none; opacity: 1; } }
+@keyframes turn-back { from { transform: rotateY(75deg); opacity: 0.4; } to { transform: none; opacity: 1; } }
+.daystrip { display: flex; gap: 4px; overflow-x: auto; padding: 4px 4px 8px; scrollbar-width: thin; scrollbar-color: var(--on-page) transparent; }
+.daystrip .dmark { flex: none; min-height: 0; padding: 0 6px; border-width: 8px; border-image: url("../../assets/third_party/crusenho/UI_TravelBook_Frame04a.png") 4 fill stretch;
+  color: var(--ink2); animation: none !important; font-variant-numeric: tabular-nums; }
+.daystrip .dmark.on { border-image-source: url("../../assets/third_party/crusenho/UI_TravelBook_FrameSelect01a.png"); color: var(--ink); }
+@media (prefers-reduced-motion: reduce) { .sspread[class*="turn-"] > * { animation: none !important; } }
+@media (max-width: 899.98px) { .sbook { border-width: 12px; } }
