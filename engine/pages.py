@@ -211,10 +211,29 @@ def pet_page(eng, pid, beliefs_of):
             words["last_words"] = json.loads(Path(f).read_text()).get("last_words") if f else None
         except Exception:
             pass
+    # SPEC-v3.5.7 §6: which of its things were firsts (the house's record of who first made each kind, at that tick),
+    # how many firsts it has in the house and in its family, and its quest log
+    N, f = h.get("new") or {}, str(fam.get(pid, 1))
+    by_me = lambda d: {k for k, v in (d or {}).items() if v.get("pet") == pid and not k.startswith(("join:", "got:", "make:"))}   # (a nature is at most its own first; the other two restate a kind or a process)
+    in_house, in_family = by_me(N.get("house")), by_me((N.get("family") or {}).get(f))
+    for t in made:
+        k, was = "kind:%s" % (t["recipe"] or {}).get("kind"), lambda d: (d or {}).get(k, {})
+        t["first"] = "house" if was(N.get("house")) == {"pet": pid, "tick": t["tick"]} else \
+            "family" if was((N.get("family") or {}).get(f)) == {"pet": pid, "tick": t["tick"]} else None
+    A = p.get("ambition") or {}
+    done_with = next((t for t in made if A.get("done") and t["tick"] == A["done"]), None)
+    quest = {
+        "ambition_thing": done_with and {"id": done_with["id"], "name": done_with["name"]},
+        "project": p.get("project") and {"text": p["project"]["text"], "day": day_of(cfg, p["project"].get("since"))},
+        "projects_done": [{"text": x["text"], "day": day_of(cfg, x.get("ended"))} for x in p.get("projects", []) if x.get("how") == "finished"][-3:],
+        "wants": [w["text"] for w in p.get("wants", [])] if p["stage"] != "dead" else [],
+        "wants_done": list({m["text"]: {"text": m["text"], "day": m["day"]} for m in moments if m["kind"] == "want"}.values())[-3:],   # (the latest of each)
+    }
     return {"pet": card, "named_after": named_after(h, p, names), "parent": par and par["id"], "siblings": sibs,
             "children": card["children"], "names": {k: names[k] for k in h["pets"]}, "traits": traits(h, p), "moments": moments,
             "made": made, "words": words, "my_life": life.get("my_life"), "family_names": {},
-            "bests": firsts.page(h, cfg, p)}   # SPEC-v3.5.4 §7, §9: its ambition, its bests and its family's
+            "bests": firsts.page(h, cfg, p),   # SPEC-v3.5.4 §7, §9: its ambition, its bests and its family's
+            "firsts": {"house": len(in_house), "family": len(in_family - in_house)}, "quest": quest}
 
 
 def story_days(eng, before=None, n=7):
