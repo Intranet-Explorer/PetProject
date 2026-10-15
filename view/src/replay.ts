@@ -43,7 +43,7 @@ export async function startReplay(lineage: string, show: (s: Snap) => Promise<vo
     f = clamp(f, 0, lines.length - 1);
     shown = JSON.parse(lines[f]) as Snap;
     scrub.value = String(Math.round((d + f / lines.length) * 1000));
-    when.textContent = `day ${shown.clock.day} of ${days.at(-1)} · ${hhmm(shown.clock.hour)}`;
+    when.textContent = `day ${shown.clock.day} of ${days.at(-1)} - ${hhmm(shown.clock.hour)}`;
     mark();
     await show(shown);
     return shown;

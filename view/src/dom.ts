@@ -10,7 +10,8 @@ export type Kid = Node | string | number | null | undefined | false;
 export function el(tag: string, cls = "", ...kids: Kid[]) {
   const e = document.createElement(tag);
   if (cls) e.className = cls;
-  e.append(...kids.filter((k) => k != null && k !== false).map((k) => (typeof k === "number" ? String(k) : (k as Node | string))));
+  // (SPEC-v3.5.6: the pixel face has no middle dot, so a separator is a dash, as in the mockups)
+  e.append(...kids.filter((k) => k != null && k !== false).map((k) => (typeof k === "number" ? String(k) : typeof k === "string" ? k.replace(/ · /g, " - ") : (k as Node))));
   return e;
 }
 

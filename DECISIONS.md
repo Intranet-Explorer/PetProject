@@ -1873,4 +1873,9 @@ View only: the engine is unchanged.
 - **Holo (§1)** is the board on the House tab, the Works' goal and its segmented meter (one segment a scrap, thirty at
   most), and the machine room's screens when one is opened (blue, or amber for the amber screen).
 - **A pet's page** is one book page; ambition and bests come first, then family, now, body, words, made, life.
-- **Not done:** Toriko has no curly quotes, so “ and ” come from the fallback face and stand a little large.
+- **Separators are dashes.** Toriko draws a middle dot as a raised tick, so the page's " · " between facts is " - ",
+  as in the mockups (in `dom.el`, which builds every line, so engine words get it too).
+- **The fresh reviewer** (phone screenshots only) did the four v3.5.3 tasks in 2, 2, 1 and 1 taps. From its notes the
+  board's headings are brighter, the credit is no longer faded, and the phone's sign sits higher over the frame.
+  Not done, and noted: Toriko has no curly quotes, so “ and ” come from the fallback face and stand a little large; the
+  House cards say a pet's name as the engine does ("Grey Light"), where the pages number it ("Grey Light II").

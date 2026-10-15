@@ -11,7 +11,7 @@
   /* (the families: §2's #1f6f8b and #a3366a measure 3.5 to 4.2 : 1 on the Wood card and the paper; these are the nearest
      darker shades that reach 4.5 : 1 on every panel they are written on, the lightest being the selected tab, 4.6 : 1) */
   --ink: #2b140e; --ink2: #6e3b26; --fam1: #165266; --fam2: #842b55; --fam3: #45510d; --fam4: #653492;
-  --holo: #9fe3ff; --holo-glow: #2fb6ff; --amber: #ffb84a; --amber-glow: #ff8a00; --holo-dim: #6fa7cf;
+  --holo: #9fe3ff; --holo-glow: #2fb6ff; --amber: #ffb84a; --amber-glow: #ff8a00; --holo-dim: #8cc4ea;
   --page: #3a2730; --page2: #44303a; --paper: #fdd6a6; --on-page: #f3d9bd;
   /* v3.5.3's names, mapped onto the skin, so every older rule reads right */
   --bg: var(--paper); --surface: var(--paper); --muted: var(--ink2); --line: #c98f62; --edge: #4a2a22;
@@ -121,7 +121,7 @@ img.ticon { width: calc(var(--w) * 2px); height: auto; image-rendering: pixelate
 }
 
 /* the foot of every page: the credit (§10), and the Lab */
-p.more { color: var(--on-page); opacity: 0.8; display: flex; gap: 16px; justify-content: center; }
+p.more { color: var(--on-page); display: flex; gap: 16px; justify-content: center; }
 p.more a, p.more .link { color: var(--on-page) !important; }
 body[data-page="house"] p.more { display: flex; }
 
@@ -151,7 +151,7 @@ header .tab { width: 150px; min-height: 0; line-height: 18px; display: block; te
 #now:is(.want, .find) { border-image-source: url("../assets/third_party/crusenho/UI_TravelBook_FrameSelect01a.png"); border-image-slice: 4; border-width: 8px; padding: 4px 8px; }
 #now .icon { color: var(--accent); }
 main { flex: 1; min-height: 0; overflow: visible; padding: 0; display: block; }
-#roomwrap { position: relative; display: flex; justify-content: center; padding-top: 18px; }
+#roomwrap { position: relative; display: flex; justify-content: center; padding-top: 30px; }   /* (the sign covers the frame's edge, not the room) */
 #frame { padding: 0; flex: none; line-height: 0; }
 #stage { position: relative; }
 #sign { position: absolute; left: 50%; top: 0; transform: translateX(-50%); width: 192px; height: 46px; padding-top: 6px; text-align: center; line-height: 30px;

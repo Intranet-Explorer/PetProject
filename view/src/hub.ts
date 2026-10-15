@@ -68,7 +68,7 @@ export function screens(s: Snap, room: string) {
   const ink = screenInk(r, open.name), sc = o.screen, who = sc && (sc.by ?? s.pets.find((p) => p.id === sc.pet)?.label ?? "someone");
   panel.style.setProperty("--crt", ink.on);
   panel.classList.toggle("amber", ink === INKS[1]);   // (v3.5.6 §1: the Holo panel glows blue, or amber for the amber screen)
-  head.textContent = `${r.name}: the ${open.name}${sc ? ` · ${who}, ${when(s, sc.tick)}` : ""}`;
+  head.textContent = `${r.name}: the ${open.name}${sc ? ` - ${who}, ${when(s, sc.tick)}` : ""}`;
   clearInterval(timer);
   const asked = sc ? `> ${sc.asked}\n\n` : "", body = sc ? (sc.text ? `${sc.title ? sc.title.toUpperCase() + "\n\n" : ""}${sc.text}` : "NOTHING FOUND.") : "READY.";
   const draw = () => {
