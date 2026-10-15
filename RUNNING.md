@@ -34,7 +34,10 @@ names there. `view/assets/third_party/CREDITS.md` credits what is used.
 **The skin** (since v3.5.6) is Crusenho's Travel Book, Wood and Holo Book sprites and the Toriko pixel face, in
 `view/assets/third_party/crusenho/` (only the sprites used; credits and licences in `third_party/CREDITS.md`), drawn
 by `view/src/skin.css` as 9-sliced frames at whole-number scales. Short words are Toriko at 32 px; what is read is
-Pixelify Sans (`third_party/pixelify/`), 16 px or, with "Large text" under More, 20 px. From 1000 px wide the House tab is a game screen
+Pixelify Sans (`third_party/pixelify/`), 16 px or, with "Large text" under More, 20 px. Since v3.5.7 the House tab follows
+the action by itself (the chip beside "Here" says what it follows; `petView.follows()` lists every room change and
+why), its right column is the blue console (the map, the room's readout, the board in VT323, the Works), and the
+house's big moments drop in as banners (`petView.replayMoment(n)` shows a recorded one again, for checking). From 1000 px wide the House tab is a game screen
 in three columns; narrower, one column that scrolls.
 **The book** reads `book/wikipedia_en-simple_all_maxi_2026-09.zim` (Simple English Wikipedia from
 download.kiwix.org, 2.9 GB, not in the repository). Without it the book never arrives and nothing else minds.

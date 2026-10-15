@@ -1967,3 +1967,11 @@ View only: the engine is unchanged.
 
 **Measured** (headless Chrome on the Mac, a paused copy of the house; the room's frames over ten seconds): before,
 60.1 fps (worst frame 16.8 ms) at 1512 x 945 and 60.0 on a phone; after, the same, and 60.0 with a banner up.
+
+**The fresh reviewer** (phone screenshots only) did the four v3.5.3 tasks in 2, 2, 2 and 1 taps (yesterday is the
+Story tab and "‹ Yesterday" on a phone). Most interesting: a dead pet's sheet ("reads like an obituary"). Most
+confusing: the lower half of the House tab on a phone (the console's unlabelled map, the scrolling board, the Works,
+and the visitor's controls, whose pet they act on is not obvious). Acted on: the foot of the page wraps with a gutter,
+the phone's choices are no longer cut short, a count in a title is "Made: 48" (Toriko draws brackets like C and J).
+Noted, not changed: Pixelify's 5 reads like an S; a board line mid-scroll is cut at the panel's edges by design; the
+tree on a phone scrolls sideways in its own box, and its families' names are cut there until scrolled to.
