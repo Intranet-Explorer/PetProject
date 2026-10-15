@@ -428,3 +428,7 @@ button.followchip.off { background: var(--paper); }
 @media (hover: hover) and (prefers-reduced-motion: no-preference) {
   .cards .card:hover, a.card:hover { transform: translateY(-1px); filter: drop-shadow(0 2px 0 rgb(0 0 0 / 30%)); }
 }
+
+/* §5 a thing's card in the room's hover: the card is its own paper panel */
+#tip.holdscard { border: 0; border-image: none; background: none; padding: 0; display: block; width: max-content; max-width: min(430px, calc(100vw - 24px)); z-index: 6; }
+#tip.holdscard .cardhint { text-align: right; color: var(--ink2); margin: -10px 14px 0 0; position: relative; }

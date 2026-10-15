@@ -22,6 +22,7 @@ import { Room } from "./room";
 import type { Target } from "./room";
 import { artReady, aThing, firstSprite, hasSprite, sprite, thingSprite } from "./sprite";
 import { getJSON, giveStar } from "./ui";
+import { thingCard } from "./thingcard";
 import { ago, fam, hhmm } from "./types";
 import { voiceInput } from "./voice";
 import { initVoice } from "./voicelab";
@@ -596,6 +597,9 @@ function controls(s: Snap, here: RoomV) {
   star.hidden = !thing?.made;
   star.disabled = !!thing?.made?.star;
   star.textContent = thing?.made?.star ? "★ Starred" : "★ Star";
+  const page = $<HTMLAnchorElement>("thingPage"), tm = thing?.made as { id?: number; tick?: number } | undefined;   // SPEC-v3.5.7 §5: the picked thing's page
+  page.hidden = !tm;
+  if (tm && picked) page.href = `#/thing/${encodeURIComponent(tm.id != null ? String(tm.id) : `g${tm.tick}-${picked.replace(/\W+/g, "-")}`)}`;
   $("room").classList.toggle("placing", !!thing);
 }
 
@@ -729,17 +733,10 @@ function tipFor(t: Target): Kid[] | null {
     return [hasSprite(pic) ? sprite(pic, 3) : null, el("div", "", el("b", "", to?.type ? `the door to ${to.name}` : "a door nobody has been through"),
       shut ? el("p", "", "It has blown shut.") : null, to?.type ? el("p", "hint", "Click to look in there.") : null)];
   }
-  if (o?.made) {
-    const m = o.made, maker = m.by === "visitor" ? "the visitor" : pet(m.by)?.label ?? "someone gone";
-    return [drawn(t) ?? thingSprite(m.recipe, 3), el("div", "",
-      el("b", "", aThing(m.recipe)), el("p", "", `“${m.called ?? t.object}”`),
-      el("p", "hint", [`made by ${maker}`, m.owner_name && m.owner_name !== maker ? `${m.owner_name}'s now` : !m.owner_name ? "nobody's now" : null, m.heirloom ? "an heirloom" : null].filter(Boolean).join(" · ")),
-      el("p", "hint", `${m.recipe.material}${m.recipe.purpose ? ` · for “${m.recipe.purpose}”` : ""}`),
-      m.star ? el("p", "star", "★ The visitor gave it a star.") : null,
-      ...kept(t),
-      el("p", "truth", el("b", "", "What it really does: "), `${truthOf({ hello }, m).join("; ")}.`),
-      replayId ? null : el("p", "hint", m.star ? "Click to move or name it." : "Click to move, name or star it."),
-      ...(here.marks ?? []).filter((x) => x.on === t.object).flatMap(written))];
+  if (o?.made) {   // SPEC-v3.5.7 §5: the thing card (thingcard.ts), filled in from the house's record as it arrives
+    const m = o.made as typeof o.made & { id?: number; tick?: number }, key = m.id != null ? String(m.id) : `g${m.tick}-${t.object!.replace(/\W+/g, "-")}`;
+    const card = thingCard(key, { name: t.object!, recipe: m.recipe as never, by: m.by, owner: m.owner, uses: m.uses, heirloom: !!m.heirloom, star: m.star ?? null } as never, false);
+    return [card, replayId ? null : el("p", "hint cardhint", m.star ? "click to move or name it, or open its page" : "click to move, name or star it, or open its page")];
   }
   if (o?.memorial) return [drawn(t) ?? (hasSprite("stone") ? sprite("stone", 3) : null), el("div", "", el("b", "", "a stone"), el("p", "", o.memorial.text), ...kept(t),
     ...(here.marks ?? []).filter((x) => x.on === t.object).flatMap(written))];
@@ -765,10 +762,13 @@ function card(t: Target | null, fx: number, fy: number, forMs = 0) {
   clearTimeout(tipTimer);
   tip.hidden = !kids;
   if (!kids) return;
-  const key = JSON.stringify([t, snap?.tick]), nib = el("i", "nib");
+  const key = JSON.stringify([t, t?.object && snap?.rooms.find((r) => r.id === view.room)?.objects[t.object]?.made ? null : snap?.tick]), nib = el("i", "nib");   // (a thing's card is not rebuilt every tick: it fills itself in)
   if (tip.dataset.key !== key) { tip.dataset.key = key; tip.replaceChildren(...kids.filter((k): k is Node => k instanceof Node), nib); }
   // beside the thing itself where the room says where it is drawn; otherwise beside the pointer
-  const stage = $("stage"), { tile, busy, inner } = roomBoxes(), drawnAt = t ? told(t)?.rect : null;
+  tip.classList.toggle("holdscard", !!tip.querySelector(".thingcard"));
+  const stage = $("stage"), { tile, busy, inner: room0 } = roomBoxes(), drawnAt = t ? told(t)?.rect : null;
+  // a thing's card is taller than many rooms: it keeps within the window, not the room (SPEC-v3.5.7 §5)
+  const sr = stage.getBoundingClientRect(), inner = tip.classList.contains("holdscard") ? { x: 8 - sr.left, y: 8 - sr.top, w: innerWidth - 16, h: innerHeight - 16 } : room0;
   const at = drawnAt && drawnAt.w <= 5 * tile && drawnAt.h <= 4 * tile ? drawnAt : null;   // a wall, a floor or a big rug is everywhere: the pointer says which part is meant
   const [px, py] = at ? [at.x + at.w / 2, at.y + at.h / 2] : [fx * stage.clientWidth, fy * stage.clientHeight];
   const target = at ? { x: at.x - 2, y: at.y - 2, w: at.w + 4, h: at.h + 4 } : { x: px - tile * 0.8, y: py - tile * 0.9, w: tile * 1.6, h: tile * 1.7 }, [w, h] = [tip.offsetWidth, tip.offsetHeight], gap = 12;

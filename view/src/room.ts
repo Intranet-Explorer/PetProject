@@ -80,6 +80,7 @@ export class Room {
   private top = new Container();
   private rims = new Container();       // the pets' pale outlines, over the dark
   private mark = new Graphics();        // round the thing the visitor has picked up
+  private glow = new Graphics();        // SPEC-v3.5.7 §5: round the thing under the pointer, gold
   private fx = new Fx();
   private over = new Fx();              // SPEC-v3.4 §5: a burst, drawn over the lettering: a caption or bubble that is up does not hide it
   private light = new Light();
@@ -145,7 +146,7 @@ export class Room {
     cv.style.imageRendering = "pixelated";
     el.append(cv);
     this.sorted.sortableChildren = true;
-    this.world.addChild(this.ground, this.walls, this.marks.c, this.flat, this.sorted, this.top, this.mark, this.light.dark, this.rims, this.light.glow, this.light.panes, this.fx.c, this.light.falling);
+    this.world.addChild(this.ground, this.walls, this.marks.c, this.flat, this.sorted, this.top, this.mark, this.glow, this.light.dark, this.rims, this.light.glow, this.light.panes, this.fx.c, this.light.falling);
     this.app.stage.addChild(this.world, this.words.c, this.over.c);
     const at = (e: PointerEvent) => { const r = cv.getBoundingClientRect(); return [((e.clientX - r.left) / r.width) * W, ((e.clientY - r.top) / r.height) * H]; };
     // a finger has no hover: a tap shows what a hover would (the card, the thing's name) for five seconds, and lifting the finger does not take it away
@@ -593,6 +594,13 @@ export class Room {
   private point(at: number[] | null = this.pointer) {
     this.pointer = at;
     const t = at && this.under(at[0], at[1]), cv = this.app.canvas;
+    const lit = t?.object && !t.pet ? this.still?.things.get(t.object) : null;
+    this.glow.clear();
+    if (lit && this.scene?.room.objects[t!.object!]?.made) {   // a made thing glows gold while it is pointed at
+      const r = lit.rect, [x, y, w, h] = [Math.round(r.x) - 2, Math.round(r.y) - 2, Math.round(r.w) + 4, Math.round(r.h) + 4];
+      this.glow.rect(x - 2, y - 2, w + 4, h + 4).stroke({ width: 2, color: 0xffc84a, alpha: 0.35, alignment: 1 })
+        .rect(x, y, w, h).stroke({ width: 1, color: 0xffd76a, alignment: 1 }).rect(x, y, w, h).fill({ color: 0xffd76a, alpha: 0.12 });
+    }
     cv.style.cursor = t?.pet ? "var(--hand, pointer)" : t?.object || t?.door ? "var(--arrow, pointer)" : "";   // (skin.css, SPEC-v3.5.6 §8: the hand over a pet; inline, as the canvas sets its own)
     const beast = t?.creature && !t.pet ? this.beasts.get(t.creature) : null;   // a creature wears its name only while it is pointed at
     if (beast) { const r = beast.rect(); this.words.hover(beast.cr.name ?? `a ${beast.cr.kind}`, (r.x + r.w / 2) * this.K, (r.y + r.h + 1) * this.K); }
