@@ -43,6 +43,7 @@ let tweak: Record<string, unknown> = {};
 // What is on screen. `follow` is "auto", a pet's id, or "" to stay in the room chosen by hand.
 const view = { room: recall("room") ?? "", follow: recall("follow") ?? "auto", sel: recall("sel"), tab: "lab", drawer: false, page: "house" };
 let picked: string | null = null; // a thing clicked, waiting for a tile to be moved to or a name
+let clicked: string | null = null; // the pet last clicked in the room (to poke or name it)
 let autoAt = performance.now();   // when "auto" last changed rooms
 const api: Record<string, unknown> = {};
 
@@ -353,11 +354,11 @@ function side(s: Snap, here: RoomV) {
 /** SPEC-v3.5.4 §11, v3.5.6 §1: the machine room's board, seen from any room, in the Holo Book: its newest line in amber,
  *  the others in blue, then the Works' goal and a glowing meter of segments, one to a scrap. */
 function board(s: Snap) {
-  const B = (s.ticker?.board ?? []).slice(0, 4), hubRoom = s.ticker?.room ?? null, box = $("board"), key = JSON.stringify(B);
+  const B = s.ticker?.board ?? [], hubRoom = s.ticker?.room ?? null, box = $("board"), key = JSON.stringify(B);
   box.hidden = !B.length;
   if (box.dataset.key === key) return;
   box.dataset.key = key;
-  const lines = B.filter((l) => !l.meter), works = B.find((l) => l.meter);
+  const lines = B.filter((l) => !l.meter).slice(0, 3), works = B.find((l) => l.meter);   // (three of its lines, as the mockups; the Works always)
   const cells = (have: number, of: number) => { const n = Math.min(of, 30), on = Math.round((Math.min(have, of) / of) * n); return el("div", "meter-cells", ...Array.from({ length: n }, (_, i) => el("i", i < on ? "on" : ""))); };
   box.replaceChildren(
     el("p", "dim", "THE BOARD"),
@@ -428,6 +429,7 @@ function controls(s: Snap, here: RoomV) {
   $("ended").hidden = !!replayId || !over;
   document.querySelector("footer")!.hidden = !!replayId;
   $("chosen").hidden = !!replayId || over;   // (v3.5.6: naming sits beside the cards now, not in the footer)
+  $("chosen").classList.toggle("asked", !!picked || clicked === view.sel);   // (a desktop shows it once a pet or a thing has been clicked in the room)
   if (replayId || over) return;
   // a control that cannot be used here says why: in its own words where it can, and in its title
   const set = (id: string, off: boolean, why: string, text?: string) => { const b = $<HTMLButtonElement>(id); b.disabled = off; b.title = off ? why : ""; if (text) b.textContent = text; };
@@ -506,7 +508,7 @@ room.onClick = (t: Target) => {
   if (picked && !t.pet && t.object !== picked) {
     act({ type: "place", object: picked, tile: t.tile });
     picked = null;
-  } else if (t.pet) jump({ pet: t.pet });
+  } else if (t.pet) { clicked = t.pet; jump({ pet: t.pet }); }
   else if (t.door) jump({ room: here?.doors[t.door] });
   else if (o?.fix?.terminal) openScreen(snap, view.room, t.object!);   // SPEC-v3.5.1 §3: read what is on its screen
   else if (can && o && (o.made || o.fix?.movable)) picked = picked === t.object ? null : t.object!;

@@ -255,7 +255,11 @@ footer.paper { padding: 0 4px; }
   .cards .card.away .wholine { flex-direction: row; gap: 0 6px; flex-wrap: wrap; align-items: baseline; }
   .cards .card.away .where { grid-column: 2; }
   #chosen { order: -1; }   /* at the top of the column, while a pet or a thing is chosen (a click in the room) */
-  #chosen:has(#chosenWhat.none) { display: none; }
+  #chosen:not(.asked) { display: none; }
+  #happening li:not(.warn) { display: none; }   /* (the creatures and the radio are in the room, on the map and in Music: the board has the room) */
+  #sky h2 { display: none; }   /* (the room's name is on its sign, a little above: the board has the room) */
+  #side { gap: 6px; }
+  #mapframe { padding: 0; border-width: 7px; }   /* (the Wood frame at x1 here) */
   #stockBox, #musicBox, #moreBox { inset: auto 16px 84px auto; margin: 0; }   /* above the toolbar's right end, under the buttons that open them */
   body[data-page="house"] p.more { position: fixed; right: 16px; bottom: 0; margin: 0; padding: 0; }
 }

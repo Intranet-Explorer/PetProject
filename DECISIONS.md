@@ -1859,12 +1859,16 @@ View only: the engine is unchanged.
   wall rather than above the frame, for the same reason. When the cards or the right column hold more than the
   screen, that column scrolls (a thin bar); the room never does. From 1000 px wide the House tab is the game screen;
   narrower, the phone's one column.
+- **Fitting 1280 x 800.** On a desktop the room's panel leaves out its name (the sign over the room says it) and the
+  creatures and the radio (they are in the room, on the map and under Music; warnings stay); the board shows three of
+  its lines and the Works; the map's frame is Wood at x1. With that the room is 3x and the right column needs no
+  scrolling with today's board.
 - **What moved on the House tab.** "Lately" (the moments beside the room) is gone from it: the Story tab has them all.
   The status chips show only what is wrong (a power cut, the engine away), not "you are here". Follow and Names stay,
   in the room's panel. The visitor's toolbar has Care, Talk and More; Music and the radio, and the rest of More
   (ambience, volume, Replay, the Lab), open as paper pop-ups from their buttons, as Stock already did. Naming (Poke,
-  a name, Star, Let go) appears at the top of the left column while a pet or a thing is chosen, and in the column on a
-  phone. A phone shows the groups as rows of three buttons; they fit, so nothing is folded behind "Visit".
+  a name, Star, Let go) appears at the top of the left column once a pet or a thing has been clicked in the room, and
+  in the column on a phone. A phone shows the groups as rows of three buttons; they fit, so nothing is folded behind "Visit".
 - **Cursors (§8).** The arrow everywhere, buttons and links included; the hand over the pets in the room and over
   every card; the pencil in the text box. The room's canvas sets its own cursor, so the room sets the hand inline.
 - **Hover names (§9)** were already the room's way (the "Names" switch still holds them all on); the hover card is a
