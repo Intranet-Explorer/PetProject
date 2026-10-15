@@ -3,10 +3,10 @@
 import { el } from "./dom";
 import { icon } from "./icons";
 import { hasSprite, sprite } from "./sprite";
+import { fam } from "./types";
 import type { Snap } from "./types";
 
 const STEP: Record<string, [number, number]> = { north: [0, -1], south: [0, 1], west: [-1, 0], east: [1, 0] };
-const tint = (p: { genome: { hue: number; saturation: number } }) => `hsl(${p.genome.hue} ${Math.round(p.genome.saturation * 100)}% 52%)`;
 
 /** Drawn again only when what it shows has changed. `width` is the room there is for it, in screen pixels. */
 export function drawMap(box: HTMLElement, s: Snap, viewed: string, chosen: string | null, look: (room: string) => void, width: number) {
@@ -15,7 +15,7 @@ export function drawMap(box: HTMLElement, s: Snap, viewed: string, chosen: strin
   const scale = Math.max(1, Math.min(3, Math.floor((width / gx - 22) / 16))), cell = 16 * scale + 16, gap = scale > 1 ? 6 : 4;   // (v3.5.6: a slot round each room, 8 px a side)
   const key = JSON.stringify([scale, viewed, chosen, s.rooms.map((r) => [r.type, r.wet, r.cold, r.sounding, r.shut, r.name]),
     s.pets.map((p) => [p.id, p.room, p.stage, p.buried, p.label]), s.creatures.map((c) => [c.id, c.room, c.tame, c.name])]);
-  if (box.dataset.key === key) return;
+  if (box.dataset.key === key) return void dots(box, s, chosen, x0, y0, cell, gap);
   box.dataset.key = key;
   const map = el("div", "map");
   map.style.cssText = `width:${gx * (cell + gap) - gap}px;height:${gy * (cell + gap) - gap}px;--cell:${cell}px`;
@@ -37,17 +37,6 @@ export function drawMap(box: HTMLElement, s: Snap, viewed: string, chosen: strin
     }
     const here = s.pets.filter((p) => p.room === r.id && !(p.stage === "dead" && p.buried)), beasts = s.creatures.filter((c) => c.room === r.id);
     const b = put(el("button", `maproom${r.id === viewed ? " viewed" : ""}`, sprite(`icon.room.${r.type}`, scale),
-      el("span", "dots",
-        ...here.map((p) => {
-          const d = el("i", `dot${p.stage === "egg" ? " egg" : p.stage === "dead" ? " dead" : ""}${p.id === chosen ? " chosen" : ""}`);
-          if (p.stage !== "egg" && p.stage !== "dead") d.style.background = tint(p);
-          return d;
-        }),
-        ...beasts.map((c) => {
-          const owner = s.pets.find((p) => p.id === c.tame), d = el("i", "dot beast");   // somebody's animal is in its pet's colour (SPEC-v3.1 §4.4)
-          if (owner) d.style.background = tint(owner);
-          return d;
-        })),
       r.wet || r.cold || r.sounding ? el("span", "signs", r.wet ? icon("drop", 10) : null, r.cold ? icon("wind", 10) : null, r.sounding ? icon("music", 10) : null) : null), x, y) as HTMLButtonElement;
     b.type = "button";
     b.title = [r.name, ...here.map((p) => (p.stage === "egg" ? p.name ?? "an egg" : p.label)), ...beasts.map((c) => c.name ?? `a ${c.kind}`),
@@ -56,5 +45,28 @@ export function drawMap(box: HTMLElement, s: Snap, viewed: string, chosen: strin
     b.onclick = () => look(r.id);
     map.append(b);
   }
+  map.append(el("div", "dotlayer"));
   box.replaceChildren(map);
+  dots(box, s, chosen, x0, y0, cell, gap);
+}
+
+/** SPEC-v3.5.7 §3: everyone as a dot in its family's colour where it is in its room, moving as it walks (the dots are
+ *  kept, and glide from place to place); an animal is a smaller dot, in its pet's colour if it is somebody's. */
+function dots(box: HTMLElement, s: Snap, chosen: string | null, x0: number, y0: number, cell: number, gap: number) {
+  const layer = box.querySelector<HTMLElement>(".dotlayer");
+  if (!layer) return;
+  const [W, H] = s.size, seen = new Set<string>();
+  const place = (id: string, cls: string, roomId: string, pos: number[]) => {
+    const r = s.rooms.find((q) => q.id === roomId);
+    if (!r?.type) return;
+    let d = layer.querySelector<HTMLElement>(`[data-id="${id}"]`);
+    if (!d) { d = el("i", ""); d.dataset.id = id; layer.append(d); }
+    d.className = cls;
+    d.style.left = `${(r.cell[0] - x0) * (cell + gap) + 8 + ((pos[0] + 0.5) / W) * (cell - 16)}px`;
+    d.style.top = `${(r.cell[1] - y0) * (cell + gap) + 8 + ((pos[1] + 0.5) / H) * (cell - 16)}px`;
+    seen.add(id);
+  };
+  for (const p of s.pets) if (!(p.stage === "dead" && p.buried)) place(p.id, `dot ${fam(p.family)}${p.stage === "egg" ? " egg" : p.stage === "dead" ? " dead" : ""}${p.asleep ? " asleep" : ""}${p.id === chosen ? " chosen" : ""}`, p.room, p.pos);
+  for (const c of s.creatures) { const owner = s.pets.find((p) => p.id === c.tame); place(`c${c.id}`, `dot beast${owner ? ` ${fam(owner.family)}` : ""}`, c.room, c.pos); }
+  for (const d of [...layer.children] as HTMLElement[]) if (!seen.has(d.dataset.id!)) d.remove();
 }

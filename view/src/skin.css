@@ -205,38 +205,18 @@ main { flex: 1; min-height: 0; overflow: visible; padding: 0; display: block; }
 #nameText { width: 110px; }
 
 /* beside the room: the map as slots, the room on paper, the board in Holo */
-#mapframe { padding: 2px; display: flex; justify-content: center; }
-button.maproom, .maproom { border-style: solid; border-width: 8px; border-image: url("../assets/third_party/crusenho/UI_TravelBook_Slot01a.png") 4 fill stretch; background: none; outline: none; }
-button.maproom.viewed { border-image-source: url("../assets/third_party/crusenho/UI_TravelBook_Slot03a.png"); filter: drop-shadow(0 0 3px var(--amber)); outline: none; }
-.maproom.unfound { border: 2px dashed var(--on-page); border-image: none; color: var(--on-page); }
-.map .way { background: var(--on-page); opacity: 0.8; }
-#info { display: flex; flex-direction: column; gap: 4px; }
-#sky h2 { margin: 0; color: var(--ink); text-transform: none; }
-#sky .mess.much { color: var(--bad); }
-#sky .mess:empty { display: none; }
-#family b { color: var(--fam); }
-#status .chip { border-width: 8px; }
-#status .chip:not(.warn, .down) { display: none; }   /* (only what is wrong: the power, the engine away) */
-#happening { display: flex; flex-direction: column; gap: 2px; overflow: visible; }
-#happening li { color: var(--ink2); }
-#happening li.warn { color: var(--bad); }
-#playing { color: var(--ink2); min-height: 0; }
-#board { display: flex; flex-direction: column; gap: 2px; margin: 0; font-family: var(--pixel); background: none; color: var(--holo); border-radius: 0; padding: 0 4px; letter-spacing: 0;
-  border-style: solid; border-width: 12px; border-image: url("../assets/third_party/crusenho/UI_HoloBook_Textfield02a.png") 6 fill stretch; }
-#board p { margin: 0; }
-#board .gap { margin-top: 10px; }
 
 /* the toolbar: the visitor's controls, a group each */
 footer { border-top: 0; background: none; flex: none; }
 footer.paper { padding: 0 4px; }
 .controls.visit { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; justify-content: flex-start; }
 .visit .group { gap: 4px; }
-#talkText { min-width: 90px; }
+#talkText { flex: 1 1 120px; width: 120px; min-width: 90px; }   /* (an input's own width would hold the toolbar open) */
 .visit .group { display: flex; flex-wrap: nowrap; gap: 6px; align-items: center; }
 .visit .glabel { color: var(--ink2); }
 .visit .pair { display: flex; gap: 2px; align-items: center; }
 #talkForm { flex: 1 1 180px; max-width: none; }
-#giveBit, #writeOn { width: auto; max-width: 9em; }
+#giveBit, #writeOn { width: auto; max-width: 6.5em; }
 #talkText { flex: 1; min-width: 120px; }
 .visit button { min-width: 0; padding: 0 6px; }
 #stockBox, #musicBox, #moreBox { margin: auto; inset: 0; height: fit-content; padding: 4px 8px; position: fixed; color: var(--ink); width: max-content; max-width: min(360px, 94vw);
@@ -255,22 +235,14 @@ footer.paper { padding: 0 4px; }
 @media (min-width: 1000px) {
   body { height: 100dvh; overflow: hidden; }
   .page.house { display: grid; grid-template-columns: 256px minmax(0, 1fr) 262px; grid-template-rows: minmax(0, 1fr) auto;
-    grid-template-areas: "left centre side" "foot foot foot"; gap: 8px 10px; padding: 10px 16px 0; min-height: 0; flex: 1; }
+    grid-template-areas: "left centre side" "foot foot side"; gap: 8px 10px; padding: 10px 16px 0; min-height: 0; flex: 1; }
   #roomwrap { padding-top: 40px; }   /* the sign hangs over the frame's top edge and a little of the wall, and stays off the "now" strip */
   #left { grid-area: left; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--ink2) transparent; }
   .cards .card.here .want { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }   /* (whole in the card's hover and on its page) */
   #centre { grid-area: centre; min-height: 0; }
-  #side { grid-area: side; min-height: 0; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--ink2) transparent; }
-  #family .fline { display: inline; white-space: normal; }
-  #family .fline::before { content: " "; }
-  #family .fline + .fline::before { content: "; "; }
-  #info { flex-direction: row; flex-wrap: wrap; column-gap: 8px; }
-  #info > * { flex-basis: 100%; }
-  #info > .look, #info > #status { flex-basis: auto; }
   footer { grid-area: foot; }
   /* names, tabs and headings at 32 px (the rest 16) */
   #sign { top: 0; width: 384px; height: 92px; padding-top: 28px; }   /* (x4 for words at 32 px: it hangs over the frame's top edge and a little of the wall) */
-  #board { flex: 1 0 auto; }
   .cards .card.away { grid-template-columns: auto minmax(0, 1fr); align-items: center; border-width: 7px; padding: 2px 6px; }
   .cards .card.away .pic .plate, .cards .card.away .doing, .cards .card.away .want, .cards .card.away .bars, .cards .card.away .naming { display: none; }
   .cards .card.away .where { display: block; }
@@ -278,10 +250,6 @@ footer.paper { padding: 0 4px; }
   .cards .card.away .where { grid-column: 2; }
   #chosen { order: -1; }   /* at the top of the column, while a pet or a thing is chosen (a click in the room) */
   #chosen:not(.asked) { display: none; }
-  #happening li:not(.warn) { display: none; }   /* (the creatures and the radio are in the room, on the map and in Music: the board has the room) */
-  #sky h2 { display: none; }   /* (the room's name is on its sign, a little above: the board has the room) */
-  #side { gap: 6px; }
-  #mapframe { padding: 0; border-width: 7px; }   /* (the Wood frame at x1 here) */
   #stockBox, #musicBox, #moreBox { inset: auto 16px 84px auto; margin: 0; }   /* above the toolbar's right end, under the buttons that open them */
   body[data-page="house"] p.more { position: fixed; right: 16px; bottom: 0; margin: 0; padding: 0; }
 }
@@ -297,10 +265,12 @@ footer.paper { padding: 0 4px; }
   header .tabs { order: 4; flex-basis: 100%; gap: 4px; margin: 20px -14px 0; }
   header .tab { flex: 1; width: auto; }
   .page.house { display: flex; flex-direction: column; gap: 10px; padding: 10px 12px 12px; overflow: visible; }
-  #left, #side, #centre { display: contents; }
-  #now { order: 1; } #replayBar { order: 2; } main { order: 3; } #board { order: 4; } #cardsHere { order: 5; } #cardsElse { order: 6; }
-  #chosen { order: 7; } footer { order: 8; } #mapframe { order: 9; } #info { order: 10; }
+  #left, #centre { display: contents; }
+  .herehead { order: 0; }
+  #now { order: 1; } #replayBar { order: 2; } main { order: 3; } #side { order: 4; } #cardsHere { order: 5; } #cardsElse { order: 6; }
+  #chosen { order: 7; } footer { order: 8; }
   .head { display: none; }
+  .herehead .head { display: block; }
   .cards { grid-template-columns: 1fr 1fr; }
   .cards .card .wholine { display: contents; }   /* (a phone's card is narrow: the name at 32 px has the card's width, over the portrait and the stage) */
   .cards .card .n { grid-column: 1 / -1; order: -1; }
@@ -324,4 +294,137 @@ footer.paper { padding: 0 4px; }
 .crt .crtglass { font-family: var(--pixel); background: none; text-shadow: 0 0 4px currentColor; color: inherit; }
 .crt .crthead { opacity: 1; color: var(--holo-dim); }
 /* a small desktop: the toolbar's group labels give way so it stays one row (the room keeps its scale) */
-@media (min-width: 1000px) and (max-width: 1399.98px) { .visit .glabel { display: none; } }
+@media (min-width: 1000px) and (max-width: 1399.98px) { .visit .glabel { display: none; } #stockBtn .btxt, #musicBtn .btxt, #moreBtn .btxt { display: none; } }
+/* (v3.5.7: the pack's icons on the toolbar's buttons, in the ink colour) */
+.bicon { display: inline-block; width: 24px; height: 26px; vertical-align: -6px; margin-right: 4px; background: center / contain no-repeat; image-rendering: pixelated;
+  filter: brightness(0) saturate(100%) invert(9%) sepia(30%) saturate(2000%) hue-rotate(340deg); }
+.bicon.gear { background-image: url("../assets/third_party/crusenho/UI_Icon_Gear01b.png"); }
+.bicon.music { background-image: url("../assets/third_party/crusenho/UI_Icon_Music01b.png"); }
+.bicon.manual { background-image: url("../assets/third_party/crusenho/UI_Icon_Manual01b.png"); }
+.bicon.contact { background-image: url("../assets/third_party/crusenho/UI_Icon_Contact01b.png"); }
+@media (min-width: 1000px) and (max-width: 1399.98px) { #stockBtn .bicon, #musicBtn .bicon, #moreBtn .bicon { margin-right: 0; } }
+
+/* ==== SPEC-v3.5.7 ==== */
+/* §2 what the page follows: a chip beside "Here" */
+.herehead { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+button.followchip { border: 2px solid var(--ink2); border-image: none; background: var(--amber); color: var(--ink); min-height: 0; padding: 0 6px; animation: none !important;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+button.followchip.off { background: var(--paper); }
+#followBox { display: none; }
+#followBox:popover-open { display: flex; flex-direction: column; gap: 4px; align-items: stretch; }
+#followBox button.on { border-image-source: url("../assets/third_party/crusenho/UI_Wood_Button_Large_Press_01a4.png"); }
+#followBox button.fam1, #followBox button.fam2 { color: var(--fam); }
+@media (min-width: 1000px) { #followBox { inset: 130px auto auto 16px; margin: 0; } }
+/* §2 a room change: a short pixel wipe across the room */
+#stage.wipe::after { content: ""; position: absolute; inset: 0; z-index: 4; pointer-events: none; image-rendering: pixelated;
+  background: conic-gradient(var(--page) 0 25%, transparent 0 50%, var(--page) 0 75%, transparent 0) 0 0 / 16px 16px, var(--page);
+  animation: wipe 0.55s steps(8) forwards; }
+@keyframes wipe { from { clip-path: inset(0 0 0 0); } to { clip-path: inset(0 0 0 100%); } }
+
+/* §3 the blue console: one tall Holo Book panel, sections headed in small blue capitals with a white icon */
+#side.console { border-style: solid; border-width: 20px; border-image: url("../assets/third_party/crusenho/UI_HoloBook_Cover01a.png") 20 fill stretch;
+  background: none; color: var(--holo); display: flex; flex-direction: column; gap: 8px; padding: 0 2px; min-height: 0; overflow-y: auto; scrollbar-width: none; text-shadow: 0 0 4px var(--holo-glow); }
+.console .ctitle { display: flex; justify-content: space-between; align-items: center; margin: 0; padding-bottom: 2px; border-bottom: 2px solid var(--holo-line); color: #a8d8f5; letter-spacing: 1px;
+  font-family: var(--dot) !important; font-size: 16px !important; line-height: 20px !important; }
+.cicon { width: 24px; height: 26px; flex: none; background: center / contain no-repeat; image-rendering: pixelated; filter: drop-shadow(0 0 2px var(--holo-glow)); }
+.cicon.home { background-image: url("../assets/third_party/crusenho/UI_Icon_Home01b.png"); }
+.cicon.display { background-image: url("../assets/third_party/crusenho/UI_Icon_Display01b.png"); }
+.cicon.trophy { background-image: url("../assets/third_party/crusenho/UI_Icon_Trophy01b.png"); }
+.cicon.gear { background-image: url("../assets/third_party/crusenho/UI_Icon_Gear01b.png"); }
+.cpart { display: flex; flex-direction: column; gap: 4px; }
+.console button.cfold { display: none; }
+/* (§3: the room's readout is time, day, sky, light and who is here; what else the old panel said stays out of it but warnings) */
+.console #family, .console #status .chip:not(.warn, .down), .console #happening li:not(.warn) { display: none; }
+.console .mapbox { border: 2px solid var(--holo-line); background: var(--holo-deep); padding: 4px; display: flex; justify-content: center; }
+.console button.maproom { border: 2px solid var(--holo-line); border-image: none; background: #13284a; }
+.console button.maproom > canvas { filter: grayscale(1) sepia(1) hue-rotate(165deg) saturate(2.4) brightness(1.1) contrast(1.1); }
+.console button.maproom.viewed { border-color: var(--cyan); box-shadow: 0 0 0 2px var(--cyan), 0 0 8px var(--holo-glow); filter: none; background: #1b3a66; }
+.console .maproom.unfound { border: 2px dashed var(--holo-line); color: var(--holo-dim); background: none; }
+.console .map .way { background: var(--holo-line); opacity: 1; }
+.dotlayer { position: absolute; inset: 0; pointer-events: none; }
+.dotlayer .dot { position: absolute; width: 8px; height: 8px; margin: -4px 0 0 -4px; border: 2px solid var(--holo-deep); box-shadow: 0 0 5px currentColor; background: currentColor;
+  color: #9fe3ff; transition: left 1.5s linear, top 1.5s linear; }
+.dotlayer .dot.fam1 { color: var(--amber); } .dotlayer .dot.fam2 { color: #ff8fc8; }
+.dotlayer .dot.asleep { opacity: 0.55; box-shadow: none; }
+.dotlayer .dot.egg { border-radius: 50%; color: #f5f0e0; }
+.dotlayer .dot.dead { color: #6b7d92; box-shadow: none; }
+.dotlayer .dot.beast { width: 6px; height: 6px; margin: -3px 0 0 -3px; border-width: 1px; color: #c8d6e5; }
+.dotlayer .dot.chosen { outline: 2px solid #fff; }
+.console .read { display: grid; grid-template-columns: auto 1fr; gap: 0 10px; align-items: center; }
+.console .read b { color: #a8d8f5; font-weight: normal; }
+.console .digit { display: inline-block; border-style: solid; border-width: 8px; border-image: url("../assets/third_party/crusenho/UI_HoloBook_DigitFrame01a.png") 4 fill stretch; padding: 0 2px;
+  color: var(--amber); text-shadow: 0 0 6px var(--amber-glow); font-family: var(--led) !important; font-size: 30px !important; line-height: 18px !important; }
+.console #status .chip { background: none; border: 0; color: #ff9a8a; }
+.console #happening li, .console #playing { color: var(--holo); }
+.console #happening li.warn { color: #ff9a8a; }
+.console #happening li .icon { color: var(--holo); }
+.console button.cbtn { align-self: flex-start; border: 2px solid var(--holo-line); border-image: none; background: #13284a; color: var(--holo); min-height: 0; padding: 0 8px; animation: none !important; }
+.console button.cbtn[aria-pressed="true"] { background: var(--holo-line); color: #fff; }
+/* the board: an LED panel */
+#board.led { background: #0a1424; border: 2px solid var(--holo-line); border-image: none; padding: 4px 6px; color: var(--holo); display: block; margin: 0; overflow: hidden; }
+#board.led p { margin: 0; white-space: nowrap; overflow: hidden; }
+#board.led p.a { color: var(--amber); text-shadow: 0 0 6px var(--amber-glow); }
+#board.led p .txt { display: inline-block; }
+#board.led p.run .txt { animation: marquee 9s ease-in-out infinite alternate; }
+@keyframes marquee { 0%, 15% { transform: translateX(0); } 85%, 100% { transform: translateX(var(--over)); } }
+#board.led .cur { display: inline-block; width: 10px; height: 16px; margin-left: 2px; vertical-align: -2px; background: var(--amber); box-shadow: 0 0 6px var(--amber-glow); animation: blink 1s steps(1) infinite; }
+#board.led p.run .cur { display: none; }
+@keyframes blink { 50% { opacity: 0; } }
+#board.led.pulse { animation: pulse 0.9s ease-out; }
+@keyframes pulse { from { box-shadow: 0 0 0 2px var(--cyan), 0 0 18px var(--holo-glow); } to { box-shadow: none; } }
+/* the Works */
+#works .meter-cells { display: flex; gap: 2px; flex-wrap: nowrap; }
+#works .meter-cells i { flex: 1; min-width: 3px; height: 14px; background: #1a3b5c; border: 2px solid var(--holo-line); }
+#works .meter-cells i.on { background: var(--cyan); box-shadow: 0 0 5px var(--holo-glow); }
+#works .meter-cells i.new { animation: cellin 0.4s ease-out; }
+@keyframes cellin { from { background: #fff; box-shadow: 0 0 10px #fff; } }
+#works.reached { animation: reached 1.4s ease-out; }
+@keyframes reached { 0%, 30% { background: rgb(88 208 255 / 45%); box-shadow: 0 0 16px var(--holo-glow); } 100% { background: none; box-shadow: none; } }
+@media (min-width: 1000px) {
+  .page.house { grid-template-rows: minmax(0, 1fr) auto; }
+  #side.console { grid-row: 1 / 3; }
+  .cboard { flex: 0 0 auto; }
+}
+@media (max-width: 999.98px) {
+  #side.console { gap: 6px; }
+  .console button.cfold { display: flex; width: 100%; background: none; border: 0; border-image: none; color: #a8d8f5; min-height: 0; padding: 0 0 2px; border-bottom: 2px solid var(--holo-line); animation: none !important; }
+  button.cfold::after { content: "▾"; }
+  #side.console.folded button.cfold::after { content: "▸"; }
+  #side.console.folded :is(.cmap, .croom, .cworks) { display: none; }
+}
+
+/* §4 the big moments: a sign dropping in over the room, swinging to rest */
+#event { position: absolute; z-index: 5; left: 50%; top: 18%; width: min(470px, 92%); transform: translateX(-50%); text-align: center; cursor: pointer; }
+#event .sign { position: relative; border-style: solid; border-width: 20px 24px; border-image: url("../assets/third_party/crusenho/UI_Wood_Banner_02.png") 10 12 fill stretch;
+  padding: 2px 4px 0; color: var(--ink); filter: drop-shadow(0 6px 0 rgb(0 0 0 / 35%)); transform-origin: 50% -40px; animation: swing 1.6s cubic-bezier(.3,1.4,.5,1) both; }
+#event .big { color: var(--ink); }
+#event .sub { color: var(--ink2); }
+#event .who { display: flex; gap: 8px; justify-content: center; align-items: center; margin-top: 4px; }
+#event .who .title { color: var(--fam, var(--ink)); }
+#event canvas.thing { position: absolute; right: -14px; top: -52px; transform: rotate(8deg); z-index: 1; filter: drop-shadow(0 4px 0 rgb(0 0 0 / 30%)); }
+#event .glowring { position: absolute; inset: -60px -40px; z-index: -1; background: radial-gradient(closest-side, rgb(255 200 90 / 50%), rgb(255 200 90 / 0)); pointer-events: none; }
+#event .spark { position: absolute; width: 24px; height: 22px; background: url("../assets/third_party/crusenho/UI_TravelBook_IconStar01a.png") 0 0 / 100% 100%; image-rendering: pixelated;
+  animation: twinkle 1.2s ease-in-out infinite alternate; }
+#event .spark.k1 { width: 12px; height: 11px; animation-delay: .4s; }
+@keyframes twinkle { from { transform: scale(.7) rotate(-10deg); opacity: .6; } to { transform: scale(1.1) rotate(10deg); opacity: 1; } }
+@keyframes swing { 0% { transform: translateY(-160%) rotate(-8deg); } 55% { transform: translateY(0) rotate(5deg); } 75% { transform: rotate(-3deg); } 90% { transform: rotate(1deg); } 100% { transform: rotate(-1deg); } }
+#event.small { width: min(380px, 86%); }
+#event.small .sign { border-width: 10px 12px; }
+#event.birth .glowring { background: radial-gradient(closest-side, rgb(255 230 240 / 70%), rgb(255 200 220 / 0)); }
+#event.birth .sign { filter: drop-shadow(0 0 10px rgb(255 240 200 / 90%)); }
+#event.death .glowring { background: radial-gradient(closest-side, rgb(20 20 30 / 45%), rgb(0 0 0 / 0)); }
+#event.death .sign { filter: grayscale(1) brightness(0.92) drop-shadow(0 6px 0 rgb(0 0 0 / 35%)); animation-duration: 2.4s; }
+#event .stone { color: var(--ink2); }
+#event.still .sign, #event.still .spark { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  #event .sign, #event .spark, #stage.wipe::after, #board.led p.run .txt, #board.led .cur, #board.led.pulse, #works .meter-cells i.new, #works.reached { animation: none !important; }
+  .dotlayer .dot, .wbar > i { transition: none !important; }
+}
+
+/* §9 small motion: bars fill smoothly and flash when a value jumps; cards lift a pixel on hover */
+.wbar > i { transition: width 0.8s ease-out; }
+.wbar.jump > i { animation: barflash 0.6s ease-out; }
+@keyframes barflash { from { filter: brightness(1.8); } }
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .cards .card:hover, a.card:hover { transform: translateY(-1px); filter: drop-shadow(0 2px 0 rgb(0 0 0 / 30%)); }
+}

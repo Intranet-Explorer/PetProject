@@ -25,7 +25,10 @@ import { getJSON, giveStar } from "./ui";
 import { ago, fam, hhmm } from "./types";
 import { voiceInput } from "./voice";
 import { initVoice } from "./voicelab";
-import type { Burst, Creature, Hello, Mark, Moment, Need, Note, Obj, PetV, RoomV, Snap } from "./types";
+import { Banners, classify } from "./banner";
+import type { Ev } from "./banner";
+import { initUiSound, play } from "./uisound";
+import type { BoardLine, Burst, Creature, Hello, Mark, Moment, Need, Note, Obj, PetV, RoomV, Snap } from "./types";
 
 const remember = (key: string, value: string) => { try { localStorage.setItem(key, value); } catch { /* private window */ } };
 const recall = (key: string) => { try { return localStorage.getItem(key); } catch { return null; } };
@@ -84,6 +87,7 @@ function layout() {
   $("stage").style.width = `${Math.ceil(w * k)}px`;
   $("stage").style.height = `${Math.ceil(h * k)}px`;
   if (snap) drawMap($("map"), snap, view.room, view.sel, (id) => jump({ room: id }), mapWidth());
+  marquee($("board"));
 }
 const mapWidth = () => Math.min($("mapframe").clientWidth, innerWidth >= DESKTOP ? 170 : 300);   // (two of the art's pixels to one on a desktop: the board has the rest of the column)
 const watch = new ResizeObserver(() => layout());   // a new window, or the toolbar wrapping: measure afresh
@@ -97,31 +101,60 @@ const WEIGHT: Record<string, number> = { hatched: 100, death: 100, egg: 90, ende
                                          "arrival writing": 95, "arrival songs": 95, "arrival taming": 95, "arrival radio": 95, "arrival book": 95, "arrival strangers": 95,
                                          tamed: 65, young: 60, "creature died": 60, scrubbed: 55, crossed: 55, wrote: 50, song: 50, read: 45, untamed: 45 };
 
-/** "Follow: auto" (§10.1): the room where the most is going on. A birth or a death wins at once; otherwise it
- *  takes a clearly better room, and a few seconds since the last move, to look away. */
-function auto(s: Snap) {
-  const score = new Map<string, number>();
-  const add = (id: string | null, n: number) => { if (id && s.rooms.find((r) => r.id === id)?.type) score.set(id, Math.max(score.get(id) ?? 0, n)); };
+/** SPEC-v3.5.7 §2: following the action. Each room is scored by what is happening in it now: a pet making or finding
+ *  something out (or about to: carrying bits to make with), pets talking or doing something together, the visitor's
+ *  doings, any pet awake. At night, when nobody is awake, the room where most of them sleep. The page changes room at
+ *  most once every two real minutes (an event, §4, may take it sooner), never within a minute of the visitor clicking
+ *  or typing, and only for a clearly better room. Every change is written down with its reason (`petView.follows`). */
+const BUSY = new Set(["made", "discovery", "invented", "first", "found", "best", "works", "built", "process", "combined"]);
+const TOGETHER = new Set(["nuzzle", "gift", "told", "taught", "words", "song", "befriended", "played"]);
+const VISITOR = new Set(["fed", "stocked", "visitor", "named", "poked", "star", "gave"]);
+const follows: { at: number; tick: number; from: string; to: string; why: string }[] = [];
+let pending: { room: string; why: string } | null = null;   // an event elsewhere: go there when the visitor has been still a minute
+let followNow = false;   // the visitor has just asked to follow the house: go at once
+function scores(s: Snap) {
+  const out = new Map<string, { n: number; why: string }>();
+  const add = (id: string | null | undefined, n: number, why: string) => {
+    if (!id || !s.rooms.find((r) => r.id === id)?.type) return;
+    const was = out.get(id);
+    out.set(id, { n: (was?.n ?? 0) + n, why: was && was.n > n ? was.why : why });
+  };
+  const up = s.pets.filter((p) => p.stage !== "dead" && p.stage !== "egg" && !p.asleep);
   for (const m of s.moments) {
     const age = ago(s, m.tick);
-    if (age <= 40) add(m.room, (WEIGHT[m.kind] ?? 0) - age / 4);
+    if (age > 60) continue;
+    if (BUSY.has(m.kind)) add(m.room, 40 - age / 3, `${m.kind === "first" ? "a first" : "something made or found out"} there`);
+    else if (TOGETHER.has(m.kind)) add(m.room, 25 - age / 4, "pets together there");
+    else if (VISITOR.has(m.kind)) add(m.room, 15 - age / 6, "the visitor's doings");
   }
-  const up = s.pets.filter((p) => p.stage !== "dead" && p.stage !== "egg");
-  for (const p of s.pets) {
-    if (p.stage === "egg") add(p.room, (p.hatches_in ?? 99) < 20 ? 85 : 6);
-    else if (p.stage === "dead") { if (!p.buried) add(p.room, 60); }
-    else {
-      add(p.room, 10 + 3 * up.filter((q) => q.room === p.room && !q.asleep).length - (p.asleep ? 6 : 0));
-      if (p.said) add(p.room, p.said.to && p.said.to !== "visitor" ? 50 : 28);   // pets talking to each other
-    }
+  for (const p of up) {
+    const act = `${p.act?.type ?? ""} ${p.doing ?? ""}`;
+    if (/\b(make|making|process|combine|joining|weaving|build)/.test(act) || (p.carrying?.length ?? 0) >= 2) add(p.room, 30, `${p.label} making something`);
+    if (p.said && p.said.to && p.said.to !== "visitor") add(p.room, 25, `${p.label} talking`);
+    add(p.room, 10, "a pet awake");
   }
-  for (const c of s.creatures) if (up.some((p) => p.room === c.room)) add(c.room, 45);
-  const best = [...score].sort((a, b) => b[1] - a[1])[0], mine = score.get(view.room) ?? -1, now = performance.now();
-  if (best && best[0] !== view.room && (mine < 0 || (best[1] >= mine + 15 && (now - autoAt > 6000 || best[1] >= 85)))) {
-    autoAt = now;
-    return best[0];
+  for (const r of new Set(up.map((p) => p.room))) {
+    const n = up.filter((p) => p.room === r).length;
+    if (n > 1) add(r, 8 * (n - 1), "pets together there");
   }
-  return view.room;
+  if (!up.length) {   // night: where most of them sleep
+    for (const p of s.pets.filter((p) => p.stage !== "dead")) add(p.room, p.stage === "egg" ? 1 : 3, "where they sleep");
+  }
+  return out;
+}
+function auto(s: Snap) {
+  const sc = scores(s), now = performance.now(), mine = sc.get(view.room)?.n ?? -1;
+  const best = [...sc].sort((a, b) => b[1].n - a[1].n)[0];
+  const still = followNow || Date.now() - lastInput > 60_000, due = followNow || now - autoAt > 120_000;
+  followNow = false;
+  let to: { room: string; why: string } | null = null;
+  if (pending && pending.room !== view.room && still) to = pending;
+  else if (best && best[0] !== view.room && still && (due || mine < 0) && best[1].n >= mine + 10) to = { room: best[0], why: best[1].why };
+  if (pending && (pending.room === view.room || to)) pending = null;
+  if (!to) return view.room;
+  follows.push({ at: Date.now(), tick: s.tick, from: view.room, to: to.room, why: to.why });
+  autoAt = now;
+  return to.room;
 }
 
 function jump(to: { pet?: string | null; room?: string | null }) {
@@ -171,6 +204,7 @@ function render() {
   screens(s, view.room);
   const burst = bursts(s);
   header(s);
+  wipe(here.id);
   try {
     room.update({ snap: s, room: here, hello, selected: view.sel, picked, replay: !!replayId });
     for (const b of burst) if (b.room === view.room) room.burst(b.pet, b.kind);
@@ -189,14 +223,20 @@ function render() {
   // which of several to announce: a death before anything; then a birth, an arrival or a storm before a project or a
   // thing made; then what is about the room on screen, or about the whole house, before another room's news; then the newest
   const rank = (m: Moment) => (m.kind === "death" || m.kind === "ended" ? 100 : 0) + (BIG(m) ? 20 : 0) + (m.room === view.room || !m.room ? 10 : 0) + m.n / 1e9;
+  // SPEC-v3.5.7 §4: the big moments (a house or family first, an ambition reached, the Works building, a birth, a death,
+  // the visitor's star) each get a banner of their own, queued; the rest keep the small one
+  const big = (m: Moment) => !replayId && !!classify(s, m);
   const say = (m: Moment) => flash(m.kind === "project" ? m.text.split(":")[0] : m.text, false, () => jump(m), m.kind);   // a project's own words are long, and are in the list beside the room
   if (jumped) { $("banner").hidden = true; bannerN = newest?.n ?? 0; }
   else if (newest && newest.n !== bannerN) {
     // (a want met or a thing found out has the top line of the page: the banner does not say it a second time)
-    const fresh = bannerN >= 0 ? s.moments.filter((m) => m.n > bannerN && !s.bursts?.some((b) => b.tick === m.tick && b.text === m.text)) : [];
+    const all = bannerN >= 0 ? s.moments.filter((m) => m.n > bannerN) : [];
+    for (const m of all) { const ev = big(m) ? classify(s, m) : null; if (ev) banners.push(ev); }
+    const fresh = all.filter((m) => !big(m) && !s.bursts?.some((b) => b.tick === m.tick && b.text === m.text));
     // a death is never old news: one from the last few minutes of the watcher's time is announced even on first load
     const died = bannerN < 0 && !replayId ? [...s.moments].reverse().find((m) => m.kind === "death" && ago(s, m.tick) < 600) : undefined;
-    const m = [...fresh].sort((a, b) => rank(b) - rank(a))[0] ?? died;
+    if (died) { const ev = classify(s, died); if (ev) banners.push(ev); }
+    const m = [...fresh].sort((a, b) => rank(b) - rank(a))[0];
     // a lesser moment does not push a death, a birth or an arrival off the screen while it is still up
     if (m && !(bannerBig && !$("banner").hidden && !BIG(m))) { say(m); bannerBig = BIG(m); }
     bannerN = newest.n;
@@ -207,6 +247,28 @@ let sent = "";
 let bannerN = -1;
 let bannerBig = false;   // the banner that is up is for a death, a birth, an arrival or a storm
 let shownTick = -1;   // the tick of the snapshot last drawn
+/** SPEC-v3.5.7 §4: an event in another room takes the page there first, when it follows the house and the visitor has
+ *  been still a minute (§2); it is written down with the other room changes. */
+const banners = new Banners($("event"), (p) => nameOf(p), (ev: Ev) => {
+  if (!ev.room || ev.room === view.room || view.follow !== "auto" || Date.now() - lastInput < 60_000) return;
+  follows.push({ at: Date.now(), tick: snap?.tick ?? 0, from: view.room, to: ev.room, why: `event: ${ev.head.toLowerCase()}` });
+  view.room = ev.room;
+  autoAt = performance.now();
+  render();
+}, (k) => play(k));
+initUiSound(() => voice.on, () => voice.volume);
+/** SPEC-v3.5.7 §2: a room change is a short pixel wipe, not a cut (none with reduced motion) */
+let drawnRoom = "";
+function wipe(to: string) {
+  if (drawnRoom && drawnRoom !== to && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    const st = $("stage");
+    st.classList.remove("wipe");
+    void st.offsetWidth;
+    st.classList.add("wipe");
+    setTimeout(() => st.classList.remove("wipe"), 600);
+  }
+  drawnRoom = to;
+}
 let bannerTimer: ReturnType<typeof setTimeout> | undefined;
 
 type Box = { x: number; y: number; w: number; h: number };
@@ -324,22 +386,27 @@ function header(s: Snap) {
   }
   dj(s);
   stock(s);
-  const pick = $<HTMLSelectElement>("follow"), options = s.pets.filter((p) => p.stage !== "dead");
-  const key = options.map((p) => p.id + p.label + p.stage).join();
-  if (pick.dataset.key !== key) {
-    pick.dataset.key = key;
-    pick.replaceChildren(new Option("the action", "auto"), new Option("no one", ""), ...options.map((p) => new Option(p.stage === "egg" ? `${p.name ?? "an egg"} (egg)` : p.label, p.id)));
-  }
-  pick.value = view.follow;
+  followChip(s);
 }
 
 /** Beside the room: where this is and what the sky is doing, the map, what is going on in the house, and the last few moments. */
 function side(s: Snap, here: RoomV) {
   const c = s.clock, name = (id: string | null) => s.rooms.find((r) => r.id === id)?.name ?? "the house";
-  $("sky").replaceChildren(el("h2", "", here.name.toUpperCase()),
+  // SPEC-v3.5.7 §3: THE ROOM, a readout: the time in amber digits, the day, the sky, the light, who is here
+  $("roomTitle").firstChild!.textContent = here.name.toUpperCase();
+  const lit = !s.power ? "DARK: THE POWER IS OUT" : c.phase === "night" ? (Object.values(here.objects).some((o) => o.fix?.light && o.state === "on") ? "LAMPLIGHT" : "DARK") : c.phase === "day" ? "BRIGHT" : "DIM";
+  const pets = s.pets.filter((p) => p.room === here.id && p.stage !== "dead" && p.stage !== "egg"), beasts = s.creatures.filter((cr) => cr.room === here.id);
+  const asleep = pets.filter((p) => p.asleep).length;
+  const who = [pets.length ? `${pets.length} ${pets.length === 1 ? "PET" : "PETS"}${asleep ? ` (${asleep === pets.length ? "ASLEEP" : `${asleep} ASLEEP`})` : ""}` : "NOBODY",
+    ...Object.entries(beasts.reduce<Record<string, number>>((n, b) => ({ ...n, [b.kind]: (n[b.kind] ?? 0) + 1 }), {})).map(([k, n]) => `${n} ${k.toUpperCase()}${n > 1 ? "S" : ""}`)].join(", ");
+  const row = (k: string, ...v: (Node | string)[]) => [el("b", "", k), el("span", "", ...v)];
+  $("sky").replaceChildren(el("div", "read",
+    ...row("TIME", el("span", "digit", hhmm(c.hour)), ` DAY ${c.day}`),
+    ...row("SKY", `${c.season}, ${s.weather}`.toUpperCase()),
+    ...row("LIGHT", lit),
+    ...row("HERE", who),
     // SPEC-v3.3 §2: how the room is kept, in the pets' own words, when things lie about in it
-    ...(here.mess != null ? [el("p", `mess${here.mess === 2 ? " much" : ""}`, here.mess && here.mess_says ? `${cap(here.mess_says)}.` : "")] : []),
-    el("p", "", icon(c.phase === "night" && s.weather === "clear" ? "moon" : s.weather, 18), ` ${c.season}, ${s.weather} - ${c.phase}`));
+    ...(here.mess === 2 ? row("ROOM", `${(here.mess_says ?? "a mess").toUpperCase()}`) : [])));   // (only a real mess: the readout stays short)
   if ($("sign").textContent !== here.name.toUpperCase()) $("sign").textContent = here.name.toUpperCase();   // SPEC-v3.5.6 §4: the room's name on the hanging wood sign
   const line = (cls: string, pic: string, text: string, to: string | null) => {
     const li = el("li", cls, icon(pic), el("span", "", text));
@@ -359,21 +426,63 @@ function side(s: Snap, here: RoomV) {
   board(s);
 }
 
-/** SPEC-v3.5.4 §11, v3.5.6 §1: the machine room's board, seen from any room, in the Holo Book: its newest line in amber,
- *  the others in blue, then the Works' goal and a glowing meter of segments, one to a scrap. */
+/** SPEC-v3.5.7 §3: THE BOARD, an LED panel in VT323. The newest line amber with a blinking block cursor; a new line types
+ *  itself in; a line too long for the panel runs sideways like a marquee; the panel pulses when a line arrives. And
+ *  THE WORKS: the goal and a segmented meter that fills cell by cell, with a chime and a flash when it is reached. */
+let boardTop = "", typing: ReturnType<typeof setInterval> | undefined, worksHad: [number, number] | null = null;
 function board(s: Snap) {
-  const B = s.ticker?.board ?? [], hubRoom = s.ticker?.room ?? null, box = $("board"), key = JSON.stringify(B);
-  box.hidden = !B.length;
-  if (box.dataset.key === key) return;
-  box.dataset.key = key;
-  // (v3.5.7: in Toriko at 32 px: its newest line, then the Works' count and meter; what the Works are making in the reading face)
-  const lines = B.filter((l) => !l.meter).slice(0, 1), works = B.find((l) => l.meter);
-  const cells = (have: number, of: number) => { const n = Math.min(of, 30), on = Math.round((Math.min(have, of) / of) * n); return el("div", "meter-cells", ...Array.from({ length: n }, (_, i) => el("i", i < on ? "on" : ""))); };
-  box.replaceChildren(...[
-    ...lines.map((l) => el("p", "amber", boardRows(l).join(": ").toUpperCase())),
-    ...(works ? [el("p", "gap", `THE WORKS: ${works.meter![0]} OF ${works.meter![1]}`), cells(works.meter![0], works.meter![1]), works.what ? el("p", "goal", `${works.meter![1] - works.meter![0]} more scrap for ${works.what}`) : null] : [])].filter((k): k is HTMLElement => !!k));
-  box.title = `On the board in the machine room: ${B.map((l) => boardRows(l).join(": ")).join("; ")}`;
+  const B = s.ticker?.board ?? [], hubRoom = s.ticker?.room ?? null, box = $("board"), still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const lines = B.filter((l) => !l.meter).slice(0, 3).map((l) => boardRows(l).join(": ").toUpperCase()), key = JSON.stringify(lines);
+  box.hidden = !lines.length;
   box.onclick = hubRoom ? () => jump({ room: hubRoom }) : null;
+  if (box.dataset.key !== key) {
+    const fresh = !!box.dataset.key && lines[0] !== boardTop;
+    box.dataset.key = key;
+    boardTop = lines[0] ?? "";
+    const row = (t: string, i: number) => {
+      const p = el("p", i ? "" : "a", el("span", "txt", t));
+      return p;
+    };
+    box.replaceChildren(...lines.map(row));
+    const first = box.firstElementChild as HTMLElement | null, txt = first?.querySelector<HTMLElement>(".txt");
+    if (first) first.append(el("i", "cur"));
+    clearInterval(typing);
+    if (fresh && txt && !still) {   // a new line types itself in, and the panel pulses
+      box.classList.remove("pulse"); void box.offsetWidth; box.classList.add("pulse");
+      let n = 0;
+      txt.textContent = "";
+      typing = setInterval(() => { txt.textContent = boardTop.slice(0, ++n); if (n >= boardTop.length) { clearInterval(typing); marquee(box); } }, 45);
+    } else marquee(box);
+  }
+  works(s, B.find((l) => l.meter) ?? null, still);
+}
+/** A line too long for the panel runs sideways (and back) like a marquee; none with reduced motion. */
+function marquee(box: HTMLElement) {
+  requestAnimationFrame(() => measure(box));   // (after layout: a panel not laid out yet measures nothing)
+}
+function measure(box: HTMLElement) {
+  for (const p of box.querySelectorAll<HTMLElement>("p")) {
+    if (!p.clientWidth) continue;
+    const t = p.querySelector<HTMLElement>(".txt")!, over = t.scrollWidth - p.clientWidth + (p.classList.contains("a") ? 14 : 0);
+    p.classList.toggle("run", over > 4);
+    p.style.setProperty("--over", `${-Math.max(0, over)}px`);
+  }
+}
+function works(s: Snap, w: BoardLine | null, still: boolean) {
+  const box = $("works");
+  box.closest<HTMLElement>(".cworks")!.hidden = !w;
+  if (!w?.meter) return;
+  const [have, of] = w.meter, n = Math.min(of, 30), on = Math.round((Math.min(have, of) / of) * n), key = `${have}/${of}|${w.what}`;
+  if (box.dataset.key === key) return;
+  const grew = worksHad && worksHad[1] === of && have > worksHad[0], done = worksHad && (have >= of || (worksHad[1] !== of && worksHad[0] > 0));
+  const was = worksHad && worksHad[1] === of ? Math.round((Math.min(worksHad[0], of) / of) * n) : on;
+  box.dataset.key = key;
+  worksHad = [have, of];
+  const cells = Array.from({ length: n }, (_, i) => el("i", i < (still ? on : was) ? "on" : ""));
+  box.replaceChildren(el("p", "", `${have} OF ${of} SCRAP${w.what ? ` - ${w.what.toUpperCase()}` : ""}`), el("div", "meter-cells", ...cells));
+  if (grew && !still) cells.slice(was, on).forEach((c, i) => setTimeout(() => c.classList.add("on", "new"), 180 * (i + 1)));   // cell by cell
+  else cells.slice(0, on).forEach((c) => c.classList.add("on"));
+  if (done) { box.classList.remove("reached"); void box.offsetWidth; box.classList.add("reached"); play("chime"); }
 }
 
 /** A creature in a few words: "a moth"; once tame, whose it is and what it is called (SPEC-v3.1 §4.4). Never how far it trusts anyone. */
@@ -405,8 +514,19 @@ function cards(s: Snap) {
     : p.naming.at != null && (s.tick - p.naming.at) * s.tick_seconds < s.day_seconds / 4 ? `it took the name ${p.naming.offered}` : null;
   const level = (p: PetV, n: Need) => Math.round(p.needs?.[n] ?? 0);
   if (!replayId && (Date.now() - numberedAt > 60_000 || who.some((p) => !numbered[p.id] && Date.now() - numberedAt > 5000))) void renumber();
-  const desk = innerWidth >= DESKTOP, key = JSON.stringify([view.room, desk, who.map((p) => [naming(p), p.id, nameOf(p), p.stage, p.room, p.stage === "egg" ? hatchWords(p.hatches_in ?? 0) : [moodWords(p), emoteOf(p), doingOf(p), wishOf(p), p.body?.icon, p.asleep, p.wants?.map((w) => w.text), p.ambition, BARS.map(([n]) => level(p, n))], p.genome, p.id === view.sel, p.family])]);
-  if ($("cardsHere").dataset.key === key) return;
+  const desk = innerWidth >= DESKTOP, key = JSON.stringify([view.room, desk, who.map((p) => [naming(p), p.id, nameOf(p), p.stage, p.room, p.stage === "egg" ? hatchWords(p.hatches_in ?? 0) : [moodWords(p), emoteOf(p), doingOf(p), wishOf(p), p.body?.icon, p.asleep, p.wants?.map((w) => w.text), p.ambition], p.genome, p.id === view.sel, p.family])]);
+  // SPEC-v3.5.7 §9: the bars are kept between snapshots and fill smoothly; a jump of a tenth or more flashes
+  const bars = () => {
+    for (const p of who) for (const [i, [n]] of BARS.entries()) {
+      const b = document.querySelectorAll<HTMLElement>(`.cards .card[data-pet="${p.id}"] .wbar > i`)[i];
+      if (!b) continue;
+      const v = level(p, n), was = Number(b.dataset.v ?? v);
+      b.style.width = `${v}%`;
+      b.dataset.v = String(v);
+      if (Math.abs(v - was) >= 10) { const w = b.parentElement!; w.classList.remove("jump"); void w.offsetWidth; w.classList.add("jump"); }
+    }
+  };
+  if ($("cardsHere").dataset.key === key) return bars();
   $("cardsHere").dataset.key = key;
   const one = (p: PetV) => {
     const egg = p.stage === "egg", emote = egg ? null : emoteOf(p), doing = p.asleep ? "asleep" : doingOf(p);
@@ -424,7 +544,8 @@ function cards(s: Snap) {
       !egg ? el("span", "where", `${doing || "awake"} in ${where(p)}`) : null,
       !egg && want ? el("span", "want", `wants: ${want}`) : null,
       egg || !p.needs ? null : el("span", "bars", ...BARS.flatMap(([n, word, cls]) => [el("span", "", word), el("span", `wbar ${cls}`, el("i", "", ""))])));
-    li.querySelectorAll<HTMLElement>(".wbar > i").forEach((b, i) => (b.style.width = `${level(p, BARS[i][0])}%`));
+    li.dataset.pet = p.id;
+    li.querySelectorAll<HTMLElement>(".wbar > i").forEach((b, i) => { b.style.width = `${level(p, BARS[i][0])}%`; b.dataset.v = String(level(p, BARS[i][0])); });
     li.tabIndex = 0;
     li.setAttribute("role", "link");
     li.title = `${egg ? "This egg" : nameOf(p)}'s page. It is in ${where(p)}; ${moodWords(p).join(", ") || "content"}` + (wish && !egg ? `\nIt wants: ${wish}` : "")
@@ -671,6 +792,7 @@ $("namesBtn").onclick = () => {
   $("namesBtn").setAttribute("aria-pressed", String(on));
   (room as unknown as { names?: (on: boolean) => void }).names?.(on);
 };
+$("consoleFold").onclick = () => $("consoleFold").setAttribute("aria-expanded", String(!$("side").classList.toggle("folded")));   // SPEC-v3.5.7 §3: a phone's console folds to the board
 $("feed").onclick = () => act({ type: "feed" });
 $("window").onclick = () => act({ type: "window" });
 $("giveBtn").onclick = () => act({ type: "give", bit: $<HTMLSelectElement>("giveBit").value });
@@ -701,11 +823,22 @@ $("nameForm").onsubmit = (e) => {
   input.value = "";
   picked = null;
 };
-$<HTMLSelectElement>("follow").onchange = (e) => {
-  view.follow = (e.target as HTMLSelectElement).value;
-  if (pet(view.follow)) view.sel = view.follow;
-  render();
-};
+/** SPEC-v3.5.7 §2: the chip says what the page follows; its pop-up picks a pet, the house, or nobody. */
+function followChip(s: Snap) {
+  const p = pet(view.follow), chip = $("followChip");
+  const text = view.follow === "auto" ? "FOLLOWING THE HOUSE" : p ? `FOLLOWING ${nameOf(p).toUpperCase()}` : "NOT FOLLOWING";
+  if (chip.textContent !== text) chip.textContent = text;
+  chip.classList.toggle("off", !view.follow);
+  const box = $("followBox"), who = s.pets.filter((q) => q.stage !== "dead" && q.stage !== "egg"), key = JSON.stringify([view.follow, who.map((q) => q.id + nameOf(q))]);
+  if (box.dataset.key === key) return;
+  box.dataset.key = key;
+  const pick = (to: string, label: string, cls = "") => {
+    const b = el("button", `${cls}${view.follow === to ? " on" : ""}`, label) as HTMLButtonElement;
+    b.onclick = () => { view.follow = to; if (pet(to)) view.sel = to; followNow = to === "auto"; box.hidePopover?.(); render(); };
+    return b;
+  };
+  box.replaceChildren(el("p", "hint", "Follow"), pick("auto", "the house (wherever the action is)"), ...who.map((q) => pick(q.id, nameOf(q), fam(q.family))), pick("", "nobody: stay in this room"));
+}
 addEventListener("keydown", (e) => { if (e.key === "Escape" && picked) { picked = null; render(); } });
 
 // ---- the engine ----
@@ -787,6 +920,7 @@ onRoute(showPage);
 // SPEC-v3.5.6 §7: a press plays the Wood button's own four frames, then it springs back
 addEventListener("pointerdown", (e) => {
   const b = (e.target as HTMLElement).closest?.("button");
+  if (b && !b.disabled) play("click");   // SPEC-v3.5.7 §9
   if (!b || b.disabled || getComputedStyle(b).borderImageSource === "none") return;
   let f = 1;
   const step = () => { b.classList.remove("press1", "press2", "press3", "press4"); if (f <= 4) { b.classList.add(`press${f++}`); setTimeout(step, 45); } };
@@ -812,13 +946,18 @@ const overlaps = () => {
 const clipped = () => [...document.querySelectorAll<HTMLElement>("header *, #now, main *, footer *, .page:not([hidden]) *")].filter((e) => {
   if (!e.offsetParent || e.closest("#room") || e instanceof HTMLSelectElement || e instanceof HTMLInputElement || e instanceof SVGElement) return false;
   const o = getComputedStyle(e);
-  if (e.id === "moments" || e.id === "happening") return false;   // these two show whole lines only: what does not fit is wrapped out of sight on purpose
+  if (e.id === "moments" || e.id === "happening") return false;
+  if (e.closest("#board.led")) return false;   // (SPEC-v3.5.7 §3: a board line too long for the panel runs sideways, to be read whole)   // these two show whole lines only: what does not fit is wrapped out of sight on purpose
   if (e.closest(".cards .card")) return false;   // so does a card, which is one height always (SPEC-v3.2, v3.3): the whole of every line is in its hover and in the pet's mind
   return (o.overflowX !== "visible" && o.overflowX !== "auto" && e.scrollWidth > e.clientWidth + 1) || (o.overflowY !== "visible" && o.overflowY !== "auto" && e.scrollHeight > e.clientHeight + 1);
 }).map((e) => `${e.tagName.toLowerCase()}${e.id ? "#" + e.id : ""}.${e.className}: ${e.textContent?.slice(0, 40)}`);
 Object.assign(window, { petView: {
   lookAt: (id: string) => jump({ room: id }),
   follow: (who: string | null) => { view.follow = who ?? ""; if (pet(who)) view.sel = who; render(); },
+  /** SPEC-v3.5.7 §11: every room the page went to by itself, when and why */
+  follows: () => follows,
+  /** For checks and screenshots: put a moment the house recorded through the banners again, as if it had just happened. */
+  replayMoment: (n: number) => { const m = snap?.moments.find((x) => x.n === n); const ev = m && snap ? classify(snap, m) : null; if (ev) banners.push({ ...ev, n: -Date.now() }); return !!ev; },
   select: (id: string) => { view.sel = id; render(); poll(); },
   openTab: (name: string | null, who?: string) => (name ? openTab(name, who) : go("house")),
   go,
