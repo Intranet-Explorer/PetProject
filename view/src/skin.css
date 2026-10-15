@@ -1,0 +1,120 @@
+/* SPEC-v3.5.6: the skin. Look A: the Travel Book (Crusenho's Complete UI Book Styles pack) for menus, pages and
+   frames, the Wood theme (the Complete UI Essential pack) for cards, buttons and bars, the Holo Book for the machine
+   room's board. Every sprite is 9-sliced at a whole-number scale (border-width = the slice x 1 or x 2) and drawn
+   without smoothing. The pack's pixel face, Toriko, is used at 16 px and 32 px only. One look: the page does not
+   switch to dark (the art decides the colours). Loaded after style.css; the blocks here are the ones v3.5.3 left
+   to be reskinned: .tab, .panel, .card, .frame, .button, .chip, and buttons and fields everywhere. */
+@font-face { font-family: "PetPixel"; src: url("../assets/third_party/crusenho/Toriko.ttf"); font-display: block; }
+
+:root, :root[data-theme] {
+  /* §2 */
+  --ink: #2b140e; --ink2: #6e3b26; --fam1: #1f6f8b; --fam2: #a3366a; --fam3: #5b6b12; --fam4: #7a3fb0;
+  --holo: #9fe3ff; --holo-glow: #2fb6ff; --amber: #ffb84a; --amber-glow: #ff8a00; --holo-dim: #6fa7cf;
+  --page: #3a2730; --page2: #44303a; --paper: #fdd6a6; --on-page: #f3d9bd;
+  /* v3.5.3's names, mapped onto the skin, so every older rule reads right */
+  --bg: var(--paper); --surface: var(--paper); --muted: var(--ink2); --line: #c98f62; --edge: #4a2a22;
+  --accent: #b2441c; --good: #2b6e3a; --bad: #a32a22; --gold: #8a5a08; --shadow: rgb(43 20 14 / 25%);
+  --pixel: "PetPixel", ui-monospace, "SF Mono", Menlo, monospace;
+  color-scheme: light;
+}
+.fam3 { --fam: var(--fam3); }
+.fam4 { --fam: var(--fam4); }
+
+body { background: var(--page); color: var(--ink);
+  background-image: linear-gradient(45deg, var(--page2) 25%, transparent 25%, transparent 75%, var(--page2) 75%),
+                    linear-gradient(45deg, var(--page2) 25%, transparent 25%, transparent 75%, var(--page2) 75%);
+  background-size: 48px 48px; background-position: 0 0, 24px 24px;
+  font: 16px/18px var(--pixel); -webkit-font-smoothing: none; font-smooth: never; }
+button, select, input, textarea { font: 16px/18px var(--pixel); color: var(--ink); }
+/* §1: the pixel face at 16 px and 32 px only. Everything is 16 px; what is a name, a tab or a heading on a desktop is 32
+   (below). The Lab stays plain and keeps its own sizes. */
+body :not(#page-lab, #page-lab *, svg, svg *, canvas) { font-size: 16px !important; letter-spacing: 0; }
+#page-lab, #page-lab :not(svg, svg *) { font-family: system-ui, -apple-system, sans-serif; -webkit-font-smoothing: auto; }
+#page-lab { background: var(--paper); }
+img.px, .px, canvas { image-rendering: pixelated; }
+:focus-visible { outline: 2px solid var(--amber); outline-offset: 1px; }
+.hint, .empty, details > summary { color: var(--ink2); }
+b, strong { font-weight: normal; }   /* (a pixel face has no bold: a name stands out by its colour) */
+
+/* ---- §3 the building blocks ---- */
+/* paper strip (Travel Book Popup01a, slice 6, x2) */
+.paper, .panel, .frame, .info { border-style: solid; border-width: 12px; border-image: url("../assets/third_party/crusenho/UI_TravelBook_Popup01a.png") 6 fill stretch;
+  background: none; box-shadow: none; border-radius: 0; padding: 0 4px; color: var(--ink); }
+/* a page of the book (BookPageLeft01a, 8 8 12 8, x2): pet, thing and story pages */
+.book { border-style: solid; border-width: 16px 16px 24px; border-image: url("../assets/third_party/crusenho/UI_TravelBook_BookPageLeft01a.png") 8 8 12 8 fill stretch;
+  background: none; box-shadow: none; padding: 0 8px; color: var(--ink); }
+/* wood card / frame (Wood Textfield_03, slice 7, x2) */
+.card, .wood { border-style: solid; border-width: 14px; border-image: url("../assets/third_party/crusenho/UI_Wood_Textfield_03.png") 7 fill stretch;
+  background: none; box-shadow: none; border-radius: 0; padding: 0 2px; color: var(--ink); }
+/* a slot (Slot01a dark, Slot03a light; slice 4, x2) */
+.slot { border-style: solid; border-width: 8px; border-image: url("../assets/third_party/crusenho/UI_TravelBook_Slot03a.png") 4 fill stretch; background: none; }
+.slot.dark { border-image-source: url("../assets/third_party/crusenho/UI_TravelBook_Slot01a.png"); }
+/* the Holo Book's panel (Textfield02a, slice 6, x2): the machine room's board and screens */
+.holo { border-style: solid; border-width: 12px; border-image: url("../assets/third_party/crusenho/UI_HoloBook_Textfield02a.png") 6 fill stretch;
+  background: none; color: var(--holo); text-shadow: 0 0 4px var(--holo-glow); padding: 0 4px; }
+.holo .amber { color: var(--amber); text-shadow: 0 0 4px var(--amber-glow); }
+.holo .dim { color: var(--holo-dim); text-shadow: none; }
+.meter-cells { display: flex; flex-wrap: wrap; gap: 2px; margin: 4px 0 2px; }
+.meter-cells i { width: 12px; height: 12px; background: #1a3b5c; border: 2px solid #2d6c9e; }
+.meter-cells i.on { background: #58d0ff; box-shadow: 0 0 4px var(--holo-glow); }
+
+/* buttons: Wood Button_Large (8 10 12 10, x1), the pack's four-frame press (main.ts plays it), §7 the wobble */
+button, .button { border-style: solid; border-width: 8px 10px 12px; border-image: url("../assets/third_party/crusenho/UI_Wood_Button_Large_Release_01a1.png") 8 10 12 10 fill stretch;
+  background: none; box-shadow: none; border-radius: 0; padding: 0 4px; min-height: 38px; color: var(--ink); cursor: inherit; transform-origin: 50% 60%; }
+button:hover:not(:disabled), .button:hover { background: none; filter: brightness(1.08); }
+button:active:not(:disabled) { transform: none; box-shadow: none; }
+button.pressing { border-image-source: url("../assets/third_party/crusenho/UI_Wood_Button_Large_Press_01a4.png"); }
+button.press1 { border-image-source: url("../assets/third_party/crusenho/UI_Wood_Button_Large_Press_01a1.png"); }
+button.press2 { border-image-source: url("../assets/third_party/crusenho/UI_Wood_Button_Large_Press_01a2.png"); }
+button.press3 { border-image-source: url("../assets/third_party/crusenho/UI_Wood_Button_Large_Press_01a3.png"); }
+button.press4 { border-image-source: url("../assets/third_party/crusenho/UI_Wood_Button_Large_Press_01a4.png"); transform: translateY(3px); }
+button:disabled { color: #8a6a58; filter: saturate(0.5) brightness(0.95); }
+button[aria-pressed="true"], button[aria-expanded="true"] { background: none; color: var(--ink); border-image-source: url("../assets/third_party/crusenho/UI_Wood_Button_Large_Press_01a4.png"); }
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  button:hover:not(:disabled):not([class*="press"]), .button:hover { animation: wob 0.5s ease-in-out infinite; }
+}
+@keyframes wob { 0% { transform: rotate(0); } 25% { transform: rotate(-2.5deg) scale(1.04); } 50% { transform: rotate(0) scale(1.04); }
+                 75% { transform: rotate(2.5deg) scale(1.04); } 100% { transform: rotate(0); } }
+/* plain links and icon buttons keep no wood */
+.link, button.link, button.moment, button.maproom, button.node, .crt button, button.icon, #tip button { border: 0; border-image: none; min-height: 0; animation: none !important; filter: none; }
+button.icon { padding: 0; background: none; }
+/* fields and choices: a Travel Book frame (Frame04a, slice 4, x2) */
+select, input:not([type]), input[type="text"], input[type="search"], textarea { border-style: solid; border-width: 8px; border-image: url("../assets/third_party/crusenho/UI_TravelBook_Frame04a.png") 4 fill stretch;
+  background: none; border-radius: 0; padding: 0 2px; min-height: 34px; box-shadow: none; }
+input::placeholder, textarea::placeholder { color: #8a6a58; opacity: 1; }
+select { appearance: none; padding-right: 14px;
+  background: linear-gradient(45deg, transparent 50%, var(--ink2) 50%) right 4px top 50% / 5px 5px no-repeat, linear-gradient(-45deg, transparent 50%, var(--ink2) 50%) right 0 top 50% / 5px 5px no-repeat; }
+input[type="range"] { accent-color: var(--accent); }
+/* tabs and chips (Frame04a, selected FrameSelect01a; chips Frame01a) */
+.tab { border-style: solid; border-width: 8px; border-image: url("../assets/third_party/crusenho/UI_TravelBook_Frame04a.png") 4 fill stretch;
+  background: none; color: var(--ink2); padding: 0 6px; min-height: 0; text-decoration: none; justify-content: center; border-radius: 0; }
+.tab.on, .tab[aria-current="page"] { border-image-source: url("../assets/third_party/crusenho/UI_TravelBook_FrameSelect01a.png"); background: none; color: var(--ink); }
+.tab:hover { color: var(--ink); }
+.chip { border-style: solid; border-width: 8px; border-image: url("../assets/third_party/crusenho/UI_TravelBook_Frame04a.png") 4 fill stretch; background: none; padding: 0 2px; color: var(--ink2); border-radius: 0; }
+.chip[aria-pressed] { border-radius: 0; min-height: 0; padding: 0 4px; color: var(--ink2); }
+.chip[aria-pressed="true"] { border-image-source: url("../assets/third_party/crusenho/UI_TravelBook_FrameSelect01a.png"); background: none; color: var(--ink); }
+/* a need bar (Wood Fillbar_Flat_01, slice 6, x1; the fillers Green, Blue, Red stretched inside) */
+.wbar { display: block; position: relative; height: 16px; border-style: solid; border-width: 6px; border-image: url("../assets/third_party/crusenho/UI_Wood_Fillbar_Flat_01.png") 6 fill stretch; }
+.wbar > i { position: absolute; left: 0; top: 0; bottom: 0; background: url("../assets/third_party/crusenho/UI_Wood_Fillbar_Filler_Green.png") 0 0 / 100% 100%; image-rendering: pixelated; }
+.wbar.blue > i { background-image: url("../assets/third_party/crusenho/UI_Wood_Fillbar_Filler_Blue.png"); }
+.wbar.red > i { background-image: url("../assets/third_party/crusenho/UI_Wood_Fillbar_Filler_Red.png"); }
+/* icons from the Travel Book (sound, star, heart, home, settings), drawn x2 */
+img.ticon { width: calc(var(--w) * 2px); height: auto; image-rendering: pixelated; display: inline-block; vertical-align: middle; }
+
+/* §6, §9: a name on hover (desktop) or tap (phone), the same tooltip everywhere: a paper strip */
+.tipbox { position: fixed; z-index: 20; pointer-events: none; max-width: 260px; width: max-content; }
+#tip { border-style: solid; border-width: 12px; border-image: url("../assets/third_party/crusenho/UI_TravelBook_Popup01a.png") 6 fill stretch; background: none; box-shadow: none; padding: 0 4px; }
+#tip .nib { display: none; }
+
+/* §8 cursors, desktop only: the Travel Book arrow; a hand over pets and cards; the Papernote pencil in the text box */
+#room.over canvas { cursor: pointer; }
+@media (hover: hover) and (pointer: fine) {
+  html { cursor: image-set(url("../assets/third_party/crusenho/UI_TravelBook_Cursor01a@1x.png") 1x, url("../assets/third_party/crusenho/UI_TravelBook_Cursor01a@2x.png") 2x) 3 0, auto; }
+  a, button, select, .card, [role="link"], .maproom, #room.over canvas, .tab, .chip { cursor: image-set(url("../assets/third_party/crusenho/Icon_Cursor_02a@1x.png") 1x, url("../assets/third_party/crusenho/Icon_Cursor_02a@2x.png") 2x) 4 0, pointer; }
+  #talkText, textarea, input:not([type]), input[type="text"] { cursor: image-set(url("../assets/third_party/crusenho/UI_Papernote_CursorPencil01@1x.png") 1x, url("../assets/third_party/crusenho/UI_Papernote_CursorPencil01@2x.png") 2x) 2 2, text; }
+}
+
+/* the foot of every page: the credit (§10), and the Lab */
+p.more { color: var(--on-page); opacity: 0.8; display: flex; gap: 16px; justify-content: center; }
+p.more a, p.more .link { color: var(--on-page) !important; }
+body[data-page="house"] p.more { display: flex; }

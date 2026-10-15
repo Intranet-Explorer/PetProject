@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Pet</title>
   <link rel="stylesheet" href="/src/style.css">
-  <script>try { const t = localStorage.getItem("theme"); if (t) document.documentElement.dataset.theme = t; } catch {}</script>
+  <link rel="stylesheet" href="/src/skin.css">
 </head>
 <body>
   <!-- SPEC-v3.5.3 §1: a slim header (the house, the world's time and season, sound) and four tabs; the Lab is a small link -->
@@ -105,7 +105,6 @@
           <button id="stockBtn" popovertarget="stockBox">Stock the machine</button>
           <button id="ambBtn" aria-pressed="false" title="The room's own sound: its clock, its wind, its water, and the weather. Quiet, under everything else.">Ambience off</button>
           <input id="volume" type="range" min="0" max="100" value="80" aria-label="Volume">
-          <button id="themeBtn" aria-label="Switch between light and dark">Dark</button>
           <button id="replayBtn">Replay</button>
           <a class="link small" href="#/lab">Lab</a>
         </span>

@@ -3,8 +3,7 @@
   "dir": "third_party/ninja_adventure",
   "tile": 16,
   "licence": "CC0",
-  "by": "Pixel-boy and AAA",
-  "font": "Ui/Font/NormalFont.ttf"
+  "by": "Pixel-boy and AAA"
  },
  "own": {
   "dir": "own",

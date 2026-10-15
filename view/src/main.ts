@@ -762,15 +762,6 @@ function openTab(name: string, who?: string) {
   if (name === "mind") showMind();
   go(name === "mind" ? "lab" : name);
 }
-function theme(to?: string) {
-  const now = document.documentElement.dataset.theme ?? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
-  const next = to ?? (now === "dark" ? "light" : "dark");
-  document.documentElement.dataset.theme = next;
-  $("themeBtn").textContent = next === "dark" ? "Light" : "Dark";
-  remember("theme", next);
-}
-$("themeBtn").onclick = () => theme();
-$("themeBtn").textContent = (document.documentElement.dataset.theme ?? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")) === "dark" ? "Light" : "Dark";
 $("replayBtn").hidden = !!replayId;
 $("replayBtn").onclick = () => (location.search = `?replay=${snap?.lineage.id ?? 1}`);
 onRoute(showPage);
@@ -805,7 +796,6 @@ Object.assign(window, { petView: {
   select: (id: string) => { view.sel = id; render(); poll(); },
   openTab: (name: string | null, who?: string) => (name ? openTab(name, who) : go("house")),
   go,
-  theme,
   /** Lay something over every snapshot before it is drawn, e.g. {weather: "storm", power: false, clock: {phase: "night"}}. */
   tweak: (over: Record<string, unknown> | null) => { tweak = over ?? {}; if (raw) show(raw); },
   /** The hover card for whatever is at a floor tile, as if the pointer were there. */
@@ -816,7 +806,7 @@ Object.assign(window, { petView: {
   audioLog: voice.log,
   state: () => snap && {
     tick: snap.tick, clock: snap.clock, weather: snap.weather, power: snap.power, room: view.room, roomType: snap.rooms.find((r) => r.id === view.room)?.type,
-    follow: view.follow, selected: view.sel, tab: view.page, theme: document.documentElement.dataset.theme ?? "system",
+    follow: view.follow, selected: view.sel, tab: view.page,
     replay: replay?.state() ?? null, ended: snap.lineage.ended != null, petsHere: snap.pets.filter((p) => p.room === view.room && !(p.stage === "dead" && p.buried)).map((p) => p.id),
     creaturesHere: snap.creatures.filter((c) => c.room === view.room).map((c) => c.kind), rooms: found(snap).map((r) => `${r.id}:${r.type}`),
     labels: room.labels(), overlaps: overlaps(), clipped: clipped(), scrolls: document.querySelector("main")!.scrollHeight - document.querySelector("main")!.clientHeight,
