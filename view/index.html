@@ -6,6 +6,7 @@
   <title>Pet</title>
   <link rel="stylesheet" href="/src/style.css">
   <link rel="stylesheet" href="/src/skin.css">
+  <script>try { if (localStorage.getItem("text") === "large") document.documentElement.dataset.text = "large"; } catch {}</script>
 </head>
 <body>
   <!-- SPEC-v3.5.6 §4, §5: the header is a Travel Book banner: the name, the four tabs (in the middle on a desktop, a row
@@ -118,6 +119,7 @@
         <div id="moreBox" class="paper pop" popover aria-label="More">
           <button id="ambBtn" aria-pressed="false" title="The room's own sound: its clock, its wind, its water, and the weather. Quiet, under everything else.">Ambience off</button>
           <label>Volume <input id="volume" type="range" min="0" max="100" value="80" aria-label="Volume"></label>
+          <button id="textBtn" aria-pressed="false" title="Larger words everywhere on the page, for this browser">Large text</button>
           <button id="replayBtn">Replay</button>
           <a class="link" href="#/lab">Lab</a>
         </div>

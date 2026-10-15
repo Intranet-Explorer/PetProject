@@ -1883,3 +1883,24 @@ View only: the engine is unchanged.
   board's headings are brighter, the credit is no longer faded, and the phone's sign sits higher over the frame.
   Not done, and noted: Toriko has no curly quotes, so “ and ” come from the fallback face and stand a little large; the
   House cards say a pet's name as the engine does ("Grey Light"), where the pages number it ("Grey Light II").
+
+## Part 23: v3.5.6 follow-ups (15 October 2026)
+
+- **Two faces (Tyler: Toriko at 16 px is only about 7 px tall).** Toriko is now for short words only, at 32 px:
+  the name in the header, the tabs, every button and chip, headings, the names on cards and in the gallery, the room's
+  sign and the board. Everything read (the "now" line, card lines, pet pages, Story, words, fields) is in Pixelify
+  Sans (OFL, bundled from Fontsource), 16 px, or 20 px with "Large text" (under More; kept in the browser). Pixelify
+  has the curly quotes Toriko lacks. Its "fi" ligature reads as "A", so ligatures are off.
+- **What that cost the House tab, and how it was made to fit.** The sign is x3 on a phone and x4 on a desktop, to
+  hold its words at 32 px; on a desktop it no longer reaches over the "now" strip. The board shows its newest line
+  and the Works' count and meter at 32 px, with what the Works are making in the reading face (the rest of the
+  board is in its title). The toolbar's buttons say "Feed" and "Window" whether or not they can be used (the title
+  says why not), and below 1400 px the group labels give way, so the toolbar stays one row. At a full-screen
+  1512 x 945 or 1920 x 1080 everything fits, the room at 3.5x and 4x; at 1280 x 800 the room is 2x and the right
+  column scrolls a little. A phone's card puts the name across the card's width.
+- **The House cards use the pages' numbered names** ("Grey Light II"), from `/api/pets`, asked for every minute and
+  when someone new appears; a replay keeps the recorded labels.
+- **The machine room's floor** (Tyler saw it plain grey; its paint is null): not reproduced. Its paint is null in
+  every backup since v3.5.4, so that is not it; the layout and its cobblestone tiles are served, the room draws them
+  at every size and time of day tried, and the skin touched no art but its own sprites and the one font file. A plain
+  floor is what a room draws without its layout; the room redraws when its layout arrives.

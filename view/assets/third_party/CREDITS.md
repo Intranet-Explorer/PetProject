@@ -43,6 +43,12 @@ https://crusenho.itch.io/complete-ui-book-styles-pack).
 pixels; the three cursors are also kept enlarged (nearest neighbour, `@1x` and `@2x`), since a browser cannot scale
 a cursor. The page credits it at its foot: "UI art: Crusenho", linking to the store.
 
+## Pixelify Sans (the page's reading face, since 15 October 2026)
+
+By the Pixelify Sans Project Authors (https://github.com/eifetx/Pixelify-Sans), released under the SIL Open Font
+License 1.1: `pixelify/OFL.txt`. `pixelify/PixelifySans-latin-400.woff2` is the Latin regular as Fontsource packs it
+(`@fontsource/pixelify-sans` 5.3.0), unchanged; it is bundled, not loaded from the web.
+
 ## Drawn for this project
 
 `../own/*.png` (made things, some fixtures and scenery, bits, the moth and the beetle, walls, doors, icons, the signs

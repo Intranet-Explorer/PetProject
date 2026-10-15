@@ -5,6 +5,9 @@
    switch to dark (the art decides the colours). Loaded after style.css; the blocks here are the ones v3.5.3 left
    to be reskinned: .tab, .panel, .card, .frame, .button, .chip, and buttons and fields everywhere. */
 @font-face { font-family: "PetPixel"; src: url("../assets/third_party/crusenho/Toriko.ttf"); font-display: block; }
+/* (Tyler, 15 October: Toriko at 16 px is about 7 px tall. It is the face for short words only, at 32 px; whatever is
+   read, a sentence or more, is in Pixelify Sans, taller, with curly quotes: 16 px, or 20 px with "Text: large") */
+@font-face { font-family: "PetRead"; src: url("../assets/third_party/pixelify/PixelifySans-latin-400.woff2") format("woff2"); font-display: block; }
 
 :root, :root[data-theme] {
   /* §2 */
@@ -17,20 +20,27 @@
   --bg: var(--paper); --surface: var(--paper); --muted: var(--ink2); --line: #c98f62; --edge: #4a2a22;
   --accent: #833214; --good: #2b6e3a; --bad: #8f241d; --gold: #8a5a08; --shadow: rgb(43 20 14 / 25%);
   --pixel: "PetPixel", ui-monospace, "SF Mono", Menlo, monospace;
+  --read: "PetRead", system-ui, -apple-system, sans-serif;
+  --text: 16px; --lh: 21px;
   color-scheme: light;
 }
 .fam3 { --fam: var(--fam3); }
 .fam4 { --fam: var(--fam4); }
 
+html[data-text="large"] { --text: 20px; --lh: 26px; }
 body { background: var(--page); color: var(--ink);
   background-image: linear-gradient(45deg, var(--page2) 25%, transparent 25%, transparent 75%, var(--page2) 75%),
                     linear-gradient(45deg, var(--page2) 25%, transparent 25%, transparent 75%, var(--page2) 75%);
   background-size: 48px 48px; background-position: 0 0, 24px 24px;
-  font: 16px/18px var(--pixel); -webkit-font-smoothing: none; font-smooth: never; }
-button, select, input, textarea, input:not([type]), input[type="text"] { font: 16px/18px var(--pixel); color: var(--ink); }
-/* §1: the pixel face at 16 px and 32 px only. Everything is 16 px; what is a name, a tab or a heading on a desktop is 32
-   (below). The Lab stays plain and keeps its own sizes. */
-body :where(:not(#page-lab, #page-lab *, svg, svg *, canvas)) { font-size: 16px !important; }   /* (:where: no weight of its own, so any rule naming 32 px wins) */
+  font: var(--text)/var(--lh) var(--read); font-variant-ligatures: none; }   /* (Pixelify's "fi" reads as "A") */
+button, select, input, textarea, input:not([type]), input[type="text"] { font: var(--text)/var(--lh) var(--read); color: var(--ink); }
+/* Two faces and two sizes, everywhere but the Lab (which stays plain): what is read in Pixelify at --text; the short
+   words (below) in Toriko at 32 px, the only size it is drawn for besides 16. (:where gives the first rule no weight,
+   so the short words' rule, later, wins.) */
+body :where(:not(#page-lab, #page-lab *, svg, svg *, canvas)) { font-family: var(--read) !important; font-size: var(--text) !important; line-height: var(--lh) !important; letter-spacing: 0; }
+body :is(header.banner h1, header.banner h1 *, .tab, button:not(.link, .moment, .maproom, .node, .icon), .chip, .head, h1, h2, h3, #sign, #board :not(.goal), 
+         .cards .card .n, .gname, .tname, .thead, .treename, .sday > h3, .sday > h3 *):not(#page-lab *) {
+  font-family: var(--pixel) !important; font-size: 32px !important; line-height: 34px !important; -webkit-font-smoothing: none; font-smooth: never; }
 #page-lab, #page-lab :not(svg, svg *) { font-family: system-ui, -apple-system, sans-serif; -webkit-font-smoothing: auto; }
 #page-lab { background: var(--paper); }
 img.px, .px, canvas { image-rendering: pixelated; }
@@ -152,10 +162,10 @@ header .tab { width: 150px; min-height: 0; line-height: 18px; display: block; te
 #now:is(.want, .find) { border-image-source: url("../assets/third_party/crusenho/UI_TravelBook_FrameSelect01a.png"); border-image-slice: 4; border-width: 8px; padding: 4px 8px; }
 #now .icon { color: var(--accent); }
 main { flex: 1; min-height: 0; overflow: visible; padding: 0; display: block; }
-#roomwrap { position: relative; display: flex; justify-content: center; padding-top: 30px; }   /* (the sign covers the frame's edge, not the room) */
+#roomwrap { position: relative; display: flex; justify-content: center; padding-top: 44px; }   /* (the sign covers the frame's edge, not the room) */
 #frame { padding: 0; flex: none; line-height: 0; }
 #stage { position: relative; }
-#sign { position: absolute; left: 50%; top: 0; transform: translateX(-50%); width: 192px; height: 46px; padding-top: 6px; text-align: center; line-height: 30px;
+#sign { position: absolute; left: 50%; top: 0; transform: translateX(-50%); width: 288px; height: 69px; padding-top: 19px; text-align: center; line-height: 30px;
   background: url("../assets/third_party/crusenho/UI_Wood_Banner_Downward_01.png") center / 100% 100% no-repeat; image-rendering: pixelated; color: var(--ink); letter-spacing: 1px; pointer-events: none; white-space: nowrap; }
 #banner { border-style: solid; border-width: 12px; border-image: url("../assets/third_party/crusenho/UI_TravelBook_Popup01a.png") 6 fill stretch; background: none; color: var(--ink); box-shadow: none; padding: 0 6px; }
 #banner.error { color: var(--bad); }
@@ -210,13 +220,16 @@ button.maproom.viewed { border-image-source: url("../assets/third_party/crusenho
 /* the toolbar: the visitor's controls, a group each */
 footer { border-top: 0; background: none; flex: none; }
 footer.paper { padding: 0 4px; }
-.controls.visit { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; justify-content: flex-start; }
+.controls.visit { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; justify-content: flex-start; }
+.visit .group { gap: 4px; }
+#talkText { min-width: 90px; }
 .visit .group { display: flex; flex-wrap: nowrap; gap: 6px; align-items: center; }
 .visit .glabel { color: var(--ink2); }
 .visit .pair { display: flex; gap: 2px; align-items: center; }
-#talkForm { flex: 1 1 300px; max-width: none; }
+#talkForm { flex: 1 1 180px; max-width: none; }
+#giveBit, #writeOn { width: auto; max-width: 9em; }
 #talkText { flex: 1; min-width: 120px; }
-.visit button { min-width: 80px; }
+.visit button { min-width: 0; padding: 0 6px; }
 #stockBox, #musicBox, #moreBox { margin: auto; inset: 0; height: fit-content; padding: 4px 8px; position: fixed; color: var(--ink); width: max-content; max-width: min(360px, 94vw);
   border-style: solid; border-width: 12px; border-image: url("../assets/third_party/crusenho/UI_TravelBook_Popup01a.png") 6 fill stretch; background: none; box-shadow: 4px 4px 0 rgb(0 0 0 / 35%); }
 #stockBox { width: 330px; }
@@ -234,7 +247,7 @@ footer.paper { padding: 0 4px; }
   body { height: 100dvh; overflow: hidden; }
   .page.house { display: grid; grid-template-columns: 256px minmax(0, 1fr) 262px; grid-template-rows: minmax(0, 1fr) auto;
     grid-template-areas: "left centre side" "foot foot foot"; gap: 8px 10px; padding: 10px 16px 0; min-height: 0; flex: 1; }
-  #roomwrap { padding-top: 0; }   /* the sign hangs over the room's top wall, as in the mockup: the room gets the height */
+  #roomwrap { padding-top: 40px; }   /* the sign hangs over the frame's top edge and a little of the wall, and stays off the "now" strip */
   #left { grid-area: left; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--ink2) transparent; }
   .cards .card.here .want { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }   /* (whole in the card's hover and on its page) */
   #centre { grid-area: centre; min-height: 0; }
@@ -247,8 +260,7 @@ footer.paper { padding: 0 4px; }
   #info > .look, #info > #status { flex-basis: auto; }
   footer { grid-area: foot; }
   /* names, tabs and headings at 32 px (the rest 16) */
-  header.banner h1, header.banner h1 *, header .tab, .head, #sky h2, .cards .card.here .n { font-size: 32px !important; line-height: 32px; }
-  #sign { top: -20px; }   /* (x2, 16 px words, as the mockup: it sits on the frame's top edge and only a little of the wall) */
+  #sign { top: 0; width: 384px; height: 92px; padding-top: 28px; }   /* (x4 for words at 32 px: it hangs over the frame's top edge and a little of the wall) */
   #board { flex: 1 0 auto; }
   .cards .card.away { grid-template-columns: auto minmax(0, 1fr); align-items: center; border-width: 7px; padding: 2px 6px; }
   .cards .card.away .pic .plate, .cards .card.away .doing, .cards .card.away .want, .cards .card.away .bars, .cards .card.away .naming { display: none; }
@@ -268,9 +280,8 @@ footer.paper { padding: 0 4px; }
 @media (max-width: 999.98px) {
   body { height: auto; min-height: 100dvh; overflow: auto; display: block; }
   header.banner { flex-wrap: wrap; margin: 10px 12px 0; padding: 12px 14px 0; min-height: 0; }
-  header.banner::before { bottom: auto; height: 66px; }
+  header.banner::before { bottom: auto; height: calc(max(50px, 2 * var(--lh)) + 22px); }   /* (as tall as the two lines of the clock, at either text size) */
   #soundBtn { width: 50px; height: 50px; margin: -4px 0; }
-  header.banner h1, header.banner h1 * { font-size: 32px !important; line-height: 28px; }
   header.banner h1 { flex: 1; }
   header.banner #clock { order: 2; }
   header.banner #soundBtn { order: 3; }
@@ -282,6 +293,8 @@ footer.paper { padding: 0 4px; }
   #chosen { order: 7; } footer { order: 8; } #mapframe { order: 9; } #info { order: 10; }
   .head { display: none; }
   .cards { grid-template-columns: 1fr 1fr; }
+  .cards .card .wholine { display: contents; }   /* (a phone's card is narrow: the name at 32 px has the card's width, over the portrait and the stage) */
+  .cards .card .n { grid-column: 1 / -1; order: -1; }
   #cardsHere:has(> .empty-house) { grid-template-columns: 1fr; }
   .visit .group { flex-wrap: wrap; }
   .controls.visit { gap: 6px; }
@@ -301,3 +314,5 @@ footer.paper { padding: 0 4px; }
 .crt.amber { color: var(--amber); }
 .crt .crtglass { font-family: var(--pixel); background: none; text-shadow: 0 0 4px currentColor; color: inherit; }
 .crt .crthead { opacity: 1; color: var(--holo-dim); }
+/* a small desktop: the toolbar's group labels give way so it stays one row (the room keeps its scale) */
+@media (min-width: 1000px) and (max-width: 1399.98px) { .visit .glabel { display: none; } }

@@ -21,7 +21,7 @@ import type { Replay } from "./replay";
 import { Room } from "./room";
 import type { Target } from "./room";
 import { artReady, aThing, firstSprite, hasSprite, sprite, thingSprite } from "./sprite";
-import { giveStar } from "./ui";
+import { getJSON, giveStar } from "./ui";
 import { ago, fam, hhmm } from "./types";
 import { voiceInput } from "./voice";
 import { initVoice } from "./voicelab";
@@ -366,12 +366,13 @@ function board(s: Snap) {
   box.hidden = !B.length;
   if (box.dataset.key === key) return;
   box.dataset.key = key;
-  const lines = B.filter((l) => !l.meter).slice(0, 3), works = B.find((l) => l.meter);   // (three of its lines, as the mockups; the Works always)
+  // (v3.5.7: in Toriko at 32 px: its newest line, then the Works' count and meter; what the Works are making in the reading face)
+  const lines = B.filter((l) => !l.meter).slice(0, 1), works = B.find((l) => l.meter);
   const cells = (have: number, of: number) => { const n = Math.min(of, 30), on = Math.round((Math.min(have, of) / of) * n); return el("div", "meter-cells", ...Array.from({ length: n }, (_, i) => el("i", i < on ? "on" : ""))); };
-  box.replaceChildren(
-    el("p", "dim", "THE BOARD"),
-    ...lines.map((l, i) => el("p", i ? "" : "amber", boardRows(l).join(": ").toUpperCase())),
-    ...(works ? [el("p", "dim gap", "THE WORKS"), el("p", "", `${works.meter![0]} OF ${works.meter![1]} SCRAP${works.what ? `: ${works.what.toUpperCase()}` : ""}`), cells(works.meter![0], works.meter![1])] : []));
+  box.replaceChildren(...[
+    ...lines.map((l) => el("p", "amber", boardRows(l).join(": ").toUpperCase())),
+    ...(works ? [el("p", "gap", `THE WORKS: ${works.meter![0]} OF ${works.meter![1]}`), cells(works.meter![0], works.meter![1]), works.what ? el("p", "goal", `${works.meter![1] - works.meter![0]} more scrap for ${works.what}`) : null] : [])].filter((k): k is HTMLElement => !!k));
+  box.title = `On the board in the machine room: ${B.map((l) => boardRows(l).join(": ")).join("; ")}`;
   box.onclick = hubRoom ? () => jump({ room: hubRoom }) : null;
 }
 
@@ -386,6 +387,15 @@ function beast(c: Creature) {
  *  words; the feeling stays as its small picture. Those in the room on screen first, in full; the rest after, which a
  *  desktop shows as a line each (portrait, name, stage, where and what). A card opens the pet's page. Rebuilt only
  *  when what they show changes. */
+/** The names the pages show, numbered where a name was used before ("Grey Light II"), from /api/pets: asked for again
+ *  every minute, and at once when someone new turns up. Not in a replay (a recorded family is not this house). */
+let numbered: Record<string, string> = {}, numberedAt = 0;
+async function renumber() {
+  numberedAt = Date.now();
+  const d = await getJSON<{ pets: { id: string; name: string }[] }>("/api/pets");
+  if (d) { numbered = Object.fromEntries(d.pets.map((p) => [p.id, p.name])); if (snap) cards(snap); }
+}
+const nameOf = (p: PetV) => (!replayId && numbered[p.id]) || p.label;
 const BARS: [Need, string, string][] = [["energy", "energy", ""], ["curiosity", "curious", "blue"], ["company", "company", "red"]];
 function cards(s: Snap) {
   const who = s.pets.filter((p) => p.stage !== "dead").sort((a, b) => a.laid - b.laid);
@@ -394,7 +404,8 @@ function cards(s: Snap) {
   const naming = (p: PetV) => !p.naming ? null : !p.naming.took ? `you called it ${p.naming.offered}; waiting to hear`
     : p.naming.at != null && (s.tick - p.naming.at) * s.tick_seconds < s.day_seconds / 4 ? `it took the name ${p.naming.offered}` : null;
   const level = (p: PetV, n: Need) => Math.round(p.needs?.[n] ?? 0);
-  const desk = innerWidth >= DESKTOP, key = JSON.stringify([view.room, desk, who.map((p) => [naming(p), p.id, p.label, p.stage, p.room, p.stage === "egg" ? hatchWords(p.hatches_in ?? 0) : [moodWords(p), emoteOf(p), doingOf(p), wishOf(p), p.body?.icon, p.asleep, p.wants?.map((w) => w.text), p.ambition, BARS.map(([n]) => level(p, n))], p.genome, p.id === view.sel, p.family])]);
+  if (!replayId && (Date.now() - numberedAt > 60_000 || who.some((p) => !numbered[p.id] && Date.now() - numberedAt > 5000))) void renumber();
+  const desk = innerWidth >= DESKTOP, key = JSON.stringify([view.room, desk, who.map((p) => [naming(p), p.id, nameOf(p), p.stage, p.room, p.stage === "egg" ? hatchWords(p.hatches_in ?? 0) : [moodWords(p), emoteOf(p), doingOf(p), wishOf(p), p.body?.icon, p.asleep, p.wants?.map((w) => w.text), p.ambition, BARS.map(([n]) => level(p, n))], p.genome, p.id === view.sel, p.family])]);
   if ($("cardsHere").dataset.key === key) return;
   $("cardsHere").dataset.key = key;
   const one = (p: PetV) => {
@@ -406,7 +417,7 @@ function cards(s: Snap) {
     if (feels) feels.title = `feeling ${emote}`;
     const li = el("li", `card ${fam(p.family)}${p.id === view.sel ? " chosen" : ""}${egg ? " egg" : ""}${p.room === view.room ? " here" : " away"}`,
       el("span", "pic", face(p, desk && p.room !== view.room ? 32 : 48)),   // (a desktop's line for one elsewhere has a small portrait, drawn at its size)
-      el("span", "wholine", el("span", "n", egg ? p.name ?? "An egg" : p.label), el("span", "s", stageWord(p), feels)),
+      el("span", "wholine", el("span", "n", egg ? p.name ?? "An egg" : nameOf(p)), el("span", "s", stageWord(p), feels)),
       egg ? el("span", "doing", hatchWords(p.hatches_in ?? 0)) : null,
       naming(p) ? el("span", "naming", naming(p)!) : null,
       !egg && doing ? el("span", "doing", sign, doing) : null,
@@ -416,7 +427,7 @@ function cards(s: Snap) {
     li.querySelectorAll<HTMLElement>(".wbar > i").forEach((b, i) => (b.style.width = `${level(p, BARS[i][0])}%`));
     li.tabIndex = 0;
     li.setAttribute("role", "link");
-    li.title = `${egg ? "This egg" : p.label}'s page. It is in ${where(p)}; ${moodWords(p).join(", ") || "content"}` + (wish && !egg ? `\nIt wants: ${wish}` : "")
+    li.title = `${egg ? "This egg" : nameOf(p)}'s page. It is in ${where(p)}; ${moodWords(p).join(", ") || "content"}` + (wish && !egg ? `\nIt wants: ${wish}` : "")
       + (p.focus?.words && !p.asleep ? `\nIts mind is on: ${p.focus.words}` : "") + wants.map((w) => `\n${w.startsWith("wants ") ? `It ${w}` : cap(w)}`).join("")
       + (p.ambition && !egg ? `\nIt means in its life to ${p.ambition}` : "") + (p.habits?.length ? `\nIts habits: ${p.habits.join("; ")}` : "");
     li.onclick = () => go("pet", p.id);
@@ -442,8 +453,10 @@ function controls(s: Snap, here: RoomV) {
   // a control that cannot be used here says why: in its own words where it can, and in its title
   const set = (id: string, off: boolean, why: string, text?: string) => { const b = $<HTMLButtonElement>(id); b.disabled = off; b.title = off ? why : ""; if (text) b.textContent = text; };
   const win = objs.find((o) => o.fix?.window), bowl = objs.some((o) => o.fix && "meal" in o.fix);
-  set("feed", !bowl, `There is no bowl in ${here.name} to fill.`, bowl ? "Feed" : "No bowl");
-  set("window", !win, `There is no window in ${here.name}.`, !win ? "No window" : win.state === "open" ? "Close window" : "Open window");
+  set("feed", !bowl, `There is no bowl in ${here.name} to fill.`, "Feed");   // (v3.5.7: short words on the buttons; a greyed button says why in its title)
+  set("window", !win, `There is no window in ${here.name}.`, "Window");
+  $("window").setAttribute("aria-pressed", String(win?.state === "open"));
+  if (win) $("window").title = win.state === "open" ? "The window is open: close it" : "Open the window";
   const give = $<HTMLSelectElement>("giveBit");
   if (!give.options.length && hello) give.replaceChildren(...Object.keys(hello.bits).sort().map((b) => new Option(b)));
   const p = pet(view.sel), near = p && p.room === here.id && p.stage !== "egg" && p.stage !== "dead" ? p : null;
@@ -759,6 +772,15 @@ function openTab(name: string, who?: string) {
   if (name === "mind") showMind();
   go(name === "mind" ? "lab" : name);
 }
+// the text size (Tyler, 15 October): normal or large, kept in this browser only
+const textSize = (large: boolean) => {
+  if (large) document.documentElement.dataset.text = "large"; else delete document.documentElement.dataset.text;
+  $("textBtn").setAttribute("aria-pressed", String(large));
+  remember("text", large ? "large" : "normal");
+  layout();
+};
+$("textBtn").setAttribute("aria-pressed", String(document.documentElement.dataset.text === "large"));
+$("textBtn").onclick = () => textSize(document.documentElement.dataset.text !== "large");
 $("replayBtn").hidden = !!replayId;
 $("replayBtn").onclick = () => (location.search = `?replay=${snap?.lineage.id ?? 1}`);
 onRoute(showPage);
