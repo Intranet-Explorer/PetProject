@@ -190,6 +190,8 @@ def refuses(house, cfg, pet, room, name):
         return "the machine only takes made things and bits"
     if o["made"].get("heirloom"):
         return "the machine will not take an heirloom"
+    if order.statue(name, o):   # SPEC-v3.5.4 §1
+        return "the machine will not take a statue"
     if o["made"].get("star") is not None:   # SPEC-v3.5.4 §10
         return "the machine will not take a thing the visitor gave a star"
     if o.get("on") and order.keeps(room["objects"].get(o["on"], {})):

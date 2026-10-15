@@ -90,7 +90,7 @@ async def run(d):
     del hb["objects"]["spare jug"]
     thing(eng, hb, "kept jug", "charm", "hard", pet["id"], days=1.5)
     thing(eng, hb, "newest jug", "charm", "hard", pet["id"], days=1.2)
-    S["have"] = costs[0] - 2
+    S["have"] = costs[0] - 1
     assert works.nearly(h, cfg) and "nearly full" in works.full(h, cfg)
     c = [x for x in wants.candidates(h, cfg, pet) if x["what"] == "feed" and x.get("thing") not in (None, "bits")]
     assert [x["thing"] for x in c] == ["kept jug"] and "the Works is nearly full: it wants scrap for a lamp for the cellar; your old kept jug" in c[0]["text"], \

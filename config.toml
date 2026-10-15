@@ -370,6 +370,7 @@ observe = "eye"
 [order]                   # §2
 tidy_below = 2            # this many loose things or fewer: "everything here has its place"
 mess_above = 6            # more than this: "this room is a mess"
+clear_pull = 1.2          # SPEC-v3.5.4 §1: putting a crowded room's old things away pulls a body like a mess does (two steps of mess_pull)
 old_days = 5              # a thing someone who has died left lying about, untouched this long, goes into its keepsake box (order.keep)
 restore_from = "data.backup-v3.3-2026-10-12-before-tidy"   # the copy of the house (a folder beside its data) that what wore out on 12 October is put back from, once (tick.unwear)
 bits = 12                 # loose bits a shelf, chest or basket takes beside the things it holds: a whole floor's worth (make.loose_bits)

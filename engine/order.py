@@ -102,9 +102,14 @@ def crowded(cfg, room):
     return floor_count(cfg, room) >= cfg["make"]["crowded"]
 
 
+def statue(name, o):
+    """A statue stays (SPEC-v3.5.4 §1): one built, or a made thing that is one by its name or kind."""
+    return "statue" in name or "statue" in (o.get("made", {}).get("recipe", {}).get("kind") or "") or bool(o.get("fix", {}).get("built"))
+
+
 def clutter_of(house, cfg, room):
     """SPEC-v3.5.4 §1: in a crowded room, the old things that could go (to the machine, or a keepsake box), oldest
-    first. What stays: heirlooms, things the visitor named or starred, what is kept in a box or on anything, things on
+    first. What stays: heirlooms, statues, things the visitor named or starred, what is kept in a box or on anything, things on
     a wall, a place to keep things with anything in it (an empty one can go), what is too heavy to move, anything used
     in the last world day (put away or moved is not used), and the newest thing each pet made."""
     if not crowded(cfg, room):
@@ -119,7 +124,7 @@ def clutter_of(house, cfg, room):
     # least in it is emptied first.
     out = [((len(held(room, o["on"])) if o.get("on") else 0, used(o)), n) for n, o in things.made(room).items()
            if (not o.get("on") and not o.get("wall") or o.get("on") in objs and cap(cfg, objs[o["on"]]) and not keeps(objs[o["on"]]))
-           and not o["made"].get("heirloom") and not o["made"].get("called") and not o["made"].get("star") and not keeps(o) and not held(room, n)
+           and not o["made"].get("heirloom") and not o["made"].get("called") and not o["made"].get("star") and not keeps(o) and not held(room, n) and not statue(n, o)
            and not things.prop(cfg, o).get("fixed") and not o.get("planted") and newest.get(o["made"]["by"]) != o["made"]["tick"]
            and world_days(cfg, used(o), house["tick"]) >= cfg["make"]["clutter_days"]]
     return [n for _, n in sorted(out)]
@@ -258,10 +263,12 @@ def job(house, cfg, pet, room):
     anything."""
     out, objs = [], room["objects"]
     fresh = house["tick"] - ticks(cfg, cfg["order"]["just_out_seconds"])   # what has only just been taken out, brought over or rolled across is left a while
-    for n in [n for n in loose(house, cfg, room) if objs[n].get("kept", -10 ** 9) <= fresh]:   # anyone may put anyone's thing in its place here: it stays its owner's, in the same room
+    clear = [n for n in clutter_of(house, cfg, room) if not objs[n].get("on")]   # SPEC-v3.5.4 §1: a crowded room's old things go into a box or onto a shelf here, by whoever is about
+    # ponytail: only into what keeps things in this room; a crowded room with none of it free waits for the machine (its owners), boxes elsewhere if that falls short
+    for n in [n for n in loose(house, cfg, room) + [n for n in clear if n not in loose(house, cfg, room)] if objs[n].get("kept", -10 ** 9) <= fresh]:   # anyone may put anyone's thing in its place here: it stays its owner's, in the same room
         where = place_for(house, cfg, pet, room, n)
         if where:
-            out.append({"what": n, "job": ["thing", n, where[0], where[1]], "pos": objs[n]["pos"]})
+            out.append({"what": n, "job": ["thing", n, where[0], where[1]], "pos": objs[n]["pos"], "bonus": cfg["order"]["clear_pull"] if n in clear else 0.0})
     bits, space = loose_bits(room), {n: k for n, k in bit_room(cfg, room).items() if k > 0}
     if bits and space:
         first = min(bits, key=lambda s: dist(s["pos"], pet["pos"]))

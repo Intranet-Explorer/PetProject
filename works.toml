@@ -6,7 +6,7 @@
 thing = 1                 # scrap a made thing fed to the machine counts for
 bits = 1                  # ... and three loose bits
 age_hours = 12            # a made thing counts only once it is this many world hours old: nothing straight from the machine and back
-nearly = 0.75             # from this much of its goal the Works is "nearly full"
+nearly = 0.6              # from this much of its goal the Works is "nearly full" (two of the first goal's three)
 weight = 1.5              # a spare thing is wanted fed this much more while the Works has a goal
 nearly_weight = 2.0       # nearly full: how much a pet wants to feed it an old thing of its own that nobody has touched lately
 idle_days = 1             # ... "lately": this long
@@ -18,30 +18,30 @@ keep = 400                # the things it has counted, kept so that none counts 
 #   machine   bigger numbers in machine.toml's [machine] (never smaller)
 #   material  one more material the machine holds and hands out (a bit from house.toml)
 # (A new part in the parts library needs its picture drawn: not one of these yet.)
-# The first goal is sized for the live house to reach in about a world day: some two to seven things a day were fed
-# to the machine before v3.5.4, and clearing crowded rooms (§1) sends it their old things.
+# The first goal is small enough to be reached within a world day, so the family sees the Works pay off early: on a
+# copy of the live house with the real model, about three things were fed to the machine in a world day. Later goals grow.
 
 [[build]]
 what = "a lamp for the cellar"
-scrap = 12
+scrap = 3
 fixture = { room = "cellar", name = "lamp", pos = [7, 0], light = "on" }
 
 [[build]]
 what = "a shelf for the music room"
-scrap = 18
+scrap = 6
 fixture = { room = "music", name = "shelf", pos = [7, 0], store = 4 }
 
 [[build]]
 what = "a bigger morning delivery for the machine"
-scrap = 24
+scrap = 10
 machine = { restock = 3 }
 
 [[build]]
 what = "wax in the machine"
-scrap = 30
+scrap = 15
 material = "wax"
 
 [[build]]
 what = "a third thing a day from the machine for everyone"
-scrap = 40
+scrap = 20
 machine = { free = 3 }
