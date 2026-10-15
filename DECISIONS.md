@@ -1821,3 +1821,15 @@ Tyler's five points after v3.5.4's first live days, built together and tested on
 - **Going straight back** is reported both ways: every return within six real minutes, and the empty trips among
   them, in and straight out with nothing done there but doors, walking about, looking about or following kin. On the
   live house's five and a half v3.5.4 days that was 25% and 3%.
+
+The test day (a copy of the live house with the real model, ticks 89780 to 91580, beside the living family over the
+same hours on v3.5.4): no errors. Straight back 11% (empty trips 6%; live 24% and 5%), stays 4.4 real minutes, doors
+7%, no room at the cap, 0 "no room to make", projects 0 don'ts, five kinds made, six firsts (one house, two family).
+The Works built its wax. Targets gone: 2 of 69 steps failed for it, against live's 18 of 223; 2 steps went after a
+stand-in and 2 were told where the other had gone. Near-misses, deployed and noted:
+- **Curiosity** 40% (bar 50 to 80%): the live house was at 41% on the old code over the same hours, so it is the day
+  (a night and a slow morning), not this round.
+- **Charms** 2 of 8 things made, 25% (bar 20%); live made 11 of 21 as charms over the same hours. Eight is few:
+  watched on live.
+- **Bored, then something new within a world hour** 6 of 12 times (bar: most times; v3.5.4's copy 8 of 12).
+The copy had about half live's thoughts, giving way to it (12.6 calls a pet a world day), so it made eight things.
