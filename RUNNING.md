@@ -31,6 +31,10 @@ and the sounds. The code names no tile and no pack. [view/assets/README.md](view
 formats and how to add a pack: put its zip in `assets-incoming/` (not in the repository) and map its pieces to
 names there. `view/assets/third_party/CREDITS.md` credits what is used.
 
+**The skin** (since v3.5.6) is Crusenho's Travel Book, Wood and Holo Book sprites and the Toriko pixel face, in
+`view/assets/third_party/crusenho/` (only the sprites used; credits and licences in `third_party/CREDITS.md`), drawn
+by `view/src/skin.css` as 9-sliced frames at whole-number scales. From 1000 px wide the House tab is a game screen
+in three columns; narrower, one column that scrolls.
 **The book** reads `book/wikipedia_en-simple_all_maxi_2026-09.zim` (Simple English Wikipedia from
 download.kiwix.org, 2.9 GB, not in the repository). Without it the book never arrives and nothing else minds.
 **The radio** (since v3.5.1) is a real station, Radio Paradise: while the pets' radio is on, the page plays the

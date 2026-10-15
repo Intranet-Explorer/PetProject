@@ -1833,3 +1833,44 @@ stand-in and 2 were told where the other had gone. Near-misses, deployed and not
   watched on live.
 - **Bored, then something new within a world hour** 6 of 12 times (bar: most times; v3.5.4's copy 8 of 12).
 The copy had about half live's thoughts, giving way to it (12.6 calls a pet a world day), so it made eight things.
+
+## Part 22: v3.5.6, the skin (15 October 2026)
+
+Crusenho's Travel Book, Wood and Holo Book on every tab, built to the mockups in `assets-incoming/skin-mockups/`.
+View only: the engine is unchanged.
+
+- **The family colours are a shade darker for text.** §2 says the mockups' colours reach 4.5 : 1; measured against the
+  sprites' own fills they do not: `#1f6f8b` is 4.2 on paper and 3.5 on the Wood card, `#a3366a` 4.7 and 3.9. Text uses
+  the nearest darker shades that reach 4.5 on every panel a name is written on (the lightest is the selected tab):
+  `#165266` and `#842b55` (a third and fourth family `#45510d`, `#653492`), and the accent `#833214`. Everything else
+  in §2 is as given.
+- **One look.** The skin decides the colours, so the page no longer switches to dark, and the light/dark button is
+  gone. The Lab stays plain (system face, the skin's colours).
+- **The pixel face** fills v3.5.3's slot (`--pixel`) from `skin.css`; the old pack face (Ninja Adventure's) is no
+  longer named in `packs.json` and its file is gone. Toriko is used at 16 px and 32 px only (a rule in `skin.css`
+  holds everything else at 16). **Body text stays 16 px at 1280 px; no "large text" setting:** Toriko is drawn for
+  16 px and reads cleanly there. Names, tabs and headings are 32 px on a desktop, as §5 asks.
+- **Whole-number scales.** Every frame is 9-sliced at x1 or x2 of its slice; the buttons and bars are x1 as in the
+  mockups, the rest x2. Pixel art too: the small portraits on a desktop's "Elsewhere" lines are drawn at their size,
+  not shrunk. A browser cannot scale a cursor, so the three cursors are kept enlarged (x3 arrow, x2 hand and pencil,
+  each with a x2 copy for a sharp screen).
+- **The desktop House tab** is the mockup's game screen. The columns are 256 and 262 px (the mockup's 262 and 270),
+  so that at 1280 x 800 the room is drawn at 3x; the wood sign hangs over the frame's top edge and a little of the top
+  wall rather than above the frame, for the same reason. When the cards or the right column hold more than the
+  screen, that column scrolls (a thin bar); the room never does. From 1000 px wide the House tab is the game screen;
+  narrower, the phone's one column.
+- **What moved on the House tab.** "Lately" (the moments beside the room) is gone from it: the Story tab has them all.
+  The status chips show only what is wrong (a power cut, the engine away), not "you are here". Follow and Names stay,
+  in the room's panel. The visitor's toolbar has Care, Talk and More; Music and the radio, and the rest of More
+  (ambience, volume, Replay, the Lab), open as paper pop-ups from their buttons, as Stock already did. Naming (Poke,
+  a name, Star, Let go) appears at the top of the left column while a pet or a thing is chosen, and in the column on a
+  phone. A phone shows the groups as rows of three buttons; they fit, so nothing is folded behind "Visit".
+- **Cursors (§8).** The arrow everywhere, buttons and links included; the hand over the pets in the room and over
+  every card; the pencil in the text box. The room's canvas sets its own cursor, so the room sets the hand inline.
+- **Hover names (§9)** were already the room's way (the "Names" switch still holds them all on); the hover card is a
+  paper strip now. The Things grid's tooltip (`view/src/pages/tip.ts`) carries the kind, the maker and the place as
+  well as the name, so the grid lost nothing by not printing names; a second tap, or the name in it, opens the thing.
+- **Holo (§1)** is the board on the House tab, the Works' goal and its segmented meter (one segment a scrap, thirty at
+  most), and the machine room's screens when one is opened (blue, or amber for the amber screen).
+- **A pet's page** is one book page; ambition and bests come first, then family, now, body, words, made, life.
+- **Not done:** Toriko has no curly quotes, so “ and ” come from the fallback face and stand a little large.

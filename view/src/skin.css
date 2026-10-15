@@ -158,8 +158,8 @@ main { flex: 1; min-height: 0; overflow: visible; padding: 0; display: block; }
   background: url("../assets/third_party/crusenho/UI_Wood_Banner_Downward_01.png") center / 100% 100% no-repeat; image-rendering: pixelated; color: var(--ink); letter-spacing: 1px; pointer-events: none; white-space: nowrap; }
 #banner { border-style: solid; border-width: 12px; border-image: url("../assets/third_party/crusenho/UI_TravelBook_Popup01a.png") 6 fill stretch; background: none; color: var(--ink); box-shadow: none; padding: 0 6px; }
 #banner.error { color: var(--bad); }
-#banner.death, #banner.arrival { border-image-source: url("../assets/third_party/crusenho/UI_HoloBook_Textfield02a.png"); color: var(--holo); text-shadow: 0 0 4px var(--holo-glow); }
-#banner.arrival { color: var(--amber); text-shadow: 0 0 4px var(--amber-glow); }
+#banner.death, #banner.arrival { border-image-source: url("../assets/third_party/crusenho/UI_TravelBook_FrameSelect01a.png"); border-image-slice: 4; border-width: 8px; padding: 4px 10px; }
+#banner .icon { color: var(--accent); }
 
 /* the cards: Wood, a portrait, the name in its family's colour, the stage, what it is doing, three bars */
 .cards { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
