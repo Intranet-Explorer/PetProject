@@ -8,6 +8,9 @@
 /* (Tyler, 15 October: Toriko at 16 px is about 7 px tall. It is the face for short words only, at 32 px; whatever is
    read, a sentence or more, is in Pixelify Sans, taller, with curly quotes: 16 px, or 20 px with "Text: large") */
 @font-face { font-family: "PetRead"; src: url("../assets/third_party/pixelify/PixelifySans-latin-400.woff2") format("woff2"); font-display: block; }
+/* SPEC-v3.5.7 §1: the screens' faces, for the blue console: DotGothic16 for readouts, VT323 for the board */
+@font-face { font-family: "PetDot"; src: url("../assets/third_party/dotgothic16/DotGothic16-latin-400.woff2") format("woff2"); font-display: block; }
+@font-face { font-family: "PetLed"; src: url("../assets/third_party/vt323/VT323-latin-400.woff2") format("woff2"); font-display: block; }
 
 :root, :root[data-theme] {
   /* §2 */
@@ -21,6 +24,8 @@
   --accent: #833214; --good: #2b6e3a; --bad: #8f241d; --gold: #8a5a08; --shadow: rgb(43 20 14 / 25%);
   --pixel: "PetPixel", ui-monospace, "SF Mono", Menlo, monospace;
   --read: "PetRead", system-ui, -apple-system, sans-serif;
+  --dot: "PetDot", ui-monospace, monospace; --led: "PetLed", ui-monospace, monospace;
+  --cyan: #58d0ff; --holo-line: #2d6c9e; --holo-deep: #0f1f36;
   --text: 16px; --lh: 21px;
   color-scheme: light;
 }
@@ -38,9 +43,13 @@ button, select, input, textarea, input:not([type]), input[type="text"] { font: v
    words (below) in Toriko at 32 px, the only size it is drawn for besides 16. (:where gives the first rule no weight,
    so the short words' rule, later, wins.) */
 body :where(:not(#page-lab, #page-lab *, svg, svg *, canvas)) { font-family: var(--read) !important; font-size: var(--text) !important; line-height: var(--lh) !important; letter-spacing: 0; }
-body :is(header.banner h1, header.banner h1 *, .tab, button:not(.link, .moment, .maproom, .node, .icon), .chip, .head, h1, h2, h3, #sign, #board :not(.goal), 
+/* SPEC-v3.5.7 §1: Toriko is for titles (names, tabs, signs, section headings, banners); buttons and chips read in Pixelify */
+body :is(header.banner h1, header.banner h1 *, .tab, .head, h1, h2, h3, #sign, .title, 
          .cards .card .n, .gname, .tname, .thead, .treename, .sday > h3, .sday > h3 *):not(#page-lab *) {
   font-family: var(--pixel) !important; font-size: 32px !important; line-height: 34px !important; -webkit-font-smoothing: none; font-smooth: never; }
+/* the blue console's screens (§3): DotGothic16 readouts at 16 px, the board's LEDs in VT323 at 20 px */
+body :is(.screen, .screen *):not(#page-lab *) { font-family: var(--dot) !important; font-size: 16px !important; line-height: 20px !important; -webkit-font-smoothing: none; }
+body :is(.led, .led *):not(#page-lab *) { font-family: var(--led) !important; font-size: 20px !important; line-height: 20px !important; }
 #page-lab, #page-lab :not(svg, svg *) { font-family: system-ui, -apple-system, sans-serif; -webkit-font-smoothing: auto; }
 #page-lab { background: var(--paper); }
 img.px, .px, canvas { image-rendering: pixelated; }
