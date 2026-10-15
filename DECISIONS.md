@@ -1904,3 +1904,66 @@ View only: the engine is unchanged.
   every backup since v3.5.4, so that is not it; the layout and its cobblestone tiles are served, the room draws them
   at every size and time of day tried, and the skin touched no art but its own sprites and the one font file. A plain
   floor is what a room draws without its layout; the room redraws when its layout arrives.
+
+## Part 24: v3.5.7, alive on screen (15 October 2026)
+
+(SPEC-v3.5.7 asks for Part 23; Tyler moved it here, Part 23 being the font fix.)
+
+**Read my own way**
+- **Buttons and chips read in Pixelify.** §1's table gives Toriko to titles only (names, tabs, signs, section
+  headings, banners), and the mockups' buttons are in the reading face; the font fix had buttons in Toriko.
+- **Following (§2).** Rooms score by what happened there in the last minute of the house (something made, found out or
+  a first; pets together; the visitor's doings), what each awake pet is at (making, or carrying two bits to make with;
+  talking), and one point for any pet awake; at night, where most of them sleep. "About to reach a first" has nothing
+  to go on but a pet carrying the makings, so that is what counts. The page leaves an empty room 20 seconds after it
+  came there (two minutes otherwise), never while a banner is up, and never within a minute of a click or a key.
+  Clicking a pet in the room follows it, as before; a room on the map turns following off; the chip's pop-up picks
+  the house, a pet or nobody. Every change is written with its reason (`petView.follows()`).
+- **The console (§3).** Its map is the old map recoloured blue, with every pet a dot in its family's colour placed
+  where it stands in its room, gliding as it walks (families on blue: amber and pink, the colours the mockup used).
+  The room's readout keeps time, day, sky, light and who is here; a room that is a real mess says so; the families'
+  count and the creatures elsewhere are left out of it (warnings stay). The board shows three lines (the mockup's
+  count) and the Works on their own. On a desktop below 1400 px the toolbar's Stock, Music and More are their icons
+  alone (their names are in their titles), and below 1600 px the toolbar's group names give way, so the toolbar keeps
+  one row. On a phone the console sits under the room and folds to the board.
+- **Banners (§4).** What gets one is read from the engine's own words for each moment: a first "in the house" or "of
+  its family", "did what it meant to do", the Works, a hatching, a death, the visitor's star. The thing on a banner is
+  the one its maker made within three ticks of the moment. Every banner's moment is already on the board (the engine
+  puts feats, births and deaths there). §4 says a death has no sound and §9 a low tone for a death: a death's banner
+  plays the low tone and nothing else (Tyler may want it silent).
+- **The thing card (§5).** A click on a thing in the room still picks it up to move, name or star it (the visitor's
+  doings need it); the card says so, and the naming row has "Its page". The card keeps within the window, not the
+  room, being taller than most rooms.
+- **A pet's sheet (§6).** On a phone the two pages stack, left first, rather than turning. The bookmarks sit on the
+  book's top edge (the sprite opens downward). The badges count house and family firsts apart. Grey Light II is dead
+  in the house now, so its sheet is a dead one.
+- **Things (§7).** Kind and room stay dropdowns (there are too many kinds for chips); families, marks and sort are chips.
+  A phone folds the filters under "Filter and sort". The use line comes from the house's rules for the kind.
+- **Story (§8).** A desktop's arrows turn two days; a phone's back arrow says "‹ Yesterday". The tree's rows were made
+  taller: at Toriko 32 the names overlapped the row below.
+- **Room changes** wipe in eight steps across the room; the board's marquee moves the line by position, not by a
+  transform (a sliding layer went unpainted in captures).
+- **The grey floor** (Tyler, 14:37, the Claude app's browser at 707 px, the machine room at night): a room whose layout
+  was still loading was drawn on a plain floor, and a failed fetch of a layout was kept as "no layout" until a reload.
+  Now the room on screen stays as it was until the layout is in, and a failed fetch is asked again.
+- **Fonts** are bundled from Fontsource with their OFL licences; ligatures are off everywhere (a `font:` shorthand had
+  turned Pixelify's broken "fi" back on).
+
+**Gaps: asked for, not recorded, left out**
+- How a thing was made ("woven at the loom", "fired in the kiln"): not kept on a made thing; a process lives only in a
+  bit's name ("fired clay").
+- What a gone thing was made from: `gone_things` keeps no bits.
+- Firsts before day 61: the house kept no feats before then.
+- Where 37 early things were made: no "made" moment for them.
+- Who used a thing most: the activity log starts at tick 17663 and sees sitting, playing and using, not a thing's warmth
+  or light, so "most often by" shows only where the log has three sightings or more (144 of 607 things).
+- Where a thing stands within its room ("by the screens"): only the room, a shelf, a wall or a box is kept.
+- Words said about a thing when it was laid down: not kept. The card shows the maker's words when it made it, claims
+  that name it, and what is written on it.
+- A project's progress: not kept, so no project has a bar.
+- Whether a dead pet's ambition was missed: it is simply left unticked.
+- Words on a stone: none are kept; the stone shows its name and days.
+- Pictures for some kinds (some invented kinds, rugs) are the "?" placeholder: the thing art is not there yet (v3.6).
+
+**Measured** (headless Chrome on the Mac, a paused copy of the house; the room's frames over ten seconds): before,
+60.1 fps (worst frame 16.8 ms) at 1512 x 945 and 60.0 on a phone; after, the same, and 60.0 with a banner up.
