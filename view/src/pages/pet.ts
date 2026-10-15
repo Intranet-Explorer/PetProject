@@ -175,7 +175,7 @@ export async function render(root: HTMLElement, id: string | null) {
   };
   const best = [...page.made].sort((x, y) => Number(!!y.first) - Number(!!x.first) || (y.first === "house" ? 1 : 0) - (x.first === "house" ? 1 : 0));
   const SLOTS = 12;
-  const madeTop = sec("made", `Made (${page.made.length})`, iTrophy,
+  const madeTop = sec("made", `Made: ${page.made.length}`, iTrophy,   /* (Toriko draws brackets like C and J) */
     page.made.length ? el("div", "islots", ...best.slice(0, SLOTS).map(slot)) : el("p", "hint", "Nothing yet."),
     page.made.length > SLOTS ? button(`All ${page.made.length}, further on`, () => turnTo("more-made"), "link small") : null);
 

@@ -141,7 +141,7 @@ img.ticon { width: calc(var(--w) * 2px); height: auto; image-rendering: pixelate
 }
 
 /* the foot of every page: the credit (§10), and the Lab */
-p.more { color: var(--on-page); display: flex; gap: 16px; justify-content: center; }
+p.more { color: var(--on-page); display: flex; flex-wrap: wrap; padding-inline: 16px; row-gap: 0; gap: 16px; justify-content: center; }
 p.more a, p.more .link { color: var(--on-page) !important; }
 body[data-page="house"] p.more { display: flex; }
 
@@ -217,7 +217,7 @@ footer.paper { padding: 0 4px; }
 .visit .glabel { color: var(--ink2); }
 .visit .pair { display: flex; gap: 2px; align-items: center; }
 #talkForm { flex: 1 1 180px; max-width: none; }
-#giveBit, #writeOn { width: auto; max-width: 6.5em; }
+@media (min-width: 1000px) { #giveBit, #writeOn { width: auto; max-width: 6.5em; } }
 #talkText { flex: 1; min-width: 120px; }
 .visit button { min-width: 0; padding: 0 6px; }
 #stockBox, #musicBox, #moreBox { margin: auto; inset: 0; height: fit-content; padding: 4px 8px; position: fixed; color: var(--ink); width: max-content; max-width: min(360px, 94vw);
