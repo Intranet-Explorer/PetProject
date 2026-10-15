@@ -8,12 +8,14 @@
 
 :root, :root[data-theme] {
   /* §2 */
-  --ink: #2b140e; --ink2: #6e3b26; --fam1: #1f6f8b; --fam2: #a3366a; --fam3: #5b6b12; --fam4: #7a3fb0;
+  /* (the families: §2's #1f6f8b and #a3366a measure 3.5 to 4.2 : 1 on the Wood card and the paper; these are the nearest
+     darker shades that reach 4.5 : 1 on every panel they are written on, the lightest being the selected tab, 4.6 : 1) */
+  --ink: #2b140e; --ink2: #6e3b26; --fam1: #165266; --fam2: #842b55; --fam3: #45510d; --fam4: #653492;
   --holo: #9fe3ff; --holo-glow: #2fb6ff; --amber: #ffb84a; --amber-glow: #ff8a00; --holo-dim: #6fa7cf;
   --page: #3a2730; --page2: #44303a; --paper: #fdd6a6; --on-page: #f3d9bd;
   /* v3.5.3's names, mapped onto the skin, so every older rule reads right */
   --bg: var(--paper); --surface: var(--paper); --muted: var(--ink2); --line: #c98f62; --edge: #4a2a22;
-  --accent: #b2441c; --good: #2b6e3a; --bad: #a32a22; --gold: #8a5a08; --shadow: rgb(43 20 14 / 25%);
+  --accent: #833214; --good: #2b6e3a; --bad: #8f241d; --gold: #8a5a08; --shadow: rgb(43 20 14 / 25%);
   --pixel: "PetPixel", ui-monospace, "SF Mono", Menlo, monospace;
   color-scheme: light;
 }
@@ -81,7 +83,7 @@ button.icon { padding: 0; background: none; }
 /* fields and choices: a Travel Book frame (Frame04a, slice 4, x2) */
 select, input:not([type]), input[type="text"], input[type="search"], textarea { border-style: solid; border-width: 8px; border-image: url("../assets/third_party/crusenho/UI_TravelBook_Frame04a.png") 4 fill stretch;
   background: none; border-radius: 0; padding: 0 2px; min-height: 34px; box-shadow: none; }
-input::placeholder, textarea::placeholder { color: #8a6a58; opacity: 1; }
+input::placeholder, textarea::placeholder { color: var(--ink2); opacity: 1; }
 select { appearance: none; padding-right: 14px;
   background: linear-gradient(45deg, transparent 50%, var(--ink2) 50%) right 4px top 50% / 5px 5px no-repeat, linear-gradient(-45deg, transparent 50%, var(--ink2) 50%) right 0 top 50% / 5px 5px no-repeat; }
 input[type="range"] { accent-color: var(--accent); }
