@@ -252,7 +252,8 @@ footer.paper { padding: 0 4px; }
   #chosen { order: -1; }   /* at the top of the column, while a pet or a thing is chosen (a click in the room) */
   #chosen:not(.asked) { display: none; }
   #stockBox, #musicBox, #moreBox { inset: auto 16px 84px auto; margin: 0; }   /* above the toolbar's right end, under the buttons that open them */
-  body[data-page="house"] p.more { position: fixed; right: 16px; bottom: 0; margin: 0; padding: 0; }
+  body[data-page="house"] p.more { position: fixed; right: 16px; bottom: 0; margin: 0; padding: 0; line-height: 20px !important; }
+  body[data-page="house"] .page.house { padding-bottom: 22px; }   /* (a strip of its own for the credit, under the console) */
 }
 /* ---- §4 a phone (and anything narrower than a desktop): one column, the page scrolls ---- */
 @media (max-width: 999.98px) {
@@ -295,7 +296,8 @@ footer.paper { padding: 0 4px; }
 .crt .crtglass { font-family: var(--pixel); background: none; text-shadow: 0 0 4px currentColor; color: inherit; }
 .crt .crthead { opacity: 1; color: var(--holo-dim); }
 /* a small desktop: the toolbar's group labels give way so it stays one row (the room keeps its scale) */
-@media (min-width: 1000px) and (max-width: 1399.98px) { .visit .glabel { display: none; } #stockBtn .btxt, #musicBtn .btxt, #moreBtn .btxt { display: none; } }
+@media (min-width: 1000px) and (max-width: 1599.98px) { .visit .glabel { display: none; } }
+@media (min-width: 1000px) and (max-width: 1399.98px) { #stockBtn .btxt, #musicBtn .btxt, #moreBtn .btxt { display: none; } }
 /* (v3.5.7: the pack's icons on the toolbar's buttons, in the ink colour) */
 .bicon { display: inline-block; width: 24px; height: 26px; vertical-align: -6px; margin-right: 4px; background: center / contain no-repeat; image-rendering: pixelated;
   filter: brightness(0) saturate(100%) invert(9%) sepia(30%) saturate(2000%) hue-rotate(340deg); }
@@ -324,7 +326,7 @@ button.followchip.off { background: var(--paper); }
 
 /* §3 the blue console: one tall Holo Book panel, sections headed in small blue capitals with a white icon */
 #side.console { border-style: solid; border-width: 20px; border-image: url("../assets/third_party/crusenho/UI_HoloBook_Cover01a.png") 20 fill stretch;
-  background: none; color: var(--holo); display: flex; flex-direction: column; gap: 8px; padding: 0 2px; min-height: 0; overflow-y: auto; scrollbar-width: none; text-shadow: 0 0 4px var(--holo-glow); }
+  background: none; color: var(--holo); display: flex; flex-direction: column; gap: 6px; padding: 0 2px; min-height: 0; overflow-y: auto; scrollbar-width: none; text-shadow: 0 0 4px var(--holo-glow); }
 .console .ctitle { display: flex; justify-content: space-between; align-items: center; margin: 0; padding-bottom: 2px; border-bottom: 2px solid var(--holo-line); color: #a8d8f5; letter-spacing: 1px;
   font-family: var(--dot) !important; font-size: 16px !important; line-height: 20px !important; }
 .cicon { width: 24px; height: 26px; flex: none; background: center / contain no-repeat; image-rendering: pixelated; filter: drop-shadow(0 0 2px var(--holo-glow)); }
@@ -332,11 +334,11 @@ button.followchip.off { background: var(--paper); }
 .cicon.display { background-image: url("../assets/third_party/crusenho/UI_Icon_Display01b.png"); }
 .cicon.trophy { background-image: url("../assets/third_party/crusenho/UI_Icon_Trophy01b.png"); }
 .cicon.gear { background-image: url("../assets/third_party/crusenho/UI_Icon_Gear01b.png"); }
-.cpart { display: flex; flex-direction: column; gap: 4px; }
+.cpart { display: flex; flex-direction: column; gap: 2px; }
 .console button.cfold { display: none; }
 /* (§3: the room's readout is time, day, sky, light and who is here; what else the old panel said stays out of it but warnings) */
 .console #family, .console #status .chip:not(.warn, .down), .console #happening li:not(.warn) { display: none; }
-.console .mapbox { border: 2px solid var(--holo-line); background: var(--holo-deep); padding: 4px; display: flex; justify-content: center; }
+.console .mapbox { border: 2px solid var(--holo-line); background: var(--holo-deep); padding: 2px; display: flex; justify-content: center; }
 .console button.maproom { border: 2px solid var(--holo-line); border-image: none; background: #13284a; }
 .console button.maproom > canvas { filter: grayscale(1) sepia(1) hue-rotate(165deg) saturate(2.4) brightness(1.1) contrast(1.1); }
 .console button.maproom.viewed { border-color: var(--cyan); box-shadow: 0 0 0 2px var(--cyan), 0 0 8px var(--holo-glow); filter: none; background: #1b3a66; }
