@@ -309,7 +309,15 @@ function header(s: Snap) {
     now.dataset.key = text + here;
     const mine = s.pets.filter((p) => p.room === view.room && p.needs);
     const lead = !!unsaid.length && unsaid.length === mine.length;   // the sentence is all about other rooms: this room's own line leads
-    line.replaceChildren(...(lead ? [here, el("span", "here", text)] : [...(got?.kind === "find" ? [icon("star")] : []), text, ...(here ? [el("span", "here", here)] : [])]));
+    // SPEC-v3.5.6 §4: each pet's name in its family's colour
+    const who = s.pets.filter((p) => p.stage !== "egg" && p.label).sort((a, b) => b.label.length - a.label.length);
+    const names = (t: string): (Node | string)[] => {
+      const p = who.find((q) => t.includes(cap(q.label)) || t.includes(q.label));
+      if (!p) return [t];
+      const said = t.includes(cap(p.label)) ? cap(p.label) : p.label, i = t.indexOf(said);
+      return [...names(t.slice(0, i)), el("b", `who ${fam(p.family)}`, said), ...names(t.slice(i + said.length))];
+    };
+    line.replaceChildren(...(lead ? [...names(here), el("span", "here", ...names(text))] : [...(got?.kind === "find" ? [icon("star")] : []), ...names(text), ...(here ? [el("span", "here", ...names(here))] : [])]));
     now.className = got ? got.kind : "";
     now.classList.toggle("long", line.offsetHeight > now.clientHeight);   // more than the box holds: set smaller
     if (line.offsetHeight > now.clientHeight) line.querySelector(".here")?.remove();   // still more: the engine's sentence alone
