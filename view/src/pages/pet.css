@@ -60,7 +60,7 @@
 .pcols { column-gap: 32px; }
 .psec { padding: 0; margin-bottom: 12px; background: none; border: 0; box-shadow: none; }
 .psec h2 { color: var(--ink2); text-transform: uppercase; letter-spacing: 1px; word-spacing: 0; margin: 4px 0 6px; font: inherit; }
-.psec h3 { color: var(--ink2); margin: 8px 0 2px; }
+.psec h3 { color: var(--ink2); margin: 8px 0 2px; word-spacing: 0; }
 .psec dt, .psec .hint, .bul .read, .timeline .icon, .timeline .when { color: var(--ink2); }
 .psec blockquote { font-style: normal; }
 .bul li { border-left-color: var(--line); }
@@ -74,3 +74,4 @@ p.iconed, .iconed li { flex-direction: row; display: flex; gap: 8px; align-items
 .pthing.gone .pic > * { opacity: 0.6; }
 .timeline li { grid-template-columns: 16px 64px 1fr; }
 .timeline .when { font-family: var(--pixel); }
+.bul .read { display: block; overflow: visible; }   /* (cut to a few lines in pet.ts, not clipped by its box) */

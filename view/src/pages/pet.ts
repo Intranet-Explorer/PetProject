@@ -113,7 +113,7 @@ export async function render(root: HTMLElement, id: string | null) {
     w.songs.length ? [el("h3", "", "Songs"), el("ul", "bul", ...w.songs.map((s) => el("li", "", `“${s.name}”`, el("span", "hint", ` ${s.how === "by ear" ? "picked up by ear" : s.how}`))))] : null,
     w.walls.length ? [el("h3", "", "Written on walls"), el("ul", "bul", ...w.walls.map((s) => el("li", "", `“${s.text}”`, el("span", "hint", ` ${s.place}`))))] : null,
     w.reads.length ? [el("h3", "", "What it asked the book and the screens"), el("ul", "bul", ...w.reads.map((r) =>
-      el("li", "", el("b", "", `“${r.question}”`), el("span", "hint", ` day ${r.day} · read about ${r.title}`), el("p", "read", r.text))))] : null,
+      el("li", "", el("b", "", `“${r.question}”`), el("span", "hint", ` day ${r.day} · read about ${r.title}`), el("p", "read", r.text.length > 160 ? `${r.text.slice(0, 160).replace(/\s+\S*$/, "")}…` : r.text))))] : null,
     page.my_life ? [el("h3", "", "Its life, in its own words"), quote(page.my_life)] : null,
     !lastSaid && !message && !w.beliefs.length && !w.sayings.length && !w.songs.length && !w.walls.length && !w.reads.length && !page.my_life
       ? el("p", "hint", "Nothing yet.") : null);

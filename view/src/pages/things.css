@@ -45,9 +45,9 @@ a.tslot > * { max-width: 100%; max-height: 100%; }
 #page-thing .thead h2 { font-size: 32px !important; line-height: 32px; word-spacing: 0; }   /* (an id, to beat skin.css's 16 px rule) */
 .tpage .tbig { width: 144px; height: 144px; }
 .tpage .tbig.dark { color: var(--on-page); }
-.tpage > h3 { color: var(--ink2); text-transform: uppercase; letter-spacing: 1px; margin: 8px 0 0; }
+.tpage > h3 { color: var(--ink2); text-transform: uppercase; letter-spacing: 1px; word-spacing: 0; margin: 8px 0 0; }
 .tfacts dt { color: var(--ink2); }
 @media (max-width: 640px) { .tpage .tbig { width: 112px; height: 112px; } }
 /* the pixel face for the small labels too (style.css sets them in a monospace) */
 :is(.things, .tpage, .ptip, .story, .petpage) :is(.badge, .tag) { font-family: var(--pixel); line-height: 16px; }
-.tpage { max-width: 760px !important; }
+#page-thing > .tpage { max-width: 760px; }
