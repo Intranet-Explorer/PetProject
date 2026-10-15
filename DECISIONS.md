@@ -1775,3 +1775,23 @@ Tested with the scripted brain on copies of the live house, then for one world d
 - **The board (§11)** replaces the sign's forecast and headlines: the Works line and its meter first, then up to four
   feats, one to a pet, the young and the rarely named sooner. It turns every world hour, or at once for a new feat.
 - **Numbers** are in `config.toml [drive]`, `[novelty]`, `[body]`, `[make]` and `works.toml`.
+- **Clearing, after the test day (Tyler, 14 October).** The nursery stayed at the cap all day: its floor was ten
+  things, six of them boxes and baskets, and the one thing §1 lets go (an empty box) was Grey Light's, who had never
+  found the machine room. So anyone about may now put a crowded room's old things into a box or onto a shelf with room
+  in that room (a tidying job, pulling like a mess: `order.clear_pull`). Only the owner feeds its things to the
+  machine. Statues stay: the machine refuses anything made or named as a statue (on the copy, Open Hand fed "first
+  one's statue whole", its parent's, before this).
+- **The Works' first goal is 3 scrap**, then 6, 10, 15, 20 (Tyler: small enough to pay off within a world day; the
+  copy fed it five in its test day). "Nearly full" is from 0.6 of the goal.
+- **Names that begin with an article** ("the letting go") keep it when an action names them: the machine could not
+  take one, and the live house's "you could not use the letting go (that is not here)" was the same fault.
+- **Ambitions** are said to others in the engine's plain words ("Open Stone means to be the first of its family to
+  warm cloth in its life"); the pet's own words are for itself and its page. Two pets cannot take one first on the
+  same night.
+
+The test day (a copy of the live house with the real model, ticks 77711 to 79511, after one restart of the copy for
+the article fault): every §0 bar passed but four. Rooms at the cap (the nursery, 20 world hours) and the Works (not
+reached at 12) were fixed as above and checked on the copy's own nursery and scrap count, not by another test day.
+Charms were 6 of 13 things made (Tyler: too few to judge; watched on live). v3.4's busy paws is a near-miss: its
+bar takes each pet's worst five minutes, and four of the five pets handled two things there; 96% to 99% of their
+five-minute windows had three or more, Open Stone's 86% (the live house misses it on some days too).
