@@ -163,7 +163,13 @@ export function layout(type: string | null, then: () => void): Layout | null | u
   if (layouts.has(type)) return layouts.get(type);
   if (!asked.has(type)) {
     asked.add(type);
-    json<Layout | null>(`rooms/${encodeURIComponent(type)}.json`, null).then((l) => { layouts.set(type, l); then(); });
+    // a room type with no layout has none (404); one that could not be fetched just now is asked for again, not taken
+    // as having none (15 October 2026: a failed fetch left the machine room on a plain floor until a reload)
+    const ask = () => fetch(`${base}/rooms/${encodeURIComponent(type)}.json`).then(async (r) => {
+      if (r.ok || r.status === 404) { layouts.set(type, r.ok ? ((await r.json()) as Layout) : null); then(); }
+      else setTimeout(ask, 2000);
+    }, () => setTimeout(ask, 2000));
+    void ask();
   }
   return undefined;
 }

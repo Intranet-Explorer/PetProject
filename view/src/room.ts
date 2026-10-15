@@ -216,10 +216,13 @@ export class Room {
       this.pace = this.tick < 0 || fresh ? tickMs(snap) : clamp(now - this.lastUpdate, 120, Math.max(2600, tickMs(snap) * 1.25));
       [this.tick, this.lastUpdate] = [snap.tick, now];
     }
+    // its layout not in yet: the room on screen stays as it was (or nothing, the first time) until it is, rather than a
+    // plain floor for a moment or longer; the layout's arrival draws it
+    const lay = layout(room.type, () => { this.built = ""; if (this.scene) this.update(this.scene); });
+    if (lay === undefined) return;
     this.roomId = room.id;
     if (fresh) { this.fx.clear(); this.over.clear(); this.ghosts.clear(); this.crate?.destroy(); this.crate = null; this.hatched.clear(); }
 
-    const lay = layout(room.type, () => { this.built = ""; if (this.scene) this.update(this.scene); });
     const keep = this.keep();
     const key = JSON.stringify([room.id, room.type, lay === undefined, room.areas, Object.entries(room.objects).map(([n, o]) => [n, o.pos, o.state, o.wall, o.on, o.store?.holds, o.servings === 0, o.grow != null && o.grow < 0.35, o.water, o.planted, o.build,
       o.made && [o.made.recipe, o.made.active, o.made.behavior?.do, o.made.worn, !!o.made.heirloom], !!o.memorial]), room.spots, room.paint, room.painted, room.doors, room.shut, room.wet, snap.power,
