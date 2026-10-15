@@ -149,7 +149,7 @@ function auto(s: Snap) {
   followNow = false;
   let to: { room: string; why: string } | null = null;
   if (pending && pending.room !== view.room && still) to = pending;
-  else if (best && best[0] !== view.room && still && (due || mine < 0) && best[1].n >= mine + 10) to = { room: best[0], why: best[1].why };
+  else if (best && best[0] !== view.room && still && !banners.showing && (due || (mine < 0 && now - autoAt > 20_000)) && best[1].n >= mine + 10) to = { room: best[0], why: best[1].why };   // (an empty room is left soon, but not the moment an event has brought the page to it)
   if (pending && (pending.room === view.room || to)) pending = null;
   if (!to) return view.room;
   follows.push({ at: Date.now(), tick: s.tick, from: view.room, to: to.room, why: to.why });
@@ -460,6 +460,7 @@ function board(s: Snap) {
 function marquee(box: HTMLElement) {
   requestAnimationFrame(() => measure(box));   // (after layout: a panel not laid out yet measures nothing)
 }
+void document.fonts.ready.then(() => marquee($("board")));   // (and once the LED face is in: before, a line measures short)
 function measure(box: HTMLElement) {
   for (const p of box.querySelectorAll<HTMLElement>("p")) {
     if (!p.clientWidth) continue;

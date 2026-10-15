@@ -364,9 +364,9 @@ button.followchip.off { background: var(--paper); }
 #board.led { background: #0a1424; border: 2px solid var(--holo-line); border-image: none; padding: 4px 6px; color: var(--holo); display: block; margin: 0; overflow: hidden; }
 #board.led p { margin: 0; white-space: nowrap; overflow: hidden; }
 #board.led p.a { color: var(--amber); text-shadow: 0 0 6px var(--amber-glow); }
-#board.led p .txt { display: inline-block; }
+#board.led p .txt { display: inline-block; position: relative; left: 0; }
 #board.led p.run .txt { animation: marquee 9s ease-in-out infinite alternate; }
-@keyframes marquee { 0%, 15% { transform: translateX(0); } 85%, 100% { transform: translateX(var(--over)); } }
+@keyframes marquee { 0%, 15% { left: 0; } 85%, 100% { left: var(--over); } }   /* (by position, not a transform: a sliding layer went unpainted in some captures) */
 #board.led .cur { display: inline-block; width: 10px; height: 16px; margin-left: 2px; vertical-align: -2px; background: var(--amber); box-shadow: 0 0 6px var(--amber-glow); animation: blink 1s steps(1) infinite; }
 #board.led p.run .cur { display: none; }
 @keyframes blink { 50% { opacity: 0; } }
