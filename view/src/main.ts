@@ -757,9 +757,13 @@ let tipTimer: ReturnType<typeof setTimeout> | undefined;
 /** Show the card for what is at this place in the room (`fx`, `fy` are how far across and down the room's box it is,
  *  0 to 1). The card stands beside what it describes, never on it, with a small point toward it; it stays inside the
  *  room's walls, and of the four sides it takes the one where it covers least of the pets and their captions. */
+let lastCard: [Target | null, number, number] | null = null;
+// a thing's card fills itself in after it is placed: placed again when it grows, so it stays within the window
+new ResizeObserver(() => { if (!$("tip").hidden && lastCard && $("tip").classList.contains("holdscard")) card(lastCard[0], lastCard[1], lastCard[2], -1); }).observe($("tip"));   // (-1: placed again only; a tap's timer runs on)
 function card(t: Target | null, fx: number, fy: number, forMs = 0) {
+  lastCard = [t, fx, fy];
   const tip = $("tip"), kids = t ? tipFor(t) : null;
-  clearTimeout(tipTimer);
+  if (forMs !== -1) clearTimeout(tipTimer);
   tip.hidden = !kids;
   if (!kids) return;
   const key = JSON.stringify([t, t?.object && snap?.rooms.find((r) => r.id === view.room)?.objects[t.object]?.made ? null : snap?.tick]), nib = el("i", "nib");   // (a thing's card is not rebuilt every tick: it fills itself in)
@@ -782,7 +786,7 @@ function card(t: Target | null, fx: number, fy: number, forMs = 0) {
   const point = tip.querySelector<HTMLElement>(".nib")!, across = best.side === "below" || best.side === "above";
   point.className = `nib ${best.side}`;
   point.style.cssText = across ? `left:${within(px - best.x - 6, 6, w - 18)}px` : `top:${within(py - best.y - 6, 6, h - 18)}px`;
-  if (forMs) tipTimer = setTimeout(() => (tip.hidden = true), forMs);
+  if (forMs > 0) tipTimer = setTimeout(() => (tip.hidden = true), forMs);
 }
 room.onHover = (t, fx, fy) => card(t, fx, fy);
 
