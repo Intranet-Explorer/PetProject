@@ -1,7 +1,5 @@
-// SPEC-v3.5.6 §6, §9: a name shown only on hover (a mouse) or on a tap (a finger), on a paper strip (skin.css .paper:
-// Travel Book Popup01a, the same as the room's #tip). One box for the page. tipOn() gives a link one: with a mouse it
-// shows while the pointer is on the link and the click opens it; with a finger the first tap shows it and a second tap
-// (on the link, or a link inside the tip) opens it; from the keyboard it shows on focus and Enter opens it.
+// SPEC-v3.5.6 §6, §9: a name shown on hover, on a paper strip (skin.css .paper: Travel Book Popup01a, the same as the
+// room's #tip). One box for the page. (SPEC-v3.5.7 §7: the Things tab's slots show it under a mouse; a tap chooses.)
 import { el } from "../dom";
 
 const box = el("div", "tipbox paper ptip");
@@ -26,20 +24,6 @@ export function showTip(at: HTMLElement, kids: Node[], touch = false) {
   const y = r.top - h - gap >= 8 ? r.top - h - gap : Math.min(r.bottom + gap, innerHeight - h - 8);
   box.style.left = `${Math.round(Math.max(8, Math.min(innerWidth - w - 8, r.left + r.width / 2 - w / 2)))}px`;
   box.style.top = `${Math.round(Math.max(8, y))}px`;
-}
-
-/** Give `link` its tip, made by `kids` when it is shown. */
-export function tipOn(link: HTMLAnchorElement, kids: () => Node[]) {
-  let finger = false;
-  link.addEventListener("pointerdown", (e) => (finger = e.pointerType !== "mouse"));
-  link.addEventListener("pointerenter", (e) => { if (e.pointerType === "mouse") showTip(link, kids()); });
-  link.addEventListener("pointerleave", (e) => { if (e.pointerType === "mouse" && on === link) hideTip(); });
-  link.addEventListener("focus", () => { if (!finger) showTip(link, kids()); });
-  link.addEventListener("blur", () => { if (on === link && !finger) hideTip(); });
-  link.addEventListener("click", (e) => {
-    if (finger && on !== link) { e.preventDefault(); showTip(link, kids(), true); }
-    finger = false;
-  });
 }
 
 // anything else touched, the page scrolled, or another page opened: the tip goes

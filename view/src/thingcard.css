@@ -1,0 +1,35 @@
+/* SPEC-v3.5.7 §5: the thing card (thingcard.ts, hover.html). On a paper panel (.paper: Popup01a); its picture in a dark
+   slot; badges on Travel Book frames (Frame04a, the gold ones FrameSelect01a); the bits in light slots. Sizes come from
+   skin.css's type roles: .title is Toriko 32, the rest Pixelify at --text. */
+.thingcard { width: min(420px, calc(100vw - 24px)); color: var(--ink); filter: drop-shadow(0 4px 0 rgb(0 0 0 / 40%)); }
+.tccontent, .thingcard { display: flex; flex-direction: column; gap: 4px; }
+.tctop { display: flex; gap: 12px; align-items: flex-start; min-width: 0; margin-top: 10px; }
+.tcslot { position: relative; flex: none; width: 112px; height: 112px; display: flex; align-items: center; justify-content: center; color: var(--on-page); }
+.tcslot > canvas, .tcslot > svg { max-width: 100%; max-height: 100%; }
+img.tcstar { position: absolute; left: -14px; top: -14px; width: 24px; height: 22px; }
+.tchead { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; overflow-wrap: anywhere; }
+.tchead .tcname { margin: 0; color: var(--ink); }
+.tckind { margin: 0; color: var(--ink2); }
+.tcbadges { margin: 2px 0 0; display: flex; flex-wrap: wrap; gap: 4px; }
+.tcbadge { display: inline-flex; align-items: center; gap: 4px; border-style: solid; border-width: 8px; border-image: url("../assets/third_party/crusenho/UI_TravelBook_Frame04a.png") 4 fill stretch;
+  padding: 0 2px; color: var(--ink2); font-family: var(--read); }
+.tcbadge.gold { border-image-source: url("../assets/third_party/crusenho/UI_TravelBook_FrameSelect01a.png"); color: var(--ink); }
+.tcbadge.silver { color: #39434d; }
+.tcbadge.blue { color: #1d4a7a; }
+.tcbadge img { width: 12px; height: 11px; image-rendering: pixelated; }
+.tcmaker { display: flex; gap: 8px; align-items: center; margin-top: 4px; }
+.tcmaker canvas { flex: none; }
+.tcwhere { color: var(--ink2); }
+.thingcard h4.tcsec, .tccontent h4.tcsec { margin: 8px 0 0; color: var(--ink2); }
+.tcmats { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.tcmat { display: inline-flex; align-items: center; gap: 4px; padding: 0 4px 0 0; }
+.tcrows { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 2px 12px; margin: 0; overflow-wrap: anywhere; }
+.tcrows dt { color: var(--ink2); }
+.tcrows dd { margin: 0; }
+.tcbar { display: block; margin-top: 4px; }
+.tcbar .wbar { max-width: 260px; }
+.tcsmall { display: block; color: var(--ink2); }
+.tcwords { margin: 8px 0 0; padding-left: 8px; border-left: 4px solid #c98f62; color: var(--ink); display: flex; flex-direction: column; gap: 4px; overflow-wrap: anywhere; }
+.tcwords p { margin: 0; }
+.tchint { margin: 4px 0 0; text-align: right; color: var(--ink2); }
+@media (max-width: 640px) { .tctop { flex-direction: column; } }

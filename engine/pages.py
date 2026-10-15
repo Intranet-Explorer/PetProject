@@ -121,11 +121,25 @@ def thing_key(o_made, name):
     return str(o_made["id"]) if o_made.get("id") is not None else "g%s-%s" % (o_made.get("made") or o_made.get("tick"), re.sub(r"\W+", "-", name))
 
 
+def made_firsts(house):
+    """(maker, tick made, kind) -> "house" or "family": the made things that were a first (SPEC-v3.5.7 §5, §7), from the
+    house's feats ("kind:rug", or "make:rug|soft" for the first soft one), each logged at the very tick the thing was
+    made. Feats were kept from day 61 (SPEC-v3.5.4); a first before then is not known."""
+    out = {}
+    for f in house.get("feats", {}).get("list", []):
+        kind, _, key = f.get("key", "").partition(":")
+        if f["kind"] == "first" and kind in ("kind", "make") and f.get("level") in ("house", "family"):
+            k = (f["pet"], f["tick"], key.split("|")[0])
+            out[k] = "house" if "house" in (out.get(k), f["level"]) else "family"
+    return out
+
+
 def all_things(eng):
     """Everything made, where it is now, newest first: standing or put away in a room (a keepsake box says whose),
     and what is gone and how."""
     h, cfg = eng.house, eng.cfg
-    fam, names = families(h), numbered(h)
+    fam, names, firsts_ = families(h), numbered(h), made_firsts(h)
+    first = lambda by, tick, r: firsts_.get((by, tick, r.get("kind")))
     out = []
     for r in h["rooms"].values():
         if not r["type"]:
@@ -139,7 +153,8 @@ def all_things(eng):
             out.append({"id": thing_key(m, n), "name": n, "recipe": m["recipe"], "by": m["by"], "by_name": names.get(m["by"]), "owner": m.get("owner"),
                         "family": fam.get(m["by"]), "room": r["id"], "room_name": r["name"], "where": where, "gone": None, "tick": m["tick"],
                         "day": day_of(cfg, m["tick"]), "bits": m.get("bits", []), "uses": m.get("uses", 0), "heirloom": bool(m.get("heirloom")),
-                        "invented": m["recipe"].get("kind") in h.get("invented", {}), "statue": False, "keepsake": bool(keep), "star": m.get("star")})
+                        "invented": m["recipe"].get("kind") in h.get("invented", {}), "statue": False, "keepsake": bool(keep), "star": m.get("star"),
+                        "first": first(m["by"], m["tick"], m["recipe"])})
         for n, o in r["objects"].items():
             if o.get("statue") or (o.get("fix", {}).get("built") and "statue" in n):
                 # a statue standing has `fix.built` (who raised it, began and finished); one going up has `site`
@@ -157,7 +172,8 @@ def all_things(eng):
         out.append({"id": thing_key(g, g["name"]), "name": g["name"], "recipe": g["recipe"], "by": g["by"], "by_name": names.get(g["by"]), "owner": g.get("owner"),
                     "family": fam.get(g["by"]), "room": None, "room_name": None, "where": GONE_WHERE.get(g["gone"][1], g["gone"][1]), "gone": g["gone"][1],
                     "tick": g["made"], "day": day_of(cfg, g["made"]), "bits": [], "uses": g.get("uses", 0), "heirloom": False,
-                    "invented": g["recipe"].get("kind") in h.get("invented", {}), "statue": False, "keepsake": False, "star": g.get("star")})
+                    "invented": g["recipe"].get("kind") in h.get("invented", {}), "statue": False, "keepsake": False, "star": g.get("star"),
+                    "first": first(g["by"], g["made"], g["recipe"]), "gone_day": day_of(cfg, g["gone"][0])})
     out.sort(key=lambda t: -(t["tick"] or 0))
     return {"things": out, "kinds": sorted({t["recipe"].get("kind") for t in out if t["recipe"].get("kind")}),
             "rooms": sorted({t["room_name"] for t in out if t["room_name"]})}
@@ -177,7 +193,53 @@ def thing_page(eng, key):
         like = "%" + name.replace("%", "") + "%"
     moments = rows(eng.db, "SELECT tick, day, hour, kind, text, pet, room FROM moments WHERE text LIKE ? AND tick >= ? ORDER BY tick LIMIT 400",
                    like, t["tick"] or 0) if eng.db else []
-    return dict(t, moments=[m for m in moments if ok(m)][:200], does=(t["recipe"] or {}).get("purpose"))
+    return dict(t, moments=[m for m in moments if ok(m)][:200], does=(t["recipe"] or {}).get("purpose"), **({} if t["statue"] else thing_more(eng, t)))
+
+
+USED = ("use", "sit on", "play")   # what in the log's `doing` is a pet using a thing (not tidying it, carrying it or putting it away)
+
+
+def thing_more(eng, t):
+    """SPEC-v3.5.7 §5: what the thing card shows beyond the list, each only as far as it is recorded: what its kind is
+    for, the room it was made in (its "made" moment), the things it was joined from, who used it most (the log's
+    `doing`, kept from tick 17663, which sees sitting, playing and using but not, say, a lamp's warmth), and what pets
+    said or wrote about it (claims and inscriptions that name it)."""
+    h, cfg, db, name, kind = eng.house, eng.cfg, eng.db, t["name"], t["recipe"].get("kind")
+    if t["gone"]:
+        rec = next((g for g in h.get("gone_things", []) if g["name"] == name and g["made"] == t["tick"]), {})
+        end = (rec.get("gone") or [None])[0]
+    else:
+        rec, end = h["rooms"][t["room"]]["objects"].get(name, {}).get("made", {}), None
+    inv, tool = h.get("invented", {}).get(kind), cfg["craft"]["tool"].get(kind)
+    need = cfg["materials"].get(t["recipe"].get("material"), {}).get("need")
+    use = inv["does"] if inv and inv.get("does") else "used to %s" % tool["does"] if tool else "for %s" % need if need else None
+    out = {"use": use, "material": t["recipe"].get("material"), "joined": rec.get("from") or [], "invention": bool(inv and inv.get("by") == t["by"] and inv.get("tick") == t["tick"]),
+           "made_in": None, "used_by": [], "words": []}
+    if not db:
+        return out
+    upto = end if end is not None else 1 << 62
+    m = rows(db, "SELECT room FROM moments WHERE kind = 'made' AND tick = ? AND pet = ? AND text LIKE ?", t["tick"], t["by"], "%'" + name + "'%")
+    out["made_in"] = h["rooms"].get(m[0]["room"], {}).get("name") if m and m[0]["room"] else None
+    out["used_by"] = rows(db, "SELECT pet AS id, COUNT(*) AS n FROM doing WHERE lower(thing) = lower(?) AND what IN (%s) AND tick_from BETWEEN ? AND ? "
+                          "GROUP BY pet ORDER BY n DESC" % ",".join("?" * len(USED)), name, *USED, t["tick"] or 0, upto)
+    if " " in name:   # a one-word name ("leaning") is a word pets use for other things too
+        longer = [n for n in all_names(h) if n != name.lower() and name.lower() in n]   # "dusk signal" is not "dusk signal two"
+        said = re.compile(r"(?<![\w'])%s(?![\w])" % re.escape(name), re.I)
+        seen = set()
+        for r in rows(db, "SELECT pet, tick, kind, text FROM claims WHERE kind IN ('tell', 'writing') AND text LIKE ? AND tick BETWEEN ? AND ? ORDER BY tick",
+                      "%" + name + "%", t["tick"] or 0, upto):
+            low = r["text"].lower()
+            if said.search(r["text"]) and not any(n in low for n in longer) and low not in seen:
+                seen.add(low)
+                out["words"].append({"pet": r["pet"], "tick": r["tick"], "day": day_of(cfg, r["tick"]), "how": "wrote" if r["kind"] == "writing" else "said", "text": r["text"]})
+    for r in rows(db, "SELECT by, tick, text FROM inscriptions WHERE place = ? AND what = 'written' AND tick BETWEEN ? AND ? ORDER BY tick", name, t["tick"] or 0, upto):
+        out["words"].append({"pet": r["by"], "tick": r["tick"], "day": day_of(cfg, r["tick"]), "how": "wrote on it", "text": r["text"]})
+    out["words"] = sorted(out["words"], key=lambda w: w["tick"])[:6]
+    return out
+
+
+def all_names(h):
+    return {n.lower() for r in h["rooms"].values() if r["type"] for n in things.made(r)} | {g["name"].lower() for g in h.get("gone_things", [])}
 
 
 def pet_page(eng, pid, beliefs_of):
