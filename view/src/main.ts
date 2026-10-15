@@ -427,6 +427,7 @@ function controls(s: Snap, here: RoomV) {
   $("controls").hidden = !!replayId || over;
   $("ended").hidden = !!replayId || !over;
   document.querySelector("footer")!.hidden = !!replayId;
+  $("chosen").hidden = !!replayId || over;   // (v3.5.6: naming sits beside the cards now, not in the footer)
   if (replayId || over) return;
   // a control that cannot be used here says why: in its own words where it can, and in its title
   const set = (id: string, off: boolean, why: string, text?: string) => { const b = $<HTMLButtonElement>(id); b.disabled = off; b.title = off ? why : ""; if (text) b.textContent = text; };
