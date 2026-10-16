@@ -79,14 +79,15 @@ function bubbleCanvas(lines: string[], o: { fill: string; ink: string; text: str
   draw(x, lines, px, y, { color: o.text });
   return c;
 }
-/** The colour inside a bubble of the art's, for the tail that runs from it. */
+/** The colour inside a bubble of the art's (or of its outline, `edge`), for the tail that runs from it. */
 const fills = new Map<string, number>();
-function fillOf(art: string, or: number) {
-  if (!fills.has(art)) {
-    const d = def(art), c = d ? canvasOf(art) : null, p = c?.getContext("2d")!.getImageData(c.width >> 1, c.height >> 1, 1, 1).data;
-    fills.set(art, p && p[3] ? (p[0] << 16) | (p[1] << 8) | p[2] : or);
+function fillOf(art: string, or: number, edge = false) {
+  const key = `${art}|${edge}`;
+  if (!fills.has(key)) {
+    const d = def(art), c = d ? canvasOf(art) : null, p = c?.getContext("2d")!.getImageData(c.width >> 1, edge ? 0 : c.height >> 1, 1, 1).data;
+    fills.set(key, p && p[3] ? (p[0] << 16) | (p[1] << 8) | p[2] : or);
   }
-  return fills.get(art)!;
+  return fills.get(key)!;
 }
 /** The sign for a thing a body does when the art has none: a small plain dot. */
 function dot() {
@@ -230,7 +231,7 @@ export class Labels {
         const r = k === e.line ? line : this.spot(k, e, b, room);
         k.ease(dt);
         k.s.position.set(r.x, r.y);
-        if (k !== e.line && k.want && k.alpha > 0.5) this.tail(g, r, e.under || !e.line.want ? b : line, k === e.say, k === e.say ? fillOf("ui.bubble.say", 0xffffff) : fillOf("ui.bubble.think", 0xfffdf2));
+        if (k !== e.line && k.want && k.alpha > 0.5) this.tail(g, r, e.under || !e.line.want ? b : line, k === e.say, k === e.say ? fillOf("ui.bubble.say", 0xffffff) : fillOf("ui.bubble.think", 0xfffdf2), k === e.say ? fillOf("ui.bubble.say", 0x2b2233, true) : 0x2b2233);
       }
     }
     for (const t of this.tags.values()) {   // names: on for a moment, or held; a stone keeps its own, faintly
@@ -266,7 +267,7 @@ export class Labels {
   }
 
   /** A bubble's tail, all the way to its owner: a wedge for speech, a string of dots for a thought, in lettering pixels. */
-  private tail(g: Graphics, r: Rect, b: Rect, speech: boolean, fill: number) {
+  private tail(g: Graphics, r: Rect, b: Rect, speech: boolean, fill: number, ink = 0x2b2233) {
     const F = this.F, snap = (v: number) => Math.round(v / F) * F;
     const tx = clamp(r.x + r.w / 2, b.x + b.w * 0.3, b.x + b.w * 0.7), ty = clamp(r.y + r.h / 2, b.y + 2 * F, b.y + b.h - 2 * F);   // a point on the owner
     const ax = clamp(tx, r.x + 6 * F, r.x + r.w - 6 * F), ay = clamp(ty, r.y + 4 * F, r.y + r.h - 4 * F);                           // and one just inside the bubble
@@ -279,7 +280,7 @@ export class Labels {
       blocks.push(snap(ax + (tx - ax) * k), snap(ay + (ty - ay) * k), j < m / 2 ? 1.5 * F : F);
     }
     for (let i = 0; i < blocks.length; i += 3) g.rect(blocks[i] - blocks[i + 2] - F, blocks[i + 1] - blocks[i + 2] - F, 2 * blocks[i + 2] + 2 * F, 2 * blocks[i + 2] + 2 * F);
-    g.fill(0x2b2233);
+    g.fill(ink);
     for (let i = 0; i < blocks.length; i += 3) g.rect(blocks[i] - blocks[i + 2], blocks[i + 1] - blocks[i + 2], 2 * blocks[i + 2], 2 * blocks[i + 2]);
     g.fill(fill);
   }

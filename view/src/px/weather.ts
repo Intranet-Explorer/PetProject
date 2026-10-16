@@ -11,7 +11,7 @@ import { FX, FY, H, OX, OY, TILE, W } from "./geom";
 import type { Rect } from "./geom";
 import type { Lamp } from "./still";
 
-export type Env = { phase: string; weather: string; season: string; power: boolean; lit: boolean; cold: boolean; night: number; day: number; sky: string | null;
+export type Env = { phase: string; hour: number; weather: string; season: string; power: boolean; lit: boolean; cold: boolean; night: number; day: number; sky: string | null;
   windowTiles: Tile[]; windows: Rect[]; lamps: Lamp[]; sun: number[] | null;
   /** Glass that is part of the walls (a glass-roofed room): weather shows on it as drops and runs, never as rain in the room. */
   panes: Rect[] };
@@ -57,6 +57,9 @@ export class Light {
   glow = new Container();       // halos round what is lit, above the dark
   falling = new Container();    // rain, snow, shimmer in the room
   panes = new Graphics();       // rain, snow, stars on the window glass
+  /** SPEC-v3.5.9 §4: where the sun through each window falls on the floor just now ([x, y, w, h] each), for dust in it. */
+  beams: number[][] = [];
+  private bright: number[] = [];   // each halo's own strength, before it flickers
   /** 0 (full day) to 1: how dark the room is just now, for anything that should show more at night. */
   darkness = 0;
   flashing = false;
@@ -122,6 +125,29 @@ export class Light {
       s.alpha = l.color[0] < 128 ? 0 : Math.min(0.4, this.darkness * 0.7);   // by day a lamp hardly shows; by night it must not bleach what it stands on
       this.glow.addChild(s);
     }
+    this.bright = this.glow.children.map((c) => c.alpha);
+    this.sunbeams(env);
+  }
+
+  /** SPEC-v3.5.9 §4: by day the sun comes in at each window and lies on the floor in a shaft that swings across it with
+   *  the hour, short at noon and long morning and evening, warm toward evening; faint through cloud, none in a storm. */
+  private sunbeams(e: Env) {
+    this.beams = [];
+    const strength = e.phase === "night" ? 0 : ({ clear: 1, heat: 1, cloudy: 0.35, rain: 0.18, snow: 0.25 } as Record<string, number>)[e.weather] ?? 0;
+    if (!strength) return;
+    const h = e.hour, up = Math.sin((Math.PI * Math.max(0, Math.min(14, h - 6))) / 14), slope = (13 - h) * 0.11, long = Math.round(26 + (1 - up) * 34);
+    const warm = mix([255, 246, 214], [255, 178, 104], Math.max(0, Math.min(1, (h - 15.5) / 3))), color = (warm[0] << 16) | (warm[1] << 8) | warm[2];
+    const g = new Graphics();
+    for (const w of e.windows) {
+      if (w.w < 4) continue;
+      for (let y = 0; y < long; y++) {
+        const k = y / long, x = Math.round(w.x + y * slope - k * 2), ww = Math.round(w.w + k * 4);
+        g.rect(x, OY + y, ww, 1).fill({ color, alpha: strength * 0.3 * (1 - k * 0.7) * (e.phase === "dusk" ? 0.6 : 1) });
+      }
+      this.beams.push([w.x + (long / 2) * slope, OY + long / 2, w.w + 2, long]);
+    }
+    this.glow.addChildAt(g, 0);
+    this.bright.unshift(1);
   }
 
   step(now: number) {
@@ -132,6 +158,7 @@ export class Light {
     if (soft !== this.soft) { this.soft = soft; this.dirty = true; }
     if (this.flashing && !this.wasFlashing) this.dip = now + 260;   // the lamps flicker once at a flash
     this.glow.alpha = now < this.dip ? 0.3 : 1;
+    if (!REDUCE.matches) this.glow.children.forEach((c, i) => { if (i || !this.beams.length) c.alpha = this.bright[i] * (0.9 + 0.1 * Math.sin(now / 150 + i * 1.7) * Math.sin(now / 67 + i)); });   // SPEC-v3.5.9 §7: a lamp's glow lives
     if (this.dirty || this.flashing !== this.wasFlashing || (now < this.dip) !== this.dipped || now - this.drawn > (this.pools.length && this.darkness > 0.25 ? 70 : 160)) this.map(now);
     this.wasFlashing = this.flashing;
     this.fall(now);
@@ -242,6 +269,12 @@ export class Light {
       if (ww < 3 || hh < 3) continue;
       const [color, alpha] = this.flashing ? [0xffffff, wall ? 0.5 : 0.9] : wall ? [0, 0] : SKY[e.phase] ?? DULL[e.weather] ?? [0, 0];
       if (alpha) g.rect(x, y, ww, hh).fill({ color, alpha });
+      if (e.season === "winter" && !wall) {   // SPEC-v3.5.9 §4: frost creeping in from the corners and along the edges
+        for (const [cx, sx] of [[x, 1], [x + ww - 1, -1]]) for (const [cy, sy] of [[y, 1], [y + hh - 1, -1]]) g.rect(cx, cy, 1, 1).rect(cx + sx, cy, 1, 1).rect(cx, cy + sy, 1, 1).rect(cx + 2 * sx, cy, 1, 1).rect(cx, cy + 2 * sy, 1, 1).rect(cx + sx, cy + sy, 1, 1);
+        for (let i = 3; i < ww - 3; i += 3 + (i % 2)) g.rect(x + i, y + hh - 1, 1, 1);
+        for (let j = 3; j < hh - 3; j += 4) g.rect(x, y + j, 1, 1).rect(x + ww - 1, y + j + 1, 1, 1);
+        g.fill({ color: 0xf2f8ff, alpha: 0.85 });
+      }
       if (wet) {
         for (let i = 0; i < Math.max(2, ww >> 2); i++) {
           const k = (now / 500 + i * 0.37) % 1;

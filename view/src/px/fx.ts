@@ -3,6 +3,7 @@
 // over the effect's life; an animation called "kinds" is a set of variants instead).
 // Sprites are reused, so a busy room allocates nothing per frame.
 import { Container, Sprite } from "pixi.js";
+import { textCanvas } from "./font";
 import type { Texture } from "pixi.js";
 import { anim, def, fromCanvas, has, tex } from "./assets";
 
@@ -28,6 +29,7 @@ const SHAPES: Record<string, [string[], string, boolean]> = {   // rows, colour,
   pip: [["##", "##"], "#ffffff", true],
   out: [["..##.", ".##..", "####.", "..##.", ".##..", "#...."], "#aab0c6", true],
   flag: [["###", "###", "#..", "#.."], "#ffffff", true],
+  wisp: [[".##.", "####", ".##."], "#ece6da", false],   // SPEC-v3.5.9: a small puff (at the bench), a breath in the cold
 };
 /** Our names here -> the art's, where they differ. */
 const ALIAS: Record<string, string> = { z: "zzz", chalk: "chalk dust", drop: "drip" };
@@ -56,6 +58,32 @@ export function fxTexture(name: string, frame = 0): Texture {
   return t;
 }
 
+/** SPEC-v3.5.9 §7: a soap-bubble ring, for a made thing rising from its maker; and a little red "made" stamp. */
+let ring: Texture | null = null, stamp: Texture | null = null;
+export function bubbleTexture() {
+  if (ring) return ring;
+  const c = document.createElement("canvas"), x = c.getContext("2d")!, R = 10;
+  c.width = c.height = 2 * R + 1;
+  for (let y = -R; y <= R; y++) for (let i = -R; i <= R; i++) {
+    const d = Math.hypot(i, y);
+    if (d > R + 0.5) continue;
+    x.fillStyle = d > R - 0.7 ? "rgba(255,255,255,0.9)" : "rgba(220,240,255,0.28)";
+    x.fillRect(i + R, y + R, 1, 1);
+  }
+  x.fillStyle = "#ffffff";
+  x.fillRect(R - 6, R - 5, 2, 1); x.fillRect(R - 6, R - 4, 1, 2);   // its shine
+  return (ring = fromCanvas(c));
+}
+export function stampTexture() {
+  if (stamp) return stamp;
+  const t = textCanvas(["MADE"], { color: "#c4484a" }), c = document.createElement("canvas"), x = c.getContext("2d")!;
+  [c.width, c.height] = [t.width + 6, 13];
+  x.fillStyle = "#fff6e8"; x.fillRect(1, 1, c.width - 2, c.height - 2);
+  x.strokeStyle = "#c4484a"; x.lineWidth = 1; x.strokeRect(0.5, 0.5, c.width - 1, c.height - 1);
+  x.drawImage(t, 3, 2);
+  return (stamp = fromCanvas(c));
+}
+
 type Mote = { s: Sprite; x: number; y: number; vx: number; vy: number; g: number; age: number; life: number; sway: number; name: string; frames: number; fps: number; a: number };
 type Tween = { t0: number; dur: number; fn: (k: number) => void; done?: () => void };
 export type MoteOpts = { vx?: number; vy?: number; g?: number; life?: number; sway?: number; tint?: number; alpha?: number };
@@ -65,6 +93,7 @@ export class Fx {
   private live: Mote[] = [];
   private pool: Sprite[] = [];
   private tweens: Tween[] = [];
+  private floats = new Set<Container>();
   private now = 0;
   /** Nothing rises past this (the top of the room, in its pixels): a note at the ceiling is gone, not cut in half. */
   top = 0;
@@ -109,6 +138,18 @@ export class Fx {
     this.c.addChild(s);
     this.tween(dur, (k) => s.position.set(from[0] + (to[0] - from[0]) * k, from[1] + (to[1] - from[1]) * k - Math.sin(k * Math.PI) * 7), () => { this.free(s); done?.(); });
   }
+  /** Pictures that pop in with a bounce at (x, y), rise `rise` pixels and fade over `dur` ms (the first is drawn behind). */
+  float(pics: [Texture, number][], x: number, y: number, rise = 14, dur = 1600) {
+    const c = new Container();
+    for (const [t, scale] of pics) { const s = new Sprite(t); s.anchor.set(0.5); s.scale.set(scale); c.addChild(s); }
+    this.c.addChild(c);
+    this.floats.add(c);
+    this.tween(dur, (k) => {
+      c.scale.set(k < 0.12 ? (k / 0.12) * 1.2 : k < 0.2 ? 1.2 - ((k - 0.12) / 0.08) * 0.2 : 1);
+      c.position.set(Math.round(x), Math.round(y - rise * k));
+      c.alpha = k > 0.7 ? (1 - k) / 0.3 : 1;
+    }, () => { this.floats.delete(c); c.destroy({ children: true }); });
+  }
   private free(s: Sprite) {
     s.visible = false;
     this.c.removeChild(s);
@@ -118,6 +159,8 @@ export class Fx {
     for (const m of this.live) this.free(m.s);
     this.live.length = 0;
     this.tweens.length = 0;
+    for (const c of this.floats) c.destroy({ children: true });
+    this.floats.clear();
   }
   step(now: number, dt: number) {
     this.now = now;

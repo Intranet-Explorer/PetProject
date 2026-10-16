@@ -16,5 +16,12 @@
   "tile": 16,
   "licence": "CC0",
   "by": "Karsiori"
+ },
+ "crusenho": {
+  "dir": "third_party/crusenho",
+  "tile": 16,
+  "licence": "CC BY 4.0 (Essential); Book Styles: use and change with credit, not to be re-sold or published as itself",
+  "by": "Crusenho Agus Hennihuno",
+  "skin": true
  }
 }

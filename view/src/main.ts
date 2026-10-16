@@ -746,7 +746,9 @@ function tipFor(t: Target): Kid[] | null {
   if (t.door) {
     const to = s.rooms.find((r) => r.id === here.doors[t.door!]), shut = here.shut.includes(t.door), pic = firstSprite(`door.${shut ? "shut" : "open"}`, "door");
     return [hasSprite(pic) ? sprite(pic, 3) : null, el("div", "", el("b", "", to?.type ? `the door to ${to.name}` : "a door nobody has been through"),
-      shut ? el("p", "", "It has blown shut.") : null, to?.type ? el("p", "hint", "Click to look in there.") : null)];
+      shut ? el("p", "", "It has blown shut.") : null,
+      to?.type ? el("p", "", `In there: ${s.pets.filter((p) => p.room === to.id && !(p.stage === "dead" && p.buried)).map((p) => (p.stage === "egg" ? p.name ?? "an egg" : p.label)).join(", ") || "nobody just now"}.`) : null,   // SPEC-v3.5.9 §7
+      to?.type ? el("p", "hint", "Click to look in there.") : null)];
   }
   if (o?.made) {   // SPEC-v3.5.7 §5: the thing card (thingcard.ts), filled in from the house's record as it arrives
     const m = o.made as typeof o.made & { id?: number; tick?: number }, key = m.id != null ? String(m.id) : `g${m.tick}-${t.object!.replace(/\W+/g, "-")}`;

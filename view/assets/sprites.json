@@ -757,7 +757,7 @@
  "season.winter.fix.window.closed": {"pack": "own", "file": "seasons.png", "rect": [112, 128, 16, 19], "anchor": [0, 28]},
  "season.winter.fix.window.open": {"pack": "own", "file": "seasons.png", "rect": [128, 128, 16, 19], "anchor": [0, 28]},
  "season.winter.fix.skylight": {"pack": "own", "file": "seasons.png", "rect": [144, 128, 16, 15], "anchor": [0, 30]},
- "ui.bubble.say": {"pack": "ninja", "file": "Ui/Theme/Wip/ThemeBubble/nine_path_panel.png", "rect": [0, 0, 16, 16], "slice": [5, 5, 5, 6]},
+ "ui.bubble.say": {"pack": "crusenho", "file": "UI_TravelBook_Popup01a.png", "rect": [0, 0, 62, 30], "slice": [6, 6, 6, 6]},
  "ui.bubble.say.tail": {"pack": "own", "file": "ui.png", "rect": [32, 0, 7, 6]},
  "ui.bubble.think": {"pack": "own", "file": "ui.png", "rect": [0, 0, 16, 16], "slice": [5, 5, 5, 6]},
  "ui.bubble.think.tail": {"pack": "own", "file": "ui.png", "rect": [16, 0, 8, 8]},

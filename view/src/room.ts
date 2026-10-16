@@ -5,7 +5,7 @@
 import { Application, Container, Graphics, Sprite } from "pixi.js";
 import type { Genome, Look } from "./pet";
 import { petPortrait } from "./petsprite";
-import { ago, bodyStage, tickMs } from "./types";
+import { ago, bodyStage, hhmm, tickMs } from "./types";
 import type { Act, Hello, Mark, Obj, PetV, RoomV, Snap, Tile } from "./types";
 import { play } from "./px/acts";
 import type { Ghost } from "./px/acts";
@@ -14,6 +14,8 @@ import type { Stage } from "./px/actors";
 import { canvasOf, has, kind, layout, loadArt, pick, size, tex } from "./px/assets";
 import type { Layout } from "./px/assets";
 import { Labels } from "./px/bubbles";
+import { display, SKY } from "./px/display";
+import type { Display } from "./px/display";
 import type { Tag, Who } from "./px/bubbles";
 import { Fx, fxTexture } from "./px/fx";
 import { Hub } from "./px/hub";
@@ -25,13 +27,14 @@ import { drawnOf, Still } from "./px/still";
 import { paintText, paintTitle } from "./px/built";
 import type { Thing } from "./px/still";
 import { hslInt } from "./px/tint";
-import { Light } from "./px/weather";
+import { Light, REDUCE } from "./px/weather";
 import { step as works } from "./px/works";
 
 export type Rect = { x: number; y: number; w: number; h: number };
 /** What is under the pointer. */
 /** `decor`: a piece of the room's own scenery (its sprite's name), when nothing else is there. `bare`: the bit grows here and has been picked. */
-export type Target = { tile: [number, number]; pet?: string; creature?: string; door?: string; object?: string; bit?: string; bare?: boolean; mark?: Mark; decor?: string };
+export type Target = { tile: [number, number]; pet?: string; creature?: string; door?: string; object?: string; bit?: string; bare?: boolean; mark?: Mark; decor?: string;
+  display?: boolean };   // SPEC-v3.5.9 §4: the room's small display
 export type Scene = { snap: Snap; room: RoomV; hello: Hello | null; selected: string | null; picked: string | null; replay: boolean };
 /** What a hover card can show about a Target (§3.3): see `Room.describe`. Every field but `title` may be missing. */
 export type Card = { what: "pet" | "creature" | "thing" | "fixture" | "stone" | "bit" | "door" | "writing" | "scenery"; title: string; sprite: HTMLCanvasElement | null;
@@ -44,6 +47,10 @@ export type Card = { what: "pet" | "creature" | "thing" | "fixture" | "stone" | 
   rect?: Rect };
 
 const norm = (s: string | null | undefined) => (s ?? "").trim().toLowerCase();
+/** Each need's colour, as on the cards' bars (comfort has none there: gold). */
+const NEED: Record<string, number> = { energy: 0x7ccf4e, curiosity: 0x4fa8ec, company: 0xe8545a, comfort: 0xf2c14e };
+/** A thing that bends in the wind (SPEC-v3.5.9 §4). */
+const leafy = (t: Thing) => !!(t.obj.fix?.plant || t.obj.planted || /plant|vine|bush|reed|flower|fern|herb/.test(t.name));
 /** Would two pets on these tiles stand on each other: a pet is wider than a tile and taller than two (SPEC-v3.3 §5). */
 const near = (a: Tile, b: Tile) => Math.abs(a[0] - b[0]) <= 1 && Math.abs(a[1] - b[1]) <= (a[0] === b[0] ? 2 : 1);
 const recall = (k: string) => { try { return localStorage.getItem(k); } catch { return null; } };
@@ -109,7 +116,7 @@ export class Room {
   private pointer: number[] | null = null;
   private tap = 0;                      // the timer that lets go of what a finger tapped
   private aim = [0, 0];                 // the same, in screen pixels
-  private next = { note: 0, air: 0, glint: 0, drip: 0 };
+  private next = { note: 0, air: 0, glint: 0, drip: 0, weather: 0, breath: 0 };
   private stage: Stage;
   private avoid: Rect[] = [];
   private avoidAt = -1e9;
@@ -123,7 +130,9 @@ export class Room {
   private hatched = new Map<string, number>();                 // who has just hatched here: its tag shows until then
   private shells = new Map<string, { c: Container; tick: number }>();   // the shell each left where its egg lay
   private hub = new Hub();              // SPEC-v3.5.1: the lit sign, the screens, the statue, the radio set
+  private display: Display | null = null;   // SPEC-v3.5.9 §4
   private roomBox: Rect = { x: 0, y: 0, w: W, h: H };
+  private felt = new Map<string, { tick: number; needs: Record<string, number> }>();   // SPEC-v3.5.9 §7: each pet's needs as last seen
 
   constructor() {
     this.stage = { now: 0, dt: 16, fx: this.fx, blocked: new Uint8Array(FX * FY), K: 1,
@@ -239,7 +248,7 @@ export class Room {
 
     // light and weather
     const reading = snap.read_glow ? [...still.things.values()].filter((t) => t.obj.fix?.book).map((t) => ({ x: t.x, y: t.y - 6, r: 24, color: [255, 236, 150], made: true })) : [];
-    const env = { phase: snap.clock.phase, weather: snap.weather, season: snap.clock.season, power: snap.power, lit: room.lit, cold: room.cold, night: lay?.light?.night ?? 0.45, day: lay?.light?.day ?? 0,
+    const env = { phase: snap.clock.phase, hour: Math.round(snap.clock.hour * 10) / 10, weather: snap.weather, season: snap.clock.season, power: snap.power, lit: room.lit, cold: room.cold, night: lay?.light?.night ?? 0.45, day: lay?.light?.day ?? 0,
                   sky: skyOf(lay ?? null), windowTiles: lay?.light?.window ?? [], windows: still.windows.map((w) => w.rect), lamps: snap.power ? [...still.lamps, ...reading] : [], sun: still.sun,   // in a power cut nothing glows
                   panes: skyOf(lay ?? null) === "glass" ? (lay?.light?.window ?? []).map(([tx]) => ({ x: OX + tx * TILE + 1, y: 4, w: TILE - 2, h: OY - 10 })) : [] };
     const lit = JSON.stringify(env);
@@ -252,6 +261,7 @@ export class Room {
       if ((stir === 3) !== (t.stir === 3) && !t.s.destroyed) t.s.visible = stir !== 3;
       t.stir = stir;
     }
+    this.rises(sc, fresh);
     this.arrived(sc);
     this.say(sc);
     this.tag(sc);
@@ -283,6 +293,7 @@ export class Room {
     this.flat.addChild(s.flat);
     this.top.addChild(s.top);
     this.hub.build(s, this.K);
+    this.display = display(s, sc.room, this.K);
     this.marks.build(sc.room, s, this.F / this.K, keep, now);
     for (const c of s.standing) this.sorted.addChild(c);
   }
@@ -383,6 +394,23 @@ export class Room {
       if (w) for (const a of this.pets.values()) a.turn(w.x, w.y, now + Math.random() * 600, 2200);
     }
     this.weather = snap.weather;
+  }
+
+  /** SPEC-v3.5.9 §7: a need that has just risen (by three or more since the last moment): a tiny "+" in its colour floats up. */
+  private rises(sc: Scene, fresh: boolean) {
+    const tick = sc.snap.tick;
+    for (const a of this.pets.values()) {
+      const p = a.pet, was = this.felt.get(p.id);
+      if (!p.needs) continue;
+      if (was && !fresh && tick > was.tick && tick - was.tick <= 3) {
+        let i = 0;
+        for (const [n, v] of Object.entries(p.needs)) if (v - (was.needs[n] ?? v) >= 3) {
+          const k = i++;
+          this.fx.after(k * 260, () => this.fx.spawn("plus", a.w.x + (k % 2 ? 5 : -4), a.w.y - a.tall - 2, { vy: -9, life: 1300, sway: 1, tint: NEED[n] ?? 0xffffff }));
+        }
+      }
+      if (!was || tick !== was.tick) this.felt.set(p.id, { tick, needs: { ...p.needs } });
+    }
   }
 
   /** A delivery or a discovery that came in a crate (SPEC-v3.1 §1): the crate stands open where it landed for a couple of
@@ -543,6 +571,7 @@ export class Room {
         .map((b) => ({ x: (b.left - view.left) * s, y: (b.top - view.top) * s, w: b.width * s, h: b.height * s }));
     }
     this.hub.step(now, sc.snap, sc.room, this.fx);
+    this.display?.board.step(now, sc.snap);
     const b = still.bounds, rm = this.roomBox;
     [rm.x, rm.y, rm.w, rm.h] = [(b.x + 2) * K, (b.y + 1) * K, (b.w - 4) * K, (b.h - 3) * K];   // a little inside the room's edge: nothing hangs over its border
     this.words.step(now, dt, this.heads, K, rm, this.avoid);
@@ -550,12 +579,14 @@ export class Room {
 
   /** The small life of the room's things: glints on glass, a springy thing's bob, notes from what sounds, drips, a draught, dust in the sun. */
   private alive(sc: Scene, still: Still, now: number) {
-    const { snap, room } = sc, fx = this.fx, K = this.K, n = this.next;
+    const { snap, room } = sc, fx = this.fx, K = this.K, n = this.next, sky = skyOf(still.layout);
+    const windy = (snap.weather === "storm" && !!sky) || room.cold, gust = REDUCE.matches ? 900 : 380;   // a storm under the sky, or a draught
     for (const t of still.things.values()) {
       if (t.s.destroyed) continue;
       if (t.bob || t.bounce || t.stir === 1) t.s.y = t.y - Math.round((t.bounce ? Math.abs(Math.sin(now / 190 + t.x)) * 5 : t.stir === 1 ? Math.abs(Math.sin(now / 215)) * 4 : (Math.sin(now / 700 + t.x) + 1) * 1) * K) / K;
       else if (t.s.y !== t.y) t.s.y = t.y;
       t.s.x = t.stir === 2 ? t.x + Math.round(Math.sin(now / 70) * K * Math.max(0, Math.sin(now / 450))) / K : t.x;   // fiddled with: it shakes, in fits
+      if (windy && leafy(t)) t.s.x += Math.round(Math.sin(now / gust + t.x) * 1.4 + Math.sin(now / (gust * 0.37) + t.y) * 0.5);   // and it bends in the wind
       for (const e of t.extra) { e.position.copyFrom(t.s.position); e.visible = t.s.visible; }   // what grows in it goes with it
     }
     if (now > n.glint) {
@@ -577,6 +608,7 @@ export class Room {
       }
       for (const t of still.things.values()) if (t.obj.state === "playing" || (room.sounding && t.obj.fix?.loud)) up(t.x, t.rect.y);
     }
+    this.weatherLife(sc, still, now, sky);
     if (now > n.drip && (room.wet || room.cold || (still.sun && snap.clock.phase !== "night"))) {
       n.drip = now + 240;
       if (room.wet && still.drip && Math.random() < 0.2) {   // a leak drips in one place: a drop down from the top of the wall, a ring where it lands in the puddle
@@ -586,6 +618,27 @@ export class Room {
       if (room.cold) fx.spawn("speck", OX, OY + Math.random() * FY * TILE, { vx: 34, life: 3000, sway: 2, tint: 0xdcecff, alpha: 0.7 });   // a draught: pale wisps crossing the floor
       if (still.sun && snap.clock.phase !== "night" && Math.random() < 0.4) fx.spawn("speck", still.sun[0] + (Math.random() - 0.5) * 24, still.sun[1] + (Math.random() - 0.5) * 16, { vy: -3, life: 2600, sway: 2, tint: 0xfff2c0, alpha: 0.7 });
     }
+  }
+
+  /** SPEC-v3.5.9 §4: the weather and the hour inside: dust in a sunbeam, fireflies in the garden at night, breath in
+   *  the cold, rain rippling the pond. */
+  private weatherLife(sc: Scene, still: Still, now: number, sky: string | null) {
+    const { snap, room } = sc, fx = this.fx, n = this.next, night = snap.clock.phase === "night", w = snap.weather, calm = REDUCE.matches ? 2 : 1;
+    if (now < n.weather) return;
+    n.weather = now + 300 * calm;
+    for (const [x, y, bw, bh] of this.light.beams) if (Math.random() < 0.5) fx.spawn("speck", x + (Math.random() - 0.5) * bw, y + (Math.random() - 0.5) * bh, { vy: -2, vx: 1, life: 2800, sway: 2, tint: 0xfff2c0, alpha: 0.65 });
+    if (sky === "open" && night && snap.clock.season !== "winter" && (w === "clear" || w === "cloudy" || w === "heat") && Math.random() < 0.55)
+      fx.spawn("speck", OX + Math.random() * FX * TILE, OY + TILE + Math.random() * (FY - 1) * TILE, { vx: (Math.random() - 0.5) * 8, vy: (Math.random() - 0.5) * 6, life: 3600, sway: 3, tint: 0xe4ff7a });
+    const cold = room.cold || ((sky === "open" || w === "snow") && snap.clock.season === "winter");
+    if (cold && now > n.breath) {   // every so often each one breathes out a little cloud
+      n.breath = now + 900;
+      for (const a of this.pets.values()) if (a.pet.stage !== "egg" && a.pet.stage !== "dead" && Math.random() < 0.4) {
+        const side = a.w.dir === "left" ? -1 : a.w.dir === "right" ? 1 : Math.random() < 0.5 ? -1 : 1;
+        fx.spawn("wisp", a.w.x + side * 5, a.w.y - a.tall * 0.6, { vx: side * 7, vy: -3, life: 1100, tint: 0xeef6ff, alpha: 0.7 });
+      }
+    }
+    if (w === "rain" || w === "storm") for (const t of still.things.values()) for (const [tx, ty] of t.obj.water ?? []) if (Math.random() < 0.25 / calm)   // rings on the pond
+      fx.spawn("rain.splash", OX + tx * TILE + 2 + Math.random() * 12, OY + ty * TILE + 3 + Math.random() * 11, { life: 380, tint: 0xd8f0ff, alpha: 0.8 });
   }
 
   // ---- the pointer ----
@@ -602,7 +655,12 @@ export class Room {
       this.glow.rect(x - 2, y - 2, w + 4, h + 4).stroke({ width: 2, color: 0xffc84a, alpha: 0.35, alignment: 1 })
         .rect(x, y, w, h).stroke({ width: 1, color: 0xffd76a, alignment: 1 }).rect(x, y, w, h).fill({ color: 0xffd76a, alpha: 0.12 });
     }
-    cv.style.cursor = t?.pet ? "var(--hand, pointer)" : t?.object || t?.door ? "var(--arrow, pointer)" : "";   // (skin.css, SPEC-v3.5.6 §8: the hand over a pet; inline, as the canvas sets its own)
+    const door = t?.door && !t.pet ? this.still?.doors.find((d) => d.dir === t.door) : null;
+    if (door) {   // SPEC-v3.5.9 §7: a door lights up while it is pointed at (where it leads, and who is there, is on its card)
+      const r = door.rect, [x, y, w, h] = [Math.round(r.x), Math.round(r.y), Math.round(r.w), Math.round(r.h)];
+      this.glow.rect(x - 1, y - 1, w + 2, h + 2).stroke({ width: 1, color: 0xffe08a, alignment: 1 }).rect(x, y, w, h).fill({ color: 0xffe9a8, alpha: 0.28 });
+    }
+    cv.style.cursor = t?.pet ? "var(--hand, pointer)" : t?.object || t?.door || t?.display ? "var(--arrow, pointer)" : "";   // (skin.css, SPEC-v3.5.6 §8: the hand over a pet; inline, as the canvas sets its own)
     const beast = t?.creature && !t.pet ? this.beasts.get(t.creature) : null;   // a creature wears its name only while it is pointed at
     if (beast) { const r = beast.rect(); this.words.hover(beast.cr.name ?? `a ${beast.cr.kind}`, (r.x + r.w / 2) * this.K, (r.y + r.h + 1) * this.K); }
     else this.words.hover(null);
@@ -620,6 +678,7 @@ export class Room {
     for (const [id, b] of this.beasts) if (inside(grown(b.rect(), 3), x, y)) out.creature = id;
     out.mark = this.marks.rects.find((m) => inside(grown(m.rect, 1), x, y))?.m;
     out.door = still.doors.find((d) => inside(d.rect, x, y))?.dir;
+    if (this.display && inside(this.display.rect, x, y)) out.display = true;
     let best: Thing | null = null;
     for (const t of still.things.values()) if (inside(grown(t.rect, 1), x, y) && (!best || t.rect.w * t.rect.h < best.rect.w * best.rect.h)) best = t;   // the smallest thing under the pointer: a cup on a rug, not the rug
     const onTile = x >= OX && y >= OY && x < OX + FX * TILE && y < OY + FY * TILE;
@@ -651,7 +710,7 @@ export class Room {
     const still = this.still;
     return (t.pet && this.pets.get(t.pet)?.rect()) || (t.creature && this.beasts.get(t.creature)?.rect()) || (t.mark && this.marks.rects.find((m) => m.m === t.mark)?.rect) || (t.object && still?.things.get(t.object)?.rect)
       || (t.bit && still?.spots.find((s) => s.bit === t.bit && s.pos[0] === t.tile[0] && s.pos[1] === t.tile[1])?.rect) || (t.door && still?.doors.find((d) => d.dir === t.door)?.rect)
-      || (t.decor && still?.scenery.find((s) => s.sprite === t.decor && inside(s.rect, OX + t.tile[0] * TILE + 8, OY + t.tile[1] * TILE + 8))?.rect) || null;
+      || (t.display && this.display?.rect) || (t.decor && still?.scenery.find((s) => s.sprite === t.decor && inside(s.rect, OX + t.tile[0] * TILE + 8, OY + t.tile[1] * TILE + 8))?.rect) || null;
   }
   /** Order (SPEC-v3.3 §2), as plain lines for a hover card: what a thing that keeps things holds and how much room is
    *  left, where a thing put away is kept, where its home is when it is not there, and the named place it stands in. */
@@ -714,6 +773,7 @@ export class Room {
       return { what: "door", title: to?.type ? `the door to ${to.name}` : "a door nobody has been through", sprite: null, state: room.shut.includes(t.door) ? "stuck shut" : to?.type ? "open" : "shut",
                text: to?.type ? `it leads to ${to.name}` : "nobody knows yet what is behind it" };
     }
+    if (t.display && this.display) return { what: "scenery", title: `the display: ${hhmm(snap.clock.hour)}, ${SKY[snap.weather] ?? snap.weather}`, sprite: null, text: this.display.line(snap) };
     const pt = t.decor?.startsWith("paint.") ? still.paints[Number(t.decor.slice(6))] : null;
     if (t.decor?.startsWith("paint.")) return pt ? { what: "scenery", title: paintTitle(pt.p), sprite: null, text: paintText(pt.p), rect: undefined } : null;
     if (t.decor === "room.wall" || t.decor === "room.floor") { const wall = t.decor === "room.wall"; return { what: "scenery", title: wall ? "the wall" : "the floor", sprite: null, text: `painted ${wall ? room.paint.wall : room.paint.floor}` }; }
