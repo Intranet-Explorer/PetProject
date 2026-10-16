@@ -1984,3 +1984,73 @@ the time. Asleep, the page stayed on the room where they slept and did not move.
 not an event came 120 s or more after the last (most at exactly 120 s: the house is busy enough that a better room is
 always waiting, so the page moves about every two minutes by day). Three big moments in the window (two house firsts,
 a family first): three banners, the page taken to each room first.
+
+## Part 25: v3.5.8, hobs (16 October 2026)
+
+SPEC-v3.5.8 as built, and where it was read one way.
+
+- **Hob** is the word on the page and in what a hob is told: the packet says "you are a hob, in the kitchen"; the
+  day's chronicle is asked of "a house of hobs, small household spirits". HOBS.md is the reference. The page's own
+  title stays "Pet" (§8: the game's name is not in this version).
+- **Names (§2, engine/names.py, names.toml):** a bank of 2,758 names; five offers from five sources (the screens,
+  the bank, the family's sound, an old family name, its own life), filled from the bank where a source has nothing.
+  Screen finds keep to words that read as names: Latin ranks, genus names, scriptures and gods, and words over nine
+  letters are skipped, so most screen slots fall back to the bank. An old family name honours forebears or the dead,
+  never a living sister. A name that fails the rules (a phrase of the family's words, a living hob's name, hard to
+  say) is not refused: the egg takes the first offer, and the phrase becomes its **by-name**, which the parent is
+  told. By-names from what the family says about a hob later: not built; the rejected phrase is the only source.
+- **Things' names (§3):** the everyday name is the kind and one telling word, in this order: its stuff ("felt
+  cushion"), its nature ("soft cushion"), colour and stuff, size, the maker's name ("Pim's cushion"), the room, then
+  "other"/"spare". The maker's own name for it stands when it is one of these ("soft nest"); otherwise it is the
+  thing's title, and a pet may still use the title in an action. A thing of an invented kind is called by its use
+  (uses.json `everyday`: a "seat or bed" is a seat, a keepsake a charm); a curio by its base part, logged.
+  The older self-checks (check.py, check_bodies, check_firsts, check_season) keep their makers' names
+  (`make.own_names`); engine/check_hobs.py checks everyday names.
+- **Honest kinds (§3.1):** only a "charm" is refiled, by the last everyday word for a kind in its name, else in what it
+  is for (kinds.json `words`), never as a tool or a thing that hangs on a wall. Five kinds added: tile, patch, tinder
+  bundle, draught stopper, sign (art: cells of the PixelLab sweeper sheet).
+- **Kept (§4):** heirlooms, statues, firsts (marked on the thing from now on, and from the feats since day 61), gifts
+  (owner is not its maker), things the visitor named or starred, anything in a keepsake box. "Named (titled)" is read
+  as one of those: every new thing has a title now. A title shows on the page only for a kept thing.
+- **Scrap (§4):** charms past a hob's three newest, anywhere; any other made thing untouched for three world days
+  (`make.scrap_days`). Never a tool, a store, what has things in it, what is planted, too heavy, a lit light, or a
+  bed-thing where a hob sleeps. Handling a thing (a body playing with it) now counts as using it.
+- **Clearing is an ordinary activity** ("clear scrap", like tidying, orderly hobs more): found needed on the copy,
+  where clearing only for a want moved 10 charms in half a world day. A hob carries up to three at a time, a room
+  at a time, toward the Works. Only once it knows where the Works is (a hob that had never been there crashed its
+  body for a fifth of the test window before this was fixed).
+- **Materials back (§4.1):** one base material for every three pieces of scrap, from what most of them were made of,
+  into the paws of whoever fed them. A thing fed for a material of the hob's choosing (the v3.5 trade, one for one)
+  is not counted again.
+- **The spring clean:** once, on the first start of v3.5.8 in a house with charms; told to every hob and in the
+  story; scrap is wanted twice as much for three world days (`works.spring_days`).
+- **The sweeper (§4.2, engine/sweeper.py):** the Works' next goal, 12 scrap, after "a third thing a day". It sweeps
+  floors only (scrap lying loose, and loose bits), never a shelf, a wall or a box; brings four at a time, or what it
+  has after three hours, to the Works; charges an hour between rounds and stays on its dock at night. A hob using or
+  standing by what it heads for shoos it off for two hours. Bits it brings count three for one. Hobs see it like any
+  creature; naming it needs it tame, as for any creature.
+- **Gone things** keep what they were made of, and how, where and by whom used; the house keeps the last 2,000 gone
+  things (was 200), so every charm traded in stays in the Things tab's history.
+- **Recorded from now on (Tyler's list):** how a thing was made and where (`made.how`, e.g. "stitched at the bench",
+  `made.made_in`); what it was made from, kept after it is gone; who uses it (`made.users`, a count per hob); what a
+  hob had in mind as it made it or set it down (`made.words`, its plan's thought); a build project's progress (parts
+  set in place of all it takes; a hob's own free-text project has nothing to measure); words written on a stone
+  (kept on the stone after the chalk fades).
+- **View:** carrying in the paws / a sack with a count / overhead; the sweeper and its dock; by-names under names;
+  titles in italics; a Charms chip on Things; the chosen hob's face and name at the head of the toolbar; the phone's
+  house map captioned. Notes in POLISH.md.
+
+**Measured** on a copy of the live house with the real model, one world day (ticks 102970 to 104770), the copy
+holding its thoughts back while the family has one waiting:
+- Things about the house 485 to 422 (13% fewer); charms 205 to 140; none from a keepsake box or an heirloom.
+- The Works built the sweeper a third of the way in; it then brought 16 things and 8 bits in 6 trips.
+- 53 pieces of scrap fed, 15 materials back. No "some X" in anything told, done or seen. Every new thing's name at
+  most three words, none numbered. No charm with a use in its name filed as a charm.
+- One egg laid and named in the window: Pethuthus (its family's sound). Things made: wood lamp, cloth rope, stone
+  charm, wood stone stack, felt charm, petal rope.
+- **Near misses, noted:** charms among things made 2 of 6 (33%; the day before on the live house, 68%; bar 20%), on
+  a small day: the copy had 12 thoughts per hob against the live house's 30, because it waits behind the family.
+  Curiosity median 35% against the live house's 49% the day before, on the same starved thinking; thoughts from
+  "nothing to do" 8% (10%), at doors 6% (9%), straight back within 6 min 36% (35%), projects that are a "don't" 0 (0).
+  To be watched on the live house, with its full share of the model.
+- Before the clearing fix, an earlier window on another copy: 10 charms cleared in half a world day.

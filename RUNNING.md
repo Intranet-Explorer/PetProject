@@ -59,6 +59,10 @@ was made on the showcase's, so it is started with `live` (or `showcase`), never 
 | `PET_PROFILE=live PET_DATA=<a copy of data/> PET_PORT=8001 PET_YIELD_TO=$PWD/data/model.busy uv run python -m engine.server` | a real-model copy beside the living family, without pausing it: the copy holds each of its thoughts back while the family has one waiting or in flight (the family keeps `data/model.busy` while it does). A copy's thought already in flight is not stopped, so a family thought can wait behind one. |
 | `PET_PROFILE=showcase PET_DATA=data.showcase-3 PET_PAUSED=1 PET_PORT=8001 uv run python -m engine.server` | open an archived run (`data.showcase-1` to `-4`) to look at and replay (http://localhost:8001/?replay=1); nothing in it moves |
 
+A copy of the house for a test lives beside the repo, in `../PetProject-tests/<version>/` (its data, log, reports and
+pictures), never in /tmp: a shutdown clears /tmp, and a copy kept beside the repo just carries on from its saved tick
+when its server is started again (16 October 2026).
+
 ## Look at it
 
 - **The house:** the room being followed fills the screen; the map beside it shows every room found so far and
