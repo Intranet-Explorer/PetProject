@@ -392,16 +392,17 @@ export class PetActor {
     const big = items.find((x) => x.big), rest = items.filter((x) => x !== big), one = !big && items.length === 1 ? items[0] : null, n = big ? rest.length : items.length > 1 ? items.length : 0;
     this.heavy = !!big;
     // picking up or putting down: a short reach (§5), the thing coming up from the floor or going down to it
-    const texs = items.map((x) => x.tex), was = this.carried ?? texs, gone = was.find((t) => !texs.includes(t));
-    if (was.length !== texs.length && (texs.length > was.length || gone)) {
-      this.reach = { at: now, up: texs.length > was.length, from: [this.held.x, this.held.y] };
-      if (gone && !(texs.length > was.length)) { this.dropped.texture = gone; this.dropped.scale.set(this.held.scale.x || 1 / P); }
+    const texs = items.map((x) => x.tex), was = this.carried ?? texs;
+    if (was.length !== texs.length) {
+      const up = texs.length > was.length;
+      this.reach = { at: now, up, from: [this.held.x, this.held.y] };
+      if (!up) { this.dropped.texture = was.find((t) => !texs.includes(t)) ?? was[0]; this.dropped.scale.set(this.held.scale.x || 1 / P); }
     }
     this.carried = texs;
     const k = clamp((now - this.reach.at) / REACH, 0, 1), dir = /left$/.test(a) ? -1 : /right$/.test(a) ? 1 : 0, away = /up$/.test(a);
     const tall = Math.round(this.tall / P), half = Math.ceil(this.box.w / 2), floor = [dir ? dir * (half + 3) : half + 3, 0];
     // in its paws in front of it (behind it when it walks away), or up over its head
-    const hold = big ? [0, -tall + 1 + bob] : [dir * 3, bob], it = big ?? one;
+    const hold = big ? [0, -tall + 1 + bob] : [dir * 3, -3 + bob], it = big ?? one;
     this.held.visible = !!it;
     if (it) {
       this.held.texture = it.tex;
@@ -421,7 +422,7 @@ export class PetActor {
         const g = this.pet.genome, coat = hslInt(g.hue, g.saturation, 0.62), x = Math.max(2, Math.min(half - 2, 5)), y0 = -Math.round(tall * 0.55), y1 = -tall + 1;
         this.arms.clear();
         if (big) for (const s of [-1, 1]) this.arms.rect(s * x - 1, y1 - 1, 2, y0 - y1 + 2).fill(0x2b2233).rect(s * x - (s > 0 ? 1 : 0), y1, 1, y0 - y1).fill(coat);
-        else for (const s of [-1, 1]) this.arms.rect(dir * 3 + s * 4 - 1, -4, 3, 3).fill(0x2b2233).rect(dir * 3 + s * 4, -3, 1, 1).fill(coat);
+        else for (const s of [-1, 1]) this.arms.rect(dir * 3 + s * 4 - 1, -8, 3, 3).fill(0x2b2233).rect(dir * 3 + s * 4, -7, 1, 1).fill(coat);
       }
       this.arms.position.set(0, bob);
       this.arms.visible = !!big || k >= 1 || !this.reach.up;   // (its paws close on it once it is up)
