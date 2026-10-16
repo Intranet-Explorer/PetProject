@@ -274,7 +274,7 @@ def found_in(house, cfg, title, text):
         ws = [re.sub(r"'s$", "", w) for w in re.findall(r"[A-Za-z][a-z]*(?:'s)?", sentence)]
         cap = lambda i: 0 <= i < len(ws) and ws[i][0].isupper()
         for i, w in enumerate(ws):
-            proper = i > 0 and cap(i) and not (i > 1 and cap(i - 1)) and not cap(i + 1) and 3 <= len(w) <= 12 and not WORDY.search(w)
+            proper = i > 0 and cap(i) and not (i > 1 and cap(i - 1)) and not cap(i + 1) and 4 <= len(w) <= 12 and not WORDY.search(w)
             if (proper or w.capitalize() in cfg["names"]["nature"]) and w.lower() not in cfg["names"]["skip"]:
                 out.append(w.capitalize())
     out += [title] if title in cfg["names"]["bank"] else []
