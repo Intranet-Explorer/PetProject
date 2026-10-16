@@ -41,5 +41,6 @@ Small things Tyler has seen and set aside. No action until he says so. Newest at
   - A bit held in the paws is a small picture at its floor size; pale bits (fibre, string) are hard to see on a pale hob.
   - A big thing over the head of a hob seen side-on: its arms are hidden behind its body's outline.
   - The sack's count pip can sit under the hob's name plate when the plate is placed low.
+  - The sweeper drives in straight lines, over the pond and past furniture, not along the room's paths (engine/sweeper.py `move`).
   - A thing card with every new record (title, how, made from, users, words) is taller than an 800 px window's room:
     it keeps within the window, and the "click to move" hint under it can meet the toolbar.
