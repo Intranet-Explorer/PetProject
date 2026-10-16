@@ -172,6 +172,8 @@ charms = 3                # SPEC-v3.5.8 §4: the charms a pet keeps (its newest)
 charm_takes = ["wood", "stone", "metal", "clay", "fibre", "sand"]   # SPEC-v3.5.9.1: a charm uses up one of these besides what gives it its nature
 scrap_days = 3            # ... and any made thing nobody has used this long, that is not kept, is scrap too
 haul = 3                  # scrap a body carries to the Works at a time
+floor_days = 1            # 16 October 2026: a made thing lying loose on a floor, untouched this long, is scrap (scrap_days elsewhere)
+box_keeps = 3             # ... and a keepsake box keeps this many (heirlooms, firsts and titled things first); the rest is scrap
 parts = { hatchling = 2, child = 3, youngling = 3, adult = 3, elder = 3 }   # a made thing's parts; combining goes to 6
 
 [sleep]

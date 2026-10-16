@@ -29,9 +29,19 @@ def make(house, cfg, n=1):
 
 
 def junk(house, cfg, room):
-    """What it would pick up here, nearest first is the caller's: [(pos, name of a scrap thing or None, the bit spot or None)]."""
+    """What it would pick up here, nearest first is the caller's: [(pos, name of a scrap thing or None, the bit spot or None)].
+    16 October 2026: a loose bit only once nobody has touched it in a while, and never one a hob here is going for,
+    has laid out, or is about to make with."""
+    from . import body
+    C = cfg["house"]["creatures"]["sweeper"]
     out = [(o["pos"], n, None) for why, n in order.scraps(house, cfg, room) for o in [room["objects"][n]] if not o.get("on") and not o.get("wall")]
-    out += [(s["pos"], None, s) for s in room["spots"] if s["loose"] and s["ready"] and not s.get("on")]
+    busy = set()
+    for p in house["pets"].values():
+        if p["room"] == room["id"] and p["stage"] not in ("egg", "dead"):
+            now = body.state(p)["now"] or {}
+            busy |= {now.get("what")} | set(body.state(p).get("laid") or []) | {w.get("bit") for w in p.get("wants", []) if w.get("room") == room["id"]}
+    out += [(s["pos"], None, s) for s in room["spots"] if s["loose"] and s["ready"] and not s.get("on") and s["bit"] not in busy
+            and house["tick"] - s.get("since", house["tick"]) >= hours(cfg, C["bit_hours"])]
     return out
 
 
@@ -156,7 +166,7 @@ def move(house, cfg, cr, goal, then):
 
 def pick(house, cfg, cr, room, name, spot):
     """It sucks up a scrap thing or a loose bit where it stands."""
-    if name and name in room["objects"] and order.scrap(house, cfg, room, name) and not room["objects"][name].get("on"):
+    if name and name in room["objects"] and order.scrap(house, cfg, room, name) and not room["objects"][name].get("on") and not order.held(room, name):
         o = room["objects"].pop(name)
         cr["held"].append({"name": name, "o": o})
         for m in [m for m in room.get("marks", []) if m["on"] == name]:

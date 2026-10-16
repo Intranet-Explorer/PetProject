@@ -195,8 +195,8 @@ def refuses(house, cfg, pet, room, name):
         return "the machine will not take a statue"
     if o["made"].get("star") is not None:   # SPEC-v3.5.4 §10
         return "the machine will not take a thing the visitor gave a star"
-    if o.get("on") and order.keeps(room["objects"].get(o["on"], {})):
-        return "the machine will not take what is kept in a keepsake box"
+    if o.get("on") and order.keeps(room["objects"].get(o["on"], {})) and name in order.boxed(house, cfg, room, o["on"]):
+        return "the machine will not take what is kept in a keepsake box"   # (one of the few it keeps: the rest is scrap)
     if not things.free_to_change(house, pet, o) and not leave(pet, name, o):
         return "that belongs to someone else: the machine will not take it without their leave"
     if order.held(room, name) or o.get("planted"):

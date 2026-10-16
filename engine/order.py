@@ -144,13 +144,35 @@ def firsts_of(house):
     return memo["set"]
 
 
+def meant(house, o):
+    """Something it means: an heirloom, a first, a gift, a thing the visitor named or starred."""
+    m = o["made"]
+    return bool(m.get("heirloom") or m.get("called") or m.get("star") is not None or m.get("first") or (m["by"], m["tick"]) in firsts_of(house) or m["by"] != m["owner"])
+
+
+def boxed(house, cfg, room, box):
+    """16 October 2026: what a keepsake box keeps: at most `box_keeps` things, the dead hob's heirlooms, firsts and
+    titled things first, then the newest. The rest in it is scrap, cleared by the hobs as anything else."""
+    def rank(n):
+        o = room["objects"][n]
+        m = o["made"]
+        return (not m.get("heirloom"), not (m.get("first") or (m["by"], m["tick"]) in firsts_of(house)), not meant(house, o), not m["recipe"].get("title"), -m["tick"])
+    key = (id(house), house["tick"], room["id"], box, len(room["objects"]))
+    if key not in _BOXED:   # (asked for every thing in the box in turn: once a tick is enough)
+        _BOXED.clear()
+        _BOXED[key] = set(sorted(held(room, box), key=rank)[:cfg["make"]["box_keeps"]])
+    return _BOXED[key]
+
+
+_BOXED = {}
+
+
 def kept(house, cfg, room, name):
     """SPEC-v3.5.8 §4: a made thing kept for meaning, never scrap: an heirloom, a statue, a first, a gift, a thing
-    the visitor named or starred, or anything in a keepsake box."""
+    the visitor named or starred, or one of the few a keepsake box keeps (16 October 2026: three)."""
     o = room["objects"][name]
-    m = o["made"]
-    return bool(m.get("heirloom") or m.get("called") or m.get("star") is not None or m.get("first") or (m["by"], m["tick"]) in firsts_of(house)
-                or m["by"] != m["owner"] or statue(name, o) or keeps(o) or (o.get("on") and keeps(room["objects"].get(o["on"], {}))))
+    return bool(meant(house, o) or statue(name, o) or keeps(o)
+                or (o.get("on") and keeps(room["objects"].get(o["on"], {})) and name in boxed(house, cfg, room, o["on"])))
 
 
 def scrap(house, cfg, room, name, newest=None):
@@ -167,18 +189,22 @@ def scrap(house, cfg, room, name, newest=None):
     if kind in KEEP["sleeping corner"] and any(p.get("sleeps_in") == room["id"] and dist(p.get("sleeps_at") or p["pos"], o["pos"]) <= 1
                                                for p in house["pets"].values() if p["stage"] not in ("egg", "dead")):
         return None
-    if kind == "charm":
+    if kind == "charm":   # (16 October 2026: one of its three only while its owner is alive, on a shelf or anywhere)
         newest = newest if newest is not None else newest_charms(house, cfg)
         return "charm" if o["made"]["tick"] not in newest.get(o["made"]["owner"], ()) else None
-    return "unused" if world_days(cfg, last_touch(o), house["tick"]) >= M["scrap_days"] else None
+    loose_ = not o.get("on") and not o.get("wall")
+    if loose_ and cfg["kinds"].get(kind, {}).get("furniture"):
+        return None   # (a rug or a stool on the floor is where it belongs)
+    days_ = M["floor_days"] if loose_ else M["scrap_days"]   # 16 October 2026: lying loose on the floor, a world day untouched is enough
+    return "unused" if world_days(cfg, last_touch(o), house["tick"]) >= days_ else None
 
 
 def newest_charms(house, cfg):
     """{owner: the ticks its newest `charms` charms were made}."""
-    out = {}
+    out, alive = {}, {p["id"] for p in house["pets"].values() if p["stage"] not in ("egg", "dead")}
     for r in house["rooms"].values():
         for o in things.made(r).values() if r["type"] else ():
-            if o["made"]["recipe"].get("kind") == "charm":
+            if o["made"]["recipe"].get("kind") == "charm" and o["made"]["owner"] in alive:
                 out.setdefault(o["made"]["owner"], []).append(o["made"]["tick"])
     return {k: set(sorted(v)[-cfg["make"]["charms"]:]) for k, v in out.items()}
 

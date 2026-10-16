@@ -79,9 +79,28 @@ async def run(d):
     room["objects"]["keepsake box for Odo"] = {"pos": [8, 2], "fix": {"store": order.BOX, "inside": True, "keepsake": "p0"}}
     thing(eng, room, "boxed charm", "charm", "soft", pet["id"], days=9, on="keepsake box for Odo")
     thing(eng, room, "old cushion", "cushion", "soft", pet["id"], days=cfg["make"]["scrap_days"] + 1)
-    thing(eng, room, "new cushion", "cushion", "soft", pet["id"], days=1)
+    thing(eng, room, "new cushion", "cushion", "soft", pet["id"], days=0.5)
+    thing(eng, room, "shelved cushion", "cushion", "soft", pet["id"], days=2, on="keepsake box for Odo")
     scrap = {n for why, n in order.scraps(h, cfg, room)}
-    assert not scrap & {"heir charm", "starred charm", "first charm", "boxed charm", "new cushion"} and "old cushion" in scrap, scrap
+    assert not scrap & {"heir charm", "starred charm", "first charm", "boxed charm", "new cushion", "shelved cushion"} and "old cushion" in scrap, scrap
+    # 16 October 2026: a keepsake box keeps three (heirlooms, firsts, titled things first); the rest is scrap
+    for i in range(4):
+        o = thing(eng, room, "box thing %d" % i, "cushion", "soft", "p0", days=9 - i, on="keepsake box for Odo")
+        o["made"]["recipe"]["title"] = "A Title" if i == 3 else None
+    first = thing(eng, room, "box first", "cushion", "soft", "p0", days=12, on="keepsake box for Odo")
+    first["made"]["first"] = True
+    keeps = order.boxed(h, cfg, room, "keepsake box for Odo")
+    assert len(keeps) == 3 and "box first" in keeps and "box thing 3" in keeps, keeps
+    scrap = {n for why, n in order.scraps(h, cfg, room)}
+    assert {"box thing 0", "box thing 1", "box thing 2"} - keeps <= scrap and not keeps & scrap, (keeps, scrap)
+    for n in [n for n in room["objects"] if n.startswith("box ")]:
+        del room["objects"][n]
+    # a lying thing a world day untouched is scrap; a dead hob's charm is not one of anyone's three
+    thing(eng, room, "lying cushion", "cushion", "soft", pet["id"], days=cfg["make"]["floor_days"] + 0.1)
+    dead = thing(eng, room, "dead hob's charm", "charm", "soft", "p0", days=0.2)
+    scrap = {n for why, n in order.scraps(h, cfg, room)}
+    assert {"lying cushion", "dead hob's charm"} <= scrap, scrap
+    del room["objects"]["lying cushion"], room["objects"]["dead hob's charm"]
     assert order.scraps(h, cfg, room)[0][0] == "charm", "charms first"
 
     # ---- §4: the spring clean comes once, and the old charms are wanted fed ----
@@ -109,6 +128,9 @@ async def run(d):
     thing(eng, hb, "junk charm", "charm", "soft", pet["id"], days=9)
     thing(eng, hb, "kept charm", "charm", "soft", pet["id"], days=9)["made"]["heirloom"] = {"from": "p0", "to": [pet["id"]], "tick": 0, "line": []}
     things.drop_bits(h, cfg, hb, [6, 6], ["wood"])
+    hb["spots"][-1]["since"] = h["tick"] - world.hours(cfg, 7)   # (16 October 2026: a loose bit nobody has touched in a while)
+    things.drop_bits(h, cfg, hb, [3, 6], ["clay"])   # ... and one just put down: left alone
+    fresh = hb["spots"][-1]
     have = works.state(h, cfg)["have"]
     sw["charged"] = -10 ** 6
     at(eng, 11, 6)
@@ -116,7 +138,8 @@ async def run(d):
         h["tick"] += 1
         sweeper.step(h, cfg, sw)
     gone = [g["name"] for g in h["gone_things"] if "sweeper" in g["gone"][1]]
-    assert "junk charm" in gone and "kept charm" in hb["objects"] and not order.loose_bits(hb), (gone, sw)
+    assert "junk charm" in gone and "kept charm" in hb["objects"], (gone, sw)
+    assert fresh in hb["spots"] and not any(s["bit"] == "wood" and s["loose"] for s in hb["spots"]), "the old bit swept up, one just put down left alone: %s" % hb["spots"]
     assert works.state(h, cfg)["have"] > have or works.state(h, cfg)["built"], "what it brings counts as scrap"
     assert any(m["kind"] == "sweeper" and "brought" in m["text"] for m in h["moments"]), "it goes in the story"
     # ---- SPEC-v3.5.9 §5: the Works never runs out; a second sweeper ----
