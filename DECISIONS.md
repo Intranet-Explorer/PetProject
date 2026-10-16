@@ -2138,3 +2138,29 @@ Tyler: fix forward, not roll back (RUNNING.md now: roll back only for a bar made
   second, four times when full; steady or slow with reduce motion). It drives round the pond, by the shortest way
   over dry tiles. Any hob can name it (a creature otherwise needs to be tame). The five kind pictures that came from
   the old sweeper sheet (tile, tinder bundle, patch, draught stopper, sign) stay: Tyler's word was about the sweeper.
+
+## Part 28: v3.5.10, view polish (16 October 2026)
+
+Page only, deployed without restarting the engine (the day's charm measurement ran on).
+
+- **Evening:** one curve, `evening(hour)` (px/weather.ts), from 16:48 to about 21:36 house time, deepest 19:00-20:00:
+  the sky's orange horizon and pink-lit clouds, a warm light and dusk-coloured glass in the room, a warm tint on the
+  wooden and paper frames (not the blue console, which has its own light), and the halos and pools of lights that are
+  on from about 18:00. The engine's phases are unchanged, so in winter the sky can be golden while the house already
+  calls it night (POLISH.md). The room's surround was a 60% navy fill with a blur that wiped out the sky; it is now a
+  light darkening with no blur, so stars, moon, hills and sunset show round the room at every size. The strip shows
+  the time of day (sunrise, sun, sunset, moon) and, beside it, the weather when there is any.
+- **Hover cards in the room** use the Things panel's card for everything in it: hobs (the whole first want,
+  wrapped), creatures, writing, doors, stones, fixtures, bits; a keepsake box no longer repeats itself.
+- **Things:** gone things hidden until "Show gone"; charms get one of five pendants and the colour of their main bit,
+  the same for the same charm, until their art comes (the room still draws the old charm).
+- **The board** is measured again once its font has loaded (the half-cut row was a line measured in the fallback
+  font), steps a whole row at a time, and keeps the word before a colon with the name.
+- **The toolbar:** saying and writing are one "Say…" pop-up, labelled; "Give [amber]".
+- **Phone:** the room's name over a soft shimmer until it first draws; hob cards full width.
+- **Following:** only the follow chip's choice is remembered in the browser; a room picked by hand lasts the visit;
+  a fresh browser opens on an awake hob (it opened on a stored room before: a map click stored "not following").
+- **1024 x 768** is a narrow Laptop (sides 205 / 240): the room at x2 with the hobs and the board beside it.
+- **After a deploy** an open page asks for its front page every half minute and when it comes back into view, and
+  reloads when the build's script has changed; one part of the room that throws (it was the Works' drawing) is
+  skipped and said once, and the rest goes on being drawn. Checked by forcing the Works' drawing to throw.
