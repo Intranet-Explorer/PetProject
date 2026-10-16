@@ -44,3 +44,9 @@ Small things Tyler has seen and set aside. No action until he says so. Newest at
   - The sweeper drives in straight lines, over the pond and past furniture, not along the room's paths (engine/sweeper.py `move`).
   - A thing card with every new record (title, how, made from, users, words) is taller than an 800 px window's room:
     it keeps within the window, and the "click to move" hint under it can meet the toolbar.
+- **v3.5.9 page (helper A), 16 October 2026:**
+  - On Large (1728 x 1117, 1920 x 1080) the console's sections are taller than the window, so it folds to the board
+    and the Works by itself; "THE CONSOLE" opens the map and the room's readout again. The readout repeats the time and
+    the sky the room's strip now shows: leaving those two rows out would let the console stay open there.
+  - The sentence about now is cut at three lines (two on Small), its "Here:" line first; the whole is in the cards.
+  - A long name in the folded toolbar's "Visit" head breaks inside a word when it has no space (Pethuthus).

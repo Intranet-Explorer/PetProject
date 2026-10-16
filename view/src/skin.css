@@ -24,20 +24,23 @@
   --accent: #833214; --good: #2b6e3a; --bad: #8f241d; --gold: #8a5a08; --shadow: rgb(43 20 14 / 25%);
   --pixel: "PetPixel", ui-monospace, "SF Mono", Menlo, monospace;
   --read: "PetRead", system-ui, -apple-system, sans-serif;
-  --dot: "PetDot", ui-monospace, monospace; --led: "PetLed", ui-monospace, monospace;
+  --dot: "PetDot", ui-monospace, monospace; --ledf: "PetLed", ui-monospace, monospace;
   --cyan: #58d0ff; --holo-line: #2d6c9e; --holo-deep: #0f1f36;
-  --text: 16px; --lh: 21px;
+  /* SPEC-v3.5.9 §2: the reading size (--tx, what the eye sees) and the layout's UI scale (--ui: frames, icons and text
+     grow together, by CSS zoom on the panels); --text is what a rule writes, so inside a zoomed panel it is --tx / --ui */
+  --tx: 16px; --ui: 1; --maxw: 100vw; --colL: 0px; --colR: 0px; --led: 24px;
   color-scheme: light;
 }
 .fam3 { --fam: var(--fam3); }
 .fam4 { --fam: var(--fam4); }
 
-html[data-text="large"] { --text: 20px; --lh: 26px; }
-body { background: var(--page); color: var(--ink);
-  background-image: linear-gradient(45deg, var(--page2) 25%, transparent 25%, transparent 75%, var(--page2) 75%),
-                    linear-gradient(45deg, var(--page2) 25%, transparent 25%, transparent 75%, var(--page2) 75%);
-  background-size: 48px 48px; background-position: 0 0, 24px 24px;
+html[data-text="large"] { --tx: 20px; }
+body { --text: var(--tx); --lh: calc(var(--tx) * 1.3125); }
+/* SPEC-v3.5.9 §3: the page sits on the world outside, a canvas (#world) fixed behind everything; until it is drawn, a
+   dark evening sky stands in */
+body { background: linear-gradient(#1b2340, #2d2a44 55%, #3a2730) fixed var(--page); color: var(--ink);
   font: var(--text)/var(--lh) var(--read); font-variant-ligatures: none; }   /* (Pixelify's "fi" reads as "A") */
+#world { position: fixed; inset: 0; z-index: -1; pointer-events: none; display: block; }
 button, select, input, textarea, input:not([type]), input[type="text"] { font: var(--text)/var(--lh) var(--read); color: var(--ink); }
 /* Two faces and two sizes, everywhere but the Lab (which stays plain): what is read in Pixelify at --text; the short
    words (below) in Toriko at 32 px, the only size it is drawn for besides 16. (:where gives the first rule no weight,
@@ -50,7 +53,7 @@ body :is(header.banner h1, header.banner h1 *, .tab, .head, h1, h2, h3, #sign, .
   font-family: var(--pixel) !important; font-size: 32px !important; line-height: 34px !important; -webkit-font-smoothing: none; font-smooth: never; }
 /* the blue console's screens (§3): DotGothic16 readouts at 16 px, the board's LEDs in VT323 at 20 px */
 body :is(.screen, .screen *):not(#page-lab *) { font-family: var(--dot) !important; font-size: 16px !important; line-height: 20px !important; -webkit-font-smoothing: none; }
-body :is(.led, .led *):not(#page-lab *) { font-family: var(--led) !important; font-size: 20px !important; line-height: 20px !important; }
+body :is(.led, .led *):not(#page-lab *) { font-family: var(--ledf) !important; font-size: var(--led) !important; line-height: calc(var(--led) * 1.15) !important; }
 #page-lab, #page-lab :not(svg, svg *) { font-family: system-ui, -apple-system, sans-serif; -webkit-font-smoothing: auto; }
 #page-lab { background: var(--paper); }
 img.px, .px, canvas { image-rendering: pixelated; }
@@ -146,8 +149,9 @@ p.more a, p.more .link { color: var(--on-page) !important; }
 body[data-page="house"] p.more { display: flex; }
 
 /* ---- §4, §5 the header: one Travel Book banner (Banner01a, slice 8, x2) ---- */
-header.banner { position: relative; border: 0; background: none; display: flex; align-items: center; gap: 8px 16px; padding: 7px 22px; margin: 8px 12px 0; min-height: 64px; flex: none; flex-wrap: nowrap; }
-header.banner::before { content: ""; position: absolute; inset: 0; z-index: -1; box-sizing: border-box; border-style: solid; border-width: 16px;
+header.banner { position: relative; border: 0; background: none; display: flex; align-items: center; gap: calc(8px * var(--ui)) calc(16px * var(--ui)); padding: calc(7px * var(--ui)) calc(22px * var(--ui));
+  margin: 8px auto 0; width: min(100% - 24px, var(--maxw)); min-height: calc(64px * var(--ui)); flex: none; flex-wrap: nowrap; }
+header.banner::before { content: ""; position: absolute; inset: 0; z-index: -1; box-sizing: border-box; border-style: solid; border-width: calc(16px * var(--ui));
   border-image: url("../assets/third_party/crusenho/UI_TravelBook_Banner01a.png") 8 fill stretch; image-rendering: pixelated; }
 body { isolation: isolate; }
 header.banner h1 { margin: 0; flex: none; }
@@ -172,11 +176,8 @@ header .tab { width: 150px; min-height: 0; line-height: 18px; display: block; te
 #now:is(.want, .find) { border-image-source: url("../assets/third_party/crusenho/UI_TravelBook_FrameSelect01a.png"); border-image-slice: 4; border-width: 8px; padding: 4px 8px; }
 #now .icon { color: var(--accent); }
 main { flex: 1; min-height: 0; overflow: visible; padding: 0; display: block; }
-#roomwrap { position: relative; display: flex; justify-content: center; padding-top: 44px; }   /* (the sign covers the frame's edge, not the room) */
-#frame { padding: 0; flex: none; line-height: 0; }
+#frame { padding: 0; flex: none; line-height: 0; border-width: calc(14px * var(--ui)); position: relative; }   /* (Textfield_03 x2, x3 on Large, x4 on Huge) */
 #stage { position: relative; }
-#sign { position: absolute; left: 50%; top: 0; transform: translateX(-50%); width: 288px; height: 69px; padding-top: 19px; text-align: center; line-height: 30px;
-  background: url("../assets/third_party/crusenho/UI_Wood_Banner_Downward_01.png") center / 100% 100% no-repeat; image-rendering: pixelated; color: var(--ink); letter-spacing: 1px; pointer-events: none; white-space: nowrap; }
 #banner { border-style: solid; border-width: 12px; border-image: url("../assets/third_party/crusenho/UI_TravelBook_Popup01a.png") 6 fill stretch; background: none; color: var(--ink); box-shadow: none; padding: 0 6px; }
 #banner.error { color: var(--bad); }
 #banner.death, #banner.arrival { border-image-source: url("../assets/third_party/crusenho/UI_TravelBook_FrameSelect01a.png"); border-image-slice: 4; border-width: 8px; padding: 4px 10px; }
@@ -224,7 +225,6 @@ footer.paper { padding: 0 4px; }
 .actson b { color: var(--fam, var(--ink)); min-width: 0; line-height: 1.05; overflow-wrap: anywhere; }   /* (a long name takes two lines, never cut) */
 .visit .pair { display: flex; gap: 2px; align-items: center; }
 #talkForm { flex: 1 1 180px; max-width: none; }
-@media (min-width: 1000px) { #giveBit, #writeOn { width: auto; max-width: 6.5em; } }
 #talkText { flex: 1; min-width: 120px; }
 .visit button { min-width: 0; padding: 0 6px; }
 #stockBox, #musicBox, #moreBox { margin: auto; inset: 0; height: fit-content; padding: 4px 8px; position: fixed; color: var(--ink); width: max-content; max-width: min(360px, 94vw);
@@ -239,18 +239,34 @@ footer.paper { padding: 0 4px; }
 #stockBox li { grid-template-columns: 32px 52px 1fr 24px auto; }
 #ended { color: var(--ink2); }
 
-/* ---- §5 a desktop: a game screen, three columns over the toolbar, nothing below the fold ---- */
-@media (min-width: 1000px) {
+/* ==== SPEC-v3.5.9 §2: set layouts, the largest that fits the width. Phone (under 700): one column, as before. Small
+   (700-1199): the room on top, the toolbar under it, the hobs and the console side by side below. Laptop (1200-1699),
+   Large (1700-2399), Huge (2400 up): hobs, room, console, with fixed side columns and a UI scale (--ui, CSS zoom on the
+   panels: their frames, icons and words grow together, x1.5 and x2). Content stops at the layout's widest (--maxw) and
+   is centred; the world outside has the rest. ==== */
+@media (min-width: 700px) { :root { --maxw: 1200px; } }
+@media (min-width: 1200px) { :root { --maxw: 1700px; --colL: 260px; --colR: 300px; } }
+@media (min-width: 1700px) { :root { --maxw: 2400px; --colL: 340px; --colR: 400px; --ui: 1.5; --led: calc(32px / 1.5); }
+  body[data-page="house"] { --tx: 20px; } html[data-text="large"] body[data-page="house"] { --tx: 24px; } }
+@media (min-width: 2400px) { :root { --maxw: 3200px; --colL: 480px; --colR: 560px; --ui: 2; --led: 16px; }
+  body[data-page="house"] { --tx: 32px; } html[data-text="large"] body[data-page="house"] { --tx: 40px; } }
+/* the panels that grow with the layout (the room does not: main.ts gives it its own whole-number zoom) */
+:is(header.banner > *, #left, #side, footer, #now, #replayBar, #roomhead, p.more) { zoom: var(--ui); --text: calc(var(--tx) / var(--ui)); --lh: calc(var(--tx) * 1.3125 / var(--ui)); }
+#stage { --text: var(--tx); --lh: calc(var(--tx) * 1.3125); }   /* (the banner and the hover card over the room are not zoomed: their words are --tx) */
+
+/* ---- Laptop, Large, Huge: a game screen, three columns over the toolbar, nothing below the fold ---- */
+@media (min-width: 1200px) {
   body { height: 100dvh; overflow: hidden; }
-  .page.house { display: grid; grid-template-columns: 256px minmax(0, 1fr) 262px; grid-template-rows: minmax(0, 1fr) auto;
-    grid-template-areas: "left centre side" "foot foot side"; gap: 8px 10px; padding: 10px 16px 0; min-height: 0; flex: 1; }
-  #roomwrap { padding-top: 40px; }   /* the sign hangs over the frame's top edge and a little of the wall, and stays off the "now" strip */
+  .page.house { display: grid; grid-template-columns: var(--colL) minmax(0, 1fr) var(--colR); grid-template-rows: minmax(0, 1fr) auto;
+    grid-template-areas: "left centre side" "foot foot side"; gap: calc(8px * var(--ui)) calc(10px * var(--ui)); padding: calc(10px * var(--ui)) calc(16px * var(--ui)) 0;
+    min-height: 0; flex: 1; width: min(100%, var(--maxw)); margin-inline: auto; }
+  /* a short window (main.ts: when it gives the room a larger zoom): the toolbar folds into "Visit" at the head of the
+     hobs' column, and the room has the full height */
+  body.fold .page.house { grid-template-rows: auto minmax(0, 1fr); grid-template-areas: "foot centre side" "left centre side"; }
   #left { grid-area: left; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--ink2) transparent; }
   .cards .card.here .want { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }   /* (whole in the card's hover and on its page) */
   #centre { grid-area: centre; min-height: 0; }
   footer { grid-area: foot; }
-  /* names, tabs and headings at 32 px (the rest 16) */
-  #sign { top: 0; width: 384px; height: 92px; padding-top: 28px; }   /* (x4 for words at 32 px: it hangs over the frame's top edge and a little of the wall) */
   .cards .card.away { grid-template-columns: auto minmax(0, 1fr); align-items: center; border-width: 7px; padding: 2px 6px; }
   .cards .card.away .pic .plate, .cards .card.away .bn, .cards .card.away .doing, .cards .card.away .want, .cards .card.away .bars, .cards .card.away .naming { display: none; }
   .cards .card.away .where { display: block; }
@@ -259,13 +275,37 @@ footer.paper { padding: 0 4px; }
   #chosen { order: -1; }   /* at the top of the column, while a pet or a thing is chosen (a click in the room) */
   #chosen:not(.asked) { display: none; }
   #stockBox, #musicBox, #moreBox { inset: auto 16px 84px auto; margin: 0; }   /* above the toolbar's right end, under the buttons that open them */
+  body.fold :is(#stockBox, #musicBox, #moreBox) { inset: 0; margin: auto; }
   body[data-page="house"] p.more { position: fixed; right: 16px; bottom: 0; margin: 0; padding: 0; line-height: 20px !important; }
-  body[data-page="house"] .page.house { padding-bottom: 22px; }   /* (a strip of its own for the credit, under the console) */
+  body[data-page="house"] .page.house { padding-bottom: calc(22px * var(--ui)); }   /* (a strip of its own for the credit, under the console) */
 }
-/* ---- §4 a phone (and anything narrower than a desktop): one column, the page scrolls ---- */
-@media (max-width: 999.98px) {
+/* ---- Small: one page that scrolls; the room fits the window's height, the toolbar under it ---- */
+@media (min-width: 700px) and (max-width: 1199.98px) {
   body { height: auto; min-height: 100dvh; overflow: auto; display: block; }
-  header.banner { flex-wrap: wrap; margin: 10px 12px 0; padding: 12px 14px 0; min-height: 0; }
+  .page.house { display: grid; grid-template-columns: minmax(0, 1fr) 300px; grid-template-areas: "centre centre" "foot foot" "left side"; align-items: start;
+    gap: 10px; padding: 10px 12px 12px; width: min(100%, var(--maxw)); margin-inline: auto; }
+  #left { grid-area: left; } #centre { grid-area: centre; } footer { grid-area: foot; } #side { grid-area: side; }
+  .cards { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+}
+/* the toolbar's words give way as it narrows (by its own width: it is zoomed on Large and Huge, and folded into the
+   hobs' column on a short window), so it stays one row where it can */
+@media (min-width: 700px) { footer { container: bar / inline-size; } }
+@container bar (min-width: 664px) { #giveBit, #writeOn { width: auto; max-width: 6.5em; } }
+@container bar (max-width: 1263.98px) { .visit .glabel { display: none; } }
+@container bar (max-width: 1363.98px) { #stockBtn .btxt, #musicBtn .btxt, #moreBtn .btxt { display: none; } #giveBit, #writeOn { max-width: 5em; } }
+@container bar (max-width: 1063.98px) {
+  #talkForm .btxt { display: none; } #talkText { min-width: 64px; width: 64px; } .controls.visit { column-gap: 7px; } .visit .actson { max-width: 7.5em; }
+  #stockBtn .bicon, #musicBtn .bicon, #moreBtn .bicon { margin-right: 0; } }
+@container bar (max-width: 959.98px) { .controls.visit { column-gap: 4px; } .visit .group { gap: 3px; } .visit .actson { max-width: 6em; } .actson b { overflow-wrap: break-word; } }
+@container bar (max-width: 600px) { .visit .group { flex-wrap: wrap; } #talkForm { flex-basis: 100%; } .visit .actson { max-width: none; } #giveBit, #writeOn { max-width: none; } }
+#visitBtn { display: none; }
+body.fold #visitBtn { display: block; width: 100%; }
+body.fold #visitBtn[aria-expanded="false"] + #controls { display: none; }
+body.fold footer.paper:has(#visitBtn[aria-expanded="false"]) { border: 0; border-image: none; padding: 0; }
+
+/* ---- the header on anything narrower than a laptop: the name, the time and the sound, the tabs under ---- */
+@media (max-width: 999.98px) {
+  header.banner { flex-wrap: wrap; margin: 10px 12px 0; width: auto; padding: 12px 14px 0; min-height: 0; }
   header.banner::before { bottom: auto; height: calc(max(50px, 2 * var(--lh)) + 22px); }   /* (as tall as the two lines of the clock, at either text size) */
   #soundBtn { width: 50px; height: 50px; margin: -4px 0; }
   header.banner h1 { flex: 1; }
@@ -273,6 +313,11 @@ footer.paper { padding: 0 4px; }
   header.banner #soundBtn { order: 3; }
   header .tabs { order: 4; flex-basis: 100%; gap: 4px; margin: 20px -14px 0; }
   header .tab { flex: 1; width: auto; }
+  .page:not(.house) { padding-inline: 12px; }
+}
+/* ---- §4 a phone: one column, the page scrolls ---- */
+@media (max-width: 699.98px) {
+  body { height: auto; min-height: 100dvh; overflow: auto; display: block; }
   .page.house { display: flex; flex-direction: column; gap: 10px; padding: 10px 12px 12px; overflow: visible; }
   #left, #centre { display: contents; }
   .herehead { order: 0; }
@@ -295,7 +340,6 @@ footer.paper { padding: 0 4px; }
   #talkForm { display: grid; grid-template-columns: repeat(3, 1fr); }
   #talkText { grid-column: 1 / -1; }
   .visit button { min-width: 0; }
-  .page:not(.house) { padding-inline: 12px; }
 }
 
 /* §1 the machine room's screens (SPEC-v3.5.1 §3), in the Holo Book: glowing blue, or amber for an amber screen */
@@ -304,13 +348,8 @@ footer.paper { padding: 0 4px; }
 .crt.amber { color: var(--amber); }
 .crt .crtglass { font-family: var(--pixel); background: none; text-shadow: 0 0 4px currentColor; color: inherit; }
 .crt .crthead { opacity: 1; color: var(--holo-dim); }
-/* a small desktop: the toolbar's group labels give way so it stays one row (the room keeps its scale) */
-@media (min-width: 1000px) and (max-width: 1599.98px) { .visit .glabel { display: none; } }
-/* v3.5.8: room for the chosen hob at the head of the toolbar, still one row: Stock, Music and More as icons up to 1700
-   (v3.5.7: 1400), the two choosers narrower; below 1400 Say as its icon too and the words box narrower */
-@media (min-width: 1000px) and (max-width: 1699.98px) { #stockBtn .btxt, #musicBtn .btxt, #moreBtn .btxt { display: none; } #giveBit, #writeOn { max-width: 5em; } }
-@media (min-width: 1000px) and (max-width: 1399.98px) {
-  #talkForm .btxt { display: none; } #talkText { min-width: 64px; width: 64px; } .controls.visit { column-gap: 7px; } .visit .actson { max-width: 7.5em; } }
+/* (v3.5.7, v3.5.8: the toolbar's group labels, then Stock, Music and More's words, then Say's give way so it stays one
+   row: v3.5.9 does it by the toolbar's own width, with the set layouts above) */
 /* (v3.5.7: the pack's icons on the toolbar's buttons, in the ink colour) */
 .bicon { display: inline-block; width: 24px; height: 26px; vertical-align: -6px; margin-right: 4px; background: center / contain no-repeat; image-rendering: pixelated;
   filter: brightness(0) saturate(100%) invert(9%) sepia(30%) saturate(2000%) hue-rotate(340deg); }
@@ -318,7 +357,6 @@ footer.paper { padding: 0 4px; }
 .bicon.music { background-image: url("../assets/third_party/crusenho/UI_Icon_Music01b.png"); }
 .bicon.manual { background-image: url("../assets/third_party/crusenho/UI_Icon_Manual01b.png"); }
 .bicon.contact { background-image: url("../assets/third_party/crusenho/UI_Icon_Contact01b.png"); }
-@media (min-width: 1000px) and (max-width: 1399.98px) { #stockBtn .bicon, #musicBtn .bicon, #moreBtn .bicon { margin-right: 0; } }
 
 /* ==== SPEC-v3.5.7 ==== */
 /* §2 what the page follows: a chip beside "Here" */
@@ -330,7 +368,6 @@ button.followchip.off { background: var(--paper); }
 #followBox:popover-open { display: flex; flex-direction: column; gap: 4px; align-items: stretch; }
 #followBox button.on { border-image-source: url("../assets/third_party/crusenho/UI_Wood_Button_Large_Press_01a4.png"); }
 #followBox button.fam1, #followBox button.fam2 { color: var(--fam); }
-@media (min-width: 1000px) { #followBox { inset: 130px auto auto 16px; margin: 0; } }
 /* §2 a room change: a short pixel wipe across the room */
 #stage.wipe::after { content: ""; position: absolute; inset: 0; z-index: 4; pointer-events: none; image-rendering: pixelated;
   background: conic-gradient(var(--page) 0 25%, transparent 0 50%, var(--page) 0 75%, transparent 0) 0 0 / 16px 16px, var(--page);
@@ -347,7 +384,7 @@ button.followchip.off { background: var(--paper); }
 .cicon.display { background-image: url("../assets/third_party/crusenho/UI_Icon_Display01b.png"); }
 .cicon.trophy { background-image: url("../assets/third_party/crusenho/UI_Icon_Trophy01b.png"); }
 .cicon.gear { background-image: url("../assets/third_party/crusenho/UI_Icon_Gear01b.png"); }
-.cpart { display: flex; flex-direction: column; gap: 2px; }
+.cpart { display: flex; flex-direction: column; gap: 2px; flex: none; }   /* (never squeezed: what does not fit folds, main.ts) */
 .console button.cfold { display: none; }
 /* (§3: the room's readout is time, day, sky, light and who is here; what else the old panel said stays out of it but warnings) */
 .console #family, .console #status .chip:not(.warn, .down), .console #happening li:not(.warn) { display: none; }
@@ -368,8 +405,8 @@ button.followchip.off { background: var(--paper); }
 .dotlayer .dot.chosen { outline: 2px solid #fff; }
 .console .read { display: grid; grid-template-columns: auto 1fr; gap: 0 10px; align-items: center; }
 .console .read b { color: #a8d8f5; font-weight: normal; }
-.console .digit { display: inline-block; border-style: solid; border-width: 8px; border-image: url("../assets/third_party/crusenho/UI_HoloBook_DigitFrame01a.png") 4 fill stretch; padding: 0 2px;
-  color: var(--amber); text-shadow: 0 0 6px var(--amber-glow); font-family: var(--led) !important; font-size: 30px !important; line-height: 18px !important; }
+.digit { display: inline-block; border-style: solid; border-width: 8px; border-image: url("../assets/third_party/crusenho/UI_HoloBook_DigitFrame01a.png") 4 fill stretch; padding: 0 2px;
+  color: var(--amber); text-shadow: 0 0 6px var(--amber-glow); font-family: var(--ledf) !important; font-size: 30px !important; line-height: 18px !important; }
 .console #status .chip { background: none; border: 0; color: #ff9a8a; }
 .console #happening li, .console #playing { color: var(--holo); }
 .console #happening li.warn { color: #ff9a8a; }
@@ -380,11 +417,8 @@ button.followchip.off { background: var(--paper); }
 #board.led { background: #0a1424; border: 2px solid var(--holo-line); border-image: none; padding: 4px 6px; color: var(--holo); display: block; margin: 0; overflow: hidden; }
 #board.led p { margin: 0; white-space: nowrap; overflow: hidden; }
 #board.led p.a { color: var(--amber); text-shadow: 0 0 6px var(--amber-glow); }
-#board.led p .txt { display: inline-block; position: relative; left: 0; }
-#board.led p.run .txt { animation: marquee 9s ease-in-out infinite alternate; }
-@keyframes marquee { 0%, 15% { left: 0; } 85%, 100% { left: var(--over); } }   /* (by position, not a transform: a sliding layer went unpainted in some captures) */
+#board.led p .txt { display: inline-block; position: relative; left: 0; }   /* (main.ts moves it by position, not a transform: a sliding layer went unpainted in some captures) */
 #board.led .cur { display: inline-block; width: 10px; height: 16px; margin-left: 2px; vertical-align: -2px; background: var(--amber); box-shadow: 0 0 6px var(--amber-glow); animation: blink 1s steps(1) infinite; }
-#board.led p.run .cur { display: none; }
 @keyframes blink { 50% { opacity: 0; } }
 #board.led.pulse { animation: pulse 0.9s ease-out; }
 @keyframes pulse { from { box-shadow: 0 0 0 2px var(--cyan), 0 0 18px var(--holo-glow); } to { box-shadow: none; } }
@@ -396,20 +430,21 @@ button.followchip.off { background: var(--paper); }
 @keyframes cellin { from { background: #fff; box-shadow: 0 0 10px #fff; } }
 #works.reached { animation: reached 1.4s ease-out; }
 @keyframes reached { 0%, 30% { background: rgb(88 208 255 / 45%); box-shadow: 0 0 16px var(--holo-glow); } 100% { background: none; box-shadow: none; } }
-@media (min-width: 1000px) {
-  .page.house { grid-template-rows: minmax(0, 1fr) auto; }
-  #side.console { grid-row: 1 / 3; }
+@media (min-width: 1200px) {
+  #side.console { grid-row: 1 / -1; }
   .cboard { flex: 0 0 auto; }
 }
-@media (max-width: 999.98px) {
-  #side.console { gap: 6px; }
-  .console button.cfold { display: flex; width: 100%; background: none; border: 0; border-image: none; color: #a8d8f5; min-height: 0; padding: 0 0 2px; border-bottom: 2px solid var(--holo-line); animation: none !important; }
-  button.cfold::after { content: "▾"; }
-  #side.console.folded button.cfold::after { content: "▸"; }
-  #side.console.folded :is(.cmap, .croom, .cworks) { display: none; }
-}
-.console .cnote { margin: 4px 0 0; color: #a8d8f5; letter-spacing: 1px; font-family: var(--dot) !important; font-size: 14px !important; line-height: 18px !important; }
-@media (min-width: 1000px) { .console .cnote { display: none; } }
+/* the console folds to the board and the Works' count (SPEC-v3.5.9 §2, §5): by its button on a phone and Small; on
+   a desktop by itself when its sections do not fit the window's height (main.ts: .tight), and back by the button */
+@media (max-width: 1199.98px) { #side.console { gap: 6px; } }
+.console button.cfold { width: 100%; background: none; border: 0; border-image: none; color: #a8d8f5; min-height: 0; padding: 0 0 2px; border-bottom: 2px solid var(--holo-line); animation: none !important; }
+@media (max-width: 1199.98px) { .console button.cfold { display: flex; } }
+#side.console.tight button.cfold { display: flex; }
+button.cfold::after { content: "▾"; }
+#side.console.folded button.cfold::after { content: "▸"; }
+#side.console.folded :is(.cmap, .croom) { display: none; }
+.console .cnote { margin: 4px 0 0; color: #a8d8f5; letter-spacing: 1px; font-family: var(--dot) !important; font-size: 16px !important; line-height: 20px !important; }
+@media (min-width: 1200px) { .console .cnote { display: none; } }
 
 /* §4 the big moments: a sign dropping in over the room, swinging to rest */
 #event { position: absolute; z-index: 5; left: 50%; top: 18%; width: min(470px, 92%); transform: translateX(-50%); text-align: center; cursor: pointer; }
@@ -435,7 +470,7 @@ button.followchip.off { background: var(--paper); }
 #event .stone { color: var(--ink2); }
 #event.still .sign, #event.still .spark { animation: none; }
 @media (prefers-reduced-motion: reduce) {
-  #event .sign, #event .spark, #stage.wipe::after, #board.led p.run .txt, #board.led .cur, #board.led.pulse, #works .meter-cells i.new, #works.reached { animation: none !important; }
+  #event .sign, #event .spark, #stage.wipe::after, #board.led .cur, #board.led.pulse, #works .meter-cells i.new, #works.reached { animation: none !important; }
   .dotlayer .dot, .wbar > i { transition: none !important; }
 }
 
@@ -451,4 +486,91 @@ button.followchip.off { background: var(--paper); }
 #tip.holdscard { border: 0; border-image: none; background: none; padding: 0; display: block; width: max-content; max-width: min(430px, calc(100vw - 24px)); z-index: 6; }
 #tip.holdscard .cardhint { text-align: right; color: var(--ink2); margin: -10px 14px 0 0; position: relative; }
 p.more .fonts { color: var(--on-page); }
-@media (min-width: 1000px) { body[data-page="house"] p.more .fonts { display: none; } }   /* (the House tab's foot is the credit alone: the fonts are on every other page's foot) */
+@media (min-width: 1200px) { body[data-page="house"] p.more .fonts { display: none; } }   /* (the House tab's foot is the credit alone: the fonts are on every other page's foot) */
+
+/* ==== SPEC-v3.5.9 ==== */
+/* §1, §2, §3 the room: a slim Holo strip on top (what the page follows, the room's name, the house time, the weather,
+   the season), the room at its whole-number zoom under it, and round it the room's surround: the world outside,
+   darker and blurred, behind the room as a window onto it */
+main { display: flex; flex-direction: column; }
+#roomwrap { flex: 1 1 auto; align-self: stretch; min-height: 0; display: flex; flex-direction: column; align-items: center;
+  background: rgb(6 8 18 / 60%); -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px); }
+#roomhead { align-self: stretch; position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 2px 12px; padding: 0 4px; margin: 0; min-height: 0; text-shadow: none;
+  border-width: 6px; }   /* (slim: the Holo Textfield at x1) */
+/* the sentence about now: a box three lines high on anything wider than a phone, so a longer sentence never moves the
+   room to another zoom (main.ts leaves out its "Here:" line, then cuts it at three lines, when it is longer) */
+@media (min-width: 700px) {
+  #now { height: calc(3 * var(--lh) + 24px); overflow: hidden; }
+  #now > span { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+}
+@media (min-width: 700px) and (max-width: 1199.98px) {   /* (Small: two lines, at its width the sentence's usual length, so a 1024 x 768 window has the room at x3) */
+  #now { height: calc(2 * var(--lh) + 24px); }
+  #now > span { -webkit-line-clamp: 2; }
+}
+#roomhead .followchip { flex: 0 1 auto; min-width: 0; }
+#roomName { flex: 1 1 auto; margin: 0; text-align: center; color: var(--holo); text-shadow: 0 0 2px var(--holo-glow); white-space: nowrap; letter-spacing: 1px; }
+#roomWhen { flex: none; display: flex; align-items: center; gap: 8px; margin-left: auto; }
+#roomWhen .wx { display: inline-flex; color: var(--holo); filter: drop-shadow(0 0 1px var(--holo-glow)); }
+#roomWhen .season { color: var(--holo-dim); font-family: var(--dot) !important; letter-spacing: 1px; }
+/* the page's own words straight on the world (the column heads, the credit) stand on a dark plate */
+.head, .empty-house, p.more > * { background: rgb(12 8 16 / 72%); width: fit-content; padding-inline: 6px; }
+@media (max-width: 1199.98px) { #roomwrap { padding-bottom: 10px; } }
+/* a phone: what the page follows and the time on the strip's first row, the room's name under them (the season is in
+   the header just above); the cards' "Here" head goes with the followed chip it used to sit beside */
+@media (max-width: 699.98px) {
+  #roomName { order: 3; flex-basis: 100%; }
+  #roomWhen .season, .herehead { display: none; }
+}
+
+/* §6 the board: VT323 at 24 px (32 on Large and Huge: --led), a 1-2 px glow and no blur, on a darker panel; two rows,
+   one line at a time (main.ts pages them, and scrolls a longer one up, slowly), the newest amber, the others a brighter blue */
+#board.led { background: #02060c; padding: 2px 8px; color: #c4ebff; text-shadow: 0 0 1px #c4ebff, 0 0 2px var(--holo-glow); }
+#board.led p { height: calc(var(--led) * 2.3); white-space: normal; overflow-wrap: break-word; }
+#board.led p .txt { display: block; top: 0; }
+#board.led .by { display: inline-block; }   /* (who it is about: never split, so it takes the second row whole) */
+#board.led p.a { color: var(--amber); text-shadow: 0 0 1px var(--amber), 0 0 2px var(--amber-glow); }
+#board.led .cur { width: calc(var(--led) * 0.42); height: calc(var(--led) * 0.75); vertical-align: -2px; box-shadow: 0 0 2px var(--amber-glow); }
+/* §5 the Works: its goal, its count and its meter, always (and still there when the console folds) */
+#works .goal { color: var(--holo); }
+#works .count { color: var(--amber); text-shadow: 0 0 1px var(--amber), 0 0 2px var(--amber-glow); }
+
+/* §7 living cards: a portrait breathes (one of its pixels up and down) and blinks now and then (main.ts); a hob asleep
+   keeps its eyes shut and "z"s rise from it */
+.cards .card .pic { position: relative; }
+.cards .card:not(.egg) .pic canvas.face { --bob: -2px; animation: breathe 3.4s steps(1) infinite; }
+.cards .card.away .pic canvas.face { --bob: -1px; }   /* (a small portrait is drawn one to one) */
+@keyframes breathe { 50% { transform: translateY(var(--bob)); } }
+.cards .card.asleep .pic canvas.face { animation-duration: 5.2s; }
+.cards .card.asleep .pic::before, .cards .card.asleep .pic::after { content: "z"; position: absolute; right: -6px; top: -4px; color: var(--ink2); line-height: 1 !important;
+  pointer-events: none; animation: zzz 3.6s linear infinite; opacity: 0; }
+.cards .card.asleep .pic::after { animation-delay: 1.8s; }
+@keyframes zzz { 0% { transform: translate(0, 6px); opacity: 0; } 25%, 70% { opacity: 1; } 100% { transform: translate(8px, -14px); opacity: 0; } }
+/* §7 a need that rises ticks its bar up, a notch at a time, with a warm glint */
+.wbar.up > i { transition-timing-function: steps(3, end); animation: tickup 1s ease-out; }
+@keyframes tickup { from { filter: brightness(1.35) saturate(1.2); } }
+/* §7 seasons on the page: frost on the frames' corners in winter, a leaf caught on them in autumn */
+:root {
+  --frost-tl: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8' shape-rendering='crispEdges'><g><path fill='%23f2faff' d='M0 0h3v1H0zM4 0h2v1H4zM0 1h2v1H0zM0 2h1v1H0zM0 4h1v1H0zM0 6h1v1H0z'/><path fill='%239fd6f2' d='M3 0h1v1H3zM6 0h1v1H6zM2 1h1v1H2zM4 1h1v1H4zM1 2h1v1H1zM0 3h1v1H0zM0 5h1v1H0z'/></g></svg>");
+  --frost-tr: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8' shape-rendering='crispEdges'><g transform='matrix(-1 0 0 1 8 0)'><path fill='%23f2faff' d='M0 0h3v1H0zM4 0h2v1H4zM0 1h2v1H0zM0 2h1v1H0zM0 4h1v1H0zM0 6h1v1H0z'/><path fill='%239fd6f2' d='M3 0h1v1H3zM6 0h1v1H6zM2 1h1v1H2zM4 1h1v1H4zM1 2h1v1H1zM0 3h1v1H0zM0 5h1v1H0z'/></g></svg>");
+  --frost-bl: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8' shape-rendering='crispEdges'><g transform='matrix(1 0 0 -1 0 8)'><path fill='%23f2faff' d='M0 0h3v1H0zM4 0h2v1H4zM0 1h2v1H0zM0 2h1v1H0zM0 4h1v1H0zM0 6h1v1H0z'/><path fill='%239fd6f2' d='M3 0h1v1H3zM6 0h1v1H6zM2 1h1v1H2zM4 1h1v1H4zM1 2h1v1H1zM0 3h1v1H0zM0 5h1v1H0z'/></g></svg>");
+  --frost-br: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8' shape-rendering='crispEdges'><g transform='matrix(-1 0 0 -1 8 8)'><path fill='%23f2faff' d='M0 0h3v1H0zM4 0h2v1H4zM0 1h2v1H0zM0 2h1v1H0zM0 4h1v1H0zM0 6h1v1H0z'/><path fill='%239fd6f2' d='M3 0h1v1H3zM6 0h1v1H6zM2 1h1v1H2zM4 1h1v1H4zM1 2h1v1H1zM0 3h1v1H0zM0 5h1v1H0z'/></g></svg>");
+}
+#now, #roomhead, .cards .card { position: relative; }
+/* (each as big as its frame's edge, so it never reaches the words or the room inside) */
+body[data-season="winter"] :is(#frame, #now, .cards .card)::after { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; image-rendering: pixelated; --f: 14px;
+  background: var(--frost-tl) left top / var(--f) var(--f) no-repeat, var(--frost-tr) right top / var(--f) var(--f) no-repeat,
+              var(--frost-bl) left bottom / var(--f) var(--f) no-repeat, var(--frost-br) right bottom / var(--f) var(--f) no-repeat; }
+body[data-season="winter"] #frame::after { --f: calc(14px * var(--ui)); }
+body[data-season="winter"] #now::after { --f: 12px; }
+body[data-season="autumn"] :is(#frame, #now, .cards .card)::after { content: ""; position: absolute; z-index: 1; top: -3px; right: 12px; width: 24px; height: 14px; pointer-events: none;
+  background: url("../assets/third_party/ninja_adventure/FX/Particle/Leaf.png") 0 0 / 144px 14px; image-rendering: pixelated; filter: hue-rotate(-42deg) saturate(1.5); transform: rotate(-12deg); }
+body[data-season="autumn"] .cards .card:nth-child(even)::after { right: auto; left: 10px; background-position: -48px 0; transform: rotate(10deg); }
+body[data-season="autumn"] #frame::after { width: calc(24px * var(--ui)); height: calc(14px * var(--ui)); background-size: calc(144px * var(--ui)) calc(14px * var(--ui)); }
+
+/* reduce motion: nothing flashes; what moves, moves slower */
+@media (prefers-reduced-motion: reduce) {
+  .wbar.jump > i, .wbar.up > i { animation: none !important; }
+  .cards .card:not(.egg) .pic canvas.face { animation-duration: 6.8s; }
+  .cards .card.asleep .pic::before, .cards .card.asleep .pic::after { animation-duration: 7.2s; }
+  .cards .card.asleep .pic::after { animation-delay: 3.6s; }
+}
