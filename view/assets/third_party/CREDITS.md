@@ -65,12 +65,20 @@ the VT323 Project Authors (Peter Hull), both released under the SIL Open Font Li
 over a pet's head) were drawn for this project in the pack's palette and manner, from `../own/src/art.py`. They are
 CC0 as well.
 
-## PixelLab (the sweeper, its dock and five kinds, SPEC-v3.5.8)
+## PixelLab (the sweeper and its dock, v3.5.9.1; five kinds, SPEC-v3.5.8)
 
-`../own/sweeper.png` is cut from a sheet generated for this project with **PixelLab** (https://www.pixellab.ai) on
-15 October 2026 (`generate-with-style-v2`, the Ninja Adventure items as the style; the sheet is
-`assets-incoming/pixellab/sweeper16.png`, its names in `lists.py` `SHEETS["sweeper16"]`). Used unchanged: cells 0, 1,
-2, 6 and 7 (the robot vacuum, with its green light, a variant, full of dust, its charging dock) and 24, 13, 52, 27, 45
-(clay brick, bundle of sticks, rag, bundle of fibre, label tag: the tile, tinder bundle, patch, draught stopper and
-sign kinds). Put together from them: cell 0 mirrored (the drive's second frame) and cell 6 with cell 1's green light
-(full, blinking). Generated images are used under PixelLab's terms of service.
+`../own/robot.png` is cut from pictures generated for this project with **PixelLab** (https://www.pixellab.ai) on
+16 October 2026: the sweeper, a little orange delivery robot (`assets-incoming/pixellab/robotC/`, PixelLab object
+45d2830b-b942-4d12-a70a-19830087361d, made with `create-8-direction-object` from cell 2 of `robots32.png`): its eight
+still directions (`C_<direction>.png`) and its drive animation (`C_drive_<south|east|north|west>_<0-4>.png`), each cut
+from 34 × 34 to the 26 × 25 that holds the robot; and its dock, cell 26 of `assets-incoming/pixellab/robots32.png`
+(`generate-with-style-v2`, 32 × 32 cells; the charging dock with the green light), cut to 20 × 21. Changed only in the
+robot's green light, which is drawn lit in every frame (PixelLab's drive frames blink and glare on their own; the view
+blinks it).
+
+`../own/sweeper.png` is cut from a sheet generated for this project with **PixelLab** on 15 October 2026
+(`generate-with-style-v2`, the Ninja Adventure items as the style; the sheet is `assets-incoming/pixellab/sweeper16.png`,
+its names in `lists.py` `SHEETS["sweeper16"]`). Used unchanged: cells 24, 13, 52, 27, 45 (clay brick, bundle of sticks,
+rag, bundle of fibre, label tag: the tile, tinder bundle, patch, draught stopper and sign kinds). The sweeper and its
+dock from that sheet (cells 0, 1, 2, 6, 7) are no longer used. Generated images are used under PixelLab's terms of
+service.

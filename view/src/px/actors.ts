@@ -7,7 +7,7 @@ import { petSheet } from "../petsprite";
 import type { PetAnim, PetSheet } from "../petsprite";
 import { bodyStage } from "../types";
 import type { Creature, PetV, Tile } from "../types";
-import { anim, fromCanvas, has, kind, tex } from "./assets";
+import { anim, canvasOf, fromCanvas, has, kind, tex } from "./assets";
 import { fxTexture } from "./fx";
 import type { Fx } from "./fx";
 import { clamp, foot, FX, OX, OY, TILE, tileAt } from "./geom";
@@ -16,6 +16,7 @@ import { path } from "./path";
 import type { Grid } from "./path";
 import type { Thing } from "./still";
 import { hslInt } from "./tint";
+import { REDUCE } from "./weather";
 
 /** What an actor may know of the room each frame. `free`: could a pet stand on this tile just now. `where`: the
  *  place of a pet, creature, thing or wall by its name, in the room's pixels. */
@@ -490,6 +491,27 @@ export class PetActor {
   }
 }
 
+/** v3.5.9.1: the sweeper's eight ways, in the order of its stills; the nearest of them to a step of dx, dy (y down). */
+const COMPASS = ["south", "south-east", "east", "north-east", "north", "north-west", "west", "south-west"];
+const DIR8: Record<Dir, number> = { down: 0, right: 2, up: 4, left: 6 };
+const compass = (dx: number, dy: number) => (Math.round(Math.atan2(dx, dy) / (Math.PI / 4)) + 8) % 8;
+const unlit = new Map<string, Texture>();
+/** A frame of the sweeper with its green light off: the light's bright greens dimmed, its dark rim left as it is. */
+function lightOff(n: string, a: string, i: number): Texture {
+  const key = `${n}|${a}|${i}`;
+  let t = unlit.get(key);
+  if (t) return t;
+  const src = canvasOf(n, a, i), c = document.createElement("canvas");
+  [c.width, c.height] = [src.width, src.height];
+  const x = c.getContext("2d")!;
+  x.drawImage(src, 0, 0);
+  const im = x.getImageData(0, 0, c.width, c.height), p = im.data;
+  for (let j = 0; j < p.length; j += 4) if (p[j + 1] >= 140 && p[j + 1] > p[j] + 30 && p[j + 1] > p[j + 2]) for (let q = j; q < j + 3; q++) p[q] = Math.round(p[q] * 0.4);
+  x.putImageData(im, 0, 0);
+  unlit.set(key, (t = fromCanvas(c)));
+  return t;
+}
+
 /** A small creature: the pack's own frames, facing where it goes. A tame one carries a small flag in its pet's colour. */
 export class CreatureActor {
   c = new Container();
@@ -502,7 +524,9 @@ export class CreatureActor {
   private faced = "right";
   private t0 = Math.random() * 1000;
   private bumpAt = -1e9;   // SPEC-v3.5.8 §4.2: the sweeper last bumped into something and turned
-  private was: [boolean, Dir] = [false, "down"];
+  private heading = 0;     // v3.5.9.1: the way the sweeper last went from one snapshot to the next, 0..7 (COMPASS)
+  private turn: [number, number] = [0, 0];   // ... and the turn it is making: from, to (COMPASS)
+  private rolling = false;
 
   constructor() {
     this.body.anchor.set(0.5, 1);
@@ -513,6 +537,7 @@ export class CreatureActor {
   update(cr: Creature, st: Stage, ms: number, first: boolean, color: number | null) {
     this.name = `creature.${cr.kind}`;
     const moved = !this.cr || cr.pos[0] !== this.cr.pos[0] || cr.pos[1] !== this.cr.pos[1];
+    if (moved && this.cr) this.heading = compass(cr.pos[0] - this.cr.pos[0], cr.pos[1] - this.cr.pos[1]);
     this.cr = cr;
     if (first) this.w.place(cr.pos);
     else if (moved) this.w.go(cr.pos, st.blocked, ms, 4);
@@ -551,19 +576,29 @@ export class CreatureActor {
     this.carry.position.set(0, this.body.y - h + 4);
   }
 
-  /** SPEC-v3.5.8 §4.2: the sweeper. It drives (its brush turning), hums a pixel up and down, bumps and turns where it
-   *  stops or changes way, blinks green when full, and sits on its dock when docked. */
+  /** SPEC-v3.5.8 §4.2: the sweeper, v3.5.9.1: the orange delivery robot. It drives in the drive frames of the nearest of
+   *  its four ways, stands in the still of the eight it last went, and turns through the stills between; it backs off
+   *  a pixel or two where it stops or turns, blinks its green light (faster when full), and sits on its dock facing out. */
   private sweep(st: Stage) {
-    const now = st.now, cr = this.cr, n = this.name, moving = this.w.moving, dir = this.w.dir;
-    if ((this.was[0] && !moving) || (moving && dir !== this.was[1])) this.bumpAt = now;
-    this.was = [moving, dir];
-    const a = cr.full ? "full" : moving ? "walk" : "idle", an = anim(n, a), k = (now - this.bumpAt) / 300;
-    this.body.texture = tex(n, an ? a : undefined, an ? Math.floor(((now + this.t0) / 1000) * an.fps) % an.frames.length : 0);
+    const now = st.now, cr = this.cr, n = this.name, moving = this.w.moving && !cr.docked, dir = this.w.dir;
+    const to = cr.docked ? 0 : moving ? DIR8[dir] : this.heading;
+    if (to !== this.turn[1] || (this.rolling && !moving)) [this.turn, this.bumpAt] = [[this.facing(now), to], now];
+    this.rolling = moving;
+    const k = (now - this.bumpAt) / 300, turning = k < 1 && this.turn[0] !== to;
+    const a = turning ? `still.${COMPASS[this.facing(now)]}` : moving ? `walk.${dir}` : `still.${COMPASS[to]}`, an = anim(n, a);
+    const i = an ? Math.floor(((now + this.t0) / 1000) * an.fps) % an.frames.length : 0;
+    // the light: on and off about once a second, four times when full; under reduce motion steady, or slow when full
+    const blink = REDUCE.matches ? (cr.full ? 2000 : 0) : cr.full ? 250 : 1000, lit = !blink || (now + this.t0) % blink < blink / 2;
+    this.body.texture = an ? (lit ? tex(n, a, i) : lightOff(n, a, i)) : tex(n);
     const back = k < 1 ? Math.round(Math.sin(k * Math.PI) * 2) : 0, [dx, dy] = dir === "left" ? [-1, 0] : dir === "right" ? [1, 0] : dir === "up" ? [0, -1] : [0, 1];
-    this.body.scale.x = k < 1 && k > 0.5 ? -1 : 1;   // (the turn: it swings round)
-    this.body.position.set(-dx * back, -dy * back - (moving && Math.floor(now / 120) % 2 ? 1 : 0));
-    this.c.position.set(Math.round(this.w.x), Math.round(this.w.y) + (cr.docked ? 6 : 0));   // docked: on its dock's plate, in front of the dock
+    this.body.position.set(-dx * back, -dy * back);
+    this.c.position.set(Math.round(this.w.x) + (cr.docked ? 8 : 0), Math.round(this.w.y) + (cr.docked ? 3 : 0));   // docked: on its dock's plate, the dock's back showing behind it
     this.c.zIndex = this.w.y + (cr.docked ? 2 : -1);
     this.flag.position.set(-this.body.texture.width / 2, this.body.y - this.body.texture.height + 2);
+  }
+  /** Which of the eight stills it shows just now, partway round a turn (the short way). */
+  private facing(now: number) {
+    const [from, to] = this.turn, d = ((to - from + 12) % 8) - 4, k = Math.min(1, (now - this.bumpAt) / 300);
+    return (from + Math.round(d * k) + 8) % 8;
   }
 }
