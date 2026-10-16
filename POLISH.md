@@ -50,3 +50,5 @@ Small things Tyler has seen and set aside. No action until he says so. Newest at
     the sky the room's strip now shows: leaving those two rows out would let the console stay open there.
   - The sentence about now is cut at three lines (two on Small), its "Here:" line first; the whole is in the cards.
   - A long name in the folded toolbar's "Visit" head breaks inside a word when it has no space (Pethuthus).
+  - At 1728 x 1117 the toolbar (Large's, zoomed) takes two rows, Stock, Music and More on the second; the room there is
+    as wide as its column allows, so the room loses nothing, but one row would look tidier.

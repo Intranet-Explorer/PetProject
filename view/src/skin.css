@@ -290,9 +290,9 @@ footer.paper { padding: 0 4px; }
 /* the toolbar's words give way as it narrows (by its own width: it is zoomed on Large and Huge, and folded into the
    hobs' column on a short window), so it stays one row where it can */
 @media (min-width: 700px) { footer { container: bar / inline-size; } }
-@container bar (min-width: 664px) { #giveBit, #writeOn { width: auto; max-width: 6.5em; } }
+@container bar (min-width: 664px) { #giveBit, #writeOn { width: auto; max-width: calc(4.7em + 30px); }   /* (its frame and arrow do not grow with the words) */ }
 @container bar (max-width: 1263.98px) { .visit .glabel { display: none; } }
-@container bar (max-width: 1363.98px) { #stockBtn .btxt, #musicBtn .btxt, #moreBtn .btxt { display: none; } #giveBit, #writeOn { max-width: 5em; } }
+@container bar (max-width: 1363.98px) { #stockBtn .btxt, #musicBtn .btxt, #moreBtn .btxt { display: none; } #giveBit, #writeOn { max-width: calc(3.2em + 30px); } }
 @container bar (max-width: 1063.98px) {
   #talkForm .btxt { display: none; } #talkText { min-width: 64px; width: 64px; } .controls.visit { column-gap: 7px; } .visit .actson { max-width: 7.5em; }
   #stockBtn .bicon, #musicBtn .bicon, #moreBtn .bicon { margin-right: 0; } }
@@ -503,7 +503,7 @@ main { display: flex; flex-direction: column; }
   #now { height: calc(3 * var(--lh) + 24px); overflow: hidden; }
   #now > span { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
 }
-@media (min-width: 700px) and (max-width: 1199.98px) {   /* (Small: two lines, at its width the sentence's usual length, so a 1024 x 768 window has the room at x3) */
+@media (min-width: 900px) and (max-width: 1199.98px) {   /* (a wide Small: two lines, at its width the sentence's usual length, so a 1024 x 768 window has the room at x3) */
   #now { height: calc(2 * var(--lh) + 24px); }
   #now > span { -webkit-line-clamp: 2; }
 }
