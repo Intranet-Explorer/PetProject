@@ -12,6 +12,7 @@ from . import season
 from . import build
 from . import machine
 from . import hub
+from .world import a as a_bit
 from .world import LONG_AGO, STAGES, add_event, beside, dist, free_tile, here, label, relation, rnd, ticks
 
 URGENT = {"visitor", "woke", "hatched", "low", "spoken", "event"}   # what stops it in its tracks (as it hurries a thought)
@@ -420,7 +421,7 @@ def say(cfg, house, pet, now, form, where=""):
         what = "%s (a %s)" % (what, o["made"]["recipe"]["kind"])   # its maker's name for it says little to a stranger: what it is, too
     A = cfg["activities"][now["name"]]
     form = form + "_screen" if o.get("fix", {}).get("terminal") and form + "_screen" in A else form   # (a screen is not the heavy book)
-    return A[form].format(what=what, where=where or (now.get("where") if isinstance(now.get("where"), str) else ""),
+    return A[form].format(what=what, a_what=a_bit(what) if what else what, where=where or (now.get("where") if isinstance(now.get("where"), str) else ""),
                                                          who=(actions.handle(house, pet, who) if form == "did" else label(who)) if who else "someone")
 
 
@@ -624,6 +625,7 @@ def finish(mind, now, cut=False):
         b.setdefault("done", {})[now["name"]] = h["tick"]
         if A.get("handles") and now.get("what"):
             b["handled"] = (b.get("handled", []) + [[h["tick"], now["what"]]])[-12:]
+            things.used_by(h, h["rooms"][pet["room"]]["objects"].get(now["what"], {}), pet)   # SPEC-v3.5.8: who uses it
     b["last_passive"] = bool(now["passive"]) and done
     span = max(1, h["tick"] - start)
     b["idle"] = (b["idle"] + [1 if now["passive"] and now["began"] is not None else 0] * min(span, 60))[-cfg["body"]["window_ticks"]:]

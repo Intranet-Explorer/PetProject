@@ -241,6 +241,8 @@ def first(house, cfg, pet, keys):
 def made(house, cfg, pet, o, room):
     """Hook (things.make, things.combine, invent.make): a thing was made. Firsts, bests, and who saw it."""
     seen = [best(house, cfg, pet, "thing", quality(cfg, o), thing_words(cfg, o), o["made"]["recipe"]["kind"]), first(house, cfg, pet, made_keys(o["made"]["recipe"]))]
+    if seen[1]:
+        o["made"]["first"] = True   # SPEC-v3.5.8 §3, §4: a first is kept, and shows its maker's title for it
     if any(seen):
         noticed(house, cfg, pet, *seen)
     elif o["made"].get("fine", 0) >= cfg["drive"]["fine_thing"]:   # a fine thing, when it was nothing more: seen, but not a feat, and once a day by each onlooker

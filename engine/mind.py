@@ -95,6 +95,8 @@ def perceive(house, cfg, pet, mem):
         if "made" in o:
             notes.append(things.a_thing(cfg, o["made"]["recipe"]))   # what it is, beside the name its maker gave it (SPEC-v3.2 §3)
             notes.append(things.whose(house, pet, o))
+            if o["made"]["recipe"].get("title"):   # SPEC-v3.5.8 §3: its maker's own name for it
+                notes.append("%s %s" % ("you call it" if o["made"]["by"] == pet["id"] else "its maker calls it", o["made"]["recipe"]["title"]))
             if o.get("wall"):
                 notes.append("on the wall")
             if o.get("on"):
@@ -253,9 +255,9 @@ def perceive(house, cfg, pet, mem):
             return None
         return "%s%s: %s" % (actions.handle(house, pet, p), ", who has died" if p["stage"] == "dead" else "", line)
 
-    sections = {
+    sections = {   # ("you are a hob": SPEC-v3.5.8 §1)
         "time": "it is %s" % feel.when(house),
-        "room": "you are in %s%s" % (room["name"], ": %s walls, %s floor" % (room["paint"]["wall"], room["paint"]["floor"]) if room["paint"]["wall"] else ""),
+        "room": "you are a hob, in %s%s" % (room["name"], ": %s walls, %s floor" % (room["paint"]["wall"], room["paint"]["floor"]) if room["paint"]["wall"] else ""),
         "feel": "you feel: " + "; ".join(filter(None, [feel.feelings(pet), feats.felt(cfg, house, pet)])),   # SPEC-v3.5.4 §12: pride, while it glows
         "wants": "; ".join(wants.lines(pet)),
         "skills": "with practice: " + craft.skills_line(cfg, pet),

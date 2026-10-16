@@ -124,7 +124,10 @@ def write(house, cfg, pet, a, clean, norm):
     room, on = house["rooms"][pet["room"]], norm(a["on"])
     text, medium = last_sentence(clean(a["text"], cfg["writing"]["max_chars"] + 20), cfg["writing"]["max_chars"]), tool(cfg, pet)
     m, restored = put(house, cfg, room, pet["id"], text, on, medium, along(cfg, pet, on), family(pet))
-    used = ""
+    used, stone = "", room["objects"].get(on, {})
+    if "memorial" in stone:   # SPEC-v3.5.8: words written on a stone are kept with the stone, long after the chalk fades
+        stone.setdefault("words", []).append({"tick": house["tick"], "pet": pet["id"], "text": m["text"]})
+        del stone["words"][:-8]
     if medium == "chalk":
         pet["chalked"] = pet.get("chalked", 0) + 1
         if pet["chalked"] >= cfg["writing"]["chalk_writings"]:

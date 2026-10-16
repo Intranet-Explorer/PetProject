@@ -11,7 +11,11 @@
    "bright"
   ],
   "sprite": "kind.cushion",
-  "a": "a"
+  "a": "a",
+  "words": [
+   "cushion",
+   "pillow"
+  ]
  },
  "rug": {
   "furniture": true,
@@ -27,7 +31,11 @@
   ],
   "sprite": "kind.rug",
   "a": "a",
-  "flat": true
+  "flat": true,
+  "words": [
+   "rug",
+   "carpet"
+  ]
  },
  "blanket": {
   "rank": 1,
@@ -42,7 +50,12 @@
   ],
   "sprite": "kind.blanket",
   "a": "a",
-  "flat": true
+  "flat": true,
+  "words": [
+   "blanket",
+   "quilt",
+   "throw"
+  ]
  },
  "nest": {
   "rank": 2,
@@ -55,7 +68,10 @@
    "sweet"
   ],
   "sprite": "kind.nest",
-  "a": "a"
+  "a": "a",
+  "words": [
+   "nest"
+  ]
  },
  "bed-mat": {
   "rank": 2,
@@ -70,7 +86,12 @@
   ],
   "sprite": "kind.bed-mat",
   "a": "a",
-  "flat": true
+  "flat": true,
+  "words": [
+   "mat",
+   "bedroll",
+   "pallet"
+  ]
  },
  "doll": {
   "rank": 2,
@@ -82,7 +103,13 @@
   ],
   "sprite": "kind.doll",
   "a": "a",
-  "hangs": true
+  "hangs": true,
+  "words": [
+   "doll",
+   "figure",
+   "figurine",
+   "puppet"
+  ]
  },
  "candle": {
   "rank": 1,
@@ -97,7 +124,11 @@
    "quiet"
   ],
   "sprite": "kind.candle",
-  "a": "a"
+  "a": "a",
+  "words": [
+   "candle",
+   "taper"
+  ]
  },
  "lantern": {
   "rank": 2,
@@ -110,7 +141,10 @@
   ],
   "sprite": "kind.lantern",
   "a": "a",
-  "hangs": true
+  "hangs": true,
+  "words": [
+   "lantern"
+  ]
  },
  "lamp": {
   "rank": 2,
@@ -122,7 +156,10 @@
    "sweet"
   ],
   "sprite": "kind.lamp",
-  "a": "a"
+  "a": "a",
+  "words": [
+   "lamp"
+  ]
  },
  "bell": {
   "rank": 1,
@@ -134,7 +171,10 @@
   ],
   "sprite": "kind.bell",
   "a": "a",
-  "hangs": true
+  "hangs": true,
+  "words": [
+   "bell"
+  ]
  },
  "drum": {
   "rank": 2,
@@ -145,7 +185,10 @@
    "glassy"
   ],
   "sprite": "kind.drum",
-  "a": "a"
+  "a": "a",
+  "words": [
+   "drum"
+  ]
  },
  "flute": {
   "rank": 2,
@@ -157,7 +200,12 @@
    "heavy"
   ],
   "sprite": "kind.flute",
-  "a": "a"
+  "a": "a",
+  "words": [
+   "flute",
+   "pipe",
+   "whistle"
+  ]
  },
  "wind chime": {
   "rank": 3,
@@ -170,7 +218,11 @@
   ],
   "sprite": "kind.wind chime",
   "a": "a",
-  "hangs": true
+  "hangs": true,
+  "words": [
+   "chime",
+   "chimes"
+  ]
  },
  "ball": {
   "rank": 1,
@@ -180,7 +232,10 @@
    "heavy"
   ],
   "sprite": "kind.ball",
-  "a": "a"
+  "a": "a",
+  "words": [
+   "ball"
+  ]
  },
  "spinning top": {
   "rank": 2,
@@ -191,7 +246,11 @@
    "heavy"
   ],
   "sprite": "kind.spinning top",
-  "a": "a"
+  "a": "a",
+  "words": [
+   "top",
+   "spinner"
+  ]
  },
  "mobile": {
   "rank": 3,
@@ -202,7 +261,10 @@
   ],
   "sprite": "kind.mobile",
   "a": "a",
-  "hangs": true
+  "hangs": true,
+  "words": [
+   "mobile"
+  ]
  },
  "jar": {
   "rank": 1,
@@ -213,7 +275,12 @@
    "soft"
   ],
   "sprite": "kind.jar",
-  "a": "a"
+  "a": "a",
+  "words": [
+   "jar",
+   "pot",
+   "vessel"
+  ]
  },
  "bowl": {
   "rank": 1,
@@ -224,7 +291,11 @@
    "soft"
   ],
   "sprite": "kind.bowl",
-  "a": "a"
+  "a": "a",
+  "words": [
+   "bowl",
+   "dish"
+  ]
  },
  "cup": {
   "rank": 1,
@@ -235,7 +306,12 @@
    "soft"
   ],
   "sprite": "kind.cup",
-  "a": "a"
+  "a": "a",
+  "words": [
+   "cup",
+   "mug",
+   "beaker"
+  ]
  },
  "vase": {
   "rank": 2,
@@ -247,7 +323,10 @@
    "sweet"
   ],
   "sprite": "kind.vase",
-  "a": "a"
+  "a": "a",
+  "words": [
+   "vase"
+  ]
  },
  "basket": {
   "rank": 2,
@@ -261,7 +340,10 @@
   "a": "a",
   "store": 3,
   "inside": true,
-  "hangs": true
+  "hangs": true,
+  "words": [
+   "basket"
+  ]
  },
  "box": {
   "rank": 1,
@@ -273,7 +355,12 @@
   "sprite": "kind.box",
   "a": "a",
   "store": 2,
-  "inside": true
+  "inside": true,
+  "words": [
+   "box",
+   "case",
+   "tin"
+  ]
  },
  "shelf": {
   "rank": 2,
@@ -286,7 +373,11 @@
   ],
   "sprite": "kind.shelf",
   "a": "a",
-  "store": 3
+  "store": 3,
+  "words": [
+   "shelf",
+   "ledge"
+  ]
  },
  "stool": {
   "furniture": true,
@@ -297,7 +388,12 @@
    "glassy"
   ],
   "sprite": "kind.stool",
-  "a": "a"
+  "a": "a",
+  "words": [
+   "stool",
+   "seat",
+   "bench"
+  ]
  },
  "mirror": {
   "rank": 2,
@@ -313,7 +409,10 @@
   ],
   "sprite": "kind.mirror",
   "a": "a",
-  "hangs": true
+  "hangs": true,
+  "words": [
+   "mirror"
+  ]
  },
  "picture": {
   "rank": 2,
@@ -327,7 +426,13 @@
   ],
   "sprite": "kind.picture",
   "a": "a",
-  "hangs": true
+  "hangs": true,
+  "words": [
+   "picture",
+   "painting",
+   "drawing",
+   "portrait"
+  ]
  },
  "plant pot": {
   "furniture": true,
@@ -353,7 +458,11 @@
   ],
   "sprite": "kind.garland",
   "a": "a",
-  "hangs": true
+  "hangs": true,
+  "words": [
+   "garland",
+   "wreath"
+  ]
  },
  "charm": {
   "rank": 1,
@@ -377,7 +486,10 @@
    "fragrant"
   ],
   "sprite": "kind.stone stack",
-  "a": "a"
+  "a": "a",
+  "words": [
+   "cairn"
+  ]
  },
  "sculpture": {
   "rank": 3,
@@ -404,7 +516,13 @@
    "springy"
   ],
   "sprite": "kind.treat",
-  "a": "a"
+  "a": "a",
+  "words": [
+   "treat",
+   "snack",
+   "biscuit",
+   "cake"
+  ]
  },
  "chest": {
   "rank": 2,
@@ -420,7 +538,10 @@
   "sprite": "kind.chest",
   "a": "a",
   "store": 5,
-  "inside": true
+  "inside": true,
+  "words": [
+   "chest"
+  ]
  },
  "crate": {
   "rank": 1,
@@ -435,7 +556,10 @@
   "sprite": "kind.crate",
   "a": "a",
   "store": 4,
-  "inside": true
+  "inside": true,
+  "words": [
+   "crate"
+  ]
  },
  "wall hook": {
   "rank": 1,
@@ -449,7 +573,11 @@
   ],
   "sprite": "kind.wall hook",
   "a": "a",
-  "hooks": 2
+  "hooks": 2,
+  "words": [
+   "hook",
+   "peg"
+  ]
  },
  "rope": {
   "rank": 1,
@@ -462,7 +590,13 @@
   ],
   "sprite": "kind.rope",
   "a": "a",
-  "hangs": true
+  "hangs": true,
+  "words": [
+   "rope",
+   "cord",
+   "twine",
+   "string"
+  ]
  },
  "carver": {
   "rank": 1,
@@ -476,7 +610,13 @@
   ],
   "sprite": "kind.carver",
   "a": "a",
-  "tool": true
+  "tool": true,
+  "words": [
+   "knife",
+   "blade",
+   "cutter",
+   "carver"
+  ]
  },
  "trowel": {
   "rank": 1,
@@ -491,7 +631,12 @@
   ],
   "sprite": "kind.trowel",
   "a": "a",
-  "tool": true
+  "tool": true,
+  "words": [
+   "trowel",
+   "spade",
+   "scoop"
+  ]
  },
  "hammer": {
   "rank": 2,
@@ -506,6 +651,102 @@
   ],
   "sprite": "kind.hammer",
   "a": "a",
-  "tool": true
+  "tool": true,
+  "words": [
+   "hammer",
+   "mallet"
+  ]
+ },
+ "tile": {
+  "rank": 1,
+  "wall": false,
+  "not": [
+   "soft",
+   "bouncy",
+   "springy",
+   "sweet",
+   "fragrant"
+  ],
+  "sprite": "kind.tile",
+  "a": "a",
+  "flat": true,
+  "words": [
+   "tile",
+   "tiles",
+   "slab",
+   "brick"
+  ]
+ },
+ "patch": {
+  "rank": 1,
+  "wall": false,
+  "not": [
+   "glassy",
+   "sweet",
+   "bouncy"
+  ],
+  "sprite": "kind.patch",
+  "a": "a",
+  "words": [
+   "patch",
+   "seal",
+   "plug",
+   "mend",
+   "mending"
+  ]
+ },
+ "tinder bundle": {
+  "rank": 1,
+  "wall": false,
+  "not": [
+   "glassy",
+   "sweet",
+   "heavy",
+   "cool"
+  ],
+  "sprite": "kind.tinder bundle",
+  "a": "a",
+  "words": [
+   "tinder",
+   "kindling",
+   "firestarter"
+  ]
+ },
+ "draught stopper": {
+  "rank": 1,
+  "wall": false,
+  "not": [
+   "glassy",
+   "sweet",
+   "bouncy",
+   "noisy"
+  ],
+  "sprite": "kind.draught stopper",
+  "a": "a",
+  "words": [
+   "draught",
+   "draft",
+   "stopper",
+   "stop"
+  ]
+ },
+ "sign": {
+  "rank": 1,
+  "wall": false,
+  "not": [
+   "soft",
+   "sweet",
+   "bouncy",
+   "springy"
+  ],
+  "sprite": "kind.sign",
+  "a": "a",
+  "hangs": true,
+  "words": [
+   "sign",
+   "marker",
+   "label",
+   "signpost"
+  ]
  }
 }

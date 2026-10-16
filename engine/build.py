@@ -61,6 +61,18 @@ def missing(P, o):
     return {b: n - placed.get(b, 0) for b, n in P["needs"].items() if n > placed.get(b, 0)} if o is None or "site" in o else {}
 
 
+def progress(house, cfg, pet):
+    """SPEC-v3.5.8: a project's progress where it can be measured: the first thing it wants built, as the parts set
+    in place out of all it takes ({what, have, need}), or None."""
+    for w in pet.get("wants", []):
+        P = cfg["build"]["project"].get(w.get("project")) if w["what"] == "build" else None
+        room = house["rooms"].get(w.get("room") or "")
+        if P and room:
+            lack, need = missing(P, find(room, w["project"])[1]), sum(P["needs"].values())
+            return {"what": "the %s in %s" % (w["project"], room["name"]), "have": need - sum(lack.values()), "need": need}
+    return None
+
+
 def spot(house, cfg, room, P):
     """The tile it stands on (or hangs above), or None if this room has not what it goes on."""
     objs = room["objects"]

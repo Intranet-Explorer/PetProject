@@ -11,6 +11,7 @@ weight = 1.5              # a spare thing is wanted fed this much more while the
 nearly_weight = 2.0       # nearly full: how much a pet wants to feed it an old thing of its own that nobody has touched lately
 idle_days = 1             # ... "lately": this long
 keep = 400                # the things it has counted, kept so that none counts twice
+spring_days = 3           # SPEC-v3.5.8 §4: the spring clean lasts this many world days
 
 # What it builds, in this order, cheapest first. `what` is said to the pets and on the board; `scrap` is its goal.
 # What it does, one of:
@@ -45,3 +46,8 @@ material = "wax"
 what = "a third thing a day from the machine for everyone"
 scrap = 20
 machine = { free = 3 }
+
+[[build]]
+what = "a sweeper for the house"   # SPEC-v3.5.8 §4.2: a small robot vacuum that clears loose junk by itself (engine/sweeper.py)
+scrap = 12
+sweeper = true

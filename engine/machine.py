@@ -8,6 +8,7 @@ import tomllib
 from collections import Counter
 
 from . import craft, order, things, works
+from .world import a as a_bit
 from .world import LONG_AGO, add_event, beside, days as world_days, dist, free_tile, label, moment, ticks
 
 ACTIONS = ("machine_take", "machine_feed")   # what a mind can decide, at the machine
@@ -226,7 +227,7 @@ def take(house, cfg, pet, what):
     got(house, cfg, pet, room, what)
     moment(house, "machine", "%s took %s from the machine" % (label(pet), what), pet["id"], room["id"])
     more = left(house, cfg, pet)
-    return "the machine clunked and dropped some %s into your paws; it will give you %s today" % (what, COUNT[more] if 0 <= more < len(COUNT) else "more"), dict(cfg["effects"]["gather"]), "machine " + what
+    return "the machine clunked and dropped %s into your paws; it will give you %s today" % (a_bit(what), COUNT[more] if 0 <= more < len(COUNT) else "more"), dict(cfg["effects"]["gather"]), "machine " + what
 
 
 def feed(house, cfg, pet, what, back, keep=False):
@@ -256,7 +257,26 @@ def feed(house, cfg, pet, what, back, keep=False):
         return "%s; it whirred and clunked, and you left the %s it made of it in the machine%s" % (told, back, scrap), fx, "machine feed"
     got(house, cfg, pet, room, back)
     moment(house, "fed", "%s fed %s to the machine for %s" % (label(pet), said, back), pet["id"], room["id"])
-    return "%s; it whirred, clunked, and dropped some %s into your paws%s" % (told, back, scrap), fx, "machine feed"
+    return "%s; it whirred, clunked, and dropped %s into your paws%s" % (told, a_bit(back), scrap), fx, "machine feed"
+
+
+def scrap_back(house, cfg, pet, room, fed):
+    """SPEC-v3.5.8 §4.1: scrap fed to the Works is broken down by what it was made of, and about every `scrap_back`
+    pieces one base material comes back, into the paws of whoever fed it. What it was told, to add on."""
+    M, S = cfg["machine"], pet.setdefault("scrap", {"n": 0, "of": []})
+    gone = {g["name"]: g for g in house.get("gone_things", [])[-len(fed) - 4:]}
+    for n in fed:
+        g = gone.get(n)
+        bits = (g or {}).get("bits") or []
+        base = next((b for b in bits if b in M["materials"]), None) or next(iter(gives(cfg, [g["recipe"].get("material")] if g else [])), "wood")
+        S["n"], S["of"] = S["n"] + 1, (S["of"] + [base])[-6:]
+    if S["n"] < M["scrap_back"]:
+        return ""
+    back = Counter(S["of"]).most_common(1)[0][0]
+    S["n"], S["of"] = S["n"] - M["scrap_back"], []
+    got(house, cfg, pet, room, back)
+    moment(house, "fed", "the Works broke down what %s fed it and gave it %s" % (label(pet), a_bit(back)), pet["id"], room["id"])
+    return "; the Works broke down the scrap you have fed it and gave you %s" % ("a piece of " + back if back in ("wood", "stone", "metal", "clay") else a_bit(back))
 
 
 # ---- a mind at the machine (actions.py, mind.py, the brains) ----
@@ -378,11 +398,15 @@ def spare(house, cfg, pet, room):
     kinds = Counter(o["made"]["recipe"].get("kind") for o in things.made(room).values())
     today = (pet.get("fed") or {}).get("day") == house["clock"]["day"]
     clutter = order.clutter_of(house, cfg, room)   # SPEC-v3.5.4 §1: a cluttered room's old things, its own or nobody's, can go
+    scrap = [(why, n) for why, n in order.scraps(house, cfg, room) if things.free_to_change(house, pet, room["objects"][n]) and not refuses(house, cfg, pet, room, n)
+             and room["objects"][n].get("kept", LONG_AGO) <= fresh]   # SPEC-v3.5.8 §4: its old charms, and what nobody uses, are scrap for the Works
+    out += [(order.last_touch(room["objects"][n]), n, "scrap " + why) for why, n in scrap]
+    clutter = [n for n in clutter if n not in dict((n, 1) for _, n in scrap)]
     out += [(order.last_touch(room["objects"][n]), n, "clutter") for n in clutter
             if things.free_to_change(house, pet, room["objects"][n]) and room["objects"][n]["made"]["recipe"].get("kind") not in cfg["craft"]["tool"]
             and not refuses(house, cfg, pet, room, n) and room["objects"][n].get("kept", LONG_AGO) <= fresh]
     for n, o in things.made(room).items():
-        if n in clutter:
+        if n in clutter or any(n == x for _, x in scrap):
             continue
         kind, kept = o["made"]["recipe"].get("kind"), bool(o.get("on")) and not o.get("wall")
         if not (n in loose or kept) or o["made"]["owner"] != pet["id"] or kind in cfg["craft"]["tool"] or order.cap(cfg, o) or o.get("kept", LONG_AGO) > fresh \
@@ -418,9 +442,15 @@ def wants(house, cfg, pet, known, out, add, via):
     if len(order.loose_bits(mess)) >= M["bits"] and not named & set(pet["carrying"]):
         add("feed", "bits %d" % (pet.get("fed") or {}).get("n", 0), "loose bits lie about in %s: you want to feed three of them to the machine%s" % (mess["name"], "" if at is mess else " in " + at["name"]),
             "fed three loose bits to the machine", M["feed_weight"] * (1.0 if mess is at else M["bits_weight"]), thing="bits", room=mess["id"])
-    spares = sorted(((why != "clutter", why == "kept", t, n, why, r) for r in known for t, n, why in spare(house, cfg, pet, r)), key=lambda x: x[:4])[:2]   # clutter first, then what lies about, then what is put away
-    for _, _, _, n, why, r in spares:
+    spares = sorted(((not why.startswith("scrap"), why != "clutter", why == "kept", t, n, why, r) for r in known for t, n, why in spare(house, cfg, pet, r)), key=lambda x: x[:5])[:2]   # scrap and clutter first, then what lies about, then what is put away
+    for *_, n, why, r in spares:
         mine = "your" if r["objects"][n]["made"]["owner"] == pet["id"] else "the"
+        if why.startswith("scrap"):   # SPEC-v3.5.8 §4
+            text = "you have charms enough, and your old %s in %s is one too many" % (n, r["name"]) if why == "scrap charm" and mine == "your" else \
+                "nobody keeps the %s in %s for anything" % (n, r["name"]) if why == "scrap charm" else "nobody has used %s %s in %s for days" % (mine, n, r["name"])
+            add("feed", n, "%s: it could go to the Works%s as scrap, and the Works gives something back for scrap" % (text, "" if at is r else " in " + at["name"]),
+                "fed the %s to the Works" % n, M["feed_weight"] * M["scrap_weight"] * (M["spring_weight"] if works.spring(house, cfg) else 1.0), thing=n, room=r["id"])
+            continue
         if why == "clutter":   # SPEC-v3.5.4 §1
             add("feed", n, "%s is cluttered with old things: you want to take %s %s to the machine%s" % (r["name"], mine, n, "" if at is r else " in " + at["name"]),
                 "fed the %s to the machine" % n, M["feed_weight"] * M["clutter_weight"], thing=n, room=r["id"])
@@ -562,7 +592,7 @@ def finish(mind, now):
         act = story.act_of(h, pet, a)
         text, fx, key = actions.apply(h, cfg, pet, a, mind.mem)
         add_event(h, pet, text)
-        return "took some %s from the machine" % what, fx, key, act
+        return "took %s from the machine" % a_bit(what), fx, key, act
     name = now["what"]
     if name != "bits" and (name not in room["objects"] or refuses(h, cfg, pet, room, name)):
         return None, {}, None, None
@@ -574,20 +604,32 @@ def finish(mind, now):
         a = {"type": "machine_feed", "what": name, "for": choose(h, cfg, pet, mine) if mine else min(back, key=lambda m: S["stock"].get(m, 0)), "leave": not mine}
         act = dict(story.act_of(h, pet, a), to=a["for"] if mine else None)
         text, fx, key = actions.apply(h, cfg, pet, a, mind.mem)
+        more = [n for n, o in list(room["objects"].items()) if o.get("haul") == pet["id"] and not refuses(h, cfg, pet, room, n)]   # SPEC-v3.5.8 §4: what it carried along with it
+        for n in more:
+            feed(h, cfg, pet, n, min(offers(h, cfg, pet, room, n), key=lambda m: S["stock"].get(m, 0)), True)
+        text += scrap_back(h, cfg, pet, room, ([] if name == "bits" or mine else [name]) + more)   # (a thing it fed for something of its choosing is paid for already)
         add_event(h, pet, text)
-        return "fed %s to the machine%s" % ("three bits" if name == "bits" else name if name.startswith("the ") else "the " + name, " for some %s" % a["for"] if mine else ""), fx, key, act
+        return "fed %s to the machine%s" % ("three bits" if name == "bits" else listed([name] + more) if more else name if name.startswith("the ") else "the " + name,
+                                            " for %s" % a_bit(a["for"]) if mine else ""), fx, key, act
     door = now.get("door")   # the machine is elsewhere: it and the thing go through the door toward it, and the thing is set down there
     if door not in room["doors"] or actions.check({"type": "go", "door": door}, h, cfg, pet, mind.mem):
         return None, {}, None, None
-    o = room["objects"].pop(name)
-    for k in ("on", "wall", "home", "places"):
-        o.pop(k, None)
+    along = [n for n, o in room["objects"].items() if o.get("haul") == pet["id"] and n != name]   # SPEC-v3.5.8 §4: a few at a time
+    along += [n for why, n in order.scraps(h, cfg, room) if n != name and n not in along and things.free_to_change(h, pet, room["objects"][n])
+              and not refuses(h, cfg, pet, room, n)][:cfg["make"]["haul"] - 1 - len(along)]
+    moving = [(n, room["objects"].pop(n)) for n in [name] + along]
     text, fx, key = actions.go(h, cfg, pet, door)
     to = h["rooms"][pet["room"]]
-    o["pos"], o["kept"] = free_tile(h, cfg, to, pet["pos"], name), h["tick"]
-    to["objects"][name] = o
-    for m in [m for m in room.get("marks", []) if m["on"] == name]:   # what is written on a thing goes where the thing goes
-        room["marks"].remove(m)
-        to.setdefault("marks", []).append(m)
-    add_event(h, pet, "you carried the %s into %s, on the way to the machine" % (name, to["name"]))
-    return "carried the %s into %s" % (name, to["name"]), fx, key, None
+    for n, o in moving:
+        for k in ("on", "wall", "home", "places"):
+            o.pop(k, None)
+        o["pos"], o["kept"] = free_tile(h, cfg, to, pet["pos"], n), h["tick"]
+        if n != name:
+            o["haul"] = pet["id"]
+        to["objects"][n] = o
+        for m in [m for m in room.get("marks", []) if m["on"] == n]:   # what is written on a thing goes where the thing goes
+            room["marks"].remove(m)
+            to.setdefault("marks", []).append(m)
+    said = listed([n for n, _ in moving]) if along else "the " + name
+    add_event(h, pet, "you carried %s into %s, on the way to the machine" % (said, to["name"]))
+    return "carried %s into %s" % (said, to["name"]), fx, key, None

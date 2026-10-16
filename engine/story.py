@@ -6,7 +6,7 @@ import re
 from . import genome, life, things
 from .feel import meter_talk
 from .log import pet_row, put
-from .world import days as world_days, label, moment
+from .world import a, days as world_days, label, moment
 
 STOP = set("""a an the and or but if then so that this these those it its is are was were be been being am do does did
 to of in on at by for with from as into than too very not no you your yours i my me mine we our they them their he she
@@ -252,11 +252,11 @@ def acted(house, cfg, pet, act, ok):
 
 
 PAST = {"eat": "ate from the {what}", "make": "made {thing}", "unmake": "took apart {thing}", "combine": "joined two things into {thing}", "use": "used the {what}",
-        "gather": "picked up some {what}", "drop": "put down some {what}", "give": "held out {what} to {to}", "show": "showed {to} the {what}",
+        "gather": "picked up {bit}", "drop": "put down {bit}", "give": "held out {what} to {to}", "show": "showed {to} the {what}",
         "nuzzle": "leaned toward {to}", "accept": "took what {to} offered", "speak": "said something", "tell": "told {to} something to keep",
         "go": "came through the {what} door", "write": "wrote on the {to}", "scrub": "rubbed out some writing", "sing": "sang \"{what}\"",
         "compose": "made up a song", "teach_song": "taught {to} a song", "ask_book": "asked the book a question", "call": "called its {what}",
-        "process": "tried something with some {what}", "mend": "mended the {what}", "carry": "carried the book through the {what} door",
+        "process": "tried something with {bit}", "mend": "mended the {what}", "carry": "carried the book through the {what} door",
         "name": "gave a name to something", "lay_egg": "laid an egg", "bequeath": "chose something to leave behind", "arrange": "moved the {what}",
         "take": "took the {what}", "chase": "chased the {to}", "paint": "painted the room", "teach": "taught the {what} a trick"}
 
@@ -296,4 +296,5 @@ def now(house, cfg):
     said = str(last.get("to") or "someone")
     told = {"thing": things.a_thing(cfg, {"kind": last.get("kind") or "thing", "color": last.get("color")}), "what": last.get("what") or "something",
             "to": name(to, who) if to else "someone" if said.startswith(("your ", "a stranger")) else said}
+    told["bit"] = a(told["what"])
     return "%s %s just %s." % (first, cap(name(who)), PAST[last["type"]].format(**told))

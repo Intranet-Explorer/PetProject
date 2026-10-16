@@ -204,8 +204,8 @@ handles = true
 
 [gather]
 do = "gather"
-doing = "picking up some {what}"
-did = "picked up some {what}"
+doing = "picking up {a_what}"
+did = "picked up {a_what}"
 icon = "paws"
 seconds = [3, 4]
 base = 0.4
@@ -469,8 +469,8 @@ handles = true
 # at a time if the machine is elsewhere, and fed in for a material back. Nothing to make with: it goes to see.
 ["take from the machine"]
 do = "vend"
-doing = "getting some {what} from the machine"
-did = "took some {what} from the machine"
+doing = "getting {a_what} from the machine"
+did = "took {a_what} from the machine"
 icon = "paws"
 seconds = [3, 5]
 base = 0.0

@@ -10,7 +10,7 @@ from . import season
 from . import build
 from . import machine
 from . import hub
-from .world import LONG_AGO, add_event, arrived, days as world_days, label, moment, relation, rnd
+from .world import LONG_AGO, ONE, a, add_event, arrived, days as world_days, label, moment, relation, rnd
 
 GROUPS = {"door": "know", "creature": "know", "bit": "know", "try": "know", "word": "know", "look": "know",
           "store": "better", "glow": "better", "warm": "better", "useless": "better", "tool": "better", "window": "better",
@@ -28,16 +28,7 @@ RAIN = re.compile(r"\b(rain|drizzle|showers?|thunderstorms?|snow)\b", re.I)
 
 
 STEP = ("get", "try", "plant")   # wants that are a bit carried to where something is done to it: its body does these the same way
-ONE = ("pebble", "seed", "leaf", "petal", "feather", "shell", "bead", "reed", "bell", "vine", "quill", "berry", "bean", "stone", "tile", "brick", "block", "cake")
-
-
-def a(bit):
-    """A bit with its article: "a reed", "an ink block"; stuff has none ("clay", "wicker")."""
-    return "%s %s" % ("an" if bit[0] in "aeiou" else "a", bit) if bit.split()[-1] in ONE else bit
-
-
-def some(bit):
-    return a(bit) if bit.split()[-1] in ONE else "some " + bit
+some = a   # SPEC-v3.5.8 §3: never "some clay": "clay", "a seed"
 
 
 def named(cfg, pet):

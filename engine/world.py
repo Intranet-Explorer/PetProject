@@ -439,6 +439,15 @@ def ordinal(n):
     return "latest"
 
 
+ONE = ["pebble", "seed", "leaf", "petal", "feather", "shell", "bead", "reed", "bell", "vine", "quill", "berry", "bean", "stone", "tile", "brick", "block", "cake"]   # (wants.py adds the machine's)
+
+
+def a(bit):
+    """A bit with its article: "a reed", "an ink block"; stuff has none ("clay", "wicker"). SPEC-v3.5.8 §3: and never
+    "some clay"."""
+    return "%s %s" % ("an" if bit[0] in "aeiou" else "a", bit) if bit.split()[-1] in ONE else bit
+
+
 def label(pet):
     """A pet's name, or for one that has none a label that is its own: "the first one", "the third one", by the order
     they came into the house. (They were all "the little one", and "the little one told the little one something"

@@ -8,10 +8,11 @@ found again by whoever joins the same two things. Part names, spots and limits a
 the view draws from the same record. No model is asked anything here."""
 import itertools
 import json
+import logging
 from pathlib import Path
 
 from . import craft, firsts, things
-from .world import LONG_AGO, add_event, bit_kinds, clock, free_tile, hours, label, moment, rnd, ticks, weather_of
+from .world import LONG_AGO, a, add_event, bit_kinds, clock, free_tile, hours, label, moment, rnd, ticks, weather_of
 
 ART = Path(__file__).parent.parent / "view" / "assets"
 P, USES = json.loads((ART / "parts.json").read_text()), json.loads((ART / "uses.json").read_text())["uses"]
@@ -147,10 +148,23 @@ def as_kind(cfg, rec):
     """An invented kind as the catalog would have it, so everything that asks what a kind is gets an answer: where
     it goes, what it holds, what it is built on, and what it does."""
     base, E = cfg["kinds"].get(rec["from"][0], {}), USES.get(rec["use"], {}).get("effect", {})
-    return {"invented": True, "a": rec["a"], "not": [], "rank": min(3, base.get("rank", 1) + 1), "wall": rec["wall"], "hangs": rec["hangs"], "store": rec["store"],
+    return {"invented": True, "a": rec["a"], "everyday": everyday(cfg, rec), "not": [], "rank": min(3, base.get("rank", 1) + 1), "wall": rec["wall"], "hangs": rec["hangs"], "store": rec["store"],
             "inside": bool(rec["store"] and (base.get("inside") or E.get("inside"))), "furniture": bool(base.get("furniture")), "from": rec["from"],
             "base": rec["parts"][0]["part"], "signature": rec["parts"][-1]["part"], "prop": prop(cfg, rec), "effect": E,
             **({"counts": E["tool"]} if E.get("tool") else {}), **({"plantable": True} if E.get("plantable") else {})}
+
+
+def everyday(cfg, rec):
+    """SPEC-v3.5.8 §3: what a thing of an invented kind is called about the house: the everyday word for its use
+    (uses.json `everyday`); a curio is called what its base is, where that is a kind, and else what the larger of its
+    two things was. Logged, so a kind for it can be added as data."""
+    word = USES.get(rec["use"], {}).get("everyday")
+    if word:
+        return word
+    base = rec["parts"][0]["part"] if rec.get("parts") else None
+    word = base if base in cfg["kinds"] and not cfg["kinds"][base].get("invented") else (rec.get("from") or ["thing"])[0]
+    logging.info("no everyday kind for the invented %s (%s): called a %s", rec["name"], rec["use"], word)
+    return word
 
 
 def install(house, cfg):
@@ -286,13 +300,13 @@ def make(house, cfg, pet, a, clean):
     used = stuff(cfg, rec, pet["carrying"])
     for b in used:
         pet["carrying"].remove(b)
-    name = things.unique_name(house, cfg, things.clean_name(r["name"]))
-    recipe = {"name": name, "kind": rec["name"], "material": rec["material"], "color": r["color"] if r.get("color") in things.COLORS else rec["parts"][0]["color"],
+    recipe = {"kind": rec["name"], "material": rec["material"], "color": r["color"] if r.get("color") in things.COLORS else rec["parts"][0]["color"],
               "size": 3 if rec["size"] == "large" else min(things.as_size(r.get("size", 2)) or 2, 2), "purpose": clean(r["purpose"], 80)}
+    name, title = things.named(house, cfg, recipe, used, pet, room, r["name"])
     house["n"]["thing"] += 1
     o = {"pos": things.wall_slot(house, room) if rec["wall"] else things.spot_for(house, cfg, pet, a.get("near")), **({"wall": True} if rec["wall"] else {}),
          "made": {"id": house["n"]["thing"], "recipe": recipe, "by": pet["id"], "owner": pet["id"], "tick": house["tick"], "bits": used, "uses": 0, "ups": 0,
-                  "used_at": house["tick"], "heirloom": None, "behavior": None, "fine": craft.skill(cfg, pet, "making")}}
+                  "used_at": house["tick"], "heirloom": None, "behavior": None, "fine": craft.skill(cfg, pet, "making"), **things.record(house, cfg, pet, room, used)}}
     if things.prop(cfg, o).get("light"):
         o["state"] = "on"
     room["objects"][name] = o
@@ -300,9 +314,10 @@ def make(house, cfg, pet, a, clean):
     pet["last_made"] = {"tick": house["tick"], "kind": rec["name"], "material": rec["material"], "new": False}
     pet.setdefault("made_at", []).append([house["tick"], "%s|%s" % (rec["name"], rec["material"])])
     craft.practise(house, cfg, pet, "making")
-    moment(house, "made", "%s made %s it calls '%s'" % (label(pet), things.a_thing(cfg, recipe), name), pet["id"], room["id"])
+    moment(house, "made", "%s made %s%s" % (label(pet), things.a_thing(cfg, recipe), ", which it calls '%s'" % title if title else ""), pet["id"], room["id"])
     firsts.made(house, cfg, pet, o, room)   # SPEC-v3.5.4 §6, §7, §10
-    return "you made %s and called it %s, from %s, the way you know%s" % (things.a_thing(cfg, recipe), name, " and ".join(sorted(set(used))), "; it hangs on the wall" if rec["wall"] else ""), \
+    return "you made %s from %s, the way you know; %s%s" % (things.a_thing(cfg, recipe), " and ".join(sorted(set(used))), "you call it %s, and about the house it is the %s" % (title, name) if title else "it is the %s" % name,
+                                                            "; it hangs on the wall" if rec["wall"] else ""), \
         {"energy": -(cfg["make"]["effort"] + len(used))}, "make " + rec["material"]
 
 
@@ -336,7 +351,7 @@ def used(house, cfg, pet, room, name):
         room["shelf"] = tick + hours(cfg, R["hours"])
         craft.give(house, cfg, pet, room, bit)
         pet["got"] = [bit, tick]
-        return "you hooked something down from the high shelf with the %s, where no paw reaches: some %s" % (name, bit), {"curiosity": cfg["craft"]["knowing"]["lift"]}, "reach"
+        return "you hooked something down from the high shelf with the %s, where no paw reaches: %s" % (name, a(bit)), {"curiosity": cfg["craft"]["knowing"]["lift"]}, "reach"
     S = E.get("sails")
     if S and room["type"] == S["room"]:   # a boat, on the water
         return "you set the %s on the water and watched it go where the pond took it" % name, {"curiosity": S["curiosity"]}, "sail " + name

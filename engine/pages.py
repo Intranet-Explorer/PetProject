@@ -3,12 +3,14 @@ world day, and everything made. Nothing here changes the house; it only gathers 
 import json
 import re
 
-from . import firsts, genome, things
+from . import firsts, genome, order, things
 from .world import clock, label, season_of
 
 ROMAN = ["", "", " II", " III", " IV", " V", " VI", " VII", " VIII", " IX", " X"]
 GONE_WHERE = {"fed to the machine": "traded into the machine", "taken apart": "taken apart", "combined": "joined into something else",
-              "eaten": "eaten", "stolen by the mouse": "taken by the mouse", "set into a statue": "set into a statue"}
+              "eaten": "eaten", "stolen by the mouse": "taken by the mouse", "set into a statue": "set into a statue",
+              "swept up and fed to the Works by the sweeper": "swept up by the sweeper and fed to the Works"}
+KEPT = ("how", "made_in", "users", "words", "title_shown")   # SPEC-v3.5.8: what a made thing keeps for its card from now on
 
 
 def day_of(cfg, tick):
@@ -154,7 +156,8 @@ def all_things(eng):
                         "family": fam.get(m["by"]), "room": r["id"], "room_name": r["name"], "where": where, "gone": None, "tick": m["tick"],
                         "day": day_of(cfg, m["tick"]), "bits": m.get("bits", []), "uses": m.get("uses", 0), "heirloom": bool(m.get("heirloom")),
                         "invented": m["recipe"].get("kind") in h.get("invented", {}), "statue": False, "keepsake": bool(keep), "star": m.get("star"),
-                        "first": first(m["by"], m["tick"], m["recipe"])})
+                        "first": first(m["by"], m["tick"], m["recipe"]), "title_shown": bool(m["recipe"].get("title")) and order.kept(h, cfg, r, n),
+                        **{k: m[k] for k in KEPT if m.get(k)}})
         for n, o in r["objects"].items():
             if o.get("statue") or (o.get("fix", {}).get("built") and "statue" in n):
                 # a statue standing has `fix.built` (who raised it, began and finished); one going up has `site`
@@ -171,7 +174,7 @@ def all_things(eng):
     for g in h.get("gone_things", []):
         out.append({"id": thing_key(g, g["name"]), "name": g["name"], "recipe": g["recipe"], "by": g["by"], "by_name": names.get(g["by"]), "owner": g.get("owner"),
                     "family": fam.get(g["by"]), "room": None, "room_name": None, "where": GONE_WHERE.get(g["gone"][1], g["gone"][1]), "gone": g["gone"][1],
-                    "tick": g["made"], "day": day_of(cfg, g["made"]), "bits": [], "uses": g.get("uses", 0), "heirloom": False,
+                    "tick": g["made"], "day": day_of(cfg, g["made"]), "bits": g.get("bits", []), "uses": g.get("uses", 0), "heirloom": False, **{k: g[k] for k in KEPT if g.get(k)},
                     "invented": g["recipe"].get("kind") in h.get("invented", {}), "statue": False, "keepsake": False, "star": g.get("star"),
                     "first": first(g["by"], g["made"], g["recipe"]), "gone_day": day_of(cfg, g["gone"][0])})
     out.sort(key=lambda t: -(t["tick"] or 0))

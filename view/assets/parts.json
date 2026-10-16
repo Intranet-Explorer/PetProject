@@ -1009,6 +1009,26 @@
    "base": "ring",
    "signature": "gem"
   },
+  "tile": {
+   "base": "block",
+   "signature": "band"
+  },
+  "patch": {
+   "base": "disc",
+   "signature": "studs"
+  },
+  "tinder bundle": {
+   "base": "bundle",
+   "signature": "cord"
+  },
+  "draught stopper": {
+   "base": "cushion",
+   "signature": "band"
+  },
+  "sign": {
+   "base": "stick",
+   "signature": "head"
+  },
   "stone stack": {
    "base": "block",
    "signature": "studs"

@@ -1,8 +1,8 @@
 """What the house does on its own (SPEC-v3 §6.4, §6.5): the day's weather, the seasons, storms and power
 cuts, the events nobody caused, and the small creatures. All of it scripted; no model is ever asked."""
 from . import craft, genes, genome, order, songs, things, walls
-from . import build, firsts
-from .world import (LONG_AGO, days as world_days, moving as on_the_move, add_event, alive, arrived, bit_kinds, clock, dist, family, free_tile, hours, in_room, label, moment,
+from . import build, firsts, sweeper
+from .world import (LONG_AGO, a as a_bit, days as world_days, moving as on_the_move, add_event, alive, arrived, bit_kinds, clock, dist, family, free_tile, hours, in_room, label, moment,
                     new_pet, power_on, rnd, ticks, weather_of)
 
 SKY = {"clear": "the sky has cleared", "cloudy": "the sky has gone grey", "rain": "it has started to rain",
@@ -200,7 +200,7 @@ def events(house, cfg):
     elif kind == "surprise":
         bit = r.choice(bit_kinds(house, cfg))
         things.drop_bits(house, cfg, room, [cfg["W"] // 2, cfg["H"] // 2], [bit])
-        tell_all(house, "the visitor left some %s on the floor" % bit, "visitor", room["id"])
+        tell_all(house, "the visitor left %s on the floor" % a_bit(bit), "visitor", room["id"])
         note(house, "surprise", room["id"], bit + " (the director's, in the visitor's name)")
 
 
@@ -277,6 +277,10 @@ def creatures(house, cfg):
         arrive(house, cfg)
     taming = arrived(house, "taming")
     for cr in list(house["creatures"]):
+        if cr["kind"] == "sweeper":   # SPEC-v3.5.8 §4.2: a machine, not an animal: no trust, no leaving
+            if not tick % 2:
+                sweeper.step(house, cfg, cr)
+            continue
         room = house["rooms"][cr["room"]]
         pets = awake_pets(house, cr["room"])
         kind, r = cr["kind"], rnd(house, "cr", cr["id"], tick)
@@ -319,8 +323,8 @@ def creatures(house, cfg):
                         room["spots"].remove(s)
                     else:
                         s["ready"], s["back"] = False, tick + hours(cfg, cfg["house"]["rooms"][room["type"]]["regrow_hours"])
-                    cr["doing"] = "carrying some %s" % s["bit"]
-                    seen(house, cfg, cr, "the beetle picked up some %s" % s["bit"])
+                    cr["doing"] = "carrying %s" % a_bit(s["bit"])
+                    seen(house, cfg, cr, "the beetle picked up %s" % a_bit(s["bit"]))
             if tick % ticks(cfg, 120) == 0 and room["doors"] and r.random() < 0.6:   # it wanders from room to room
                 d = r.choice([d for d, rid in room["doors"].items() if house["rooms"][rid]["type"]] or [None])
                 if d:
@@ -402,7 +406,7 @@ def arrive(house, cfg):
     """Now and then a creature turns up where it would: a moth to a light at night, a bird to the garden in the
     morning, the mouse in the darkest room, a beetle anywhere."""
     C, c, tick = cfg["house"]["creatures"], house["clock"], house["tick"]
-    if len(house["creatures"]) >= (cfg["taming"]["creatures"] if arrived(house, "taming") else cfg["house"]["house"]["creatures"]):
+    if sum(c["kind"] != "sweeper" for c in house["creatures"]) >= (cfg["taming"]["creatures"] if arrived(house, "taming") else cfg["house"]["house"]["creatures"]):
         return
     r = rnd(house, "arrive", tick)
     have = {cr["kind"] for cr in house["creatures"] if not cr.get("tame")}   # one wild one of each kind (SPEC-v3.1 §4.3)
@@ -453,7 +457,7 @@ def fed(house, cfg, cr, pet, bit):
     pet["met"][cr["kind"]] = pet["met"].get(cr["kind"], 0) + 1
     cr["until"] = max(cr["until"], house["tick"] + hours(cfg, 24))   # a fed creature stays about
     if cr["kind"] == "beetle":
-        cr["carry"], cr["doing"] = bit, "carrying some " + bit
+        cr["carry"], cr["doing"] = bit, "carrying " + a_bit(bit)
     house.setdefault("fresh_creatures", []).append({"tick": house["tick"], "kind": cr["kind"], "room": cr["room"], "pet": pet["id"], "what": "fed " + bit})
     n = cr["fed"][pet["id"]]
     if liked and n == cfg["house"]["creatures"]["mouse"]["trust_to_wait"]:
@@ -633,7 +637,7 @@ def kept(house, cfg, cr, owner, r):
                 cr["fetched"] = day
                 bit = r.choice(others)
                 things.drop_bits(house, cfg, house["rooms"][cr["room"]], owner["pos"], [bit])
-                add_event(house, owner, "%s comes trundling up with some %s from another room and leaves it by you" % (name, bit))
+                add_event(house, owner, "%s comes trundling up with %s from another room and leaves it by you" % (name, a_bit(bit)))
         elif kind == "bird" and c["morning"] and cr.get("sang") != day:
             cr["sang"] = day
             sid = next((x["id"] for x in songs.book(house).values() if x["by"] == "bird"), None) or songs.add(house, "the bird's song", songs.BIRD, "bird", how="the bird", fam=0)

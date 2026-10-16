@@ -7,6 +7,7 @@ from . import build
 from . import machine
 from . import hub
 from . import firsts
+from .world import a as a_bit
 from .world import (BACK, LONG_AGO, add_event, arrived, beside, dist, family, free_tile, generate_room, here, knows, label, moment,
                     power_on, relation, ticks, witness)
 
@@ -238,9 +239,21 @@ def words(a):
 
 # ---- checking ----
 
+def by_title(house, pet, a):
+    """SPEC-v3.5.8 §3: in its own thoughts a pet may still call a thing by its title ("Soft Stop"): the name in the
+    action becomes the thing's everyday name here."""
+    room = house["rooms"][pet["room"]]
+    titles = {norm(o["made"]["recipe"]["title"]): n for n, o in things.made(room).items() if o["made"]["recipe"].get("title")}
+    for f in ("target", "what", "object", "a", "b", "near", "where", "on") if titles else ():
+        v = norm(a.get(f)) if isinstance(a.get(f), str) else None
+        if v and v not in room["objects"] and v in titles:
+            a[f] = titles[v]
+
+
 def check(a, house, cfg, pet, mem):
     """None if the action can happen now, else why not, in words the pet can use."""
     t, room = a.get("type"), house["rooms"][pet["room"]]
+    by_title(house, pet, a)
     norm = norm_in(room, pet)
     if t in ("put_away", "take_out", "hang"):
         return order.check(a, house, cfg, pet, norm)
@@ -557,7 +570,7 @@ def apply(house, cfg, pet, a, mem):
         else:
             spot["ready"], spot["back"] = False, house["tick"] + round(cfg["house"]["rooms"][room["type"]]["regrow_hours"] * cfg["ticks_per_hour"])
         can = cfg["house"]["bits"][spot["bit"]]["can"]
-        return "you picked up some %s; it feels like it could become something %s" % (spot["bit"], " or ".join(can)), dict(E["gather"]), "gather " + spot["bit"]
+        return "you picked up %s; it feels like it could become something %s" % (a_bit(spot["bit"]), " or ".join(can)), dict(E["gather"]), "gather " + spot["bit"]
     if t == "drop":
         bit = norm(a["what"])
         pet["carrying"].remove(bit)
@@ -580,6 +593,8 @@ def apply(house, cfg, pet, a, mem):
             return "you set %s on the water" % ref, {}, "arrange"
         o["pos"] = free_tile(house, cfg, room, to, ref)
         order.moved(o, house["tick"])
+        if "made" in o:
+            things.noted(house, pet, o, "set down")   # SPEC-v3.5.8: what it had in mind as it set it down
         return "you moved %s over by %s" % (ref, norm(a["near"])), {}, "arrange"
     if t == "combine":
         return things.combine(house, cfg, pet, a, clean, norm)
@@ -974,7 +989,7 @@ def accept(house, cfg, pet, off):
     giver["news"].append("answer")
     bump(giver, cfg, {"company": E["gift"]})
     house.setdefault("said", []).append(rec)
-    given = "some " + what if off["bit"] else "%s, '%s'" % (things.a_thing(cfg, room["objects"][what]["made"]["recipe"]), what)
+    given = a_bit(what) if off["bit"] else "%s, '%s'" % (things.a_thing(cfg, room["objects"][what]["made"]["recipe"]), what)
     moment(house, "gift", "%s gave %s %s" % (label(giver), label(pet), given), pet["id"], room["id"])
     return "you took the %s from %s" % (what, handle(house, pet, giver)), {"company": E["gift"]}, "gift"
 
@@ -1025,7 +1040,7 @@ def visit(house, cfg, cmd):
         if bit not in cfg["house"]["bits"]:
             return "unknown bit"
         things.drop_bits(house, cfg, room, [cfg["W"] // 2, cfg["H"] // 2], [bit])
-        tell("the visitor left some %s on the floor" % bit, 1.0)
+        tell("the visitor left %s on the floor" % a_bit(bit), 1.0)
     elif t == "place":
         o, tile = room["objects"].get(cmd.get("object")), cmd.get("tile")
         from .world import in_room

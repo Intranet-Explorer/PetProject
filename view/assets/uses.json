@@ -1,5 +1,5 @@
 {
- "about": "SPEC-v3.5 \u00a73.0: what an invention does. Any two things may be combined into a new kind. If its base part is one of a use's `base` and it has one part from each list in `add` (part names from parts.json; `may` lists a part it may also carry), it is that use and has that use's effect: `does`, and the engine's rule keyed by the use's name. If it fits no use it is a curio: drawn from both things' parts, named by the pet, with its materials' properties and no special effect. More uses can be added here. `effect` (engine, helper B) is that rule as data: `prop` is laid over what the thing's materials do (materials.toml's own keys); `store`/`inside`: it keeps things; `tool`: the tool it counts as; `follows`: it goes from room to room with its owner; `plantable`: a seed can be planted in it; `floats`: water does not carry it off; and what using it does: `waters`, `plays`, `reaches` (a bit from a high place in that kind of room, every so many world hours), `sails` (curiosity, on water), `rolls` (kin in the room are drawn to play); by the hour: `wind` (it sounds in wind and rain; in the garden, once a day, it tells tomorrow's weather), `feeds` (creatures stay by it and come to trust its owner; now and then one is drawn to its room).",
+ "about": "SPEC-v3.5 \u00a73.0: what an invention does. Any two things may be combined into a new kind. If its base part is one of a use's `base` and it has one part from each list in `add` (part names from parts.json; `may` lists a part it may also carry), it is that use and has that use's effect: `does`, and the engine's rule keyed by the use's name. If it fits no use it is a curio: drawn from both things' parts, named by the pet, with its materials' properties and no special effect. More uses can be added here. `effect` (engine, helper B) is that rule as data: `prop` is laid over what the thing's materials do (materials.toml's own keys); `store`/`inside`: it keeps things; `tool`: the tool it counts as; `follows`: it goes from room to room with its owner; `plantable`: a seed can be planted in it; `floats`: water does not carry it off; and what using it does: `waters`, `plays`, `reaches` (a bit from a high place in that kind of room, every so many world hours), `sails` (curiosity, on water), `rolls` (kin in the room are drawn to play); by the hour: `wind` (it sounds in wind and rain; in the garden, once a day, it tells tomorrow's weather), `feeds` (creatures stay by it and come to trust its owner; now and then one is drawn to its room). SPEC-v3.5.8 \u00a73: `everyday` is what a thing of that use is called about the house (\"a seat\"), whatever its maker named the kind.",
  "uses": {
   "carried light": {
    "base": [
@@ -19,7 +19,8 @@
      "light": true
     },
     "follows": true
-   }
+   },
+   "everyday": "torch"
   },
   "soft light": {
    "base": [
@@ -45,7 +46,8 @@
      "gentle": true,
      "shade": true
     }
-   }
+   },
+   "everyday": "lamp"
   },
   "cutter": {
    "base": [
@@ -60,7 +62,8 @@
    "does": "counts as a carver",
    "effect": {
     "tool": "carver"
-   }
+   },
+   "everyday": "knife"
   },
   "digger": {
    "base": [
@@ -75,7 +78,8 @@
    "does": "counts as a trowel",
    "effect": {
     "tool": "trowel"
-   }
+   },
+   "everyday": "trowel"
   },
   "pourer": {
    "base": [
@@ -90,7 +94,8 @@
    "does": "carries water to plants",
    "effect": {
     "waters": true
-   }
+   },
+   "everyday": "jug"
   },
   "keeper": {
    "base": [
@@ -107,7 +112,8 @@
    "effect": {
     "store": 3,
     "inside": true
-   }
+   },
+   "everyday": "jar"
   },
   "cart": {
    "base": [
@@ -124,7 +130,8 @@
    "effect": {
     "store": 4,
     "follows": true
-   }
+   },
+   "everyday": "cart"
   },
   "instrument": {
    "base": [
@@ -149,7 +156,8 @@
       "energy": -1.0
      }
     }
-   }
+   },
+   "everyday": "harp"
   },
   "reacher": {
    "base": [
@@ -167,7 +175,8 @@
      "room": "attic",
      "hours": 12
     }
-   }
+   },
+   "everyday": "pole"
   },
   "chime": {
    "base": [
@@ -190,7 +199,8 @@
     "prop": {
      "loud": true
     }
-   }
+   },
+   "everyday": "wind chime"
   },
   "seat or bed": {
    "base": [
@@ -212,7 +222,8 @@
      },
      "by_size": true
     }
-   }
+   },
+   "everyday": "seat"
   },
   "planter": {
    "base": [
@@ -227,7 +238,8 @@
    "does": "grows a plant indoors",
    "effect": {
     "plantable": true
-   }
+   },
+   "everyday": "planter"
   },
   "boat": {
    "base": [
@@ -252,7 +264,8 @@
       "curiosity": 2.0
      }
     }
-   }
+   },
+   "everyday": "boat"
   },
   "rolling toy": {
    "base": [
@@ -276,7 +289,8 @@
       "energy": -1.0
      }
     }
-   }
+   },
+   "everyday": "toy"
   },
   "feeder": {
    "base": [
@@ -295,7 +309,8 @@
      "trust": 0.2,
      "drawn": 0.25
     }
-   }
+   },
+   "everyday": "feeder"
   },
   "keepsake": {
    "base": [
@@ -312,7 +327,8 @@
    ],
    "may": [],
    "does": "no use but meaning: kept, given, inherited",
-   "effect": {}
+   "effect": {},
+   "everyday": "charm"
   }
  }
 }

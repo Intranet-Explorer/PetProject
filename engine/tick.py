@@ -23,7 +23,7 @@ from .world import LONG_AGO, NEEDS, add_event, alive, dist, family, here, hours,
 URGENT = {"visitor", "woke", "hatched", "low", "spoken", "event"}   # news that does not wait for min_think_seconds
 SEEN = {"use": "used the %s", "make": "made a %s", "unmake": "took apart the %s", "combine": "put two things together",
         "rest": "rested", "paint": "painted the room", "teach": "taught the %s something", "lay_egg": "laid an egg",
-        "take": "took the %s", "gather": "picked up some %s", "drop": "put down some %s", "arrange": "moved the %s",
+        "take": "took the %s", "gather": "picked up %s", "drop": "put down %s", "arrange": "moved the %s",
         "chase": "chased the %s", "compose": "made up a tune", "ask_book": "bent over the book a while", "call": "called out for something"}
 
 
@@ -366,7 +366,7 @@ class Mind:
                     ease, into = max(soft)
                     fx["comfort"], text = ease, text + ", sunk into the %s" % into
                     if "made" in room["objects"][into]:
-                        things.occasion(h, cfg, room["objects"][into], into, {"comfort": ease})
+                        things.occasion(h, cfg, room["objects"][into], into, {"comfort": ease}, pet)
                 for n, v in share.items():   # what resting beside it added or took away counts as an occasion of use
                     things.occasion(h, cfg, room["objects"][n], n, {"energy": v * cfg["steps"]["rest"] / 10})
             if key and self.novelty(fx, key, bool(thing), scale, thing["made"]["recipe"].get("kind") if thing else None):
@@ -392,7 +392,7 @@ class Mind:
         deltas = {n: round(pet["needs"][n] - plan["step_needs0"][n], 1) for n in NEEDS}
         meanwhile = {n: round(arrived[n] - plan["step_needs0"][n], 1) for n in NEEDS}
         if thing is not None and not reason:
-            things.occasion(h, cfg, thing, name, own)   # engine truth, for the Things tab and for growing up
+            things.occasion(h, cfg, thing, name, own, pet)   # engine truth, for the Things tab and for growing up
         for n, (need, total) in plan.pop("near", {}).items():   # things that worked on it just by being near
             o = h["rooms"][pet["room"]]["objects"].get(n)
             if abs(total) >= 0.2 and o and "made" in o:
@@ -428,8 +428,8 @@ class Mind:
         """What a finished step leaves behind for others and for the records."""
         pet, h, eng, t = self.pet, self.eng.house, self.eng, a["type"]
         if t in SEEN:   # the others in the room saw it, and how it left the pet (§7.1)
-            what = SEEN[t] % actions.norm(a.get("target") or a.get("what") or a.get("object") or (a.get("recipe") or {}).get("name") or a.get("who")) \
-                if "%s" in SEEN[t] else SEEN[t]
+            what = actions.norm(a.get("target") or a.get("what") or a.get("object") or (a.get("recipe") or {}).get("name") or a.get("who"))
+            what = SEEN[t] % (world.a(what) if t in ("gather", "drop") else what) if "%s" in SEEN[t] else SEEN[t]
             for other in here(h, pet, awake=True):
                 add_event(h, other, "%s %s and seems %s" % (actions.handle(h, other, pet), what, feel.seems(pet)))
         if t in ("gather", "drop"):
@@ -553,7 +553,7 @@ class Mind:
             if pet["plan"]:
                 self.end_plan("interrupted" if world.busy(pet) else "done")
             pet["sleep"], pet["following"] = {"since": h["tick"], "day": h["clock"]["day"], "done": False}, None
-            pet["sleeps_in"] = pet["room"]   # where it sleeps: a room's sleeping corner holds one bed-thing for each who does (order.corners)
+            pet["sleeps_in"], pet["sleeps_at"] = pet["room"], list(pet["pos"])   # where it sleeps: a room's sleeping corner holds one bed-thing for each who does (order.corners)
             if body.state(pet)["now"]:
                 body.finish(self, body.state(pet)["now"], cut=True)
             for other in here(h, pet, awake=True):
@@ -734,6 +734,7 @@ class Engine:
         hub.migrate(h, cfg)   # SPEC-v3.5.1: a house lived in before the machine room gains it: the machine leaves the storeroom for it
         machine.migrate(h, cfg)   # SPEC-v3.5 §4.3: a house lived in before the vending machine gains it
         works.lay(h, cfg)   # SPEC-v3.5.4 §8: what the Works has built stays built
+        works.spring_clean(h, cfg)   # SPEC-v3.5.8 §4: once, the spring clean
         hub.settle_radio(h, cfg)
         for pet in h["pets"].values():   # 13 October 2026: what it has made lately is counted over three world days, from the things themselves
             if "made_at" not in pet and pet["stage"] not in ("egg", "dead"):

@@ -223,7 +223,7 @@ async def run(d):
     assert cands["peek:%d" % h["clock"]["day"]]["room"] == sr["id"], "with little in its paws it wants to see what the machine has"
     pet.update(wants=[{"what": "tool", "key": "tool:hammer", "text": "", "done": "", "tool": "hammer", "since": h["tick"]}], takes=["hammer"], lacks={"hammer": h["tick"]}, tried={"stone|grind": "sharp stone"})
     cands = {c["key"]: c for c in wants.candidates(h, cfg, pet)}
-    assert cands["get:wood"]["text"] == "you want some wood from the machine in the machine room" and cands["get:wood"]["room"] == sr["id"], "a want that names a material leads to the machine: %s" % cands.get("get:wood")
+    assert cands["get:wood"]["text"] == "you want wood from the machine in the machine room" and cands["get:wood"]["room"] == sr["id"], "a want that names a material leads to the machine: %s" % cands.get("get:wood")
     step = cands["get:stone|grind"]
     assert step["bit_room"] == sr["id"] and step["room"] == cellar["id"] and step["text"] == "you want to grind a stone, for the sharp stone", "and to what the material becomes: %s" % step
     get = dict(cands["get:wood"], since=h["tick"])

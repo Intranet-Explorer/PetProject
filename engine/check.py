@@ -23,6 +23,7 @@ def load_config(*a, body=False, **k):
     cfg = world.load_config(*a, **k)
     cfg["body"]["on"] = body
     cfg["make"]["same"] = 99   # (these checks make the same thing over and over; the rule that stops that has its own check)
+    cfg["make"]["own_names"] = True   # (written before v3.5.8: things go by their makers' names; engine/check_hobs.py checks everyday names)
     return cfg
 
 
@@ -959,7 +960,7 @@ async def main():
         r = await do(e8, po, {"type": "make", "recipe": base, "near": "here"})
         glow = room8["objects"]["glow"]
         assert not r[0]["reason"] and glow["made"]["recipe"] == dict(base, size=1) and po["carrying"] == ["wax", "fluff"] and glow["state"] == "on", r
-        assert "a yellow jar" in r[0]["feedback"] and "Po made a yellow jar it calls 'glow'" in [m["text"] for m in h8["moments"][-4:]], h8["moments"][-4:]   # (v3.5.4: a first or a best may follow it)
+        assert "a yellow jar" in r[0]["feedback"] and "Po made a yellow jar, which it calls 'glow'" in [m["text"] for m in h8["moments"][-4:]], h8["moments"][-4:]   # (v3.5.4: a first or a best may follow it)
         packet = mind.perceive(h8, c8, po, pm.mem)[0]
         assert "glow (a yellow jar; yours" in packet, "a pet is told what a thing is, beside its name"
         slots = len(room8["wall_slots"])
@@ -1013,7 +1014,7 @@ async def main():
         r = await do(e8, po, {"type": "combine", "a": "glow", "b": "ring-a", "recipe": {"name": "ringing light", "material": "noisy", "purpose": "both"}})
         both = room8["objects"]["ringing light"]["made"]["recipe"]
         assert not r[0]["reason"] and both["kind"] == "ringing light" and both["color"] == "blue" and both["size"] == 2 and "parts" not in both, both
-        assert any(m_["text"] == "Po joined a jar and a bell into a ringing light it calls 'ringing light'" for m_ in h8["moments"][-6:]), h8["moments"][-1]["text"]   # (SPEC-v3.4: and what came of it, something bright and noisy, is a moment after it)
+        assert any(m_["text"].startswith("Po joined a jar and a bell into a") and m_["text"].endswith(", which it calls 'ringing light'") for m_ in h8["moments"][-6:]), [m_["text"] for m_ in h8["moments"][-6:]]   # (v3.5.8: what it does, by its everyday word)   # (SPEC-v3.4: and what came of it, something bright and noisy, is a moment after it)
         assert not walls_.marks(room8), "what was written on a thing goes when the thing does"
         await e8.tick()
         assert e8.db.execute("SELECT count(*) FROM inscriptions WHERE what='gone with the thing'").fetchone()[0] == 1
@@ -1022,7 +1023,7 @@ async def main():
         assert story_.now(h8, c8).endswith("Not long ago, Bo hatched."), "a birth is in the headline for a while: %s" % story_.now(h8, c8)
         h8["moments"] = [m_ for m_ in h8["moments"] if m_["kind"] not in ("hatched", "storm", "power", "death") and not m_["kind"].startswith("arrival")]
         line = story_.now(h8, c8)
-        assert line.startswith("Po, an old one, is ") and "just joined two things into a blue ringing light." in line and not re.search(r"\d|youngling|hatchling|elder\b", line), line
+        assert line.startswith("Po, an old one, is ") and "just joined two things into a blue harp." in line and not re.search(r"\d|youngling|hatchling|elder\b", line), line
         e8.close()
 
         # ---- §3.2: a house from before kinds. Every thing becomes a kind, once, and nothing else about it changes ----

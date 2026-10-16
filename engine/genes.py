@@ -11,7 +11,7 @@ from collections import Counter
 
 from . import genome
 from .genome import BODIES, PLANS, RANGES, SLOTS, START, get
-from .world import LONG_AGO, add_event, bit_kinds, dist, family, moment, label, neighbours, rnd
+from .world import LONG_AGO, a, add_event, bit_kinds, dist, family, moment, label, neighbours, rnd
 
 R, T, PARTS = BODIES["rates"], BODIES["traits"], BODIES["parts"]
 MIX = {frozenset(k.split("+")): v for k, v in BODIES["pattern_mix"].items()}
@@ -251,7 +251,7 @@ def live(house, cfg, pet):
         room["nook"] = tick + round(T["small"]["hours"] * cfg["ticks_per_hour"])
         craft.give(house, cfg, pet, room, bit)
         pet["got"] = [bit, tick]
-        felt(house, cfg, pet, "small", T["small"]["found"] % ("some " + bit))
+        felt(house, cfg, pet, "small", T["small"]["found"] % a(bit))
 
 
 # ---- the stub run of §7.2: inheritance alone, many births ----

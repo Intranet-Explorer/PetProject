@@ -70,9 +70,15 @@ def kinds_for(cfg, material):
     return [k for k, v in cfg["kinds"].items() if material not in v.get("not", [])]
 
 
+def everyday_kind(cfg, kind):
+    """SPEC-v3.5.8 §3: what a kind is called about the house: the kind itself, or for one the house invented the
+    everyday word for what it does ("a seat"), whatever its maker called it."""
+    return cfg["kinds"].get(kind, {}).get("everyday") or kind or "thing"
+
+
 def a_thing(cfg, recipe, material=False):
     """A made thing in plain words: "a blue cushion", "a soft blue cushion"."""
-    kind = recipe.get("kind") or "thing"
+    kind = everyday_kind(cfg, recipe.get("kind"))
     words = ([recipe["material"]] if material else []) + ([recipe["color"]] if recipe.get("color") else []) + [kind]
     return "%s %s" % ("an" if words[0][0] in "aeiou" else "a", " ".join(words))
 
@@ -141,14 +147,54 @@ def who_s(house, pet, other):
 COUNT = ["", "", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve"]
 
 
-def unique_name(house, cfg, name):
-    """Two pets may both make a "soft nest": the second becomes "soft nest two". A made thing never takes the
-    name of anything else in the house (a fixture, a stone, a bit, a pet), or it would replace or hide it."""
+def taken_names(house, cfg):
+    """Every name a made thing may not take: anything else in the house (a fixture, a stone, a bit, a pet), or it
+    would replace or hide it."""
     taken = {n for r in house["rooms"].values() if r["type"] for n in r["objects"]}
     taken |= {f["name"] for r in cfg["house"]["rooms"].values() for f in r["fixtures"]} | set(cfg["house"]["bits"])
     taken |= {(p["name"] or "").lower() for p in house["pets"].values()} | {"egg", "visitor", "here", "the little one", "middle"}
     taken |= {label(p).lower().replace("the ", "", 1) for p in house["pets"].values()}   # nor the label of a pet that has no name
-    taken |= {k for c in ("moth", "beetle", "mouse", "bird") for k in (c,)} | {d + " door" for d in ("north", "south", "east", "west")}
+    taken |= {"moth", "beetle", "mouse", "bird", "sweeper"} | {d + " door" for d in ("north", "south", "east", "west")}
+    return taken
+
+
+def honest(cfg, recipe):
+    """SPEC-v3.5.8 §3.1: "charm" means a small thing kept for meaning, with no use. A charm its maker calls a tile, or
+    makes to keep a draught out, is a tile or a draught stopper: the kind whose everyday words (kinds.json `words`)
+    come last in its name, else in what it is for. Any other kind is what its maker said it is."""
+    if recipe.get("kind") != "charm":
+        return recipe.get("kind")
+    for text in (recipe.get("name"), recipe.get("purpose")):
+        words = re.findall(r"[a-z]+", str(text or "").lower())
+        for w in reversed(words):
+            kind = next((k for k, v in cfg["kinds"].items() if w in v.get("words", ()) and recipe.get("material") not in v.get("not", [])
+                         and not v.get("wall") and not v.get("tool") and k not in cfg["craft"]["tool"]), None)   # (never a tool, or what hangs on a wall: those are made as such)
+            if kind:
+                return kind
+    return "charm"
+
+
+def everyday(house, cfg, recipe, bits, pet, room, own=None):
+    """SPEC-v3.5.8 §3: a made thing is called what it is: its kind and at most one word that tells it apart, its main
+    stuff or its nature ("felt cushion", "clay tile", "warm lamp"). When that is taken, the next most telling words
+    ("blue felt cushion"), never a number. At most three words. Its maker's own name for it stands when it is one of
+    these ("soft nest")."""
+    kind, taken = everyday_kind(cfg, recipe["kind"]), taken_names(house, cfg)
+    stuff = next((b for b in bits if recipe.get("material") in cfg["house"]["bits"].get(b, {}).get("can", [])), bits[0] if bits else None)
+    nature, colour, big = recipe.get("material"), recipe.get("color"), {1: "small", 3: "big"}.get(recipe.get("size"))
+    whose = "%s's" % pet["name"] if pet.get("name") else None
+    tries = [(stuff,), (nature,), (colour, stuff), (colour, nature), (big, stuff), (big, nature), (colour,), (whose,), (whose, stuff), (whose, colour),
+             (room["type"],), (colour, big), (nature, stuff), (big, colour, stuff)] + [(c, stuff) for c in COLORS] + [(w, nature) for w in ("other", "spare", "new", "little")]
+    names = [n for t in tries for words in [[w for w in t if w] + [kind]] for n in [" ".join(words)] if len(words) > 1 and len(n.split()) <= 3 and n not in taken]
+    if names:
+        return own if own in names else names[0]
+    return unique_name(house, cfg, kind)   # ponytail: past every telling word, a number after all; never seen with things cleared to the Works
+
+
+def unique_name(house, cfg, name):
+    """Two pets may both make a "soft nest": the second becomes "soft nest two". A made thing never takes the
+    name of anything else in the house (a fixture, a stone, a bit, a pet), or it would replace or hide it."""
+    taken = taken_names(house, cfg)
     if name.startswith("stone for"):
         name = "a " + name
     while True:
@@ -232,6 +278,7 @@ def make(house, cfg, pet, a, clean):
     r, room = a["recipe"], house["rooms"][pet["room"]]
     if cfg["kinds"][r["kind"]].get("invented"):
         return invent.make(house, cfg, pet, a, clean)
+    was, r["kind"] = r["kind"], honest(cfg, r)   # SPEC-v3.5.8 §3.1: a "charm" that is a tile is a tile
     want, n = r["material"], 1   # one bit goes into a thing: the one that gives it its nature
     picked = to_pick_up(house, cfg, pet, r)
     for spot in picked:   # what it was short of, it picks up from the floor on the way
@@ -245,17 +292,18 @@ def make(house, cfg, pet, a, clean):
     if not any(want in cfg["house"]["bits"][b]["can"] for b in used):   # ... and, if none of that gives it its nature, the bit that does
         order = sorted(pet["carrying"], key=lambda b: want not in cfg["house"]["bits"][b]["can"])
         used, pet["carrying"] = used + order[:n], order[n:]
-    name = unique_name(house, cfg, clean_name(r["name"]))
     # SPEC-v3.4 §2.2, §3.4: a practised maker's things are finer and bigger; furniture built with a hammer is bigger and sturdier
     fine = craft.skill(cfg, pet, "making")
     built = r["kind"] in cfg["craft"]["tool"]["hammer"]["builds"] and craft.tool_here(house, cfg, room, "hammer")
     size = min(3, as_size(r.get("size", 2)) + (fine >= 2) + bool(built))
-    recipe = {"name": name, "kind": r["kind"], "material": want, "color": r["color"], "size": size, "purpose": clean(r["purpose"], 80)}
+    recipe = {"kind": r["kind"], "material": want, "color": r["color"], "size": size, "purpose": clean(r["purpose"], 80)}
+    name, title = named(house, cfg, recipe, used, pet, room, r["name"])
     house["n"]["thing"] += 1
     hangs = cfg["kinds"][r["kind"]].get("wall")
     o = {"pos": wall_slot(house, room) if hangs else spot_for(house, cfg, pet, a.get("near")), **({"wall": True} if hangs else {}),
          "made": {"id": house["n"]["thing"], "recipe": recipe, "by": pet["id"], "owner": pet["id"], "tick": house["tick"],
-                  "bits": used, "uses": 0, "ups": 0, "used_at": house["tick"], "heirloom": None, "behavior": None, "fine": fine, **({"sturdy": True} if built else {})}}
+                  "bits": used, "uses": 0, "ups": 0, "used_at": house["tick"], "heirloom": None, "behavior": None, "fine": fine, **({"sturdy": True} if built else {}),
+                  **record(house, cfg, pet, room, used, "knocked together with the hammer" if built else None)}}
     if cfg["materials"][want].get("light"):
         o["state"] = "on"
     room["objects"][name] = o
@@ -269,15 +317,73 @@ def make(house, cfg, pet, a, clean):
     pet["last_made"] = {"tick": house["tick"], "kind": r["kind"], "material": want, "new": not again}
     pet.setdefault("made_at", []).append([house["tick"], "%s|%s" % (r["kind"], want)])
     craft.practise(house, cfg, pet, "making")
-    moment(house, "made", "%s made %s it calls '%s'" % (label(pet), a_thing(cfg, recipe), name), pet["id"], room["id"])   # §6: the kind, then the name
+    moment(house, "made", "%s made %s%s" % (label(pet), a_thing(cfg, recipe), ", which it calls '%s'" % title if title else ""), pet["id"], room["id"])   # §6: the kind, then the name
     craft.first_of(house, cfg, pet, r["kind"])
     firsts.made(house, cfg, pet, o, room)   # SPEC-v3.5.4 §6, §7, §10: a first, a best, and who saw it
     how = "out of what you carried" if not picked else "from %s" % " and ".join(sorted(set(used)))
-    said = "you made %s and called it %s, %s%s%s" % (a_thing(cfg, recipe), name, how, "; it hangs on the wall" if hangs else "", "; built with the hammer, it is bigger and sturdier" if built else "")
+    said = "you made %s, %s%s%s%s%s" % (a_thing(cfg, recipe), how, "; you call it %s, and about the house it is the %s" % (title, name) if title else "; it is the %s" % name,
+                                       "" if was == r["kind"] else "; it is %s %s, not a charm: it has a use" % (cfg["kinds"][r["kind"]].get("a", "a"), r["kind"]),
+                                       "; it hangs on the wall" if hangs else "", "; built with the hammer, it is bigger and sturdier" if built else "")
+    if r["kind"] == "charm" and charms(house, pet) > cfg["make"]["charms"]:   # SPEC-v3.5.8 §4: one more charm, while it has its few, is worth less
+        return said + "; you have charms enough already, and another one doesn't feel like much", {"energy": -(cfg["make"]["effort"] + n)}, None
     if again:
         return said + "; you have made this before; it doesn't feel new", {"energy": -(cfg["make"]["effort"] + n)}, None
     # Novelty goes by kind and wears; a thing like one it made lately is no longer new (§3.3).
     return said, {"energy": -(cfg["make"]["effort"] + n)}, "make " + want
+
+
+def named(house, cfg, recipe, bits, pet, room, own):
+    """SPEC-v3.5.8 §3: (the everyday name it is known by, its maker's own name for it as a title or None). The
+    recipe gets both."""
+    title = clean_name(own)
+    if cfg["make"].get("own_names"):   # (the self-checks written before v3.5.8 call things what their makers did)
+        recipe["name"] = unique_name(house, cfg, title)
+        return recipe["name"], recipe["name"]
+    name = everyday(house, cfg, recipe, bits, pet, room, title)
+    recipe["name"] = name
+    if title and title != name:
+        recipe["title"] = " ".join(w if w in ("of", "the", "a", "an", "and") else w.capitalize() for w in title.split())
+    return name, recipe.get("title")
+
+
+VERB = {"fluff": "stitched", "cloth": "stitched", "felt": "stitched", "feather": "bound", "moss": "packed", "leaf": "folded", "petal": "pressed",
+        "clay": "shaped", "wax": "poured", "resin": "poured", "wood": "carved", "shell": "carved", "pebble": "set", "chalk": "carved",
+        "reed": "woven", "wire": "twisted", "string": "knotted", "vine": "woven", "metal": "beaten", "bead": "strung", "soot": "smudged", "seed": "pressed", "bell": "hung"}
+
+
+def record(house, cfg, pet, room, bits, how=None):
+    """SPEC-v3.5.8, kept from now on for the thing's card: how it was made and where (the place it stood by, the
+    room), and what its maker had in mind as it made it."""
+    near = min(((dist(o["pos"], pet["pos"]), n) for n, o in room["objects"].items() if "fix" in o and not o["fix"].get("built")), default=(9, None))
+    stuff = next((b for b in bits if b.split()[-1] in VERB), None)
+    how = how or "%s %s" % (VERB.get(stuff.split()[-1], "made") if stuff else "made", "at the " + near[1] if near[0] <= 1 else "by paw")
+    out = {"how": how, "made_in": room["name"], "users": {}, "words": []}
+    thought = (pet.get("plan") or {}).get("thought")
+    if thought:
+        out["words"].append({"tick": house["tick"], "pet": pet["id"], "text": thought[:160], "at": "made"})
+    return out
+
+
+def noted(house, pet, o, at):
+    """SPEC-v3.5.8: what a pet had in mind as it set a thing down (or made it), kept on the thing; the last few."""
+    thought = (pet.get("plan") or {}).get("thought")
+    w = o["made"].setdefault("words", [])
+    if thought and (not w or w[-1]["text"] != thought[:160]):
+        w.append({"tick": house["tick"], "pet": pet["id"], "text": thought[:160], "at": at})
+        del w[:-6]
+
+
+def used_by(house, o, pet):
+    """SPEC-v3.5.8: who uses it, a light count per pet (and a thing used is a thing touched)."""
+    if pet and "made" in o:
+        u = o["made"].setdefault("users", {})
+        u[pet["id"]] = u.get(pet["id"], 0) + 1
+        o["made"]["touched"] = house["tick"]
+
+
+def charms(house, pet):
+    """How many charms it owns, about the house."""
+    return sum(1 for r in house["rooms"].values() if r["type"] for o in made(r).values() if o["made"]["owner"] == pet["id"] and o["made"]["recipe"].get("kind") == "charm")
 
 
 def drop_bits(house, cfg, room, pos, bits):
@@ -309,8 +415,9 @@ def gone(house, o, name, how, room=None):
                                                         "by": m["by"], "medium": m["medium"], "what": "gone with the thing", "actor": None})
     house.setdefault("gone_things", []).append(
         {"id": o["made"].get("id"), "name": name, "recipe": o["made"]["recipe"], "by": o["made"]["by"], "owner": o["made"]["owner"],
-         "uses": o["made"]["uses"], "ups": o["made"]["ups"], "made": o["made"]["tick"], "gone": [house["tick"], how], "star": o["made"].get("star")})
-    del house["gone_things"][:-200]
+         "uses": o["made"]["uses"], "ups": o["made"]["ups"], "made": o["made"]["tick"], "gone": [house["tick"], how], "star": o["made"].get("star"),
+         "bits": o["made"].get("bits", []), **{k: o["made"][k] for k in ("how", "made_in", "users", "words") if o["made"].get(k)}})   # (SPEC-v3.5.8: what it was made from, kept)
+    del house["gone_things"][:-2000]   # (SPEC-v3.5.8 §4: every charm traded in stays in the Things tab's history)
 
 
 def check_combine(a, house, cfg, pet, norm):
@@ -338,7 +445,6 @@ def combine(house, cfg, pet, a, clean, norm):
         r["material"] = olds[0]["made"]["recipe"]["material"]
     for n, o in zip((x, y), olds):
         gone(house, o, n, "combined", room)
-    name = unique_name(house, cfg, clean_name(r["name"]))
     kept = next(o for o in olds if o["made"]["recipe"]["material"] == r["material"])["made"]["recipe"]   # the one whose nature it keeps
     kind = joined(cfg, [o["made"]["recipe"] for o in olds], r["material"])
     meets = craft.meet(cfg, *[o["made"]["recipe"]["material"] for o in olds])   # SPEC-v3.4 §3.2: two properties that meet make one neither had
@@ -347,15 +453,17 @@ def combine(house, cfg, pet, a, clean, norm):
     kind = new or kind
     if kind not in cfg["kinds"] or material in cfg["kinds"][kind].get("not", []):
         kind = "sculpture"
-    recipe = {"name": name, "kind": kind, "material": material, "color": kept.get("color", "grey"), "size": max(size(o) for o in olds),
+    recipe = {"kind": kind, "material": material, "color": kept.get("color", "grey"), "size": max(size(o) for o in olds),
               "purpose": clean(r["purpose"], 80)}
+    bits = [b for old in olds for b in old["made"]["bits"]][:6]
+    name, title = named(house, cfg, recipe, bits, pet, room, r["name"])
     house["n"]["thing"] += 1
     hangs = cfg["kinds"][kind].get("wall")
     o = {"pos": (wall_slot(house, room) or olds[0]["pos"]) if hangs else next((x["pos"] for x in olds if not x.get("wall")), pet["pos"]),
          **({"wall": True} if hangs and wall_slot(house, room) else {}),
          "made": {"id": house["n"]["thing"], "recipe": recipe, "by": pet["id"], "owner": pet["id"], "tick": house["tick"],
-                  "bits": [b for old in olds for b in old["made"]["bits"]][:6], "uses": 0, "ups": 0, "used_at": house["tick"],
-                  "heirloom": None, "behavior": None, "from": [x, y]}}
+                  "bits": bits, "uses": 0, "ups": 0, "used_at": house["tick"],
+                  "heirloom": None, "behavior": None, "from": [x, y], **record(house, cfg, pet, room, bits, "joined from the %s and the %s" % (x, y))}}
     if prop(cfg, o).get("light"):
         o["state"] = "on"
     room["objects"][name] = o
@@ -364,9 +472,9 @@ def combine(house, cfg, pet, a, clean, norm):
     craft.practise(house, cfg, pet, "making")
     effort = (cfg["make"]["effort"] + 1) * (room_rule(cfg, room, "combine", 1.0) if room["type"] == "workshop" else 1.0)   # easier at a bench (§6.1)
     was = [a_thing(cfg, {"kind": old["made"]["recipe"].get("kind")}) for old in olds]
-    moment(house, "made", "%s joined %s and %s into %s it calls '%s'" % (label(pet), was[0], was[1], a_thing(cfg, {"kind": kind}), name), pet["id"], room["id"])
+    moment(house, "made", "%s joined %s and %s into %s%s" % (label(pet), was[0], was[1], a_thing(cfg, {"kind": kind}), ", which it calls '%s'" % title if title else ""), pet["id"], room["id"])
     firsts.made(house, cfg, pet, o, room)   # SPEC-v3.5.4 §6, §7, §10
-    said = "you joined %s and %s into %s and called it %s; " % (x, y, a_thing(cfg, recipe), name)
+    said = "you joined %s and %s into %s; %s; " % (x, y, a_thing(cfg, recipe), "you call it %s, and about the house it is the %s" % (title, name) if title else "it is the %s" % name)
     if not meets:
         return said + (invent.said(house, new) or "nothing new came of it"), {"energy": -effort}, "combine " + material
     return said + craft.joined(house, cfg, pet, meets), {"energy": -effort, "curiosity": cfg["craft"]["knowing"]["lift"]}, "combine " + material
@@ -446,9 +554,10 @@ def useful(made_rec, cfg):
     return bool(need) and made_rec["uses"] >= cfg["growth"]["useful_uses"] and made_rec["ups"] * 2 > made_rec["uses"]
 
 
-def occasion(house, cfg, o, name, change):
+def occasion(house, cfg, o, name, change, pet=None):
     """Engine truth about what a thing did to a pet on one occasion. Its maker is credited when it turns useful."""
     m = o["made"]
+    used_by(house, o, pet)
     need = prop(cfg, o).get("need")
     m["uses"] += 1
     m["ups"] += change.get(need, 0) > 0

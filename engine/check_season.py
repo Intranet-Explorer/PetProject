@@ -38,6 +38,7 @@ def cold(eng, pet):
 
 async def run(d):
     cfg = world.load_config()
+    cfg["make"]["own_names"] = True   # (things go by their makers' names here: engine/check_hobs.py checks everyday names)
     cfg["weather"]["real"] = False
 
     # ---- the clock: four seasons by the world's days; one forced holds whatever the clock says; a bad name is refused ----
@@ -244,6 +245,7 @@ async def run(d):
     # ---- autumn: food lying loose is wanted put by, and a body can do it ----
     eng.close()
     cB = world.load_config()
+    cB["make"]["own_names"] = True
     cB["weather"]["real"], cB["stub"] = False, dict(cB["stub"], paced=True)
     eB, pb = engine(cB, d + "/autumn")
     hB = eB.house

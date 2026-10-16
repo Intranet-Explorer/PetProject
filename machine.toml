@@ -17,6 +17,9 @@ stored_days = 5           # a thing of its own put away on or in something, unto
 stored_weight = 0.6       # ... wanted fed this much less than one that lies about
 feed_weight = 2.0         # how much a spare thing is wanted fed (the orderly lean toward it, like any want of theirs)
 clutter_weight = 2.0      # ... times this for an old thing in a cluttered room (SPEC-v3.5.4 §1)
+scrap_weight = 1.5        # ... times this for scrap: an old charm past the few it keeps, or a thing nobody uses (SPEC-v3.5.8 §4)
+spring_weight = 2.0       # ... and this, for the world days of the spring clean
+scrap_back = 3            # scrap fed for one base material back to whoever fed it (SPEC-v3.5.8 §4.1)
 bits_weight = 0.8         # ... and three loose bits lying about in some other room than the machine's, beside a spare thing
 peek_weight = 1.2         # how much a pet with little in its paws to make anything of wants to see what the machine has
 

@@ -131,6 +131,65 @@ def clutter_of(house, cfg, room):
     return [n for _, n in sorted(out)]
 
 
+_FIRSTS = {}
+
+
+def firsts_of(house):
+    """{(maker, tick made)} of the things that were a first in the house or the family (SPEC-v3.5.4 feats; a thing
+    made from v3.5.8 on also says so itself)."""
+    L, memo = house.get("feats", {}).get("list", []), _FIRSTS
+    if memo.get("n") != (id(L), len(L)):   # (rebuilt when the feats grow)
+        memo.update(n=(id(L), len(L)), set={(f["pet"], f["tick"]) for f in L if f["kind"] == "first" and f.get("level") in ("house", "family")
+                                   and f.get("key", "").partition(":")[0] in ("kind", "make")})
+    return memo["set"]
+
+
+def kept(house, cfg, room, name):
+    """SPEC-v3.5.8 §4: a made thing kept for meaning, never scrap: an heirloom, a statue, a first, a gift, a thing
+    the visitor named or starred, or anything in a keepsake box."""
+    o = room["objects"][name]
+    m = o["made"]
+    return bool(m.get("heirloom") or m.get("called") or m.get("star") is not None or m.get("first") or (m["by"], m["tick"]) in firsts_of(house)
+                or m["by"] != m["owner"] or statue(name, o) or keeps(o) or (o.get("on") and keeps(room["objects"].get(o["on"], {}))))
+
+
+def scrap(house, cfg, room, name, newest=None):
+    """SPEC-v3.5.8 §4: why a made thing is scrap, or None. A pet keeps only its few newest charms; the rest are scrap,
+    on a shelf, a wall or the floor. Any other made thing nobody has used in `scrap_days` is scrap too. Never what is
+    kept (above), a tool, a place things are kept in, what has things in it, what is planted, what is too heavy to
+    move, a lit light, or a bed-thing where someone sleeps. `newest`: {owner: ticks of its newest charms}, if known."""
+    o, M = room["objects"][name], cfg["make"]
+    if "made" not in o or kept(house, cfg, room, name) or held(room, name) or o.get("planted") or cap(cfg, o) or things.prop(cfg, o).get("fixed"):
+        return None
+    kind = o["made"]["recipe"].get("kind")
+    if kind in cfg["craft"]["tool"] or cfg["kinds"].get(kind, {}).get("tool") or (o.get("state") == "on" and things.prop(cfg, o).get("light")):
+        return None
+    if kind in KEEP["sleeping corner"] and any(p.get("sleeps_in") == room["id"] and dist(p.get("sleeps_at") or p["pos"], o["pos"]) <= 1
+                                               for p in house["pets"].values() if p["stage"] not in ("egg", "dead")):
+        return None
+    if kind == "charm":
+        newest = newest if newest is not None else newest_charms(house, cfg)
+        return "charm" if o["made"]["tick"] not in newest.get(o["made"]["owner"], ()) else None
+    return "unused" if world_days(cfg, last_touch(o), house["tick"]) >= M["scrap_days"] else None
+
+
+def newest_charms(house, cfg):
+    """{owner: the ticks its newest `charms` charms were made}."""
+    out = {}
+    for r in house["rooms"].values():
+        for o in things.made(r).values() if r["type"] else ():
+            if o["made"]["recipe"].get("kind") == "charm":
+                out.setdefault(o["made"]["owner"], []).append(o["made"]["tick"])
+    return {k: set(sorted(v)[-cfg["make"]["charms"]:]) for k, v in out.items()}
+
+
+def scraps(house, cfg, room):
+    """The scrap in a room, charms first, then the longest untouched: [(why, name)]."""
+    newest = newest_charms(house, cfg)
+    out = [(why, n) for n in things.made(room) for why in [scrap(house, cfg, room, n, newest)] if why]
+    return sorted(out, key=lambda x: (x[0] != "charm", last_touch(room["objects"][x[1]])))
+
+
 def old(house, cfg, room, name):
     """Left lying: a made thing nobody has touched for `old_days`, that is not an heirloom, not up on a wall, not put
     away on anything, not itself a place where things are kept, and not too heavy to be moved."""
@@ -370,6 +429,7 @@ def do(a, house, cfg, pet, norm):
             o["home"] = {"room": room["id"], "on": was}
         return "you took the %s down from the %s" % (name, was), {}, None
     said = put(house, cfg, pet, room, name, "wall", things.wall_slot(house, room)) if t == "hang" else put(house, cfg, pet, room, name, "on", norm(a["where"]))
+    things.noted(house, pet, o, "set down")   # SPEC-v3.5.8: what it had in mind as it put it there
     owner = house["pets"].get(o["made"]["owner"])
     if owner and owner is not pet and owner["stage"] != "dead":   # anyone may put anyone's thing in its place here, as a body does (do_job); its owner is told
         add_event(house, owner, "your %s was put %s" % (name, said))

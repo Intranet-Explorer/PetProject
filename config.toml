@@ -168,6 +168,9 @@ tired = 8                 # too tired to make anything below this much energy
 loose_bits = 12           # dropped bits a room's floor holds before the oldest is swept away
 crowded = 10              # made things on one room's floor before it feels cluttered (SPEC-v3.5.4 §1: no longer a bar to making) ...
 clutter_days = 1          # ... and its things nobody has used this long can go: to the machine, or a keepsake box
+charms = 3                # SPEC-v3.5.8 §4: the charms a pet keeps (its newest); past these, another is worth less and the old ones are scrap
+scrap_days = 3            # ... and any made thing nobody has used this long, that is not kept, is scrap too
+haul = 3                  # scrap a body carries to the Works at a time
 parts = { hatchling = 2, child = 3, youngling = 3, adult = 3, elder = 3 }   # a made thing's parts; combining goes to 6
 
 [sleep]

@@ -286,6 +286,6 @@ class Model:
 
     async def chronicle(self, day, lines):
         """§9.4: the house's day told as one paragraph. Not a pet's voice; nothing here reaches a pet."""
-        ask = ("These things happened in a house of small creatures on day %d:\n%s\n\n"
+        ask = ("These things happened in a house of hobs, small household spirits, on day %d:\n%s\n\n"
                "Tell the day plainly, as someone who watched it, in short sentences: one thing to a sentence, at most twelve sentences. Use only what is listed." % (day, lines))
         return (await asyncio.to_thread(self.chat, ask, None, True, 4000, 0.7, "chronicle")).strip()

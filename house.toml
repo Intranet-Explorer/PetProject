@@ -366,6 +366,12 @@ trust_to_wait = 3         # fed this many times by one pet, it starts waiting fo
 [creatures.bird]              # the garden, in the morning
 stay_hours = 5
 likes = ["seed"]
+[creatures.sweeper]           # SPEC-v3.5.8 §4.2: built by the Works; it never leaves (engine/sweeper.py)
+likes = []                # (held out a bit, it bumps it and leaves it lying)
+holds = 4                 # loose things and bits it sweeps up before it goes back to the Works, full
+round_hours = 3           # ... or after this long out
+charge_hours = 1          # on its dock between rounds
+shooed_hours = 2          # shooed off a thing, it leaves that thing alone this long
 
 # ---- rule drift (§6.5): once in a lineage one found room's rule becomes this. Logged; the pets are not told. ----
 [drifts]

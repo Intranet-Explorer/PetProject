@@ -77,7 +77,7 @@ def pet_view(p):
         needs={n: round(v, 1) for n, v in p["needs"].items()}, levels={n: feel.level(p, n) for n in p["needs"]},
         feelings=feel.feelings(p), felt={n: feel.WORDS[n][feel.level(p, n)] for n in p["needs"]}, seems=feel.seems(p), doing=mind.doing(h, p), asleep=bool(p["sleep"]), thinking=p["thinking"],
         carrying=p["carrying"], following=p["following"], weak=p["weak"], said=said, days=round(life.days(h, cfg, p), 1),
-        project=p["project"], offers=[{"from": o["from"], "kind": o["kind"]} for o in p["offers"]],
+        project=p["project"], progress=build.progress(h, cfg, p), offers=[{"from": o["from"], "kind": o["kind"]} for o in p["offers"]],
         plan={"intention": plan["intention"], "thought": plan["thought"], "expect": plan["expect"], "i": plan["i"], "why": plan["why"],
               "steps": [actions.words(s) for s in plan["steps"]], "acting": plan["left"] is not None and not plan.get("idle"),
               "idle": bool(plan.get("idle"))} if plan else None,
@@ -150,11 +150,16 @@ def room_view(r):
                          "ups": m["ups"], "useful": things.useful(m, cfg), "called": m.get("called"), "tick": m["tick"], "star": m.get("star"),   # (SPEC-v3.5.4 §10)
                          "worn": [k for k in ("damp", "dusty", "eaten") if m.get(k)],
                          "loud": bool(things.prop(cfg, o).get("loud")),                           # it sounds when used (SPEC-v3.3 §4)
-                         "hums": bool(o.get("active") and things.doing(cfg, o).get("loud"))}     # it is making a noise by itself now
+                         "hums": bool(o.get("active") and things.doing(cfg, o).get("loud")),     # it is making a noise by itself now
+                         # SPEC-v3.5.8: its maker's title shows only where it matters; and what is kept from now on for its card
+                         "title_shown": bool(m["recipe"].get("title")) and order.kept(h, cfg, r, n), "from": m.get("bits", []),
+                         **{k: m[k] for k in ("how", "made_in", "users", "words") if m.get(k)}}
             if o.get("home"):
                 v["home"] = o["home"]   # SPEC-v3.3 §2.3: where it belongs: {room, on} or {room, pos}
         elif "memorial" in o:
             v["memorial"] = o["memorial"]
+            if o.get("words"):
+                v["words"] = o["words"]   # SPEC-v3.5.8: what has been written on the stone
         else:
             v["fix"] = {k: (True if k == "water" else x) for k, x in o["fix"].items() if k != "states"}
             v["says"] = actions.fixture_says(o["fix"])   # what it is, for the visitor's hover card
@@ -224,7 +229,7 @@ def snapshot():
         "tick_seconds": cfg["clock"]["tick_seconds"], "day_seconds": cfg["clock"]["day_seconds"], "turbo": cfg["clock"]["turbo"], "shift": cfg.get("shift"),
         "profile": cfg["profile"], "start": h["start"], "door_tiles": h["door_tiles"], "lineage": h["lineage"],
         "rooms": [room_view(r) for r in h["rooms"].values()], "pets": [pet_view(p) for p in h["pets"].values()],
-        "creatures": h["creatures"], "moments": h["moments"][-60:], "events": h["events"][-8:],
+        "creatures": [{k: v for k, v in c.items() if k not in ("held", "swept", "shooed")} for c in h["creatures"]], "moments": h["moments"][-60:], "events": h["events"][-8:],
         "chronicle": h["chronicle"][-1:], "visitor": present(), "population": cfg["life"]["population"],
         "sayings": [{"text": c["text"], "gens": len(c["gens"]), "truth": c["truth"]} for c in story.sayings(h, 3)],
     }

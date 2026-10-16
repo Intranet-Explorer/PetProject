@@ -14,7 +14,7 @@ bits count as one: they give one back for three, so they cannot go round."""
 import tomllib
 
 from . import feats, order, things
-from .world import add_event, days, label
+from .world import add_event, days, label, moment
 
 FULL = ["it has nothing in it yet", "it has a little in it", "it is about half full", "it is nearly full"]
 
@@ -57,6 +57,27 @@ def view(house, cfg):
             "line": "THE WORKS NEEDS %d SCRAP: %s" % (g["scrap"], g["what"].upper()), "built": [b["what"] for b in state(house, cfg)["built"]]}
 
 
+# ---- the spring clean (SPEC-v3.5.8 §4) ----
+
+def spring(house, cfg):
+    """Is the spring clean on: the world days after it was called, while scrap is wanted fed all the more?"""
+    return house["tick"] < (house.get("spring_clean") or {}).get("until", 0)
+
+
+def spring_clean(house, cfg):
+    """Once, when v3.5.8 comes to a house: the family is told the old charms could go to the Works, and the story
+    says so. What is cleared, they clear by their own paws over the next world days."""
+    from . import hub
+    if "spring_clean" in house:
+        return
+    house["spring_clean"] = {"at": house["tick"], "until": house["tick"] + round(cfg["works"]["works"]["spring_days"] * cfg["ticks_per_day"])}
+    moment(house, "spring", "A spring clean: the old charms about the house, and the things nobody uses, could go to the Works as scrap", None, hub.RID)
+    for p in house["pets"].values():
+        if p["stage"] not in ("egg", "dead"):
+            add_event(house, p, "it is time for a spring clean: there are too many old charms about the house. Everyone keeps their few newest charms, "
+                                "and anything that means something; the rest, and things nobody uses, could go to the Works as scrap, and the Works gives something back for scrap")
+
+
 # ---- fed ----
 
 def key(o):
@@ -81,7 +102,8 @@ def fed(house, cfg, pet, o=None):
     if o is not None:
         S["counted"] = (S["counted"] + [key(o)])[-W["keep"]:]
     S["have"] += W["thing"] if o is not None else W["bits"]
-    S["fed"][pet["id"]] = S["fed"].get(pet["id"], 0) + 1
+    if pet:   # (the sweeper's scrap counts, and names nobody)
+        S["fed"][pet["id"]] = S["fed"].get(pet["id"], 0) + 1
     lift = dict(cfg["build"]["build"]["lift"])
     if S["have"] >= g["scrap"]:
         built(house, cfg, g)
@@ -98,6 +120,9 @@ def built(house, cfg, g):
     S["built"].append({"what": g["what"], "tick": house["tick"], "by": who})
     S.update(goal=S["goal"] + 1, have=0, fed={})
     lay(house, cfg, new=g)
+    if g.get("sweeper"):   # SPEC-v3.5.8 §4.2
+        from . import sweeper
+        sweeper.make(house, cfg)
     feats.record(house, cfg, "works", None, "The Works built %s, fed by %s" % (g["what"], machine.listed(names)),
                  board="THE WORKS BUILT %s: %s" % (g["what"].upper(), machine.listed(names).upper()), room=hub.RID, pets=who,
                  **{"for": "feeding the Works for %s" % g["what"]})
@@ -128,6 +153,9 @@ def lay(house, cfg, new=None):
             stock.setdefault(m, 0)
             if b is new:
                 machine.fill(house, cfg, m, M["restock"])
+        if b.get("sweeper") and b is not new:   # (built before this house was opened: it is there; made once, on its dock)
+            from . import sweeper
+            sweeper.make(house, cfg)
         f = dict(b.get("fixture") or {})
         kind = f.pop("room", None)
         if not kind:
