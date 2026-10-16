@@ -30,9 +30,10 @@ def state(house, cfg):
 
 
 def goal(house, cfg):
-    """What the Works is gathering scrap for now, or None once it has built everything on its list."""
+    """What the Works is gathering scrap for now: the next on its list, and once it has built everything on it, the
+    goal that never runs out (SPEC-v3.5.9 §5: `forever`, the house store), or None if there is none."""
     L, g = cfg["works"]["build"], state(house, cfg)["goal"]
-    return L[g] if g < len(L) else None
+    return L[g] if g < len(L) else cfg["works"].get("forever")
 
 
 def full(house, cfg):
@@ -123,9 +124,12 @@ def built(house, cfg, g):
     S["built"].append({"what": g["what"], "tick": house["tick"], "by": who})
     S.update(goal=S["goal"] + 1, have=0, fed={})
     lay(house, cfg, new=g)
-    if g.get("sweeper"):   # SPEC-v3.5.8 §4.2
+    if g.get("sweeper"):   # SPEC-v3.5.8 §4.2 (and a second: SPEC-v3.5.9 §5)
         from . import sweeper
-        sweeper.make(house, cfg)
+        sweeper.make(house, cfg, int(g["sweeper"]))
+    if g.get("stock"):   # SPEC-v3.5.9 §5: the house store fills the machine with every base material
+        for m in machine.state(house, cfg)["stock"]:
+            machine.fill(house, cfg, m, g["stock"])
     feats.record(house, cfg, "works", None, "The Works built %s, fed by %s" % (g["what"], machine.listed(names)),
                  board="THE WORKS BUILT %s: %s" % (g["what"].upper(), machine.listed(names).upper()), room=hub.RID, pets=who,
                  **{"for": "feeding the Works for %s" % g["what"]})
@@ -158,7 +162,7 @@ def lay(house, cfg, new=None):
                 machine.fill(house, cfg, m, M["restock"])
         if b.get("sweeper") and b is not new:   # (built before this house was opened: it is there; made once, on its dock)
             from . import sweeper
-            sweeper.make(house, cfg)
+            sweeper.make(house, cfg, int(b["sweeper"]))
         f = dict(b.get("fixture") or {})
         kind = f.pop("room", None)
         if not kind:

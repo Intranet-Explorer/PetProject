@@ -10,11 +10,12 @@ from .world import BACK, a, add_event, dist, free_tile, hours, in_room, label, m
 DOCK = "sweeper dock"
 
 
-def make(house, cfg):
-    """The Works has built it: its dock by the machine, and the sweeper on it."""
+def make(house, cfg, n=1):
+    """The Works has built it: its dock by the machine, and the sweeper on it, until there are `n` of them (the
+    second shares the dock)."""
     from . import hub, world
     room = house["rooms"].get(hub.RID)
-    if not room or any(c["kind"] == "sweeper" for c in house["creatures"]):
+    if not room or sum(c["kind"] == "sweeper" for c in house["creatures"]) >= n:
         return
     if DOCK not in room["objects"]:
         room["objects"][DOCK] = world.fixture({"name": DOCK, "pos": free_tile(house, cfg, room, [2, cfg["H"] - 2]), "dock": True})
@@ -24,7 +25,7 @@ def make(house, cfg):
                                "doing": "charging on its dock", "since": house["tick"], "until": house["tick"] + 10 ** 9, "fed": {}, "carry": None,
                                "trust": {}, "tame": None, "name": None, "held": [], "load": 0, "full": False, "docked": True,
                                "charged": house["tick"], "swept": {}, "shooed": {}, "goal": None})
-    moment(house, "sweeper", "the Works built a sweeper: it whirred off its dock to clean the house", None, room["id"])
+    moment(house, "sweeper", "the Works built %s: it whirred off its dock to clean the house" % ("another sweeper" if n > 1 else "a sweeper"), None, room["id"])
 
 
 def junk(house, cfg, room):

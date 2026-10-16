@@ -117,6 +117,18 @@ async def run(d):
     assert "junk charm" in gone and "kept charm" in hb["objects"] and not order.loose_bits(hb), (gone, sw)
     assert works.state(h, cfg)["have"] > have or works.state(h, cfg)["built"], "what it brings counts as scrap"
     assert any(m["kind"] == "sweeper" and "brought" in m["text"] for m in h["moments"]), "it goes in the story"
+    # ---- SPEC-v3.5.9 §5: the Works never runs out; a second sweeper ----
+    S = works.state(h, cfg)
+    sweeper.make(h, cfg, 2)
+    assert sum(c["kind"] == "sweeper" for c in h["creatures"]) == 2, "a second sweeper"
+    S["goal"] = len(cfg["works"]["build"])
+    g = works.goal(h, cfg)
+    assert g["what"] == "the house store" and works.view(h, cfg)["need"] == g["scrap"], g
+    stock = dict(machine.state(h, cfg)["stock"])
+    for m in stock:
+        machine.state(h, cfg)["stock"][m] = 0
+    works.built(h, cfg, g)
+    assert works.goal(h, cfg)["what"] == "the house store" and all(machine.state(h, cfg)["stock"][m] == g["stock"] for m in stock), "it fills the machine, and goes on"
     print("hobs check passed")
 
 

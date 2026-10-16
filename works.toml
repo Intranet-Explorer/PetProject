@@ -51,3 +51,128 @@ machine = { free = 3 }
 what = "a sweeper for the house"   # SPEC-v3.5.8 §4.2: a small robot vacuum that clears loose junk by itself (engine/sweeper.py)
 scrap = 12
 sweeper = true
+
+# SPEC-v3.5.9 §5: the Works never runs out. After the sweeper, more for the house, cheapest first; the greenhouse's
+# extension takes three fills in a row. Every fixture here has its picture already (view/assets/sprites.json fix.*).
+
+[[build]]
+what = "a lantern for the garden"
+scrap = 20
+fixture = { room = "garden", name = "lantern", pos = [7, 1], light = "on" }
+
+[[build]]
+what = "a lamp for the music room"
+scrap = 20
+fixture = { room = "music", name = "lamp", pos = [5, 1], light = "on" }
+
+[[build]]
+what = "a rug for the nursery"
+scrap = 22
+fixture = { room = "nursery", name = "rug", pos = [6, 4], soft = 4.0, cozy = true }
+
+[[build]]
+what = "a lantern for the pond room"
+scrap = 22
+fixture = { room = "pond", name = "lantern", pos = [10, 1], light = "on" }
+
+[[build]]
+what = "a bench by the pond"
+scrap = 24
+fixture = { room = "pond", name = "old bench", pos = [9, 6], rest = 2.5, cozy = true }
+
+[[build]]
+what = "a blanket for the music room"
+scrap = 24
+fixture = { room = "music", name = "blanket", pos = [9, 5], movable = true, soft = 3.5, cozy = true }
+
+[[build]]
+what = "a bigger daily allowance from the machine"
+scrap = 25
+machine = { free = 4 }
+
+[[build]]
+what = "a lantern for the attic"
+scrap = 26
+fixture = { room = "attic", name = "lantern", pos = [7, 1], light = "on" }
+
+[[build]]
+what = "resin in the machine"
+scrap = 26
+material = "resin"
+
+[[build]]
+what = "a second sweeper"
+scrap = 28
+sweeper = 2
+
+[[build]]
+what = "a rocking chair for the nursery"
+scrap = 28
+fixture = { room = "nursery", name = "rocking chair", pos = [1, 6], rest = 2.5, cozy = true }
+
+[[build]]
+what = "chimes by the garden door"
+scrap = 30
+fixture = { room = "garden", name = "chimes", pos = [7, 0], toy = 2.0, loud = true }
+
+[[build]]
+what = "a tool box for the workshop"
+scrap = 30
+fixture = { room = "workshop", name = "tool box", pos = [10, 1], store = 4, inside = true }
+
+[[build]]
+what = "string in the machine"
+scrap = 32
+material = "string"
+
+[[build]]
+what = "a mirror for the music room"
+scrap = 32
+fixture = { room = "music", name = "mirror", pos = [4, 0], mirror = true }
+
+[[build]]
+what = "a plant for the storeroom"
+scrap = 34
+fixture = { room = "storeroom", name = "plant", pos = [1, 6], movable = true }
+
+[[build]]
+what = "a bigger morning delivery still"
+scrap = 35
+machine = { restock = 4 }
+
+[[build]]
+what = "the greenhouse extension: a long shelf"
+scrap = 36
+fixture = { room = "greenhouse", name = "long shelf", pos = [5, 0], store = 6 }
+
+[[build]]
+what = "the greenhouse extension: a bird bath"
+scrap = 38
+fixture = { room = "greenhouse", name = "bird bath", pos = [5, 6] }
+
+[[build]]
+what = "the greenhouse extension: a lantern"
+scrap = 40
+fixture = { room = "greenhouse", name = "lantern", pos = [7, 1], light = "on" }
+
+[[build]]
+what = "cloth in the machine"
+scrap = 40
+material = "cloth"
+
+[[build]]
+what = "more room in the machine"
+scrap = 42
+machine = { limit = 16 }
+
+[[build]]
+what = "a fifth thing a day from the machine for everyone"
+scrap = 45
+machine = { free = 5 }
+
+# When the list is done, a goal that never runs out: each time it fills, a stock of every base material goes into the
+# machine (as much as it holds).
+[forever]
+what = "the house store"
+scrap = 30
+stock = 3
