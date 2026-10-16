@@ -2114,3 +2114,27 @@ Best size: 1512 x 982 (1440 x 900 nearly as good). Worst: 1024 x 768 (Small: the
 below it). Acted on: the folding above. Noted, not changed: Pixelify's 5 reads as S in the clock; hob cards run past
 the window's foot at desktop sizes and scroll in their column; name plates pile up when hobs crowd one spot; the
 machine room's own board is caught mid-scroll in a still.
+
+## Part 27: v3.5.9.1, charms with a cost, no numbered names, the sweeper's robot (16 October 2026)
+
+After v3.5.8's first live day (charms 70% of things made, the bar 20%; one thing called "warm reed charm two"),
+Tyler: fix forward, not roll back (RUNNING.md now: roll back only for a bar made worse or something broken).
+
+- **Charms count lately:** the three a hob keeps count the charms it owns and those it made in the last world day that
+  have gone since (the spring clean fed them to the Works, so it rarely owned three and the nudge seldom came).
+- **A charm costs a base material** (wood, stone, metal, clay, fibre or sand: `make.charm_takes`) besides the bit
+  that gives it its nature; a hob without one is told so. Scrap gives materials back, so there is a supply.
+- **A better thing, not only a warning:** past its three, its packet says "you have made N charms lately: another
+  would be worth little; the house could use ..." with one or two things: a lamp or a candle for a room it knows
+  that has no light, a cushion for a room where hobs sit and none lies, and scrap for what the Works is building.
+- **No name or title ends in a number** (world.unnumbered, ends_in_number): a hob's own title for a thing ("Seed
+  Rest Six" is "Seed Rest"), an invented kind, a second song of a name, a built thing; things are told apart by a word
+  ("other bell", "little red soft nest"), never "two". A hob's name may not end in a number word; an honoured name's
+  numeral ("Odo II") is not one. The cause of "warm reed charm two": a thing of an invention of an invention was
+  called by that invention's three-word name, so no telling word fitted and the old fallback numbered it; an
+  everyday word is now always a catalog kind or a use's word, and the fallback never numbers.
+- **The sweeper is the orange delivery robot** (PixelLab robotC, 8 stills and a 4-way drive; the dock is robots32
+  #26): it faces the way it drives, turns through the stills between, and its green light blinks in code (once a
+  second, four times when full; steady or slow with reduce motion). It drives round the pond, by the shortest way
+  over dry tiles. Any hob can name it (a creature otherwise needs to be tame). The five kind pictures that came from
+  the old sweeper sheet (tile, tinder bundle, patch, draught stopper, sign) stay: Tyler's word was about the sweeper.
