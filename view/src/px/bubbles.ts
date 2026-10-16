@@ -269,9 +269,13 @@ export class Labels {
   /** A bubble's tail, all the way to its owner: a wedge for speech, a string of dots for a thought, in lettering pixels. */
   private tail(g: Graphics, r: Rect, b: Rect, speech: boolean, fill: number, ink = 0x2b2233) {
     const F = this.F, snap = (v: number) => Math.round(v / F) * F;
-    const tx = clamp(r.x + r.w / 2, b.x + b.w * 0.3, b.x + b.w * 0.7), ty = clamp(r.y + r.h / 2, b.y + 2 * F, b.y + b.h - 2 * F);   // a point on the owner
+    let tx = clamp(r.x + r.w / 2, b.x + b.w * 0.3, b.x + b.w * 0.7), ty = clamp(r.y + r.h / 2, b.y + 2 * F, b.y + b.h - 2 * F);   // a point on the owner
     const ax = clamp(tx, r.x + 6 * F, r.x + r.w - 6 * F), ay = clamp(ty, r.y + 4 * F, r.y + r.h - 4 * F);                           // and one just inside the bubble
-    const d = Math.hypot(tx - ax, ty - ay);
+    let d = Math.hypot(tx - ax, ty - ay);
+    if (d < 5 * F && speech) {   // SPEC-v3.5.9 §7: right up against its owner, a speech bubble still has its little tail, toward it
+      [tx, ty] = [ax, b.y + b.h / 2 > r.y + r.h / 2 ? r.y + r.h + 4 * F : r.y - 4 * F];
+      d = Math.hypot(tx - ax, ty - ay);
+    }
     if (d < 5 * F) return;
     const blocks: number[] = [];   // x, y, half a side
     if (speech) for (let i = 0, n = Math.ceil(d / F); i <= n; i++) blocks.push(snap(ax + ((tx - ax) * i) / n), snap(ay + ((ty - ay) * i) / n), Math.max(F / 2, (3 - (2.5 * i) / n) * F));

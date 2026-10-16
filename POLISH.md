@@ -44,3 +44,14 @@ Small things Tyler has seen and set aside. No action until he says so. Newest at
   - The sweeper drives in straight lines, over the pond and past furniture, not along the room's paths (engine/sweeper.py `move`).
   - A thing card with every new record (title, how, made from, users, words) is taller than an 800 px window's room:
     it keeps within the window, and the "click to move" hint under it can meet the toolbar.
+
+- **v3.5.9 canvas, 16 October 2026:**
+  - Lightning and thunder are in step now: the room and the world outside flash on one schedule (`px/weather.ts`
+    `flashAt`), and the thunder follows the world's flash (`world.ts` -> `voice.ts`), at most every 12 seconds.
+  - A room's display reads its time at the start of each run (sky, time, line), so after a jump in time it can be
+    behind for one run; like the big board.
+  - The display hangs where the north wall is clearest; in a crowded room tall furniture can stand in front of it.
+    A layout's `display` ([x, y]) puts it somewhere else (only the garden's is set: on the fence).
+  - The "made" stamp is in the room's 5 x 7 lettering, so it is as big as a small thing; a smaller face would suit it.
+  - The garden at night is still much lighter than the sky behind the page.
+  - The world's fog is drawn as thin drifting bands; it reads as mist lines more than a bank of fog.

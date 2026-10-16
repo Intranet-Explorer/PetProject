@@ -154,7 +154,7 @@ function tree(x: CanvasRenderingContext2D, cx: number, foot: number, k: number, 
   if (pine) {
     const tall = (5 + Math.floor(r() * 4)) * k;
     for (let y = 0; y < tall; y++) {
-      const half = Math.floor((y * 0.5 + 1) * (k === 1 ? 0.7 : 0.6)) + (y % 3 === 2 ? 0 : 0);
+      const half = Math.floor((y * 0.5 + 1) * (k === 1 ? 0.7 : 0.6));
       x.fillStyle = css(c.leaf);
       x.fillRect(cx - half, foot - 2 * k - tall + y, 2 * half + k, 1);
       if (winter && y % 3 === 0) { x.fillStyle = css(c.snow); x.fillRect(cx - half, foot - 2 * k - tall + y, half + 1, 1); }
@@ -182,7 +182,7 @@ function frame(now: number) {
   x.drawImage(sky, 0, 0);
   if (dark > 0.3 && (wx === "clear" || wx === "heat" || wx === "cloudy")) {   // stars, twinkling, and the moon
     const a = (dark - 0.3) / 0.7 * (wx === "cloudy" ? 0.4 : 1);
-    for (let i = 0; i < stars.length; i += 4) { x.fillStyle = css([236, 236, 255], a * (0.55 + 0.45 * Math.sin(t * 1.3 + stars[i + 2]))); x.fillRect(stars[i], stars[i + 1], stars[i + 3], stars[i + 3] > 1 ? 1 : 1); }
+    for (let i = 0; i < stars.length; i += 4) { x.fillStyle = css([236, 236, 255], a * (0.55 + 0.45 * Math.sin(t * 1.3 + stars[i + 2]))); x.fillRect(stars[i], stars[i + 1], stars[i + 3], 1); }
     const k = ((hr + 24 - 19.5) % 24) / 11, mx = Math.round(w * (0.1 + 0.8 * k)), my = Math.round(h * 0.6 - Math.sin(Math.PI * Math.max(0, Math.min(1, k))) * h * 0.45);
     disc(x, mx, my, 6, css([200, 210, 255], 0.12 * a));
     disc(x, mx, my, 4, css([236, 234, 214], a));
