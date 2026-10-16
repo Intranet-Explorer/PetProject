@@ -53,6 +53,8 @@ def load_config(path=ROOT / "config.toml", profile=None):
     machine.load(cfg, path.parent)
     from . import works   # SPEC-v3.5.4 §8: works.toml, what the Works builds
     works.load(cfg, path.parent)
+    from . import names   # SPEC-v3.5.8 §2: names.toml, the name bank and the family's words
+    names.load(cfg, path.parent)
     # the words from the box a pet may wonder about (picturable.txt): never what the house already has a word for
     own = set(cfg["house"]["bits"]) | set(cfg["kinds"]) | set(cfg["house"]["rooms"]) | {f["name"] for r in cfg["house"]["rooms"].values() for f in r["fixtures"]}
     listed = path.parent / "picturable.txt"

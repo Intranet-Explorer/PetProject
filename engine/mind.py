@@ -4,6 +4,7 @@ like. Its temperament shows only in what is mentioned and how (§8.1). Alongside
 names the packet shows, so a brain's reply can be held to things that are really there."""
 from . import actions, body, craft, feel, genes, invent, life, order, physics, songs, things, walls, wants
 from . import feats, firsts, hub, machine
+from . import names
 from .world import LONG_AGO, dist, family, here, neighbours, room_type
 from . import build
 
@@ -195,11 +196,8 @@ def perceive(house, cfg, pet, mem):
         senses.append("something hard that you carry would scratch a mark into the wall, faintly")
     if "name" in can and "egg" in actions.nameable(house, pet):
         senses.append("the egg here is nobody's, and nobody has given it a name")
-    if "lay_egg" in can or ("name" in can and "egg" in actions.nameable(house, pet)):   # SPEC-v3.5.4 §5: the names its family has had
-        fam = hub.family_of(house, pet)
-        used = list(dict.fromkeys(p["name"] for p in house["pets"].values() if p.get("name") and hub.family_of(house, p) == fam))
-        if used:
-            senses.append("names your family has had: %s; an egg can have a name of its own, or one that honours someone" % ", ".join(used))
+    if "lay_egg" in can or ("name" in can and "egg" in actions.nameable(house, pet)):   # SPEC-v3.5.8 §2: five names to choose from (one honours its family)
+        senses.append(names.line(house, cfg, pet, names.nobodys(house, pet) if "name" in can else None))
 
     # ---- what happened ----
     since = [e for t, e in pet["events"] if t > pet["seen"]]

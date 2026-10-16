@@ -7,6 +7,7 @@ from . import build
 from . import machine
 from . import hub
 from . import firsts
+from . import names
 from .world import a as a_bit
 from .world import (BACK, LONG_AGO, add_event, arrived, beside, dist, family, free_tile, generate_room, here, knows, label, moment,
                     power_on, relation, ticks, witness)
@@ -682,9 +683,11 @@ def apply(house, cfg, pet, a, mem):
             egg = next(p for p in house["pets"].values() if p["room"] == room["id"] and p["stage"] == "egg" and not p["parent"] and not p["name"])
             if any((p["name"] or "").lower() == new.lower() for p in life.alive(house)):
                 return "there is already one called that in the house", {}, None
-            egg["name"] = new
-            moment(house, "named", "%s named the egg that is nobody's %s" % (name, new), pet["id"], room["id"])
-            return "you named the egg %s" % new, {}, "name"
+            egg["name"], by, told = names.given(house, cfg, pet, new, egg["family"])   # SPEC-v3.5.8 §2: the founder of a new family gets a real name too
+            if by:
+                egg["byname"] = by
+            moment(house, "named", "%s named the egg that is nobody's %s" % (name, egg["name"]), pet["id"], room["id"])
+            return "you named the egg %s%s" % (egg["name"], told), {}, "name"
         cr = tame(house, pet, a["what"])
         cr["name"] = new
         for an in pet.get("animals", []):
@@ -828,7 +831,7 @@ def speak(house, cfg, pet, a, mem):
         moment(house, "words", '%s spoke for the first time: "%s"' % (label(pet), text), pet["id"], room["id"])
     own = re.search(r"\bmy name is ([A-Za-z][\w'-]{0,15})", text, re.I)
     new = pet["called"].strip() if takes(pet, text) else own.group(1).strip() if own and not pet["name"] else None
-    if new and not name_taken(house, pet, new):
+    if new and not name_taken(house, pet, new) and (takes(pet, text) or names.check(house, cfg, new) is None):   # SPEC-v3.5.8 §2: a name it gives itself is a real name (the visitor's wins)
         named(house, pet, mem, new)
     fx = dict(cfg["effects"]["speak"])
     if kind == "pet" and not again:

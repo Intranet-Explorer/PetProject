@@ -12,6 +12,7 @@ from . import season
 from . import build
 from . import machine
 from . import hub
+from . import names as naming
 from .world import a as a_bit
 from .world import LONG_AGO, STAGES, add_event, beside, dist, free_tile, here, label, relation, rnd, ticks
 
@@ -126,6 +127,8 @@ def targets(house, cfg, pet, mem, name, A):
         return build.targets(house, cfg, pet, A, near)
     if do in machine.DOS:   # SPEC-v3.5 §4.3: at the vending machine
         return machine.targets(house, cfg, pet, A, near)
+    if do == "names":   # SPEC-v3.5.8 §2: at a screen, looking up a name for an egg
+        return naming.targets(house, cfg, pet, near)
     L, W = wants.lean(house, cfg, pet) if do in ("go", "gather", "tail", "watch", "place", "try", "play", "inspect", "eat") else None, cfg["body"]["want"]   # SPEC-v3.4 §2.1: its body leans toward what serves its wants
     if do == "wander":   # somewhere a few steps off: the farthest of a few tries (or near what its mind is on)
         at = anchor(house, pet)
@@ -585,6 +588,8 @@ def finish(mind, now, cut=False):
                 songs.sing(h, cfg, pet, {"song": now["what"]}, actions.find, actions.handle, actions.bump)
             elif do == "watch":
                 pet["met"][now["what"]] = pet["met"].get(now["what"], 0) + 1
+            elif do == "names":   # SPEC-v3.5.8 §2
+                told = naming.look_up(h, cfg, pet, name)
             elif do in machine.DOS:   # SPEC-v3.5 §4.3: it takes from the machine, feeds it, or carries a thing a room nearer to it
                 told, fx, key, act = machine.finish(mind, now)
                 done = bool(told)

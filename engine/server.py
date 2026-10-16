@@ -59,6 +59,7 @@ def pet_view(p):
     out["naming"] = {"offered": p["called"], "took": (p.get("name") or "").lower() == p["called"].strip().lower(),
                      "at": (p.get("named") or {}).get("tick")} if p.get("called") else None
     out.update(label=label(p), buried=bool(p.get("buried")), made=p.get("made", 0), useful=len(p.get("useful", [])), family=p.get("family", 1))
+    out["byname"] = p.get("byname")   # SPEC-v3.5.8 §2: "Clementine, called Open Hand"
     if p["stage"] == "dead":
         out["days"] = (p.get("life") or {}).get("days")
         # view only: how far it has faded towards its stone, 0 to 1

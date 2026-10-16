@@ -43,7 +43,7 @@ WRITTEN = {   # how each action is written, shown only for the actions it can do
     "take": '{"type": "take", "what": a thing here that is someone else\'s}',
     "chase": '{"type": "chase", "who": a small creature here}',
     "tell": '{"type": "tell", "to": someone here, "text": something for them to keep, up to 400 chars}',
-    "lay_egg": ('{"type": "lay_egg", "name": a name for your child, up to 16 chars (or "" to leave it to them): a name of its own, or one that honours someone, '
+    "lay_egg": ('{"type": "lay_egg", "name": a name for your child, up to 16 chars (or "" to leave it to them): a real name, one of those offered or your own, not a phrase, '
                 '"message": a few sentences, at most four, in your own words, on what you have learned in your own life}'),
     "bequeath": '{"type": "bequeath", "what": a thing of yours here, "to": a child\'s name, or "my children"}',
     "write_belief": '{"type": "write_belief", "statement": one short sentence of at most 200 characters, "source": how you know it: lived | seen | told by <who>}',
@@ -60,7 +60,7 @@ WRITTEN = {   # how each action is written, shown only for the actions it can do
     "sing": '{"type": "sing", "song": a song you know, "to": someone here or "egg" (leave out to sing to the room)}',
     "teach_song": '{"type": "teach_song", "song": a song you know, "to": someone awake here; they will have it note for note}',
     "call": '{"type": "call", "who": an animal of yours}',
-    "name": '{"type": "name", "what": an animal of yours here, or "egg", "name": up to 16 chars}',
+    "name": '{"type": "name", "what": an animal of yours here, or "egg", "name": a real name, up to 16 chars}',
     "ask_book": '{"type": "ask_book", "question": what you want to know, at most 80 chars}',
     # SPEC-v3.4 §3
     "process": '{"type": "process", "what": a bit you carry or one lying here, "how": one of the ways it could be tried here} (do that to it and see what comes of it)',
