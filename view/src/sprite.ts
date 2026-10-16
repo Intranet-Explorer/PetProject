@@ -158,9 +158,47 @@ export function aThing(r: Thing) {
   return `${/^[aeiou]/.test(words) ? "an" : "a"} ${words}`;
 }
 
-/** A made thing's picture, in its own colour. */
-export function thingSprite(r: Thing, scale = 2) {
+/** SPEC-v3.5.10 §3: until charms have art of their own, a charm is the charm's picture with one of five pendants (the
+ *  same charm always the same one, by its name) in the colour of what it is mainly made of: `bit`, or the first word of
+ *  its name that is a bit ("reed-felt mark"), its picture's colours averaged; with no bit, its own colour. */
+const PENDANTS = ["", "..####..|.#owoo#.|#owooos#|#ooooss#|#ooosss#|.#osss#.|..####..", ".##..##.|#wo##os#|#ooooos#|#ooooss#|.#ooss#.|..#os#..|...##...",
+  "...##...|..#wo#..|.#owos#.|#ooooos#|#ooooss#|.#osss#.|..####..", ".######.|.#wooo#.|.#ooos#.|.#ooos#.|.#ooss#.|.#osss#.|.######."];
+function charm(r: Thing & { name?: string; title?: string; purpose?: string }, scale: number, color: string, bit?: string | null) {
+  const c = Object.assign(document.createElement("canvas"), { className: "px", width: 16 * scale, height: 16 * scale });
+  c.setAttribute("aria-hidden", "true");
+  const words = (r.name ?? "").toLowerCase().split(/[\s-]+/), pairs = words.slice(1).map((w, i) => `${words[i]} ${w}`);
+  bit = [bit, ...pairs, ...words].find((w) => w && hasSprite(`bit.${w}`));
+  const key = r.title ?? r.name ?? r.purpose ?? "", shape = PENDANTS[[...key].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >>> 0, 7) % PENDANTS.length];
+  void artReady.then(async () => {
+    const s = resolve("kind.charm"), b = bit ? resolve(`bit.${bit}`) : null, [img, bimg] = await Promise.all([s && image(fileUrl(s)!), b && image(fileUrl(b)!)]);
+    if (!s || !img) return placeholder(c, scale, "kind.charm");
+    const small = Object.assign(document.createElement("canvas"), { width: 16, height: 16 }), x = small.getContext("2d", { willReadFrequently: true })!;
+    let hex = PALETTE[color] ? color : "grey";
+    if (b && bimg) {   // the bit's own colour: its picture's pixels averaged, leaving out its outline and highlights
+      x.drawImage(bimg, b.rect![0], b.rect![1], b.rect![2], b.rect![3], 0, 0, 16, 16);
+      const d = x.getImageData(0, 0, 16, 16).data, sum = [0, 0, 0, 0];
+      for (let i = 0; i < d.length; i += 4) { const l = (Math.max(d[i], d[i + 1], d[i + 2]) + Math.min(d[i], d[i + 1], d[i + 2])) / 510; if (d[i + 3] > 128 && l > 0.2 && l < 0.9) { sum[0] += d[i]; sum[1] += d[i + 1]; sum[2] += d[i + 2]; sum[3]++; } }
+      if (sum[3]) hex = `#${sum.slice(0, 3).map((v) => Math.round(v / sum[3]).toString(16).padStart(2, "0")).join("")}`;
+      x.clearRect(0, 0, 16, 16);
+    }
+    x.drawImage(img, s.rect![0], s.rect![1], 16, 16, 0, 0, 16, 16);
+    if (shape) {   // a pendant of another shape where the diamond hangs, in the charm's own outline, light, shade and highlight
+      x.clearRect(0, 7, 16, 9);
+      const ink: Record<string, string> = { "#": "#141b1b", o: "#ecc19d", s: "#dc9457", w: "#ffffff" };
+      shape.split("|").forEach((row, y) => [...row].forEach((ch, i) => { if (ink[ch]) { x.fillStyle = ink[ch]; x.fillRect(4 + i, 7 + y, 1, 1); } }));
+    }
+    x.putImageData(recolor(x.getImageData(0, 0, 16, 16), hex), 0, 0);
+    const g = c.getContext("2d")!;
+    g.imageSmoothingEnabled = false;
+    g.drawImage(small, 0, 0, c.width, c.height);
+  });
+  return c;
+}
+
+/** A made thing's picture, in its own colour. `bit`: what it is mainly made of, when the caller knows (a charm shows it). */
+export function thingSprite(r: Thing, scale = 2, bit?: string | null) {
   const { kind, color } = kindOf(r), inv = inventedKind(kind);
+  if (kind === "charm") return charm(r, Math.max(1, Math.round(scale)), color, bit);
   if (inv) {   // SPEC-v3.5 §3: a kind the house invented is put together from its parts
     const src = composeThing(inv), c = Object.assign(document.createElement("canvas"), { className: "px", width: src.width * scale, height: src.height * scale }), x = c.getContext("2d")!;
     x.imageSmoothingEnabled = false;

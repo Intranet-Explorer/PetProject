@@ -74,7 +74,7 @@ export function petLink(p: Who & { name: string; byname?: string | null }, box =
 export const thingLink = (id: string, name: string) => a(name, href("thing", id), "thinglink");
 
 /** A made thing's picture. */
-export const thingPic = (recipe: Record<string, unknown>, scale = 2) => thingSprite(recipe as never, scale);
+export const thingPic = (recipe: Record<string, unknown>, scale = 2, bit?: string | null) => thingSprite(recipe as never, scale, bit);
 
 /** The engine's answer to `url` as JSON, or null if it could not be had. */
 export async function getJSON<T = any>(url: string): Promise<T | null> {

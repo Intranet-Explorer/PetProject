@@ -216,7 +216,6 @@ footer { border-top: 0; background: none; flex: none; }
 footer.paper { padding: 0 4px; }
 .controls.visit { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; justify-content: flex-start; }
 .visit .group { gap: 4px; }
-#talkText { flex: 1 1 120px; width: 120px; min-width: 90px; }   /* (an input's own width would hold the toolbar open) */
 .visit .group { display: flex; flex-wrap: nowrap; gap: 6px; align-items: center; }
 .visit .glabel { color: var(--ink2); }
 /* the chosen hob at the head of the toolbar (the v3.5.7 review): its face and name, never wider than 9em */
@@ -224,10 +223,14 @@ footer.paper { padding: 0 4px; }
 .actson .face { flex: none; }
 .actson b { color: var(--fam, var(--ink)); min-width: 0; line-height: 1.05; overflow-wrap: anywhere; }   /* (a long name takes two lines, never cut) */
 .visit .pair { display: flex; gap: 2px; align-items: center; }
-#talkForm { flex: 1 1 180px; max-width: none; }
-#talkText { flex: 1; min-width: 120px; }
+/* v3.5.10 §5: saying and writing, in the "Say..." pop-up: the field with its words over it, then Say it, and Write it on a wall */
+#talkText { width: 100%; }
+#talkForm { width: min(360px, 94vw); }
+#talkForm label { color: var(--ink2); font-size: inherit; }
+#talkForm .sayrow { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+#talkForm .sayrow label { display: flex; gap: 6px; align-items: center; }
 .visit button { min-width: 0; padding: 0 6px; }
-#stockBox, #musicBox, #moreBox { margin: auto; inset: 0; height: fit-content; padding: 4px 8px; position: fixed; color: var(--ink); width: max-content; max-width: min(360px, 94vw);
+#stockBox, #musicBox, #moreBox, #talkForm { margin: auto; inset: 0; height: fit-content; padding: 4px 8px; position: fixed; color: var(--ink); width: max-content; max-width: min(360px, 94vw);
   border-style: solid; border-width: 12px; border-image: url("../assets/third_party/crusenho/UI_TravelBook_Popup01a.png") 6 fill stretch; background: none; box-shadow: 4px 4px 0 rgb(0 0 0 / 35%); }
 #stockBox { width: 330px; }
 #stockBox .bar { height: 8px; background: #e5b67f; }
@@ -246,6 +249,10 @@ footer.paper { padding: 0 4px; }
    is centred; the world outside has the rest. ==== */
 @media (min-width: 700px) { :root { --maxw: 1200px; } }
 @media (min-width: 1200px) { :root { --maxw: 1700px; --colL: 260px; --colR: 300px; } }
+/* v3.5.10 §8: a landscape window from 1000 to 1199 wide (1024 x 768) is a narrow Laptop: the room a zoom smaller (x2),
+   so the hobs and the console's board fit beside it rather than under it */
+@media (min-width: 1000px) and (max-width: 1199.98px) and (orientation: landscape) { :root { --colL: 205px; --colR: 240px; }
+  #roomhead #roomWhen .season { display: none; } #roomhead { column-gap: 8px; } }   /* (the room's strip is narrow: its season is in the header) */
 @media (min-width: 1700px) { :root { --maxw: 2400px; --colL: 340px; --colR: 400px; --ui: 1.5; --led: calc(32px / 1.5); }
   body[data-page="house"] { --tx: 20px; } html[data-text="large"] body[data-page="house"] { --tx: 24px; } }
 @media (min-width: 2400px) { :root { --maxw: 3200px; --colL: 480px; --colR: 560px; --ui: 2; --led: 20px; }   /* (the board at 40 px on Huge, as big as the text round it) */
@@ -255,7 +262,7 @@ footer.paper { padding: 0 4px; }
 #stage { --text: var(--tx); --lh: calc(var(--tx) * 1.3125); }   /* (the banner and the hover card over the room are not zoomed: their words are --tx) */
 
 /* ---- Laptop, Large, Huge: a game screen, three columns over the toolbar, nothing below the fold ---- */
-@media (min-width: 1200px) {
+@media (min-width: 1200px), (min-width: 1000px) and (orientation: landscape) {
   body { height: 100dvh; overflow: hidden; }
   .page.house { display: grid; grid-template-columns: var(--colL) minmax(0, 1fr) var(--colR); grid-template-rows: minmax(0, 1fr) auto;
     grid-template-areas: "left centre side" "foot foot side"; gap: calc(8px * var(--ui)) calc(10px * var(--ui)); padding: calc(10px * var(--ui)) calc(16px * var(--ui)) 0;
@@ -274,13 +281,13 @@ footer.paper { padding: 0 4px; }
   .cards .card.away .where { grid-column: 2; }
   #chosen { order: -1; }   /* at the top of the column, while a pet or a thing is chosen (a click in the room) */
   #chosen:not(.asked) { display: none; }
-  #stockBox, #musicBox, #moreBox { inset: auto 16px 84px auto; margin: 0; }   /* above the toolbar's right end, under the buttons that open them */
-  body.fold :is(#stockBox, #musicBox, #moreBox) { inset: 0; margin: auto; }
+  #stockBox, #musicBox, #moreBox, #talkForm { inset: auto 16px 84px auto; margin: 0; }   /* above the toolbar's right end, under the buttons that open them */
+  body.fold :is(#stockBox, #musicBox, #moreBox, #talkForm) { inset: 0; margin: auto; }
   body[data-page="house"] p.more { position: fixed; right: 16px; bottom: 0; margin: 0; padding: 0; line-height: 20px !important; }
   body[data-page="house"] .page.house { padding-bottom: calc(22px * var(--ui)); }   /* (a strip of its own for the credit, under the console) */
 }
 /* ---- Small: one page that scrolls; the room fits the window's height, the toolbar under it ---- */
-@media (min-width: 700px) and (max-width: 1199.98px) {
+@media (min-width: 700px) and (max-width: 999.98px), (min-width: 1000px) and (max-width: 1199.98px) and (orientation: portrait) {
   body { height: auto; min-height: 100dvh; overflow: auto; display: block; }
   .page.house { display: grid; grid-template-columns: minmax(0, 1fr) 300px; grid-template-areas: "centre centre" "foot foot" "left side"; align-items: start;
     gap: 10px; padding: 10px 12px 12px; width: min(100%, var(--maxw)); margin-inline: auto; }
@@ -290,14 +297,14 @@ footer.paper { padding: 0 4px; }
 /* the toolbar's words give way as it narrows (by its own width: it is zoomed on Large and Huge, and folded into the
    hobs' column on a short window), so it stays one row where it can */
 @media (min-width: 700px) { footer { container: bar / inline-size; } }
-@container bar (min-width: 664px) { #giveBit, #writeOn { width: auto; max-width: calc(4.7em + 30px); }   /* (its frame and arrow do not grow with the words) */ }
+@container bar (min-width: 664px) { #giveBit { width: auto; max-width: calc(6em + 30px); }   /* (its frame and arrow do not grow with the words) */ }
 @container bar (max-width: 1263.98px) { .visit .glabel { display: none; } }
-@container bar (max-width: 1363.98px) { #stockBtn .btxt, #musicBtn .btxt, #moreBtn .btxt { display: none; } #giveBit, #writeOn { max-width: calc(3.2em + 30px); } }
+@container bar (max-width: 1363.98px) { #stockBtn .btxt, #musicBtn .btxt, #moreBtn .btxt { display: none; } }
 @container bar (max-width: 1063.98px) {
-  #talkForm .btxt { display: none; } #talkText { min-width: 64px; width: 64px; } .controls.visit { column-gap: 7px; } .visit .actson { max-width: 7.5em; }
+  .controls.visit { column-gap: 7px; } .visit .actson { max-width: 7.5em; }
   #stockBtn .bicon, #musicBtn .bicon, #moreBtn .bicon { margin-right: 0; } }
 @container bar (max-width: 959.98px) { .controls.visit { column-gap: 4px; } .visit .group { gap: 3px; } .visit .actson { max-width: 6em; } .actson b { overflow-wrap: break-word; } }
-@container bar (max-width: 600px) { .visit .group { flex-wrap: wrap; } #talkForm { flex-basis: 100%; } .visit .actson { max-width: none; } #giveBit, #writeOn { max-width: none; } }
+@container bar (max-width: 600px) { .visit .group { flex-wrap: wrap; } .visit .actson { max-width: none; } #giveBit { max-width: none; } }
 #visitBtn { display: none; }
 body.fold #visitBtn { display: block; width: 100%; }
 body.fold #visitBtn[aria-expanded="false"] + #controls { display: none; }
@@ -325,11 +332,7 @@ body.fold footer.paper:has(#visitBtn[aria-expanded="false"]) { border: 0; border
   #chosen { order: 7; } footer { order: 8; }
   .head { display: none; }
   .herehead .head { display: block; }
-  .cards { grid-template-columns: 1fr 1fr; }
-  .cards .card .wholine { display: contents; }   /* (a phone's card is narrow: the name at 32 px has the card's width, over the portrait and the stage) */
-  .cards .card .n { grid-column: 1 / -1; order: -1; }
-  .cards .card .bn { grid-column: 1 / -1; order: -1; margin-top: -2px; }   /* (SPEC-v3.5.8 §6: the by-name right under the name) */
-  #cardsHere:has(> .empty-house) { grid-template-columns: 1fr; }
+  .cards { grid-template-columns: 1fr; }   /* (v3.5.10 §6: each card the column's whole width, its portrait beside its name, as on a desktop) */
   .visit .group { flex-wrap: wrap; }
   .controls.visit { gap: 6px; }
   .visit .group { display: grid; grid-template-columns: repeat(3, 1fr); width: 100%; gap: 6px; }
@@ -337,8 +340,6 @@ body.fold footer.paper:has(#visitBtn[aria-expanded="false"]) { border: 0; border
   .visit .actson { display: flex; max-width: none; }   /* (the chosen hob: a face and a name on one line) */
   .visit .pair { display: contents; }
   #giveBit { order: 5; grid-column: 1 / -1; }
-  #talkForm { display: grid; grid-template-columns: repeat(3, 1fr); }
-  #talkText { grid-column: 1 / -1; }
   .visit button { min-width: 0; }
 }
 
@@ -430,22 +431,22 @@ button.followchip.off { background: var(--paper); }
 @keyframes cellin { from { background: #fff; box-shadow: 0 0 10px #fff; } }
 #works.reached { animation: reached 1.4s ease-out; }
 @keyframes reached { 0%, 30% { background: rgb(88 208 255 / 45%); box-shadow: 0 0 16px var(--holo-glow); } 100% { background: none; box-shadow: none; } }
-@media (min-width: 1200px) {
+@media (min-width: 1200px), (min-width: 1000px) and (orientation: landscape) {
   #side.console { grid-row: 1 / -1; }
   .cboard { flex: 0 0 auto; }
 }
 /* the console folds to the board and the Works' count (SPEC-v3.5.9 §2, §5): by its button on a phone and Small; on
    a desktop by itself when its sections do not fit the window's height (main.ts: .tight), and back by the button */
-@media (max-width: 1199.98px) { #side.console { gap: 6px; } }
+@media (max-width: 999.98px), (max-width: 1199.98px) and (orientation: portrait) { #side.console { gap: 6px; } }
 .console button.cfold { width: 100%; background: none; border: 0; border-image: none; color: #a8d8f5; min-height: 0; padding: 0 0 2px; border-bottom: 2px solid var(--holo-line); animation: none !important; }
-@media (max-width: 1199.98px) { .console button.cfold { display: flex; } }
+@media (max-width: 999.98px), (max-width: 1199.98px) and (orientation: portrait) { .console button.cfold { display: flex; } }
 #side.console.tight button.cfold { display: flex; }
 button.cfold::after { content: "▾"; }
 #side.console.folded button.cfold::after { content: "▸"; }
 #side.console.folded :is(.cmap, .croom) { display: none; }
 #side.console.lean .croom { display: none; }   /* SPEC-v3.5.9 §2: short, the readout goes first (the room's header strip has its time, weather and season), then the map */
 .console .cnote { margin: 4px 0 0; color: #a8d8f5; letter-spacing: 1px; font-family: var(--dot) !important; font-size: 16px !important; line-height: 20px !important; }
-@media (min-width: 1200px) { .console .cnote { display: none; } }
+@media (min-width: 1200px), (min-width: 1000px) and (orientation: landscape) { .console .cnote { display: none; } }
 
 /* §4 the big moments: a sign dropping in over the room, swinging to rest */
 #event { position: absolute; z-index: 5; left: 50%; top: 18%; width: min(470px, 92%); transform: translateX(-50%); text-align: center; cursor: pointer; }
@@ -486,8 +487,22 @@ button.cfold::after { content: "▾"; }
 /* §5 a thing's card in the room's hover: the card is its own paper panel */
 #tip.holdscard { border: 0; border-image: none; background: none; padding: 0; display: block; width: max-content; max-width: min(430px, calc(100vw - 24px)); z-index: 6; }
 #tip.holdscard .cardhint { text-align: right; color: var(--ink2); margin: -10px 14px 0 0; position: relative; }
+/* SPEC-v3.5.10 §2: every other hover card in the room is the same card (thingcard.ts, roomCard): its picture in the
+   slot, its name, what it is, its lines; as wide as its words need, up to the thing card's width, and wrapped */
+#tip .roomcard { width: max-content; max-width: 100%; min-width: min(280px, 100%); }
+#tip .roomcard :is(p, ul, blockquote) { margin: 0; }
+#tip .roomcard b { font-size: inherit; }
+/* the hover card stands over the toolbar and the console when it reaches them (the room's surround is a layer of its own) */
+#roomwrap { position: relative; z-index: 3; }
+/* v3.5.10 §6: until the room has drawn, its name on a soft shimmer, not a blank frame */
+#stage.loading { background: linear-gradient(100deg, rgb(255 255 255 / 0) 35%, rgb(255 255 255 / 10%) 50%, rgb(255 255 255 / 0) 65%) 0 0 / 300% 100%, rgb(16 14 26 / 80%);
+  animation: shimmer 1.8s linear infinite; }
+#stage.loading::before { content: attr(data-name); position: absolute; inset: 0; display: grid; place-items: center; padding: 8px; text-align: center; color: var(--holo);
+  text-shadow: 0 0 2px var(--holo-glow); letter-spacing: 1px; text-transform: uppercase; font-family: var(--dot); }
+@keyframes shimmer { from { background-position: 100% 0, 0 0; } to { background-position: 0% 0, 0 0; } }
+@media (prefers-reduced-motion: reduce) { #stage.loading { animation: none; } }
 p.more .fonts { color: var(--on-page); }
-@media (min-width: 1200px) { body[data-page="house"] p.more .fonts { display: none; } }   /* (the House tab's foot is the credit alone: the fonts are on every other page's foot) */
+@media (min-width: 1200px), (min-width: 1000px) and (orientation: landscape) { body[data-page="house"] p.more .fonts { display: none; } }   /* (the House tab's foot is the credit alone: the fonts are on every other page's foot) */
 
 /* ==== SPEC-v3.5.9 ==== */
 /* §1, §2, §3 the room: a slim Holo strip on top (what the page follows, the room's name, the house time, the weather,
@@ -504,7 +519,7 @@ main { display: flex; flex-direction: column; }
   #now { height: calc(3 * var(--lh) + 24px); overflow: hidden; }
   #now > span { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
 }
-@media (min-width: 900px) and (max-width: 1199.98px) {   /* (a wide Small: two lines, at its width the sentence's usual length, so a 1024 x 768 window has the room at x3) */
+@media (min-width: 900px) and (max-width: 999.98px), (min-width: 1000px) and (max-width: 1199.98px) and (orientation: portrait) {   /* (a wide Small: two lines, at its width the sentence's usual length) */
   #now { height: calc(2 * var(--lh) + 24px); }
   #now > span { -webkit-line-clamp: 2; }
 }
@@ -515,7 +530,7 @@ main { display: flex; flex-direction: column; }
 #roomWhen .season { color: var(--holo-dim); font-family: var(--dot) !important; letter-spacing: 1px; }
 /* the page's own words straight on the world (the column heads, the credit) stand on a dark plate */
 .head, .empty-house, p.more > * { background: rgb(12 8 16 / 72%); width: fit-content; padding-inline: 6px; }
-@media (max-width: 1199.98px) { #roomwrap { padding-bottom: 10px; } }
+@media (max-width: 999.98px), (max-width: 1199.98px) and (orientation: portrait) { #roomwrap { padding-bottom: 10px; } }
 /* a phone: what the page follows and the time on the strip's first row, the room's name under them (the season is in
    the header just above); the cards' "Here" head goes with the followed chip it used to sit beside */
 @media (max-width: 699.98px) {

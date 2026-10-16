@@ -4,6 +4,7 @@
 import { $, el, when } from "./dom";
 import type { Kid } from "./dom";
 import { INKS, screenInk, screenKey, tickerLines } from "./px/hub";
+import { roomCard } from "./thingcard";
 import type { Obj, Snap } from "./types";
 
 const cap = (t: string) => t.slice(0, 1).toUpperCase() + t.slice(1);
@@ -11,22 +12,18 @@ const cap = (t: string) => t.slice(0, 1).toUpperCase() + t.slice(1);
 /** The hover card of a hub thing (null: not one of them). `pic`: its picture as the room draws it. */
 export function hubTip(name: string, o: Obj, s: Snap, pic: HTMLCanvasElement | null): Kid[] | null {
   if (o.statue) {   // its name (the founder's own label until the family gives it one), who it was, its last words
-    const st = o.statue, p = o.build?.progress ?? 1, up = !o.fix?.built && p < 1, small = pic && el("canvas", "px") as HTMLCanvasElement;
-    if (pic && small) { [small.width, small.height] = [pic.width / 3, pic.height / 3]; const g = small.getContext("2d")!; g.imageSmoothingEnabled = false; g.drawImage(pic, 0, 0, small.width, small.height); }   // (it is twice a pet's size already)
-    return [small, el("div", "",
-      el("p", "", el("b", "", st.name ?? s.pets.find((q) => q.id === st.of)?.label ?? "the first one"), el("span", "hint", ` · ${up ? `a statue going up, ${Math.round(p * 100)}% done` : "a statue"}`)),
-      el("p", "", "the first of the family"),
-      st.words ? el("blockquote", "chalk", st.words) : el("p", "hint", "Its last words are not known."),
-      o.build?.title ? el("p", "hint", cap(o.build.title) + ".") : null)];
+    const st = o.statue, p = o.build?.progress ?? 1, up = !o.fix?.built && p < 1;
+    return [roomCard(pic, [st.name ?? s.pets.find((q) => q.id === st.of)?.label ?? "the first one"], [up ? `a statue going up, ${Math.round(p * 100)}% done` : "a statue", " · the first of the family"],
+      st.words ? el("blockquote", "chalk", st.words) : el("p", "", "Its last words are not known."),
+      o.build?.title ? el("p", "", cap(o.build.title) + ".") : null)];
   }
-  if (o.fix?.sign) return [el("div", "", el("p", "", el("b", "", "the board"), el("span", "hint", " · what the house is proudest of, in turn:")),
-    el("ul", "", ...tickerLines(s).map((l) => el("li", "", l))))];
+  if (o.fix?.sign) return [roomCard(null, ["the board"], ["what the house is proudest of, in turn:"], el("ul", "", ...tickerLines(s).map((l) => el("li", "", l))))];
   if (o.fix?.terminal) {
     const sc = o.screen, who = sc && (sc.by ?? s.pets.find((p) => p.id === sc.pet)?.label ?? "someone");
-    return [pic, el("div", "", el("p", "", el("b", "", `the ${name}`), el("span", "hint", " · an old computer: it looks things up in an encyclopedia")),
-      sc ? el("p", "", `${cap(who!)} asked: `, el("q", "", sc.asked)) : el("p", "hint", "Nobody has used it yet."),
-      sc ? el("p", "hint", sc.title ? `It found “${sc.title}”, ${when(s, sc.tick)}.` : `It found nothing, ${when(s, sc.tick)}.`) : null,
-      el("p", "hint", "Click it to read the screen."))];
+    return [roomCard(pic, [`the ${name}`], ["an old computer: it looks things up in an encyclopedia"],
+      sc ? el("p", "", `${cap(who!)} asked: `, el("q", "", sc.asked)) : el("p", "", "Nobody has used it yet."),
+      sc ? el("p", "", sc.title ? `It found “${sc.title}”, ${when(s, sc.tick)}.` : `It found nothing, ${when(s, sc.tick)}.`) : null,
+      el("p", "tchint", "click it to read the screen"))];
   }
   return null;
 }
