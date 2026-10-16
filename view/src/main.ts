@@ -1,7 +1,7 @@
 // Wiring (SPEC-v3 §10, SPEC-v3.2 §7): one websocket to the engine (or a recorded run played back), snapshots in, the
 // visitor's actions out. Lays the page out round the room, decides which room is on screen, and keeps that choice
 // across a reload.
-import { $, bar, doingOf, el, emoteOf, face, goodWord, hatchWords, moodWords, ownLabel, stageWord, wantWords, when, wishOf } from "./dom";
+import { $, bar, doingOf, el, emoteOf, face, goodWord, hatchWords, moodWords, ownLabel, plural, stageWord, wantWords, when, wishOf } from "./dom";
 import type { Ctx, Kid } from "./dom";
 import { showRecord } from "./family";
 import { hubTip, openScreen, radioChoice, radioControl, radioSound, screens } from "./hub";
@@ -422,7 +422,7 @@ function side(s: Snap, here: RoomV) {
       ...(r.cold ? [line("warn", "wind", `a draught in ${r.name}${r.shut.length ? `; its ${r.shut.join(" and ")} door is shut` : ""}`, r.id)] : []),
     ]),
     ...found(s).filter((r) => Object.values(r.objects).some((o) => o.fix?.radio && o.state === "on")).map((r) => line("", "radio", `the radio is on in ${r.name}${s.dj?.radio.now ? `: ${s.dj.radio.now.title}` : ""}`, r.id)),
-    ...s.creatures.map((cr) => line("", cr.tame ? "paw" : "mouse", `${beast(cr)} in ${name(cr.room)}, ${cr.doing}`, cr.room)),
+    ...s.creatures.map((cr) => line("", cr.tame ? "paw" : cr.kind === "sweeper" ? "sweeper" : "mouse", `${beast(cr)} in ${name(cr.room)}, ${cr.doing}`, cr.room)),
   );
   board(s);
 }
@@ -722,11 +722,14 @@ function tipFor(t: Target): Kid[] | null {
       mood ? el("p", "", `Feeling ${mood}${good ? `; and ${good}` : ""}.`) : null,
       doing ? el("p", "", `Now: ${doing}.`) : null,
       wish ? el("p", "", "Wants: ", el("q", "", wish)) : null,
-      p.carrying?.length ? el("p", "hint", `Carrying ${p.carrying.join(", ")}.`) : null,
+      carried(p).length ? el("p", "hint", `Carrying ${carried(p).join(", ")}.`) : null,
       pet(p.following) ? el("p", "hint", `Following ${pet(p.following)!.label}.`) : null)];
   }
   if (c) return [drawn(t) ?? (hasSprite(`creature.${c.kind}`) ? sprite(`creature.${c.kind}`, 3) : null), el("div", "", el("b", "", beast(c).replace(/,$/, "")), el("p", "", cap(c.doing) + "."),
-    c.carry ? el("p", "hint", `It is carrying ${c.carry}.`) : null)];
+    c.carry ? el("p", "hint", `It is carrying ${c.carry}.`) : null,
+    // SPEC-v3.5.8 §4.2: the sweeper's load, and whether it is full or on its dock
+    c.kind === "sweeper" ? el("p", "hint", c.docked ? "On its dock by the Works, charging." : c.full ? "Full: its green light is blinking, and it is going back to the Works."
+      : c.load ? `It has picked up ${plural(c.load, "thing")}.` : "Nothing picked up yet.") : null)];
   if (t.mark) return [el("div", "", ...written(t.mark))];
   if (t.door) {
     const to = s.rooms.find((r) => r.id === here.doors[t.door!]), shut = here.shut.includes(t.door), pic = firstSprite(`door.${shut ? "shut" : "open"}`, "door");
@@ -753,6 +756,8 @@ function tipFor(t: Target): Kid[] | null {
   return it ? [drawn(t), el("div", "", el("p", "", el("b", "", it.title)), it.text ? el("p", "hint", `${cap(it.text)}.`) : null)] : null;
 }
 
+/** What a hob carries, for its card (SPEC-v3.5.8 §5): the thing its body has picked up, and its bits. */
+const carried = (p: PetV) => [...(p.body?.carrying && p.body.what && !p.asleep ? [`the ${p.body.what}`] : []), ...(p.carrying ?? [])];
 let tipTimer: ReturnType<typeof setTimeout> | undefined;
 /** Show the card for what is at this place in the room (`fx`, `fy` are how far across and down the room's box it is,
  *  0 to 1). The card stands beside what it describes, never on it, with a small point toward it; it stays inside the

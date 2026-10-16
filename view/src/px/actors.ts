@@ -7,7 +7,7 @@ import { petSheet } from "../petsprite";
 import type { PetAnim, PetSheet } from "../petsprite";
 import { bodyStage } from "../types";
 import type { Creature, PetV, Tile } from "../types";
-import { anim, fromCanvas, has, tex } from "./assets";
+import { anim, fromCanvas, has, kind, tex } from "./assets";
 import { fxTexture } from "./fx";
 import type { Fx } from "./fx";
 import { clamp, foot, FX, OX, OY, TILE, tileAt } from "./geom";
@@ -15,6 +15,7 @@ import type { Dir, Rect } from "./geom";
 import { path } from "./path";
 import type { Grid } from "./path";
 import type { Thing } from "./still";
+import { hslInt } from "./tint";
 
 /** What an actor may know of the room each frame. `free`: could a pet stand on this tile just now. `where`: the
  *  place of a pet, creature, thing or wall by its name, in the room's pixels. */
@@ -127,6 +128,15 @@ const MOVES: Record<string, Move> = {
   seat: { a: "sit" }, box: { a: "make", stir: 3 }, "follow a creature": { a: "face", hop: 2, ms: 420 },
   "try it": { a: "make", stir: 2 },   // SPEC-v3.4 §3.1: its paws at a bit, whatever sign the way of trying is given
 };
+/** SPEC-v3.5.8 §5: how long reaching down to pick something up, or to set it down, takes (ms). */
+const REACH = 420;
+/** A count in a small dark pip, 5 x 7, its digit 3 x 5 (rows, top first, as bits of 3). */
+const DIGITS = ["75557", "26227", "71747", "71317", "55711", "74717", "74757", "71222", "75757", "75717"];
+function digit(g: Graphics, n: number) {
+  g.rect(0, 0, 5, 7).fill(0x2b2233);
+  [...DIGITS[Math.min(9, n)]].forEach((r, y) => { for (let x = 0; x < 3; x++) if (Number(r) & (4 >> x)) g.rect(1 + x, 1 + y, 1, 1); });
+  g.fill(0xffe9b0);
+}
 const REST: Move = { a: "sit" }, PLAIN: Move = { a: "face", sway: 1, ms: 1100, lean: 1 };
 const ABOUT: Dir[] = ["left", "down", "right", "down"];
 /** How much bigger than the art's own pixels a pet is drawn (SPEC-v3.3 §5): about 1.6 times, on whole screen pixels. */
@@ -166,9 +176,22 @@ export class PetActor {
   eating = false;
   /** Set by the room: a pose for a moment (a startle, a lean, a hop), over at `until`. */
   pose: { anim: PetAnim; until: number } | null = null;
+  /** Set by the room: the pointer is on it (its sack's count shows). */
+  hovered = false;
   private body = new Sprite();
-  private held = [new Sprite(), new Sprite(), new Sprite(fxTexture("plus"))];   // what it carries: two bits at most, and a "+" for more
-  private lifted = new Sprite();   // what it has picked up to put away
+  // SPEC-v3.5.8 §5: what it carries. One small thing in its paws; two or more in a sack on its back (its count shows on
+  // hover); something big over its head with both arms. `lift`: the made thing its body has picked up (set by update).
+  private held = new Sprite();
+  private sack = new Graphics();
+  private pip = new Graphics();
+  private arms = new Graphics();
+  private dropped = new Sprite();   // what it has just put down, on its way to the floor
+  private lift: { tex: Texture; scale: number; big: boolean } | null = null;
+  private toBuild = false;          // its bits are going to a build: the first is held up like a part
+  private carried: Texture[] | null = null;  // what it carried last frame, to see a picking up or a putting down
+  private reach = { at: -1e9, up: true, from: [0, 0] };
+  private heavy = false;            // something big over its head: it walks a bit slower
+  private drawnFor = "";
   private ring = new Graphics();
   private lean = { x: 0, y: 0, t0: 0, until: 0 };
   private turned: Dir | null = null;
@@ -193,10 +216,13 @@ export class PetActor {
     this.body.anchor.set(0.5, 1);
     this.rim.anchor.set(0.5, 1);
     this.rim.visible = false;
-    this.lifted.anchor.set(0.5, 1);
-    this.lifted.visible = false;
-    for (const h of this.held) h.anchor.set(0.5, 1);
-    this.c.addChild(this.ring, this.body, ...this.held, this.lifted);
+    for (const s of [this.held, this.dropped]) { s.anchor.set(0.5, 1); s.visible = false; }
+    this.c.sortableChildren = true;   // (the sack goes behind its body, or in front when it walks away from us)
+    [this.ring.zIndex, this.body.zIndex, this.arms.zIndex, this.dropped.zIndex, this.pip.zIndex] = [-2, 0, 1, 2, 3];
+    // a burlap sack 10 x 9, tied at the neck, drawn from its foot's middle
+    this.sack.rect(-2, -9, 4, 3).rect(-4, -7, 8, 7).rect(-5, -6, 10, 5).fill(0x2b2233).rect(-3, -6, 6, 5).rect(-4, -5, 8, 3).fill(0xb48a52)
+      .rect(-3, -6, 2, 2).fill(0xd8b47a).rect(-3, -7, 6, 1).rect(-1, -8, 2, 1).fill(0x7a4e2a);
+    this.c.addChild(this.ring, this.sack, this.body, this.arms, this.held, this.dropped, this.pip);
   }
 
   /** A snapshot: who it is now, and the tile it should stand on. `ms`: how long a tick takes. `rest`: what its body
@@ -212,10 +238,11 @@ export class PetActor {
       const m = b ? MOVES[b.activity] ?? MOVES[b.icon ?? ""] : null;
       this.move = !b ? null : rest && !(m && /^(sit|sleep)/.test(m.a)) ? REST : m ?? PLAIN;
       [this.moveKey, this.began, this.aimAt] = [key, now, 0];
-      const t = this.move?.stir === 3 ? st.thing(b!.what) : null;
-      this.lifted.texture = t ? t.texture : Texture.EMPTY;
-      if (t) this.lifted.scale.set((t.scale * 0.8) / this.P);
     }
+    // §5: a made thing in its paws, and whether it is big (furniture, a statue, a part of a build); bits going to a build
+    const t = b && (b.carrying || this.move?.stir === 3) ? st.thing(b.what) : undefined, site = (n: string | null | undefined) => !!n && st.thing(n)?.obj.build?.progress != null;
+    this.lift = t ? { tex: t.texture, scale: t.scale / this.P, big: !!kind(t.drawn?.kind)?.furniture || !!t.obj.statue || !!t.obj.build } : null;
+    this.toBuild = site(b?.what) || site(p.act?.to) || site(p.act?.what);
     if (!first && p.react && p.react.tick > this.reacted && !p.asleep) {   // stopped in its tracks: a start, or a turn to whoever it was
       if (p.react.kind === "startle") { this.react("startled", now, 750); st.fx.spawn("bang", this.w.x, this.w.y - this.tall - 5, { vy: -6, life: 800 }); }
       else [this.turned, this.turnUntil] = ["down", now + 1600];
@@ -230,11 +257,11 @@ export class PetActor {
     else if (moved || (busy && this.away && !this.w.moving)) {
       const here = this.w.tile(), far = Math.max(Math.abs(here[0] - home[0]), Math.abs(here[1] - home[1]));
       if (far > 7 && !moved) this.w.place(home);
-      else this.w.go(home, st.blocked, moved ? ms : 700);
+      else this.w.go(home, st.blocked, (moved ? ms : 700) * (this.heavy ? 1.35 : 1));   // (§5: under something big, a bit slower)
       this.away = false;
       this.idle.until = 0;
     }
-    const look = `${selected}|${this.box.w}|${(p.carrying ?? []).join()}|${p.emote ?? ""}|${st.K}|${p.stage}`;
+    const look = `${selected}|${this.box.w}|${p.emote ?? ""}|${st.K}|${p.stage}`;
     if (look !== this.seen) {
       this.seen = look;
       const r = this.ring.clear(), hw = Math.ceil(this.box.w / 2) + 2, sw = Math.max(3, Math.floor(this.box.w / 2) - 1);
@@ -242,11 +269,6 @@ export class PetActor {
       if (selected) {   // who the page has chosen: a ring on the floor under it, in whole pixels
         r.rect(-hw + 2, -3, 2 * hw - 4, 1).rect(-hw + 2, 2, 2 * hw - 4, 1).rect(-hw, -1, 1, 2).rect(hw - 1, -1, 1, 2).rect(-hw + 1, -2, 1, 1).rect(hw - 2, -2, 1, 1).rect(-hw + 1, 1, 1, 1).rect(hw - 2, 1, 1, 1).fill(0xffb347);
       }
-      const bits = p.carrying ?? [], small = Math.max(1, Math.round(st.K * 0.55)) / st.K / this.P;   // (what it carries stays the size it is on the floor)
-      this.held.forEach((h, i) => {
-        h.visible = i < 2 ? !!bits[i] : bits.length > 2;
-        if (i < 2 && bits[i]) { h.texture = tex(`bit.${bits[i]}`); h.scale.set(small); }
-      });
     }
   }
 
@@ -276,8 +298,8 @@ export class PetActor {
   /** Where its head is, and the whole of it, in the room's pixels: bubbles and plates keep clear of this. (Where it
    *  stands, not where a hop or a lean has it this instant: its plate and its bubbles hold still while it plays.) */
   rect(): Rect {
-    const n = this.sheet.size, b = this.box, P = this.P;
-    return { x: this.at[0] + (b.x - n / 2) * P, y: this.at[1] + (b.y - n) * P, w: b.w * P, h: b.h * P };
+    const n = this.sheet.size, b = this.box, P = this.P, up = this.heavy && this.held.visible ? this.held.height : 0;   // (with what it holds over its head: its plate goes above that)
+    return { x: this.at[0] + (b.x - n / 2) * P, y: this.at[1] + (b.y - n) * P - up * P, w: b.w * P, h: b.h * P + up * P };
   }
   /** How far above its feet the top of its head is, in the room's pixels. */
   get tall() { return (this.sheet.size - this.box.y) * this.P; }
@@ -307,8 +329,7 @@ export class PetActor {
       this.c.position.set(this.w.x, this.w.y);
       this.at[0] = this.w.x; this.at[1] = this.w.y;
       this.c.zIndex = this.w.y;
-      for (const h of this.held) h.visible = false;
-      this.lifted.visible = false;
+      for (const s of [this.held, this.dropped, this.sack, this.pip, this.arms]) s.visible = false;
       this.edge(st, frame);
       return;
     }
@@ -349,8 +370,9 @@ export class PetActor {
       } else this.nextAir = now + 200;
     }
 
-    const frames = this.sheet.frames[a]?.length ? this.sheet.frames[a] : this.sheet.frames.idle, fps = (this.sheet.fps[a] ?? 2) * (elder ? 0.75 : 1);
-    const frame = frames[Math.floor(((now + this.t0) / 1000) * fps) % frames.length], grain = st.K * this.P;   // (moved on whole screen pixels)
+    if (!this.w.moving && !p.asleep && now - this.reach.at < REACH) a = "make";   // §5: reaching down for something, or setting it down
+    const frames = this.sheet.frames[a]?.length ? this.sheet.frames[a] : this.sheet.frames.idle, fps = (this.sheet.fps[a] ?? 2) * (elder ? 0.75 : 1) * (this.heavy && this.w.moving ? 0.75 : 1);
+    const fi = Math.floor(((now + this.t0) / 1000) * fps), frame = frames[fi % frames.length], grain = st.K * this.P;   // (moved on whole screen pixels)
     this.body.texture = texOf(frame);
     this.body.position.set(Math.round(off[0] * grain) / grain, Math.round(off[1] * grain) / grain);
     const k = now < this.lean.until ? Math.sin(Math.min(1, (now - this.lean.t0) / (this.lean.until - this.lean.t0)) * Math.PI) : 0;
@@ -359,17 +381,63 @@ export class PetActor {
     this.c.position.set(clamp(this.w.x + this.lean.x * k + off[2], OX + half, OX + FX * TILE - half), this.w.y + this.lean.y * k + off[3]);
     this.c.zIndex = this.w.y;
     this.edge(st, frame);
-    const side = a === "walk.left" ? -1 : a === "walk.right" ? 1 : 0;
-    // what it carries, at its side by its paws (never over its face)
-    // small, down at its paws beside its body, never across its face; behind it when it walks away from us
-    const hx = (side || 1) * (Math.ceil(this.box.w / 2) + 1), hy = -(a === "make" ? Math.floor(now / 250) % 2 : 0), n = (p.carrying ?? []).length;
-    this.held[0].position.set(hx, hy);
-    this.held[1].position.set(hx + (side || 1) * 4, hy);
-    this.held[2].position.set(hx + (side || 1) * (n > 1 ? 7 : 4), hy - 2);
-    this.held.forEach((h, i) => (h.visible = a !== "walk.up" && (i < 2 ? i < n : n > 2)));
-    // what it has picked up to put away: held out at its other side, off the floor, bobbing
-    this.lifted.visible = this.stirs === 3 && this.lifted.texture !== Texture.EMPTY;
-    if (this.lifted.visible) this.lifted.position.set(-(Math.ceil(this.box.w / 2) + 3), -3 - Math.round(Math.abs(Math.sin((now - this.began) / 300)) * 2 * grain) / grain);
+    this.carry(st, a, this.w.moving ? fi % 2 : 0);
+  }
+
+  /** SPEC-v3.5.8 §5: what it carries, drawn each frame. `bob`: a pixel up and down with its walk. */
+  private carry(st: Stage, a: PetAnim, bob: number) {
+    const now = st.now, P = this.P, items: { tex: Texture; scale: number; big: boolean }[] = [];
+    if (this.lift && this.stirs === 3) items.push(this.lift);
+    for (const [i, b] of (this.pet.carrying ?? []).entries()) items.push({ tex: tex(`bit.${b}`), scale: 1 / P, big: i === 0 && this.toBuild });   // (a bit at the size it lies on the floor)
+    const big = items.find((x) => x.big), rest = items.filter((x) => x !== big), one = !big && items.length === 1 ? items[0] : null, n = big ? rest.length : items.length > 1 ? items.length : 0;
+    this.heavy = !!big;
+    // picking up or putting down: a short reach (§5), the thing coming up from the floor or going down to it
+    const texs = items.map((x) => x.tex), was = this.carried ?? texs, gone = was.find((t) => !texs.includes(t));
+    if (was.length !== texs.length && (texs.length > was.length || gone)) {
+      this.reach = { at: now, up: texs.length > was.length, from: [this.held.x, this.held.y] };
+      if (gone && !(texs.length > was.length)) { this.dropped.texture = gone; this.dropped.scale.set(this.held.scale.x || 1 / P); }
+    }
+    this.carried = texs;
+    const k = clamp((now - this.reach.at) / REACH, 0, 1), dir = /left$/.test(a) ? -1 : /right$/.test(a) ? 1 : 0, away = /up$/.test(a);
+    const tall = Math.round(this.tall / P), half = Math.ceil(this.box.w / 2), floor = [dir ? dir * (half + 3) : half + 3, 0];
+    // in its paws in front of it (behind it when it walks away), or up over its head
+    const hold = big ? [0, -tall + 1 + bob] : [dir * 3, bob], it = big ?? one;
+    this.held.visible = !!it;
+    if (it) {
+      this.held.texture = it.tex;
+      this.held.scale.set(it.scale);
+      this.held.zIndex = big ? 2 : away ? -1 : 2;
+      const from = this.reach.up && k < 1 ? floor : hold;   // (coming up from the floor)
+      this.held.position.set(Math.round(from[0] + (hold[0] - from[0]) * k), Math.round(from[1] + (hold[1] - from[1]) * k));
+    }
+    this.dropped.visible = !this.reach.up && k < 1 && this.dropped.texture !== Texture.EMPTY;
+    if (this.dropped.visible) this.dropped.position.set(Math.round(this.reach.from[0] + (floor[0] - this.reach.from[0]) * k), Math.round(this.reach.from[1] * (1 - k)));
+    // both arms up to it, or its two paws on it, in its own colours
+    this.arms.visible = !!it && !(away && !big);
+    if (this.arms.visible) {
+      const key = `${big ? "up" : dir}|${tall}|${half}|${this.pet.genome.hue}`;
+      if (key !== this.drawnFor) {
+        this.drawnFor = key;
+        const g = this.pet.genome, coat = hslInt(g.hue, g.saturation, 0.62), x = Math.max(2, Math.min(half - 2, 5)), y0 = -Math.round(tall * 0.55), y1 = -tall + 1;
+        this.arms.clear();
+        if (big) for (const s of [-1, 1]) this.arms.rect(s * x - 1, y1 - 1, 2, y0 - y1 + 2).fill(0x2b2233).rect(s * x - (s > 0 ? 1 : 0), y1, 1, y0 - y1).fill(coat);
+        else for (const s of [-1, 1]) this.arms.rect(dir * 3 + s * 4 - 1, -4, 3, 3).fill(0x2b2233).rect(dir * 3 + s * 4, -3, 1, 1).fill(coat);
+      }
+      this.arms.position.set(0, bob);
+      this.arms.visible = !!big || k >= 1 || !this.reach.up;   // (its paws close on it once it is up)
+    }
+    // two or more: the sack on its back (over a shoulder, facing us; in front of it when it walks away), and its count on hover
+    this.sack.visible = n > 1 || (!!big && n > 0);
+    this.pip.visible = this.sack.visible && this.hovered;
+    if (this.sack.visible) {
+      const sx = away ? 0 : dir ? -dir * (half - 2) : half - 1, sy = -Math.round(tall * (away ? 0.3 : 0.5)) + bob;
+      this.sack.position.set(sx, sy);
+      this.sack.zIndex = away ? 1.5 : -1;
+      if (this.pip.visible) {
+        if (this.pip.label !== String(n)) { this.pip.label = String(n); digit(this.pip.clear(), n); }
+        this.pip.position.set(sx + 2, sy - 12);
+      }
+    }
   }
 
   /** What its body is doing by itself (SPEC-v3.3 §1): on its way there it faces where it is going; there, the frames
@@ -425,6 +493,8 @@ export class CreatureActor {
   private name = "";
   private faced = "right";
   private t0 = Math.random() * 1000;
+  private bumpAt = -1e9;   // SPEC-v3.5.8 §4.2: the sweeper last bumped into something and turned
+  private was: [boolean, Dir] = [false, "down"];
 
   constructor() {
     this.body.anchor.set(0.5, 1);
@@ -438,7 +508,7 @@ export class CreatureActor {
     this.cr = cr;
     if (first) this.w.place(cr.pos);
     else if (moved) this.w.go(cr.pos, st.blocked, ms, 4);
-    this.c.scale.set(Math.max(1, Math.round(st.K * 0.7)) / st.K);   // small beside a pet, on whole pixels
+    this.c.scale.set(cr.kind === "sweeper" ? 1 : Math.max(1, Math.round(st.K * 0.7)) / st.K);   // small beside a pet, on whole pixels (the sweeper at the house's own scale)
     this.flag.visible = color != null;
     if (color != null) this.flag.tint = color;
     this.carry.visible = !!cr.carry;
@@ -450,6 +520,7 @@ export class CreatureActor {
   }
   step(st: Stage) {
     this.w.step(st.dt);
+    if (this.cr.kind === "sweeper") return this.sweep(st);
     const n = this.name, dir = this.w.dir, flying = this.cr.kind === "moth" || this.cr.kind === "bird" && this.w.moving;
     // the frames it has for this: its own for the direction, the other side's mirrored, any walk, or standing
     let a: string | undefined, flip = false;
@@ -470,5 +541,21 @@ export class CreatureActor {
     const h = this.body.texture.height;
     this.flag.position.set(-this.body.texture.width / 2, this.body.y - h + 2);
     this.carry.position.set(0, this.body.y - h + 4);
+  }
+
+  /** SPEC-v3.5.8 §4.2: the sweeper. It drives (its brush turning), hums a pixel up and down, bumps and turns where it
+   *  stops or changes way, blinks green when full, and sits on its dock when docked. */
+  private sweep(st: Stage) {
+    const now = st.now, cr = this.cr, n = this.name, moving = this.w.moving, dir = this.w.dir;
+    if ((this.was[0] && !moving) || (moving && dir !== this.was[1])) this.bumpAt = now;
+    this.was = [moving, dir];
+    const a = cr.full ? "full" : moving ? "walk" : "idle", an = anim(n, a), k = (now - this.bumpAt) / 300;
+    this.body.texture = tex(n, an ? a : undefined, an ? Math.floor(((now + this.t0) / 1000) * an.fps) % an.frames.length : 0);
+    const back = k < 1 ? Math.round(Math.sin(k * Math.PI) * 2) : 0, [dx, dy] = dir === "left" ? [-1, 0] : dir === "right" ? [1, 0] : dir === "up" ? [0, -1] : [0, 1];
+    this.body.scale.x = k < 1 && k > 0.5 ? -1 : 1;   // (the turn: it swings round)
+    this.body.position.set(-dx * back, -dy * back - (moving && Math.floor(now / 120) % 2 ? 1 : 0));
+    this.c.position.set(Math.round(this.w.x), Math.round(this.w.y) + (cr.docked ? 6 : 0));   // docked: on its dock's plate, in front of the dock
+    this.c.zIndex = this.w.y + (cr.docked ? 2 : -1);
+    this.flag.position.set(-this.body.texture.width / 2, this.body.y - this.body.texture.height + 2);
   }
 }

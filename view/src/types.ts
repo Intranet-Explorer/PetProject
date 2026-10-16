@@ -118,7 +118,8 @@ export type PetV = {
 export type Act = { n: number; tick: number; pet: string; type: string; what?: string | null; to?: string | null; room: string; ok: boolean;
   kind?: string | null; color?: string | null; from?: string[] | null; to_id?: string | null; text?: string | null;
   body?: string; loud?: boolean };   // SPEC-v3.3: `body`: its body did it unasked (the activity's name); `loud`: the thing sounds
-export type Creature = { id: string; kind: string; room: string; pos: Tile; doing: string; carry: string | null; tame?: string | null; name?: string | null };
+export type Creature = { id: string; kind: string; room: string; pos: Tile; doing: string; carry: string | null; tame?: string | null; name?: string | null;
+  load?: number; full?: boolean; docked?: boolean };   // SPEC-v3.5.8 §4.2: the sweeper's: how much it has picked up, full (its light blinks), on its dock
 export type Moment = { n: number; tick: number; day: number; hour: number; kind: string; text: string; pet: string | null; room: string | null };
 export type HouseEvent = { tick: number; day: number; kind: string; room: string | null; detail: string };
 export type Chronicle = { day: number; season: string; summary: string; lines: string[]; text: string | null };

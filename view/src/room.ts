@@ -594,6 +594,7 @@ export class Room {
   private point(at: number[] | null = this.pointer) {
     this.pointer = at;
     const t = at && this.under(at[0], at[1]), cv = this.app.canvas;
+    for (const a of this.pets.values()) a.hovered = a.pet.id === t?.pet;   // SPEC-v3.5.8 §5: its sack's count shows
     const lit = t?.object && !t.pet ? this.still?.things.get(t.object) : null;
     this.glow.clear();
     if (lit && this.scene?.room.objects[t!.object!]?.made) {   // a made thing glows gold while it is pointed at

@@ -12,7 +12,7 @@ export type Anim = { frames: [number, number][]; fps: number; flip?: boolean };
 /** `surface` (optional): where things put away on it stand, as [x, y, w] inside the sprite: a line `w` wide whose left end is at x, y. */
 export type SpriteDef = { pack: string; file: string; rect: [number, number, number, number]; anchor?: [number, number]; anims?: Record<string, Anim>; made?: boolean;
   tint?: string; fallback?: string; glass?: [number, number, number, number]; slice?: [number, number, number, number]; surface?: [number, number, number] };
-export type KindDef = { sprite?: string; wall?: boolean; a?: string; flat?: boolean };
+export type KindDef = { sprite?: string; wall?: boolean; a?: string; flat?: boolean; furniture?: boolean };   // `furniture`: big (SPEC-v3.5.8 §5: carried over the head)
 export type Decor = { sprite: string; at: Tile; layer?: string };
 /** A room type's layout. `doors`: a kind of door other than the plain one ("gate": sprites door.gate.<dir>.<state>).
  *  A fixture's `wall`: it hangs on the wall (its sprite's anchor says where); `walk`: it can be stood on.

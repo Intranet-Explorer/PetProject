@@ -62,7 +62,7 @@ const KIND: Record<string, string> = {
   ate: "bowl", painted: "brush", mouse: "mouse", words: "speech", mark: "star",
   "arrival writing": "chalk", "arrival songs": "music", "arrival taming": "paw", "arrival radio": "radio", "arrival book": "book", "arrival strangers": "stranger",
   wrote: "chalk", scrubbed: "scrub", song: "music", tamed: "paw", untamed: "paw", young: "mouse", "creature died": "stone", read: "book",
-  moth: "mouse", beetle: "mouse", bird: "mouse",
+  moth: "mouse", beetle: "mouse", bird: "mouse", sweeper: "brush",   // (SPEC-v3.5.8 §4.2)
   // SPEC-v3.4: a want met, a thing found out, the first tool, growing food, a recipe nobody knows any more, the book carried
   want: "star", discovery: "star", tool: "hammer", harvest: "leaf", planted: "leaf", forgotten: "stone", moved: "crate",
   first: "star", best: "star", ambition: "star", works: "crate", star: "star", noticed: "heart",   // SPEC-v3.5.4: what the house is proud of
