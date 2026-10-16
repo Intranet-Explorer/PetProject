@@ -131,6 +131,15 @@ export function face(p: Pick<PetV, "genome" | "stage" | "stage_before">, box = 4
   return c;
 }
 
+/** SPEC-v3.5.9 §7: a portrait from `face` drawn again with its eyes shut (a blink, or asleep), or open. */
+export function eyes(c: HTMLCanvasElement, p: Pick<PetV, "genome" | "stage" | "stage_before">, shut: boolean) {
+  const stage = bodyStage(p), idle = petSheet(p.genome, stage, { grey: stage === "elder" ? 0.55 : 0 }).frames.idle, x = c.getContext("2d")!;
+  if (!idle?.[9]) return;
+  x.imageSmoothingEnabled = false;
+  x.clearRect(0, 0, c.width, c.height);
+  x.drawImage(idle[shut ? 9 : 0], 0, 0, c.width, c.height);   // (petsprite.ts: idle's tenth frame is its blink)
+}
+
 // ---- plain words (SPEC-v3.2 §6): the engine sends them; a recording made before it did has to be read into them ----
 
 const STAGE: Record<string, string> = { egg: "egg", hatchling: "little one", child: "little one", youngling: "young one", adult: "grown", elder: "old one" };

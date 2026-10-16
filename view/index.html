@@ -25,10 +25,7 @@
   <div id="page-house" class="page house">
     <!-- the left column on a desktop: everyone in the room on screen, in full; everyone else, a line each -->
     <aside id="left" aria-label="Who is where">
-      <div class="herehead"><h2 class="head">Here</h2>
-        <!-- SPEC-v3.5.7 §2: what is being followed; a click picks a pet to follow, the house, or nobody -->
-        <button id="followChip" class="followchip" popovertarget="followBox" aria-label="What the page follows">Following the house</button>
-        <div id="followBox" class="paper pop" popover aria-label="Follow"></div></div>
+      <div class="herehead"><h2 class="head">Here</h2></div>
       <ul id="cardsHere" class="cards" aria-label="In this room"></ul>
       <h2 class="head">Elsewhere</h2>
       <ul id="cardsElse" class="cards" aria-label="Elsewhere in the house"></ul>
@@ -55,7 +52,16 @@
         <button id="replayLive">Back to now</button>
       </section>
       <main>
+        <!-- SPEC-v3.5.9 §1, §2: the room's surround, a dark strip of the world outside, with the room's header strip on
+             top: what the page follows, the room's name, the house time, the weather and the season -->
         <div id="roomwrap">
+          <div id="roomhead" class="holo">
+            <!-- SPEC-v3.5.7 §2: what is being followed; a click picks a pet to follow, the house, or nobody -->
+            <button id="followChip" class="followchip" popovertarget="followBox" aria-label="What the page follows">Following the house</button>
+            <div id="followBox" class="paper pop" popover aria-label="Follow"></div>
+            <h2 id="roomName" class="title"></h2>
+            <span id="roomWhen"></span>
+          </div>
           <div id="frame" class="wood">
             <div id="stage">
               <div id="room" aria-label="The room"></div>
@@ -64,7 +70,6 @@
               <div id="tip" hidden></div>
             </div>
           </div>
-          <div id="sign" aria-hidden="true"></div>
         </div>
       </main>
     </section>
@@ -91,6 +96,8 @@
     </aside>
     <!-- SPEC-v3.5.3 §2, v3.5.6 §5: the visitor's controls in one toolbar on a paper strip: Care, Talk, More -->
     <footer class="paper">
+      <!-- SPEC-v3.5.9 §2: on a short window the toolbar folds into this one button, at the head of the hobs' column -->
+      <button id="visitBtn" aria-expanded="false" aria-controls="controls">Visit</button>
       <section id="controls" class="controls visit" aria-label="Visit">
         <!-- v3.5.8 (the v3.5.7 review): which hob the buttons act on, its face and name -->
         <span id="actsOn" class="group actson" role="status" aria-label="The hob you have chosen"></span>

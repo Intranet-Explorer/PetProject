@@ -1,7 +1,7 @@
 // Wiring (SPEC-v3 §10, SPEC-v3.2 §7): one websocket to the engine (or a recorded run played back), snapshots in, the
 // visitor's actions out. Lays the page out round the room, decides which room is on screen, and keeps that choice
 // across a reload.
-import { $, bar, byname, doingOf, el, emoteOf, face, goodWord, hatchWords, moodWords, ownLabel, plural, stageWord, wantWords, when, wishOf } from "./dom";
+import { $, bar, byname, doingOf, el, emoteOf, eyes, face, goodWord, hatchWords, moodWords, ownLabel, plural, stageWord, wantWords, when, wishOf } from "./dom";
 import type { Ctx, Kid } from "./dom";
 import { showRecord } from "./family";
 import { hubTip, openScreen, radioChoice, radioControl, radioSound, screens } from "./hub";
@@ -73,27 +73,49 @@ function hear(notes: Note[], by: string) {
 
 // ---- the page round the room (SPEC-v3.2 §7) ----
 
-/** The room is drawn at the largest whole-number scale its box allows (SPEC-v3.5.6 §5): on a desktop the centre of a
- *  game screen with nothing below the fold, so as large as the space left by the header, the "now" strip and the
- *  toolbar; on a phone the width (the page scrolls down to the rest). A whole number of the screen's own pixels to each
- *  pixel of the art: on a sharp screen that allows 3.5 as well as 3 and 4. */
-const DESKTOP = 1000;   // skin.css: from this width the House tab is a game screen in three columns
-const FRAME = 14;       // the wood frame round the room (Textfield_03, slice 7, x2)
-function layout() {
-  const main = document.querySelector("main")!;
+/** The room is drawn at the largest whole-number zoom that fits its column and the window's height (SPEC-v3.5.9 §2): a
+ *  whole number of the screen's own pixels to each pixel of the art, so on a sharp screen 3.5 as well as 3 and 4
+ *  (v3.5.6 §5). What is left round it is its surround (skin.css). On a phone the width alone (the page scrolls down to
+ *  the rest); on Small the width and the window's height under the room's header strip (the toolbar follows it down
+ *  the page); from Laptop up the space the grid gives the room, and on a short window the toolbar folds into one
+ *  "Visit" button when that gives the room a larger zoom, and opens out again when it no longer would. */
+const SMALL = 700, DESKTOP = 1200;   // skin.css: the set layouts (Phone, Small, then Laptop, Large and Huge in three columns)
+let barH = 0;   // the toolbar's height and the gap above it, when it was last open
+function layout(again = true) {
   const [w, h] = snap ? [(snap.size[0] + 2) * 16, (snap.size[1] + 3) * 16] : [224, 176];   // the floor, a wall each side, two rows of wall above and one below
-  const dpr = devicePixelRatio || 1, desk = innerWidth >= DESKTOP, sign = parseFloat(getComputedStyle($("roomwrap")).paddingTop) || 0;   // (the sign hangs over the frame's top edge)
-  const W = main.clientWidth - 2 * FRAME, H = main.clientHeight - 2 * FRAME - sign;
-  const fit = desk ? Math.min(W / w, H / h) : W / w;
-  const k = Math.max(1, Math.floor(fit * dpr + 0.001) / dpr);
+  const dpr = devicePixelRatio || 1, wrap = $("roomwrap"), head = $("roomhead").getBoundingClientRect(), F = parseFloat(getComputedStyle($("frame")).borderTopWidth) || 14;
+  const zoom = (fit: number) => Math.max(1, Math.floor(fit * dpr + 0.001) / dpr), W = (wrap.clientWidth - 2 * F) / w;
+  let k = zoom(W);
+  if (innerWidth >= DESKTOP) {
+    const foot = document.querySelector("footer")!, fold = document.body.classList.contains("fold");
+    const H = wrap.getBoundingClientRect().bottom - head.bottom - 2 * F;
+    if (!fold) barH = foot.getBoundingClientRect().height + parseFloat(getComputedStyle($("page-house")).rowGap || "0");
+    const open = zoom(Math.min(W, (fold ? H - barH : H) / h)), shut = zoom(Math.min(W, (fold ? H : H + barH) / h));
+    const want = shut > open && !foot.hidden;
+    if (want !== fold && again) { document.body.classList.toggle("fold", want); return layout(false); }
+    k = fold || want ? shut : open;
+  } else if (innerWidth >= SMALL) k = zoom(Math.min(W, (innerHeight - head.bottom - scrollY - 2 * F - 2) / h));
   $("stage").style.width = `${Math.ceil(w * k)}px`;
   $("stage").style.height = `${Math.ceil(h * k)}px`;
   if (snap) drawMap($("map"), snap, view.room, view.sel, (id) => jump({ room: id }), mapWidth());
+  consoleFit();
   marquee($("board"));
 }
-const mapWidth = () => Math.min($("mapframe").clientWidth, innerWidth >= DESKTOP ? 170 : 300);   // (two of the art's pixels to one on a desktop: the board has the rest of the column)
+/** SPEC-v3.5.9 §2: on a short desktop the console folds to the board and the Works by itself when its sections do not
+ *  fit the window's height, and opens again when they do; its button folds and opens it by hand in between. */
+let consoleNeeds = 0, consoleAuto = false;
+function consoleFit() {
+  const side = $("side"), folded = side.classList.contains("folded");
+  if (!folded) consoleNeeds = side.scrollHeight;
+  const tight = innerWidth >= DESKTOP && consoleNeeds > side.clientHeight + 1;
+  side.classList.toggle("tight", tight);
+  if (tight !== consoleAuto) { consoleAuto = tight; foldConsole(tight); }
+}
+const foldConsole = (on: boolean) => { $("side").classList.toggle("folded", on); $("consoleFold").setAttribute("aria-expanded", String(!on)); };
+const mapWidth = () => Math.min($("mapframe").clientWidth, innerWidth >= 2400 ? 140 : innerWidth >= DESKTOP ? 170 : 300);   // (two of the art's pixels to one on a desktop: the board has the rest of the column; on Huge one, which its zoom doubles)
 const watch = new ResizeObserver(() => layout());   // a new window, or the toolbar wrapping: measure afresh
-for (const e of [document.querySelector("header")!, document.querySelector("footer")!, document.querySelector("main")!, $("replayBar"), $("now")]) watch.observe(e);
+for (const e of [document.querySelector("header")!, document.querySelector("footer")!, document.querySelector("main")!, $("replayBar"), $("now"), $("side")]) watch.observe(e);
+addEventListener("resize", () => layout());   // (Small: the window's height alone can change the room's zoom)
 
 // ---- which room to show ----
 
@@ -344,6 +366,7 @@ function nowLine(s: Snap) {
 
 function header(s: Snap) {
   // SPEC-v3.5.3 §1: the world's time and season, in the slim header
+  document.body.dataset.season = s.clock.season ?? "";   // SPEC-v3.5.9 §7: the frames pick up a touch of the season
   $("clock").replaceChildren(`day ${s.clock.day} - ${hhmm(s.clock.hour)}`, el("br"), `${s.clock.season ?? ""}${s.clock.phase === "night" ? " night" : ""} - year ${s.clock.year}`);
   const alive = s.pets.filter((p) => p.stage !== "dead");
   // how many families live here and how many are alive in each, each family in its colour (SPEC-v3.1 §7.4)
@@ -384,8 +407,8 @@ function header(s: Snap) {
     };
     line.replaceChildren(...(lead ? [...names(here), el("span", "here", ...names(text))] : [...(got?.kind === "find" ? [icon("star")] : []), ...names(text), ...(here ? [el("span", "here", ...names(here))] : [])]));
     now.className = got ? got.kind : "";
-    now.classList.toggle("long", line.offsetHeight > now.clientHeight);   // more than the box holds: set smaller
-    if (line.offsetHeight > now.clientHeight) line.querySelector(".here")?.remove();   // still more: the engine's sentence alone
+    now.classList.toggle("long", line.scrollHeight > now.clientHeight);   // more than the box holds: set smaller
+    if (line.scrollHeight > now.clientHeight) line.querySelector(".here")?.remove();   // still more: the engine's sentence alone (SPEC-v3.5.9: and past three lines, cut)
   }
   dj(s);
   stock(s);
@@ -411,7 +434,17 @@ function side(s: Snap, here: RoomV) {
     ...row("HERE", who),
     // SPEC-v3.3 §2: how the room is kept, in the pets' own words, when things lie about in it
     ...(here.mess === 2 ? row("ROOM", `${(here.mess_says ?? "a mess").toUpperCase()}`) : [])));   // (only a real mess: the readout stays short)
-  if ($("sign").textContent !== here.name.toUpperCase()) $("sign").textContent = here.name.toUpperCase();   // SPEC-v3.5.6 §4: the room's name on the hanging wood sign
+  // SPEC-v3.5.9 §1: the room's header strip: its name, the house time in amber digits, the weather and the season
+  if ($("roomName").textContent !== here.name.toUpperCase()) $("roomName").textContent = here.name.toUpperCase();
+  const wx = s.weather === "clear" && c.phase === "night" ? "moon" : s.weather === "fog" ? "cloud" : s.weather, whenKey = `${hhmm(c.hour)}|${wx}|${c.season}`;
+  if ($("roomWhen").dataset.key !== whenKey) {
+    $("roomWhen").dataset.key = whenKey;
+    const sky = el("span", "wx", icon(wx, 24));
+    sky.title = s.weather;
+    sky.setAttribute("role", "img");
+    sky.setAttribute("aria-label", s.weather);
+    $("roomWhen").replaceChildren(el("span", "digit", hhmm(c.hour)), sky, el("span", "season", (c.season ?? "").toUpperCase()));
+  }
   const line = (cls: string, pic: string, text: string, to: string | null) => {
     const li = el("li", cls, icon(pic), el("span", "", text));
     if (to) { li.style.cursor = "pointer"; li.onclick = () => jump({ room: to }); }
@@ -428,51 +461,68 @@ function side(s: Snap, here: RoomV) {
     ...s.creatures.map((cr) => line("", cr.tame ? "paw" : cr.kind === "sweeper" ? "sweeper" : "mouse", `${beast(cr)} in ${name(cr.room)}, ${cr.doing}`, cr.room)),
   );
   board(s);
+  consoleFit();   // (the Works' lines come and go: whether the console's sections fit is asked again)
 }
 
-/** SPEC-v3.5.7 §3: THE BOARD, an LED panel in VT323. The newest line amber with a blinking block cursor; a new line types
- *  itself in; a line too long for the panel runs sideways like a marquee; the panel pulses when a line arrives. And
- *  THE WORKS: the goal and a segmented meter that fills cell by cell, with a chime and a flash when it is reached. */
-let boardTop = "", typing: ReturnType<typeof setInterval> | undefined, worksHad: [number, number] | null = null;
+/** SPEC-v3.5.7 §3, v3.5.9 §6: THE BOARD, an LED panel in VT323 to be read at a glance: one of its lines at a time, on
+ *  at most two rows (it wraps between words), the newest amber with its blinking block cursor and the others a
+ *  brighter blue, each in turn every few seconds. A line longer than two rows scrolls slowly up, pausing at its start
+ *  and its end (slower still with reduced motion). A new line types itself in and the panel pulses. And THE WORKS: the
+ *  goal, its count and a segmented meter that fills cell by cell, with a chime and a flash when it is reached. */
+let boardLines: string[] = [], typing: ReturnType<typeof setInterval> | undefined, paging: ReturnType<typeof setTimeout> | undefined, worksHad: [number, number] | null = null;
+const PAGE = 5000, PAUSE = 2000, SPEED = 12;   // ms a line stays; ms a long line rests at each end; px a second it scrolls
+const calm = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 function board(s: Snap) {
-  const B = s.ticker?.board ?? [], hubRoom = s.ticker?.room ?? null, box = $("board"), still = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const lines = B.filter((l) => !l.meter).slice(0, 3).map((l) => boardRows(l).join(": ").toUpperCase()), key = JSON.stringify(lines);
+  const B = s.ticker?.board ?? [], hubRoom = s.ticker?.room ?? null, box = $("board");
+  const lines = B.filter((l) => !l.meter).map((l) => boardRows(l).join(": ").toUpperCase()), key = JSON.stringify(lines);   // ("WHAT: WHO")
   box.hidden = !lines.length;
   box.onclick = hubRoom ? () => jump({ room: hubRoom }) : null;
   if (box.dataset.key !== key) {
-    const fresh = !!box.dataset.key && lines[0] !== boardTop;
+    const fresh = !!box.dataset.key && lines[0] !== boardLines[0];
     box.dataset.key = key;
-    boardTop = lines[0] ?? "";
-    const row = (t: string, i: number) => {
-      const p = el("p", i ? "" : "a", el("span", "txt", t));
-      return p;
-    };
-    box.replaceChildren(...lines.map(row));
-    const first = box.firstElementChild as HTMLElement | null, txt = first?.querySelector<HTMLElement>(".txt");
-    if (first) first.append(el("i", "cur"));
-    clearInterval(typing);
-    if (fresh && txt && !still) {   // a new line types itself in, and the panel pulses
-      box.classList.remove("pulse"); void box.offsetWidth; box.classList.add("pulse");
-      let n = 0;
-      txt.textContent = "";
-      typing = setInterval(() => { txt.textContent = boardTop.slice(0, ++n); if (n >= boardTop.length) { clearInterval(typing); marquee(box); } }, 45);
-    } else marquee(box);
+    boardLines = lines;
+    page(box, 0, fresh && !calm());
   }
-  works(s, B.find((l) => l.meter) ?? null, still);
+  works(s, B.find((l) => l.meter) ?? null, calm());
 }
-/** A line too long for the panel runs sideways (and back) like a marquee; none with reduced motion. */
+/** Line `i` of the board, for a few seconds or as long as it takes to scroll through once; then the next. */
+function page(box: HTMLElement, i: number, typed = false) {
+  clearTimeout(paging);
+  clearInterval(typing);
+  const n = boardLines.length, text = boardLines[i % n];
+  if (!n) return box.replaceChildren();
+  const at = text.lastIndexOf(": "), [what, who] = at < 0 ? ["", text] : [text.slice(0, at + 2), text.slice(at + 2)];
+  const p = el("p", i % n ? "" : "a", el("span", "txt", what, el("span", "by", who, i % n ? null : el("i", "cur"))));
+  box.replaceChildren(p);
+  const next = (pass: number) => { if (n > 1) paging = setTimeout(() => page(box, i + 1), Math.max(PAGE * (calm() ? 2 : 1), pass)); };
+  if (!typed) return next(scroll(p));
+  box.classList.remove("pulse"); void box.offsetWidth; box.classList.add("pulse");   // a new line types itself in, and the panel pulses
+  const [txt, by, cur] = [p.firstElementChild!, p.querySelector(".by")!, p.querySelector(".cur")!];
+  txt.replaceChildren(by);
+  by.replaceChildren(cur);
+  let k = 0;
+  typing = setInterval(() => {   // (what it is first, then who, the cursor after the last letter typed)
+    k++;
+    txt.replaceChildren(what.slice(0, k), by);
+    by.replaceChildren(who.slice(0, Math.max(0, k - what.length)), cur);
+    if (k >= text.length) { clearInterval(typing); next(scroll(p)); }
+  }, 45);
+}
+/** A line longer than its two rows scrolls up (by position: see skin.css) and back to its start, round and round; how
+ *  long one pass takes, in ms (0 when it fits). */
+function scroll(p: HTMLElement) {
+  const t = p.querySelector<HTMLElement>(".txt")!, over = t.scrollHeight - p.clientHeight;
+  t.getAnimations().forEach((a) => a.cancel());
+  if (over <= 2 || !p.clientHeight) return 0;
+  const go = ((over / SPEED) * 1000) * (calm() ? 2 : 1), all = 2 * PAUSE + go;
+  t.animate([{ top: "0px" }, { top: "0px", offset: PAUSE / all }, { top: `${-over}px`, offset: (PAUSE + go) / all }, { top: `${-over}px` }], { duration: all, iterations: Infinity });
+  return all;
+}
+/** After a layout, and once the LED face is in (before, a line measures short): the line on show measured again. */
 function marquee(box: HTMLElement) {
-  requestAnimationFrame(() => measure(box));   // (after layout: a panel not laid out yet measures nothing)
+  requestAnimationFrame(() => box.querySelectorAll<HTMLElement>("p").forEach(scroll));
 }
-void document.fonts.ready.then(() => marquee($("board")));   // (and once the LED face is in: before, a line measures short)
-function measure(box: HTMLElement) {
-  for (const p of box.querySelectorAll<HTMLElement>("p")) {
-    if (!p.clientWidth) continue;
-    const t = p.querySelector<HTMLElement>(".txt")!, over = t.scrollWidth - p.clientWidth + (p.classList.contains("a") ? 14 : 0);
-    p.classList.toggle("run", over > 4);
-    p.style.setProperty("--over", `${-Math.max(0, over)}px`);
-  }
-}
+void document.fonts.ready.then(() => marquee($("board")));
 function works(s: Snap, w: BoardLine | null, still: boolean) {
   const box = $("works");
   box.closest<HTMLElement>(".cworks")!.hidden = !w;
@@ -484,7 +534,8 @@ function works(s: Snap, w: BoardLine | null, still: boolean) {
   box.dataset.key = key;
   worksHad = [have, of];
   const cells = Array.from({ length: n }, (_, i) => el("i", i < (still ? on : was) ? "on" : ""));
-  box.replaceChildren(el("p", "", `${have} OF ${of} SCRAP${w.what ? ` - ${w.what.toUpperCase()}` : ""}`), el("div", "meter-cells", ...cells));
+  // SPEC-v3.5.9 §5: the goal, then its count ("18 OF 30 SCRAP"), then the meter
+  box.replaceChildren(...(w.what ? [el("p", "goal", w.what.toUpperCase())] : []), el("p", "count", `${have} OF ${of} SCRAP`), el("div", "meter-cells", ...cells));
   if (grew && !still) cells.slice(was, on).forEach((c, i) => setTimeout(() => c.classList.add("on", "new"), 180 * (i + 1)));   // cell by cell
   else cells.slice(0, on).forEach((c) => c.classList.add("on"));
   if (done) { box.classList.remove("reached"); void box.offsetWidth; box.classList.add("reached"); play("chime"); }
@@ -528,7 +579,8 @@ function cards(s: Snap) {
       const v = level(p, n), was = Number(b.dataset.v ?? v);
       b.style.width = `${v}%`;
       b.dataset.v = String(v);
-      if (Math.abs(v - was) >= 10) { const w = b.parentElement!; w.classList.remove("jump"); void w.offsetWidth; w.classList.add("jump"); }
+      const w = b.parentElement!, jump = Math.abs(v - was) >= 10, up = v - was >= 3;   // (SPEC-v3.5.9 §7: a need that rises ticks its bar up)
+      if (jump || up) { w.classList.remove("jump", "up"); void w.offsetWidth; w.classList.toggle("jump", jump); w.classList.toggle("up", up); }
     }
   };
   if ($("cardsHere").dataset.key === key) return bars();
@@ -540,8 +592,10 @@ function cards(s: Snap) {
     const wish = wishOf(p), wants = (p.wants ?? []).map((w) => wantWords(w.text));
     const want = wants[0]?.replace(/^.*\bit wants /, "").replace(/^wants /, "") ?? wish;
     if (feels) feels.title = `feeling ${emote}`;
-    const li = el("li", `card ${fam(p.family)}${p.id === view.sel ? " chosen" : ""}${egg ? " egg" : ""}${p.room === view.room ? " here" : " away"}`,
-      el("span", "pic", face(p, desk && p.room !== view.room ? 32 : 48)),   // (a desktop's line for one elsewhere has a small portrait, drawn at its size)
+    const pic = face(p, desk && p.room !== view.room ? 32 : 48);   // (a desktop's line for one elsewhere has a small portrait, drawn at its size)
+    if (!egg) { blinks.set(pic, p); pic.style.animationDelay = `${-(Math.random() * 3.4).toFixed(2)}s`; if (p.asleep) eyes(pic, p, true); }   // SPEC-v3.5.9 §7: it lives
+    const li = el("li", `card ${fam(p.family)}${p.id === view.sel ? " chosen" : ""}${egg ? " egg" : ""}${p.asleep && !egg ? " asleep" : ""}${p.room === view.room ? " here" : " away"}`,
+      el("span", "pic", pic),
       el("span", "wholine", el("span", "n", egg ? p.name ?? "An egg" : nameOf(p)), egg ? null : byname(p) && el("span", "bn", byname(p)), el("span", "s", stageWord(p), feels)),   // (SPEC-v3.5.8 §6: its by-name under its name)
       egg ? el("span", "doing", hatchWords(p.hatches_in ?? 0)) : null,
       naming(p) ? el("span", "naming", naming(p)!) : null,
@@ -565,6 +619,17 @@ function cards(s: Snap) {
   $("cardsElse").replaceChildren(...away.map(one));
   $("cardsElse").previousElementSibling!.toggleAttribute("hidden", !away.length);
 }
+
+/** SPEC-v3.5.9 §7: living cards. A portrait breathes (skin.css) and now and then blinks; asleep, its eyes stay shut. */
+const blinks = new WeakMap<HTMLCanvasElement, PetV>();
+setInterval(() => {
+  for (const c of document.querySelectorAll<HTMLCanvasElement>(".cards .card:not(.asleep, .egg) .pic canvas.face")) {
+    const p = blinks.get(c);
+    if (!p || Math.random() > 0.07) continue;   // (about once in thirteen seconds each)
+    eyes(c, p, true);
+    setTimeout(() => eyes(c, p, false), 150);
+  }
+}, 900);
 
 // ---- the visitor (§7.5): acts only in the room being looked at ----
 
@@ -818,7 +883,8 @@ $("namesBtn").onclick = () => {
   $("namesBtn").setAttribute("aria-pressed", String(on));
   (room as unknown as { names?: (on: boolean) => void }).names?.(on);
 };
-$("consoleFold").onclick = () => $("consoleFold").setAttribute("aria-expanded", String(!$("side").classList.toggle("folded")));   // SPEC-v3.5.7 §3: a phone's console folds to the board
+$("consoleFold").onclick = () => foldConsole(!$("side").classList.contains("folded"));   // SPEC-v3.5.7 §3: a phone's console folds to the board
+$("visitBtn").onclick = () => $("visitBtn").setAttribute("aria-expanded", String($("visitBtn").getAttribute("aria-expanded") !== "true"));   // SPEC-v3.5.9 §2: the folded toolbar
 $("feed").onclick = () => act({ type: "feed" });
 $("window").onclick = () => act({ type: "window" });
 $("giveBtn").onclick = () => act({ type: "give", bit: $<HTMLSelectElement>("giveBit").value });
