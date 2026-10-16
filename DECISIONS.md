@@ -2054,3 +2054,63 @@ holding its thoughts back while the family has one waiting:
   "nothing to do" 8% (10%), at doors 6% (9%), straight back within 6 min 36% (35%), projects that are a "don't" 0 (0).
   To be watched on the live house, with its full share of the model.
 - Before the clearing fix, an earlier window on another copy: 10 charms cleared in half a world day.
+
+## Part 26: v3.5.9, layout and weather (16 October 2026)
+
+SPEC-v3.5.9 as built, and where it was read one way. Tested by the rule of 16 October (RUNNING.md): the page on a
+paused copy at the nine sizes; the Works' list and its endless goal by the self-checks and a 30-minute smoke run on a
+copy (0 errors; that copy's Works built the first new goal, a lantern for the garden); one restart for `works.toml`.
+
+- **The room's name off the room (§1):** the hanging sign is gone; a slim Holo strip on top of the room's frame holds
+  the following chip, the name, the time in amber, a weather icon (a moon on a clear night) and the season. On a phone
+  the name takes its own row and the season is left to the page header.
+- **Set layouts (§2):** Phone, Small, Laptop, Large and Huge at the spec's widths, columns and UI scales (CSS `zoom` on
+  the panels; the room has its own zoom), centred, the world filling anything wider. The room takes the largest
+  whole number of screen pixels per art pixel that fits (so 3.5 on a sharp screen, as since v3.5.6). On Small the
+  page scrolls to the toolbar, the cards and the console below the room, as the table's "below" says.
+- **Short windows:** the toolbar folds into one "Visit" button only when the room would otherwise be smaller than 3x;
+  the console gives way a section at a time: first its room readout (the strip says the time, weather and season),
+  then the map, leaving the board and the Works. Both found in review: a first version folded the toolbar at 1920
+  and 2560 and the whole console at 1728 and 1920, leaving the visitor's buttons hidden and half the panel empty.
+- **The world outside (§3):** drawn in code (no PixelLab call): a sky on the house's clock and season with stars and
+  the moon, three layers of hills and trees in the season's colours with a slight parallax, clouds, rain, snow,
+  morning fog and a storm's lightning, which the house's thunder now follows (in place of its own 14-30 s timer). The
+  room's surround is a darker, blurred window onto it.
+- **A display in every room (§4):** the machine room's board, smaller, on each room's clearest stretch of north wall
+  (or a layout's `display`), with the time, the weather and a line; hovering it gives the line in words. Lines with no
+  data of their own: the pond's water (from weather, season and cold; fish wait for v3.6), the cellar's damp and
+  warmth (from a leak, a draught and the weather), the workshop's bench (what is on it, and who is making).
+- **Weather inside:** sunbeams from the windows through the day, warm by evening; frost at the windows in winter;
+  rain and snow on the glass, lightning, lamp pools and dark corners at night (kept from before); dust in the beam,
+  fireflies in the garden at night, breath-mist in the cold, rain rings on the pond; plants that are fixtures or
+  planted sway in wind (scenery plants do not).
+- **The Works never runs out (§5):** 23 goals after the sweeper, cheapest first (lights for the garden, music room,
+  pond room and attic; a rug and a rocking chair for the nursery; a bench by the pond; a blanket and a mirror for the
+  music room; chimes, a tool box, a plant for the storeroom; resin, string and cloth in the machine; a bigger daily
+  allowance, delivery and stock; a second sweeper; the greenhouse's extension in three fills), every one using art
+  the house already has. Not built from the spec's examples: a new radio station (it would mean a new stream on the
+  network), a gift for each hob, a weather vane and a fountain (no art). When the list is done, "the house store"
+  (30 scrap) puts three of every base material in the machine each time it fills. The console shows the goal and
+  "N OF M SCRAP" with its meter, and keeps it when folded.
+- **The board (§6):** VT323 at 24 px (32 on Large, 40 on Huge, as big as the text round it), a 1-2 px glow on a
+  near-black panel. One line at a time over two rows (two one-row lines were each longer than the panel at 24 px, so
+  every line scrolled and was never whole), the newest amber with its cursor, the rest a brighter blue paging every
+  5 s; a line longer than two rows scrolls slowly with pauses.
+- **More pop (§7):** lamps, candles and screens glow and flicker at night; puffs and sparks at the work while a hob
+  makes, then a burst, a "MADE" stamp and the thing rising in a bubble; a "+" in a need's colour when it rises by 3 or
+  more, and the card's bar ticks up; speech bubbles in the Travel Book popup with a tail, popping in; a hovered door
+  lights and its card says who is in the next room; portraits breathe and blink, a sleeping hob's card shows shut
+  eyes and "z"s; frost on the frames in winter, a leaf caught on them in autumn (not on the now box, whose words run
+  to its edge).
+- **Art data:** `packs.json` has `"skin": true` for the Crusenho UI pack (its files are named by the style sheets,
+  so validate.py does not count them unused); room layouts may give a `display` tile.
+
+**Measured** (headless Chrome on the Mac, a paused copy): at all nine sizes no overlap, cut-off or sideways scroll,
+the room at a whole-number zoom, no text under 16 px, the room never covered, 98-99% of the width used. 60 fps, worst
+frame 16.8 ms, at 1280 x 800 and 2560 x 1440 before and after, with the world and weather running.
+
+**The fresh reviewer** read both 1280 x 800 boards whole ("FIRST WARM REED CHARM IN / THE HOUSE: OPEN HUM").
+Best size: 1512 x 982 (1440 x 900 nearly as good). Worst: 1024 x 768 (Small: the room fills the window and the rest is
+below it). Acted on: the folding above. Noted, not changed: Pixelify's 5 reads as S in the clock; hob cards run past
+the window's foot at desktop sizes and scroll in their column; name plates pile up when hobs crowd one spot; the
+machine room's own board is caught mid-scroll in a still.
