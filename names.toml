@@ -64,7 +64,8 @@ garden = "Clover"
 storeroom = "Cubby"
 hub = "Gizmo"
 
-# Words read on the screens that are not names, however they are written ("Latin", "Monday").
+# Words read on the screens that are not names, however they are written ("Latin", "Monday"), and never holy books
+# or gods.
 [screen]
 skip = """
 latin greek english french german italian spanish roman american british european african asian japanese chinese
@@ -73,7 +74,10 @@ sunday january february march september october november december internet micro
 science god gods bible church empire kingdom republic state states united union mount river lake sea ocean island
 islands saint new old north south east west earth world national international university college king queen
 prince princess president people language english americans europe cretaceous paleogene obon festival xbox android
-chrome macos linux series album band film movie company the however also there they these those this although
+chrome macos linux series album band film movie company the however also there they these those this although because when while where which after before since until
+aves insecta mammalia reptilia animalia plantae torah bible quran koran talmud veda vedas gita sutra psalms gospel
+scripture god gods goddess allah buddha jesus christ krishna shiva vishnu brahma zeus jupiter odin thor yahweh jehovah
+mohammed muhammad moses
 """
 
 [bank.english]

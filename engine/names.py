@@ -17,6 +17,7 @@ CONS = ["b", "d", "f", "g", "h", "j", "k", "l", "m", "n", "p", "r", "s", "t", "v
 NEAR = {"b": "p", "p": "b", "d": "t", "t": "d", "g": "k", "k": "g", "v": "f", "f": "v", "z": "s", "s": "z", "m": "n", "n": "m",
         "l": "r", "r": "l", "w": "h", "h": "w", "j": "sh", "sh": "th", "th": "sh"}   # a sound drifts to one like it
 WORDY = re.compile(r"(tion|sion|ment|ness|ity|ism|ture|ing|ogy|ics|ance|ence|ship|hood|(?<=....)ly)$")   # a word's ending, not a name's ("Agriculture")
+RANK = re.compile(r"(ptera|idae|inae|aceae|ales|formes)$|^.{6,}ia$")   # a Latin rank of creatures or plants, or a long place ("Coleoptera", "Antarctica")
 ENDINGS = ["o", "io", "on", "an", "a", "ia", "ie", "y", "ly", "el", "en", "in", "is", "us", "ix", "wick", "bert", "kin", "by", "wyn"]
 
 
@@ -269,16 +270,18 @@ def topics(house, cfg, pet):
 def found_in(house, cfg, title, text):
     """The real names in a page: a word written with a capital inside a sentence, on its own (people, places, stars,
     rivers; not "Internet Explorer"), and the names of plants and creatures in the bank, however they are written."""
-    out = []
+    out, latin = [], set()   # a Latin name for a kind of creature or plant ("genus Vitis", "(Plutella xylostella)"), or half of a name in two ("Internet Explorer")
+    for m in re.finditer(r"\b(?:genus|genera|order|family|class|species|phylum|tribe) ([A-Z][a-z]+)|\(([A-Z][a-z]+) [a-z]+|(?<=[a-z,] )([A-Z][a-z]+) ([A-Z][a-z]+)", text):
+        latin |= set(m.groups()) - {None}
     for sentence in re.split(r"(?<=[.!?])\s+", text):
         ws = [re.sub(r"'s$", "", w) for w in re.findall(r"[A-Za-z][a-z]*(?:'s)?", sentence)]
         cap = lambda i: 0 <= i < len(ws) and ws[i][0].isupper()
         for i, w in enumerate(ws):
-            proper = i > 0 and cap(i) and not (i > 1 and cap(i - 1)) and not cap(i + 1) and 4 <= len(w) <= 12 and not WORDY.search(w)
+            proper = i > 0 and cap(i) and not (i > 1 and cap(i - 1)) and not cap(i + 1) and 4 <= len(w) <= 9 and not WORDY.search(w) and not RANK.search(w) and (w not in latin or w in cfg["names"]["bank"]) and " %s " % w.lower() not in text
             if (proper or w.capitalize() in cfg["names"]["nature"]) and w.lower() not in cfg["names"]["skip"]:
                 out.append(w.capitalize())
     out += [title] if title in cfg["names"]["bank"] else []
-    return [n for n in dict.fromkeys(out) if check(house, cfg, n) is None]
+    return sorted((n for n in dict.fromkeys(out) if check(house, cfg, n) is None), key=lambda n: n not in cfg["names"]["bank"])   # (a name people give first)
 
 
 def look_up(house, cfg, pet, at):
@@ -289,7 +292,7 @@ def look_up(house, cfg, pet, at):
     r, screen = rnd(house, "look up", pet["id"], house["tick"]), "on the " + at if house["rooms"][pet["room"]]["objects"].get(at, {}).get("fix", {}).get("terminal") else "in the heavy book"
     ts, whose = topics(house, cfg, pet), wanted(house, cfg, pet) or "your egg"
     r.shuffle(ts)
-    for t in ts[:3]:
+    for t in ts[:8]:   # (a few pages: most pages about everyday things have no name in them)
         got = book.lookup(dict(cfg, book=dict(cfg["book"], chars=1200)), t)   # (a longer read than a question gets: names are few in a page)
         names = found_in(house, cfg, *got)[:3] if got else []
         if names:

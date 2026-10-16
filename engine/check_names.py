@@ -105,6 +105,11 @@ async def run(d):
             "Some nest in rosemary and thyme. Rain falls.")
     got = names.found_in(h, cfg, "Eagle", text)
     assert {"Aquila", "Africa", "Eurasia", "Rosemary", "Thyme"} <= set(got) and "Latin" not in got and "Rain" not in got and "Eagles" not in got, got
+    assert got.index("Rosemary") < got.index("Africa"), "a name people give first"
+    got = names.found_in(h, cfg, "Beetle", "Beetles are the order Coleoptera, in the class Insecta. Some are in Lepidoptera or Carabidae. "
+                                           "They live in Antarctica and in the Torah. God made Wren and Nile. The genus Vitis, the moth (Plutella xylostella), "
+                                           "Lymantria, and Internet Explorer.")
+    assert got == ["Wren", "Nile"], "no Latin ranks, long places, holy books or gods: %s" % got
     pet["eggs"] = 0
     assert names.wanted(h, cfg, pet) == "your egg"
     pet["eggs"], found["name"] = life.fertility(pet), None
