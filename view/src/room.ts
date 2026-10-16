@@ -28,6 +28,16 @@ import { paintText, paintTitle } from "./px/built";
 import type { Thing } from "./px/still";
 import { hslInt } from "./px/tint";
 import { Light, REDUCE } from "./px/weather";
+
+/** v3.5.10: one part of the room that fails (a new snapshot field an old page does not know, a bad sprite) is skipped,
+ *  and said once on the console; everything else goes on being drawn. */
+const failed = new Set<string>();
+function once(part: string, e: unknown) {
+  if (!failed.has(part)) { failed.add(part); console.error(`room: ${part} failed; the rest goes on`, e); }
+}
+function guard(part: string, fn: () => void) {
+  try { fn(); } catch (e) { once(part, e); }
+}
 import { step as works } from "./px/works";
 
 export type Rect = { x: number; y: number; w: number; h: number };
@@ -168,7 +178,7 @@ export class Room {
     this.fit();
     this.app.ticker.add(() => this.frame(performance.now()));
     this.ready = true;
-    if (this.scene) this.update(this.scene);
+    if (this.scene) guard("drawing the room", () => this.update(this.scene!));
   }
 
   /** The largest whole number of screen pixels to an art pixel that fits the element. */
@@ -186,7 +196,7 @@ export class Room {
     this.world.scale.set(K);
     this.over.c.scale.set(K);
     this.built = "";
-    if (this.scene && this.ready) this.update(this.scene);
+    if (this.scene && this.ready) guard("drawing the room", () => this.update(this.scene!));
   }
 
   /** Hold the names of the things in the room on (true), or let them go (false). Each one also shows while the pointer
@@ -527,6 +537,10 @@ export class Room {
   // ---- every frame ----
 
   private frame(now: number) {
+    try { this.frameParts(now); } catch (e) { once("frame", e); }
+  }
+
+  private frameParts(now: number) {
     const sc = this.scene, still = this.still;
     if (!sc || !still || !this.ready) return;
     const dt = Math.min(100, now - (this.last || now)), st = this.stage, K = this.K;
@@ -535,7 +549,7 @@ export class Room {
     const pools = this.light.pools;
     pools.length = 0;
     for (const a of this.pets.values()) {
-      a.step(st);
+      guard("a hob", () => a.step(st));
       const r = a.rect(), h = this.heads.get(a.pet.id) ?? { x: 0, y: 0, w: 0, h: 0 };
       [h.x, h.y, h.w, h.h] = [r.x * K, r.y * K, r.w * K, r.h * K];
       this.heads.set(a.pet.id, h);
@@ -543,7 +557,7 @@ export class Room {
     }
     st.held = now - this.lastUpdate > Math.max(6000, this.pace * 3);   // the house has stopped (a replay paused): nobody wanders
     for (const [id, b] of this.beasts) {
-      b.step(st);
+      guard("a creature", () => b.step(st));
       const box = this.beastBox.get(id), r = b.rect();
       if (box) [box.x, box.y, box.w, box.h] = [r.x * K, r.y * K, r.w * K, r.h * K];
     }
@@ -553,16 +567,16 @@ export class Room {
     this.words.pointer = at ? this.aim : null;
     st.dim = this.light.darkness;
     this.fx.top = still.bounds.y + 1;
-    this.alive(sc, still, now);
-    this.light.step(now);
-    works(still, sc.snap, now);   // SPEC-v3.5.1: the machine room's machine, alive
+    guard("the room's small life", () => this.alive(sc, still, now));
+    guard("the light", () => this.light.step(now));
+    guard("the Works", () => works(still, sc.snap, now));   // SPEC-v3.5.1: the machine room's machine, alive
     if (this.light.flashing && !this.flashing) { this.startle(now, 0.3); this.shakeUntil = now + 130; }   // thunder: some of them jump, and every room feels it
     this.world.y = now < this.shakeUntil ? K : 0;
     this.flashing = this.light.flashing;
     const tip = this.marks.step(now);
     if (tip && Math.random() < 0.3) this.fx.spawn("grit", tip[0] / K, tip[1] / K, { vx: (Math.random() - 0.5) * 10, vy: 8, g: 30, life: 500 });
-    this.fx.step(now, dt);
-    this.over.step(now, dt);
+    guard("effects", () => this.fx.step(now, dt));
+    guard("effects", () => this.over.step(now, dt));
     this.mark.alpha = 0.6 + 0.4 * Math.sin(now / 200);
     if (now - this.avoidAt > 500) {   // the page's own plates over the room take their space first
       this.avoidAt = now;
@@ -570,11 +584,11 @@ export class Room {
       this.avoid = this.clear.map((id) => document.getElementById(id)).filter((e): e is HTMLElement => !!e && !e.hidden && e.offsetParent !== null).map((e) => e.getBoundingClientRect())
         .map((b) => ({ x: (b.left - view.left) * s, y: (b.top - view.top) * s, w: b.width * s, h: b.height * s }));
     }
-    this.hub.step(now, sc.snap, sc.room, this.fx);
-    this.display?.board.step(now, sc.snap);
+    guard("the machine room", () => this.hub.step(now, sc.snap, sc.room, this.fx));
+    guard("the room's display", () => this.display?.board.step(now, sc.snap));
     const b = still.bounds, rm = this.roomBox;
     [rm.x, rm.y, rm.w, rm.h] = [(b.x + 2) * K, (b.y + 1) * K, (b.w - 4) * K, (b.h - 3) * K];   // a little inside the room's edge: nothing hangs over its border
-    this.words.step(now, dt, this.heads, K, rm, this.avoid);
+    guard("the words", () => this.words.step(now, dt, this.heads, K, rm, this.avoid));
   }
 
   /** The small life of the room's things: glints on glass, a springy thing's bob, notes from what sounds, drips, a draught, dust in the sun. */

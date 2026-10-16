@@ -31,6 +31,7 @@ import { initVoice } from "./voicelab";
 import { Banners, classify } from "./banner";
 import type { Ev } from "./banner";
 import { initUiSound, play } from "./uisound";
+import { watchVersion } from "./reload";
 import type { BoardLine, Burst, Creature, Hello, Mark, Moment, Need, Note, Obj, PetV, RoomV, Snap } from "./types";
 
 const remember = (key: string, value: string) => { try { localStorage.setItem(key, value); } catch { /* private window */ } };
@@ -238,7 +239,8 @@ function render() {
   header(s);
   wipe(here.id);
   try {
-    room.update({ snap: s, room: here, hello, selected: view.sel, picked, replay: !!replayId });
+    try { room.update({ snap: s, room: here, hello, selected: view.sel, picked, replay: !!replayId }); }
+    catch (e) { console.error("room: drawing the room failed; the page goes on", e); }   // (v3.5.10: never the whole page for one part)
     for (const b of burst) if (b.room === view.room) room.burst(b.pet, b.kind);
   } catch (e) { console.error(e); }   // whatever goes wrong in the room, the page round it still says what is happening
   drawMap($("map"), s, view.room, view.sel, (id) => jump({ room: id }), mapWidth());
@@ -1079,3 +1081,4 @@ Object.assign(window, { petView: {
     stage: [$("stage").offsetWidth, $("stage").offsetHeight], scale: $("stage").offsetWidth / ((snap.size[0] + 2) * 16),
   },
 } });
+watchVersion();   // v3.5.10: a page open across a deploy reloads itself
