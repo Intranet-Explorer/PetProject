@@ -7,7 +7,7 @@
 // The sky and each hill layer are drawn once into a canvas of their own and only drawn again when the hour, season,
 // weather or size changes; every frame lays them down and draws what moves over them.
 import { seeded } from "./px/geom";
-import { flashAt, flashOn, REDUCE, softFlash } from "./px/weather";
+import { evening, flashAt, flashOn, REDUCE, softFlash } from "./px/weather";
 import type { Snap } from "./types";
 
 type RGB = number[];
@@ -18,8 +18,10 @@ const smooth = (a: number, b: number, v: number) => { const k = Math.max(0, Math
 /** The sky by the hour: its colour at the top and at the horizon. */
 const SKY: [number, RGB, RGB][] = [
   [0, [9, 12, 36], [22, 28, 64]], [4.6, [11, 14, 40], [30, 30, 72]], [6, [48, 54, 112], [214, 132, 104]], [7.4, [74, 118, 184], [196, 204, 214]],
-  [10, [58, 110, 184], [150, 190, 226]], [16, [62, 112, 184], [162, 196, 224]], [18.4, [84, 90, 150], [232, 168, 92]], [19.9, [42, 40, 90], [190, 100, 82]],
-  [21.4, [13, 17, 46], [32, 34, 76]], [24, [9, 12, 36], [22, 28, 64]],
+  [10, [58, 110, 184], [150, 190, 226]], [16.6, [62, 112, 184], [162, 196, 224]],
+  // v3.5.10 §1: the golden hour from 17:00, the horizon a strong orange by 19:00, the sunset deepest at 19 to 20, night after
+  [17.8, [78, 104, 168], [240, 184, 104]], [19, [90, 80, 146], [255, 142, 64]], [20, [56, 44, 100], [232, 96, 66]],
+  [21, [22, 22, 58], [72, 46, 82]], [22, [13, 17, 46], [32, 34, 76]], [24, [9, 12, 36], [22, 28, 64]],
 ];
 /** What the weather does to the sky: the grey it turns toward, and how far. */
 const OVERCAST: Record<string, [RGB, number]> = { cloudy: [[128, 136, 150], 0.4], rain: [[96, 104, 122], 0.6], storm: [[58, 62, 82], 0.75], snow: [[176, 184, 198], 0.5], heat: [[236, 214, 160], 0.15] };
@@ -76,8 +78,8 @@ function fit() {
 }
 
 /** How light the sky is, 0 (deep night) to 1 (full day), and how golden (0 to 1, round sunrise and sunset). */
-const daylight = (hr: number) => smooth(4.8, 7.2, hr) * (1 - smooth(18.8, 21.2, hr));
-const golden = (hr: number) => Math.max(1 - Math.abs(hr - 6.4) / 1.4, 1 - Math.abs(hr - 19) / 1.6, 0);
+const daylight = (hr: number) => smooth(4.8, 7.2, hr) * (1 - smooth(19, 21.2, hr));
+const golden = (hr: number) => Math.max(1 - Math.abs(hr - 6.4) / 1.4, evening(hr), 0);
 
 function skyAt(hr: number): [RGB, RGB] {
   const i = SKY.findIndex((k) => k[0] > hr), [a, b] = [SKY[Math.max(0, i - 1)], SKY[Math.max(0, i)]], k = (hr - a[0]) / Math.max(0.01, b[0] - a[0]);
@@ -89,11 +91,11 @@ function skyAt(hr: number): [RGB, RGB] {
 
 /** The still layers: the sky in dithered bands, and each layer of hills with its trees. */
 function build() {
-  const hr = state.hour, [top, low] = skyAt(hr), dark = 1 - daylight(hr), horizon = Math.round(h * 0.72);
+  const hr = state.hour, [top, low] = skyAt(hr), dark = 1 - daylight(hr), horizon = Math.round(h * 0.72), rise = 1.5 - 0.8 * golden(hr);   // (at sunrise and sunset the horizon's colour climbs higher, over the hills)
   sky = canvas(w, h);
   const sx = sky.getContext("2d")!, img = sx.createImageData(w, h), d = img.data, BAYER = [0, 0.5, 0.75, 0.25];
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-    const t = Math.min(1, y / horizon), band = Math.min(1, Math.floor(t * 10 + BAYER[(x & 1) + 2 * (y & 1)]) / 10), c = mix(top, low, band * band * 0.6 + band * 0.4), i = (y * w + x) * 4;
+    const t = Math.min(1, y / horizon), band = Math.min(1, Math.floor(t * 10 + BAYER[(x & 1) + 2 * (y & 1)]) / 10), c = mix(top, low, band ** rise), i = (y * w + x) * 4;
     [d[i], d[i + 1], d[i + 2], d[i + 3]] = [c[0], c[1], c[2], 255];
   }
   sx.putImageData(img, 0, 0);
@@ -105,7 +107,7 @@ function build() {
     disc(sx, x, y, 5, css(mix([255, 244, 200], [255, 186, 110], g), 0.85 * pale));
     disc(sx, x, y, 3, css([255, 252, 236], 0.9 * pale));
   }
-  const tone = (c: RGB, far: number) => mix(mix(mix(c, low, far), [255, 168, 96], golden(hr) * 0.18), NIGHT, dark * 0.72);
+  const tone = (c: RGB, far: number) => mix(mix(mix(c, low, far), [255, 160, 90], golden(hr) * 0.26), NIGHT, dark * 0.72);
   const look = HILLS[state.season] ?? HILLS.spring;
   hills = [0, 1, 2].map((L) => {
     const lay = canvas(w, h + 48), x = lay.getContext("2d")!, r = seeded(`hills${L}`), far = [0.55, 0.3, 0.08][L];
@@ -125,7 +127,9 @@ function build() {
   });
   clouds = [];   // the clouds' colour follows the hour and the weather too
   const heavy = state.weather === "rain" || state.weather === "storm", cr = seeded("clouds");
-  const body = mix(mix(heavy ? [120, 126, 142] : [236, 238, 244], [244, 168, 140], golden(hr) * 0.6), [44, 50, 84], dark * 0.82), shade = mix(body, [40, 44, 66], 0.25), rim = mix(body, [255, 255, 255], 0.25 * (1 - dark));
+  // (v3.5.10 §1: at sunset lit pink from below, a gold rim on top, and they keep the light a little after the sky has lost it)
+  const g = golden(hr) * (heavy ? 0.5 : 1), body = mix(mix(heavy ? [120, 126, 142] : [236, 238, 244], [250, 146, 168], g * 0.8), [44, 50, 84], dark * 0.82 * (1 - g * 0.45));
+  const shade = mix(body, g > 0.3 ? [140, 70, 110] : [40, 44, 66], 0.25), rim = mix(body, g > 0.3 ? [255, 214, 150] : [255, 255, 255], (0.25 + g * 0.3) * (1 - dark * (1 - g)));
   for (let i = 0; i < 6; i++) {
     const cw = 26 + Math.floor(cr() * 34), c = canvas(cw, 18), x = c.getContext("2d")!, lumps = 4 + Math.floor(cw / 12);
     for (let j = 0; j < lumps; j++) { const k = (j + 0.5) / lumps; disc(x, 4 + k * (cw - 8), 13, 2 + Math.sin(k * Math.PI) * (3 + cw / 12) * (0.7 + cr() * 0.5), css(body)); }

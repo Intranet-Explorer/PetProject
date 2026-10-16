@@ -34,6 +34,13 @@ export const flashOn = (now: number, at = flashAt(now)) => (now > at && now < at
 /** Reduce motion: nothing flashes; lightning is a soft brighten, 0 to 1, over a little under a second. */
 export const softFlash = (now: number, at = flashAt(now)) => Math.max(0, 1 - Math.abs(now - at - 350) / 450);
 export const REDUCE = matchMedia("(prefers-reduced-motion: reduce)");
+const smooth = (a: number, b: number, v: number) => { const k = Math.max(0, Math.min(1, (v - a) / (b - a))); return k * k * (3 - 2 * k); };
+/** SPEC-v3.5.10 §1: the golden hour, the view's own reading of the house clock (the engine's phases are left as they
+ *  are): 0 before 17:00, 1 from about 18:30, the sunset deepest at 19 to 20, gone into the night by about 21:30. The
+ *  world's sky, the room's light and the page's frames (main.ts: --eve) all follow it. */
+export const evening = (hr: number) => smooth(16.8, 18.4, hr) * (1 - smooth(20.2, 21.6, hr));
+/** ... and the lamps: what is switched on shows from dusk, about 18:00, not only once the room is dark. */
+const lampsUp = (hr: number) => smooth(17.6, 18.4, hr) * 0.42;
 
 let halo: Texture | null = null;
 function haloTexture() {
@@ -102,14 +109,15 @@ export class Light {
     this.glassy = [...env.windows, ...env.panes];
     const night = env.phase === "night", dusk = env.phase === "dusk", d = Math.max(0, Math.min(1, env.night));
     let a: RGB = WHITE;
-    if (dusk) a = mix(mix(a, [255, 176, 128], 0.32), DEEP, 0.12 + d * 0.2);
+    const eve = evening(env.hour), deep = (dusk ? 0.12 + d * 0.2 : 0) + (night ? 0 : 0.16 * smooth(18.6, 20.2, env.hour));   // the sunset dims the room a little before the night does
+    a = mix(mix(a, [255, 172, 120], 0.45 * eve * (night ? 0.5 : 1)), DEEP, deep);   // v3.5.10 §1: the golden hour's warm light, by the hour
     if (night) a = mix(a, DEEP, 0.5 + d * 0.45);
     if (!night) a = mul(a, WEATHER[env.weather] ?? WHITE);
     if (!night && env.day && !env.lit) a = mix(a, DEEP, Math.min(1, env.day) * 0.6);   // a room with little daylight is dim by day too, unless a light is on
     a = mul(a, SEASON[env.season] ?? WHITE);
     if (night && env.sky === "open" && env.season === "winter") a = mix(a, [180, 215, 255], 0.4);   // snow under the open sky gives the moon back: dim blue-white, its drifts still to be seen, never a flat dark wash
     if (!env.power) a = night || dusk ? mix(a, [8, 10, 34], 0.5) : mul(a, [226, 226, 238]);
-    else if (env.lit && (night || dusk)) a = mix(a, [255, 236, 200], 0.14);
+    else if (env.lit && (night || dusk || eve > 0.4)) a = mix(a, [255, 236, 200], 0.14);
     if (env.cold) a = mul(a, [224, 238, 255]);
     a = a.map((v, i) => Math.max(v, FLOOR[i]));   // however dark the room, what lies on its floor can still be made out
     this.ambient = a;
@@ -122,7 +130,7 @@ export class Light {
       s.position.set(l.x, l.y);
       s.scale.set(l.r / 32);
       s.tint = (l.color[0] << 16) | (l.color[1] << 8) | l.color[2];
-      s.alpha = l.color[0] < 128 ? 0 : Math.min(0.4, this.darkness * 0.7);   // by day a lamp hardly shows; by night it must not bleach what it stands on
+      s.alpha = l.color[0] < 128 ? 0 : Math.min(0.4, Math.max(this.darkness, lampsUp(env.hour)) * 0.7);   // by day a lamp hardly shows; by night it must not bleach what it stands on
       this.glow.addChild(s);
     }
     this.bright = this.glow.children.map((c) => c.alpha);
@@ -208,7 +216,7 @@ export class Light {
       const flick = Math.round(Math.sin(now / 190 + l.x) * 0.8), dim = l.color[0] < 128, weak = now < this.dip && !dim ? 0.35 : 1;
       if (dim) x.globalCompositeOperation = "darken";
       [[1, 0.22], [0.76, 0.45], [0.52, 0.7], [0.3, 0.92]].forEach(([k, t]) => {
-        x.fillStyle = css(mix(a, dim ? mul(a, [150, 150, 190]) : mix(l.color, WHITE, 0.2), t * weak * (dim ? 1 : Math.min(1, this.darkness * 2.4))));
+        x.fillStyle = css(mix(a, dim ? mul(a, [150, 150, 190]) : mix(l.color, WHITE, 0.2), t * weak * (dim ? 1 : Math.min(1, Math.max(this.darkness, lampsUp(e.hour)) * 2.4))));
         disc(x, l.x, l.y, Math.round(l.r * k) + flick);
       });
       x.globalCompositeOperation = "lighten";
@@ -267,7 +275,7 @@ export class Light {
     for (const [i, w] of this.glassy.entries()) {
       const [x, y, ww, hh] = [Math.round(w.x), Math.round(w.y), Math.round(w.w), Math.round(w.h)], wall = i >= e.windows.length;   // a pane of a glass wall keeps its own picture of the sky
       if (ww < 3 || hh < 3) continue;
-      const [color, alpha] = this.flashing ? [0xffffff, wall ? 0.5 : 0.9] : wall ? [0, 0] : SKY[e.phase] ?? DULL[e.weather] ?? [0, 0];
+      const [color, alpha] = this.flashing ? [0xffffff, wall ? 0.5 : 0.9] : wall ? [0, 0] : SKY[e.phase !== "night" && evening(e.hour) > 0.4 ? "dusk" : e.phase] ?? DULL[e.weather] ?? [0, 0];
       if (alpha) g.rect(x, y, ww, hh).fill({ color, alpha });
       if (e.season === "winter" && !wall) {   // SPEC-v3.5.9 §4: frost creeping in from the corners and along the edges
         for (const [cx, sx] of [[x, 1], [x + ww - 1, -1]]) for (const [cy, sy] of [[y, 1], [y + hh - 1, -1]]) g.rect(cx, cy, 1, 1).rect(cx + sx, cy, 1, 1).rect(cx, cy + sy, 1, 1).rect(cx + 2 * sx, cy, 1, 1).rect(cx, cy + 2 * sy, 1, 1).rect(cx + sx, cy + sy, 1, 1);

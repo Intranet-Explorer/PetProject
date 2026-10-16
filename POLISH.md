@@ -63,3 +63,7 @@ Small things Tyler has seen and set aside. No action until he says so. Newest at
   - A long name in the folded toolbar's "Visit" head breaks inside a word when it has no space (Pethuthus).
   - At 1728 x 1117 the toolbar (Large's, zoomed) takes two rows, Stock, Music and More on the second; the room there is
     as wide as its column allows, so the room loses nothing, but one row would look tidier.
+- **v3.5.10 §1, the evening, left as it is**: the golden hour (17:00 to 20:00) is the view's reading of the hour,
+  the same in every season, so in winter (the engine's dusk from 16:30, night from 19:00) the sky is still golden at
+  19:00 while the room reads night; the room's readout still says LIGHT: BRIGHT from 17:00 to the engine's dusk though
+  the lamps already glow from 18:00 (`main.ts` side()). (16 October 2026)

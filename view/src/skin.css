@@ -575,3 +575,22 @@ body[data-season="autumn"] #frame::after { width: calc(24px * var(--ui)); height
   .cards .card.asleep .pic::before, .cards .card.asleep .pic::after { animation-duration: 7.2s; }
   .cards .card.asleep .pic::after { animation-delay: 3.6s; }
 }
+
+/* v3.5.10 §1: evening */
+/* the room's surround: the world outside shows through it, darker, at every size (it was a 60% navy fill and a 5 px
+   blur, which at dusk and by night left only a flat dark: the stars and the hills' edges blurred away). Darkened by a
+   backdrop filter instead, so the sky, the stars and the hills all stay, a step down from the page round them */
+#roomwrap { background: rgb(6 8 18 / 18%); -webkit-backdrop-filter: brightness(0.66) saturate(0.85); backdrop-filter: brightness(0.66) saturate(0.85); }
+/* the header strip: the time of day (sunrise, sun, sunset, moon), and the weather beside it when there is any (main.ts) */
+#roomWhen .wx { gap: 4px; }
+/* the golden hour (main.ts sets data-eve and --eve, 0 to 1, from px/weather.ts evening()): the paper and wood frames take
+   a warm tint, deepest at sunset; each frame once (not again inside another). The room's own frame is tinted by a copy
+   of its border drawn over it, so the room inside keeps the light px/weather.ts gives it. The Holo screens give their
+   own light and are left blue */
+body[data-eve] { --evef: sepia(calc(var(--eve) * 0.25)) saturate(calc(1 + var(--eve) * 0.5)) hue-rotate(calc(var(--eve) * -10deg)) brightness(calc(1 - var(--eve) * 0.07)); }
+body[data-eve] :is(.paper, .panel, .frame, .info, .book, .card, .wood, .slot):not([id="frame"], :is(.paper, .panel, .frame, .info, .book, .card, .wood, .slot) *) { filter: var(--evef); }
+body[data-eve] #frame::before { content: ""; position: absolute; inset: calc(-14px * var(--ui)); pointer-events: none; border: inherit; border-image-source: inherit;
+  border-image-slice: 7; border-image-repeat: stretch; image-rendering: pixelated; filter: var(--evef); }
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  body[data-eve] :is(.cards .card, a.card):hover { filter: var(--evef) drop-shadow(0 2px 0 rgb(0 0 0 / 30%)); }
+}

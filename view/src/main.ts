@@ -7,6 +7,7 @@ import { showRecord } from "./family";
 import { hubTip, openScreen, radioChoice, radioControl, radioSound, screens } from "./hub";
 import { boardRows } from "./px/hub";
 import { icon } from "./icons";
+import { evening } from "./px/weather";
 import { drawMap } from "./minimap";
 import { noteInvented } from "./parts";
 import { renderDrawer, showMind, sources, truthOf } from "./panels";
@@ -373,6 +374,7 @@ function nowLine(s: Snap) {
 function header(s: Snap) {
   // SPEC-v3.5.3 §1: the world's time and season, in the slim header
   document.body.dataset.season = s.clock.season ?? "";   // SPEC-v3.5.9 §7: the frames pick up a touch of the season
+  const eve = evening(s.clock.hour); document.body.toggleAttribute("data-eve", eve > 0.02); document.body.style.setProperty("--eve", eve.toFixed(2));   // v3.5.10 §1: ... and of the evening (skin.css)
   $("clock").replaceChildren(`day ${s.clock.day} - ${hhmm(s.clock.hour)}`, el("br"), `${s.clock.season ?? ""}${s.clock.phase === "night" ? " night" : ""} - year ${s.clock.year}`);
   const alive = s.pets.filter((p) => p.stage !== "dead");
   // how many families live here and how many are alive in each, each family in its colour (SPEC-v3.1 §7.4)
@@ -442,13 +444,14 @@ function side(s: Snap, here: RoomV) {
     ...(here.mess === 2 ? row("ROOM", `${(here.mess_says ?? "a mess").toUpperCase()}`) : [])));   // (only a real mess: the readout stays short)
   // SPEC-v3.5.9 §1: the room's header strip: its name, the house time in amber digits, the weather and the season
   if ($("roomName").textContent !== here.name.toUpperCase()) $("roomName").textContent = here.name.toUpperCase();
-  const wx = s.weather === "clear" && c.phase === "night" ? "moon" : s.weather === "fog" ? "cloud" : s.weather, whenKey = `${hhmm(c.hour)}|${wx}|${c.season}`;
+  const tod = c.hour >= 20 || c.hour < 5 ? "moon" : c.hour < 8 ? "sunrise" : c.hour < 17 ? "sun" : "sunset";   // v3.5.10 §1: the time of day, and the weather beside it when there is any
+  const wx = s.weather === "clear" ? "" : s.weather === "fog" ? "cloud" : s.weather, whenKey = `${hhmm(c.hour)}|${tod}|${wx}|${c.season}`;
   if ($("roomWhen").dataset.key !== whenKey) {
     $("roomWhen").dataset.key = whenKey;
-    const sky = el("span", "wx", icon(wx, 24));
-    sky.title = s.weather;
+    const sky = el("span", "wx", icon(tod, 24), ...(wx ? [icon(wx, 24)] : []));
+    sky.title = `${tod === "moon" ? "night" : tod}, ${s.weather}`;
     sky.setAttribute("role", "img");
-    sky.setAttribute("aria-label", s.weather);
+    sky.setAttribute("aria-label", sky.title);
     $("roomWhen").replaceChildren(el("span", "digit", hhmm(c.hour)), sky, el("span", "season", (c.season ?? "").toUpperCase()));
   }
   const line = (cls: string, pic: string, text: string, to: string | null) => {

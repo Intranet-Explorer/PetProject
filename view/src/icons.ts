@@ -33,6 +33,9 @@ export const PATHS: Record<string, string> = {
   snow: "M8 2v12M3 5l10 6M13 5 3 11M6.5 2.5 8 4l1.5-1.5M6.5 13.5 8 12l1.5 1.5",
   heat: "M8 6a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5ZM8 2v1.5M3.5 8.5H2M14 8.5h-1.5M4.5 5l-1-1M11.5 5l1-1M3 13.5c1.5-1 2.5 1 4 0s2.5 1 4 0 2 .5 2.5 0",
   moon: "M12.5 10.5A5.5 5.5 0 0 1 6 3a5.5 5.5 0 1 0 6.5 7.5Z",
+  // v3.5.10 §1: half a sun on the horizon, rising or setting (the room's header strip, by the house's hour)
+  sunrise: "M1.5 12.5h13M4.5 12.5a3.5 3.5 0 0 1 7 0M2.5 9.5h1.5M12 9.5h1.5M4 6.5l1 1M12 6.5l-1 1M8 6V2M6.5 3.5 8 2l1.5 1.5",
+  sunset: "M1.5 12.5h13M4.5 12.5a3.5 3.5 0 0 1 7 0M2.5 9.5h1.5M12 9.5h1.5M4 6.5l1 1M12 6.5l-1 1M8 6V2M6.5 4.5 8 6l1.5-1.5",
   // SPEC-v3.1: the six discoveries and what the family does with them
   chalk: "M10.5 2.5l3 3-6.5 6.5-3-3ZM2.5 12.5c1 1.5 2.5 1.5 4 1.5",
   scrub: "M2.5 6c2-2 3.5 2 5.5 0s3.5-1 5.5 0M2.5 10c2-2 3.5 2 5.5 0M3.5 13.5 12.5 2.5",
