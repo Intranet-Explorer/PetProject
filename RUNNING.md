@@ -63,6 +63,16 @@ A copy of the house for a test lives beside the repo, in `../PetProject-tests/<v
 pictures), never in /tmp: a shutdown clears /tmp, and a copy kept beside the repo just carries on from its saved tick
 when its server is started again (16 October 2026).
 
+### How a change is tested (Tyler, 16 October 2026)
+
+- **Page-only changes** (view, CSS, art): no copy. Build, check in the browser at the sizes the spec lists, deploy.
+- **Data or engine changes:** the self-checks, then a 30-minute smoke run on a copy in `../PetProject-tests/<version>/`,
+  back up `data/`, deploy with one restart, then measure the spec's bars on the live house over one world day. If a
+  bar misses badly, roll back from the backup and report.
+- **A full world day on a copy** only for: life and death, eggs and hatching, anything that deletes many things, or a
+  change to the save format.
+- **After any engine deploy,** check the live house about an hour later: errors, the bars, anything odd.
+
 ## Look at it
 
 - **The house:** the room being followed fills the screen; the map beside it shows every room found so far and
