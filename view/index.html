@@ -72,7 +72,8 @@
     <aside id="side" class="console" aria-label="The house's live systems">
       <button id="consoleFold" class="ctitle cfold" aria-expanded="true">THE CONSOLE</button>
       <div class="cpart cmap"><p class="ctitle">HOUSE MAP<i class="cicon home"></i></p>
-        <div id="mapframe" class="screen mapbox"><div id="map" role="group" aria-label="Rooms of the house"></div></div></div>
+        <div id="mapframe" class="screen mapbox"><div id="map" role="group" aria-label="Rooms of the house"></div></div>
+        <p id="mapNote" class="cnote"></p></div>
       <div class="cpart croom"><p class="ctitle" id="roomTitle">THE ROOM<i class="cicon display"></i></p>
         <div id="info" class="screen">
           <div id="sky"></div>
@@ -91,6 +92,8 @@
     <!-- SPEC-v3.5.3 §2, v3.5.6 §5: the visitor's controls in one toolbar on a paper strip: Care, Talk, More -->
     <footer class="paper">
       <section id="controls" class="controls visit" aria-label="Visit">
+        <!-- v3.5.8 (the v3.5.7 review): which hob the buttons act on, its face and name -->
+        <span id="actsOn" class="group actson" role="status" aria-label="The hob you have chosen"></span>
         <span class="group" role="group" aria-label="Care">
           <span class="glabel">Care</span>
           <button id="feed">Feed</button>
@@ -119,7 +122,7 @@
         <!-- SPEC-v3.3 §3: what the visitor plays for the pets. They hear it whether or not this page's sound is on. -->
         <div id="musicBox" class="paper pop" popover aria-label="Music and the radio">
           <span id="dj" class="group" role="group" aria-label="Music and the radio" hidden>
-            <label>Music <select id="musicMood" aria-label="Music for the pets"></select></label>
+            <label>Music <select id="musicMood" aria-label="Music for the hobs"></select></label>
             <select id="musicScope" aria-label="Where the music plays"></select>
             <label><span id="radioWho">Your little radio</span> <select id="radioPlays" aria-label="Which station the radio plays"><option value="off">off</option></select></label>
             <span id="radioNow" role="status"></span>

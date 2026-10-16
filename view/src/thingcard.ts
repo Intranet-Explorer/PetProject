@@ -5,7 +5,7 @@
 // room's snapshot), and fills it in when /api/thing/<key> answers (kept 30 s: the room hovers often). The Things tab's
 // panel and a thing's page (pages/things.ts) are the same card with its history after it.
 import "./thingcard.css";
-import { el } from "./dom";
+import { el, thingName } from "./dom";
 import type { Kid } from "./dom";
 import { loadPets, petOf } from "./pages/story";
 import { artReady, hasSprite, kindOf, sprite } from "./sprite";
@@ -21,8 +21,12 @@ export type Thing = {
   star?: number | null;   // SPEC-v3.5.4 §10: the tick the visitor gave it a star
   first?: "house" | "family" | null;   // a first, from the house's feats (kept from day 61)
   gone_day?: number | null;
+  // SPEC-v3.5.8 §6, each only when recorded (Made in types.ts): the title shows; how it was made; the bits it was made
+  // from (a gone thing too); who used it, how often
+  title_shown?: boolean; how?: string | null; from?: string[] | null; users?: Record<string, number> | null;
 };
-type Word = { pet: string; day: number | null; how: string; text: string };
+/** What a hob said or wrote naming it (`how`), or (SPEC-v3.5.8 §6, `at`) said or thought about it as it made it or set it down. */
+type Word = { pet: string; day?: number | null; how?: string; text: string; tick?: number; at?: "made" | "set down" };
 export type ThingPage = Thing & {
   moments: import("./pages/story").M[]; does: string | null;
   use?: string | null; material?: string; joined?: string[]; invention?: boolean; made_in?: string | null;
@@ -45,8 +49,14 @@ export function loadThing(key: string) {
 export function thingCard(key: string, quick?: Quick, hint = true): HTMLElement {
   const box = el("div", "thingcard paper");
   if (quick) box.replaceChildren(...cardBody(quick, hint));
-  void Promise.all([loadThing(key), loadPets(), artReady]).then(([t]) => { if (t) box.replaceChildren(...cardBody(t, hint)); });
+  void Promise.all([loadThing(key), loadPets(), artReady]).then(([t]) => { if (t) box.replaceChildren(...cardBody(quick ? fill(t, quick) : t, hint)); });
   return box;
+}
+/** The house's answer, with what the room's snapshot knows and the answer does not (yet) say kept. */
+function fill(t: ThingPage, quick: Quick): ThingPage {
+  const out: Record<string, unknown> = { ...t };
+  for (const [k, v] of Object.entries(quick)) { const x = out[k]; if (x == null || (Array.isArray(x) && !x.length)) out[k] = v; }
+  return out as ThingPage;
 }
 
 /** A statue has no sprite: a figure on a plinth, in the text's colour. */
@@ -88,16 +98,17 @@ export function cardBody(t: Quick, hint = false): Node[] {
     t.day != null ? badge([`day ${t.day}`], "day") : null,
   ].filter(Boolean) as Node[];
   out.push(el("div", "tctop", pic, el("div", "tchead",
-    el("h3", "title tcname", t.name),
+    el("h3", "title tcname", ...thingName(t.name, t.recipe, t.title_shown)),
     el("p", "tckind", kindWords(t), ...(t.statue && t.of ? [" of ", who(t.of) ?? "someone"] : []), t.use ? ` - ${t.use}` : null),
     badges.length ? el("p", "tcbadges", ...badges) : null,
     maker || t.made_in ? el("div", "tcmaker", maker ? portrait(maker, 48) : null, el("div", "",
       maker ? el("div", "", t.statue ? "begun by " : "made by ", petLink(maker)) : null,
+      t.how ? el("div", "tcwhere", t.how) : null,   // SPEC-v3.5.8 §6: "woven at the loom"
       t.made_in ? el("div", "tcwhere", `in ${t.made_in}`) : null)) : null)));
 
   // made from: the bits (the house keeps them on a standing thing, not on a gone one), and what it was joined from
   const bits = new Map<string, number>();
-  for (const b of t.bits ?? []) bits.set(b, (bits.get(b) ?? 0) + 1);
+  for (const b of t.from?.length ? t.from : t.bits ?? []) bits.set(b, (bits.get(b) ?? 0) + 1);   // (SPEC-v3.5.8 §6: `from` is kept for a gone thing too)
   const mats: Node[] = [...bits].map(([b, n]) => el("span", "tcmat slot", hasSprite(`bit.${b}`) ? sprite(`bit.${b}`, 2) : null, n > 1 ? `${b} x${n}` : b));
   if (t.joined?.length) mats.push(el("span", "tcmat slot", "joined from ", ...andList(t.joined.map((n) => `'${n}'`))));
   if (mats.length) out.push(el("h4", "title tcsec", "Made from"), el("div", "tcmats", ...mats));
@@ -106,6 +117,9 @@ export function cardBody(t: Quick, hint = false): Node[] {
   const rows: [string, Kid[]][] = [];
   if (t.statue) {
     if (t.makers?.length) rows.push([t.standing ? "raised by" : "worked on by", [...andList(t.makers.map((m) => who(m.id) ?? m.name)), t.raised_day ? `, day ${t.raised_day}` : ""]]);
+  } else if (t.users && Object.keys(t.users).length) {   // SPEC-v3.5.8 §6: "used most by Pim (5), Odo (2)"
+    const top = Object.entries(t.users).sort((a, b) => b[1] - a[1]).map(([id, n]) => [who(id), n] as const).filter(([w]) => w).slice(0, 3);
+    if (top.length) rows.push(["used", [t.uses ? `${t.uses === 1 ? "once" : `${t.uses} times`}, ` : "", "most by ", ...top.flatMap(([w, n], i) => [i ? ", " : "", w, ` (${n})`])]]);
   } else if (t.uses != null) {
     const top = t.used_by?.[0], seen = (t.used_by ?? []).reduce((s, u) => s + u.n, 0);
     const most = top && top.n >= 3 && who(top.id);
@@ -123,7 +137,9 @@ export function cardBody(t: Quick, hint = false): Node[] {
   const purpose = t.does ?? t.recipe?.purpose;
   const words: Node[] = [];
   if (purpose && !t.statue) words.push(el("p", "", `“${whole(purpose)}” - `, maker ? petLink(maker) : t.by_name ?? "its maker", ", when it made it"));
-  for (const w of t.words ?? []) words.push(el("p", "", `“${w.text}” - `, who(w.pet) ?? "a pet", `, ${w.how}${w.day ? `, day ${w.day}` : ""}`));
+  // SPEC-v3.5.8 §6: the last one or two things said or thought as it was made or set down, then words naming it
+  for (const w of (t.words ?? []).filter((w) => w.at).slice(-2)) words.push(el("p", "", `“${w.text}” - `, who(w.pet) ?? "a hob", w.at === "made" ? ", as it made it" : ", as it set it down"));
+  for (const w of (t.words ?? []).filter((w) => !w.at)) words.push(el("p", "", `“${w.text}” - `, who(w.pet) ?? "a hob", `, ${w.how}${w.day ? `, day ${w.day}` : ""}`));
   if (words.length) out.push(el("blockquote", "tcwords", ...words));
   if (hint) out.push(el("p", "tchint", "click for its page"));
   return out;

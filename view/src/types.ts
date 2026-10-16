@@ -14,6 +14,11 @@ export type Made = {
   called: string | null; tick: number; worn: string[];
   loud?: boolean; hums?: boolean;   // SPEC-v3.3 §4: it sounds when used; it is making a noise by itself right now
   star?: number | null;   // SPEC-v3.5.4 §10: the tick the visitor gave it a star
+  // SPEC-v3.5.8 §6 (recorded from then on; an older thing has none): its maker's title shows (a first, an invention, an
+  // heirloom, a statue, a gift, starred: `recipe.title`); how and where it was made, the bits it was made from, who used
+  // it how often, and what a hob said or thought about it as it made it or set it down
+  title_shown?: boolean; how?: string; made_in?: string; from?: string[]; users?: Record<string, number>;
+  words?: { tick: number; pet: string; text: string; at: "made" | "set down" }[];
 };
 /** SPEC-v3.3 §2. A thing that keeps things: how many, which (by name), and whether they go in it (a chest) or on it (a shelf). */
 export type Store = { cap: number | null; holds: string[]; inside: boolean; bits?: string[] };   // `bits`: the loose bits tidied into it, by name ("string", "bell")
@@ -40,6 +45,7 @@ export type Ticker = { room: string | null; forecast: { text: string; anim: stri
 export type BoardLine = { key: string; text: string; kind: string; pets: string[]; meter: [number, number] | null; says?: string; what?: string };
 export type Obj = {
   pos: Tile; state?: string | null; made?: Made; memorial?: { pet: string; text: string }; wall?: boolean; says?: string;   // wall: it hangs on the north wall above `pos`
+  words?: { tick: number; pet: string; text: string }[];   // SPEC-v3.5.8 §6: words written on a stone
   fix?: Record<string, unknown>; water?: Tile[]; grow?: number; servings?: number;
   // SPEC-v3.3 §2: `on`: it is put away on (or in) the thing of that name and stands on that thing's tile; `store`: it
   // keeps things; `home`: where it belongs
@@ -111,6 +117,8 @@ export type PetV = {
   // is, in its own words ("your paws are surer at the bench"; may be ""). `recipes`: what it has found out.
   wants?: Want[]; skills?: string; recipes?: string[];
   mutation?: { slot: string; from: string; to: string } | null;   // SPEC-v3.5 §2.2: born with something no ancestor had
+  // SPEC-v3.5.8 §6: what its family calls it ("Open Hand"), shown under its name; a project's measurable progress
+  byname?: string | null; progress?: { what: string; have: number; need: number } | null;
 };
 /** `tame` is the pet it belongs to. (The engine also sends its trust in each pet; that is hidden and never shown.) */
 /** A step a pet has just finished (SPEC-v3.2 §5.2). `what` is the thing, bit or song it was about, `to` whom or
@@ -118,7 +126,8 @@ export type PetV = {
 export type Act = { n: number; tick: number; pet: string; type: string; what?: string | null; to?: string | null; room: string; ok: boolean;
   kind?: string | null; color?: string | null; from?: string[] | null; to_id?: string | null; text?: string | null;
   body?: string; loud?: boolean };   // SPEC-v3.3: `body`: its body did it unasked (the activity's name); `loud`: the thing sounds
-export type Creature = { id: string; kind: string; room: string; pos: Tile; doing: string; carry: string | null; tame?: string | null; name?: string | null };
+export type Creature = { id: string; kind: string; room: string; pos: Tile; doing: string; carry: string | null; tame?: string | null; name?: string | null;
+  load?: number; full?: boolean; docked?: boolean };   // SPEC-v3.5.8 §4.2: the sweeper's: how much it has picked up, full (its light blinks), on its dock
 export type Moment = { n: number; tick: number; day: number; hour: number; kind: string; text: string; pet: string | null; room: string | null };
 export type HouseEvent = { tick: number; day: number; kind: string; room: string | null; detail: string };
 export type Chronicle = { day: number; season: string; summary: string; lines: string[]; text: string | null };

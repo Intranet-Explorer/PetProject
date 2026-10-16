@@ -114,6 +114,12 @@ export function scroller(key: string, cls: string, ...kids: Kid[]) {
   return box;
 }
 
+/** SPEC-v3.5.8 §6: a hob's by-name, said under its name ("called Open Hand"), or null. */
+export const byname = (p: { byname?: string | null }) => (p.byname ? `called ${p.byname.replace(/^called /, "")}` : null);
+/** SPEC-v3.5.8 §6: a thing by its everyday name, and its maker's title for it in italics when it is meant to show. */
+export const thingName = (name: string, recipe?: { title?: string | null } | null, shown?: boolean | null): Node[] =>
+  [document.createTextNode(name), ...(shown && recipe?.title ? [document.createTextNode(" "), el("i", "ttl", recipe.title)] : [])];
+
 /** A pet's body as a small still picture, pixel for pixel: as it is now, or as it was when it died. It is drawn at
  *  the largest whole-number scale that fits a square of `box` screen pixels. */
 export function face(p: Pick<PetV, "genome" | "stage" | "stage_before">, box = 48, stage = bodyStage(p)) {

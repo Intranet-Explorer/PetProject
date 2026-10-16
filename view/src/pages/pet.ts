@@ -5,7 +5,7 @@
 // bookmarks on the book's edge turn to them. The dead: the same sheet in sepia, with its stone and last words.
 // main.ts calls render() on every visit to its address, and again every few seconds while it is shown.
 import "./pet.css";
-import { el, wantWords } from "../dom";
+import { byname, el, wantWords } from "../dom";
 import type { Kid } from "../dom";
 import { icon } from "../icons";
 import { petSheet } from "../petsprite";
@@ -52,7 +52,8 @@ type Page = {
   words: { message: string[]; last_words: string | null; sayings: string[]; songs: { name: string; how: string }[]; walls: { text: string; place: string }[];
     beliefs: string[]; reads: { question: string; title: string; text: string; day: number }[] };
   now?: { feelings?: string; wants?: { text: string }[]; focus?: { words?: string } | null; doing?: string; asleep?: boolean; project?: { text: string } | null;
-    plan?: { intention?: string } | null; carrying?: string[]; needs?: Record<string, number> };
+    plan?: { intention?: string } | null; carrying?: string[]; needs?: Record<string, number>;
+    byname?: string | null; progress?: { what: string; have: number; need: number } | null };   // SPEC-v3.5.8 §6
 };
 
 /** The moments that make a life story; the rest ("made", "want", "took"…) are behind "show everything". */
@@ -89,7 +90,7 @@ function needBar(key: string, v: number, cls: string) {
 export async function render(root: HTMLElement, id: string | null) {
   const [data, page] = await Promise.all([allPets(), id ? getJSON<Page>(`/api/petpage/${encodeURIComponent(id)}`) : null]);
   if (!data || !page) {   // the engine away: keep what is shown; a pet it does not know: say so
-    if (!drawn.startsWith(`${id}|`)) root.replaceChildren(el("p", "hint", id ? `No pet "${id}" here.` : "No pet chosen."));
+    if (!drawn.startsWith(`${id}|`)) root.replaceChildren(el("p", "hint", id ? `No hob "${id}" here.` : "No hob chosen."));
     return;
   }
   const key = `${id}|${JSON.stringify([data, page, view, innerWidth < 640])}`;
@@ -122,6 +123,7 @@ export async function render(root: HTMLElement, id: string | null) {
   const hero = el("div", "hero", ped,
     el("div", "pwho",
       el("h1", "pname", p.name),
+      byname({ byname: p.byname ?? page.now?.byname }) ? el("p", "bn", byname({ byname: p.byname ?? page.now?.byname })!) : null,   // SPEC-v3.5.8 §6
       page.named_after ? el("p", "", "named after ", petLink(by.get(page.named_after.id) ?? { ...p, ...page.named_after })) : null,
       el("p", "", `${familyName(p.family).toLowerCase()} - generation ${p.gen}`),
       el("p", "", p.alive ? `${stageText(p)} - born day ${p.born_day}` : `born day ${p.born_day} - died day ${p.died_day}${p.cause ? `, of ${p.cause}` : ""}`),
@@ -165,6 +167,10 @@ export async function render(root: HTMLElement, id: string | null) {
     ...(Q?.projects_done ?? []).map((x) => quest("project", true, say(x.text), x.day ? el("span", "qwhen", `finished day ${x.day}`) : null)),
     ...(Q?.wants_done ?? []).map((x) => quest("want", true, say(cap(x.text.replace(self, "")), x.day), el("span", "qwhen", `done day ${x.day}`))),
   ].filter(Boolean) as HTMLElement[];
+  // SPEC-v3.5.8 §6: a project's measurable progress, as a small bar under it ("3 of 5 planks")
+  const G = page.now?.progress, gauge = G && G.need > 0 ? el("span", "qprog", el("span", "wbar", Object.assign(el("i"), { style: `width:${Math.round((100 * Math.min(G.have, G.need)) / G.need)}%` })),
+    el("span", "qwhen", `${G.have} of ${G.need} ${G.what}`)) : null;
+  if (gauge) { const pq = quests.find((q) => q.querySelector(".qtag")?.textContent === "project" && !q.classList.contains("done")); if (pq) pq.lastElementChild!.append(gauge); else quests.splice(B?.ambition ? 1 : 0, 0, quest("project", false, [cap(G!.what)], gauge)); }
   const questLog = sec("quests", "Quest log", iTrophy, quests.length ? el("ol", "qlist", ...quests) : el("p", "hint", "No ambition, project or wants recorded."));
 
   const slot = (t: Thing) => {

@@ -64,8 +64,10 @@ export function portrait(p: Who, box = 48) {
 }
 
 /** A pet's name that goes to its page, in its family's colour; with its portrait first if `box` is given. */
-export function petLink(p: Who & { name: string }, box = 0) {
-  return a(box ? el("span", "who", portrait(p, box), el("span", "", p.name)) : p.name, href("pet", p.id), `pet ${fam(p.family)}`);
+export function petLink(p: Who & { name: string; byname?: string | null }, box = 0) {
+  const l = a(box ? el("span", "who", portrait(p, box), el("span", "", p.name)) : p.name, href("pet", p.id), `pet ${fam(p.family)}`);
+  if (p.byname) l.title = `${p.name}, called ${p.byname.replace(/^called /, "")}`;   // SPEC-v3.5.8 §6: its by-name, wherever its name is a link (the Story too)
+  return l;
 }
 
 /** A thing's name that goes to its page. */

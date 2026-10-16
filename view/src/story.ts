@@ -126,7 +126,7 @@ export function lab(c: Ctx): Kid[] {
     ["Model calls, per hour", (p) => `${p.calls}, ${p.calls_per_hour}`], ["Calls in the last hour", (p) => String(p.calls_last_hour)],
     ["Seconds a call, median", (p) => String(p.call_seconds ?? "–")], ["Calls that failed", (p) => String(p.failed)],
     ["Made, of them useful", (p) => `${p.made}, ${p.useful}`], ["Rooms it has been in", (p) => String(p.rooms.length)],
-    ["Creatures", (p) => pairs(p.creatures)], ["To other pets", (p) => pairs(p.social)], ["Replies it got", (p) => String(p.replies)],
+    ["Creatures", (p) => pairs(p.creatures)], ["To other hobs", (p) => pairs(p.social)], ["Replies it got", (p) => String(p.replies)],
     ["Time with a need at the bottom", (p) => Object.entries(p.low as Record<string, number | null>).filter(([, v]) => v).map(([k, v]) => `${k} ${v}%`).join(", ") || "none"],
     ["What it does most", (p) => Object.entries(p.actions as Record<string, number>).slice(0, 5).map(([k, n]) => `${k} ${n}`).join(", ")],
     ["Why it thought", (p) => pairs(p.why)],
@@ -137,7 +137,7 @@ export function lab(c: Ctx): Kid[] {
   const claims = d.claims as { text: string; first: string; pets: string[]; gens: number[]; forms: [string, string][]; truth: string | null }[];
   return [
     el("h3", "", "Does it read like a creature?"),
-    el("p", "hint", `Share of each pet's thoughts that talk mechanics (numbers, costs, "efficient"), after its first day. The bar to clear is 10%; the last v2 life was at ${v25.meter_thoughts}%, and ${v25.meter_beliefs}% of its beliefs.`),
+    el("p", "hint", `Share of each hob's thoughts that talk mechanics (numbers, costs, "efficient"), after its first day. The bar to clear is 10%; the last v2 life was at ${v25.meter_thoughts}%, and ${v25.meter_beliefs}% of its beliefs.`),
     el("div", "meters", ...pets.flatMap((p) => [el("span", "", p.name), meter(p.meter_after_day1 ?? p.meter_all, v25.meter_thoughts),
       el("span", "num", `${pct(p.meter_after_day1 ?? p.meter_all)} · beliefs ${pct(p.meter_beliefs)}`)]),
       el("span", "hint", "v2.5"), meter(v25.meter_thoughts, v25.meter_thoughts), el("span", "num hint", `${v25.meter_thoughts}% · beliefs ${v25.meter_beliefs}%`)),
@@ -145,8 +145,8 @@ export function lab(c: Ctx): Kid[] {
     el("div", "meters", el("span", "", "last hour"), (() => { const m = el("div", "meter"), f = el("b", d.calls_last_hour > d.budget ? "over" : ""); f.style.width = `${Math.min(100, (d.calls_last_hour / d.budget) * 100)}%`; m.append(f); return m; })(),
       el("span", "num", `${d.calls_last_hour} of ${d.budget}`)),
     el("p", "hint", `By kind, over the whole family: ${pairs(d.calls_by_kind)}.`),
-    el("h3", "", "Each pet"),
-    el("p", "hint", "Click a pet for all its numbers."),
+    el("h3", "", "Each hob"),
+    el("p", "hint", "Click a hob for all its numbers."),
     el("div", "each", ...each),
     el("h3", "", "Temperament over the generations"),
     drift(d.temper),
@@ -154,12 +154,12 @@ export function lab(c: Ctx): Kid[] {
     el("p", "hint", `Every sentence of a message or belief, tied to earlier ones like it: ${pairs(d.claim_rows)}.`),
     el("ul", "sayings", ...claims.slice(0, 12).map((s) => el("li", "", el("div", "", `“${s.text}”`),
       el("p", "hint", `${[...new Set(s.pets)].map(name).join(" → ")} · ${s.gens.length ? plural(s.gens.length, "generation") : "not passed on"} · ${s.truth ?? "unchecked"}${s.forms.length ? ` · reworded ${s.forms.length}×` : ""}`)))),
-    claims.length > 12 ? fold("claims", `${claims.length - 12} more`, el("ul", "sayings", ...claims.slice(12).map((s) => el("li", "", `“${s.text}” `, el("span", "hint", `${plural(s.pets.length, "pet")}, ${s.truth ?? "unchecked"}`))))) : null,
+    claims.length > 12 ? fold("claims", `${claims.length - 12} more`, el("ul", "sayings", ...claims.slice(12).map((s) => el("li", "", `“${s.text}” `, el("span", "hint", `${plural(s.pets.length, "hob")}, ${s.truth ?? "unchecked"}`))))) : null,
     el("h3", "", "The house"),
     el("ul", "plain", ...(d.rooms as { type: string; tick: number; by: string | null }[]).map((r) =>
       el("li", "", icon(r.type), ` ${c.hello?.rooms[r.type]?.name ?? r.type} `, el("span", "hint", r.by ? `found by ${name(r.by)}` : "where the family began")))),
     el("p", "hint", `Things that happened on their own: ${pairs(d.events)}.`),
-    d.drift ? el("p", "hint", `One rule has drifted: ${d.drift.type}, ${JSON.stringify(d.drift.rule).replace(/[{}"]/g, "")}. The pets were not told.`) : el("p", "hint", "No rule has drifted yet in this family."),
+    d.drift ? el("p", "hint", `One rule has drifted: ${d.drift.type}, ${JSON.stringify(d.drift.rule).replace(/[{}"]/g, "")}. The hobs were not told.`) : el("p", "hint", "No rule has drifted yet in this family."),
     (d.deaths as { name: string; cause: string; days: number | null }[]).length
       ? el("p", "hint", `Deaths: ${(d.deaths as { name: string; cause: string; days: number | null }[]).map((x) => `${x.name} (${x.cause}${x.days != null ? `, ${x.days} days` : ""})`).join("; ")}.`) : null,
     c.voiceLab,

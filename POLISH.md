@@ -30,3 +30,16 @@ Small things Tyler has seen and set aside. No action until he says so. Newest at
 - The ticker's clock is read at the start of each run of messages, so it can be a minute or two behind (v3.5.1).
 - A pet at one of the hub's screens is told "the book is right here" and "you read in the book", and the story says it
   "asked the book": the words of the heavy book, not of a screen (v3.5.1).
+
+- **v3.5.8 view, 15 October 2026:**
+  - The toolbar's Stock, Music and More are icons up to 1700 px now (v3.5.7: 1400), and below 1400 Say is its icon and
+    the words box is narrow, to keep one row with the chosen hob's face and name at its head. At 1000 px it wrapped
+    before and still does.
+  - The Charms filter sits on the Things tab's count line (out of the phone's fold), not inside the kind chooser.
+  - A sweeper on its dock is drawn in front of the dock's foot; the dock shows only above it. A bigger dock picture
+    would read better.
+  - A bit held in the paws is a small picture at its floor size; pale bits (fibre, string) are hard to see on a pale hob.
+  - A big thing over the head of a hob seen side-on: its arms are hidden behind its body's outline.
+  - The sack's count pip can sit under the hob's name plate when the plate is placed low.
+  - A thing card with every new record (title, how, made from, users, words) is taller than an 800 px window's room:
+    it keeps within the window, and the "click to move" hint under it can meet the toolbar.

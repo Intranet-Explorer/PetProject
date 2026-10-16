@@ -194,6 +194,9 @@ main { flex: 1; min-height: 0; overflow: visible; padding: 0; display: block; }
 
 .cards .card .n { color: var(--fam, var(--ink)); }
 .cards .card .s, .cards .card .want, .cards .card .naming { color: var(--ink2); }
+/* SPEC-v3.5.8 §6: a hob's by-name under its name, and a thing's title, in italics (Pixelify has none of its own: slanted) */
+.bn { color: var(--ink2); font-style: italic; overflow-wrap: anywhere; }
+i.ttl { font-style: italic; }
 .cards .card .doing canvas { display: inline-block; vertical-align: -2px; margin-right: 3px; }
 .cards .card .where { display: none; }
 .cards .card .bars { grid-column: 1 / -1; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 6px; align-items: center; color: var(--ink2); }
@@ -215,6 +218,10 @@ footer.paper { padding: 0 4px; }
 #talkText { flex: 1 1 120px; width: 120px; min-width: 90px; }   /* (an input's own width would hold the toolbar open) */
 .visit .group { display: flex; flex-wrap: nowrap; gap: 6px; align-items: center; }
 .visit .glabel { color: var(--ink2); }
+/* the chosen hob at the head of the toolbar (the v3.5.7 review): its face and name, never wider than 9em */
+.visit .actson { gap: 4px; flex: none; max-width: 9em; min-width: 0; }
+.actson .face { flex: none; }
+.actson b { color: var(--fam, var(--ink)); min-width: 0; line-height: 1.05; overflow-wrap: anywhere; }   /* (a long name takes two lines, never cut) */
 .visit .pair { display: flex; gap: 2px; align-items: center; }
 #talkForm { flex: 1 1 180px; max-width: none; }
 @media (min-width: 1000px) { #giveBit, #writeOn { width: auto; max-width: 6.5em; } }
@@ -245,7 +252,7 @@ footer.paper { padding: 0 4px; }
   /* names, tabs and headings at 32 px (the rest 16) */
   #sign { top: 0; width: 384px; height: 92px; padding-top: 28px; }   /* (x4 for words at 32 px: it hangs over the frame's top edge and a little of the wall) */
   .cards .card.away { grid-template-columns: auto minmax(0, 1fr); align-items: center; border-width: 7px; padding: 2px 6px; }
-  .cards .card.away .pic .plate, .cards .card.away .doing, .cards .card.away .want, .cards .card.away .bars, .cards .card.away .naming { display: none; }
+  .cards .card.away .pic .plate, .cards .card.away .bn, .cards .card.away .doing, .cards .card.away .want, .cards .card.away .bars, .cards .card.away .naming { display: none; }
   .cards .card.away .where { display: block; }
   .cards .card.away .wholine { flex-direction: row; gap: 0 6px; flex-wrap: wrap; align-items: baseline; }
   .cards .card.away .where { grid-column: 2; }
@@ -276,11 +283,13 @@ footer.paper { padding: 0 4px; }
   .cards { grid-template-columns: 1fr 1fr; }
   .cards .card .wholine { display: contents; }   /* (a phone's card is narrow: the name at 32 px has the card's width, over the portrait and the stage) */
   .cards .card .n { grid-column: 1 / -1; order: -1; }
+  .cards .card .bn { grid-column: 1 / -1; order: -1; margin-top: -2px; }   /* (SPEC-v3.5.8 §6: the by-name right under the name) */
   #cardsHere:has(> .empty-house) { grid-template-columns: 1fr; }
   .visit .group { flex-wrap: wrap; }
   .controls.visit { gap: 6px; }
   .visit .group { display: grid; grid-template-columns: repeat(3, 1fr); width: 100%; gap: 6px; }
   .visit .glabel { grid-column: 1 / -1; }
+  .visit .actson { display: flex; max-width: none; }   /* (the chosen hob: a face and a name on one line) */
   .visit .pair { display: contents; }
   #giveBit { order: 5; grid-column: 1 / -1; }
   #talkForm { display: grid; grid-template-columns: repeat(3, 1fr); }
@@ -297,7 +306,11 @@ footer.paper { padding: 0 4px; }
 .crt .crthead { opacity: 1; color: var(--holo-dim); }
 /* a small desktop: the toolbar's group labels give way so it stays one row (the room keeps its scale) */
 @media (min-width: 1000px) and (max-width: 1599.98px) { .visit .glabel { display: none; } }
-@media (min-width: 1000px) and (max-width: 1399.98px) { #stockBtn .btxt, #musicBtn .btxt, #moreBtn .btxt { display: none; } }
+/* v3.5.8: room for the chosen hob at the head of the toolbar, still one row: Stock, Music and More as icons up to 1700
+   (v3.5.7: 1400), the two choosers narrower; below 1400 Say as its icon too and the words box narrower */
+@media (min-width: 1000px) and (max-width: 1699.98px) { #stockBtn .btxt, #musicBtn .btxt, #moreBtn .btxt { display: none; } #giveBit, #writeOn { max-width: 5em; } }
+@media (min-width: 1000px) and (max-width: 1399.98px) {
+  #talkForm .btxt { display: none; } #talkText { min-width: 64px; width: 64px; } .controls.visit { column-gap: 7px; } .visit .actson { max-width: 7.5em; } }
 /* (v3.5.7: the pack's icons on the toolbar's buttons, in the ink colour) */
 .bicon { display: inline-block; width: 24px; height: 26px; vertical-align: -6px; margin-right: 4px; background: center / contain no-repeat; image-rendering: pixelated;
   filter: brightness(0) saturate(100%) invert(9%) sepia(30%) saturate(2000%) hue-rotate(340deg); }
@@ -395,6 +408,8 @@ button.followchip.off { background: var(--paper); }
   #side.console.folded button.cfold::after { content: "▸"; }
   #side.console.folded :is(.cmap, .croom, .cworks) { display: none; }
 }
+.console .cnote { margin: 4px 0 0; color: #a8d8f5; letter-spacing: 1px; font-family: var(--dot) !important; font-size: 14px !important; line-height: 18px !important; }
+@media (min-width: 1000px) { .console .cnote { display: none; } }
 
 /* §4 the big moments: a sign dropping in over the room, swinging to rest */
 #event { position: absolute; z-index: 5; left: 50%; top: 18%; width: min(470px, 92%); transform: translateX(-50%); text-align: center; cursor: pointer; }

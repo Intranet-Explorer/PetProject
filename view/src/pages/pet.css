@@ -106,3 +106,7 @@ a.islot:hover { filter: brightness(1.15); }
   .pg { padding: 0 2px; }
   .marks { left: 12px; right: 12px; }
 }
+/* SPEC-v3.5.8 §6: the by-name under the name; a project's progress, a Wood bar under it */
+.pwho .bn { margin: -2px 0 6px; }
+.qprog { display: grid; grid-template-columns: minmax(60px, 160px) auto; gap: 8px; align-items: center; margin-top: 4px; }
+.qprog .qwhen { display: inline; }

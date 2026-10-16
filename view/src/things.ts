@@ -3,7 +3,8 @@
 export type Part = { shape: string; size: number; color: string; at: string };
 /** SPEC-v3.2 §3: a made thing is a `kind` from the catalog (view/assets/kinds.json) in a material, a colour and a size
  *  (1 small to 3 large). A recording made before v3.2 has `parts` and no kind: see kindOf. */
-export type Recipe = { name: string; material: string; purpose: string; kind?: string; color?: string; size?: number; parts?: Part[] };
+export type Recipe = { name: string; material: string; purpose: string; kind?: string; color?: string; size?: number; parts?: Part[];
+  title?: string | null };   // SPEC-v3.5.8 §3: its maker's own name for it, shown only where Made.title_shown says
 
 export const PALETTE: Record<string, string> = {
   red: "#d9483b", orange: "#f08a2e", yellow: "#f2c94c", green: "#3f9b63", teal: "#2f8f8a", blue: "#4a7fc1",

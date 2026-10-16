@@ -4,7 +4,7 @@
 // Travel Book chips. A thing's page (#/thing/<id>) is the same card and history on a book page. main.ts sends both
 // addresses here and calls render() on every visit and every 4 s.
 import "./things.css";
-import { el, plural } from "../dom";
+import { el, plural, thingName } from "../dom";
 import { href } from "../router";
 import { artReady } from "../sprite";
 import { cardBody, fitPic, loadThing } from "../thingcard";
@@ -45,10 +45,10 @@ let side: HTMLElement | null = null, slots = new Map<string, HTMLElement>();
 /** One thing in its slot: a button that chooses it; its name in a tip under a mouse. */
 function slot(t: Thing) {
   const s = el("button", `slot tslot ${ring(t)}${t.gone ? " gone" : ""}`, fitPic(t, phone.matches ? 48 : 64));
-  s.setAttribute("aria-label", t.name + (t.gone ? " (gone)" : ""));
+  s.setAttribute("aria-label", t.name + (t.title_shown && t.recipe.title ? `, ${t.recipe.title}` : "") + (t.gone ? " (gone)" : ""));
   s.setAttribute("aria-pressed", String(t.id === sel));
   s.onclick = () => choose(t.id);
-  s.addEventListener("pointerenter", (e) => { if (e.pointerType === "mouse") showTip(s, [el("div", "ttxt", el("b", "", t.name), el("span", "twhere", t.where))]); });
+  s.addEventListener("pointerenter", (e) => { if (e.pointerType === "mouse") showTip(s, [el("div", "ttxt", el("b", "", ...thingName(t.name, t.recipe, t.title_shown)), el("span", "twhere", t.where))]); });
   s.addEventListener("pointerleave", hideTip);
   slots.set(t.id, s);
   return s;
@@ -114,7 +114,9 @@ function grid(root: HTMLElement, d: All) {
   const shade = el("div", "invshade");
   shade.onclick = () => choose(null);
   root.replaceChildren(el("div", "things", el("div", "paper tbar",
-    el("p", "hint", `${plural(T.length, "thing")} made in the house: ${standing} still about, ${T.length - standing} gone.`),
+    el("div", "tcount", el("p", "hint", `${plural(T.length, "thing")} made in the house: ${standing} still about, ${T.length - standing} gone.`),
+      // SPEC-v3.5.8 §6: charms are a filter of their own, out of the fold on a phone
+      chip(`Charms (${T.filter((t) => t.recipe.kind === "charm").length})`, kind === "charm", () => { kind = kind === "charm" ? "" : "charm"; redo(); })),
     filters(el("div", "tfilters",
       pick("Every kind", kind, kinds.map((k) => [k, inv.has(k) ? `${k} (invented)` : k]), (v) => (kind = v)),
       pick("Everywhere", place, [...d.rooms.map((r): [string, string] => [r, r]), ["keepsake", "in a keepsake box"], ["gone", "gone (taken apart, joined, traded…)"]], (v) => (place = v)),
