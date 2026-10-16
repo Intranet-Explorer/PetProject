@@ -7,6 +7,7 @@ import type { Texture } from "pixi.js";
 import type { Act } from "../types";
 import type { PetActor } from "./actors";
 import { has, tex } from "./assets";
+import { bubbleTexture, stampTexture } from "./fx";
 import type { Fx } from "./fx";
 import { OY } from "./geom";
 import type { Thing } from "./still";
@@ -29,6 +30,13 @@ function wiggle(fx: Fx, t: Thing) {
   fx.tween(420, (k) => t.s.destroyed || t.s.scale.set(t.scale * (1 + Math.sin(k * Math.PI * 3) * 0.1 * (1 - k)), t.scale * (1 - Math.sin(k * Math.PI * 3) * 0.1 * (1 - k))), () => t.s.destroyed || t.s.scale.set(t.scale));
 }
 
+/** SPEC-v3.5.9 §7: something finished: a burst, a little "made" stamp over it, and its picture in a bubble rising from its maker. */
+function made(fx: Fx, t: Thing, at: number[] | null, head: number) {
+  fx.burst("glint", t.x, t.y - 6, 8, 34);
+  fx.after(180, () => fx.float([[stampTexture(), 1]], t.x, t.rect.y - 6, 8, 1500));
+  if (at) fx.after(320, () => fx.float([[bubbleTexture(), 1], [t.texture, Math.min(1, 14 / Math.max(t.texture.width, t.texture.height))]], at[0], at[1] - head - 8, 18, 2000));
+}
+
 export function play(a: Act, c: Cast) {
   if (!a.ok) return;
   const { fx, now } = c, me = c.pets.get(a.pet), at = me ? [me.w.x, me.w.y] : null, head = me ? me.tall : 16;
@@ -39,7 +47,7 @@ export function play(a: Act, c: Cast) {
   };
   switch (a.type) {
     case "make":
-      if (thing) { pop(fx, thing); fx.burst("sparkle", thing.x, thing.y - 8, 7, 26); }
+      if (thing) { pop(fx, thing); fx.burst("sparkle", thing.x, thing.y - 8, 7, 26); made(fx, thing, at, head); }
       me?.react("happy", now, 1100);
       break;
     case "combine": {   // the two slide together, a flash, the new thing
@@ -53,7 +61,7 @@ export function play(a: Act, c: Cast) {
       fx.after(520, () => {
         fx.spawn("flash", to[0], to[1], { life: 430 });
         fx.burst("glint", to[0], to[1], 8, 40);
-        if (thing && !thing.s.destroyed) { thing.s.visible = true; pop(fx, thing, 450); }
+        if (thing && !thing.s.destroyed) { thing.s.visible = true; pop(fx, thing, 450); made(fx, thing, at, head); }
       });
       me?.react("happy", now + 520, 1000);
       break;

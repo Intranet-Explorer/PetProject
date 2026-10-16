@@ -38,7 +38,9 @@ https://crusenho.itch.io/complete-ui-book-styles-pack).
   published as itself: `crusenho/LICENSE-BookStyles.txt`. Used from it: the Travel Book (`UI_TravelBook_*`: the
   header banner, tabs, paper strips, the book pages and cover, slots, icons, the bookmark, the arrow cursor), the Holo Book
   (`UI_HoloBook_*`: the console's cover and panels, the digit frame), the white `UI_Icon_*01b` icons and the Papernote
-  pencil cursor.
+  pencil cursor. The Travel Book popup (`UI_TravelBook_Popup01a`) is also the hobs' speech bubble in the room
+  (SPEC-v3.5.9 §7: `ui.bubble.say` in `sprites.json`, through the pack entry `crusenho`, marked `"skin"`: the page's
+  style sheets name most of its files, so `validate.py` does not count them).
 
 `crusenho/` holds only the sprites the page uses, never the packs. **Changed:** most are cropped to their visible
 pixels; the three cursors are also kept enlarged (nearest neighbour, `@1x` and `@2x`), since a browser cannot scale

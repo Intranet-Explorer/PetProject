@@ -292,7 +292,7 @@ if (ASSETS / "parts.json").exists():
 
 # ---- nothing lies about unused ----
 for pack in packs.values():
-    if pack.get("local"):
+    if pack.get("local") or pack.get("skin"):   # (the page's skin: its style sheets and pages name its files, and its licences are its own)
         continue
     for path in (ASSETS / pack["dir"]).rglob("*"):
         if path.is_file() and path not in used and path.name not in ("LICENSE.txt", "CREDITS.md") and "src" not in path.relative_to(ASSETS).parts:

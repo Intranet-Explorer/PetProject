@@ -107,6 +107,8 @@ const AIR: Record<string, [string, number]> = { make: ["sparkle", 450], combine:
   teach_song: ["note", 520], write: ["chalk", 420], scrub: ["chalk", 320], ask_book: ["page", 650], unmake: ["grit", 300], paint: ["grit", 300], lay_egg: ["sparkle", 500],
   process: ["sparkle", 450] };
 
+const MAKES = new Set(["make", "combine", "process", "mend"]);
+
 /** How a thing a body does by itself looks on the spot (SPEC-v3.3 §1.4), looked up by the activity's name and then by
  *  its icon: an activity added to activities.toml later moves like the others that share its icon, and one with an
  *  icon nobody has heard of still breathes, sways and looks at what it is about (PLAIN), or sits (REST, if it is a
@@ -358,6 +360,11 @@ export class PetActor {
         const at = wall && target ? [target[0] + (Math.random() - 0.5) * 8, target[1]] : [this.w.x + (Math.random() - 0.5) * 10, what === "note" ? top : this.w.y - 5];
         st.fx.spawn(what, at[0], at[1], what === "note" ? { vx: (Math.random() - 0.5) * 8, vy: -14, life: 1500, sway: 2 } : what === "grit" ? { vx: (Math.random() - 0.5) * 12, vy: 6, g: 20, life: 600 } : what === "chalk" ? { vy: 4, life: 500 }
           : { vx: (Math.random() - 0.5) * 14, vy: -12, life: 650 });
+        if (MAKES.has(d!.type)) {   // SPEC-v3.5.9 §7: making looks like making: a small puff and a few sparks at the work
+          const x = this.w.x + (this.w.dir === "left" ? -5 : this.w.dir === "right" ? 5 : 0), y = this.w.y - 6;
+          if (Math.random() < 0.6) st.fx.spawn("wisp", x, y, { vx: (Math.random() - 0.5) * 8, vy: -7, life: 700, alpha: 0.75 });
+          for (let i = 0; i < 2; i++) st.fx.spawn("glint", x, y - 2, { vx: (Math.random() - 0.5) * 36, vy: -22 - Math.random() * 12, g: 90, life: 420, tint: 0xffd27a });
+        }
         this.nextAir = now + every;
       } else if (acting && this.eating) { st.fx.spawn("speck", this.w.x + (Math.random() - 0.5) * 6, this.w.y - 6, { vy: 8, g: 30, life: 400, tint: 0xd9b36a }); this.nextAir = now + 420; }
       else if (b && this.move?.air && !b.walking && !this.w.moving) {

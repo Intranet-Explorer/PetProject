@@ -11,6 +11,8 @@ import type { Layout } from "./assets";
 import { textCanvas } from "./font";
 import type { Fx } from "./fx";
 import { clamp, corner, seeded } from "./geom";
+import type { Rect } from "./geom";
+import { REDUCE } from "./weather";
 import type { Still, Thing } from "./still";
 
 /** What a hub thing is drawn as (null: as it always is). The terminals and the radio set are pictures of ours
@@ -43,7 +45,7 @@ function caseSprite(L: Layout | null) {
 }
 
 type Buf = Float32Array;
-type Item = { anim?: string; rows?: string[]; meter?: [number, number]; ms: number };
+export type Item = { anim?: string; rows?: string[]; meter?: [number, number]; ms: number };
 const LIT: [number, number, number] = [255, 168, 48], OFF = "#2b1709", GAP = "#0b0806";
 const lerp = (a: number, b: number, k: number) => a + (b - a) * clamp(k, 0, 1);
 const PROUD = new Set(["first", "best", "ambition", "star", "invention", "discovery", "statue", "works"]);
@@ -58,6 +60,11 @@ export function boardRows(l: BoardLine): string[] {
 export function tickerLines(s: Snap): string[] {
   return [`Day ${s.clock.day}, ${hhmm(s.clock.hour)}`, ...(s.ticker?.board ?? []).map((l) => boardRows(l).join(": "))];
 }
+
+/** The weather's own animation on a board (engine/hub.py ANIM, by night the moon). */
+export const skyAnim = (s: Snap) => s.weather === "cloudy" ? "cloud" : s.weather === "rain" || s.weather === "storm" ? "rain" : s.weather === "snow" ? "snow" : s.clock.phase === "night" ? "moon" : "sun";
+/** SPEC-v3.5.9 §7: a lit board or screen flickers faintly (never under reduce motion). */
+export const flicker = (now: number, seed = 0) => (REDUCE.matches ? 1 : 0.93 + 0.07 * Math.max(Math.sin(now / 47 + seed), Math.sin(now / 131 + seed * 3)));
 
 /** A pinball machine's dot display, between the messages: each draws one moment `k` (0 to 1) of itself. */
 const ANIMS: Record<string, (b: Pen, k: number) => void> = {
@@ -137,7 +144,7 @@ function bitmap(text: string) {
 /** The board's lights at the screen's own pixels (one light to a pixel of the art, a dark gap round each): the time,
  *  then each line of the board in two rows (what, then who; each row stands still if it fits, else scrolls by), the
  *  Works' with its meter, a little animation before each. A board too low for two rows runs them as one. */
-class Board {
+export class Board {
   s: Sprite;
   private c: HTMLCanvasElement;
   private pen: Pen;
@@ -146,27 +153,32 @@ class Board {
   private at = 0;
   private last = "";
   private two: boolean;
-  constructor(readonly t: Thing, readonly K: number) {
-    const w = Math.round(t.rect.w) - 4, h = Math.round(t.rect.h) - 4;
+  /** `r`: the board's case, in the room's pixels; `lines`: what it runs, if not the lit sign's. */
+  constructor(r: Rect, readonly K: number, readonly lines?: (s: Snap) => Item[]) {
+    const w = Math.round(r.w) - 4, h = Math.round(r.h) - 4;
     this.pen = new Pen(w, h);
     this.two = h >= 15;
     this.c = Object.assign(document.createElement("canvas"), { width: w * K, height: h * K });
     this.s = new Sprite(fromCanvas(this.c));
     this.s.scale.set(1 / K);
-    this.s.position.set(Math.round(t.rect.x) + 2, Math.round(t.rect.y) + 2);
+    this.s.position.set(Math.round(r.x) + 2, Math.round(r.y) + 2);
   }
   /** One run through: rebuilt from the latest snapshot each time round, so the time and the lines are current. */
   private plan(s: Snap) {
+    if (this.lines) this.items = this.lines(s);
+    else this.sign(s);
+    for (const it of this.items) if (it.rows) {   // what fits stands still; the rest scrolls by
+      const w = Math.max(...it.rows.map((r) => bitmap(r).w));
+      it.ms = Math.max(it.meter ? 4200 : 3200, w <= this.pen.w ? 3200 : ((this.pen.w + w) / 26) * 1000);
+    }
+  }
+  private sign(s: Snap) {
     const night = s.clock.phase === "night", time = [`DAY ${s.clock.day}`, hhmm(s.clock.hour)];
     this.items = [{ anim: s.ticker?.cold && night ? "fire" : night ? "moon" : "sun", ms: 1400 }, { rows: this.two ? time : [time.join(" ")], ms: 0 }];
     for (const l of s.ticker?.board ?? []) {
       const rows = boardRows(l);
       this.items.push({ anim: PROUD.has(l.kind) && l.kind !== "works" ? "star" : "wipe", ms: PROUD.has(l.kind) && l.kind !== "works" ? 1400 : 500 },
         { rows: this.two ? (l.meter ? rows.slice(0, 1) : rows) : [rows.join(": ")], meter: l.meter && this.two ? l.meter : undefined, ms: 0 });
-    }
-    for (const it of this.items) if (it.rows) {   // what fits stands still; the rest scrolls by
-      const w = Math.max(...it.rows.map((r) => bitmap(r).w));
-      it.ms = Math.max(it.meter ? 4200 : 3200, w <= this.pen.w ? 3200 : ((this.pen.w + w) / 26) * 1000);
     }
   }
   private row(text: string, y0: number, k: number, ms: number) {
@@ -181,6 +193,7 @@ class Board {
     for (let y = 0; y < 9; y++) for (let x = 0; x < m.w; x++) if (m.on[y * m.w + x]) p.dot(bar + 3 + x, y0 + y, 1);
   }
   step(now: number, s: Snap) {
+    this.s.alpha = flicker(now, this.s.x);
     if (this.i < 0 || now - this.at > this.items[this.i].ms) {
       this.i = this.i < 0 || this.i + 1 >= this.items.length ? 0 : this.i + 1;
       if (this.i === 0) this.plan(s);
@@ -234,6 +247,7 @@ class Glass {
     this.s.zIndex = t.s.zIndex + 0.1;
   }
   step(now: number, o: Obj) {
+    this.s.alpha = flicker(now, this.s.x);
     const [w, h] = [this.r[2], this.r[3]], sc = o.screen, key = screenKey(o), blink = Math.floor(now / 500) % 2 === 0;
     if (key && !since.has(key)) since.set(key, now);
     const ms = key ? now - since.get(key)! : 0, typed = sc ? Math.min(sc.asked.length, Math.floor(ms / 90)) : 0;
@@ -342,7 +356,7 @@ export class Hub {
     const things = [...still.things.values()], objects = Object.fromEntries(things.map((t) => [t.name, t.obj]));
     for (const t of things) {
       if (t.obj.fix?.sign) {
-        const s = new Board(t, K);
+        const s = new Board(t.rect, K);
         (t.s.parent ?? still.wallLayer).addChild(s.s);
         this.signs.push(s);
         still.lamps.push({ x: t.x, y: t.rect.y + t.rect.h / 2, r: Math.max(30, t.rect.w * 0.6), color: [255, 170, 80], made: true });

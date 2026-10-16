@@ -313,6 +313,7 @@ export class Voice {
       if (typeof saved.volume === "number") this.volume = Math.min(1, Math.max(0, saved.volume));
     } catch { /* private window: it just starts off */ }
     // A browser plays nothing until the page has been clicked. If sound was left on, the first click starts it.
+    addEventListener("pet:thunder", () => this.thunder());   // SPEC-v3.5.9 §3: lightning in the world outside (world.ts)
     if (this.on) for (const type of ["pointerdown", "keydown"]) addEventListener(type, () => this.on && void this.start(), { once: true, capture: true });
   }
 
@@ -362,6 +363,14 @@ export class Voice {
     this.ambience = on;
     if (on && !this.on) return this.setOn(true);
     this.onchange();
+  }
+
+  /** Thunder a moment after the lightning, at most every 12 seconds (the sky flashes more often than that). */
+  private thunder() {
+    const ctx = this.ctx;
+    if (!this.on || !ctx || ctx.currentTime < this.thunderAt) return;
+    this.thunderAt = ctx.currentTime + 12;
+    if (this.begin("sfx", "thunder", this.near, 1, {}, HOUSE.thunder)) effect(ctx, this.near, "thunder", ctx.currentTime + 0.5 + Math.random());
   }
 
   /** Every sound begins here. It is written in the audio log, so that what played can be checked without ears, and
@@ -661,10 +670,6 @@ export class Voice {
       this.air = null;
     }
 
-    if (s.weather === "storm" && now >= this.thunderAt) {
-      if (this.thunderAt) house("thunder", this.near);
-      this.thunderAt = now + 14 + (hash(String(s.tick)) % 16);
-    } else if (s.weather !== "storm") this.thunderAt = 0;
 
     for (const c of s.creatures.filter((c) => c.room === here)) {   // small creatures make small sounds now and then
       const kind = c.kind as Creature, singing = c.doing.startsWith("singing");
