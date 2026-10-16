@@ -27,6 +27,14 @@ const SEASON: Record<string, RGB> = { spring: [248, 255, 244], summer: [255, 251
 const SKY: Record<string, [number, number]> = { dusk: [0xf5a070, 0.7], night: [0x232c6e, 0.72] };
 const DULL: Record<string, [number, number]> = { cloudy: [0xb9c2cc, 0.35], rain: [0x8794a8, 0.5], storm: [0x5e6880, 0.62], snow: [0xe8eef6, 0.45], heat: [0xfff0c0, 0.25] };
 
+/** SPEC-v3.5.9 §3: when the storm's lightning struck last (performance.now() milliseconds): the room and the world
+ *  outside (world.ts) flash together, twice in quick succession, from then. */
+export const flashAt = (now: number) => { const slot = Math.floor(now / 5200); return slot * 5200 + ((slot * 7919) % 3800); };
+export const flashOn = (now: number, at = flashAt(now)) => (now > at && now < at + 90) || (now > at + 170 && now < at + 250);
+/** Reduce motion: nothing flashes; lightning is a soft brighten, 0 to 1, over a little under a second. */
+export const softFlash = (now: number, at = flashAt(now)) => Math.max(0, 1 - Math.abs(now - at - 350) / 450);
+export const REDUCE = matchMedia("(prefers-reduced-motion: reduce)");
+
 let halo: Texture | null = null;
 function haloTexture() {
   if (halo) return halo;
@@ -69,6 +77,7 @@ export class Light {
   private vig: CanvasGradient | null = null;
   private vigFor = "";
   private drops: Sprite[] = [];
+  private soft = 0;
 
   constructor() {
     [this.cv.width, this.cv.height] = [W, H];
@@ -118,8 +127,9 @@ export class Light {
   step(now: number) {
     const e = this.env;
     if (!e) return;
-    const storm = e.weather === "storm", slot = Math.floor(now / 5200), at = slot * 5200 + ((slot * 7919) % 3800);
-    this.flashing = storm && ((now > at && now < at + 90) || (now > at + 170 && now < at + 250));
+    const storm = e.weather === "storm", at = flashAt(now), soft = storm && REDUCE.matches ? Math.round(softFlash(now, at) * 8) / 8 : 0;
+    this.flashing = storm && !REDUCE.matches && flashOn(now, at);
+    if (soft !== this.soft) { this.soft = soft; this.dirty = true; }
     if (this.flashing && !this.wasFlashing) this.dip = now + 260;   // the lamps flicker once at a flash
     this.glow.alpha = now < this.dip ? 0.3 : 1;
     if (this.dirty || this.flashing !== this.wasFlashing || (now < this.dip) !== this.dipped || now - this.drawn > (this.pools.length && this.darkness > 0.25 ? 70 : 160)) this.map(now);
@@ -133,6 +143,7 @@ export class Light {
     const e = this.env!, x = this.x, night = e.phase === "night";
     let a = this.ambient;
     if (this.flashing) a = mix(a, WHITE, e.sky === "open" ? 0.75 : e.sky === "glass" ? 0.6 : e.windows.length ? 0.22 : 0);
+    else if (this.soft) a = mix(a, WHITE, this.soft * (e.sky ? 0.3 : e.windows.length ? 0.12 : 0));
     x.globalCompositeOperation = "source-over";
     // the dark gathers at the edges of the room and leaves its middle, where everyone is, plain to see (SPEC-v3.3 §5):
     // the darker the hour or the weather, the more the middle is lifted out of it

@@ -19,6 +19,7 @@ import * as storyPage from "./pages/story";
 import * as thingsPage from "./pages/things";
 import type { Replay } from "./replay";
 import { Room } from "./room";
+import { world } from "./world";
 import type { Target } from "./room";
 import { artReady, aThing, firstSprite, hasSprite, sprite, thingSprite } from "./sprite";
 import { getJSON, giveStar } from "./ui";
@@ -200,6 +201,7 @@ function render() {
   sent = view.room;
   for (const [k, v] of Object.entries({ room: view.room, follow: view.follow, sel: view.sel ?? "" })) remember(k, v);
 
+  world(s);   // SPEC-v3.5.9 §3: the world outside, behind the page
   voice.update(s, view.room, view.sel);
   radioSound(s, view.room, voice, !!replayId);   // SPEC-v3.5.1 §5: the station plays here while the radio is on
   screens(s, view.room);
