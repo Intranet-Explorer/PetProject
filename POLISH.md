@@ -63,3 +63,13 @@ Small things Tyler has seen and set aside. No action until he says so. Newest at
   - A long name in the folded toolbar's "Visit" head breaks inside a word when it has no space (Pethuthus).
   - At 1728 x 1117 the toolbar (Large's, zoomed) takes two rows, Stock, Music and More on the second; the room there is
     as wide as its column allows, so the room loses nothing, but one row would look tidier.
+- **v3.5.10 page (helper A), 16 October 2026:**
+  - At 1024 x 768 (the narrow Laptop) the toolbar takes two rows, Stock, Music and More on the second; the room is x2
+    either way, but one row would look tidier.
+  - The room's strip there leaves out the season (it is in the header); a long follow chip ("FOLLOWING OPEN HOUR'S
+    MARK") gives way with an ellipsis, as on the other Laptops.
+  - The charms' five pendants (diamond, round, heart, drop, tablet) and their material tints are drawn by the page from
+    the one charm picture; the room still draws every charm as the diamond. Real charm art can replace both.
+  - A charm's tint is its main bit's picture averaged, so the greys and browns (wood, clay, soot) stay close together.
+  - The "Say..." pop-up sits at the toolbar's right end, like Stock, Music and More, not under its own button.
+  - A hob's hover gives its first want whole; the plan's own words (cut short by the house) are no longer on it.

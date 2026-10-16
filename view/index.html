@@ -63,7 +63,8 @@
             <span id="roomWhen"></span>
           </div>
           <div id="frame" class="wood">
-            <div id="stage">
+            <!-- v3.5.10 §6: the room's name on a shimmer until the room has drawn -->
+            <div id="stage" class="loading" data-name="looking in…">
               <div id="room" aria-label="The room"></div>
               <p id="banner" role="status" hidden></p>
               <div id="event" class="event" role="status" aria-live="polite" hidden></div>
@@ -104,19 +105,24 @@
         <span class="group" role="group" aria-label="Care">
           <span class="glabel">Care</span>
           <button id="feed">Feed</button>
-          <span class="pair"><select id="giveBit" aria-label="What to give"></select><button id="giveBtn">Give</button></span>
+          <!-- v3.5.10 §5: the button names what the list beside it is for: "Give [amber]" -->
+          <span class="pair"><button id="giveBtn">Give</button><select id="giveBit" aria-label="What to give"></select></span>
           <button id="window">Window</button>
         </span>
-        <form id="talkForm" class="group" aria-label="Talk">
+        <!-- v3.5.10 §5: saying and writing in one "Say..." pop-up, each field with its words -->
+        <span class="group" role="group" aria-label="Talk">
           <span class="glabel">Talk</span>
-          <input id="talkText" maxlength="200" placeholder="Something to say, or to write on a wall" aria-label="Something to say or to write">
-          <button aria-label="Say"><i class="bicon contact"></i><span class="btxt">Say</span></button>
-          <span class="pair"><select id="writeOn" aria-label="Which wall to write on">
+          <button id="sayBtn" popovertarget="talkForm" aria-label="Say or write something"><i class="bicon contact"></i><span class="btxt">Say…</span></button>
+        </span>
+        <form id="talkForm" class="paper pop" popover aria-label="Say or write something">
+          <label for="talkText">Something to say, or to write on a wall</label>
+          <input id="talkText" maxlength="200" placeholder="what to say">
+          <span class="sayrow"><button>Say it</button><button id="writeBtn" type="button">Write it</button><label>on the <select id="writeOn">
             <option value="north wall">north wall</option>
             <option value="south wall">south wall</option>
             <option value="west wall">west wall</option>
             <option value="east wall">east wall</option>
-          </select><button id="writeBtn" type="button">Write</button></span>
+          </select></label></span>
         </form>
         <span class="group" role="group" aria-label="More">
           <span class="glabel">More</span>

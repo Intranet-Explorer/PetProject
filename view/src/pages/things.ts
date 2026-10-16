@@ -1,5 +1,5 @@
 // SPEC-v3.5.7 §7: the Things tab as an inventory. Everything made, each its sprite in a slot whose ring says what it is
-// (gold a house first, silver a family first, blue an invented kind; gone things faded). Choosing one shows its card
+// (gold a house first, silver a family first, blue an invented kind; gone things faded, and hidden until "Show gone"). Choosing one shows its card
 // (thingcard.ts) and its history in a panel to the right; on a phone, in a sheet from the bottom. Filters and sort are
 // Travel Book chips. A thing's page (#/thing/<id>) is the same card and history on a book page. main.ts sends both
 // addresses here and calls render() on every visit and every 4 s.
@@ -39,7 +39,7 @@ const SORTS: Record<string, [string, (a: Thing, b: Thing) => number]> = {
   new: ["Newest", (a, b) => (b.tick ?? 0) - (a.tick ?? 0)], old: ["Oldest", (a, b) => (a.tick ?? 0) - (b.tick ?? 0)],
   used: ["Most used", (a, b) => b.uses - a.uses], name: ["A to Z", (a, b) => a.name.localeCompare(b.name)],
 };
-let kind = "", fam = 0, place = "", mark = "", sort = "new", shown = STEP, drawn = "", busy = false, sel: string | null = null, auto = false;
+let kind = "", fam = 0, place = "", mark = "", gone = false, sort = "new", shown = STEP, drawn = "", busy = false, sel: string | null = null, auto = false;
 let side: HTMLElement | null = null, slots = new Map<string, HTMLElement>();
 
 /** One thing in its slot: a button that chooses it; its name in a tip under a mouse. */
@@ -90,7 +90,8 @@ function filters(...kids: Node[]) {
 
 function grid(root: HTMLElement, d: All) {
   const T = d.things;
-  const list = T.filter((t) => (!kind || (t.statue ? "statue" : t.recipe.kind) === kind) && (!fam || t.family === fam) &&
+  // SPEC-v3.5.10 §3: what is gone is hidden until the visitor asks for it ("Show gone", or the gone place)
+  const list = T.filter((t) => (gone || place === "gone" || !t.gone) && (!kind || (t.statue ? "statue" : t.recipe.kind) === kind) && (!fam || t.family === fam) &&
     (!place || (place === "gone" ? !!t.gone : place === "keepsake" ? t.keepsake : t.room_name === place)) &&
     (!mark || (mark === "invented" ? t.invented : mark === "star" ? t.star != null : mark === "heirloom" ? t.heirloom : mark === "statue" ? t.statue : t.first === mark)))
     .sort(SORTS[sort][1]);
@@ -116,7 +117,8 @@ function grid(root: HTMLElement, d: All) {
   root.replaceChildren(el("div", "things", el("div", "paper tbar",
     el("div", "tcount", el("p", "hint", `${plural(T.length, "thing")} made in the house: ${standing} still about, ${T.length - standing} gone.`),
       // SPEC-v3.5.8 §6: charms are a filter of their own, out of the fold on a phone
-      chip(`Charms (${T.filter((t) => t.recipe.kind === "charm").length})`, kind === "charm", () => { kind = kind === "charm" ? "" : "charm"; redo(); })),
+      chip(`Charms (${T.filter((t) => t.recipe.kind === "charm" && (gone || !t.gone)).length})`, kind === "charm", () => { kind = kind === "charm" ? "" : "charm"; redo(); }),
+      chip(`Show gone (${T.length - standing})`, gone, () => { gone = !gone; redo(); })),
     filters(el("div", "tfilters",
       pick("Every kind", kind, kinds.map((k) => [k, inv.has(k) ? `${k} (invented)` : k]), (v) => (kind = v)),
       pick("Everywhere", place, [...d.rooms.map((r): [string, string] => [r, r]), ["keepsake", "in a keepsake box"], ["gone", "gone (taken apart, joined, traded…)"]], (v) => (place = v)),
@@ -124,7 +126,7 @@ function grid(root: HTMLElement, d: All) {
     el("div", "chips", markChip("First in the house", "house", "gold"), markChip("First in its family", "family", "silver"), markChip("Invented kinds", "invented", "blue"),
       markChip("Heirlooms", "heirloom"), markChip("★ Starred", "star"), markChip("Statues", "statue"),
       el("span", "hint tsort", "Sort:"), ...Object.entries(SORTS).map(([k, [text]]) => chip(text, sort === k, () => { sort = k; redo(); })))),
-    list.length !== T.length ? el("p", "hint", `${plural(list.length, "thing")} like that.`) : null),
+    list.length !== (gone ? T.length : standing) ? el("p", "hint", `${plural(list.length, "thing")} like that.`) : null),
     el("div", "inv", el("div", "invlist",
       list.length ? el("div", "tgrid", ...list.slice(0, shown).map(slot)) : el("p", "empty", "Nothing made like that."),
       list.length > shown ? el("p", "earlier", button(`Show more (${list.length - shown} left)`, () => { shown += STEP * 2; drawn = ""; grid(root, d); }, "button")) : null),
@@ -180,7 +182,7 @@ export async function render(root: HTMLElement, id: string | null): Promise<void
     return thingPage(root, p);
   }
   if (!d) return;
-  const key = JSON.stringify(["grid", d.things.length, d.things[0]?.tick, d.things.filter((t) => t.gone).length, d.things.filter((t) => t.star != null).length, kind, fam, place, mark, sort, shown, phone.matches]);
+  const key = JSON.stringify(["grid", d.things.length, d.things[0]?.tick, d.things.filter((t) => t.gone).length, d.things.filter((t) => t.star != null).length, kind, fam, place, mark, gone, sort, shown, phone.matches]);
   if (key === drawn && root.contains(side)) return;
   drawn = key;
   grid(root, d);

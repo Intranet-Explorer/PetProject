@@ -63,10 +63,10 @@ function fill(t: ThingPage, quick: Quick): ThingPage {
 export const statuePic = (scale: number) => svg("svg", { viewBox: "0 0 16 16", width: 16 * scale, height: 16 * scale, class: "statuepic", "shape-rendering": "crispEdges", "aria-hidden": "true" },
   svg("path", { d: "M7 1h2v2H7ZM6 3h4v5H6ZM5 4h1v3H5ZM10 4h1v3h-1ZM6 8h1v3H6ZM9 8h1v3H9ZM4 11h8v1H4ZM3 12h10v3H3Z", fill: "currentColor" }));
 /** Its picture at the largest whole-number scale that fits `box` px. */
-export function fitPic(t: Pick<Thing, "recipe"> & { statue?: boolean }, box: number) {
+export function fitPic(t: Pick<Thing, "recipe"> & { statue?: boolean; from?: string[] | null; bits?: string[] }, box: number) {
   if (t.statue) return statuePic(Math.floor(box / 16));
-  const one = thingPic(t.recipe, 1);
-  return thingPic(t.recipe, Math.max(1, Math.floor(box / Math.max(one.width, one.height, 1))));
+  const one = thingPic(t.recipe, 1), bit = t.from?.[0] ?? t.bits?.[0];   // (SPEC-v3.5.10 §3: a charm shows what it is made of)
+  return thingPic(t.recipe, Math.max(1, Math.floor(box / Math.max(one.width, one.height, 1))), bit);
 }
 
 const who = (id: string | null | undefined, box = 0) => { const p = petOf(id); return p ? petLink(p, box) : null; };
@@ -75,6 +75,17 @@ const badge = (kids: Kid[], cls = "") => el("span", `tcbadge ${cls}`.trim(), ...
 const andList = (xs: Kid[]) => xs.flatMap((x, i) => [i ? (i === xs.length - 1 ? " and " : ", ") : "", x]);
 /** The engine keeps a purpose to 80 letters; one cut there trails off. */
 const whole = (s: string) => (s.length >= 78 && !/[.!?]$/.test(s) ? `${s}…` : s);
+
+/** SPEC-v3.5.10 §2: whatever else the room's hover shows (a hob, a fixture, a creature, a door, a stone) on the same
+ *  paper as a thing's card: its picture in the slot, its name, what it is, then its lines (`rows` and `sec` make them
+ *  as the thing card does). Nothing in it is cut: it wraps. */
+export const roomCard = (pic: Node | null, name: Kid[], kind: Kid[], ...lines: Kid[]) => el("div", "thingcard paper roomcard",
+  el("div", "tctop", pic ? el("div", "tcslot slot dark", pic) : null, el("div", "tchead", el("h3", "title tcname", ...name), kind.some(Boolean) ? el("p", "tckind", ...kind) : null)), ...lines);
+export const rows = (rs: ([string, Kid[]] | null)[]) => {
+  const ok = rs.filter((r): r is [string, Kid[]] => !!r && r[1].some((k) => k != null && k !== ""));
+  return ok.length ? el("dl", "tcrows", ...ok.flatMap(([k, v]) => [el("dt", "", k), el("dd", "", ...v)])) : null;
+};
+export const sec = (title: string) => el("h4", "title tcsec", title);
 
 /** "a small soft grey cushion", "a statue". */
 function kindWords(t: Quick) {
