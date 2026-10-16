@@ -91,7 +91,7 @@ function layout(again = true) {
     const H = wrap.getBoundingClientRect().bottom - head.bottom - 2 * F;
     if (!fold) barH = foot.getBoundingClientRect().height + parseFloat(getComputedStyle($("page-house")).rowGap || "0");
     const open = zoom(Math.min(W, (fold ? H - barH : H) / h)), shut = zoom(Math.min(W, (fold ? H : H + barH) / h));
-    const want = shut > open && !foot.hidden;
+    const want = shut > open && !foot.hidden && open * dpr < 3;   // (only when the room would otherwise be small: the visitor's buttons stay out where there is room)
     if (want !== fold && again) { document.body.classList.toggle("fold", want); return layout(false); }
     k = fold || want ? shut : open;
   } else if (innerWidth >= SMALL) k = zoom(Math.min(W, (innerHeight - head.bottom - scrollY - 2 * F - 2) / h));
@@ -101,18 +101,24 @@ function layout(again = true) {
   consoleFit();
   marquee($("board"));
 }
-/** SPEC-v3.5.9 §2: on a short desktop the console folds to the board and the Works by itself when its sections do not
- *  fit the window's height, and opens again when they do; its button folds and opens it by hand in between. */
-let consoleNeeds = 0, consoleAuto = false;
+/** SPEC-v3.5.9 §2: on a short desktop the console gives way a section at a time when its sections do not fit the
+ *  window's height: first the room's readout (the header strip says its time and weather), then the map, leaving the
+ *  board and the Works; and opens again when they fit. Its button folds and opens it by hand, until the window changes. */
+let consoleAt = "", byHand = false;
 function consoleFit() {
-  const side = $("side"), folded = side.classList.contains("folded");
-  if (!folded) consoleNeeds = side.scrollHeight;
-  const tight = innerWidth >= DESKTOP && consoleNeeds > side.clientHeight + 1;
-  side.classList.toggle("tight", tight);
-  if (tight !== consoleAuto) { consoleAuto = tight; foldConsole(tight); }
+  const side = $("side"), size = `${innerWidth}x${innerHeight}`;
+  if (byHand && size === consoleAt) return;
+  byHand = false;
+  consoleAt = size;
+  side.classList.remove("lean");
+  foldConsole(false);
+  const over = () => innerWidth >= DESKTOP && side.scrollHeight > side.clientHeight + 1;
+  if (over()) side.classList.add("lean");
+  if (over()) foldConsole(true);
+  side.classList.toggle("tight", side.classList.contains("lean"));
 }
 const foldConsole = (on: boolean) => { $("side").classList.toggle("folded", on); $("consoleFold").setAttribute("aria-expanded", String(!on)); };
-const mapWidth = () => Math.min($("mapframe").clientWidth, innerWidth >= 2400 ? 140 : innerWidth >= DESKTOP ? 170 : 300);   // (two of the art's pixels to one on a desktop: the board has the rest of the column; on Huge one, which its zoom doubles)
+const mapWidth = () => Math.min($("mapframe").clientWidth, innerWidth >= 2400 ? 250 : innerWidth >= DESKTOP ? 170 : 300);   // (two of the art's pixels to one on a desktop: the board has the rest of the column; on Huge one, which its zoom doubles)
 const watch = new ResizeObserver(() => layout());   // a new window, or the toolbar wrapping: measure afresh
 for (const e of [document.querySelector("header")!, document.querySelector("footer")!, document.querySelector("main")!, $("replayBar"), $("now"), $("side")]) watch.observe(e);
 addEventListener("resize", () => layout());   // (Small: the window's height alone can change the room's zoom)
@@ -883,7 +889,7 @@ $("namesBtn").onclick = () => {
   $("namesBtn").setAttribute("aria-pressed", String(on));
   (room as unknown as { names?: (on: boolean) => void }).names?.(on);
 };
-$("consoleFold").onclick = () => foldConsole(!$("side").classList.contains("folded"));   // SPEC-v3.5.7 §3: a phone's console folds to the board
+$("consoleFold").onclick = () => { byHand = true; foldConsole(!$("side").classList.contains("folded")); };   // SPEC-v3.5.7 §3: a phone's console folds to the board
 $("visitBtn").onclick = () => $("visitBtn").setAttribute("aria-expanded", String($("visitBtn").getAttribute("aria-expanded") !== "true"));   // SPEC-v3.5.9 §2: the folded toolbar
 $("feed").onclick = () => act({ type: "feed" });
 $("window").onclick = () => act({ type: "window" });

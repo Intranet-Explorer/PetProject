@@ -248,7 +248,7 @@ footer.paper { padding: 0 4px; }
 @media (min-width: 1200px) { :root { --maxw: 1700px; --colL: 260px; --colR: 300px; } }
 @media (min-width: 1700px) { :root { --maxw: 2400px; --colL: 340px; --colR: 400px; --ui: 1.5; --led: calc(32px / 1.5); }
   body[data-page="house"] { --tx: 20px; } html[data-text="large"] body[data-page="house"] { --tx: 24px; } }
-@media (min-width: 2400px) { :root { --maxw: 3200px; --colL: 480px; --colR: 560px; --ui: 2; --led: 16px; }
+@media (min-width: 2400px) { :root { --maxw: 3200px; --colL: 480px; --colR: 560px; --ui: 2; --led: 20px; }   /* (the board at 40 px on Huge, as big as the text round it) */
   body[data-page="house"] { --tx: 32px; } html[data-text="large"] body[data-page="house"] { --tx: 40px; } }
 /* the panels that grow with the layout (the room does not: main.ts gives it its own whole-number zoom) */
 :is(header.banner > *, #left, #side, footer, #now, #replayBar, #roomhead, p.more) { zoom: var(--ui); --text: calc(var(--tx) / var(--ui)); --lh: calc(var(--tx) * 1.3125 / var(--ui)); }
@@ -443,6 +443,7 @@ button.followchip.off { background: var(--paper); }
 button.cfold::after { content: "▾"; }
 #side.console.folded button.cfold::after { content: "▸"; }
 #side.console.folded :is(.cmap, .croom) { display: none; }
+#side.console.lean .croom { display: none; }   /* SPEC-v3.5.9 §2: short, the readout goes first (the room's header strip has its time, weather and season), then the map */
 .console .cnote { margin: 4px 0 0; color: #a8d8f5; letter-spacing: 1px; font-family: var(--dot) !important; font-size: 16px !important; line-height: 20px !important; }
 @media (min-width: 1200px) { .console .cnote { display: none; } }
 
@@ -548,7 +549,7 @@ main { display: flex; flex-direction: column; }
 /* §7 a need that rises ticks its bar up, a notch at a time, with a warm glint */
 .wbar.up > i { transition-timing-function: steps(3, end); animation: tickup 1s ease-out; }
 @keyframes tickup { from { filter: brightness(1.35) saturate(1.2); } }
-/* §7 seasons on the page: frost on the frames' corners in winter, a leaf caught on them in autumn */
+/* §7 seasons on the page: frost on the frames' corners in winter, a leaf caught on them in autumn (not on the now box, whose words run to its edge) */
 :root {
   --frost-tl: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8' shape-rendering='crispEdges'><g><path fill='%23f2faff' d='M0 0h3v1H0zM4 0h2v1H4zM0 1h2v1H0zM0 2h1v1H0zM0 4h1v1H0zM0 6h1v1H0z'/><path fill='%239fd6f2' d='M3 0h1v1H3zM6 0h1v1H6zM2 1h1v1H2zM4 1h1v1H4zM1 2h1v1H1zM0 3h1v1H0zM0 5h1v1H0z'/></g></svg>");
   --frost-tr: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8' shape-rendering='crispEdges'><g transform='matrix(-1 0 0 1 8 0)'><path fill='%23f2faff' d='M0 0h3v1H0zM4 0h2v1H4zM0 1h2v1H0zM0 2h1v1H0zM0 4h1v1H0zM0 6h1v1H0z'/><path fill='%239fd6f2' d='M3 0h1v1H3zM6 0h1v1H6zM2 1h1v1H2zM4 1h1v1H4zM1 2h1v1H1zM0 3h1v1H0zM0 5h1v1H0z'/></g></svg>");
@@ -562,7 +563,7 @@ body[data-season="winter"] :is(#frame, #now, .cards .card)::after { content: "";
               var(--frost-bl) left bottom / var(--f) var(--f) no-repeat, var(--frost-br) right bottom / var(--f) var(--f) no-repeat; }
 body[data-season="winter"] #frame::after { --f: calc(14px * var(--ui)); }
 body[data-season="winter"] #now::after { --f: 12px; }
-body[data-season="autumn"] :is(#frame, #now, .cards .card)::after { content: ""; position: absolute; z-index: 1; top: -3px; right: 12px; width: 24px; height: 14px; pointer-events: none;
+body[data-season="autumn"] :is(#frame, .cards .card)::after { content: ""; position: absolute; z-index: 1; top: -9px; right: 12px; width: 24px; height: 14px; pointer-events: none;
   background: url("../assets/third_party/ninja_adventure/FX/Particle/Leaf.png") 0 0 / 144px 14px; image-rendering: pixelated; filter: hue-rotate(-42deg) saturate(1.5); transform: rotate(-12deg); }
 body[data-season="autumn"] .cards .card:nth-child(even)::after { right: auto; left: 10px; background-position: -48px 0; transform: rotate(10deg); }
 body[data-season="autumn"] #frame::after { width: calc(24px * var(--ui)); height: calc(14px * var(--ui)); background-size: calc(144px * var(--ui)) calc(14px * var(--ui)); }
