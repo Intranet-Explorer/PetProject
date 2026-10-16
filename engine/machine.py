@@ -554,8 +554,8 @@ def targets(house, cfg, pet, A, near):
             return []
         return [{"what": v[0] or name, "want": v[1], "goal": near(room["objects"][name]["pos"]), "bonus": W}]
     f = L["feed"]
-    if A.get("scrap"):   # SPEC-v3.5.8 §4: clearing needs no want: the oldest scrap here that is its to feed
-        f = next(((n, None) for why, n in sorted(order.scraps(house, cfg, room), key=lambda x: room["objects"][x[1]].get("haul") != pet["id"])   # (what it was carrying first)
+    if A.get("scrap"):   # SPEC-v3.5.8 §4: clearing needs no want: the oldest scrap here that is its to feed (once it knows where the Works is)
+        f = None if not home(house, pet) else next(((n, None) for why, n in sorted(order.scraps(house, cfg, room), key=lambda x: room["objects"][x[1]].get("haul") != pet["id"])   # (what it was carrying first)
                   if things.free_to_change(house, pet, room["objects"][n])
                   and not refuses(house, cfg, pet, room, n) and room["objects"][n].get("haul") in (None, pet["id"])), None)
         W *= cfg["machine"]["spring_weight"] if works.spring(house, cfg) else 1.0
