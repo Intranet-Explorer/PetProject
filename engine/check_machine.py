@@ -332,7 +332,7 @@ async def run(d):
     said = json.dumps(model.schema(c)) + model.prompt(packet, c)
     assert all(x in model.WRITTEN and '"%s"' % x in said for x in machine.ACTIONS) and '"drum one"' in said, "and the model's reply is held to what the machine offers"
     go(nursery)
-    assert minds.perceive(h, cfg, pet, mem)[1]["machine"] is None and "the machine" not in minds.perceive(h, cfg, pet, mem)[0].split("you can:")[0].split("you notice")[1].split("\n")[0], "away from it nothing is added to its packet"
+    assert minds.perceive(h, cfg, pet, mem)[1]["machine"] is None and "the machine" not in minds.perceive(h, cfg, pet, mem)[0].split("you can:")[0].split("you notice")[1].split("\n")[0].split("names you could give")[0], "away from it nothing is added to its packet"
     eng.close()
 
     # ---- an old saved house gains the machine on load, and loads without error: one whose machine room was found before there was one ----

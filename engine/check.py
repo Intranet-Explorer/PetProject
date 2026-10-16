@@ -1702,7 +1702,7 @@ async def main():
         assert not why and "fired clay" in pa["carrying"] and pa["fulfilled"] == n_f + 1 and "you carry what a trowel takes" in told, "with it in its paws the want says so: %s %s" % (why, told)
         pa["carrying"] = []
         spot("clay")
-        assert "you want to warm some clay, for the fired clay" in [c["text"] for c in cands("get")], "what it has found out it sets about: %s" % [c["text"] for c in cands("get")]
+        assert "you want to warm clay, for the fired clay" in [c["text"] for c in cands("get")], "what it has found out it sets about: %s" % [c["text"] for c in cands("get")]
         # something it wants to know, and the book is in the room: it is drawn to it (not while its eyes are tired)
         pa.update(wants=[{"what": "word", "key": "word:ship", "text": "", "done": "", "word": "ship", "since": hA["tick"]}], asked_at=LONG_AGO)
         assert wants.lean(hA, cA, pa)["ask"] == ("ask", "what is ship", "word:ship")

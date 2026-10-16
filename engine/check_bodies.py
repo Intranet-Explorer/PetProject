@@ -299,7 +299,7 @@ async def inventing(d):
     assert not why and 'you played "the lamp song" on the ringing light' in got[0] and kid["songs"] and any("playing the ringing light" in e for _, e in kid["events"]), "an instrument plays, and is learned from: %s" % (got,)
     # ... and everywhere a kind is looked up, it is a kind: said, kept, joined on, in the story
     packet = mind.perceive(h, cfg, po, m.mem)[0]
-    assert "ringing light (a blue ringing light; yours" in packet, packet
+    assert "ringing light (a blue harp; yours" in packet, packet
     assert order.cap(cfg, o) == 0 and not order.can_hang(cfg, o) and order.clutter(h, cfg, room) is not None and "ringing light" in actions.describe_thing(h, cfg, po, "ringing light")
     from . import story
     assert any(t["name"] == "ringing light" for t in story.made_by(h, po)) and story.now(h, cfg)

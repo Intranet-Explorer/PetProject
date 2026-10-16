@@ -145,7 +145,7 @@ def honoured(house, cfg, pet, fam, r):
     while p and p.get("parent") and p["parent"] in house["pets"]:
         p = house["pets"][p["parent"]]
         line.append(p)
-    kin = sorted((q for q in house["pets"].values() if q.get("name") and hub.family_of(house, q) == fam and q not in line and q is not pet),
+    kin = sorted((q for q in house["pets"].values() if q.get("name") and hub.family_of(house, q) == fam and q not in line and q is not pet and q["stage"] == "dead"),   # (an old name: not a living sister's)
                  key=lambda q: (q["stage"] != "dead", q["laid"]))
     out = []
     for q in [q for q in line if q.get("name") and hub.family_of(house, q) == fam] + kin + ([pet] if pet.get("name") and hub.family_of(house, pet) == fam else []):

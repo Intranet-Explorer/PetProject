@@ -70,7 +70,10 @@ def spring_clean(house, cfg):
     from . import hub
     if "spring_clean" in house:
         return
-    house["spring_clean"] = {"at": house["tick"], "until": house["tick"] + round(cfg["works"]["works"]["spring_days"] * cfg["ticks_per_day"])}
+    charms = sum(1 for r in house["rooms"].values() if r["type"] for o in things.made(r).values() if o["made"]["recipe"].get("kind") == "charm")
+    house["spring_clean"] = {"at": house["tick"], "until": house["tick"] + round(cfg["works"]["works"]["spring_days"] * cfg["ticks_per_day"]) * (charms > 0)}
+    if not charms:   # (a new house has nothing to clear)
+        return
     moment(house, "spring", "A spring clean: the old charms about the house, and the things nobody uses, could go to the Works as scrap", None, hub.RID)
     for p in house["pets"].values():
         if p["stage"] not in ("egg", "dead"):

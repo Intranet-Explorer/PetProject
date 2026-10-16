@@ -63,7 +63,7 @@ def pet_card(house, cfg, p, fam, names):
             "stage": p["stage"], "drawn": life_stage(p), "genome": p["genome"], "parent": p.get("parent"),
             "children": [k for k in p.get("children", []) if k in house["pets"]], "alive": p["stage"] not in ("dead",),
             "laid_day": day_of(cfg, p.get("laid")), "born_day": day_of(cfg, p.get("born")), "died_day": day_of(cfg, p.get("died")),
-            "cause": p.get("cause"), "days": life.get("days"), "room": p.get("room"), "word": p.get("word")}
+            "cause": p.get("cause"), "days": life.get("days"), "room": p.get("room"), "word": p.get("word"), "byname": p.get("byname")}
 
 
 def links(house, db, fam, names):
