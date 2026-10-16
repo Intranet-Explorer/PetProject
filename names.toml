@@ -1,0 +1,421 @@
+# Hob names (SPEC-v3.5.8 §2, engine/names.py). A hob naming an egg is offered five names from different sources;
+# one of them is a name from this bank. Add a name to any group (commas or new lines between names), or add a group:
+#
+#   [bank.<group>]
+#   why = what the offer says of a name from it ("an old Welsh name")
+#   names = """ Name, Name, Name """
+#
+# A name is a name a hob can have only if it is easy to say, at most 16 letters, and not made of the family's words
+# (`vocabulary` below): engine/check_names.py checks every name here against the same rules.
+
+# The family's words: what the hobs say, call their things and named their young before v3.5.8 ("Rain Rest", "Open
+# Hand", "Grey Light II", "Open Hour"), and room, furniture and bit words that read as a phrase. A name made only of
+# these is a phrase, not a name. The words of any hob's two-word name in the house count too (names.family_words).
+vocabulary = """
+rest rests resting restless quiet quietly hush open opening light lights lit seed seeds sprout dusk dawn rain rains
+rainy grey gray stone stones hum hums humming hand hands spring springs springy echo echoes warm warmth dark darkness
+soft softness calm still stillness moss mossy hour hours first second third fourth fifth sixth one two three four five
+six last other old new fall falls fallen glow glows bright wait waiting settle settling shape nest petal petals vine
+breath hold held keep kept keeper morning night nights day days evening noon sun sunny shade shadow ease slow stop
+step heart root roots leaf leaves water deep low high home here there between green white black blue red yellow
+purple brown small big long short near far under over after before sleep sleepy dream wake tune sound whisper signal
+pulse bond shared share together alone gentle tender lost found kind true safe cold cool heavy hollow empty full edge
+mark line path way place space part whole same ring loop knot drop drip flow lean leaning fold thread weave woven
+patch draught roof door window wall floor shelf shelves box bed curtain row bush frame lining niche bench crate crates
+sign screen machine rug pipe bowl chest toy plant rock trunk chair stool cushion mat tile cup basket lamp charm totem
+token bead holder marker keepsake piece bit lump blob dot pad cellar attic nursery garden greenhouse pond storeroom
+workshop music hub room house hall north south east west clay sand wood fibre fiber metal tinder soot resin string
+wire glass cloth felt wax stick twig bark mud dust ash ember smoke fire flame chalk grit cord rope glue dye ink plank
+fluff lily quill wicker mesh brick bell bells chime chimes nook hearth visitor egg eggs hob hobs family mother father
+parent child little thing things something nothing someone song songs sing singing hymn wish wishing hope listen
+listening watch watching tend tending mend mending made making gather gathering gift gifts quietness bloom blooming
+growing grow grown dry wet damp mist misty fog frost snow storm wind breeze cloud cloudy sky moon star stars
+"""
+
+# Something from its own life comes out as a name: these words become these names (anything else is its word, if
+# that is a name).
+[life]
+lamp = "Lantern"
+candle = "Wick"
+seed = "Pip"
+moth = "Mothball"
+mouse = "Squeak"
+bean = "Beanie"
+bell = "Jingle"
+chime = "Tinkle"
+chimes = "Tinkle"
+pond = "Puddle"
+ball = "Bounce"
+button = "Button"
+pebble = "Pebble"
+drum = "Rumble"
+flute = "Piper"
+bird = "Birdie"
+beetle = "Bumble"
+herb = "Basil"
+tomato = "Tomato"
+nursery = "Cradle"
+cellar = "Barrel"
+attic = "Dusty"
+workshop = "Tinker"
+music = "Melody"
+greenhouse = "Fern"
+garden = "Clover"
+storeroom = "Cubby"
+hub = "Gizmo"
+
+# Words read on the screens that are not names, however they are written ("Latin", "Monday").
+[screen]
+skip = """
+latin greek english french german italian spanish roman american british european african asian japanese chinese
+indian arabic christian muslim jewish hindu buddhist catholic july monday tuesday wednesday thursday friday saturday
+sunday january february march september october november december internet microsoft windows google apple wikipedia
+science god gods bible church empire kingdom republic state states united union mount river lake sea ocean island
+islands saint new old north south east west earth world national international university college king queen
+prince princess president people language english americans europe cretaceous paleogene obon festival xbox android
+chrome macos linux series album band film movie company the however also there they these those this although
+"""
+
+[bank.english]
+why = "an old English name"
+names = """
+Abigail, Ada, Adam, Agatha, Agnes, Albert, Alfred, Alice, Amelia, Amos, Angus, Anne, Archibald, Archie, Arthur,
+Audrey, Barnaby, Basil, Beatrix, Benedict, Benjamin, Bertram, Bertie, Betty, Bram, Cecil, Cecily, Charles, Charlotte,
+Clara, Clarence, Clement, Clementine, Cuthbert, Cyril, Daisy, Dorothy, Douglas, Edgar, Edith, Edmund, Edwin, Eleanor,
+Eliza, Elsie, Emma, Ernest, Esther, Ethel, Evelyn, Felix, Florence, Frances, Frank, Freddie, Gilbert, Gladys, Godfrey,
+Grace, Harold, Harriet, Hattie, Henry, Herbert, Horace, Hubert, Hugh, Humphrey, Ida, Imogen, Irene, Isaac, Isabel,
+Jack, James, Jane, Jasper, Jemima, Joan, John, Josephine, Jude, Julian, Kit, Lavinia, Leonard, Lettice, Lionel, Lottie,
+Louisa, Lucy, Mabel, Margaret, Martha, Mary, Matilda, Maud, Maurice, Mildred, Millie, Miriam, Molly, Montague, Muriel,
+Nancy, Nell, Nora, Norman, Oliver, Oswald, Owen, Percival, Percy, Peggy, Phoebe, Polly, Prudence, Quentin, Ralph,
+Reginald, Rex, Robin, Rosalind, Rosie, Rupert, Ruth, Samuel, Sidney, Silas, Simon, Sophie, Stanley, Susan, Sybil,
+Theodore, Thomas, Tobias, Toby, Ursula, Vera, Victor, Violet, Walter, Wilfred, William, Winifred, Wilma, Winston,
+Alfie, Annie, Barney, Bella, Billy, Bobby, Charlie, Dottie, Eddie, Effie, Ellie, Ernie, Frankie, Freda, Georgie,
+Harry, Hettie, Jimmy, Josie, Kitty, Lizzie, Maggie, Minnie, Nellie, Ollie, Queenie, Reggie, Sally, Sammy, Teddy,
+Tilly, Tommy, Winnie, Abel, Ambrose, Bartholomew, Benedict, Cornelius, Crispin, Digby, Dudley, Edwina, Fenella,
+Fitzroy, Florian, Gideon, Giles, Gwendolen, Hilda, Hester, Hamish, Ivor, Jocelyn, Lancelot, Leopold, Lucius, Mortimer,
+Nigel, Ottoline, Peregrine, Philippa, Piers, Rosamund, Rowena, Septimus, Tabitha, Tristram, Wendy, Wilbur, Wystan,
+Alan, Andrew, Anthony, Barbara, Bernard, Brian, Carol, Catherine, Christopher, Colin, Daniel, David, Dennis, Derek,
+Diana, Donald, Edward, Elizabeth, Emily, Eric, Fiona, Francis, Geoffrey, George, Gerald, Gordon, Graham, Helen,
+Howard, Jennifer, Jeremy, Joseph, Joyce, Judith, Keith, Kenneth, Laura, Lawrence, Linda, Malcolm, Martin, Matthew,
+Michael, Nicholas, Patricia, Patrick, Paul, Peter, Philip, Rachel, Raymond, Richard, Robert, Roger, Ronald, Rosemary,
+Russell, Sarah, Stephen, Stuart, Timothy, Trevor, Valerie, Vincent, Wallace, Agnes, Alma, Aubrey, Beryl, Blanche,
+Bridget, Celia, Cordelia, Dora, Doris, Elspeth, Enid, Eunice, Flora, Gertrude, Greta, Hazel, Iris, Isla, Ivy,
+Joy, Juliet, Lorna, Lydia, Marian, Marjorie, Mavis, Meg, Myrtle, Nina, Norah, Olive, Pansy, Pearl, Primrose, Rhoda,
+Rose, Sadie, Selina, Stella, Thelma, Una, Vivian, Winona, Zillah, Arnold, Barrett, Bertrand, Chester, Clifford,
+Clive, Cyrus, Dexter, Eldon, Elmer, Ezra, Floyd, Garrett, Gregory, Harvey, Homer, Irving, Jarvis, Lester, Lloyd,
+Milton, Morris, Neville, Ogden, Orville, Otis, Roland, Roscoe, Rufus, Sherman, Spencer, Sterling, Thaddeus, Wesley
+"""
+
+[bank.celtic]
+why = "an old Celtic name"
+names = """
+Aidan, Ailsa, Aisling, Alastair, Angus, Aoife, Bram, Brendan, Brenna, Bridie, Cairn, Callum, Caoimhe, Cara, Cathal,
+Ciara, Cillian, Colm, Conall, Conor, Cormac, Darragh, Deirdre, Declan, Donal, Duncan, Eamon, Eilidh, Eileen, Eithne,
+Ewan, Fergus, Finbar, Finlay, Finn, Fionn, Fiona, Grainne, Hamish, Iona, Isla, Keira, Kenna, Kieran, Lachlan, Maeve,
+Mairi, Malachy, Morag, Muireann, Niall, Niamh, Nuala, Oisin, Orla, Padraig, Rhona, Ronan, Rory, Rowan, Seamus, Shona,
+Sorcha, Struan, Tadhg, Tamsin, Teague, Torin, Aileen, Brigid, Catriona, Dougal, Eoghan, Fenella, Ishbel, Kenzie,
+Lorcan, Mungo, Oona, Senan, Sile, Tara, Brody, Cael, Cian, Dara, Enda, Fiach, Kian, Rian, Mabyn, Morwenna, Jory,
+Jago, Kerensa, Loveday, Merryn, Tristan, Wenna, Elowen, Demelza, Tressa, Locryn, Piran, Pedrek, Senara, Ewen, Ruairi
+"""
+
+[bank.welsh]
+why = "an old Welsh name"
+names = """
+Aled, Alun, Angharad, Arwel, Bethan, Branwen, Bryn, Cadoc, Cai, Carys, Cerys, Dafydd, Delyth, Dilys, Dylan, Eira,
+Eirlys, Elin, Emrys, Ffion, Gareth, Geraint, Glenys, Gruffydd, Gwen, Gwenllian, Gwilym, Gwyn, Heledd, Huw, Idris,
+Ifor, Iolo, Lowri, Llinos, Mabon, Madoc, Meinir, Meredith, Morgan, Myfanwy, Nerys, Nia, Olwen, Owain, Rhian,
+Rhodri, Rhys, Seren, Sian, Tegan, Teleri, Tudur, Wyn, Mali, Elis, Cadi, Dewi, Tomos, Hywel, Medwyn, Eluned
+"""
+
+[bank.norse]
+why = "an old Norse name"
+names = """
+Alva, Arne, Asa, Astrid, Bjorn, Bodil, Brynja, Dagny, Einar, Eir, Erik, Eskil, Frey, Freya, Frida, Gudrun, Gunnar,
+Halvar, Harald, Helga, Hilde, Hjalmar, Idun, Inga, Ingrid, Ivar, Jorunn, Kari, Knut, Leif, Liv, Magnus, Nils, Odd,
+Odin, Olaf, Ragna, Ragnar, Rune, Sigrid, Sigurd, Solveig, Sten, Svea, Sven, Thora, Thorvald, Tor, Tove, Torvald,
+Ulf, Ulla, Vidar, Yngve, Ylva, Agnar, Alfhild, Arvid, Birgit, Dagmar, Elof, Gisli, Gorm, Hakon, Halla, Hedda, Ingvar,
+Kjell, Lars, Linnea, Malin, Nanna, Orm, Runa, Saga, Signe, Stig, Svala, Tyra, Unni, Vigdis, Viggo, Embla, Ase, Torun,
+Sune, Ebbe, Folke, Gote, Inge, Ola, Petter, Sixten, Tage, Valdemar, Ove, Bo, Bengt, Holger, Jens, Kaj, Mads, Morten,
+Soren, Sune, Aksel, Anker, Asger, Bent, Carsten, Esben, Finnur, Gylfi, Hekla, Katla, Brynhild, Gudmund, Sindri
+"""
+
+[bank.finnish]
+why = "a Finnish name"
+names = """
+Aino, Aku, Anja, Eero, Eino, Elina, Helmi, Ilmari, Ilona, Jaakko, Kaarina, Kalle, Kerttu, Lahja, Lauri, Leena,
+Lempi, Liisa, Lumi, Maija, Martti, Mikko, Minna, Niilo, Oiva, Onni, Paavo, Pekka, Pirkko, Raili, Saara, Sakari,
+Siiri, Sulo, Taisto, Tapio, Toivo, Tuuli, Ulla, Urho, Vaino, Veikko, Vilja, Aatu, Eetu, Hilja, Iiris, Kaapo,
+Kielo, Ronja, Silja, Topi, Ukko, Unto, Venla, Aila, Mielikki, Otso, Pihla, Ruusu
+"""
+
+[bank.dutch]
+why = "a Dutch name"
+names = """
+Anouk, Bas, Bram, Daan, Femke, Fleur, Geert, Hendrik, Ilse, Jaap, Joost, Kees, Lotte, Maarten, Marieke,
+Mies, Noor, Pim, Roos, Ruud, Sander, Saskia, Sjoerd, Teun, Tijs, Wim, Wouter, Lieke, Merel, Jip, Janneke, Koen,
+Lieve, Mees, Niels, Ties, Tobi, Hidde, Joris, Ruben, Siem, Stijn, Thijs, Wessel, Anneke, Elke, Hanneke, Gijs
+"""
+
+[bank.german]
+why = "a German name"
+names = """
+Adelheid, Albrecht, Anselm, Bertha, Brunhild, Bruno, Clemens, Dieter, Elke, Emil, Erna, Frieda, Fritz,
+Gerda, Gisela, Gottfried, Greta, Gretchen, Gunther, Hans, Hanne, Hedwig, Heidi, Heinrich, Helmut, Hilde, Hugo,
+Ilse, Irmgard, Jakob, Johann, Karl, Klaus, Konrad, Kurt, Leni, Liesel, Lorenz, Lotte, Ludwig, Lukas, Magda,
+Margarete, Mathilde, Max, Minna, Otto, Paulina, Ralf, Rudolf, Siegfried, Trude, Ulrich, Ute, Volker, Waltraud,
+Wilhelm, Wolfgang, Anke, Bodo, Detlef, Egon, Elfriede, Fiete, Gustav, Hannelore, Henrike, Ida, Jannik, Kai, Lenz,
+Linus, Mila, Nele, Ole, Paule, Rike, Sepp, Theo, Uwe, Wanda, Wendel, Xaver, Anton, Ferdinand, Leopold, Ottilie
+"""
+
+[bank.french]
+why = "a French name"
+names = """
+Adele, Adrien, Aimee, Alain, Amandine, Anais, Andre, Antoine, Apolline, Aristide, Armand, Augustin, Aurelie,
+Bastien, Benoit, Blaise, Brigitte, Camille, Celeste, Celestine, Chantal, Clementine, Colette, Corentin, Denis,
+Didier, Dominique, Edmond, Eloise, Emile, Etienne, Fabien, Fernand, Fleur, Florentin, Gaston, Genevieve, Germaine,
+Gilles, Hugo, Ines, Jacques, Jeanne, Josette, Jules, Juliette, Laurent, Leon, Leonie, Lisette, Louis, Lucien,
+Madeleine, Manon, Marcel, Margaux, Marius, Mathis, Maxime, Michel, Mireille, Nadine, Noemie, Odette, Odile, Olivier,
+Pascal, Paulette, Philippe, Pierre, Rene, Remy, Romain, Sabine, Sebastien, Solange, Sylvie, Thibault, Valentin,
+Yvette, Yves, Zoe, Agathe, Albane, Ambre, Anatole, Apollinaire, Baptiste, Bernadette, Capucine, Cosette, Gaspard,
+Honore, Lucille, Margot, Melisande, Ninon, Oriane, Pernelle, Perrine, Raoul, Sidonie, Theophile, Victoire, Yannick,
+Achille, Elodie, Gervais, Ghislaine, Jocelyne, Lazare, Marceline, Maurice, Severine, Thierry, Ursule, Violette
+"""
+
+[bank.italian]
+why = "an Italian name"
+names = """
+Alessandro, Alba, Alberto, Allegra, Amadeo, Angelo, Antonella, Arturo, Beatrice, Benedetta, Bianca, Bruno, Carlo,
+Carmela, Caterina, Cesare, Chiara, Concetta, Dante, Donatella, Elio, Enzo, Ettore, Fabio, Federico, Filippo,
+Franca, Gianni, Gino, Giorgio, Giulia, Giuseppe, Ilaria, Leonardo, Lorenzo, Luca, Luigi, Marcello, Margherita,
+Massimo, Matteo, Mirella, Nico, Ottavio, Paola, Pietro, Raffaele, Renata, Rocco, Romeo, Rosa, Salvatore, Sandro,
+Serafina, Silvio, Tiziana, Tommaso, Umberto, Valentina, Vittoria, Vittorio, Agostino, Aldo, Ambrogio, Arrigo,
+Bartolo, Benvenuto, Brunella, Corrado, Cosimo, Donato, Emilio, Fiorella, Fulvio, Gaetano, Guido, Isotta, Lucio,
+Nunzio, Ornella, Orsola, Pasquale, Piera, Pino, Primo, Rinaldo, Rosalba, Severino, Teodoro, Tullio, Ugo, Zita
+"""
+
+[bank.spanish]
+why = "a Spanish name"
+names = """
+Adela, Alba, Alejandro, Alfonso, Alicia, Alonso, Amparo, Ana, Andres, Angel, Antonio, Ariadna, Arturo, Beatriz,
+Benito, Blanca, Camilo, Carmen, Catalina, Celia, Concha, Consuelo, Cristobal, Diego, Dolores, Domingo, Elena,
+Emilio, Esteban, Eva, Felipe, Fernando, Gonzalo, Graciela, Guillermo, Hector, Ignacio, Ines, Isabela, Jaime, Javier,
+Jimena, Joaquin, Jorge, Julia, Leandro, Lola, Lorenzo, Lucia, Luis, Manuel, Marisol, Marta, Mateo, Mercedes,
+Miguel, Nieves, Nuria, Paco, Pablo, Paloma, Pilar, Rafael, Ramon, Ramona, Rocio, Rodrigo, Rosario, Salvador,
+Santiago, Sergio, Soledad, Teresa, Tomas, Valeria, Vicente, Ximena, Yolanda, Agustin, Amaya, Begona, Candela,
+Chema, Chus, Elvira, Esperanza, Fausto, Fidel, Inigo, Iker, Itziar, Leire, Maite, Paquita, Pepe, Pepita, Remedios,
+Ainhoa, Aitana, Lupe, Rosita, Teodora, Ulises, Nacho, Toni
+"""
+
+[bank.portuguese]
+why = "a Portuguese name"
+names = """
+Afonso, Amalia, Beatriz, Benedita, Bernardo, Caetano, Carolina, Conceicao, Diogo, Duarte, Fatima, Filipa,
+Gaspar, Graca, Henrique, Ines, Joao, Leonor, Lourenco, Mafalda, Martim, Matilde, Nuno, Rafaela, Rodrigo, Salvador,
+Sancho, Tiago, Vasco, Xavier, Iara, Jaci, Tainara, Ubirajara, Caio, Davi, Heitor, Jandira, Luana, Maiara, Rui
+"""
+
+[bank.greek]
+why = "a Greek name"
+names = """
+Achilles, Agathe, Alexios, Anastasia, Andreas, Antigone, Ariadne, Aristotle, Artemis, Athena, Calliope, Cassandra,
+Chloe, Christos, Cleo, Daphne, Demetrios, Dimitra, Dorian, Eleni, Elpida, Evangeline, Georgios, Hector, Helena,
+Hermes, Iason, Ioanna, Irene, Kalliope, Katerina, Kostas, Leander, Leonidas, Lysander, Melina, Myron, Nikolas,
+Nikos, Odysseus, Olympia, Orestes, Pandora, Penelope, Pericles, Persephone, Petros, Phaedra, Philippos, Rhea,
+Sappho, Selene, Socrates, Sophia, Spiros, Stavros, Thalia, Theodora, Thea, Xanthe, Yannis, Zeno, Zoe, Agapi,
+Alkis, Damon, Evander, Fotini, Ianthe, Ione, Kyra, Lydia, Melpomene, Niobe, Ophelia, Pelagia, Phoebe, Stathis,
+Thanos, Timon, Urania, Xenia, Zephyr, Apollo, Electra, Eudora, Galene, Hesper, Iris, Ismene, Nestor, Priam
+"""
+
+[bank.latin]
+why = "an old Roman name"
+names = """
+Aelia, Agrippa, Albus, Antonia, Augusta, Augustus, Aurelia, Aurelius, Brutus, Caius, Camilla, Cassius, Cato,
+Cicero, Claudia, Claudius, Cornelia, Decimus, Drusus, Felicitas, Flavia, Flavius, Gaius, Horatio, Julius, Junia,
+Livia, Lucan, Lucretia, Lucilla, Marcus, Maximus, Nero, Octavia, Octavius, Ovid, Petronella, Pliny, Portia,
+Quintus, Remus, Romulus, Rufina, Sabina, Septima, Seneca, Severus, Silvanus, Tacitus, Tertia, Tiberius, Titus,
+Valeria, Varro, Vesta, Virgil, Vita, Aemilia, Atticus, Balbus, Calpurnia, Crispus, Domitia, Faustina, Fabia,
+Galba, Laelia, Marcella, Plautus, Prisca, Sextus, Tullia, Ursus, Vibia, Viola, Aquila, Lucia, Livius, Cyprian
+"""
+
+[bank.slavic]
+why = "a Slavic name"
+names = """
+Agata, Aleksander, Alenka, Anya, Bogdan, Bohdana, Borislav, Boris, Branko, Dasha, Dmitri, Dobromir, Dragan,
+Dusan, Ekaterina, Fedor, Galina, Ilya, Irina, Ivan, Ivana, Jadwiga, Jarek, Kasia, Katya, Kazimir, Kira, Klara,
+Lada, Lev, Lida, Lubomir, Ludmila, Masha, Milan, Milena, Mila, Miroslav, Nadia, Natasha, Nikolai, Oksana, Olga,
+Oleg, Pavel, Petra, Radek, Radomir, Sasha, Sergei, Slava, Sonya, Stanislav, Svetlana, Tanya, Tatiana, Vadim,
+Vanya, Vera, Vlad, Vladimir, Yuri, Zofia, Zora, Zoran, Ania, Bozena, Danica, Darko, Elzbieta, Gosia, Halina,
+Jarmila, Jiri, Karel, Kuba, Lenka, Marek, Marta, Miko, Mirek, Nada, Ondrej, Radka, Stepan, Tomek, Vesna, Zdenka,
+Zuzana, Bogna, Drago, Goran, Ljuba, Marko, Nenad, Ognjen, Rada, Snezana, Tihomir, Vuk, Zlata, Zivko, Yaroslav
+"""
+
+[bank.hebrew]
+why = "a Hebrew name"
+names = """
+Aaron, Abigail, Adina, Akiva, Ari, Asher, Avi, Ayala, Barak, Boaz, Dalia, Dov, Eden, Eitan, Eli, Elisha, Esther,
+Ezra, Gal, Hadassah, Hannah, Ilan, Lior, Malka, Micah, Miriam, Naomi, Noa, Oren, Ori, Rina, Ronit, Ruth, Shira,
+Shoshana, Talia, Tamar, Tova, Yael, Yonah, Zev, Ziva, Amos, Bezalel, Caleb, Elkanah, Gideon, Ira, Jethro, Jonah,
+Levi, Meir, Mordecai, Obadiah, Reuben, Seth, Tobiah, Uriel, Zadok, Zephaniah, Delilah, Judith, Keturah, Leah,
+Rebekah, Tirzah, Zipporah
+"""
+
+[bank.arabic]
+why = "an Arabic name"
+names = """
+Adil, Ahmed, Aisha, Akram, Amal, Amira, Amina, Anwar, Basma, Bilal, Dalal, Farah, Faris, Fatima, Habib, Hala,
+Hamza, Hana, Hassan, Hiba, Ibrahim, Idris, Imran, Jamal, Jamila, Karim, Khalil, Laila, Lina, Malik, Mariam, Nabil,
+Nadia, Nasir, Nour, Omar, Rami, Rania, Rashid, Rayan, Reem, Salim, Salma, Samir, Sana, Selim, Tahir, Tariq, Yara,
+Yasmin, Yusuf, Zaid, Zara, Zainab, Zayn, Aziz, Badr, Dina, Fadi, Ghada, Hadi, Hamid, Jalila, Kamal, Lubna, Mona,
+Munir, Nawal, Qasim, Rasha, Samira, Suha, Wafa, Walid, Yasin, Ziad, Zahra
+"""
+
+[bank.persian]
+why = "a Persian name"
+names = """
+Arash, Ardeshir, Azadeh, Babak, Bahar, Bijan, Cyrus, Dariush, Farid, Farhad, Farzaneh, Golnar, Hafez, Jamshid,
+Kaveh, Kian, Laleh, Mahsa, Mina, Nasrin, Navid, Parisa, Payam, Roshan, Rostam, Roya, Shirin, Simin, Soraya, Tahmina,
+Yasaman, Zohreh, Ziba, Afsaneh, Arman, Bahram, Darya, Esfandiar, Hooman, Kourosh, Marjan, Nima, Omid, Pari,
+Parviz, Shadi, Sohrab, Taraneh
+"""
+
+[bank.turkish]
+why = "a Turkish name"
+names = """
+Ahmet, Ayla, Aylin, Aysel, Baris, Berk, Burak, Canan, Cem, Deniz, Derya, Ece, Elif, Emre, Esra, Fatih, Gul, Gulsen,
+Hakan, Ilkay, Kaan, Kerem, Leyla, Melek, Mert, Murat, Nilufer, Oya, Ozan, Pinar, Selin, Serkan, Sibel, Tuba, Tolga,
+Umut, Yasemin, Yavuz, Zeynep, Arda, Batu, Cansu, Defne, Ege, Eren, Ilker, Irmak, Nehir, Orhan, Tarkan, Toprak
+"""
+
+[bank.indian]
+why = "a name from India"
+names = """
+Aarav, Aditi, Aditya, Ajay, Amar, Amit, Ananya, Anika, Anjali, Arjun, Asha, Bharat, Chandra, Deepa, Dev, Devi,
+Diya, Gita, Hari, Indira, Ishaan, Jaya, Kabir, Kamala, Karan, Kavya, Kiran, Krishna, Lakshmi, Lalita, Leela, Madhu,
+Maya, Meera, Mohan, Nandini, Neel, Nikhil, Nisha, Padma, Pooja, Priya, Radha, Rahul, Raja, Rani, Ravi, Rekha, Rohan,
+Sanjay, Sarita, Shanti, Shiva, Sita, Sunil, Sunita, Tara, Uma, Usha, Varun, Vidya, Vikram, Vinay, Yash, Zubin,
+Aruna, Bhanu, Chitra, Daksha, Esha, Gauri, Gopal, Hema, Ila, Jai, Kalpana, Kamal, Kartik, Lata, Manu, Mira, Nalini,
+Navin, Neha, Om, Parvati, Pranav, Rajan, Rupa, Sachin, Savitri, Shreya, Sudha, Tanvi, Uday, Vasanti, Veda, Vijay
+"""
+
+[bank.chinese]
+why = "a Chinese name"
+names = """
+Ai, An, Bao, Bo, Chen, Cheng, Chun, Dai, Fang, Fei, Feng, Gang, Hai, Hong, Hua, Hui, Jia, Jian, Jie, Jin, Jing, Jun,
+Kai, Lan, Lei, Li, Lian, Lin, Ling, Mei, Min, Ming, Na, Ning, Ping, Qing, Rong, Shan, Tao, Ting, Wei, Wen,
+Xia, Xin, Yan, Yang, Yi, Ying, Yong, Yu, Yuan, Yue, Yun, Zhen, Zhi, Hao, Jiao, Lu, Mu, Shu, Wu, Xiu, Yao, Lili,
+Meiling, Xiaobo, Jiaying, Zihan, Yuming
+"""
+
+[bank.japanese]
+why = "a Japanese name"
+names = """
+Aiko, Akane, Akio, Akira, Ayame, Ayumi, Chiaki, Chihiro, Daiki, Emi, Eiji, Fumiko, Hana, Haru, Haruki, Haruto,
+Hikari, Hina, Hiro, Hiroshi, Hotaru, Ichiro, Kaede, Kaito, Kana, Kazu, Kei, Kenji, Kiko, Kiyoshi, Koharu, Kumiko,
+Mai, Mako, Mana, Mariko, Masaru, Mei, Michi, Midori, Mika, Miki, Minoru, Misaki, Miyu, Momo, Nao, Naoki, Natsu,
+Natsuki, Noboru, Nori, Riku, Rin, Saki, Sakura, Satoshi, Shiro, Sora, Sumi, Taro, Tomo, Yoko, Yori, Yoshi, Yuki,
+Yuna, Yuto, Ren, Kenta, Shin, Toshi, Umeko, Yuzu, Kohana, Tama, Momoko, Mochi, Daisuke, Kotone, Rei, Tsubasa
+"""
+
+[bank.korean]
+why = "a Korean name"
+names = """
+Bora, Chae, Dae, Eun, Ha, Haneul, Hyun, Jae, Ji, Jin, Joon, Min, Minji, Nari, Seo, Seojun, Seung, Sol, Somi,
+Sora, Taeyang, Woo, Yeon, Yuna, Dami, Gaeul, Hana, Jiwoo, Mirae, Nabi, Saerom, Yejin
+"""
+
+[bank.african]
+why = "a name from Africa"
+names = """
+Abeni, Abiola, Ada, Adebayo, Ade, Adisa, Afia, Akin, Akua, Amani, Amara, Ama, Asha, Ayo, Ayodele, Baraka, Bisi,
+Chidi, Chinwe, Chioma, Dayo, Ebo, Efua, Ekon, Emeka, Femi, Folami, Habiba, Imani, Jabari, Jelani, Jomo, Juma, Kamau,
+Kato, Kayode, Kofi, Kojo, Kwame, Kwesi, Lulu, Makena, Malaika, Mosi, Nia, Nkiru, Nnamdi, Obi, Olu, Oni, Sade, Sefu,
+Sekou, Simba, Tendai, Themba, Thandiwe, Tumi, Uzoma, Wanjiru, Yaw, Zola, Zuri, Ayana, Dalia, Esi, Gugu, Ife,
+Kagiso, Lerato, Lindiwe, Mandla, Naledi, Nandi, Palesa, Sipho, Tau, Thabo, Zanele, Ashanti, Ngozi, Oba, Bola
+"""
+
+[bank.polynesian]
+why = "a name from the islands of the Pacific"
+names = """
+Alani, Aolani, Hoku, Iolana, Kai, Kailani, Kalani, Kale, Keala, Keoni, Kiele, Koa, Lani, Leilani, Lokelani, Mahina,
+Makoa, Malia, Mana, Moana, Nalani, Noelani, Palila, Pua, Ula, Wailani, Aroha, Hemi, Kiri, Manaia, Nikau, Rangi,
+Tama, Wiremu, Ataahua, Mere, Tane, Hine, Tui, Kahu
+"""
+
+[bank.nature]
+why = "a name from nature"
+names = """
+Acorn, Alder, Almond, Anise, Apricot, Aspen, Aster, Azalea, Banyan, Basil, Bay, Begonia, Birch, Blossom, Bracken,
+Bramble, Briar, Bryony, Buttercup, Camellia, Campion, Caraway, Cedar, Chamomile, Cherry, Chestnut, Chicory, Cinnamon,
+Clematis, Clove, Clover, Columbine, Cowslip, Cress, Crocus, Cypress, Dahlia, Daffodil, Damson, Dandelion, Elder,
+Elm, Fennel, Fern, Fig, Flax, Foxglove, Gardenia, Garnet, Ginger, Hawthorn, Hazel, Heather, Hemlock, Holly,
+Honeysuckle, Hyacinth, Hyssop, Indigo, Jasmine, Juniper, Kale, Larch, Laurel, Lavender, Lemon, Lilac,
+Linden, Lotus, Lupin, Magnolia, Mallow, Maple, Marigold, Marjoram, Meadow, Mimosa, Mint, Myrtle, Nettle, Nutmeg,
+Oak, Olive, Orchid, Oregano, Pansy, Parsley, Peony, Pepper, Periwinkle, Plum, Poppy, Primrose, Quince, Rosemary,
+Rowan, Saffron, Sage, Sorrel, Sycamore, Tansy, Teasel, Thistle, Thyme, Tulip, Verbena, Violet, Walnut, Wisteria,
+Willow, Yarrow, Yew, Zinnia, Agate, Amethyst, Beryl, Coral, Jade, Jasper, Jet, Onyx, Opal, Pearl, Ruby, Sapphire,
+Topaz, Flint, Cobalt, Copper, Silver, Goldie, Harebell, Speedwell, Sedge, Rush, Tamarind,
+Kestrel, Wren, Robin, Lark, Finch, Linnet, Starling, Swift, Swallow, Martin, Heron, Plover, Dunlin, Curlew, Merlin,
+Falcon, Raven, Rook, Jay, Magpie, Siskin, Tern, Puffin, Dove, Teal, Egret, Ibis, Oriole, Pippit, Warbler, Thrush,
+Sparrow, Bunting, Nightjar, Bittern, Avocet, Godwit, Lapwing, Otter, Badger, Marten, Vole, Stoat, Hare,
+Fawn, Fox, Bear, Lynx, Wolf, Seal, Pike, Perch, Minnow, Trout, Salmon, Newt, Cricket, Ladybird, Bumblebee, Dragonfly,
+Damselfly, Firefly, Glowworm, Snail, Tadpole, Orion, Vega, Lyra, Sirius, Rigel, Altair, Deneb, Polaris, Capella,
+Castor, Pollux, Antares, Electra, Maia, Merope, Atlas, Cassiopeia, Andromeda, Draco, Pegasus, Phoenix, Carina,
+Mira, Alcor, Mizar, Nova, Comet, Luna, Halley, Kepler, Galileo, Juno, Ceres, Pallas, Titan, Io, Europa, Callisto,
+Ganymede, Rhea, Oberon, Ariel, Miranda, Triton, Thames, Severn, Tamar, Avon, Tweed, Clyde, Shannon, Liffey, Rhine,
+Danube, Loire, Seine, Rhone, Tiber, Volga, Indus, Ganges, Nile, Congo, Niger, Zambezi, Amazon, Orinoco, Yukon,
+Mekong, Jordan, Euphrates, Tigris, Douro, Ebro, Elbe, Oder, Vistula, Dnieper, Neva, Ural, Lena, Amur, Brahmaputra,
+Kaveri, Narmada, Yarra, Murray, Darling, Waikato, Arno, Adige, Liguria, Sahara, Gobi, Atacama, Kalahari, Everest,
+Kilimanjaro, Fuji, Etna, Vesuvius, Olympus, Sinai, Ararat, Denali, Rainier, Shasta, Hood, Ben, Nevis, Snowdon,
+Skiddaw, Helvellyn, Iona, Skye, Arran, Mull, Orkney, Shetland, Lundy, Jura, Islay, Capri, Corfu, Crete, Malta,
+Rhodes, Sicily, Sardinia, Corsica, Elba, Madeira, Tenerife, Bali, Java, Samoa, Tonga, Fiji, Tahiti, Hawaii, 
+Maui, Lanai, Avalon, Mabel, Mugwort, Burdock, Feverfew, Woodruff, Meadowsweet, Valerian, Angelica,
+Lovage, Tarragon, Dill, Chervil, Borage, Comfrey, Rue, Betony, Celandine, Sweetpea, Bergamot, Marram, Samphire
+"""
+
+[bank.grand]
+why = "a grand old name"
+names = """
+Sir Pebbleworth, Lady Marmalade, Lord Wimbleton, Dame Crumpet, Sir Bumbleby, Lord Puddingham,
+Sir Toffington, Lady Periwinkle, Captain Oddsock, Sir Reginald, Lady Ottoline, Lord Barnabus, Dame Agatha, Sir Percy,
+Lady Clementine, Lord Fitzwilliam, Sir Galahad, Sir Gawain, Sir Lancelot, Sir Bedivere, Lady Guinevere, Sir Kay,
+Lady Elaine, Sir Tristram, Lady Isolde, Lord Byron, Lady Ada, Sir Isaac, Lady Jane, Lord Nelson, Captain Cook,
+Bartholomew, Barnabas, Montgomery, Ptolemy, Archimedes, Aristophanes, Maximilian, Valentinian, Constantine,
+Theophilus, Hieronymus, Ignatius, Augustine, Benedictus, Cornelius, Leopoldine, Wilhelmina, Gwendolyn, Evangeline,
+Seraphina, Octavian, Ambrosius, Aurelian, Tarquin, Lucasta, Florizel, Perdita, Hermione, Rosalind, Prospero,
+Horatio, Lysander, Demetrius, Titania, Oberon, Mercutio, Benvolio, Malvolio, Bassanio, Antonio, Sebastian, Viola,
+Orsino, Cymbeline, Imogen, Leontes, Pericles, Cressida, Coriolanus, Ferdinand, Gonzalo, Theseus, Hippolyta,
+Ebenezer, Jedediah, Zebedee, Methuselah, Nebuchadnezzar, Balthazar, Melchior, Caspar, Bathsheba, Jezebel,
+Clarabelle, Henrietta, Georgiana, Arabella, Isadora, Ottoline, Philomena, Rosalinda, Theodosia, Wilhelmine,
+Bertrand, Fitzgerald, Archibald, Ignatius, Mortimer, Peregrine, Rutherford, Thelonius, Barnaby, Algernon, Augustus,
+Cuthbert, Ethelred, Alfred, Athelstan, Edmund, Eadric, Godwin, Harold, Leofric, Oswin, Wulfric, Aethelflaed,
+Aelfgifu, Hilda, Mildred, Eadgyth, Osric, Cedric, Edgar, Guthrum, Canute, Hereward, Matilda, Eleanor, Philippa,
+Isabella, Margery, Juliana, Emmeline, Millicent, Rosamund, Joscelin, Amabel, Alys, Benedicta, Constance, Euphemia,
+Griselda, Ermintrude, Gertrude, Hildegard, Mechthild, Radegund, Brunhilde, Sieglinde, Kunigunde, Wolfram,
+Lohengrin, Parsifal, Tannhauser, Rinaldo, Orlando, Ruggiero, Bradamante, Angelica, Ariosto, Tancred, Clorinda,
+Baron Biscuit, Duke Dumpling, Count Cobblepot, Countess Crumble, Princess Plum, Prince Pip, Queen Mab, King Cole,
+Doctor Dandelion, Admiral Acorn, Major Muffin, Madame Mirabelle, Lady Lavender,
+Sir Wobbleton, Lord Snoozleby, Dame Dimple, Captain Crumpet, Uncle Bramble, Auntie Marigold, Master Thimble,
+Lord Hazelnut, Sir Bramblewick, Lady Thistledown, Sir Fluffington
+"""
+
+[bank.funny]
+why = "a funny one"
+names = """
+Biscuit, Wobble, Mothball, Crumpet, Muffin, Dumpling, Noodle, Pickle, Pudding, Bumble, Doodle, Fidget, Gizmo,
+Jellybean, Kipper, Marmalade, Nugget, Pancake, Pebbles, Popcorn, Puddle, Rascal, Scamp, Sprocket, Squiggle, Toffee,
+Trinket, Truffle, Waffle, Widget, Zigzag, Bubbles, Button, Buttons, Cobble, Cobweb, Crumble, Custard, Dimple,
+Dingle, Doughnut, Fiddle, Fizz, Flapjack, Flump, Fumble, Giggles, Gumdrop, Hiccup, Humbug, Jiggle, Jumble, Kazoo,
+Lollipop, Macaroon, Marshmallow, Meatball, Mumble, Nibbles, Noodles, Nutmeg, Oddsock, Paddle, Parsnip, Peanut,
+Pernickety, Pipsqueak, Pockets, Pompom, Poppet, Porridge, Pumpkin, Quibble, Rumble, Rumpus, Scallywag, Scone,
+Scruffy, Skittles, Slipper, Smudge, Snickers, Snuffles, Soup, Sprinkles, Squeak, Squish, Stumble,
+Sugarplum, Teacup, Thimble, Tickles, Tiddles, Tinker, Tumble, Turnip, Twiddle, Waddle, Whiskers, Wiggle, Wimble,
+Winkle, Wonky, Yodel, Zoodle, Bloop, Bonbon, Bungle, Burble, Chutney, Clank, Crouton, Dabble, Doodad, Dollop,
+Fudge, Gadget, Gobbledy, Gubbins, Hobnob, Jamboree, Kerfuffle, Kumquat, Lumpkin, Mango, Mopsy, Muddle, Natter,
+Nimbus, Noggin, Nubbin, Oodles, Pemberton, Piffle, Plinky, Plonk, Pootle, Puffball, Quokka, Ramble, Ruckus, Sausage,
+Scrumpy, Shindig, Snooze, Snorkel, Spatula, Spud, Squidge, Teapot, Tiddlywink, Topsy, Turvy, Twinkle, Wibble,
+Wombat, Zippy, Bean Sprout, Mister Mittens, Miss Muffet, Little Pickle, Old Crumble, Sir Wobble, Lady Biscuit,
+Captain Noodle, Pip Squeak, Tumbleweed, Jellyroll, Butterbean, Gingersnap, Cupcake, Snickerdoodle, Pretzel, Waffles,
+Dumpy, Chubby, Fluffkin, Pudge, Squidgy, Bobbin, Bodkin, Bramblewick, Puddleduck, Hobbledehoy, Ragamuffin, Whippet,
+Fidgetty, Flibbert, Gubbin, Loopy, Mishmash, Nincompoop, Pitterpat, Razzle, Dazzle, Shuffle, Skedaddle,
+Tittle, Whatsit, Thingamajig, Doohickey, Whirligig, Kettle, Crumpets, Pippin, Bramley, Russet, Pompadour, Bumbershoot
+"""

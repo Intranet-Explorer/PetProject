@@ -495,3 +495,17 @@ voice = "murmur"
 seconds = [3, 5]
 base = 0.0
 handles = true
+
+# SPEC-v3.5.8 §2: a grown hob that could lay an egg soon, or that knows of an egg that is nobody's with no name, looks
+# up names in the encyclopedia once a world day: people, places, stars, plants, birds, rivers, found in a page about
+# something from its own life (engine/names.py). They are among the names it is offered when it names the egg.
+["look up a name"]
+do = "names"
+doing = "looking up a name for its egg in the heavy book"
+did = "looked up a name for your egg in the heavy book"
+doing_screen = "looking up a name for its egg on the {what}"
+did_screen = "looked up a name for your egg on the {what}"
+icon = "book"
+seconds = [5, 8]
+base = 0.3
+stage = "adult"

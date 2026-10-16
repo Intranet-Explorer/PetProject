@@ -3,7 +3,7 @@ grows old, and dies; before that it may lay eggs, and what it hands on is a body
 and a couple of things."""
 import re
 
-from . import craft, firsts, genes, order, things
+from . import craft, firsts, genes, names, order, things
 from .feel import level
 from .world import (GENES, STAGES, days as world_days, add_event, alive, arrived, family, free_tile, hours, label, moment, new_pet, rnd, ticks)
 
@@ -141,6 +141,7 @@ def lay_egg(house, cfg, pet, a, clean):
     room, rng = house["rooms"][pet["room"]], rnd(house, "egg", pet["id"], pet["eggs"])
     text, name = sentences(last_sentence(clean(a["message"], 640), 600), 4), clean(a.get("name") or "", 16).strip() or None
     pet["message"].append({"tick": house["tick"], "text": text})
+    name, byname, told = names.given(house, cfg, pet, name)   # SPEC-v3.5.8 §2: a real name; a phrase is its by-name
     body, new = genes.child(pet["genome"], rng, genes.line(house, pet))   # SPEC-v3.5 §2: its parent's body, a slot or two moved; rarely something new
     egg = new_pet(house, cfg, room["id"], free_tile(house, cfg, room, pet["pos"]), genome=body,
                   temper=temper_of(pet["temper"], rng, cfg), parent=pet["id"], name=name,
@@ -148,9 +149,11 @@ def lay_egg(house, cfg, pet, a, clean):
     firsts.laid(house, cfg, pet, egg)   # SPEC-v3.5.4 §9: it hears of an ambition its parent reached
     if new:
         egg["mutation"] = new   # (the family tree marks the branch; it is a moment when it hatches)
+    if byname:
+        egg["byname"] = byname
     pet["eggs"] += 1
-    moment(house, "egg", "%s laid an egg%s" % (label(pet), " and named it " + name if name else ""), pet["id"], room["id"])
-    return "you laid an egg%s and told it what you want it to know" % (" and named it " + name if name else ""), {"energy": -cfg["life"]["egg_energy"]}, "lay egg"
+    moment(house, "egg", "%s laid an egg%s" % (label(pet), " and named it " + name + (", called " + byname if byname else "") if name else ""), pet["id"], room["id"])
+    return "you laid an egg%s and told it what you want it to know%s" % (" and named it " + name if name else "", told), {"energy": -cfg["life"]["egg_energy"]}, "lay egg"
 
 
 # SPEC-v3.5.4 §4: a project is something to do or find out, and finish. "Wait with the seed", "do not make",
