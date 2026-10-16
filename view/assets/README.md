@@ -39,6 +39,9 @@ view/assets/
 
 `"font": "<file in the pack>"` on a pack entry names a pixel font the page uses for its headings.
 
+`"skin": true` (SPEC-v3.5.9): a pack whose files the page's style sheets name rather than sprites.json (the Crusenho UI
+art); validate.py does not count its files as unused.
+
 A pack whose licence forbids redistribution lives outside the repository: give it `"dir": "/absolute/path"` and
 `"local": true`. The view must work without it (every sprite from a local pack needs a `"fallback"` sprite id).
 
@@ -133,6 +136,7 @@ A pack whose licence forbids redistribution lives outside the repository: give i
   "fixtures": { "bed": { "pos": [10, 1], "sprite": "fix.bed" }, "lamp": { "pos": [2, 1], "sprite": "fix.lamp" } },
   "blocked": [[0, 0], [1, 0]],                          floor tiles nobody can stand on (scenery furniture)
   "wall_slots": [[3, 0], [8, 0]],                       floor tiles under the places a picture, mirror or shelf can hang
+  "display": [x, y],                                    (optional, SPEC-v3.5.9 §4) where the room's small LED display hangs; else the clearest stretch of north wall
   "bit_spots": { "petal": [[2, 5], [3, 5]] },           where each kind of bit turns up, if it should not be just anywhere
   "light": { "window": [[0, 3]], "night": 0.45 } }      where daylight comes in; how dark the room gets
 ```
