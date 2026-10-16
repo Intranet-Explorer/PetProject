@@ -496,6 +496,21 @@ seconds = [3, 5]
 base = 0.0
 handles = true
 
+# SPEC-v3.5.8 §4: clearing, as ordinary as tidying: an old charm past the few it keeps, or a thing nobody uses, picked
+# up with a couple more and carried toward the Works (no want needed; machine.targets finds the scrap)
+["clear scrap"]
+do = "feed"
+scrap = true
+doing = "taking the old {what} to the Works"
+did = "took the old {what} to the Works"
+icon = "box"
+voice = "murmur"
+seconds = [3, 5]
+base = 0.6
+temper = { orderly = 2.4 }
+focus = ["tidy"]
+handles = true
+
 # SPEC-v3.5.8 §2: a grown hob that could lay an egg soon, or that knows of an egg that is nobody's with no name, looks
 # up names in the encyclopedia once a world day: people, places, stars, plants, birds, rivers, found in a page about
 # something from its own life (engine/names.py). They are among the names it is offered when it names the egg.
