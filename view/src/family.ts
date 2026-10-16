@@ -268,7 +268,7 @@ export function family(c: Ctx): Kid[] {
         : el("p", "empty", c.snap.arrived?.taming == null ? "The creatures of the house are nobody's yet." : "No creature has taken to anyone yet.")) : null,
     el("h3", "", "Family sayings"),
     sayings.length ? el("p", "hint", "What one generation told the next. After each: ", el("span", "correct", "✓ true of this house"), ", ", el("span", "wrong", "✗ not so"),
-      ", or nothing the house can check. That is the engine's own test of the saying against how the house really works; the pets are never told.") : null,
+      ", or nothing the house can check. That is the engine's own test of the saying against how the house really works; the hobs are never told.") : null,
     sayings.length ? el("ul", "sayings", ...sayings.map((s) => el("li", "", el("blockquote", "", s.text),
       el("p", "hint", `${plural(s.gens.length, "generation")}: ${s.pets.map((p) => p.name).join(" → ")} `, mark(s.truth)),
       s.forms.length ? fold(`forms-${s.text}`, `Said differently ${plural(s.forms.length, "time")}`, ...s.forms.map(([id, t]) => el("p", "", `${name(id)}: “${t}”`))) : null)))

@@ -56,7 +56,7 @@ function clock(sec: number) {
 // ---- Lab: one pet's mind, or the whole house's numbers ----
 
 function labTab(c: Ctx): Kid[] {
-  const pick = choice("What the Lab shows", labView, [["mind", "One pet's mind"], ["house", "The whole house"]], (v) => { labView = v; remember("lab", v); c.redraw(); });
+  const pick = choice("What the Lab shows", labView, [["mind", "One hob's mind"], ["house", "The whole house"]], (v) => { labView = v; remember("lab", v); c.redraw(); });
   if (labView !== "mind") return [pick, ...lab(c)];
   const who = el("select", "") as HTMLSelectElement, pets = c.snap.pets.filter((p) => !(p.stage === "dead" && p.buried) || p.id === c.sel);
   who.setAttribute("aria-label", "Whose mind");
@@ -67,7 +67,7 @@ function labTab(c: Ctx): Kid[] {
 
 function mind(c: Ctx): Kid[] {
   const p = c.snap.pets.find((p) => p.id === c.sel);
-  if (!p) return [el("p", "empty", "Nobody is chosen. Click a pet in the room or on a card.")];
+  if (!p) return [el("p", "empty", "Nobody is chosen. Click a hob in the room or on a card.")];
   const d = c.api.mind?.pet?.id === p.id ? c.api.mind : {};
   const where = c.snap.rooms.find((r) => r.id === p.room)?.name ?? "the house";
   const parent = c.snap.pets.find((q) => q.id === p.parent);
@@ -194,7 +194,7 @@ function things(c: Ctx): Kid[] {
     .map((g) => ({ name: g.name, m: { recipe: g.recipe, uses: g.uses, by: g.by }, gone: `${g.gone[1]}, day ${dayOf(c.snap, g.gone[0])}` }));
   const shelf = (items: Shown[], where: boolean) => el("ul", "shelf", ...items.map((t) => thingCard(c, t, where)));
   const pick = choice("How the things are grouped", thingsBy, [["room", "By room"], ["maker", "By who made them"]], (v) => { thingsBy = v; remember("things", v); c.redraw(); });
-  const intro = el("p", "hint", "Everything the pets have made: what it is, the name and the purpose its maker gave it, and what it really does, which they are never told.");
+  const intro = el("p", "hint", "Everything the hobs have made: what it is, the name and the purpose its maker gave it, and what it really does, which they are never told.");
   if (!there.length && !gone.length) return [intro, el("p", "empty", "Nobody has made anything yet.")];
   if (thingsBy === "maker") {
     const makers = [...new Set([...there, ...gone].map((t) => t.m.by ?? ""))];

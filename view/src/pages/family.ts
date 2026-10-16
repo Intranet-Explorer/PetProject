@@ -2,7 +2,7 @@
 // per family, generations as rows, a line only from a parent to its children; what passed between the families is
 // listed under it, never drawn across it. main.ts calls render() on every visit and every few seconds while shown.
 import "./family.css";
-import { el, stageName } from "../dom";
+import { byname, el, stageName } from "../dom";
 import type { Kid } from "../dom";
 import { icon, svg } from "../icons";
 import { href } from "../router";
@@ -10,7 +10,7 @@ import { a, chip, getJSON, petLink, portrait } from "../ui";
 import type { Who } from "../ui";
 import { fam } from "../types";
 
-export type Pet = Who & { name: string; stored_name: string | null; family: number; gen: number; parent: string | null; children: string[];
+export type Pet = Who & { name: string; stored_name: string | null; byname?: string | null; family: number; gen: number; parent: string | null; children: string[];
   alive: boolean; born_day: number; died_day: number | null; cause: string | null; days: number | null };
 type Link = { kind: string; tick: number; a: string; b: string | null; text: string };
 type Pets = { pets: Pet[]; links: Link[]; day: number };
@@ -69,11 +69,12 @@ function gallery(data: Pets) {
   const pets = data.pets
     .filter((p) => (!view.fam || p.family === view.fam) && (!view.life || p.alive === (view.life === "living")))
     .sort((x, y) => (view.sort === "gen" ? x.gen - y.gen : 0) || x.born_day - y.born_day || Number(x.id.slice(1)) - Number(y.id.slice(1)));
-  if (!pets.length) return el("p", "hint", "No pet like that.");
+  if (!pets.length) return el("p", "hint", "No hob like that.");
   return el("div", "gallery", ...pets.map((p) => {
     const c = el("a", `card gcard ${fam(p.family)} ${p.alive ? "alive" : "dead"}`, el("span", "gcard-in",   // (not a.link: that has no frame)
       el("span", "gface", portrait(p, 112)),
       el("b", "gname", p.name),
+      byname(p) ? el("span", "bn", byname(p)!) : null,   // SPEC-v3.5.8 §6
       el("span", "gfam", familyName(p.family), ` · gen ${p.gen}`),
       el("span", "gdays", p.alive ? null : icon("stone", 14), lifeDays(p)),
       el("span", "gstage", p.alive ? stageText(p) : p.cause ? `died of ${p.cause}` : "dead"))) as HTMLAnchorElement;
@@ -107,7 +108,7 @@ function tree(data: Pets, fams: number[], opening = false) {
       lines.append(line);
     }
     const box = el("div", "tbox", lines, ...pets.map((p) => {
-      const n = a(el("span", "tnode-in", portrait(p, 56), el("span", "tname", p.name), el("span", "tdays", p.alive ? null : icon("stone", 12), lifeDays(p))),
+      const n = a(el("span", "tnode-in", portrait(p, 56), el("span", "tname", p.name), byname(p) ? el("span", "bn tbn", byname(p)!) : null, el("span", "tdays", p.alive ? null : icon("stone", 12), lifeDays(p))),
         href("pet", p.id), `tnode ${fam(p.family)} ${p.alive ? "alive" : "dead"}`);
       n.style.cssText = `left:${X(p) / W * 100}%;top:${Y(p)}px`;
       n.dataset.pet = p.id;

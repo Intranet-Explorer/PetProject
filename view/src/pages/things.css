@@ -67,3 +67,6 @@ button.tslot:hover { filter: brightness(1.08); }
 #page-thing > .tpage { max-width: 760px; }
 .tpage .thingcard, .tpage .tccontent { width: auto; }
 .statuepic { color: var(--ink2); display: block; }
+/* SPEC-v3.5.8 §6: the count, and the Charms filter beside it */
+.tcount { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; justify-content: space-between; }
+.tcount .hint { margin: 0; }
