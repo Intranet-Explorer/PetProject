@@ -38,6 +38,7 @@ def cold(eng, pet):
 
 async def run(d):
     cfg = world.load_config()
+    cfg["make"]["charm_takes"] = []
     cfg["make"]["own_names"] = True   # (things go by their makers' names here: engine/check_hobs.py checks everyday names)
     cfg["weather"]["real"] = False
 

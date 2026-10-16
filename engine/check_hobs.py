@@ -18,6 +18,7 @@ NUMBERS = re.compile(r"\b(two|three|four|five|six|seven|eight|nine|ten|eleven|tw
 async def run(d):
     cfg = load_config()   # (the body still, so the steps below are the mind's)
     cfg["make"]["own_names"], cfg["weather"]["real"] = False, False
+    cfg["make"]["charm_takes"] = world.load_config()["make"]["charm_takes"]   # (check.load_config turns these off for the older checks)
     eng, pet = engine(cfg, d + "/a")
     h = eng.house
     for _ in range(3):
@@ -50,16 +51,17 @@ async def run(d):
     assert things.honest(cfg, {"kind": "bowl", "name": "rain tile", "material": "hard"}) == "bowl", "only a charm is refiled"
 
     # ---- §3: made by a mind: the everyday name, its own name as a title, and what is kept for its card ----
-    pet["carrying"], pet["needs"]["energy"] = ["fluff"], 80.0
+    pet["carrying"], pet["needs"]["energy"] = ["fluff", "clay"], 80.0   # (SPEC-v3.5.9.1: a charm takes a base material besides)
     r = await do(eng, pet, {"type": "observe"},
                  {"type": "make", "recipe": {"name": "Rain Rest Charm Three", "kind": "charm", "material": "soft", "color": "white", "size": "small",
                                              "purpose": "to keep"}, "near": "here"})
     made = {n: o for n, o in things.made(room).items() if o["made"]["by"] == pet["id"]}
     (n, o), = made.items()
-    assert not r[1]["reason"] and n == "fluff charm" and o["made"]["recipe"]["title"] == "Rain Rest Charm Three", (r, made)
-    assert o["made"]["how"] and o["made"]["made_in"] == room["name"] and o["made"]["bits"] == ["fluff"] and o["made"]["users"] == {}, o["made"]
-    assert "Rain Rest Charm Three" in h["moments"][-1]["text"] or any("which it calls 'Rain Rest Charm Three'" in m["text"] for m in h["moments"][-3:])
-    r = await do(eng, pet, {"type": "look", "target": "Rain Rest Charm Three"})
+    assert not r[1]["reason"] and n == "fluff charm" and o["made"]["recipe"]["title"] == "Rain Rest Charm", "never ending in a number: %s" % made
+    assert o["made"]["bits"] == ["fluff", "clay"] and pet["carrying"] == [], "a charm uses up a base material besides (SPEC-v3.5.9.1): %s %s" % (o["made"]["bits"], pet["carrying"])
+    assert o["made"]["how"] and o["made"]["made_in"] == room["name"] and o["made"]["users"] == {}, o["made"]
+    assert any("which it calls 'Rain Rest Charm'" in m["text"] for m in h["moments"][-3:])
+    r = await do(eng, pet, {"type": "look", "target": "Rain Rest Charm"})
     assert not r[0]["reason"], "a pet may call its thing by its title: %s" % r
     things.used_by(h, o, pet)
     assert o["made"]["users"] == {pet["id"]: 1}, "who uses it"
@@ -129,6 +131,22 @@ async def run(d):
         machine.state(h, cfg)["stock"][m] = 0
     works.built(h, cfg, g)
     assert works.goal(h, cfg)["what"] == "the house store" and all(machine.state(h, cfg)["stock"][m] == g["stock"] for m in stock), "it fills the machine, and goes on"
+    # ---- SPEC-v3.5.9.1: round the pond; charms made lately count; better things offered; no name ends in a number ----
+    wet = {(4, 3), (5, 3), (6, 3), (4, 4), (5, 4), (6, 4), (5, 5), (6, 5)}
+    t, path = [2, 4], []
+    while t != [9, 4] and len(path) < 30:
+        t = sweeper.step_to(cfg, t, [9, 4], wet)
+        path.append(tuple(t))
+    assert t == [9, 4] and not set(path) & wet, "round the pond, not across it: %s" % path
+    pet["made_at"] = [[h["tick"] - i, "charm|soft"] for i in (1, 2, 3)]
+    assert things.charm_count(h, cfg, pet) >= 3, "charms made in the last world day count toward its three"
+    assert things.better(h, cfg, pet), "and something better is offered"
+    assert world.unnumbered("Seed Rest Six") == "Seed Rest" and not world.ends_in_number("Odo II") and world.ends_in_number("porous rest two")
+    room["objects"]["felt cushion"] = {"pos": [1, 1], "made": {"recipe": {"name": "felt cushion"}}}
+    assert not world.ends_in_number(things.unique_name(h, cfg, "felt cushion two")), "a name told apart by a word"
+    from . import actions
+    pet["room"] = hb["id"]
+    assert "sweeper" in actions.nameable(h, pet) and actions.sweeper_here(h, pet, "the sweeper"), "a hob can name the sweeper"
     print("hobs check passed")
 
 

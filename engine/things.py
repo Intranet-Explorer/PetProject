@@ -4,7 +4,7 @@ materials.toml; the purpose the pet writes changes nothing. Taking a thing apart
 import re
 
 from . import craft, firsts, invent
-from .world import LONG_AGO, add_event, days as world_days, dist, free_tile, hours, label, moment, sunny
+from .world import LONG_AGO, add_event, unnumbered, days as world_days, dist, free_tile, hours, label, moment, sunny
 
 SHAPES = ["circle", "square", "triangle", "blob", "bar", "dot", "ring", "star"]
 COLORS = ["red", "orange", "yellow", "green", "teal", "blue", "purple", "pink", "brown", "white", "grey", "black"]
@@ -185,23 +185,31 @@ def everyday(house, cfg, recipe, bits, pet, room, own=None):
     whose = "%s's" % pet["name"] if pet.get("name") else None
     tries = [(stuff,), (nature,), (colour, stuff), (colour, nature), (big, stuff), (big, nature), (colour,), (whose,), (whose, stuff), (whose, colour),
              (room["type"],), (colour, big), (nature, stuff), (big, colour, stuff)] + [(c, stuff) for c in COLORS] + [(w, nature) for w in ("other", "spare", "new", "little")]
-    names = [n for t in tries for words in [[w for w in t if w] + [kind]] for n in [" ".join(words)] if len(words) > 1 and len(n.split()) <= 3 and n not in taken]
+    head = kind.split()[-1]   # (a kind of two words is told apart by its last: "felt tinder bundle" would be four)
+    tries += [(w,) for w in OTHER] + [(w, c) for w in OTHER for c in COLORS]
+    names = [n for t in tries for k in (kind, head) for words in [[w for w in t if w] + [k]] for n in [" ".join(words)]
+             if len(words) > 1 and len(n.split()) <= 3 and n not in taken]
     if names:
         return own if own in names else names[0]
-    return unique_name(house, cfg, kind)   # ponytail: past every telling word, a number after all; never seen with things cleared to the Works
+    return unique_name(house, cfg, kind)   # (never numbered: unique_name tells it apart by a word)
+
+
+OTHER = ["other", "spare", "little", "odd", "plain", "old", "new", "bright", "dim", "round", "long", "short", "neat", "rough"]
 
 
 def unique_name(house, cfg, name):
-    """Two pets may both make a "soft nest": the second becomes "soft nest two". A made thing never takes the
-    name of anything else in the house (a fixture, a stone, a bit, a pet), or it would replace or hide it."""
-    taken = taken_names(house, cfg)
+    """A made thing never takes the name of anything else in the house (a fixture, a stone, a bit, a pet), or it would
+    replace or hide it; and (SPEC-v3.5.9.1) a name never ends in a number: a second "soft nest" is told apart by a word
+    ("other soft nest", "little red soft nest"), never "soft nest two"."""
+    taken, name = taken_names(house, cfg), unnumbered(name) or "thing"
     if name.startswith("stone for"):
         name = "a " + name
-    while True:
-        n = house["names"][name] = house["names"].get(name, 0) + 1
-        out = name if n == 1 else "%s %s" % (name, COUNT[n] if n < len(COUNT) else "number %d" % n)
-        if out not in taken:
-            return out
+    tries = [name] + ["%s %s" % (w, name) for w in OTHER] + ["%s %s %s" % (w, c, name) for w in OTHER for c in COLORS]
+    out = next((t for t in tries if t not in taken), None)
+    if out:
+        return out
+    n = house["names"][name] = house["names"].get(name, 0) + 1   # ponytail: past 182 tries, the day it was made tells it apart
+    return "%s of day %s" % (name, n) if "%s of day %s" % (name, n) not in taken else "%s, made %d" % (name, house["tick"])
 
 
 def clean_name(text):
@@ -251,6 +259,8 @@ def check_make(a, house, cfg, pet):
     if r.get("material") not in allowed:
         return "nothing here can be made %s" % r.get("material")
     kind = cfg["kinds"][r["kind"]]
+    if honest(cfg, r) == "charm" and cfg["make"]["charm_takes"] and not charm_base(cfg, carrying, r.get("material")):   # SPEC-v3.5.9.1: a charm costs a base material
+        return "a charm takes a piece of %s besides what gives it its nature, and you have none to spare" % " or ".join(cfg["make"]["charm_takes"])
     if craft.lacking(cfg, r["kind"], carrying):   # (SPEC-v3.4 §3.1: what it takes has to be found out; it is not told what)
         if r["kind"] in cfg["craft"]["tool"]:   # ... except a tool (13 October 2026): trying to make one says what is missing, and it goes on wanting it
             pet.setdefault("lacks", {})[r["kind"]] = house["tick"]
@@ -279,6 +289,7 @@ def make(house, cfg, pet, a, clean):
     if cfg["kinds"][r["kind"]].get("invented"):
         return invent.make(house, cfg, pet, a, clean)
     was, r["kind"] = r["kind"], honest(cfg, r)   # SPEC-v3.5.8 §3.1: a "charm" that is a tile is a tile
+    had = charm_count(house, cfg, pet)
     want, n = r["material"], 1   # one bit goes into a thing: the one that gives it its nature
     picked = to_pick_up(house, cfg, pet, r)
     for spot in picked:   # what it was short of, it picks up from the floor on the way
@@ -292,6 +303,12 @@ def make(house, cfg, pet, a, clean):
     if not any(want in cfg["house"]["bits"][b]["can"] for b in used):   # ... and, if none of that gives it its nature, the bit that does
         order = sorted(pet["carrying"], key=lambda b: want not in cfg["house"]["bits"][b]["can"])
         used, pet["carrying"] = used + order[:n], order[n:]
+    if r["kind"] == "charm":   # SPEC-v3.5.9.1: and a charm uses up a base material besides what gives it its nature
+        i = next((j for j, b in enumerate(used) if want in cfg["house"]["bits"][b]["can"]), -1)
+        base = next((b for b in pet["carrying"] if b in cfg["make"]["charm_takes"]), None)
+        if base and not any(b in cfg["make"]["charm_takes"] for j, b in enumerate(used) if j != i):
+            pet["carrying"].remove(base)
+            used = used + [base]
     # SPEC-v3.4 §2.2, §3.4: a practised maker's things are finer and bigger; furniture built with a hammer is bigger and sturdier
     fine = craft.skill(cfg, pet, "making")
     built = r["kind"] in cfg["craft"]["tool"]["hammer"]["builds"] and craft.tool_here(house, cfg, room, "hammer")
@@ -324,7 +341,7 @@ def make(house, cfg, pet, a, clean):
     said = "you made %s, %s%s%s%s%s" % (a_thing(cfg, recipe), how, "; you call it %s, and about the house it is the %s" % (title, name) if title else "; it is the %s" % name,
                                        "" if was == r["kind"] else "; it is %s %s, not a charm: it has a use" % (cfg["kinds"][r["kind"]].get("a", "a"), r["kind"]),
                                        "; it hangs on the wall" if hangs else "", "; built with the hammer, it is bigger and sturdier" if built else "")
-    if r["kind"] == "charm" and charms(house, pet) > cfg["make"]["charms"]:   # SPEC-v3.5.8 §4: one more charm, while it has its few, is worth less
+    if r["kind"] == "charm" and had >= cfg["make"]["charms"]:   # SPEC-v3.5.8 §4, v3.5.9.1: one more charm, while it has made or kept its few, is worth less
         return said + "; you have charms enough already, and another one doesn't feel like much", {"energy": -(cfg["make"]["effort"] + n)}, None
     if again:
         return said + "; you have made this before; it doesn't feel new", {"energy": -(cfg["make"]["effort"] + n)}, None
@@ -335,9 +352,10 @@ def make(house, cfg, pet, a, clean):
 def named(house, cfg, recipe, bits, pet, room, own):
     """SPEC-v3.5.8 §3: (the everyday name it is known by, its maker's own name for it as a title or None). The
     recipe gets both."""
-    title = clean_name(own)
-    if cfg["make"].get("own_names"):   # (the self-checks written before v3.5.8 call things what their makers did)
-        recipe["name"] = unique_name(house, cfg, title)
+    title = unnumbered(clean_name(own))   # (SPEC-v3.5.9.1: never "Seed Rest Six")
+    if cfg["make"].get("own_names"):   # (the self-checks written before v3.5.8 call things what their makers did, and count a second "bell two")
+        taken, own = taken_names(house, cfg), clean_name(own)
+        recipe["name"] = next(n for n in [own] + ["%s %s" % (own, c) for c in COUNT[2:]] + ["%s %d" % (own, house["tick"])] if n not in taken)
         return recipe["name"], recipe["name"]
     name = everyday(house, cfg, recipe, bits, pet, room, title)
     recipe["name"] = name
@@ -384,6 +402,41 @@ def used_by(house, o, pet):
 def charms(house, pet):
     """How many charms it owns, about the house."""
     return sum(1 for r in house["rooms"].values() if r["type"] for o in made(r).values() if o["made"]["owner"] == pet["id"] and o["made"]["recipe"].get("kind") == "charm")
+
+
+def charm_count(house, cfg, pet):
+    """SPEC-v3.5.9.1: its charms toward the few it keeps: those it owns, and those it made in the last world day that
+    have gone since (fed to the Works by the spring clean, given away)."""
+    owned = {o["made"]["tick"] for r in house["rooms"].values() if r["type"] for o in made(r).values()
+             if o["made"]["owner"] == pet["id"] and o["made"]["recipe"].get("kind") == "charm"}
+    lately = {t for t, pair in pet.get("made_at", []) if pair.startswith("charm|") and t > house["tick"] - cfg["ticks_per_day"]}
+    return len(owned | lately)
+
+
+def charm_base(cfg, carrying, material):
+    """The base material a charm would use up, from what it carries, leaving a bit that gives it its nature; or None."""
+    nature = next((b for b in carrying if material in cfg["house"]["bits"].get(b, {}).get("can", [])), None)
+    rest = list(carrying)
+    if nature:
+        rest.remove(nature)
+    return next((b for b in rest if b in cfg["make"]["charm_takes"]), None)
+
+
+def better(house, cfg, pet):
+    """SPEC-v3.5.9.1: one or two useful things the house wants just now, to offer a hob past its few charms: a light
+    for a room it knows that has none, a cushion where hobs sit, and what the Works is building."""
+    from . import works
+    known = [house["rooms"][rid] for rid in pet.get("rooms", {}) if house["rooms"].get(rid, {}).get("type")]
+    lit = lambda r: any("light" in o.get("fix", {}) or ("made" in o and prop(cfg, o).get("light")) for o in r["objects"].values())
+    soft = lambda r: any("made" in o and o["made"]["recipe"].get("kind") in ("cushion", "blanket", "nest", "bed-mat", "rug") for o in r["objects"].values())
+    sits = lambda r: any("rest" in o.get("fix", {}) or o.get("fix", {}).get("bench") for o in r["objects"].values())
+    out = [f(r) for f, ok in ((lambda r: "a lamp or a candle for %s, which has no light of its own" % r["name"], lambda r: not lit(r)),
+                              (lambda r: "a cushion for %s, where hobs sit" % r["name"], lambda r: sits(r) and not soft(r)))
+           for r in known if ok(r)][:1]
+    g = works.goal(house, cfg)
+    if g:
+        out.append("scrap for the Works, which is building %s" % g["what"])
+    return out[:2]
 
 
 def drop_bits(house, cfg, room, pos, bits):

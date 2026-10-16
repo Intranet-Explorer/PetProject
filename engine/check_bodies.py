@@ -331,7 +331,7 @@ async def inventing(d):
     # a name that is a kind's already is told apart; past the day's limit a joining makes the larger kind, as before
     clear()
     taken, o5, got = join("taper", "lamp", "warm", "ding b", "bell", "noisy", "bell", "to ring by the fire")
-    assert taken["name"] == "bell two" and o5["made"]["recipe"]["kind"] == "bell two" and cfg["kinds"]["bell"].get("invented") is None, taken
+    assert taken["name"] == "other bell" and o5["made"]["recipe"]["kind"] == "other bell" and cfg["kinds"]["bell"].get("invented") is None, taken
     cfg["invent"]["per_day"] = len(h["invented"])
     none, o6, got = join("taper b", "lamp", "warm", "ding c", "bell", "hard", "hearth bell", "to ring by the fire")
     assert none is None and o6["made"]["recipe"]["kind"] == "lamp" and "nothing new came of it" in got[0], "no more new kinds than the day's limit: %s" % o6["made"]["recipe"]

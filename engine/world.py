@@ -1,6 +1,7 @@
 """The house (SPEC-v3 §6): one JSON-able dict holding every room, pet, creature and the weather.
 Everything else is functions over it. The world is data; pets act only through the checked action set."""
 import json
+import re
 import random
 import tomllib
 from pathlib import Path
@@ -439,6 +440,26 @@ def ordinal(n):
         whole, part = TENS[n // 10 * 10]
         return whole if n % 10 == 0 else "%s-%s" % (part, ORDINAL[n % 10])
     return "latest"
+
+
+NUMBERS = {"one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen",
+           "sixteen", "seventeen", "eighteen", "nineteen", "twenty", "thirty", "forty", "fifty", "hundred", "number", "first", "second", "third"}
+
+
+def ends_in_number(text):
+    """Does a name or a title end in a number ("Seed Rest Six", "porous rest two", "song 3")? A Roman numeral after a
+    name honoured ("Odo II") is not one."""
+    words = re.findall(r"[a-z0-9]+", (text or "").lower())
+    return bool(words) and (words[-1] in NUMBERS or words[-1].isdigit())
+
+
+def unnumbered(text):
+    """SPEC-v3.5.9.1: a name or a title never ends in a number: the number words at its end go ("Seed Rest Six" ->
+    "Seed Rest"); a name that is nothing but number words is kept as it was, for the caller to tell apart."""
+    out = (text or "").strip()
+    while ends_in_number(out) and len(out.split()) > 1:
+        out = out.rsplit(None, 1)[0].strip(" -,")
+    return out
 
 
 ONE = ["pebble", "seed", "leaf", "petal", "feather", "shell", "bead", "reed", "bell", "vine", "quill", "berry", "bean", "stone", "tile", "brick", "block", "cake"]   # (wants.py adds the machine's)

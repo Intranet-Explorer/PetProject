@@ -62,6 +62,9 @@ def rules(house, cfg, name):
         return "too long for a name"
     if not re.fullmatch(r"[A-Za-z][A-Za-z' -]*", name):
         return "not a name"
+    from .world import ends_in_number
+    if ends_in_number(NUMERAL.sub("", name)):   # SPEC-v3.5.9.1: never "Open Six" (an honoured name's numeral, "Odo II", is no number word)
+        return "a number, not a name"
     words = [re.sub(r"'s$", "", w) for w in re.split(r"[\s-]+", NUMERAL.sub("", name).lower()) if w]
     core = [w for w in words if w not in TITLES] or words
     fw = family_words(house, cfg)

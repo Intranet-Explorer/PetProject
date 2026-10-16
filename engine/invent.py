@@ -12,7 +12,7 @@ import logging
 from pathlib import Path
 
 from . import craft, firsts, things
-from .world import LONG_AGO, a, add_event, bit_kinds, clock, free_tile, hours, label, moment, rnd, ticks, weather_of
+from .world import LONG_AGO, a, add_event, unnumbered, bit_kinds, clock, free_tile, hours, label, moment, rnd, ticks, weather_of
 
 ART = Path(__file__).parent.parent / "view" / "assets"
 P, USES = json.loads((ART / "parts.json").read_text()), json.loads((ART / "uses.json").read_text())["uses"]
@@ -162,7 +162,9 @@ def everyday(cfg, rec):
     if word:
         return word
     base = rec["parts"][0]["part"] if rec.get("parts") else None
-    word = base if base in cfg["kinds"] and not cfg["kinds"][base].get("invented") else (rec.get("from") or ["thing"])[0]
+    frm = (rec.get("from") or ["thing"])[0]
+    word = base if base in cfg["kinds"] and not cfg["kinds"][base].get("invented") else \
+        cfg["kinds"].get(frm, {}).get("everyday") or frm if not cfg["kinds"].get(frm, {}).get("invented") or cfg["kinds"][frm].get("everyday") else "curio"   # (an invention of an invention: what that one is called)
     logging.info("no everyday kind for the invented %s (%s): called a %s", rec["name"], rec["use"], word)
     return word
 
@@ -198,8 +200,9 @@ def born(house, cfg, pet, olds, r, meets):
         return None
     use, parts, x, y = made
     taken = set(cfg["kinds"]) | set(inv) | set(cfg["house"]["bits"]) | {f["name"] for t in cfg["house"]["rooms"].values() for f in t["fixtures"]}
-    first = things.clean_name(r.get("name")) or "thing"
-    name = next(n for n in [first] + ["%s %s" % (first, c) for c in things.COUNT[2:]] + ["%s %d" % (first, house["tick"])] if n not in taken)
+    first = unnumbered(things.clean_name(r.get("name"))) or "thing"   # (SPEC-v3.5.9.1: a kind's name never ends in a number either)
+    name = next((n for n in [first] + ["%s %s" % (w, first) for w in things.OTHER] + ["%s %s %s" % (w, c, first) for w in things.OTHER for c in things.COLORS]
+                 if n not in taken), "%s, found %d" % (first, house["tick"]))
     base, E = cfg["kinds"].get(x.get("kind"), {}), USES.get(use, {}).get("effect", {})
     rec = inv[name] = {"name": name, "a": "an" if name[0] in "aeiou" else "a", "use": use, "parts": parts,
                        "size": "large" if base.get("furniture") or max(things.size(o) for o in olds) >= 3 else "small", "from": [x.get("kind"), y.get("kind")],

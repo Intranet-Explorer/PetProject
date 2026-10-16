@@ -23,6 +23,7 @@ def load_config(*a, body=False, **k):
     cfg = world.load_config(*a, **k)
     cfg["body"]["on"] = body
     cfg["make"]["same"] = 99   # (these checks make the same thing over and over; the rule that stops that has its own check)
+    cfg["make"]["charm_takes"] = []   # (written before v3.5.9.1: a charm costs no base material here; check_hobs checks that it does)
     cfg["make"]["own_names"] = True   # (written before v3.5.8: things go by their makers' names; engine/check_hobs.py checks everyday names)
     return cfg
 

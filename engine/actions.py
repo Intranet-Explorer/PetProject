@@ -220,9 +220,14 @@ def offered_to_mind(house, cfg, pet, mem):
     return [a for a in can if a not in BODY_ONLY] if cfg["body"]["on"] else can
 
 
+def sweeper_here(house, pet, name):
+    """The sweeper in the room with no name yet, by "sweeper" (Tyler, 16 October 2026: hobs name it like any creature)."""
+    return next((c for c in house["creatures"] if c["kind"] == "sweeper" and c["room"] == pet["room"] and not c.get("name") and norm(name) == "sweeper"), None)
+
+
 def nameable(house, pet):
     """What it could give a name to here: an animal of its own that has none, or an egg that is nobody's (§4.1, §7.1)."""
-    out = [c["kind"] for c in house["creatures"] if c.get("tame") == pet["id"] and c["room"] == pet["room"] and not c.get("name")]
+    out = [c["kind"] for c in house["creatures"] if (c.get("tame") == pet["id"] or c["kind"] == "sweeper") and c["room"] == pet["room"] and not c.get("name")]
     if any(p["room"] == pet["room"] and p["stage"] == "egg" and not p["parent"] and not p["name"] for p in house["pets"].values()):
         out.append("egg")
     if hub.unnamed(house, pet):   # SPEC-v3.5.1 §4: the statue of its family's founder, with no name on its plaque
@@ -399,8 +404,8 @@ def check(a, house, cfg, pet, mem):
             return None if "egg" in nameable(house, pet) else "there is no egg here that wants a name"
         if what == "statue":
             return None if hub.unnamed(house, pet) else "there is no statue here that wants a name"
-        cr = tame(house, pet, what)
-        return None if cr and cr["room"] == room["id"] else "you can only name an animal of your own that is here"
+        cr = tame(house, pet, what) or sweeper_here(house, pet, what)
+        return None if cr and cr["room"] == room["id"] else "you can only name an animal of your own, or the sweeper, that is here"
     if t == "ask_book":
         return book.check_ask(a, house, cfg, pet, filled)
     if t == "write_belief":
@@ -688,7 +693,7 @@ def apply(house, cfg, pet, a, mem):
                 egg["byname"] = by
             moment(house, "named", "%s named the egg that is nobody's %s" % (name, egg["name"]), pet["id"], room["id"])
             return "you named the egg %s%s" % (egg["name"], told), {}, "name"
-        cr = tame(house, pet, a["what"])
+        cr = tame(house, pet, a["what"]) or sweeper_here(house, pet, a["what"])
         cr["name"] = new
         for an in pet.get("animals", []):
             if an["id"] == cr["id"]:

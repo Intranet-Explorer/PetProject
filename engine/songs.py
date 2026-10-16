@@ -103,10 +103,11 @@ def heard(house, cfg, room, sid, singer, said, but=()):
 
 
 def unique(house, name):
-    taken, base, n = {s["name"].lower() for s in book(house).values()}, name, 2
-    while name.lower() in taken:
-        name, n = "%s %d" % (base, n), n + 1
-    return name
+    """A song's name, told apart from the house's other songs by a word, never a number (SPEC-v3.5.9.1)."""
+    from .things import OTHER
+    from .world import unnumbered
+    taken, base = {s["name"].lower() for s in book(house).values()}, unnumbered(name) or name
+    return next((n for n in [base] + ["%s %s" % (w, base) for w in OTHER] + ["the %s %s" % (w, base) for w in OTHER] if n.lower() not in taken), "%s, again" % base)
 
 
 def compose(house, cfg, pet, a, clean):

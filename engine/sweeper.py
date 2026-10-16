@@ -112,11 +112,41 @@ def step(house, cfg, cr):
         move(house, cfg, cr, house["door_tiles"][d], lambda: through(house, cfg, cr, d))
 
 
+def water(house, cr):
+    """The tiles of water in the room it is in (the pond): it drives round them (Tyler, 16 October 2026)."""
+    return {tuple(t) for o in house["rooms"][cr["room"]]["objects"].values() for t in o.get("fix", {}).get("water") or ()}
+
+
+def step_to(cfg, at, goal, wet):
+    """The next tile from `at` toward `goal`, by the shortest way round the water: straight when nothing is in the way,
+    else a breadth-first search over the room's dry tiles. A goal on the water is reached from its edge."""
+    at, goal = tuple(at), tuple(goal)
+    nxt = tuple(p + (g > p) - (g < p) for p, g in zip(at, goal))
+    if nxt not in wet or nxt == goal:
+        return list(nxt)
+    seen, queue = {at: None}, [at]
+    while queue:
+        t = queue.pop(0)
+        if t == goal or (goal in wet and dist(t, goal) <= 1):
+            while seen[t] != at and seen[t] is not None:
+                t = seen[t]
+            return list(t)
+        for dx in (-1, 0, 1):
+            for dy in (-1, 0, 1):
+                n = (t[0] + dx, t[1] + dy)
+                if n not in seen and in_room(cfg, list(n)) and n not in wet:
+                    seen[n] = t
+                    queue.append(n)
+    return list(nxt)
+
+
 def move(house, cfg, cr, goal, then):
-    """One tile toward `goal` (bumping round what is in the way); `then` once there."""
-    if dist(cr["pos"], goal) <= 0 or (cr["pos"] == list(goal)):
+    """One tile toward `goal`, round the pond and never across it; `then` once there (or at the water's edge, for a
+    goal on the water)."""
+    wet = water(house, cr)
+    if cr["pos"] == list(goal) or (tuple(goal) in wet and dist(cr["pos"], goal) <= 1):
         return then()
-    nxt = [p + (g > p) - (g < p) for p, g in zip(cr["pos"], goal)]
+    nxt = step_to(cfg, cr["pos"], goal, wet)
     if not in_room(cfg, nxt):
         return then()
     cr["pos"] = nxt
