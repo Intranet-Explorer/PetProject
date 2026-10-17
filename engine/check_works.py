@@ -118,6 +118,7 @@ async def run(d):
         feed("filler %d" % i)
     assert music["objects"]["shelf"]["fix"]["store"] == 4 and cfg["machine"]["restock"] == 3, "a shelf in the music room; a bigger morning delivery"
     assert "wax" in cfg["machine"]["materials"] and machine.state(h, cfg)["stock"]["wax"] > 0 and "wax" in machine.takeable(h, cfg, other), "and wax to be had from the machine"
+    S["have"] = works.goal(h, cfg)["scrap"]   # full, but nobody feeds it again: it builds when the house is loaded
     eng.save()
     eng.close()
     cfg2 = world.load_config()
@@ -126,7 +127,8 @@ async def run(d):
     back = Engine(cfg2, d + "/a", scripted)
     assert "wax" in cfg2["machine"]["materials"] and cfg2["machine"]["restock"] == 3 and any(f["name"] == "lamp" for f in cfg2["house"]["rooms"]["cellar"]["fixtures"]), \
         "what it built stays built when the house is loaded again"
-    assert "lamp" in back.house["rooms"][cellar["id"]]["objects"] and works.goal(back.house, cfg2)["what"] == W["build"][4]["what"]
+    assert "lamp" in back.house["rooms"][cellar["id"]]["objects"] and works.goal(back.house, cfg2)["what"] == W["build"][5]["what"], "a full goal built on load"
+    assert works.state(back.house, cfg2)["built"][-1]["what"] == W["build"][4]["what"] and works.state(back.house, cfg2)["have"] == 0
     back.close()
 
     # ---- §11 the board: everyone gets a turn ----

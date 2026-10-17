@@ -115,6 +115,15 @@ def fed(house, cfg, pet, o=None):
     return "; the Works took it as scrap for %s, and %s" % (g["what"], full(house, cfg)), lift
 
 
+def check(house, cfg):
+    """A goal whose meter is already full builds straight away, not at the next feeding: on load (the list may have
+    changed under it, as when the rail came in after a goal that had 31 of 30) and as each goal starts."""
+    from . import machine
+    g = goal(house, cfg)
+    if g and machine.found(house) and state(house, cfg)["have"] >= g["scrap"]:
+        built(house, cfg, g)
+
+
 def built(house, cfg, g):
     """The meter is full: the thing is built, everyone who fed it is named and proud, the next goal starts."""
     from . import hub, machine
@@ -143,6 +152,7 @@ def built(house, cfg, g):
             feats.glow(house, cfg, p, 2, "you helped fill the Works, and it has built %s" % g["what"])
         elif p["room"] == hub.RID and not p["sleep"]:
             add_event(house, p, "the machine rumbled and clanked: the Works has built %s" % g["what"])
+    check(house, cfg)
 
 
 def lay(house, cfg, new=None):

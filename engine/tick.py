@@ -741,6 +741,7 @@ class Engine:
         resting.migrate(h, cfg)   # SPEC-v3.5.12 §4: once, the stones and keepsake boxes are carried to the resting place
         if h.get("rail") and rail.train(h):
             rail.lay(h, cfg)
+        works.check(h, cfg)   # 17 October 2026: a goal already full builds now, not at the next feeding
         hub.settle_radio(h, cfg)
         for pet in h["pets"].values():   # 13 October 2026: what it has made lately is counted over three world days, from the things themselves
             if "made_at" not in pet and pet["stage"] not in ("egg", "dead"):
