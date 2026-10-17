@@ -2179,7 +2179,7 @@ backup `data.backup-v3.5.11-2026-10-16`, one restart at tick 110391.
 - **Charms** on a shelf are kept only while their owner is alive and they are among its newest three.
 - **The log:** each pickup is a creature row, "swept up X, lying N hours" for a bit, "swept up NAME" for a thing.
 
-## Part 30: v3.5.12, what the house really needs, and titles that don't repeat (17 October 2026)
+## Part 30: v3.5.11.1 (the lamp and titles round), what the house really needs, and titles that don't repeat (17 October 2026)
 
 Engine. Tyler, after a day of lamps (10 of 27 things made, 14 of 35 the day before).
 
