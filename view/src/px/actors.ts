@@ -132,6 +132,7 @@ const MOVES: Record<string, Move> = {
   // SPEC-v3.4 §1: settled on something; a thing out of its box, or carried to someone, is in its paws; after a creature at a trot
   seat: { a: "sit" }, box: { a: "make", stir: 3 }, "follow a creature": { a: "face", hop: 2, ms: 420 },
   "try it": { a: "make", stir: 2 },   // SPEC-v3.4 §3.1: its paws at a bit, whatever sign the way of trying is given
+  fish: { a: "sit" },   // SPEC-v3.6a §2: sat at the dock's end or the edge (px/pond.ts draws the rod, the line, the paw)
 };
 /** SPEC-v3.5.8 §5: how long reaching down to pick something up, or to set it down, takes (ms). */
 const REACH = 420;

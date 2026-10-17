@@ -19,6 +19,7 @@ import { grid } from "./path";
 import type { Grid } from "./path";
 import { seasonal } from "./season";
 import { stationSprite, trackTexture } from "./train";
+import { bridgeOf, footing, pondOf, PondWater } from "./pond";
 import { hslInt, tinted } from "./tint";
 
 /** A made thing as it is drawn: its kind's sprite, its colour, its size (1 to 3). */
@@ -96,6 +97,8 @@ export class Still {
   areas: { name: string; rect: Rect }[] = [];
   /** SPEC-v3.5 §4.2: each painted place and where it is drawn, for the pointer. */
   paints: { p: Painted; rect: Rect }[] = [];
+  /** SPEC-v3.6a: the pond's water, lilies and dock, drawn over the grass (null: the room has no water). */
+  pond: PondWater | null = null;
 
   /** A sprite's name as this season draws it in this room (SPEC-v3.5 §5, view/assets/seasons.json); null: not there this season. */
   private swap: (name: string | null | undefined, x?: number, y?: number) => string | null | undefined = (n) => n;
@@ -104,8 +107,10 @@ export class Still {
     const L = layout ?? {};
     this.swap = (n, x, y) => seasonal(n, snap.clock.season, room.type, x, y);
     this.tiles(L, room);
+    const pond = pondOf(snap, room), bridge = pond && bridgeOf(pond, room);
+    if (pond) { this.pond = new PondWater(pond, room, room.id); this.ground.addChild(this.pond.c); }
     this.paint(room, false);   // SPEC-v3.5 §4.2: paint on the wall and the floor, under everything that stands there
-    const blocked: Tile[] = [...(L.blocked ?? [])];
+    const blocked: Tile[] = [...(L.blocked ?? []), ...(pond?.water ?? [])];
     for (const d of L.decor ?? []) this.decor(d.sprite, d.at, d.layer);
     this.puddles(snap, room, L);
     this.places(room);
@@ -135,6 +140,10 @@ export class Still {
       } else if (o.fix?.memory) {
         this.rack(name, o, snap, room);
         blocked.push(o.pos);
+      } else if (o.water && pond) {
+        continue;   // SPEC-v3.6a: the water is the pond's, drawn with it
+      } else if (bridge?.name === name && has("fix.built.pond bridge.ns")) {
+        this.put(name, { ...o, pos: [bridge.x, bridge.y1] }, "fix.built.pond bridge.ns", "ground");   // north to south over the neck, its foot on the south bank
       } else {
         if (o.water) blocked.push(...o.water);
         if (o.fix?.sun) this.sun = [OX + o.pos[0] * TILE + 8, OY + o.pos[1] * TILE + 8];
@@ -205,6 +214,7 @@ export class Still {
       if (t.wall) this.wallLayer.addChild(b); else this.standing.push(b);
     }
     this.blocked = grid(blocked.filter(onFloor));
+    for (const t of pond ? footing(pond, room) : []) if (onFloor(t)) this.blocked[idx(t)] = 0;   // the dock, the bridge, the ice
     for (const t of Object.values(snap.door_tiles)) if (onFloor(t)) this.blocked[idx(t)] = 0;   // a doorway is never shut off
   }
 
@@ -476,7 +486,7 @@ export class Still {
     const look = { soft: mat === "soft" || undefined, dark: mat === "dark" || undefined, damp: m.worn.includes("damp") || undefined, dusty: m.worn.includes("dusty") || undefined,
                    eaten: m.worn.includes("eaten") || undefined };
     const sprite = o.planted ? pick(`${d.sprite}.bare`, d.sprite) : d.sprite;   // a pot drawn with a plant of its own is bare under what is planted in it
-    const pic = has(sprite) ? tinted(sprite, color, look) : { texture: tex(sprite), canvas: canvasOf(sprite) };
+    const pic = has(sprite) ? tinted(sprite, def(sprite)?.tint === "none" ? null : color, look) : { texture: tex(sprite), canvas: canvasOf(sprite) };   // (SPEC-v3.6a: an everyday kind or a find keeps its own colours)
     const scale = slot ? this.small : Math.max(1, Math.round(this.K * (SIZES[Math.round(d.size) - 1] ?? 1))) / this.K;
     const t = this.put(name, o, sprite, "sorted", pic.texture, pic.canvas, scale, slot);
     t.drawn = { ...d, color };

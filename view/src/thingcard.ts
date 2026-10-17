@@ -22,6 +22,7 @@ export type Thing = {
   first?: "house" | "family" | null;   // a first, from the house's feats (kept from day 61)
   gone_day?: number | null;
   stored?: boolean;   // SPEC-v3.5.12 §1: it is in the store
+  found?: { from: string; tier: string; by: string; tick: number } | null;   // SPEC-v3.6a §3: it came up out of the pond
   // SPEC-v3.5.8 §6, each only when recorded (Made in types.ts): the title shows; how it was made; the bits it was made
   // from (a gone thing too); who used it, how often
   title_shown?: boolean; how?: string | null; from?: string[] | null; users?: Record<string, number> | null;
@@ -106,6 +107,7 @@ export function cardBody(t: Quick, hint = false): Node[] {
     t.first === "house" ? badge([icon(STAR), "FIRST IN THE HOUSE"], "gold") : t.first === "family" ? badge(["FIRST IN ITS FAMILY"], "silver") : null,
     t.invention ? badge(["INVENTED"], "blue") : null,
     t.heirloom ? badge(["HEIRLOOM"]) : null,
+    t.found?.from === "pond" ? badge([t.found.tier && t.found.tier !== "common" ? `FROM THE POND · ${t.found.tier.toUpperCase()}` : "FROM THE POND"], "pond") : null,   // SPEC-v3.6a §6
     t.star != null ? badge([icon(STAR), "STAR FROM THE VISITOR"], "gold") : null,
     t.day != null ? badge([`day ${t.day}`], "day") : null,
   ].filter(Boolean) as Node[];
@@ -114,7 +116,7 @@ export function cardBody(t: Quick, hint = false): Node[] {
     el("p", "tckind", kindWords(t), ...(t.statue && t.of ? [" of ", who(t.of) ?? "someone"] : []), t.use ? ` - ${t.use}` : null),
     badges.length ? el("p", "tcbadges", ...badges) : null,
     maker || t.made_in ? el("div", "tcmaker", maker ? portrait(maker, 48) : null, el("div", "",
-      maker ? el("div", "", t.statue ? "begun by " : "made by ", petLink(maker)) : null,
+      maker ? el("div", "", t.statue ? "begun by " : t.found ? "pulled up out of the pond by " : "made by ", petLink(maker)) : null,
       t.how ? el("div", "tcwhere", t.how) : null,   // SPEC-v3.5.8 §6: "woven at the loom"
       t.made_in ? el("div", "tcwhere", `in ${t.made_in}`) : null)) : null)));
 

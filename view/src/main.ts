@@ -10,6 +10,8 @@ import { icon } from "./icons";
 import { evening } from "./px/weather";
 import { drawMap } from "./minimap";
 import { fakeTrain } from "./faketrain";
+import { fakePond } from "./fakepond";
+import type { FakePond } from "./fakepond";
 import { noteInvented } from "./parts";
 import { renderDrawer, showMind, sources, truthOf } from "./panels";
 import { startReplay } from "./replay";
@@ -844,7 +846,7 @@ function tipFor(t: Target): Kid[] | null {
   if (o?.made) {   // SPEC-v3.5.7 §5: the thing card (thingcard.ts), filled in from the house's record as it arrives
     const m = o.made as typeof o.made & { id?: number; tick?: number }, key = m.id != null ? String(m.id) : `g${m.tick}-${t.object!.replace(/\W+/g, "-")}`;
     const card = thingCard(key, { name: t.object!, recipe: m.recipe as never, by: m.by, owner: m.owner, uses: m.uses, heirloom: !!m.heirloom, star: m.star ?? null,
-      title_shown: m.title_shown, how: m.how, made_in: m.made_in, from: m.from, users: m.users, words: m.words } as never, false);   // (SPEC-v3.5.8 §6: what the house now records)
+      title_shown: m.title_shown, how: m.how, made_in: m.made_in, from: m.from, users: m.users, words: m.words, found: m.found ?? null } as never, false);   // (SPEC-v3.5.8 §6: what the house now records)
     return [card, replayId ? null : el("p", "hint cardhint", m.star ? "click to move or name it, or open its page" : "click to move, name or star it, or open its page")];
   }
   if (o?.memorial) return [roomCard(drawn(t) ?? (hasSprite("stone") ? sprite("stone", 3) : null), ["a stone"], [o.memorial.text], kept(t),
@@ -860,7 +862,7 @@ function tipFor(t: Target): Kid[] | null {
   }
   // anything else the room can say something about: its own scenery (a bookcase, a barrel) is "part of the room"
   const it = told(t);
-  return it ? [roomCard(drawn(t), [it.title], [it.text ? `${cap(it.text)}.` : ""])] : null;
+  return it ? [roomCard(drawn(t), [it.title], [it.text ? `${cap(it.text)}.` : ""], ...(it.notes?.length ? [kept(t)] : []))] : null;   // (the display's: the fish, the train)
 }
 
 /** What a hob carries, for its card (SPEC-v3.5.8 §5): the thing its body has picked up, and its bits. */
@@ -1087,6 +1089,8 @@ Object.assign(window, { petView: {
   replay: () => replay,
   /** SPEC-v3.5.12 §5, for checks: a train driven through a room's track by the page (null stops it); see faketrain.ts. */
   fakeTrain: (rid: string | null, ms?: number, rider?: string | null) => fakeTrain(() => raw, (o) => { tweak = o ?? {}; if (raw) void show(raw); }, rid, ms, rider ?? null),
+  /** SPEC-v3.6a §6, for checks: the bigger pond, the dock and two hobs fishing, laid over the house by the page (null stops it); see fakepond.ts. */
+  fakePond: (o?: FakePond | null) => fakePond(() => raw, (x) => { tweak = x ?? {}; if (raw) void show(raw); }, o === undefined ? {} : o),
   snap: () => raw,
   /** SPEC-v3.3 §4: every sound the page has begun (the last 500), for checking without ears. */
   audioLog: voice.log,
@@ -1101,4 +1105,6 @@ Object.assign(window, { petView: {
 } });
 watchVersion();   // v3.5.10: a page open across a deploy reloads itself
 const faking = new URLSearchParams(location.search).get("faketrain");
+const ponding = new URLSearchParams(location.search).get("fakepond");
+if (ponding != null) { const go = (): unknown => (raw ? (jump({ room: raw.rooms.find((r) => r.type === "pond")?.id ?? view.room }), fakePond(() => raw, (o) => { tweak = o ?? {}; if (raw) void show(raw); }, { frozen: ponding === "frozen", rain: ponding === "rain", dock: ponding !== "nodock" })) : setTimeout(go, 500)); go(); }
 if (faking) { const go = () => (raw ? (jump({ room: faking }), fakeTrain(() => raw, (o) => { tweak = o ?? {}; if (raw) void show(raw); }, faking)) : setTimeout(go, 500)); go(); }

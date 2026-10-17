@@ -6,7 +6,7 @@ import { Application, Container, Graphics, Sprite } from "pixi.js";
 import type { Genome, Look } from "./pet";
 import { petPortrait } from "./petsprite";
 import { ago, bodyStage, hhmm, tickMs } from "./types";
-import type { Act, Hello, Mark, Obj, PetV, RoomV, Snap, Tile } from "./types";
+import type { Act, Hello, Mark, Obj, PetV, Pond, RoomV, Snap, Tile } from "./types";
 import { play } from "./px/acts";
 import type { Ghost } from "./px/acts";
 import { CreatureActor, doing, PetActor } from "./px/actors";
@@ -14,7 +14,7 @@ import type { Stage } from "./px/actors";
 import { canvasOf, has, kind, layout, loadArt, pick, size, tex } from "./px/assets";
 import type { Layout } from "./px/assets";
 import { Labels } from "./px/bubbles";
-import { display, SKY } from "./px/display";
+import { display, fishLine, SKY } from "./px/display";
 import type { Display } from "./px/display";
 import type { Tag, Who } from "./px/bubbles";
 import { Fx, fxTexture } from "./px/fx";
@@ -29,6 +29,7 @@ import type { Thing } from "./px/still";
 import { hslInt } from "./px/tint";
 import { Light, REDUCE } from "./px/weather";
 import { carLine, TrainActor } from "./px/train";
+import { catchPicture, Fishing, pondOf } from "./px/pond";
 
 /** v3.5.10: one part of the room that fails (a new snapshot field an old page does not know, a bad sprite) is skipped,
  *  and said once on the console; everything else goes on being drawn. */
@@ -109,6 +110,7 @@ export class Room {
   private pets = new Map<string, PetActor>();
   private beasts = new Map<string, CreatureActor>();
   private train: TrainActor | null = null;   // SPEC-v3.5.12 §3
+  private fishing: Fishing | null = null;    // SPEC-v3.6a: the pond's fish, floats and fishers, kept while the room is looked at
   private heads = new Map<string, Rect>();
   private scene: Scene | null = null;
   private ready = false;
@@ -243,12 +245,13 @@ export class Room {
     const lay = layout(room.type, () => { this.built = ""; if (this.scene) this.update(this.scene); });
     if (lay === undefined) return;
     this.roomId = room.id;
-    if (fresh) { this.fx.clear(); this.over.clear(); this.ghosts.clear(); this.crate?.destroy(); this.crate = null; this.hatched.clear(); }
+    if (fresh) { this.fx.clear(); this.over.clear(); this.ghosts.clear(); this.crate?.destroy(); this.crate = null; this.hatched.clear(); this.fishing?.detach(); this.fishing?.destroy(); this.fishing = null; }
 
     const keep = this.keep();
     const key = JSON.stringify([room.id, room.type, lay === undefined, room.areas, Object.entries(room.objects).map(([n, o]) => [n, o.pos, o.state, o.wall, o.on, o.store?.holds, o.servings === 0, o.grow != null && o.grow < 0.35, o.water, o.planted, o.build,
       o.made && [o.made.recipe, o.made.active, o.made.behavior?.do, o.made.worn, !!o.made.heirloom], !!o.memorial]), room.spots, room.paint, room.painted, room.doors, room.shut, room.wet, snap.power,
-      snap.rooms.map((r) => r.type), room.marks, this.K, keep, snap.door_tiles, snap.clock.season, ((r) => r && [r.track, r.platform, r.side, r.buffer])(snap.rail?.rooms?.[room.id])]);
+      snap.rooms.map((r) => r.type), room.marks, this.K, keep, snap.door_tiles, snap.clock.season, ((r) => r && [r.track, r.platform, r.side, r.buffer])(snap.rail?.rooms?.[room.id]),
+      ((p) => p && [p.water, p.dock, p.frozen, p.holes])(snap.pond?.room === room.id ? snap.pond : null)]);
     if (key !== this.built) {
       this.built = key;
       this.rebuild(sc, lay ?? null, keep, now);
@@ -267,6 +270,8 @@ export class Room {
     if (lit !== this.lit) { this.lit = lit; this.light.set(env); }
 
     this.cast(sc, fresh, now);
+    const pond = pondOf(snap, room);
+    if (pond && this.fishing) guard("the pond", () => this.fishing!.update(pond, now));
     for (const t of still.things.values()) {   // what a pet is at just now stirs: a toy bounces, a thing being put away is off the floor and in its paws
       let stir = 0;
       for (const a of this.pets.values()) if (a.stirs && this.stage.thing(a.pet.body?.what) === t) stir = a.stirs;
@@ -292,6 +297,7 @@ export class Room {
   /** Everything that holds still, built again. What made things stood there a moment ago is kept for the effects. */
   private rebuild(sc: Scene, lay: Layout | null, keep: number[] | null, now: number) {
     const old = this.still;
+    this.fishing?.detach();   // (kept: the pond's moving life goes on over the room drawn again)
     if (old) {
       this.ghosts.clear();
       for (const [n, t] of old.things) if (t.drawn) this.ghosts.set(n, { texture: t.texture, x: t.x, y: t.y, scale: t.scale, h: t.rect.h });
@@ -308,6 +314,10 @@ export class Room {
     this.display = display(s, sc.room, this.K);
     this.marks.build(sc.room, s, this.F / this.K, keep, now);
     for (const c of s.standing) this.sorted.addChild(c);
+    if (s.pond) {
+      if (!this.fishing) { this.fishing = new Fishing(); this.fishing.onAdd = (c) => this.sorted.addChild(c); }
+      this.fishing.attach(s.pond);
+    } else if (this.fishing) { this.fishing.destroy(); this.fishing = null; }
   }
 
   /** Where each pet stands: on the engine's tile, or the nearest free one if that tile has furniture on it or is taken. */
@@ -558,6 +568,11 @@ export class Room {
     const pools = this.light.pools;
     pools.length = 0;
     if (this.train) guard("the train", () => this.train!.frame(now, this.fx, this.light.darkness));
+    if (still.pond) guard("the pond", () => {
+      still.pond!.frame(now);
+      this.fishing?.frame(now, dt, sc.snap, this.fx, (id) => { const a = this.pets.get(id); return a ? { x: a.w.x, y: a.w.y, tall: a.tall, coat: hslInt(a.pet.genome.hue, a.pet.genome.saturation, 0.62) } : null; },
+                          K, (c) => catchPicture(c, sc.room));
+    });
     for (const a of this.pets.values()) {
       a.ride = a.pet.riding ? this.train?.step ?? [] : null;   // SPEC-v3.5.12 §3: on the tram's back step (out of sight with it)
       guard("a hob", () => a.step(st));
@@ -620,7 +635,6 @@ export class Room {
         if ((t.glassy && Math.random() < 0.3) || (t.heirloom && Math.random() < 0.2)) fx.spawn("glint", t.rect.x + 2 + Math.random() * (t.rect.w - 4), t.rect.y + 2 + Math.random() * (t.rect.h / 2), { life: 450 });
         if (t.noisy && Math.random() < 0.7) fx.spawn("tick", t.x + (Math.random() < 0.5 ? -1 : 1) * (t.rect.w / 2 + 3), t.y - t.rect.h / 2, { life: 420, vx: 0 });
         if (t.fragrant && Math.random() < 0.3) fx.spawn("speck", t.x + (Math.random() - 0.5) * 6, t.rect.y, { vy: -6, life: 1500, sway: 2, tint: 0xf5a8c8 });
-        if (t.obj.water && Math.random() < 0.5) { const w = t.obj.water[Math.floor(Math.random() * t.obj.water.length)]; fx.spawn("glint", OX + w[0] * TILE + 3 + Math.random() * 10, OY + w[1] * TILE + 3 + Math.random() * 10, { life: 600, alpha: 0.7 }); }
         if (t.obj.fix?.book && snap.read_glow) fx.spawn("sparkle", t.x + (Math.random() - 0.5) * 10, t.y - 8, { vy: -10, life: 800 });
       }
     }
@@ -646,7 +660,7 @@ export class Room {
   }
 
   /** SPEC-v3.5.9 §4: the weather and the hour inside: dust in a sunbeam, fireflies in the garden at night, breath in
-   *  the cold, rain rippling the pond. */
+   *  the cold. (Rain rippling the pond, and its glints: px/pond.ts.) */
   private weatherLife(sc: Scene, still: Still, now: number, sky: string | null) {
     const { snap, room } = sc, fx = this.fx, n = this.next, night = snap.clock.phase === "night", w = snap.weather, calm = REDUCE.matches ? 2 : 1;
     if (now < n.weather) return;
@@ -662,8 +676,6 @@ export class Room {
         fx.spawn("wisp", a.w.x + side * 5, a.w.y - a.tall * 0.6, { vx: side * 7, vy: -3, life: 1100, tint: 0xeef6ff, alpha: 0.7 });
       }
     }
-    if (w === "rain" || w === "storm") for (const t of still.things.values()) for (const [tx, ty] of t.obj.water ?? []) if (Math.random() < 0.25 / calm)   // rings on the pond
-      fx.spawn("rain.splash", OX + tx * TILE + 2 + Math.random() * 12, OY + ty * TILE + 3 + Math.random() * 11, { life: 380, tint: 0xd8f0ff, alpha: 0.8 });
   }
 
   // ---- the pointer ----
@@ -745,6 +757,8 @@ export class Room {
     const called = (n: string) => { const m = room.objects[n]?.made, d = m && drawnOf(m); return m?.called ? `“${m.called}”` : d ? `a ${d.color ? `${d.color} ` : ""}${d.kind}` : n; };
     const into = (n: string) => `${room.objects[n]?.store?.inside ? "in" : "on"} the ${n}`, place = (pos: Tile) => room.areas?.find((a) => a.tiles.some((t) => at(t, pos)))?.name;
     const whose = (id: unknown) => { const p = snap.pets.find((q) => q.id === id); return p ? p.label : "someone gone"; };
+    const f = o.made?.found;   // SPEC-v3.6a §3: a find
+    if (f) out.push(`from the ${f.from}: pulled up by ${whose(f.by)}${f.tier && f.tier !== "common" ? ` (${f.tier})` : ""}`);
     if (o.fix?.keepsake) out.push(`whose: ${whose(o.fix.keepsake)}'s`);   // SPEC-v3.5.12 §4
     if (o.fix?.memory) {   // a family's memory shelf: whose boxes stand on it
       const boxes = (o.store?.holds ?? []).map((n) => room.objects[n]?.fix?.keepsake).filter(Boolean).map(whose);
@@ -784,6 +798,17 @@ export class Room {
     if (area) out.push(`part of the ${area.name}`);
     return out.length ? out : undefined;
   }
+  /** SPEC-v3.6a §6: the pond's card: how many fish it has in words, today's catches, who is fishing; on the dock, the dock. */
+  private pondCard(p: Pond, tile: Tile): Card {
+    const snap = this.scene!.snap, name = (id: string) => snap.pets.find((q) => q.id === id)?.label ?? "someone";
+    const an = (w: string) => (/^(a|an|the|some) /.test(w) ? w : `${/^[aeiou]/.test(w) ? "an" : "a"} ${w}`);
+    const dock = p.dock?.tiles.some((d) => d[0] === tile[0] && d[1] === tile[1]);
+    return { what: "fixture", title: dock ? "the dock" : "the pond", sprite: canvasOf(dock ? "pond.dock.end" : "bit.fish"), name: "pond", state: p.frozen ? "frozen over" : null,
+             text: p.frozen ? `frozen over${p.holes.length ? `; ${p.holes.length > 1 ? `${p.holes.length} holes` : "a hole"} cut in the ice` : ""}` : p.says || "the water",
+             notes: [...(p.says ? [`fish: ${p.says}`] : []), `catches today: ${p.today}`,
+                     ...p.catches.slice(-4).reverse().map((c) => `${name(c.pet)} caught ${an(c.what)}${c.tier !== "common" ? ` (${c.tier})` : ""}`),
+                     ...(p.fishers.length ? [`fishing now: ${p.fishers.map((f) => `${name(f.pet)} (${f.rod ? "with a rod" : "by paw"})`).join(", ")}`] : [])] };
+  }
   private card(t: Target | null): Card | null {
     const sc = this.scene, still = this.still;
     if (!t || !sc || !still) return null;
@@ -810,6 +835,8 @@ export class Room {
     }
     if (th) return { what: th.obj.memorial ? "stone" : "fixture", title: th.obj.memorial ? "a memorial stone" : th.obj.build?.title ?? `the ${th.name}`, sprite: th.canvas, name: th.name, text: th.obj.memorial?.text, does: th.obj.says ?? null,
                      state: th.obj.fix?.light && !snap.power ? "dark: the power is out" : th.obj.state ?? null, notes: this.order(th.name, th.obj) };
+    const pond = t.object && room.objects[t.object]?.water ? pondOf(snap, room) : null;
+    if (pond) return this.pondCard(pond, t.tile);
     if (t.object && room.objects[t.object]) return { what: "fixture", title: `the ${t.object}`, sprite: null, name: t.object, state: room.objects[t.object].state ?? null, does: room.objects[t.object].says ?? null,
                                                      notes: this.order(t.object, room.objects[t.object]) };
     if (t.bit) {   // something to gather: what it is, and what a thing made of it can be
@@ -821,7 +848,10 @@ export class Room {
       return { what: "door", title: to?.type ? `the door to ${to.name}` : "a door nobody has been through", sprite: null, state: room.shut.includes(t.door) ? "stuck shut" : to?.type ? "open" : "shut",
                text: to?.type ? `it leads to ${to.name}` : "nobody knows yet what is behind it" };
     }
-    if (t.display && this.display) { const car = carLine(snap, room.id); return { what: "scenery", title: `the display: ${hhmm(snap.clock.hour)}, ${SKY[snap.weather] ?? snap.weather}`, sprite: null, text: this.display.line(snap), notes: car ? [car.toLowerCase()] : undefined }; }
+    if (t.display && this.display) {
+      const more = [fishLine(snap, room.id), carLine(snap, room.id)].filter((l): l is string => !!l).map((l) => l.toLowerCase());
+      return { what: "scenery", title: `the display: ${hhmm(snap.clock.hour)}, ${SKY[snap.weather] ?? snap.weather}`, sprite: null, text: this.display.line(snap), notes: more.length ? more : undefined };
+    }
     const pt = t.decor?.startsWith("paint.") ? still.paints[Number(t.decor.slice(6))] : null;
     if (t.decor?.startsWith("paint.")) return pt ? { what: "scenery", title: paintTitle(pt.p), sprite: null, text: paintText(pt.p), rect: undefined } : null;
     if (t.decor === "room.wall" || t.decor === "room.floor") { const wall = t.decor === "room.wall"; return { what: "scenery", title: wall ? "the wall" : "the floor", sprite: null, text: `painted ${wall ? room.paint.wall : room.paint.floor}` }; }

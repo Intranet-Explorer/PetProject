@@ -19,7 +19,17 @@ export type Made = {
   // it how often, and what a hob said or thought about it as it made it or set it down
   title_shown?: boolean; how?: string; made_in?: string; from?: string[]; users?: Record<string, number>;
   words?: { tick: number; pet: string; text: string; at: "made" | "set down" }[];
+  found?: Found | null;   // SPEC-v3.6a §3: it came out of the pond
 };
+/** SPEC-v3.6a §3: where a find came from, how rare, who pulled it up and when. */
+export type Found = { from: string; tier: string; by: string; tick: number };
+/** SPEC-v3.6a §2: a hob fishing: where it sits, the water tile its float (or paw) is on, with a rod or by paw, and the
+ *  ticks it cast, something bit and it pulled up; what came up. */
+export type Fisher = { pet: string; spot: Tile; line: Tile; rod: boolean; cast: number; bite: number | null; pulled: number | null;
+  caught: { what: string; tier: string; thing: string | null } | null };
+/** SPEC-v3.6a §1, §2: the pond room's water, its dock, the ice and the holes cut in it, the fish, today's catches. */
+export type Pond = { room: string; water: Tile[]; dock: { tiles: Tile[]; end: Tile } | null; frozen: boolean; holes: Tile[]; stock: number; most: number;
+  says: string; today: number; fishers: Fisher[]; catches: { tick: number; pet: string; what: string; tier: string }[] };
 /** SPEC-v3.3 §2. A thing that keeps things: how many, which (by name), and whether they go in it (a chest) or on it (a shelf). */
 export type Store = { cap: number | null; holds: string[]; inside: boolean; bits?: string[] };   // `bits`: the loose bits tidied into it, by name ("string", "bell")
 /** SPEC-v3.3 §1, §5.4: what a pet's body is doing by itself between the things its mind decides. `icon` names the
@@ -167,6 +177,7 @@ export type Snap = {
   ticker?: Ticker;   // SPEC-v3.5.1 §2
   rail?: Rail | null;   // SPEC-v3.5.12 §3
   resting?: { room: string; tiles: Tile[] } | null;   // SPEC-v3.5.12 §4: the garden's resting place, where the stones stand
+  pond?: Pond | null;   // SPEC-v3.6a §1, §2
   hello?: Hello; error?: string;
 };
 /** What /api/v31 answers: everything ever written, sung, asked and heard, and when each discovery comes. */

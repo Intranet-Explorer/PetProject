@@ -33,6 +33,7 @@ export function roomLine(s: Snap, room: RoomV): string {
       return room.type === "garden" ? `${sky}. ${what}` : what;
     }
     case "pond": {
+      if (s.pond?.room === room.id && s.pond.frozen) return `the pond is frozen over${s.pond.holes.length ? "; a hole cut in the ice" : ""}`;
       const ready = [...new Set(room.spots.filter((b) => b.ready !== false && !b.loose).map((b) => b.bit))];
       const water = s.weather === "rain" || s.weather === "storm" ? "rain rippling the water" : s.weather === "snow" ? "snow falling on the water"
         : room.cold || s.clock.season === "winter" ? "the water cold and still" : s.clock.phase === "night" ? "the water dark and still" : "the water clear and still";
@@ -72,6 +73,14 @@ export function roomLine(s: Snap, room: RoomV): string {
   }
 }
 
+/** SPEC-v3.6a §6: the pond room's line of the fish: "FISH: PLENTY · CATCHES TODAY 3". */
+export function fishLine(s: Snap, rid: string): string | null {
+  const p = s.pond;
+  if (!p || p.room !== rid) return null;
+  const word = p.frozen ? "UNDER THE ICE" : ({ "plenty of fish": "PLENTY", "some fish": "SOME", "fished thin": "THIN" } as Record<string, string>)[p.says] ?? p.says.toUpperCase();
+  return `FISH: ${word} · CATCHES TODAY ${p.today}`;
+}
+
 export type Display = { board: Board; rect: Rect; line: (s: Snap) => string };
 
 /** Where on the north wall it hangs: the layout's place for it, or the stretch the fewest things already cover, nearest the middle. */
@@ -104,7 +113,8 @@ export function display(still: Still, room: RoomV, K: number): Display | null {
   if (!room.type || room.type === "hub") return null;
   const r = spot(still), line = (s: Snap) => roomLine(s, s.rooms.find((x) => x.id === room.id) ?? room);
   const car = (s: Snap) => { const l = carLine(s, room.id); return l ? [{ rows: [l], ms: 0 }] : []; };   // SPEC-v3.5.12 §6: when the train is next due, once there is a rail
-  const board = new Board(r, K, (s) => [{ anim: skyAnim(s), ms: 1400 }, { rows: [hhmm(s.clock.hour)], ms: 0 }, { rows: [line(s).toUpperCase()], ms: 0 }, ...car(s)]);
+  const fish = (s: Snap) => { const l = fishLine(s, room.id); return l ? [{ rows: [l], ms: 0 }] : []; };   // SPEC-v3.6a §6
+  const board = new Board(r, K, (s) => [{ anim: skyAnim(s), ms: 1400 }, { rows: [hhmm(s.clock.hour)], ms: 0 }, { rows: [line(s).toUpperCase()], ms: 0 }, ...fish(s), ...car(s)]);
   const c = new Sprite(tex(caseName()));
   c.position.set(r.x, r.y);
   still.wallLayer.addChild(c, board.s);

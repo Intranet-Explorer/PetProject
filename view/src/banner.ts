@@ -10,21 +10,27 @@ import { thingSprite } from "./sprite";
 import { fam } from "./types";
 import type { Moment, PetV, Snap } from "./types";
 
-export type Ev = { n: number; kind: "house" | "family" | "ambition" | "works" | "birth" | "death" | "star"; head: string; line: string;
+export type Ev = { n: number; kind: "house" | "family" | "ambition" | "works" | "birth" | "death" | "star" | "find"; head: string; line: string;
   pet: PetV | null; room: string | null; recipe: Record<string, unknown> | null };
 
 const HEAD: Record<Ev["kind"], string> = { house: "FIRST IN THE HOUSE!", family: "FIRST IN ITS FAMILY", ambition: "IT DID IT!", works: "THE WORKS BUILT IT!",
-  birth: "A NEW ONE!", death: "IN MEMORY", star: "A STAR FROM YOU" };
+  birth: "A NEW ONE!", death: "IN MEMORY", star: "A STAR FROM YOU", find: "FOUND IN THE POND!" };
 
 /** What kind of big moment this is, from the engine's own words, or null for an ordinary one. */
 export function classify(s: Snap, m: Moment): Ev | null {
   const k = m.kind === "first" ? (/ in the house\b/.test(m.text) ? "house" : /\bits family\b/.test(m.text) ? "family" : null)
     : m.kind === "ambition" ? (/did what it (meant|set out) to do/.test(m.text) ? "ambition" : null)
-    : m.kind === "works" ? "works" : m.kind === "hatched" ? "birth" : m.kind === "death" ? "death" : m.kind === "star" ? "star" : null;
+    : m.kind === "works" ? "works" : m.kind === "hatched" ? "birth" : m.kind === "death" ? "death" : m.kind === "star" ? "star" : m.kind === "find" ? "find" : null;
   if (!k) return null;
   const pet = s.pets.find((p) => p.id === m.pet) ?? null;
   // the thing, when the moment is about one: what its maker made in that room within a few ticks of it
   let recipe: Record<string, unknown> | null = null;
+  if (pet && k === "find") {   // SPEC-v3.6a §3, §6: a rare find, with its picture: what came out of the pond in its paws then
+    for (const r of s.rooms) for (const o of Object.values(r.objects ?? {})) {
+      const md = o.made;
+      if (md?.found && md.found.by === pet.id && Math.abs(md.found.tick - m.tick) <= 3) recipe = md.recipe as unknown as Record<string, unknown>;
+    }
+  }
   if (pet && (k === "house" || k === "family" || k === "ambition" || k === "star")) {
     for (const r of s.rooms) for (const o of Object.values(r.objects ?? {})) {
       const md = o.made as { by?: string; tick?: number; recipe?: Record<string, unknown> } | undefined;
@@ -32,7 +38,8 @@ export function classify(s: Snap, m: Moment): Ev | null {
     }
   }
   const line = pet ? m.text.replace(new RegExp(`^${pet.label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*`), "") : m.text;
-  return { n: m.n, kind: k, head: HEAD[k], line: line || m.text, pet, room: m.room, recipe };
+  const head = k === "find" && /\bnote\b|\bmessage\b/.test(m.text) ? "A MESSAGE IN A BOTTLE!" : HEAD[k];
+  return { n: m.n, kind: k, head, line: line || m.text, pet, room: m.room, recipe };
 }
 
 const reduce = () => matchMedia("(prefers-reduced-motion: reduce)").matches;

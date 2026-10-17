@@ -16,6 +16,7 @@ img.tcstar { position: absolute; left: -14px; top: -14px; width: 24px; height: 2
 .tcbadge.gold { border-image-source: url("../assets/third_party/crusenho/UI_TravelBook_FrameSelect01a.png"); color: var(--ink); }
 .tcbadge.silver { color: #39434d; }
 .tcbadge.blue { color: #1d4a7a; }
+.tcbadge.pond { color: #1d5a6e; }
 .tcbadge img { width: 12px; height: 11px; image-rendering: pixelated; }
 .tcmaker { display: flex; gap: 8px; align-items: center; margin-top: 4px; }
 .tcmaker canvas { flex: none; }
