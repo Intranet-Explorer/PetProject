@@ -2198,3 +2198,38 @@ Engine. Tyler, after a day of lamps (10 of 27 things made, 14 of 35 the day befo
   colour or size ("Wax Machine Room Light"), else another word. Titles already given stay.
 - **RUNNING.md:** a bar that moves the wrong way one day, modestly and with a clear cause, is watched a second day;
   roll back when it is worse two days running, worse by a lot, or something broke.
+
+## Part 31: v3.5.12, a place for everything (17 October 2026)
+
+Engine (engine/store.py, rail.py, resting.py, check_rail.py) and view. Save format: house["rail"], a `train`
+creature, a `platform` fixture in every room, the store's shelves, memory shelves, house["resting"], pet["riding"].
+
+- **What a room keeps** (store.stays): furniture, what is fixed or planted, statues and sculptures, what is on a wall,
+  what the visitor named or starred, heirlooms, keepsake boxes, what is in a box (it goes with its box), anything
+  used in the last world day, the one or two bed-things by where a hob sleeps, and up to its type's `belongs` of each
+  kind (house.toml), with one cushion a seat and one light where the room has none of its own. Everything else is out
+  of place: hobs load it on the train for the store (scrap goes to the Works instead). A box holding things counts as
+  one thing and travels with what is in it, each to its own shelf; an empty box unused for a world day is scrap.
+- **Made things on view** is counted as §2 counts a box: everything not on the store's shelves and not inside a box.
+  The report also gives the count of everything outside the store's shelves.
+- **The store** is the storeroom's own fixtures plus thirteen new ones (house.toml [store]). The floor-pile scenery of
+  its layout is gone. Full, it sends the oldest thing on its shelves nobody has touched in `full_days` and that is not
+  meant or titled to the Works, and says so in the gone list. The material crates show the machine's stock.
+- **The train** runs the spec's route (store.route checks it against the doors; another house gets a walk out and back
+  along every branch). Each room's track is two or three arms from its doors to one platform, long enough for the
+  train to stand clear of the doors, along the walls where it can; a doorway is never blocked, and a room with no way
+  round its fixtures gets a track over them. It stops once a round in each room, the first time it comes, and at the
+  depot. **Timing:** with one-minute stops it could not fit six rounds into the hours it is awake (it sleeps at night,
+  and a world day's daylight is about 80 real minutes), so it stops 11 ticks (44 s) and runs 3 tiles a tick: about
+  seven rounds a day. A hob on the track is rung at, and steps aside after 3 ticks.
+- **Loading** is a body activity ("load the train"): into the cart while the train stands here, else onto the platform.
+  Hauling scrap to the Works by hand stops once the train runs (except beside the machine). "Ask the train" is a mind's
+  step at a platform, one thing at a time. Riding is a body activity for little ones and old ones; the rider gets down
+  when its stops are up, falls asleep, or its mind has something to do.
+- **The allowance:** on the day's first round the cart takes one of the machine's materials for every hob with takes
+  left, and hands it over at a stop where that hob is; what it could not hand out goes back into the machine.
+- **The resting place** is the garden's bottom-left corner, family by family; memory shelves go up in the attic, one per
+  family, named for its founder. The move is a house event over the first 0.6 world day, one stone or box at a time,
+  each credited to a living hob of the family when one is awake (not carried by the train: it may not be built yet). Two
+  of the dead with the same name keep their stones and boxes apart ("the other keepsake box for grey light").
+- **The rail goal** goes after the Works' current goal, like the sweeper out of cost order.
