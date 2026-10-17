@@ -19,6 +19,7 @@ KINDS = {"fork": ("e", 24), "spoon": ("e", 25), "knife": ("e", 26), "plate": ("e
          "brush": ("e", 35), "broom": ("e", 36), "bucket": ("e", 37), "torch": ("e", 38), "needle": ("e", 39), "wheel": ("e", 41), "hook": ("e", 42),
          "spring": ("e", 40), "rod": ("e", 0), "bottle": ("p", 8), "note bottle": ("e", 13), "lens": ("e", 17), "gear": ("e", 18), "ring": ("e", 19),
          "key": ("e", 15), "golden fish": ("e", 7)}
+FISH_SIGN = ["..........", "..........", "....UUUU..", "U..UjjjjU.", "UUUjjjjejU", "UjjjjjjjjU", "UUUjjjjjiU", "U..UjiiiU.", "....UUUU..", ".........."]
 BITS = {"fish": ("e", 5), "big fish": ("e", 6), "waterlogged wood": ("e", 21), "weed": ("e", 22), "hook": ("e", 2), "spring": ("e", 40)}
 
 
@@ -82,6 +83,16 @@ def main():
     cat = cell32(27).crop((4, 3, 27, 31))
     sheet.alpha_composite(cat, (168, y0 + 32))
     out["decor.cattails"] = {"pack": "own", "file": "pond.png", "rect": [168, y0 + 32, 23, 28], "anchor": [3, 14]}   # (stood on the middle of its tile)
+    # the sign over a hob fishing: a fish on the small white plate the other activity signs have, in the drop's blues
+    ui = Image.open(os.path.join(ASSETS, "own", "ui.png")).convert("RGBA")
+    d = json.load(open(os.path.join(ASSETS, "sprites.json")))["icon.act.drop"]["rect"]
+    plate = ui.crop((d[0], d[1], d[0] + 12, d[1] + 12))
+    pal = {"U": plate.getpixel((5, 1)), "j": plate.getpixel((5, 2)), "i": plate.getpixel((7, 8)), ".": plate.getpixel((1, 1))}
+    for y, row in enumerate(FISH_SIGN):
+        for x, ch in enumerate(row):
+            plate.putpixel((1 + x, 1 + y), pal["U"] if ch == "e" else pal[ch])
+    sheet.alpha_composite(plate, (200, y0 + 32))
+    out["icon.act.fish"] = {"pack": "own", "file": "pond.png", "rect": [200, y0 + 32, 12, 12], "anchor": [-2, -2]}
     sheet.save(os.path.join(ASSETS, "own", "pond.png"))
     path = os.path.join(ASSETS, "sprites.json")
     lines = [l for l in open(path).read().split("\n") if not re.match(r' "(%s)":' % "|".join(re.escape(k) for k in out), l)]
