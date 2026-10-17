@@ -2236,3 +2236,40 @@ creature, a `platform` fixture in every room, the store's shelves, memory shelve
 - **Testing:** the spec asks for a world day on a copy before the deploy. Tyler cut that short (17 October 2026): the
   copy's first 420 ticks (no errors, 13 stones carried to the right tiles) stand as the smoke run, the world day is
   measured on live, and from now on no change gets a full-day copy run (RUNNING.md).
+
+## Part 32: v3.6a, the pond (17 October 2026)
+
+Engine (engine/pond.py, check_pond.py; pond.toml) and view (px/pond.ts). Save format: house["pond"], a dock in
+house["pond"]["dock"], pet["paw_fished"], pet["caught_at"], made.found, house["pond_eaten"], `duck` and `frog` creatures.
+
+- **The spread** is a one-time house event on load ("after the spring rains, the pond spread"): 29 water tiles in two
+  lobes joined by a neck, the hobs' bridge laid across the neck. What stood on the new water moves to the nearest dry
+  tile, each move in the story; nothing is lost. Hobs walk round the water (a path search over dry tiles: the dock,
+  the bridge, and the ice in the frozen weeks), and stop beside a goal out on the water rather than on it.
+- **Fishing is one body activity, one pull:** cast, wait 40 to 72 world seconds by paw or 32 to 60 with a rod, pull.
+  The odds are per pull (pond.toml); a fished-thin pond halves them, and it is full again in a world day. No model
+  call. Two fishers at a time, one at the dock's end and one at the edge; a hob fishes at most 15% of a world day.
+- **The dock** is the last thing on the Works' list, put next once the rail is built (`after`), so what was fed to
+  the goal before it is not lost or skipped. Rare and very rare things come up only with a rod from the dock.
+- **The Works** checks its goal on load and as each goal starts, not only when something is fed, so a goal already
+  full builds straight away (after v3.5.12's deploy the rail sat at 31 of 30 overnight).
+- **The rod** needs wood, string and a hook (or wire or metal). The needs list offers it only to a hob that has fished
+  by paw. It wears out after 20 pulls. Offers on the needs list are now kept 7 days, not one: a forgotten offer came
+  round again the next day.
+- **Fish** are bits, eaten raw by a hungry hob that isn't timid, or shared with hungry kin (company for both). A fish
+  carried a world day spoils and is left at the edge for the birds. The golden fish is kept when a bowl, jar or
+  bucket is in the room, else let go.
+- **Frozen:** the middle third of winter. A hob cuts a hole (half the time with a carver or a knife) and fishes
+  through it at half the odds.
+- **Finds** are new made things with made.found; rare ones get a title and a feat and are kept, never scrap. Found
+  kinds (bottle, note bottle, lens, gear, ring, key, golden fish) can't be made or offered. The pond's bits (fish,
+  weed, waterlogged wood, hook, spring) turn up only in the pond room.
+- **Everyday things:** the spec lists 20. Fifteen are new kinds with recipes and parts; cup, bowl, jar and rope were
+  kinds already, and string is a bit (and one of rope's words). The rod is a sixteenth. Uses: a knife counts as a
+  carver, a torch is a light, a broom halves tidying, a bucket waters everything planted in a room, a hook goes into a
+  rod; the needs list offers a bucket in a room with water and a broom in a messy one. Little ones' curios use the
+  youngling combine that exists (v3.5); nothing new for younger stages.
+- **Fixes forward from v3.5.12's day:** the train's cart takes what is over a room's cap at its stop, oldest touched
+  first (the greenhouse sat at 9 and 10 against a cap of 6); little ones want a ride half as much again (no rides in
+  two days).
+- **Ducks and frogs** visit rooms with water by day; not when it is frozen, and no frogs in winter.
