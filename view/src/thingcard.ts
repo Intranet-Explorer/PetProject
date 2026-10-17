@@ -21,6 +21,7 @@ export type Thing = {
   star?: number | null;   // SPEC-v3.5.4 §10: the tick the visitor gave it a star
   first?: "house" | "family" | null;   // a first, from the house's feats (kept from day 61)
   gone_day?: number | null;
+  stored?: boolean;   // SPEC-v3.5.12 §1: it is in the store
   // SPEC-v3.5.8 §6, each only when recorded (Made in types.ts): the title shows; how it was made; the bits it was made
   // from (a gone thing too); who used it, how often
   title_shown?: boolean; how?: string | null; from?: string[] | null; users?: Record<string, number> | null;

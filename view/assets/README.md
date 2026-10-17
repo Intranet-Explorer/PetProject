@@ -107,6 +107,10 @@ A pack whose licence forbids redistribution lives outside the repository: give i
   and `creature.train.tram`, each with `still.<direction>` for the eight ways and `walk.down|right|up|left` to drive in, as
   `creature.sweeper`; `station.*` stand beside a platform (the lamp post, the bell post, the bench, the clock). All in
   `own/train.png`, drawn by `own/src/train.py`. The track itself is drawn by the view (px/train.ts).
+- SPEC-v3.5.12, the store: `fix.<name>` for every storage piece of PixelLab's rail sheet (`[rail32]` cells 24 to 51, by
+  their names there), cut into `own/store.png` by `own/src/store.py`; a store fixture's `fix.art` names one. `surface`
+  (`[x, y, w]`) is where things put on a piece stand, in a row; `.empty` is an open crate with nothing in it; `fix.little
+  wooden keepsake box.slot` is a keepsake box as a slot on a family's memory shelf.
 - `fx.burst.want` and `fx.burst.find`: the moment a pet gets what it wanted, or finds something out; each has a
   `play` animation.
 

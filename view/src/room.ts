@@ -23,7 +23,7 @@ import { loadSeasons } from "./px/season";
 import { clamp, FX, FY, H, idx, inside, OX, OY, onFloor, tileAt, TILE, W } from "./px/geom";
 import { Marks } from "./px/marks";
 import { nearestFree } from "./px/path";
-import { drawnOf, Still } from "./px/still";
+import { drawnOf, Still, stock } from "./px/still";
 import { paintText, paintTitle } from "./px/built";
 import type { Thing } from "./px/still";
 import { hslInt } from "./px/tint";
@@ -744,9 +744,25 @@ export class Room {
     const { snap, room } = this.scene!, out: string[] = [], at = (p: Tile | undefined, q: Tile) => !!p && p[0] === q[0] && p[1] === q[1];
     const called = (n: string) => { const m = room.objects[n]?.made, d = m && drawnOf(m); return m?.called ? `“${m.called}”` : d ? `a ${d.color ? `${d.color} ` : ""}${d.kind}` : n; };
     const into = (n: string) => `${room.objects[n]?.store?.inside ? "in" : "on"} the ${n}`, place = (pos: Tile) => room.areas?.find((a) => a.tiles.some((t) => at(t, pos)))?.name;
-    if (o.store) {
+    const whose = (id: unknown) => { const p = snap.pets.find((q) => q.id === id); return p ? p.label : "someone gone"; };
+    if (o.fix?.keepsake) out.push(`whose: ${whose(o.fix.keepsake)}'s`);   // SPEC-v3.5.12 §4
+    if (o.fix?.memory) {   // a family's memory shelf: whose boxes stand on it
+      const boxes = (o.store?.holds ?? []).map((n) => room.objects[n]?.fix?.keepsake).filter(Boolean).map(whose);
+      out.push(boxes.length ? `keepsake boxes: ${boxes.slice(0, 8).join(", ")}${boxes.length > 8 ? ` and ${boxes.length - 8} more` : ""}` : "no keepsake box yet");
+    } else if (o.fix?.shelf && o.store) {   // SPEC-v3.5.12 §1: a store fixture counts what it holds, by kind ("4 cushions, 2 blankets"), then names the ones on show
+      const kinds = new Map<string, number>(), holds = o.store.holds;
+      for (const n of holds) { const m = room.objects[n]?.made, k = m ? drawnOf(m).kind : n; kinds.set(k, (kinds.get(k) ?? 0) + 1); }
+      const many = (k: string) => (/(s|x|ch|sh)$/.test(k) ? `${k}es` : /[^aeiou]y$/.test(k) ? `${k.slice(0, -1)}ies` : `${k}s`);
+      const left = o.store.cap == null || o.fix.bits ? null : o.store.cap - holds.length;   // (a material crate keeps bits, not things)
+      out.push(holds.length ? `holds: ${[...kinds].sort((a, b) => b[1] - a[1]).map(([k, n]) => (n > 1 ? `${n} ${many(k)}` : `1 ${k}`)).join(", ")}` : o.store.bits?.length || o.fix.bits ? "" : "holds nothing yet",
+        ...(holds.length ? [`${o.store.inside ? "among them" : "on show"}: ${holds.slice(0, 3).map((n) => room.objects[n]?.made?.called ?? n).join(", ")}${holds.length > 3 && o.store.inside ? "…" : ""}`] : []),
+        ...(left == null ? [] : [left > 0 ? `room for ${left} more` : "full"]));
+    } else if (o.store) {
       const left = o.store.cap == null ? null : o.store.cap - o.store.holds.length;   // (a keepsake box has no limit)
       out.push(o.store.holds.length ? `holds: ${o.store.holds.map(called).join(", ")}` : "holds nothing yet", ...(left == null ? [] : [left > 0 ? `room for ${left} more` : "full"]));
+    }
+    if (stock(snap, o)) out.push(`stock: ${stock(snap, o)} ${o.fix!.bits} in the machine's stock`);   // SPEC-v3.5.12 §1: a material crate shows the house's stock
+    if (o.store) {
       const bits = new Map<string, number>();   // loose bits tidied into it, counted: "bits: string x3, bell" (from the room as it is now: `o` is as old as the last redraw)
       for (const b of room.objects[name]?.store?.bits ?? []) bits.set(b, (bits.get(b) ?? 0) + 1);
       if (bits.size) out.push(`bits: ${[...bits].map(([b, n]) => (n > 1 ? `${b} x${n}` : b)).join(", ")}`);

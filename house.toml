@@ -400,7 +400,7 @@ rides = true              # a hob may ride in the tram (switch off here)
 [resting]
 on = true
 corner = [0, 3, 5, 7]     # the garden's tiles where the stones stand together: x from, y from, x to, y to
-shelves = [[8, 0], [6, 0], [9, 0]]   # where the families' memory shelves go up in the attic
+shelves = [[10, 0], [1, 7], [10, 7]]   # where the families' memory shelves go up in the attic
 over_days = 0.6           # a house lived in before: its stones and boxes are carried over this much of the first world day
 least_ticks = 20          # ... at most one every this many ticks
 
@@ -414,14 +414,14 @@ shelf = [
   { name = "pegboard", pos = [0, 2], store = 12, keeps = ["carver", "trowel", "hammer"], shelf = "tools", art = "pegboard with hanging tools" },
   { name = "cubbies", pos = [0, 4], store = 20, keeps = ["bell", "drum", "flute", "wind chime", "ball", "mobile", "garland"], shelf = "instruments and toys", art = "wall of cubby holes with small things" },
   { name = "drawers", pos = [0, 6], store = 30, keeps = ["charm"], shelf = "charms and curios", art = "cabinet with many small drawers", inside = true },
-  { name = "crate rack", pos = [2, 7], store = 25, keeps = ["*"], shelf = "everything else", art = "tall storage rack with labelled crates", inside = true },
-  { name = "cup shelf", pos = [4, 7], store = 15, keeps = ["cup", "bowl", "jar", "vase", "plant pot"], shelf = "cups, bowls and jars", art = "shelf of cups and bowls" },
-  { name = "wood crate", pos = [11, 0], store = 1, keeps = [], bits = "wood", shelf = "wood", art = "crate of wood offcuts", inside = true },
-  { name = "stone crate", pos = [11, 1], store = 1, keeps = [], bits = "stone", shelf = "stone", art = "crate of stones", inside = true },
-  { name = "metal crate", pos = [11, 6], store = 1, keeps = [], bits = "metal", shelf = "metal", art = "bin of loose bits sorted by kind", inside = true },
-  { name = "clay crate", pos = [11, 7], store = 1, keeps = [], bits = "clay", shelf = "clay", art = "tidy stack of tiles", inside = true },
-  { name = "fibre crate", pos = [5, 7], store = 1, keeps = [], bits = "fibre", shelf = "fibre", art = "bolt of cloth", inside = true },
-  { name = "sand crate", pos = [9, 7], store = 1, keeps = [], bits = "sand", shelf = "sand", art = "stack of tidy crates with lids", inside = true },
+  { name = "crate rack", pos = [3, 7], store = 25, keeps = ["*"], shelf = "everything else", art = "tall storage rack with labelled crates", inside = true },
+  { name = "cup shelf", pos = [5, 7], store = 15, keeps = ["cup", "bowl", "jar", "vase", "plant pot"], shelf = "cups, bowls and jars", art = "shelf of cups and bowls" },
+  { name = "wood crate", pos = [0, 7], store = 1, keeps = [], bits = "wood", shelf = "wood", art = "crate of wood offcuts", inside = true },
+  { name = "stone crate", pos = [1, 7], store = 1, keeps = [], bits = "stone", shelf = "stone", art = "crate of stones", inside = true },
+  { name = "metal crate", pos = [8, 7], store = 1, keeps = [], bits = "metal", shelf = "metal", art = "bin of loose bits sorted by kind", inside = true },
+  { name = "clay crate", pos = [9, 7], store = 1, keeps = [], bits = "clay", shelf = "clay", art = "tidy stack of tiles", inside = true },
+  { name = "fibre crate", pos = [11, 5], store = 1, keeps = [], bits = "fibre", shelf = "fibre", art = "bolt of cloth", inside = true },
+  { name = "sand crate", pos = [11, 6], store = 1, keeps = [], bits = "sand", shelf = "sand", art = "stack of tidy crates with lids", inside = true },
 ]
 
 [drifts]

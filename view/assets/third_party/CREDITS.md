@@ -90,3 +90,10 @@ its names in `lists.py` `SHEETS["sweeper16"]`). Used unchanged: cells 24, 13, 52
 rag, bundle of fibre, label tag: the tile, tinder bundle, patch, draught stopper and sign kinds). The sweeper and its
 dock from that sheet (cells 0, 1, 2, 6, 7) are no longer used. Generated images are used under PixelLab's terms of
 service.
+
+`../own/store.png` (SPEC-v3.5.12: the store's furniture and the memory shelves) is cut by `../own/src/store.py` from a
+sheet generated for this project with **PixelLab** on 17 October 2026 (`assets-incoming/pixellab/rail32.png`, 32 × 32
+cells, its names in `sheets.toml` under `[rail32]`). Used unchanged: cells 24 to 51 (shelves, racks, cabinets, chests,
+the memory and shrine shelves, the keepsake box, jars, crates, rope, cloth and tiles). Changed: the three open crates
+(cells 46 to 48) also empty, their contents taken out and the dark inside drawn in; and a keepsake box a quarter of
+cell 39's size, drawn after it for the memory shelf. Generated images are used under PixelLab's terms of service.

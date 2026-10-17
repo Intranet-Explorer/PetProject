@@ -12,7 +12,7 @@ console: nothing is ever a hole.
 | `tint.ts` | a made thing's colour, material and wear laid on its kind's sprite (hue and saturation replaced, lightness kept), cached |
 | `font.ts` | the room's 5 x 7 pixel lettering: measure, wrap to lines, draw (plain or chalky) |
 | `path.ts` | the way round furniture on the floor grid; the nearest free tile |
-| `still.ts` | what holds still: floor, walls, decor, doors, fixtures in their states, made things by kind, bits, stones; things put away on shelves, counts on chests, the tint of a named place |
+| `still.ts` | what holds still: floor, walls, decor, doors, fixtures in their states, made things by kind, bits, stones; things put away on shelves, counts on chests, the tint of a named place; SPEC-v3.5.12: the store's fixtures by their `fix.art` (kept off doors and the platform; an open one shows three of what it holds; a material crate empty without bits), a family's memory shelf with its keepsake boxes as slots, the resting place's flowers |
 | `weather.ts` | the light map (day, dusk, night, season, weather, lamps, power cuts, windows; dark at the room's edges more than its middle), rain and snow, storm flashes |
 | `actors.ts` | pets and creatures: walking the path, poses for each kind of step, what a body does by itself (`MOVES`), a pale outline in low light |
 | `acts.ts` | each finished step or body activity played once: pop, puff, slide together, heart, notes, dust, a thing flown to its shelf |

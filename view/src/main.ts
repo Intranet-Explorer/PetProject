@@ -24,7 +24,7 @@ import { Room } from "./room";
 import { world } from "./world";
 import type { Target } from "./room";
 import { artReady, aThing, firstSprite, hasSprite, sprite, thingSprite } from "./sprite";
-import { getJSON, giveStar } from "./ui";
+import { getJSON, giveStar, live } from "./ui";
 import { roomCard, rows, sec, thingCard } from "./thingcard";
 import { ago, fam, hhmm } from "./types";
 import { voiceInput } from "./voice";
@@ -211,7 +211,7 @@ function jump(to: { pet?: string | null; room?: string | null }) {
 
 async function show(s: Snap) {
   if (s.hello) hello = s.hello;
-  raw = s;
+  raw = live.snap = s;
   noteInvented(s.invented);   // SPEC-v3.5 §3: the kinds the house invented are drawn from their parts
   snap = { ...s, ...tweak, clock: { ...s.clock, ...((tweak.clock as object) ?? {}) }, lineage: { ...s.lineage, ...((tweak.lineage as object) ?? {}) } };
   snap.pets = snap.pets.map((p) => (p.label === "the little one" ? { ...p, label: ownLabel(p) } : p));   // a recording from before unnamed pets had labels of their own
@@ -788,7 +788,8 @@ function fixture(name: string, o: Obj, here: RoomV, s: Snap, shown: HTMLCanvasEl
   const pic = [`fix.${name}.${o.state}`, `fix.${name}`].find(hasSprite), fix = o.fix ?? {};
   const state = o.state === "ripe" ? "ripe" : o.grow != null ? (o.grow > 0.7 ? "nearly ripe" : "growing") : o.servings != null ? (o.servings ? `${o.servings} left in it` : "empty") : o.state ?? "";
   const does = Object.keys(FIX).filter((k) => k in fix && fix[k]).map((k) => FIX[k]);
-  return [roomCard(shown ?? (pic ? sprite(pic, 3) : null), [o.build?.title ?? `the ${name}`], [o.says ? cap(o.says) : "", state ? `${o.says ? " · " : ""}${state}` : ""],
+  const slot = o.on && here.objects[o.on]?.fix?.memory && hasSprite("fix.little wooden keepsake box");   // SPEC-v3.5.12 §4: a box on a memory shelf is drawn as a small slot there; its card shows it whole
+  return [roomCard(slot ? sprite("fix.little wooden keepsake box", 3) : shown ?? (pic ? sprite(pic, 3) : null), [o.build?.title ?? `the ${name}`], [o.says ? cap(o.says) : "", state ? `${o.says ? " · " : ""}${state}` : ""],
     notes,
     fix.book && s.read_glow ? el("p", "", "Someone is reading it.") : null,
     ...(does.length ? [sec("What it really does"), el("p", "", `${cap(does.join("; "))}.`)] : []),

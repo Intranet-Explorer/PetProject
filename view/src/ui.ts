@@ -8,6 +8,10 @@ import { petPortrait, petSheet } from "./petsprite";
 import { href } from "./router";
 import { thingSprite } from "./sprite";
 import { fam } from "./types";
+import type { Snap } from "./types";
+
+/** The house as the last snapshot had it (main.ts keeps it), for a page that shows something only the room view says. */
+export const live: { snap: Snap | null } = { snap: null };
 
 export const panel = (cls: string, ...kids: Kid[]) => el("section", `panel ${cls}`.trim(), ...kids);
 export const frame = (cls: string, ...kids: Kid[]) => el("div", `frame ${cls}`.trim(), ...kids);
