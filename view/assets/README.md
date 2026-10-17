@@ -103,6 +103,10 @@ A pack whose licence forbids redistribution lives outside the repository: give i
   middle on what it is planted in, at that thing's size; ours put the earth where a 16 × 16 pot's rim is. A thing
   that has `<its sprite>.bare` is drawn as that while something is planted in it (`kind.plant pot.bare`: our pot is
   typed with a plant of its own). A pack with no `plant.*` shows nothing.
+- SPEC-v3.5.12, the store: `fix.<name>` for every storage piece of PixelLab's rail sheet (`[rail32]` cells 24 to 51, by
+  their names there), cut into `own/store.png` by `own/src/store.py`; a store fixture's `fix.art` names one. `surface`
+  (`[x, y, w]`) is where things put on a piece stand, in a row; `.empty` is an open crate with nothing in it; `fix.little
+  wooden keepsake box.slot` is a keepsake box as a slot on a family's memory shelf.
 - `fx.burst.want` and `fx.burst.find`: the moment a pet gets what it wanted, or finds something out; each has a
   `play` animation.
 
