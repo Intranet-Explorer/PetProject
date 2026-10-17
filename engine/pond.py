@@ -74,13 +74,15 @@ def step(house, cfg, room, pos, goal):
     if not w or tuple(straight) not in w:
         return straight
     start, end = tuple(pos), tuple(goal)
+    if end in w and max(abs(start[0] - end[0]), abs(start[1] - end[1])) <= 1:
+        return list(pos)   # (beside what is out on the water: as near as it gets)
     seen, todo = {start: None}, deque([start])
     while todo:
         at = todo.popleft()
         if at == end or (end in w and max(abs(at[0] - end[0]), abs(at[1] - end[1])) <= 1):
             while seen[at] != start and seen[at] is not None:
                 at = seen[at]
-            return list(at) if at != start else straight
+            return list(at) if at != start else list(pos)
         for dx in (-1, 0, 1):
             for dy in (-1, 0, 1):
                 n = (at[0] + dx, at[1] + dy)
@@ -88,6 +90,11 @@ def step(house, cfg, room, pos, goal):
                     seen[n] = at
                     todo.append(n)
     return straight
+
+
+def there(house, cfg, room, pos, goal):
+    """Has it got as near as it can? On the goal, or beside it when the goal is open water."""
+    return pos == goal or (max(abs(pos[0] - goal[0]), abs(pos[1] - goal[1])) <= 1 and tuple(goal) in wet(house, cfg, room))
 
 
 # ---- the spread: once, on load ----

@@ -477,7 +477,7 @@ def tick(mind):
         now["there"] = h["tick"]   # the last tick it took a step on: what it does after that is done in one place
         mind.walk(to)
     if now["began"] is None:
-        if now["do"] not in KEEPS_UP and now.get("goal") and pet["pos"] != now["goal"] and h["tick"] - now["since"] < ticks(cfg, cfg["body"]["walk_seconds"]):
+        if now["do"] not in KEEPS_UP and now.get("goal") and not pond.there(h, cfg, h["rooms"][pet["room"]], pet["pos"], now["goal"]) and h["tick"] - now["since"] < ticks(cfg, cfg["body"]["walk_seconds"]):
             return step(now["goal"])
         now["began"] = h["tick"]
         if now.get("voice"):

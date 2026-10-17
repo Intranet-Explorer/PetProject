@@ -561,7 +561,7 @@ did = "fished {where}"
 icon = "drop"
 voice = "murmur"
 seconds = [40, 72]
-base = 0.45
+base = 1.6                        # (it has to win against what else the pond room offers; [time] share keeps it from taking over)
 temper = { patient = 1.0, curious = 0.3 }
 needs = { energy = 0.5, curiosity = 0.3 }
 stage = "child"
