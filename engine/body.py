@@ -7,7 +7,7 @@ SPEC-v3.4 §1: a body goes places and handles things. A stretch, a hum or a look
 tick, on the spot, between two activities), never the thing it chose to do; a thing put away or brought to
 someone is carried there; being with someone is doing what they do; and a mind set on rest does not hold a body
 that is not tired."""
-from . import actions, craft, feel, order, songs, story, things, wants
+from . import actions, craft, feel, order, rail, songs, store, story, things, wants
 from . import season
 from . import build
 from . import machine
@@ -229,7 +229,7 @@ def targets(house, cfg, pet, mem, name, A):
         return [{"what": n, "goal": None if me == objs[n]["pos"] else list(objs[n]["pos"])} for n in sorted(seats, key=lambda n: (pet["times"].get("body seat " + n, 0), dist(me, objs[n]["pos"])))[:2]]
     if do == "take out":   # something put away that it may take: out it comes, is looked over there, and goes back where it was (13 October 2026: left out, sixteen such things lay about one room); not in a mess, and not what has only just gone in
         fresh = house["tick"] - ticks(cfg, cfg["order"]["just_out_seconds"])
-        kept = [n for n, o in things.made(room).items() if o.get("on") in objs and order.may_move(house, pet, o) and not o["made"].get("heirloom") and o.get("kept", 0) < fresh]
+        kept = [n for n, o in things.made(room).items() if o.get("on") in objs and o["on"] != "platform" and order.may_move(house, pet, o) and not o["made"].get("heirloom") and o.get("kept", 0) < fresh]
         if room.get("mess", 0) >= 2 or not kept:
             return []
         n = min(kept, key=lambda n: (pet["times"].get("look " + n, 0), dist(me, objs[n]["pos"])))
@@ -244,6 +244,23 @@ def targets(house, cfg, pet, mem, name, A):
                 n = min(far, key=lambda n: (pet["times"].get("body bring " + n, 0), dist(me, objs[n]["pos"])))
                 out.append({"what": n, "who": p["id"], "goal": near(objs[n]["pos"]), "to": beside(cfg, p["pos"], objs[n]["pos"]), "bonus": 1.0 if focus.get("who") == p["id"] else 0.0})
         return out
+    if do == "train":   # SPEC-v3.5.12 §2-3: what goes to the store (or the Works), onto the train or its platform
+        tr, at = rail.loading(house, cfg, room)
+        if not at:
+            return []
+        goes = [n for n in store.out_of_place(house, cfg, room) + [n for _, n in order.scraps(house, cfg, room)]
+                if n in objs and not objs[n].get("on") == "platform" and order.may_move(house, pet, objs[n])
+                and not any((state(p)["now"] or {}).get("what") == n for p in here(house, pet))]
+        if not goes:
+            return []
+        n = goes[0]
+        return [{"what": n, "goal": near(objs[n]["pos"]), "to": beside(cfg, at, objs[n]["pos"]), "bonus": cfg["body"]["mess_pull"] * (2.0 if tr else 1.0)}]
+    if do == "ride":   # SPEC-v3.5.12 §3: the tram, while the train stands here: little ones and old ones
+        tr = rail.train(house)
+        t = rail.tram(tr) if tr else None
+        if pet["stage"] not in ("hatchling", "child", "elder") or not t or tr["rider"] or not tr["stopped"] or t["room"] != room["id"]:
+            return []
+        return [{"what": "train", "goal": near(t["pos"]), "bonus": 0.5 if pet["stage"] == "elder" and feel.level(pet, "energy") >= 2 else 0.0}]
     if do == "tail":
         return [{"what": c["kind"], "creature": c["id"], "goal": None if dist(me, c["pos"]) <= 1 else beside(cfg, c["pos"], me), "bonus": W if c["kind"] in L["creatures"] else 0.0}
                 for c in sorted(house["creatures"], key=lambda c: c["kind"] not in L["creatures"]) if c["room"] == room["id"]][:1]
@@ -432,6 +449,9 @@ def tick(mind):
     """One tick of the body. Called when the pet has nothing it decided left to do."""
     pet, h, cfg = mind.pet, mind.eng.house, mind.cfg
     b = state(pet)
+    if pet.get("riding"):   # SPEC-v3.5.12 §3: riding in the tram, it does nothing else
+        b["now"] = None
+        return
     now = b["now"]
     urgent = bool(URGENT & set(pet["news"]))
     if now and urgent and not now.get("startled"):   # something happened: it stops and turns to it (§1.1), once
@@ -543,6 +563,12 @@ def finish(mind, now, cut=False):
             elif do == "peek" and now.get("door") in room["doors"]:
                 there = [p for p in h["pets"].values() if p["room"] == room["doors"][now["door"]] and p["stage"] not in ("egg", "dead")]
                 add_event(h, pet, "you peeked into %s: %s" % (now["what"], ", ".join("%s is there" % actions.handle(h, pet, p) for p in there) or "nobody is there"))
+            elif do == "train" and o is not None and "made" in o:   # SPEC-v3.5.12 §2-3
+                where = rail.put_on(h, cfg, pet, room, name)
+                done = bool(where)
+            elif do == "ride":
+                tr = rail.train(h)
+                done = bool(tr and rail.board(h, cfg, tr, pet))
             elif do == "tidy" and now.get("job"):
                 where = order.do_job(h, cfg, pet, room, now["job"])
                 done, act = bool(where), act if where else None   # it was gone, or the place was taken: nothing was put away

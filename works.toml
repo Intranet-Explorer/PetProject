@@ -125,6 +125,11 @@ what = "string in the machine"
 scrap = 32
 material = "string"
 
+[[build]]                 # SPEC-v3.5.12 §3: the track through every room, and the train (engine/rail.py)
+what = "a rail for the house"
+scrap = 30
+rail = true
+
 [[build]]
 what = "a mirror for the music room"
 scrap = 32

@@ -5,6 +5,7 @@ import re
 from . import book, craft, feel, genome, life, order, songs, things, walls
 from . import build
 from . import machine
+from . import rail
 from . import hub
 from . import firsts
 from . import names
@@ -192,6 +193,7 @@ def allowed(house, cfg, pet, mem):
     if offered(pet):   # only while the visitor has offered it a name it has not taken
         can["take_name"] = True
     extra += machine.offered(house, cfg, pet, room)   # SPEC-v3.5 §4.3: only at the machine
+    extra += rail.offered(house, cfg, pet, room)   # SPEC-v3.5.12 §3: at a platform, once the rail is built
     return [a for a in life.unlocked(house, pet["stage"]) + extra if can.get(a, True)]
 
 
@@ -220,14 +222,17 @@ def offered_to_mind(house, cfg, pet, mem):
     return [a for a in can if a not in BODY_ONLY] if cfg["body"]["on"] else can
 
 
+MACHINES = ("sweeper", "train")   # (SPEC-v3.5.12: the train too)
+
+
 def sweeper_here(house, pet, name):
-    """The sweeper in the room with no name yet, by "sweeper" (Tyler, 16 October 2026: hobs name it like any creature)."""
-    return next((c for c in house["creatures"] if c["kind"] == "sweeper" and c["room"] == pet["room"] and not c.get("name") and norm(name) == "sweeper"), None)
+    """The sweeper (or the train) in the room with no name yet, by its kind (Tyler, 16 October 2026: hobs name it like any creature)."""
+    return next((c for c in house["creatures"] if c["kind"] in MACHINES and c["room"] == pet["room"] and not c.get("name") and norm(name) == c["kind"]), None)
 
 
 def nameable(house, pet):
     """What it could give a name to here: an animal of its own that has none, or an egg that is nobody's (§4.1, §7.1)."""
-    out = [c["kind"] for c in house["creatures"] if (c.get("tame") == pet["id"] or c["kind"] == "sweeper") and c["room"] == pet["room"] and not c.get("name")]
+    out = [c["kind"] for c in house["creatures"] if (c.get("tame") == pet["id"] or c["kind"] in MACHINES) and c["room"] == pet["room"] and not c.get("name")]
     if any(p["room"] == pet["room"] and p["stage"] == "egg" and not p["parent"] and not p["name"] for p in house["pets"].values()):
         out.append("egg")
     if hub.unnamed(house, pet):   # SPEC-v3.5.1 §4: the statue of its family's founder, with no name on its plaque
@@ -265,6 +270,8 @@ def check(a, house, cfg, pet, mem):
         return order.check(a, house, cfg, pet, norm)
     if t in machine.ACTIONS:   # SPEC-v3.5 §4.3
         return machine.check(a, house, cfg, pet, norm)
+    if t in rail.ACTIONS:   # SPEC-v3.5.12 §3
+        return rail.check(a, house, cfg, pet, norm)
     if t in ("process", "mend", "carry") and t not in life.unlocked(house, pet["stage"]):
         return "you cannot do that yet"
     if t == "process":
@@ -405,7 +412,7 @@ def check(a, house, cfg, pet, mem):
         if what == "statue":
             return None if hub.unnamed(house, pet) else "there is no statue here that wants a name"
         cr = tame(house, pet, what) or sweeper_here(house, pet, what)
-        return None if cr and cr["room"] == room["id"] else "you can only name an animal of your own, or the sweeper, that is here"
+        return None if cr and cr["room"] == room["id"] else "you can only name an animal of your own, the sweeper or the train, that is here"
     if t == "ask_book":
         return book.check_ask(a, house, cfg, pet, filled)
     if t == "write_belief":
@@ -537,6 +544,8 @@ def apply(house, cfg, pet, a, mem):
         return order.do(a, house, cfg, pet, norm)
     if t in machine.ACTIONS:   # SPEC-v3.5 §4.3
         return machine.apply(a, house, cfg, pet, norm)
+    if t in rail.ACTIONS:   # SPEC-v3.5.12 §3
+        return rail.apply(a, house, cfg, pet, norm)
     if t == "process":
         return craft.process(house, cfg, pet, a, norm)
     if t == "mend":
