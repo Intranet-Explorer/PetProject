@@ -172,12 +172,15 @@ def pick(house, cfg, cr, room, name, spot):
         for m in [m for m in room.get("marks", []) if m["on"] == name]:
             room["marks"].remove(m)
         seen(house, cr, "%s whirred up the %s" % (called(cr), name))
+        house.setdefault("fresh_creatures", []).append({"tick": house["tick"], "kind": "sweeper", "room": room["id"], "pet": None, "what": "swept up " + name})
         owner = house["pets"].get(o["made"]["owner"])
         if owner and owner["stage"] not in ("egg", "dead") and owner["room"] != room["id"]:
             add_event(house, owner, "%s swept up your old %s from %s" % (called(cr), name, room["name"]))
     elif spot and spot in room["spots"]:
         room["spots"].remove(spot)
         cr["held"].append({"bit": spot["bit"]})
+        house.setdefault("fresh_creatures", []).append({"tick": house["tick"], "kind": "sweeper", "room": room["id"], "pet": None,   # (the log: what it took, and how long it had lain)
+                                                        "what": "swept up %s, lying %.1f hours" % (spot["bit"], (house["tick"] - spot.get("since", house["tick"])) / cfg["ticks_per_hour"])})
         seen(house, cr, "%s whirred up %s" % (called(cr), a(spot["bit"])))
     cr["load"], cr["goal"] = len(cr["held"]), None
 
