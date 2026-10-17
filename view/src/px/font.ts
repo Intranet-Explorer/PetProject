@@ -27,6 +27,7 @@ GLYPHS.set("…", [0x40, 0, 0x40, 0, 0x40]);
 GLYPHS.set("×", [0x44, 0x28, 0x10, 0x28, 0x44]);
 GLYPHS.set("→", [0x08, 0x08, 0x2a, 0x1c, 0x08]);
 GLYPHS.set("♪", [0x30, 0x38, 0x1f, 0x02, 0x04]);
+GLYPHS.set("·", [0x18, 0x18]);
 const SWAP: Record<string, string> = { "‘": "'", "’": "'", "“": '"', "”": '"', "—": "-", "–": "-", " ": " ", "\t": " ", "\n": " " };
 
 export const LINE = 10;   // the height of a line: seven rows, two below for tails, one of air

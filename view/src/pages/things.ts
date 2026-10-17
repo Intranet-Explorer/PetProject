@@ -99,7 +99,7 @@ function grid(root: HTMLElement, d: All) {
   // SPEC-v3.5.10 §3: what is gone is hidden until the visitor asks for it ("Show gone", or the gone place)
   const list = T.filter((t) => (gone || place === "gone" || !t.gone) && (!stored || t.stored) && (!kind || (t.statue ? "statue" : t.recipe.kind) === kind) && (!fam || t.family === fam) &&
     (!place || (place === "gone" ? !!t.gone : place === "keepsake" ? t.keepsake : t.room_name === place)) &&
-    (!mark || (mark === "invented" ? t.invented : mark === "star" ? t.star != null : mark === "heirloom" ? t.heirloom : mark === "statue" ? t.statue : t.first === mark)))
+    (!mark || (mark === "invented" ? t.invented : mark === "star" ? t.star != null : mark === "heirloom" ? t.heirloom : mark === "statue" ? t.statue : mark === "pond" ? t.found?.from === "pond" : t.first === mark)))
     .sort(SORTS[sort][1]);
   const redo = () => { shown = STEP; drawn = ""; grid(root, d); };
   const pick = (label: string, value: string, opts: [string, string][], set: (v: string) => void) => {
@@ -131,7 +131,7 @@ function grid(root: HTMLElement, d: All) {
       pick("Everywhere", place, [...d.rooms.map((r): [string, string] => [r, r]), ["keepsake", "in a keepsake box"], ["gone", "gone (taken apart, joined, traded…)"]], (v) => (place = v)),
       chip("Both families", !fam, () => { fam = 0; redo(); }), chip("Family 1", fam === 1, () => { fam = 1; redo(); }), chip("Family 2", fam === 2, () => { fam = 2; redo(); })),
     el("div", "chips", markChip("First in the house", "house", "gold"), markChip("First in its family", "family", "silver"), markChip("Invented kinds", "invented", "blue"),
-      markChip("Heirlooms", "heirloom"), markChip("★ Starred", "star"), markChip("Statues", "statue"),
+      markChip("Heirlooms", "heirloom"), markChip("★ Starred", "star"), markChip("Statues", "statue"), ...(T.some((t) => t.found?.from === "pond") ? [markChip("From the pond", "pond")] : []),
       el("span", "hint tsort", "Sort:"), ...Object.entries(SORTS).map(([k, [text]]) => chip(text, sort === k, () => { sort = k; redo(); })))),
     list.length !== (gone ? T.length : standing) ? el("p", "hint", `${plural(list.length, "thing")} like that.`) : null),
     el("div", "inv", el("div", "invlist",
