@@ -829,7 +829,7 @@ def upkeep(house, cfg):
                 m.pop("damp")   # used somewhere dry, it dries out
             if room["type"] == "attic" and idle >= room_rule(cfg, room, "dust_days", 2) * cfg["ticks_per_day"]:
                 m["dusty"] = True
-            if o["pos"] in water and not prop(cfg, o).get("fixed") and not invent.effect(cfg, o).get("floats") and not o.get("on"):   # it floats away (§6.1) ...
+            if o["pos"] in water and not prop(cfg, o).get("fixed") and not invent.effect(cfg, o).get("floats") and not o.get("on") and not o.get("wall"):   # it floats away (§6.1; what hangs on the wall above is not in it) ...
                 from . import pond
                 if pond.drift(house, cfg, room, n):   # ... and, from the big pond, washes up at its edge a world day later (SPEC-v3.6a §1)
                     continue

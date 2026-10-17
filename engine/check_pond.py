@@ -48,6 +48,7 @@ async def run(d):
     room["objects"]["shell bowl"] = thing(eng, room, "shell bowl", "bowl", "hard", pet["id"], days=1, pos=[4, 1])
     room["objects"]["reed toy"] = thing(eng, room, "reed toy", "ball", "springy", pet["id"], days=1, pos=[8, 2], on="reed basket")
     room["spots"].append({"bit": "shell", "pos": [7, 2], "ready": True, "back": None, "loose": False})
+    room["objects"]["wet charm"] = dict(thing(eng, room, "wet charm", "charm", "bright", pet["id"], days=1, pos=[9, 1]), wall=True)   # (on the wall over the new water)
     rail.make(h, cfg)
     before = {n for n in room["objects"]}
     h["pond"] = None
@@ -71,6 +72,8 @@ async def run(d):
     n_moments = len(h["moments"])
     pond.spread(h, cfg)
     assert len(h["moments"]) == n_moments, "once"
+    things.upkeep(h, cfg)
+    assert "wet charm" in room["objects"], "what hangs on the wall over the water stays there; it does not drift off"
 
     # ---- hobs walk round the water: from the west door to the east door without a wet step ----
     pet["room"], pet["pos"] = room["id"], list(h["door_tiles"]["west"])
