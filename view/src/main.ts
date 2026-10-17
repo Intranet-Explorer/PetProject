@@ -9,6 +9,7 @@ import { boardRows } from "./px/hub";
 import { icon } from "./icons";
 import { evening } from "./px/weather";
 import { drawMap } from "./minimap";
+import { fakeTrain } from "./faketrain";
 import { noteInvented } from "./parts";
 import { renderDrawer, showMind, sources, truthOf } from "./panels";
 import { startReplay } from "./replay";
@@ -326,7 +327,7 @@ function roomBoxes() {
   const [ox, oy, tile] = [cv.left - at.left, cv.top - at.top, cv.width / ((snap?.size[0] ?? 12) + 2)], edge = tile / 2 + 4;
   const busy: Box[] = [...room.labels().map((r) => ({ x: r.x + ox, y: r.y + oy, w: r.w, h: r.h })),
     ...(snap?.pets ?? []).filter((p) => p.room === view.room && !(p.stage === "dead" && p.buried)).map((p) => ({ x: ox + (p.pos[0] + 0.5) * tile, y: oy + (p.pos[1] + 1) * tile, w: 2 * tile, h: 2.2 * tile })),
-    ...(snap?.creatures ?? []).filter((c) => c.room === view.room).map((c) => ({ x: ox + (c.pos[0] + 0.75) * tile, y: oy + (c.pos[1] + 1.75) * tile, w: 1.5 * tile, h: 1.5 * tile }))];
+    ...(snap?.creatures ?? []).filter((c) => c.room === view.room && c.pos).map((c) => ({ x: ox + (c.pos[0] + 0.75) * tile, y: oy + (c.pos[1] + 1.75) * tile, w: 1.5 * tile, h: 1.5 * tile }))];
   return { tile, busy, inner: { x: ox + edge, y: oy + 4, w: cv.width - 2 * edge, h: cv.height - edge - 4 } };
 }
 
@@ -480,7 +481,7 @@ function side(s: Snap, here: RoomV) {
       ...(r.cold ? [line("warn", "wind", `a draught in ${r.name}${r.shut.length ? `; its ${r.shut.join(" and ")} door is shut` : ""}`, r.id)] : []),
     ]),
     ...found(s).filter((r) => Object.values(r.objects).some((o) => o.fix?.radio && o.state === "on")).map((r) => line("", "radio", `the radio is on in ${r.name}${s.dj?.radio.now ? `: ${s.dj.radio.now.title}` : ""}`, r.id)),
-    ...s.creatures.map((cr) => line("", cr.tame ? "paw" : cr.kind === "sweeper" ? "sweeper" : "mouse", `${beast(cr)} in ${name(cr.room)}, ${cr.doing}`, cr.room)),
+    ...s.creatures.map((cr) => line("", cr.tame ? "paw" : cr.kind === "sweeper" ? "sweeper" : cr.kind === "train" ? "crate" : "mouse", `${beast(cr)} in ${name(cr.room)}, ${cr.doing}`, cr.room)),
   );
   board(s);
   consoleFit();   // (the Works' lines come and go: whether the console's sections fit is asked again)
@@ -568,6 +569,7 @@ function works(s: Snap, w: BoardLine | null, still: boolean) {
 
 /** A creature in a few words: "a moth"; once tame, whose it is and what it is called (SPEC-v3.1 §4.4). Never how far it trusts anyone. */
 function beast(c: Creature) {
+  if (c.kind === "train") return c.name ?? "the train";   // SPEC-v3.5.12 §3
   const owner = pet(c.tame)?.label;
   return c.name ? `${c.name}${owner ? `, ${owner}'s ${c.kind},` : ` the ${c.kind}`}` : `a ${c.kind}${owner ? `, tame to ${owner},` : ""}`;
 }
@@ -827,7 +829,7 @@ function tipFor(t: Target): Kid[] | null {
         ["carrying", [carried(p).join(", ")]], ["following", [pet(p.following) ? nameOf(pet(p.following)!) : ""]]]))];
   }
   if (c) return [roomCard(drawn(t) ?? (hasSprite(`creature.${c.kind}`) ? sprite(`creature.${c.kind}`, 3) : null), [beast(c).replace(/,$/, "")], [`${cap(c.doing)}.`],
-    rows([["carrying", [c.carry ?? ""]]]),
+    c.kind === "train" ? kept(t) : rows([["carrying", [c.carry ?? ""]]]),   // SPEC-v3.5.12 §5: the train: what is in its cart, who rides
     // SPEC-v3.5.8 §4.2: the sweeper's load, and whether it is full or on its dock
     c.kind === "sweeper" ? el("p", "", c.docked ? "On its dock by the Works, charging." : c.full ? "Full: its green light is blinking, and it is going back to the Works."
       : c.load ? `It has picked up ${plural(c.load, "thing")}.` : "Nothing picked up yet.") : null)];
@@ -1082,6 +1084,8 @@ Object.assign(window, { petView: {
   /** The hover card for whatever is at a floor tile, as if the pointer were there. */
   hover: (t: Target | null) => (t ? card(t, (t.tile[0] + 1.5) / ((snap?.size[0] ?? 12) + 2), (t.tile[1] + 2.5) / ((snap?.size[1] ?? 8) + 3)) : card(null, 0, 0)),
   replay: () => replay,
+  /** SPEC-v3.5.12 §5, for checks: a train driven through a room's track by the page (null stops it); see faketrain.ts. */
+  fakeTrain: (rid: string | null, ms?: number, rider?: string | null) => fakeTrain(() => raw, (o) => { tweak = o ?? {}; if (raw) void show(raw); }, rid, ms, rider ?? null),
   snap: () => raw,
   /** SPEC-v3.3 §4: every sound the page has begun (the last 500), for checking without ears. */
   audioLog: voice.log,
@@ -1095,3 +1099,5 @@ Object.assign(window, { petView: {
   },
 } });
 watchVersion();   // v3.5.10: a page open across a deploy reloads itself
+const faking = new URLSearchParams(location.search).get("faketrain");
+if (faking) { const go = () => (raw ? (jump({ room: faking }), fakeTrain(() => raw, (o) => { tweak = o ?? {}; if (raw) void show(raw); }, faking)) : setTimeout(go, 500)); go(); }

@@ -10,6 +10,7 @@ import { FX, OX, TILE, W } from "./geom";
 import type { Rect } from "./geom";
 import { Board, skyAnim } from "./hub";
 import type { Still } from "./still";
+import { carLine } from "./train";
 
 const DW = 40, DH = 13;
 const STAGE: Record<string, string> = { planted: "just planted", sprout: "sprouting", leaves: "in leaf", ripe: "ripe" };
@@ -102,7 +103,8 @@ function caseName() {
 export function display(still: Still, room: RoomV, K: number): Display | null {
   if (!room.type || room.type === "hub") return null;
   const r = spot(still), line = (s: Snap) => roomLine(s, s.rooms.find((x) => x.id === room.id) ?? room);
-  const board = new Board(r, K, (s) => [{ anim: skyAnim(s), ms: 1400 }, { rows: [hhmm(s.clock.hour)], ms: 0 }, { rows: [line(s).toUpperCase()], ms: 0 }]);
+  const car = (s: Snap) => { const l = carLine(s, room.id); return l ? [{ rows: [l], ms: 0 }] : []; };   // SPEC-v3.5.12 §6: when the train is next due, once there is a rail
+  const board = new Board(r, K, (s) => [{ anim: skyAnim(s), ms: 1400 }, { rows: [hhmm(s.clock.hour)], ms: 0 }, { rows: [line(s).toUpperCase()], ms: 0 }, ...car(s)]);
   const c = new Sprite(tex(caseName()));
   c.position.set(r.x, r.y);
   still.wallLayer.addChild(c, board.s);

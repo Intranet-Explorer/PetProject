@@ -119,6 +119,7 @@ export type PetV = {
   mutation?: { slot: string; from: string; to: string } | null;   // SPEC-v3.5 §2.2: born with something no ancestor had
   // SPEC-v3.5.8 §6: what its family calls it ("Open Hand"), shown under its name; a project's measurable progress
   byname?: string | null; progress?: { what: string; have: number; need: number } | null;
+  riding?: string | null;   // SPEC-v3.5.12 §3: the train it rides in
 };
 /** `tame` is the pet it belongs to. (The engine also sends its trust in each pet; that is hidden and never shown.) */
 /** A step a pet has just finished (SPEC-v3.2 §5.2). `what` is the thing, bit or song it was about, `to` whom or
@@ -127,7 +128,16 @@ export type Act = { n: number; tick: number; pet: string; type: string; what?: s
   kind?: string | null; color?: string | null; from?: string[] | null; to_id?: string | null; text?: string | null;
   body?: string; loud?: boolean };   // SPEC-v3.3: `body`: its body did it unasked (the activity's name); `loud`: the thing sounds
 export type Creature = { id: string; kind: string; room: string; pos: Tile; doing: string; carry: string | null; tame?: string | null; name?: string | null;
-  load?: number; full?: boolean; docked?: boolean };   // SPEC-v3.5.8 §4.2: the sweeper's: how much it has picked up, full (its light blinks), on its dock
+  load?: number; full?: boolean; docked?: boolean;   // SPEC-v3.5.8 §4.2: the sweeper's: how much it has picked up, full (its light blinks), on its dock
+  // SPEC-v3.5.12 §3: the train's (kind "train"): its three cars, engine, cart, tram (null: not through a door yet); the
+  // tiles its leading car last passed, newest first; which end leads; its bell (the tick it last rang); who rides; what is in the cart
+  cars?: (Car | null)[]; trail?: [string, Tile][]; lead?: "engine" | "tram"; moving?: boolean; lid?: "open" | "closed"; bell?: number;
+  asleep?: boolean; rider?: string | null; cargo?: string[]; speed?: number };
+export type Car = { room: string; pos: Tile; dir: string };
+/** SPEC-v3.5.12 §3: the rail, once the Works has built it. Each room's track is branches of tiles, each from a door tile
+ *  to the platform; `side`: the tile beside the platform for its bench or post; `due`: the tick the train next stops here (null: in the morning). */
+export type RailRoom = { track: Tile[][]; platform: Tile; side: Tile; buffer: boolean; due: number | null };
+export type Rail = { built: number; depot: string; route: string[]; rooms: Record<string, RailRoom> };
 export type Moment = { n: number; tick: number; day: number; hour: number; kind: string; text: string; pet: string | null; room: string | null };
 export type HouseEvent = { tick: number; day: number; kind: string; room: string | null; detail: string };
 export type Chronicle = { day: number; season: string; summary: string; lines: string[]; text: string | null };
@@ -153,6 +163,7 @@ export type Snap = {
   machine?: { stock: Record<string, number>; limit: number; materials: string[]; room: string } | null;   // SPEC-v3.5 §4.3: what the vending machine holds (null: nobody has found it)
   invented?: Record<string, Invention>;   // SPEC-v3.5 §3: the kinds this house invented, by name: drawn from their parts
   ticker?: Ticker;   // SPEC-v3.5.1 §2
+  rail?: Rail | null;   // SPEC-v3.5.12 §3
   hello?: Hello; error?: string;
 };
 /** What /api/v31 answers: everything ever written, sung, asked and heard, and when each discovery comes. */

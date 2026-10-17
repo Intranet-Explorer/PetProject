@@ -18,6 +18,7 @@ import { hubSprite } from "./hub";
 import { grid } from "./path";
 import type { Grid } from "./path";
 import { seasonal } from "./season";
+import { stationSprite, trackTexture } from "./train";
 import { hslInt, tinted } from "./tint";
 
 /** A made thing as it is drawn: its kind's sprite, its colour, its size (1 to 3). */
@@ -102,6 +103,8 @@ export class Still {
     for (const d of L.decor ?? []) this.decor(d.sprite, d.at, d.layer);
     this.puddles(snap, room, L);
     this.places(room);
+    const rail = snap.rail?.rooms?.[room.id];   // SPEC-v3.5.12 §5: the track, over the floor and what is painted or laid in it (a garden path), under all else
+    if (rail) this.flat.addChild(new Sprite(trackTexture(rail, snap.door_tiles)));
     for (const [dir, to] of Object.entries(room.doors)) this.door(snap, room, dir, to, L.doors);
 
     // what is put away (SPEC-v3.3 §2) comes after what it is put away on: it stands on that, small; in a chest it is not seen
@@ -109,7 +112,12 @@ export class Still {
     for (const [name, o] of Object.entries(room.objects).sort(([, a], [, b]) => flatFirst(a) - flatFirst(b) || a.pos[1] - b.pos[1])) {
       const lf = L.fixtures?.[name], store = o.on ? room.objects[o.on]?.store : undefined;
       if (store?.inside) continue;
+      if (o.on && room.objects[o.on]?.fix?.platform && (store?.holds.indexOf(name) ?? 0) >= 3) continue;   // SPEC-v3.5.12 §5: a small heap on a platform, three at most
       const slot = store ? this.slot(o.on!, name) : undefined;
+      if (o.fix?.platform) {   // ... the platform: its slab is drawn with the track; here its bench or post, on the slab beside it
+        this.put(name, rail ? { ...o, pos: rail.side } : o, stationSprite(room.id, rail ?? { track: [], platform: o.pos, side: o.pos, buffer: false, due: null }, !!o.fix.depot), "sorted");
+        continue;
+      }
       if (o.made) {
         const t = this.made(name, o, snap.power, FAMILY[snap.pets.find((p) => p.id === o.made!.by)?.family ?? 1] ?? FAMILY[1], slot);
         if (!t.wall && !slot && !kind(t.drawn!.kind)?.flat) blocked.push(o.pos);
@@ -321,6 +329,7 @@ export class Still {
   private slot(on: string, name: string): Slot | undefined {
     const t = this.things.get(on), holds = t?.obj.store?.holds ?? [];
     if (!t) return undefined;
+    if (t.obj.fix?.platform) { const i = Math.max(0, holds.indexOf(name)); return { x: Math.round(t.x) + (i - 1) * 5, y: Math.round(t.y) + 2 + (i % 2), z: t.s.zIndex + 0.3 + i * 0.01, wall: false }; }   // (in a heap at its foot)
     const sz = size(t.sprite), [sx, sy, sw] = def(t.sprite)?.surface ?? [2, Math.round(sz.h * 0.5), sz.w - 4], i = Math.max(0, holds.indexOf(name)), n = Math.max(1, holds.length);
     return { x: Math.round(t.rect.x + (sx + (sw * (i + 0.5)) / n) * t.scale), y: Math.round(t.rect.y + sy * t.scale), z: t.s.zIndex + 0.3 + i * 0.01, wall: t.wall };
   }

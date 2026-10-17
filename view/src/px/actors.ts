@@ -68,6 +68,8 @@ export class Walker {
     this.moving = false;
   }
   tile(): Tile { return tileAt(this.x, this.y); }
+  /** Stand just here, in the room's pixels (carried: on the train). */
+  at(x: number, y: number) { [this.x, this.y, this.moving] = [x, y, false]; this.pts.length = 0; }
   /** Walk to `to` round what is blocked, arriving in about `ms` (longer if the way round is long: `max` tiles in that time). */
   go(to: Tile, g: Grid, ms: number, max = 2.6) {
     const tiles = path(this.tile(), to, g);
@@ -181,6 +183,8 @@ export class PetActor {
   pose: { anim: PetAnim; until: number } | null = null;
   /** Set by the room: the pointer is on it (its sack's count shows). */
   hovered = false;
+  /** Set by the room (SPEC-v3.5.12 §3): it rides the train: where it stands on the tram and its depth; empty, out of sight. */
+  ride: number[] | null = null;
   private body = new Sprite();
   // SPEC-v3.5.8 §5: what it carries. One small thing in its paws; two or more in a sack on its back (its count shows on
   // hover); something big over its head with both arms. `lift`: the made thing its body has picked up (set by update).
@@ -233,7 +237,7 @@ export class PetActor {
   update(p: PetV, home: Tile, st: Stage, ms: number, selected: boolean, first: boolean, rest = false) {
     const stage = bodyStage(p), b = p.asleep ? null : p.body ?? null, now = st.now;
     this.pet = p;
-    this.P = petScale(st.K);
+    this.P = p.riding ? 1 : petScale(st.K);   // (on the tram's step, the art's own size)
     this.c.scale.set(this.P);
     this.sheet = petSheet(p.genome, p.stage === "egg" ? "egg" : stage, { grey: stage === "elder" ? (p.old ? 0.85 : 0.55) : 0 });
     const key = b ? `${b.activity}|${b.what}|${b.who}` : "";
@@ -321,6 +325,8 @@ export class PetActor {
   step(st: Stage) {
     const p = this.pet, now = st.now, egg = p.stage === "egg", dead = p.stage === "dead", elder = p.stage === "elder";
     const d = doing(p), acting = !!d?.acting && !this.w.moving, b = p.asleep ? null : p.body ?? null, off = this.off;
+    if (this.ride) { this.c.visible = this.ride.length > 0; this.rim.visible &&= this.c.visible; if (!this.c.visible) return; this.w.at(this.ride[0], this.ride[1]); }
+    else this.c.visible = true;
     this.w.step(egg || dead ? 0 : st.dt);   // one that falls asleep on its way still gets to where it lies
     let a: PetAnim = "idle";
     off[0] = off[1] = off[2] = off[3] = 0;
@@ -338,7 +344,8 @@ export class PetActor {
     }
     this.c.alpha = 1;
     const target = d ? (d.type === "ask_book" ? st.book() : null) ?? st.where(d.to, [this.w.x, this.w.y]) ?? st.where(d.what, [this.w.x, this.w.y]) : null;
-    if (this.w.moving) a = `walk.${this.w.dir}`;
+    if (this.ride) a = "sit";
+    else if (this.w.moving) a = `walk.${this.w.dir}`;
     else if (p.asleep) a = "sleep";
     else if (this.pose && now < this.pose.until) a = this.pose.anim;
     else if (acting) {
@@ -387,7 +394,7 @@ export class PetActor {
     const half = Math.ceil((this.box.w * this.P) / 2) + 1;   // in a doorway too it stays inside the walls
     this.at[0] = clamp(this.w.x, OX + half, OX + FX * TILE - half); this.at[1] = this.w.y;
     this.c.position.set(clamp(this.w.x + this.lean.x * k + off[2], OX + half, OX + FX * TILE - half), this.w.y + this.lean.y * k + off[3]);
-    this.c.zIndex = this.w.y;
+    this.c.zIndex = this.ride ? this.ride[2] : this.w.y;
     this.edge(st, frame);
     this.carry(st, a, this.w.moving ? fi % 2 : 0);
   }

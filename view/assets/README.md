@@ -103,6 +103,10 @@ A pack whose licence forbids redistribution lives outside the repository: give i
   middle on what it is planted in, at that thing's size; ours put the earth where a 16 × 16 pot's rim is. A thing
   that has `<its sprite>.bare` is drawn as that while something is planted in it (`kind.plant pot.bare`: our pot is
   typed with a plant of its own). A pack with no `plant.*` shows nothing.
+- SPEC-v3.5.12, the train: `creature.train` (the engine), `creature.train.cart`, `creature.train.cart.open` (stills only)
+  and `creature.train.tram`, each with `still.<direction>` for the eight ways and `walk.down|right|up|left` to drive in, as
+  `creature.sweeper`; `station.*` stand beside a platform (the lamp post, the bell post, the bench, the clock). All in
+  `own/train.png`, drawn by `own/src/train.py`. The track itself is drawn by the view (px/train.ts).
 - `fx.burst.want` and `fx.burst.find`: the moment a pet gets what it wanted, or finds something out; each has a
   `play` animation.
 

@@ -76,6 +76,14 @@ from 34 × 34 to the 26 × 25 that holds the robot; and its dock, cell 26 of `as
 robot's green light, which is drawn lit in every frame (PixelLab's drive frames blink and glare on their own; the view
 blinks it).
 
+`../own/train.png` (SPEC-v3.5.12, drawn by `../own/src/train.py`) is cut from pictures generated for this project with
+**PixelLab** in October 2026: the little train Tyler picked from `assets-incoming/pixellab/rail32.png` (cell 19 the engine,
+15 the cart, 9 the tram), each made into an 8-direction object with its rails taken out (`assets-incoming/pixellab/train/`):
+its eight still directions and its drive animation facing south, east, north and west (five frames each), the cart with
+its lid shut and open, all 34 × 34 and used unchanged; and four station things from `rail32.png` (`generate-with-style-v2`,
+32 × 32 cells: 53 the lamp post, 56 the bell post, 59 the bench, 60 the clock), each cut to what it draws. The track, the
+platform's slab, the buffer stop and the cart's lid standing open side on are drawn by the view in code.
+
 `../own/sweeper.png` is cut from a sheet generated for this project with **PixelLab** on 15 October 2026
 (`generate-with-style-v2`, the Ninja Adventure items as the style; the sheet is `assets-incoming/pixellab/sweeper16.png`,
 its names in `lists.py` `SHEETS["sweeper16"]`). Used unchanged: cells 24, 13, 52, 27, 45 (clay brick, bundle of sticks,
