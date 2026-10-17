@@ -249,10 +249,11 @@ def out_of_place(house, cfg, room):
 
 
 def to_shelve(house, cfg, room):
-    """In the store: made things not yet on its shelves (lying about, in boxes, on the old crates), to be put away."""
+    """In the store: made things not yet on its shelves (lying about, in boxes someone made), to be put away; a box
+    once what is in it is out."""
     if not is_store(room):
         return []
-    return [n for n, o in things.made(room).items() if not shelved(cfg, room, n) and not order.cap(cfg, o) and not order.keeps(o)
+    return [n for n, o in things.made(room).items() if not shelved(cfg, room, n) and not order.held(room, n) and not order.keeps(o)
             and not (room["objects"].get(o.get("on") or "", {}).get("fix", {}).get("keepsake")) and not o.get("wall") and not cfg["kinds"].get(kind(o), {}).get("furniture")
             and not order.statue(n, o)]
 
