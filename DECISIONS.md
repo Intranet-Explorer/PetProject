@@ -2215,7 +2215,7 @@ creature, a `platform` fixture in every room, the store's shelves, memory shelve
 - **The store** is the storeroom's own fixtures plus thirteen new ones (house.toml [store]). The floor-pile scenery of
   its layout is gone. Full, it sends the oldest thing on its shelves nobody has touched in `full_days` and that is not
   meant or titled to the Works, and says so in the gone list. The material crates show the machine's stock.
-- **The train** runs the spec's route (store.route checks it against the doors; another house gets a walk out and back
+- **The train** runs the spec's route (rail.route checks it against the doors; another house gets a walk out and back
   along every branch). Each room's track is two or three arms from its doors to one platform, long enough for the
   train to stand clear of the doors, along the walls where it can; a doorway is never blocked, and a room with no way
   round its fixtures gets a track over them. It stops once a round in each room, the first time it comes, and at the
