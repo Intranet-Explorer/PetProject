@@ -30,10 +30,27 @@ def state(house, cfg):
 
 
 def goal(house, cfg):
-    """What the Works is gathering scrap for now: the next on its list, and once it has built everything on it, the
-    goal that never runs out (SPEC-v3.5.9 §5: `forever`, the house store), or None if there is none."""
-    L, g = cfg["works"]["build"], state(house, cfg)["goal"]
-    return L[g] if g < len(L) else cfg["works"].get("forever")
+    """What the Works is gathering scrap for now: one put to the front of the list (`front`, below), else the next on
+    its list (one already built that way is passed over), and once it has built everything on it, the goal that never
+    runs out (SPEC-v3.5.9 §5: `forever`, the house store), or None if there is none."""
+    L, S = cfg["works"]["build"], state(house, cfg)
+    done = {b["what"] for b in S["built"]}
+    if S.get("front") and S["front"] not in done:
+        return next((b for b in L if b["what"] == S["front"]), None) or cfg["works"].get("forever")
+    while S["goal"] < len(L) and L[S["goal"]]["what"] in done:
+        S["goal"] += 1
+    return L[S["goal"]] if S["goal"] < len(L) else cfg["works"].get("forever")
+
+
+def front(house, cfg):
+    """SPEC-v3.6a §1: a goal marked `after` (what has to be built first) goes to the front of the list once that is
+    built: it is the next goal as soon as the one being filled now is built, so nothing already fed to it is lost."""
+    S = state(house, cfg)
+    done = {b["what"] for b in S["built"]}
+    if S.get("front") in done:
+        S.pop("front")
+    if not S.get("front") and not S["have"]:
+        S["front"] = next((b["what"] for b in cfg["works"]["build"] if b.get("after") in done and b["what"] not in done), None)
 
 
 def full(house, cfg):
@@ -119,6 +136,7 @@ def check(house, cfg):
     """A goal whose meter is already full builds straight away, not at the next feeding: on load (the list may have
     changed under it, as when the rail came in after a goal that had 31 of 30) and as each goal starts."""
     from . import machine
+    front(house, cfg)
     g = goal(house, cfg)
     if g and machine.found(house) and state(house, cfg)["have"] >= g["scrap"]:
         built(house, cfg, g)
@@ -131,7 +149,8 @@ def built(house, cfg, g):
     who = sorted(S["fed"], key=lambda p: -S["fed"][p])   # whoever fed it most first
     names = [label(house["pets"][p]) for p in who if p in house["pets"]]
     S["built"].append({"what": g["what"], "tick": house["tick"], "by": who})
-    S.update(goal=S["goal"] + 1, have=0, fed={})
+    L = cfg["works"]["build"]
+    S.update(goal=S["goal"] + (S["goal"] < len(L) and L[S["goal"]] is g), have=0, fed={})
     lay(house, cfg, new=g)
     if g.get("sweeper"):   # SPEC-v3.5.8 §4.2 (and a second: SPEC-v3.5.9 §5)
         from . import sweeper

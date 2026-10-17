@@ -235,6 +235,21 @@ async def run(d):
     pet["fished"] = [h["clock"]["day"], cfg["pond"]["time"]["share"] * cfg["ticks_per_day"]]
     assert not pond.targets(h, cfg, pet, Mem(), room, A), "enough fishing for one day"
 
+    # ---- the dock's place on the Works' list: next once the rail is built, after the goal being filled now ----
+    from . import works
+    W, L = works.state(h, cfg), cfg["works"]["build"]
+    rail_at = next(i for i, b in enumerate(L) if b.get("rail"))
+    W.update(goal=rail_at + 1, have=30, fed={}, front=None, built=[{"what": b["what"], "tick": 0, "by": []} for b in L[:rail_at + 1]])
+    S["dock"] = None
+    filling = works.goal(h, cfg)
+    works.check(h, cfg)
+    assert works.goal(h, cfg) is filling and W["have"] == 30, "what has been fed to the goal now is not lost to the dock"
+    works.built(h, cfg, filling)
+    assert works.goal(h, cfg)["what"] == "a dock for the pond", "then the dock is next: %s" % works.goal(h, cfg)
+    after = L[W["goal"]]["what"]
+    works.built(h, cfg, works.goal(h, cfg))
+    assert S["dock"] and works.goal(h, cfg)["what"] == after, "built, and the list goes on where it was"
+
     # ---- the page gets the pond ----
     v = pond.view(h, cfg)
     assert v["room"] == room["id"] and len(v["water"]) == len(wet) and v["says"] in ("plenty of fish", "some fish", "fished thin")

@@ -265,7 +265,7 @@ def targets(house, cfg, pet, mem, name, A):
         t = rail.tram(tr) if tr else None
         if pet["stage"] not in ("hatchling", "child", "elder") or not t or tr["rider"] or not tr["stopped"] or t["room"] != room["id"]:
             return []
-        return [{"what": "train", "goal": near(t["pos"]), "bonus": 0.5 if pet["stage"] == "elder" and feel.level(pet, "energy") >= 2 else 0.0}]
+        return [{"what": "train", "goal": near(t["pos"]), "bonus": 0.5 if pet["stage"] == "elder" and feel.level(pet, "energy") >= 2 else 1.5 if pet["stage"] != "elder" else 0.0}]   # (18 October 2026: a whole day and no ride: the tram stands a short while, so a little one has to want it)
     if do == "tail":
         return [{"what": c["kind"], "creature": c["id"], "goal": None if dist(me, c["pos"]) <= 1 else beside(cfg, c["pos"], me), "bonus": W if c["kind"] in L["creatures"] else 0.0}
                 for c in sorted(house["creatures"], key=lambda c: c["kind"] not in L["creatures"]) if c["room"] == room["id"]][:1]

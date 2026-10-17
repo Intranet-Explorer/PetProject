@@ -130,10 +130,6 @@ what = "a rail for the house"
 scrap = 30
 rail = true
 
-[[build]]                 # SPEC-v3.6a §1: out over the bigger pond, the best place to fish (engine/pond.py); next after the rail
-what = "a dock for the pond"
-scrap = 20
-dock = true
 
 [[build]]
 what = "a mirror for the music room"
@@ -179,6 +175,12 @@ machine = { limit = 16 }
 what = "a fifth thing a day from the machine for everyone"
 scrap = 45
 machine = { free = 5 }
+
+[[build]]                 # SPEC-v3.6a §1: out over the bigger pond, the best place to fish (engine/pond.py). Last on the list, but
+what = "a dock for the pond"   # once the rail is built it goes to the front: the next goal after the one being filled (works.front)
+scrap = 20
+dock = true
+after = "a rail for the house"
 
 # When the list is done, a goal that never runs out: each time it fills, a stock of every base material goes into the
 # machine (as much as it holds).

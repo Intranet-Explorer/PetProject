@@ -360,11 +360,25 @@ def arrive(house, cfg, tr):
 
 
 def collect(house, cfg, tr, room):
-    """What the hobs have left on the platform for it goes into the cart."""
+    """What the hobs have left on the platform for it goes into the cart. And (18 October 2026, v3.5.12's day: the
+    greenhouse kept 9 where the cap is 6, for nobody was there when the train stopped) in a room still over its cap,
+    the car takes what is over it, the longest untouched first: never what is kept, in use, or a fixed thing."""
+    from . import store
     for n in order.held(room, "platform"):
         if len(tr["held"]) >= R(cfg)["cart_holds"]:
             break
         load(house, cfg, tr, room, n, None)
+    if store.is_store(room) or room["id"] == house["rail"]["depot"]:
+        return
+    over = store.out_of_place(house, cfg, room)
+    took = []
+    for n in sorted(over, key=lambda n: room["objects"][n]["made"].get("touched", room["objects"][n]["made"]["tick"]))[:max(0, len(over) - store.S(cfg)["cap"])]:
+        if len(tr["held"]) >= R(cfg)["cart_holds"] - 1 or n not in room["objects"] or order.kept(house, cfg, room, n):
+            continue
+        load(house, cfg, tr, room, n, None)
+        took.append(n)
+    if took:
+        moment(house, "rail", "the train's cart took %s from %s, where too much lay about" % (", ".join(took), room["name"]), None, room["id"])
 
 
 def load(house, cfg, tr, room, name, pet):

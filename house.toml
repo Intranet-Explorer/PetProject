@@ -434,6 +434,7 @@ least_ticks = 20          # ... at most one every this many ticks
 # SPEC-v3.5.12 §1: the store's shelves along the storeroom's walls (engine/store.py). `keeps`: the kinds each takes
 # ("light": anything that gives light; "*": anything); `art`: its picture (rail32.png, assets-incoming/pixellab/sheets.toml).
 [store]
+cap = 6                   # a room (not the storeroom) keeps at most this many made things out of place: at a stop the car takes the rest (rail.collect)
 full_days = 3             # the store full, the oldest thing nobody has used this long (not a first, heirloom, titled thing or gift) goes to the Works
 shelf = [
   { name = "cushion shelf", pos = [2, 0], store = 30, keeps = ["cushion", "blanket", "nest", "bed-mat", "rug", "pillow"], shelf = "cushions and blankets", art = "shelf of folded cushions and blankets" },

@@ -138,6 +138,18 @@ async def run(d):
     assert "titled cushion" in S["objects"] and "plain cushion" not in S["objects"], "the oldest plain thing went to the Works; the titled one stays"
     assert any(g["name"] == "plain cushion" and "full store" in g["gone"][1] for g in h["gone_things"]), "and it is listed as gone"
 
+    # ---- a room still over its cap when the train stops: the car takes what is over it (none of what is kept) ----
+    green = next(r for r in h["rooms"].values() if r["type"] == "greenhouse")
+    tr["held"] = []
+    for i in range(9):
+        thing(eng, green, "old pot %s" % "abcdefghi"[i], "box", "hard", None, days=6 + i)
+    kept = thing(eng, green, "old pot j", "box", "hard", None, days=20)
+    kept["made"]["heirloom"] = {"from": "x"}
+    while not (tr["stopped"] and tr["room"] == green["id"] and tr.get("arrived") == h["tick"]):
+        run_train(h, cfg, tr, 1)
+    assert len(store.out_of_place(h, cfg, green)) <= cfg["house"]["store"]["cap"] and "old pot j" in green["objects"], store.out_of_place(h, cfg, green)
+    assert any("too much lay about" in m["text"] for m in h["moments"]), "and the story says so"
+
     # ---- a new death: the stone to the resting place, the box to its family's shelf ----
     dead = dict(pet, id="p999", name="Odo", stage="dead", died=h["tick"], born=h["tick"] - 1000, buried=False, room=music["id"], pos=[5, 4])
     h["pets"]["p999"] = dead
