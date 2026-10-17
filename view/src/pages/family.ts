@@ -6,7 +6,8 @@ import { byname, el, stageName } from "../dom";
 import type { Kid } from "../dom";
 import { icon, svg } from "../icons";
 import { href } from "../router";
-import { a, chip, getJSON, petLink, portrait } from "../ui";
+import { hasSprite, sprite } from "../sprite";
+import { a, chip, getJSON, live, petLink, portrait, thingPic } from "../ui";
 import type { Who } from "../ui";
 import { fam } from "../types";
 
@@ -48,7 +49,8 @@ let drawn = "", treeShown = false;
 export async function render(root: HTMLElement, _id: string | null) {
   const data = await allPets();
   if (!data) { if (!root.childElementCount) root.textContent = "The house is not answering yet."; return; }
-  const key = JSON.stringify([data, view]);
+  const boxes = shelfBoxes();
+  const key = JSON.stringify([data, view, boxes.map((b) => [b.pet, b.holds.map((h) => h.name)])]);
   if (key === drawn && root.childElementCount) return;
   drawn = key;
   const redraw = () => { drawn = ""; void render(root, _id); };
@@ -62,7 +64,7 @@ export async function render(root: HTMLElement, _id: string | null) {
     row("Sort", chip("By birth", view.sort === "birth", set({ sort: "birth" })), chip("By generation", view.sort === "gen", set({ sort: "gen" }))));
   const opening = view.tree && !treeShown;   // SPEC-v3.5.7 §8: the lines draw themselves in when the tree opens (not on every redraw)
   treeShown = view.tree;
-  root.replaceChildren(el("div", "familypage", el("div", "paper fbars", ...bars), view.tree ? tree(data, fams, opening) : gallery(data)));
+  root.replaceChildren(el("div", "familypage", el("div", "paper fbars", ...bars), view.tree ? tree(data, fams, opening) : gallery(data), memoryShelf(data, boxes)));
 }
 
 function gallery(data: Pets) {
@@ -136,6 +138,34 @@ function tree(data: Pets, fams: number[], opening = false) {
   page.addEventListener("focusin", (e) => light((e.target as Element).closest<HTMLElement>("a.tnode")?.dataset.pet ?? null));
   page.addEventListener("focusout", () => light(null));
   return page;
+}
+
+/** SPEC-v3.5.12 §4: every keepsake box on a memory shelf in the attic (from the house as the last snapshot had it):
+ *  whose it is and what it holds, in the order the boxes stand. */
+function shelfBoxes() {
+  const out: { pet: string; shelf: string; holds: { name: string; recipe: Record<string, unknown> }[] }[] = [];
+  for (const r of live.snap?.rooms ?? []) for (const [name, o] of Object.entries(r.objects ?? {})) {
+    if (!o.fix?.memory) continue;
+    for (const box of o.store?.holds ?? []) {
+      const b = r.objects[box];
+      if (b?.fix?.keepsake) out.push({ pet: String(b.fix.keepsake), shelf: name, holds: (b.store?.holds ?? []).slice(0, 3).map((n) => ({ name: n, recipe: (r.objects[n]?.made?.recipe ?? {}) as Record<string, unknown> })) });
+    }
+  }
+  return out;
+}
+
+/** The family's memory shelf: each box, whose it is, and what it holds. */
+function memoryShelf(data: Pets, boxes: ReturnType<typeof shelfBoxes>) {
+  const by = new Map(data.pets.map((p) => [p.id, p])), shown = boxes.filter((b) => !view.fam || by.get(b.pet)?.family === view.fam);
+  if (!boxes.length) return null;
+  const box = hasSprite("fix.little wooden keepsake box") ? () => sprite("fix.little wooden keepsake box", 1) : () => null;
+  return el("section", "paper between memshelf", el("h2", "", "The memory shelf"),
+    el("p", "hint", "In the attic, one shelf for each family: a keepsake box for every hob that has died, with up to three things it left."),
+    shown.length ? el("ul", "mboxes", ...shown.map((b) => {
+      const p = by.get(b.pet);
+      return el("li", `mbox ${fam(p?.family)}`, el("span", "mpic", box()), el("span", "mwho", p ? petLink(p, 32) : "someone gone"),
+        el("span", "mholds", ...(b.holds.length ? b.holds.map((h) => el("span", "mthing", thingPic(h.recipe, 1), h.name)) : [el("span", "hint", "empty")])));
+    })) : el("p", "hint", "No box on the shelf from this family."));
 }
 
 const DID: Record<string, string> = { nuzzle: "nuzzled", give: "gave things", "teach song": "taught songs", tell: "told things" };

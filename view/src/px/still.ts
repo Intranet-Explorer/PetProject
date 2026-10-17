@@ -57,6 +57,10 @@ const counts = new Map<string, Texture>();   // the small numbers on chests and 
 const POOLS = [["...#####......", ".##ooooo###...", "#oo++ooooooo#.", "#o+ooooooooo##", ".#oooooooo+oo#", "..##ooooooo##.", "....######...."],
                ["..####...", ".#o++o##.", "#ooooooo#", ".##ooo+#.", "...###..."], [".##..", "#+o#.", ".#oo#", "..##."]];
 const WATER: Record<string, number> = { "#": 0x3f78a8, o: 0x79b8ce, "+": 0xe4f4fa };
+/** SPEC-v3.5.12 §4: a keepsake box as a slot on its family's memory shelf; the shelf's wood, dark to light; the colours of the resting place's flowers. */
+const SLOT = "fix.little wooden keepsake box.slot", SHELF = { line: "#24160e", wood: "#9a6440", top: "#c08a56", back: "rgba(36,22,14,0.18)" };
+const BLOOM = [0xf4efe4, 0xf2a6c0, 0xc9a6f0, 0xf6d76b, 0xe8836b];
+const racks = new Map<number, Texture>();   // a memory shelf's picture, by how many boxes it holds, made once each
 /** The colour a named place in a room is tinted (SPEC-v3.3 §2.3): the same for the same name, in every room. */
 export const areaColor = (name: string) => hslInt(seeded(name)() * 360, 0.7, 0.62);
 
@@ -102,31 +106,38 @@ export class Still {
     for (const d of L.decor ?? []) this.decor(d.sprite, d.at, d.layer);
     this.puddles(snap, room, L);
     this.places(room);
+    this.resting(snap, room);
     for (const [dir, to] of Object.entries(room.doors)) this.door(snap, room, dir, to, L.doors);
 
     // what is put away (SPEC-v3.3 §2) comes after what it is put away on: it stands on that, small; in a chest it is not seen
     const flatFirst = (o: Obj) => (o.on && room.objects[o.on]?.store ? 2 : o.fix?.soft ? 0 : 1);
     for (const [name, o] of Object.entries(room.objects).sort(([, a], [, b]) => flatFirst(a) - flatFirst(b) || a.pos[1] - b.pos[1])) {
-      const lf = L.fixtures?.[name], store = o.on ? room.objects[o.on]?.store : undefined;
+      const lf = L.fixtures?.[name], host = o.on ? room.objects[o.on] : undefined, store = host?.store;
       if (store?.inside) continue;
-      const slot = store ? this.slot(o.on!, name) : undefined;
+      if (host?.fix?.shelf && store!.holds.indexOf(name) >= 3) continue;   // SPEC-v3.5.12 §1: an open shelf of the store shows three of what it holds; the rest are put away behind
+      const memory = !!host?.fix?.memory, slot = store ? (memory ? this.boxes.get(name) : this.slot(o.on!, name)) : undefined;
       if (o.made) {
         const t = this.made(name, o, snap.power, FAMILY[snap.pets.find((p) => p.id === o.made!.by)?.family ?? 1] ?? FAMILY[1], slot);
         if (!t.wall && !slot && !kind(t.drawn!.kind)?.flat) blocked.push(o.pos);
       } else if (o.memorial) {
         this.put(name, o, "stone", "sorted");
         blocked.push(o.pos);
+      } else if (o.fix?.memory) {
+        this.rack(name, o, snap, room);
+        blocked.push(o.pos);
       } else {
         if (o.water) blocked.push(...o.water);
         if (o.fix?.sun) this.sun = [OX + o.pos[0] * TILE + 8, OY + o.pos[1] * TILE + 8];
-        const base = hubSprite(o, room.type, layout) ?? (o.build ? o.build.sprite : lf ? lf.sprite : o.fix?.keepsake ? "fix.keepsake box" : pick(`fix.${name}`, `fix.${name.replace(/ /g, "_")}`, `fix.${name.replace(/ /g, "-")}`));   // (SPEC-v3.5.1: px/hub.ts draws the hub's own)
+        const base = hubSprite(o, room.type, layout) ?? (o.build ? o.build.sprite : lf ? lf.sprite : memory ? SLOT : o.fix?.keepsake ? "fix.keepsake box" : o.fix?.art ? `fix.${o.fix.art}` : pick(`fix.${name}`, `fix.${name.replace(/ /g, "_")}`, `fix.${name.replace(/ /g, "-")}`));   // (SPEC-v3.5.1: px/hub.ts draws the hub's own)
         if (!base || ((o.fix?.sun || o.water) && !has(base))) continue;   // light and water may be part of the floor's own picture
         // how it looks just now: a bowl by what is left in it, a plant by how far it has grown, anything else by its state
         const dead = !!o.fix?.light && o.state === "on" && !snap.power;   // in a power cut no lamp is lit, whatever its switch says
         const state = dead ? "off" : o.servings != null ? (o.servings <= 0 ? "empty" : o.servings < 2 ? "half" : "full") : o.state === "ripe" ? "ripe" : o.grow != null ? (o.grow >= 0.4 ? "growing" : null) : o.state;
-        const plain = pick(o.planted ? `${base}.bare` : null, state ? `${base}.${state}` : null, base), sprite = this.swap(plain) ?? plain, sz = size(sprite);
+        const empty = !!o.fix?.art && !o.store?.holds.length && !o.store?.bits?.length;   // (SPEC-v3.5.12 §1: a material crate with nothing in it)
+        const plain = pick(o.planted ? `${base}.bare` : null, state ? `${base}.${state}` : null, empty ? `${base}.empty` : null, base), sprite = this.swap(plain) ?? plain, sz = size(sprite);
         const flat = !!o.fix?.soft || !!o.fix?.sun || !!o.water || lf?.walk || lf?.layer === "floor" || !!o.build?.flat, onWall = !!o.wall || !!lf?.wall || lf?.layer === "wall";   // (a recording from before the layouts has its window on a floor tile: it is hung on the wall above all the same)
-        const t = this.put(name, o, sprite, slot ? "sorted" : flat ? "ground" : onWall ? "wall" : lf?.layer === "top" ? "top" : "sorted", undefined, undefined, slot ? this.small : 1, slot);
+        const t = this.put(name, o, sprite, slot ? "sorted" : flat ? "ground" : onWall ? "wall" : lf?.layer === "top" ? "top" : "sorted", undefined, undefined, slot ? (memory ? 1 : this.small) : 1, slot);
+        if (o.fix?.art) this.clear(t, room);
         if (o.fix?.window) this.windows.push({ name, rect: this.glass(sprite, t), open: o.state === "open" });
         else if (!flat && !onWall && !slot && !o.fix?.sun && !o.water) blocked.push(o.pos);
         if (dead) {   // a lamp that should be lit and is not: a small grey bolt over it, so a cut shows by day too
@@ -170,7 +181,8 @@ export class Still {
     }
     this.paint(room, true);   // (and on the rugs, over them)
     for (const t of [...this.things.values()]) {   // what is kept inside a thing is not seen: a small number on it says how many
-      const n = t.obj.store?.inside ? t.obj.store.holds.length : 0, F = Math.max(1, Math.round(K / 2));
+      const st = t.obj.store, all = st ? st.holds.length + (st.bits?.length ?? 0) : 0, F = Math.max(1, Math.round(K / 2));
+      const n = !st || (t.obj.on && room.objects[t.obj.on]?.fix?.memory) ? 0 : st.inside ? all : t.obj.fix?.shelf && all > 3 ? all : 0;   // (an open shelf of the store: how many, once there are more than it shows)
       if (!n) continue;
       let c = counts.get(`${n}|${F}`);
       if (!c) counts.set(`${n}|${F}`, (c = fromCanvas(tagCanvas(String(n)))));
@@ -314,6 +326,68 @@ export class Still {
     this.flat.addChild(g);
   }
 
+  /** SPEC-v3.5.12 §4: the resting place in the garden: small flowers on each of its tiles (the same for the same tile), where the stones stand together. */
+  private resting(snap: Snap, room: RoomV) {
+    if (snap.resting?.room !== room.id) return;
+    const rows = new Map<number, Graphics>();   // a row of tiles at a time, just in front of the stones standing on it
+    for (const t of snap.resting.tiles.filter(onFloor)) {
+      const r = seeded(`rest${t[0]},${t[1]}`), [cx, cy] = corner(t);
+      let g = rows.get(cy);
+      if (!g) { rows.set(cy, (g = new Graphics())); g.zIndex = cy + TILE - 4 + 0.1; this.standing.push(g); }
+      for (let i = 0; i < 4; i++) {   // along the front of the tile, where they show in front of a stone's foot
+        const x = cx + i * 4 - 1 + Math.floor(r() * 3), y = cy + 8 + Math.floor(r() * 4), petal = BLOOM[Math.floor(r() * BLOOM.length)];
+        g.rect(x + 1, y + 3, 1, 2).rect(x + 2, y + 4, 1, 1).fill(0x3f7a3a);   // stem and leaf
+        g.rect(x + 1, y, 1, 1).rect(x, y + 1, 1, 1).rect(x + 2, y + 1, 1, 1).rect(x + 1, y + 2, 1, 1).fill(petal);
+        g.rect(x + 1, y + 1, 1, 1).fill(petal === 0xf6d76b ? 0xc86a3a : 0xf6d76b);
+      }
+    }
+  }
+
+  /** SPEC-v3.5.12 §4: a family's memory shelf: rows of planks against the wall, each keepsake box a small slot on them
+   *  in the order they came, at most three rows (it grows wider as the family's dead grow), two candles on top. Drawn
+   *  as one picture (also the hover card's); each box stands on it as a thing of its own, to be pointed at. */
+  private boxes = new Map<string, Slot>();
+  private rack(name: string, o: Obj, snap: Snap, room: RoomV) {
+    const held = o.store?.holds ?? [], n = held.length, per = Math.max(3, Math.ceil(n / 3)), rows = Math.max(1, Math.ceil(n / per)), b = size(SLOT);
+    const [sw, rh] = [b.w + 2, b.h + 4], w = per * sw + 4 + (per & 1), h = rows * rh + 7, foot = h - 3, top = foot - rows * rh;   // (an even width: it stands on whole pixels)
+    let texture = racks.get(n), c = texture ? null : Object.assign(document.createElement("canvas"), { width: w, height: h });
+    if (c) {
+      const x = c.getContext("2d")!, box = canvasOf(SLOT), px = (color: string, ...r: number[]) => { x.fillStyle = color; x.fillRect(r[0], r[1], r[2], r[3]); };
+      px(SHELF.back, 2, top, w - 4, foot - top);
+      for (const side of [0, w - 2]) { px(SHELF.line, side, top, 1, h - top); px(SHELF.wood, side + 1, top, 1, h - top); }
+      for (let r = 0; r <= rows; r++) { const y = foot - r * rh; px(SHELF.top, 0, y, w, 1); px(SHELF.wood, 0, y + 1, w, 1); px(SHELF.line, 0, y + 2, w, 1); }
+      for (const cx of [3, w - 5]) { px("#f2e6c8", cx, top - 3, 2, 3); px("#ffc84a", cx, top - 4, 1, 1); }   // the candles
+      held.forEach((_, i) => x.drawImage(box, 3 + (i % per) * sw, foot - Math.floor(i / per) * rh - b.h));
+      racks.set(n, (texture = fromCanvas(c)));
+    }
+    const t = this.put(name, o, o.fix?.art ? `fix.${o.fix.art}` : SLOT, "sorted", texture, c ?? (texture!.source.resource as HTMLCanvasElement));
+    Object.assign(t.rect, { x: t.x - w / 2, y: t.y - h, w, h });
+    this.clear(t, room, false);
+    held.forEach((box, i) => this.boxes.set(box, { x: t.rect.x + 3 + (i % per) * sw + b.w / 2, y: t.rect.y + foot - Math.floor(i / per) * rh, z: t.s.zIndex + 0.3 + i * 0.01, wall: false }));
+    if (snap.clock.phase !== "day") for (const cx of [3, w - 5]) this.lamps.push({ x: t.rect.x + cx + 1, y: t.rect.y + 1, r: 8, color: [255, 214, 150], made: true });
+  }
+
+  /** SPEC-v3.5.12 §1, §5: a store fixture (about two tiles of picture on its one tile) kept on the floor and off every
+   *  door and the platform: moved along the wall a little, or else (`shrink`) drawn half its size. */
+  private clear(t: Thing, room: RoomV, shrink = true) {
+    const p = Object.values(room.objects).find((q) => q.fix?.platform)?.pos, keep = [...this.doors.map((d) => d.rect), ...(p ? [{ x: corner(p)[0], y: corner(p)[1], w: TILE, h: TILE }] : [])];
+    const hits = (x: number, r: Rect) => keep.some((k) => x < k.x + k.w && x + r.w > k.x && r.y < k.y + k.h && r.y + r.h > k.y);
+    const lo = OX, hi = OX + FX * TILE, r = t.rect;
+    const fit = (x: number) => Math.min(Math.max(x, lo), hi - r.w);
+    const dx = [0, 4, -4, 8, -8, 12, -12, 16, -16].map((d) => fit(r.x + d) - r.x).find((d) => !hits(r.x + d, r));
+    if (dx == null && shrink) {   // nowhere near: half its size, standing on its own tile
+      const k = Math.max(1, Math.round(this.K / 2)) / this.K;
+      t.s.scale.set(k);
+      t.scale = k;
+      Object.assign(r, { x: t.x - (r.w * k) / 2, y: t.y - r.h * k, w: r.w * k, h: r.h * k });
+      return;
+    }
+    if (dx == null) return;
+    t.s.x += dx;
+    t.x += dx;
+    r.x += dx;
+  }
+
   /** Things put away on a thing are small: about half their size, on whole pixels. */
   private get small() { return Math.max(1, Math.round(this.K * 0.6)) / this.K; }
   /** Where the thing called `name` stands on the thing it is put away on: side by side along its surface (the
@@ -321,7 +395,7 @@ export class Still {
   private slot(on: string, name: string): Slot | undefined {
     const t = this.things.get(on), holds = t?.obj.store?.holds ?? [];
     if (!t) return undefined;
-    const sz = size(t.sprite), [sx, sy, sw] = def(t.sprite)?.surface ?? [2, Math.round(sz.h * 0.5), sz.w - 4], i = Math.max(0, holds.indexOf(name)), n = Math.max(1, holds.length);
+    const sz = size(t.sprite), [sx, sy, sw] = def(t.sprite)?.surface ?? [2, Math.round(sz.h * 0.5), sz.w - 4], i = Math.max(0, holds.indexOf(name)), n = Math.max(1, t.obj.fix?.shelf ? Math.min(3, holds.length) : holds.length);
     return { x: Math.round(t.rect.x + (sx + (sw * (i + 0.5)) / n) * t.scale), y: Math.round(t.rect.y + sy * t.scale), z: t.s.zIndex + 0.3 + i * 0.01, wall: t.wall };
   }
 

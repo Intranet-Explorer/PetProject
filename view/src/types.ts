@@ -58,6 +58,8 @@ export type Obj = {
   // SPEC-v3.5.1 §3, §4: what is on a screen's glass (who asked what, and what it read); a statue of a family's founder
   screen?: { pet: string; by?: string; asked: string; title: string | null; text: string | null; tick: number };
   statue?: { of: string; family: number; genome: Genome | null; stage: string; name: string | null; words: string | null };
+  // SPEC-v3.5.12 §1: a made thing's place in plain words ("in the store, on the lamp shelf"), and whether that is the store
+  where?: string; stored?: boolean;
 };
 /** SPEC-v3.5 §4.2: one painted place in a room: a stretch of the north wall or a patch of floor (`at`: its first tile; three
  *  tiles wide, a floor patch two deep) or a rug (`at`: its name), in the dye's `color` with `pattern` (stripes, dots, border)
@@ -153,6 +155,7 @@ export type Snap = {
   machine?: { stock: Record<string, number>; limit: number; materials: string[]; room: string } | null;   // SPEC-v3.5 §4.3: what the vending machine holds (null: nobody has found it)
   invented?: Record<string, Invention>;   // SPEC-v3.5 §3: the kinds this house invented, by name: drawn from their parts
   ticker?: Ticker;   // SPEC-v3.5.1 §2
+  resting?: { room: string; tiles: Tile[] } | null;   // SPEC-v3.5.12 §4: the garden's resting place, where the stones stand
   hello?: Hello; error?: string;
 };
 /** What /api/v31 answers: everything ever written, sung, asked and heard, and when each discovery comes. */

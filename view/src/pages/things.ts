@@ -10,7 +10,7 @@ import { artReady } from "../sprite";
 import { cardBody, fitPic, loadThing } from "../thingcard";
 import type { Thing, ThingPage } from "../thingcard";
 import { hhmm } from "../types";
-import { a, button, chip, getJSON, giveStar } from "../ui";
+import { a, button, chip, getJSON, giveStar, live } from "../ui";
 import { loadPets, momentRow } from "./story";
 import { hideTip, showTip } from "./tip";
 
@@ -24,6 +24,12 @@ async function loadAll() {
     if (d) { all = d; allAt = Date.now(); }
   }
   return all;
+}
+/** SPEC-v3.5.12 §1: where each thing in a room is now, in the room view's own words, and whether that is the store
+ *  (from the house as the last snapshot had it; /api/allthings is asked for less often). */
+function placeAll(T: Thing[]) {
+  const at = new Map((live.snap?.rooms ?? []).flatMap((r) => Object.entries(r.objects ?? {}).filter(([, o]) => o.made && o.where).map(([n, o]) => [`${r.id}|${n}`, o] as const)));
+  for (const t of T) { const o = !t.gone && at.get(`${t.room}|${t.name}`); if (o) [t.where, t.stored] = [o.where!, !!o.stored]; }
 }
 const names = () => Object.fromEntries((all?.things ?? []).map((t) => [t.name, t.id]));
 const ring = (t: Thing) => (t.first === "house" ? "gold" : t.first === "family" ? "silver" : t.invented ? "blue" : "");
@@ -39,7 +45,7 @@ const SORTS: Record<string, [string, (a: Thing, b: Thing) => number]> = {
   new: ["Newest", (a, b) => (b.tick ?? 0) - (a.tick ?? 0)], old: ["Oldest", (a, b) => (a.tick ?? 0) - (b.tick ?? 0)],
   used: ["Most used", (a, b) => b.uses - a.uses], name: ["A to Z", (a, b) => a.name.localeCompare(b.name)],
 };
-let kind = "", fam = 0, place = "", mark = "", gone = false, sort = "new", shown = STEP, drawn = "", busy = false, sel: string | null = null, auto = false;
+let kind = "", fam = 0, place = "", mark = "", gone = false, stored = false, sort = "new", shown = STEP, drawn = "", busy = false, sel: string | null = null, auto = false;
 let side: HTMLElement | null = null, slots = new Map<string, HTMLElement>();
 
 /** One thing in its slot: a button that chooses it; its name in a tip under a mouse. */
@@ -75,7 +81,7 @@ async function fillSide() {
   if (quick && s.dataset.id !== id) s.replaceChildren(head(quick), el("div", "tccontent", ...cardBody(quick)));
   s.dataset.id = id;
   const t = await loadThing(id);
-  if (t && sel === id && side === s) s.replaceChildren(head(t), el("div", "tccontent", ...cardBody(t)), ...history(t));
+  if (t && sel === id && side === s) s.replaceChildren(head(t), el("div", "tccontent", ...cardBody(quick?.where ? { ...t, where: quick.where } : t)), ...history(t));
 }
 
 let folded = true;
@@ -91,7 +97,7 @@ function filters(...kids: Node[]) {
 function grid(root: HTMLElement, d: All) {
   const T = d.things;
   // SPEC-v3.5.10 §3: what is gone is hidden until the visitor asks for it ("Show gone", or the gone place)
-  const list = T.filter((t) => (gone || place === "gone" || !t.gone) && (!kind || (t.statue ? "statue" : t.recipe.kind) === kind) && (!fam || t.family === fam) &&
+  const list = T.filter((t) => (gone || place === "gone" || !t.gone) && (!stored || t.stored) && (!kind || (t.statue ? "statue" : t.recipe.kind) === kind) && (!fam || t.family === fam) &&
     (!place || (place === "gone" ? !!t.gone : place === "keepsake" ? t.keepsake : t.room_name === place)) &&
     (!mark || (mark === "invented" ? t.invented : mark === "star" ? t.star != null : mark === "heirloom" ? t.heirloom : mark === "statue" ? t.statue : t.first === mark)))
     .sort(SORTS[sort][1]);
@@ -118,7 +124,8 @@ function grid(root: HTMLElement, d: All) {
     el("div", "tcount", el("p", "hint", `${plural(T.length, "thing")} made in the house: ${standing} still about, ${T.length - standing} gone.`),
       // SPEC-v3.5.8 §6: charms are a filter of their own, out of the fold on a phone
       chip(`Charms (${T.filter((t) => t.recipe.kind === "charm" && (gone || !t.gone)).length})`, kind === "charm", () => { kind = kind === "charm" ? "" : "charm"; redo(); }),
-      chip(`Show gone (${T.length - standing})`, gone, () => { gone = !gone; redo(); })),
+      chip(`Show gone (${T.length - standing})`, gone, () => { gone = !gone; redo(); }),
+      chip(`In the store (${T.filter((t) => t.stored).length})`, stored, () => { stored = !stored; redo(); })),   // SPEC-v3.5.12 §1
     filters(el("div", "tfilters",
       pick("Every kind", kind, kinds.map((k) => [k, inv.has(k) ? `${k} (invented)` : k]), (v) => (kind = v)),
       pick("Everywhere", place, [...d.rooms.map((r): [string, string] => [r, r]), ["keepsake", "in a keepsake box"], ["gone", "gone (taken apart, joined, traded…)"]], (v) => (place = v)),
@@ -182,7 +189,8 @@ export async function render(root: HTMLElement, id: string | null): Promise<void
     return thingPage(root, p);
   }
   if (!d) return;
-  const key = JSON.stringify(["grid", d.things.length, d.things[0]?.tick, d.things.filter((t) => t.gone).length, d.things.filter((t) => t.star != null).length, kind, fam, place, mark, gone, sort, shown, phone.matches]);
+  placeAll(d.things);
+  const key = JSON.stringify(["grid", d.things.length, d.things.filter((t) => t.stored).length, stored, d.things[0]?.tick, d.things.filter((t) => t.gone).length, d.things.filter((t) => t.star != null).length, kind, fam, place, mark, gone, sort, shown, phone.matches]);
   if (key === drawn && root.contains(side)) return;
   drawn = key;
   grid(root, d);
