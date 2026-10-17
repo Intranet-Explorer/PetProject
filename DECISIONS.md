@@ -2164,3 +2164,17 @@ Page only, deployed without restarting the engine (the day's charm measurement r
 - **After a deploy** an open page asks for its front page every half minute and when it comes back into view, and
   reloads when the build's script has changed; one part of the room that throws (it was the Works' drawing) is
   skipped and said once, and the rest goes on being drawn. Checked by forcing the Works' drawing to throw.
+
+## Part 29: v3.5.11, the sweeper leaves fresh bits, a day-old floor, three in a box (16 October 2026)
+
+Engine. Self-checks, a 30-minute smoke run on a copy (Tyler chose the smoke run although this clears many things),
+backup `data.backup-v3.5.11-2026-10-16`, one restart at tick 110391.
+
+- **Fresh and in-use bits:** the sweeper takes a loose bit only after it has lain `bit_hours` (6 world hours) untouched,
+  and never one a hob is doing something with, has laid out, or wants for what it means to make in that room.
+- **The floor:** a loose thing on the floor (not held, laid out, boxed, shelved, planted, fixed, a tool, a lit light, a
+  store, or furniture) is scrap after `floor_days` (1 world day); anything else after `scrap_days` (3).
+- **Keepsake boxes** keep `box_keeps` (3): heirlooms, then the dead hob's firsts, then things a hob meant, then titled,
+  then newest. The rest is scrap and goes the ordinary way, by the hobs' "clear scrap" and the sweeper. No data edited.
+- **Charms** on a shelf are kept only while their owner is alive and they are among its newest three.
+- **The log:** each pickup is a creature row, "swept up X, lying N hours" for a bit, "swept up NAME" for a thing.
