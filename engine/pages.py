@@ -3,7 +3,7 @@ world day, and everything made. Nothing here changes the house; it only gathers 
 import json
 import re
 
-from . import firsts, genome, order, things
+from . import firsts, genome, order, store, things
 from .world import clock, label, season_of
 
 ROMAN = ["", "", " II", " III", " IV", " V", " VI", " VII", " VIII", " IX", " X"]
@@ -150,10 +150,9 @@ def all_things(eng):
             m, on = o["made"], o.get("on")
             box = r["objects"].get(on) if on else None
             keep = (box or {}).get("fix", {}).get("keepsake")
-            where = "in the keepsake box for %s, in %s" % (names.get(keep, "someone"), r["name"]) if keep else \
-                "on the %s in %s" % (on, r["name"]) if on else "on the wall of %s" % r["name"] if o.get("wall") else "in %s" % r["name"]
+            where, stored = store.where(h, cfg, r, n)   # SPEC-v3.5.12 §1: where it is, in the same words as its card
             out.append({"id": thing_key(m, n), "name": n, "recipe": m["recipe"], "by": m["by"], "by_name": names.get(m["by"]), "owner": m.get("owner"),
-                        "family": fam.get(m["by"]), "room": r["id"], "room_name": r["name"], "where": where, "gone": None, "tick": m["tick"],
+                        "family": fam.get(m["by"]), "room": r["id"], "room_name": r["name"], "where": where, "stored": stored, "gone": None, "tick": m["tick"],
                         "day": day_of(cfg, m["tick"]), "bits": m.get("bits", []), "uses": m.get("uses", 0), "heirloom": bool(m.get("heirloom")),
                         "invented": m["recipe"].get("kind") in h.get("invented", {}), "statue": False, "keepsake": bool(keep), "star": m.get("star"),
                         "first": first(m["by"], m["tick"], m["recipe"]), "title_shown": bool(m["recipe"].get("title")) and order.kept(h, cfg, r, n),

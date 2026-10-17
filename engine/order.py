@@ -57,8 +57,10 @@ def loose_bits(room):
 
 def count(house, cfg, room):
     """What a person sees lying about: every made thing on the floor that is not furniture the room uses or one of
-    the few things of a corner, and every loose bit."""
-    return len(loose(house, cfg, room)) + len(loose_bits(room))
+    the few things of a corner, and every loose bit; and (SPEC-v3.5.12 §2, once the train runs) whatever is out of place."""
+    from . import store
+    going = store.out_of_place(house, cfg, room) if house.get("rail") else []
+    return len(set(loose(house, cfg, room)) | set(going)) + len(loose_bits(room))
 
 
 def clutter(house, cfg, room):
@@ -278,10 +280,11 @@ def way(house, cfg, pet):
     """The door from where it is toward the nearest mess it knows of where there is something it could put away,
     through rooms it knows: a door, or None. (A mess with nowhere left to put things is no reason to go: two of
     those used to send a tidying pet back and forth between them.)"""
+    from . import store
     rooms, seen, queue = house["rooms"], {pet["room"]}, [(pet["room"], None)]
     while queue:
         rid, first = queue.pop(0)
-        if first and rooms[rid].get("mess") == 2 and job(house, cfg, pet, rooms[rid]):
+        if first and rooms[rid].get("mess") == 2 and (job(house, cfg, pet, rooms[rid]) or (house.get("rail") and store.out_of_place(house, cfg, rooms[rid]))):
             return first
         for d, to in rooms[rid]["doors"].items():
             if to in pet["rooms"] and to not in seen and rooms[to]["type"]:

@@ -231,7 +231,7 @@ def cars(tr):
     if tr["lead"] == "tram":   # backing out: the tram goes first
         out = out[::-1]
     tr["cars"], tr["room"], tr["pos"] = out, t[0][0], list(t[0][1])
-    tr["cargo"], tr["load"] = [h["name"] for h in tr["held"]], len(tr["held"])
+    tr["cargo"], tr["load"] = [h.get("name") or h["bit"] for h in tr["held"]], len(tr["held"])
     return out
 
 
@@ -263,9 +263,10 @@ def step(house, cfg, tr):
             if house["clock"]["phase"] == "night":
                 tr.update(asleep=True, doing="asleep in its depot by the Works", lid="closed", moving=False)
                 return
-            if tr.get("laid_on") != house["clock"]["day"]:
+            if tr.get("laid_on") != house["clock"]["day"]:   # the first round of the day: the track looked over, and the day's allowance aboard
                 lay(house, cfg)
                 tr["laid_on"] = house["clock"]["day"]
+                allowance(house, cfg, tr)
             tr["leg"], tr["path"], tr["left"] = 0, leg_tiles(rail, rail["legs"][0])[1:], -1
         tr.update(stopped=False, lid="closed", moving=True)
         tr["doing"] = "pulling away from the platform in %s, puffing" % house["rooms"][tr["room"]]["name"]
@@ -344,12 +345,14 @@ def arrive(house, cfg, tr):
     if tr["rider"]:
         tr["ride"]["stops"] -= 1
     deliver(house, cfg, tr, room)
+    hand_out(house, cfg, tr, room)
     collect(house, cfg, tr, room)
     if store.is_store(room):
         store.unload(house, cfg, tr, room)
         store.fetch(house, cfg, tr, room)
     if rid == rail["depot"]:
         to_works(house, cfg, tr, room)
+        back_in(house, cfg, tr)
         rail["rounds"] = rail.get("rounds", 0) + 1
         log(house, rid, "finished a round")
     cars(tr)
@@ -443,6 +446,44 @@ def deliver(house, cfg, tr, room):
                                                        room["name"], " for %s" % label(who) if who else ""), who["id"] if who else None, room["id"])
         if who and who["stage"] not in ("egg", "dead"):
             add_event(house, who, "%s brought the %s you asked for to %s; it is by the platform" % (called(tr), h["name"], room["name"]))
+
+
+def allowance(house, cfg, tr):
+    """SPEC-v3.5.12 §3: the Works' daily allowance, delivered round the house: one of the machine's materials aboard
+    for each hob who has not had all it gets from the machine today (the one the machine holds most of)."""
+    from . import machine
+    S = machine.state(house, cfg)
+    for p in house["pets"].values():
+        if p["stage"] in ("egg", "dead") or machine.left(house, cfg, p) <= 0 or len(tr["held"]) >= R(cfg)["cart_holds"]:
+            continue
+        m = max((m for m in cfg["machine"]["materials"] if S["stock"].get(m, 0) > 0), key=lambda m: S["stock"][m], default=None)
+        if m:
+            S["stock"][m] -= 1
+            tr["held"].append({"bit": m, "for": p["id"], "to": "hand"})
+    if any(h.get("bit") for h in tr["held"]):
+        log(house, DEPOT, "took the day's allowance from the machine: %d" % sum(1 for h in tr["held"] if h.get("bit")))
+
+
+def hand_out(house, cfg, tr, room):
+    """Whoever's allowance is aboard and is here, awake, gets it: one of today's from the machine."""
+    from . import machine
+    for h in [h for h in tr["held"] if h.get("bit")]:
+        p = house["pets"].get(h["for"])
+        if not p or p["room"] != room["id"] or p["sleep"] or p["stage"] in ("egg", "dead") or machine.left(house, cfg, p) <= 0:
+            continue
+        tr["held"].remove(h)
+        p["machine"] = {"day": house["clock"]["day"], "took": cfg["machine"]["free"] - machine.left(house, cfg, p) + 1, "seen": house["tick"]}
+        machine.got(house, cfg, p, room, h["bit"])
+        add_event(house, p, "%s brought you %s from the machine: one of today's" % (called(tr), h["bit"]))
+        log(house, room["id"], "brought %s from the machine for %s" % (h["bit"], label(p)), p["id"])
+
+
+def back_in(house, cfg, tr):
+    """What it could not hand out goes back into the machine."""
+    from . import machine
+    for h in [h for h in tr["held"] if h.get("bit")]:
+        tr["held"].remove(h)
+        machine.state(house, cfg)["stock"][h["bit"]] = machine.state(house, cfg)["stock"].get(h["bit"], 0) + 1
 
 
 def to_works(house, cfg, tr, room):
@@ -541,7 +582,7 @@ def view(house, cfg):
 
 def cart_view(house, cfg):
     tr = train(house)
-    return [{"name": h["name"], "made": h["o"].get("made"), "to": h["to"]} for h in tr["held"]] if tr else []
+    return [{"name": h.get("name") or h["bit"], "made": h["o"].get("made") if "o" in h else None, "to": h["to"]} for h in tr["held"]] if tr else []
 
 
 # ---- asking the train (a mind's step) ----

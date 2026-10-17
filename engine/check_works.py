@@ -19,10 +19,10 @@ async def run(d):
     cfg = world.load_config()
     cfg["weather"]["real"] = False
     W, D = cfg["works"], cfg["drive"]
-    costs = [b["scrap"] for b in W["build"] if not b.get("sweeper")]   # (SPEC-v3.5.8 §4.2: the sweeper is next, whatever it costs)
+    costs = [b["scrap"] for b in W["build"] if not b.get("sweeper") and not b.get("rail")]   # (SPEC-v3.5.8 §4.2: the sweeper is next, whatever it costs; SPEC-v3.5.12 §3: so is the rail)
     assert W["build"][0]["what"] == "a lamp for the cellar" and costs == sorted(costs), "cheapest first, the lamp for the cellar first"
     for b in W["build"]:
-        assert sum(k in b for k in ("fixture", "machine", "material", "sweeper")) == 1, "each does one thing: %s" % b["what"]
+        assert sum(k in b for k in ("fixture", "machine", "material", "sweeper", "rail")) == 1, "each does one thing: %s" % b["what"]
         assert all(k in cfg["machine"] for k in b.get("machine", {})) and b.get("material", "wood") in cfg["house"]["bits"], b
         assert not b.get("material") or b["material"] not in cfg["machine"]["materials"], "a new material, not one it holds"
 
