@@ -344,7 +344,8 @@ export class Still {
   }
 
   /** SPEC-v3.5.12 §4: a family's memory shelf: rows of planks against the wall, each keepsake box a small slot on them
-   *  in the order they came, at most three rows (it grows wider as the family's dead grow), two candles on top. Drawn
+   *  in the order they came, at most three rows (it grows wider as the family's dead grow, from its tile toward the
+   *  middle of the room), two candles on top. Drawn
    *  as one picture (also the hover card's); each box stands on it as a thing of its own, to be pointed at. */
   private boxes = new Map<string, Slot>();
   private rack(name: string, o: Obj, snap: Snap, room: RoomV) {
@@ -361,6 +362,8 @@ export class Still {
       racks.set(n, (texture = fromCanvas(c)));
     }
     const t = this.put(name, o, o.fix?.art ? `fix.${o.fix.art}` : SLOT, "sorted", texture, c ?? (texture!.source.resource as HTMLCanvasElement));
+    const dx = Math.round(o.pos[0] < FX / 2 ? w / 2 - 8 : 8 - w / 2);   // it grows along the wall from its own tile, toward the middle of the room
+    [t.s.x, t.x] = [t.s.x + dx, t.x + dx];
     Object.assign(t.rect, { x: t.x - w / 2, y: t.y - h, w, h });
     this.clear(t, room, false);
     held.forEach((box, i) => this.boxes.set(box, { x: t.rect.x + 3 + (i % per) * sw + b.w / 2, y: t.rect.y + foot - Math.floor(i / per) * rh, z: t.s.zIndex + 0.3 + i * 0.01, wall: false }));
