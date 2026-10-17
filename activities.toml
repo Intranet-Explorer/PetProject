@@ -558,7 +558,7 @@ needs = { curiosity = 0.8, energy = -0.4 }
 do = "fish"
 doing = "fishing {where}"
 did = "fished {where}"
-icon = "drop"
+icon = "fish"
 voice = "murmur"
 seconds = [40, 72]
 base = 1.6                        # (it has to win against what else the pond room offers; [time] share keeps it from taking over)

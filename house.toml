@@ -85,23 +85,29 @@ can = ["noisy", "springy"]
 looks = { shape = "bar", color = "red" }
 # SPEC-v3.6a §3: what the pond gives (a fish is food: eaten raw, or it goes off in a world day)
 [bits.fish]
+late = "pond"              # (only ever out of the pond: never turns up by itself)
 can = ["sweet", "cool"]
 looks = { shape = "blob", color = "silver" }
 [bits."big fish"]
+late = "pond"              # (only ever out of the pond: never turns up by itself)
 can = ["sweet", "heavy"]
 looks = { shape = "blob", color = "blue" }
 [bits."waterlogged wood"]
+late = "pond"              # (only ever out of the pond: never turns up by itself)
 can = ["heavy", "dark"]
 looks = { shape = "bar", color = "brown" }
 fades_days = 6
 [bits.weed]
+late = "pond"              # (only ever out of the pond: never turns up by itself)
 can = ["soft", "cool"]
 looks = { shape = "blob", color = "green" }
 fades_days = 2
 [bits.hook]
+late = "pond"              # (only ever out of the pond: never turns up by itself)
 can = ["hard", "springy"]
 looks = { shape = "triangle", color = "grey" }
 [bits.spring]
+late = "pond"              # (only ever out of the pond: never turns up by itself)
 can = ["springy", "bouncy"]
 looks = { shape = "ring", color = "grey" }
 [bits.bell]
@@ -216,7 +222,7 @@ fixtures = [
   { name = "pond", pos = [6, 2], water = [[3, 1], [4, 1], [5, 1], [2, 2], [3, 2], [4, 2], [5, 2], [2, 3], [3, 3], [4, 3], [5, 3], [2, 4], [3, 4], [4, 4], [5, 4], [6, 2], [6, 3], [7, 1], [8, 1], [9, 1], [7, 2], [8, 2], [9, 2], [7, 3], [8, 3], [9, 3], [7, 4], [8, 4], [9, 4]] },   # SPEC-v3.6a §1: pond.toml [pond] water
   { name = "reeds", pos = [1, 2] },
   { name = "flat stone", pos = [2, 5], rest = 2.5 },
-  { name = "reed basket", pos = [6, 5], store = 4, inside = true },
+  { name = "reed basket", pos = [11, 6], store = 4, inside = true },
 ]
 
 [rooms.workshop]
