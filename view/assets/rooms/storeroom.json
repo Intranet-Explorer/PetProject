@@ -27,9 +27,9 @@
   ["tile.wall.dark.sw", "tile.wall.dark.s", "tile.wall.dark.s", "tile.wall.dark.s", "tile.wall.dark.s", "tile.wall.dark.s", "tile.wall.dark.s", "tile.wall.dark.s", "tile.wall.dark.s", "tile.wall.dark.s", "tile.wall.dark.s", "tile.wall.dark.s", "tile.wall.dark.s", "tile.wall.dark.se"]
  ],
  "decor": [{"sprite": "decor.cobweb", "at": [0, -2], "layer": "wall"}, {"sprite": "decor.cobweb.right", "at": [11, -2], "layer": "wall"}],
- "fixtures": {"crates": {"pos": [0, 0], "sprite": "fix.crates"}, "shelves": {"pos": [9, 0], "sprite": "fix.shelves"}, "corner crates": {"pos": [10, 7], "sprite": "fix.corner crates"}, "old lantern": {"pos": [6, 0], "sprite": "fix.old lantern", "wall": true}, "heavy book": {"pos": [3, 0], "sprite": "fix.heavy book"}},
+ "fixtures": {"crates": {"pos": [0, 0], "sprite": "fix.crates"}, "shelves": {"pos": [9, 0], "sprite": "fix.shelves"}, "corner crates": {"pos": [10, 7], "sprite": "fix.corner crates"}, "old lantern": {"pos": [6, 0], "sprite": "fix.old lantern", "wall": true}, "heavy book": {"pos": [6, 0], "sprite": "fix.heavy book"}},
  "blocked": [],
- "wall_slots": [[5, 0], [8, 0]],
+ "wall_slots": [[6, 0], [8, 0]],
  "bit_spots": {},
  "light": {"window": [], "night": 0.8, "day": 0.4}
 }

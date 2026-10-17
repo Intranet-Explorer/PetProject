@@ -23,7 +23,7 @@ import { loadSeasons } from "./px/season";
 import { clamp, FX, FY, H, idx, inside, OX, OY, onFloor, tileAt, TILE, W } from "./px/geom";
 import { Marks } from "./px/marks";
 import { nearestFree } from "./px/path";
-import { drawnOf, Still } from "./px/still";
+import { drawnOf, Still, stock } from "./px/still";
 import { paintText, paintTitle } from "./px/built";
 import type { Thing } from "./px/still";
 import { hslInt } from "./px/tint";
@@ -741,14 +741,15 @@ export class Room {
       const kinds = new Map<string, number>(), holds = o.store.holds;
       for (const n of holds) { const m = room.objects[n]?.made, k = m ? drawnOf(m).kind : n; kinds.set(k, (kinds.get(k) ?? 0) + 1); }
       const many = (k: string) => (/(s|x|ch|sh)$/.test(k) ? `${k}es` : /[^aeiou]y$/.test(k) ? `${k.slice(0, -1)}ies` : `${k}s`);
-      const left = o.store.cap == null ? null : o.store.cap - holds.length;
-      out.push(holds.length ? `holds: ${[...kinds].sort((a, b) => b[1] - a[1]).map(([k, n]) => (n > 1 ? `${n} ${many(k)}` : `1 ${k}`)).join(", ")}` : o.store.bits?.length ? "" : "holds nothing yet",
+      const left = o.store.cap == null || o.fix.bits ? null : o.store.cap - holds.length;   // (a material crate keeps bits, not things)
+      out.push(holds.length ? `holds: ${[...kinds].sort((a, b) => b[1] - a[1]).map(([k, n]) => (n > 1 ? `${n} ${many(k)}` : `1 ${k}`)).join(", ")}` : o.store.bits?.length || o.fix.bits ? "" : "holds nothing yet",
         ...(holds.length ? [`${o.store.inside ? "among them" : "on show"}: ${holds.slice(0, 3).map((n) => room.objects[n]?.made?.called ?? n).join(", ")}${holds.length > 3 && o.store.inside ? "…" : ""}`] : []),
         ...(left == null ? [] : [left > 0 ? `room for ${left} more` : "full"]));
     } else if (o.store) {
       const left = o.store.cap == null ? null : o.store.cap - o.store.holds.length;   // (a keepsake box has no limit)
       out.push(o.store.holds.length ? `holds: ${o.store.holds.map(called).join(", ")}` : "holds nothing yet", ...(left == null ? [] : [left > 0 ? `room for ${left} more` : "full"]));
     }
+    if (stock(snap, o)) out.push(`stock: ${stock(snap, o)} ${o.fix!.bits} in the machine's stock`);   // SPEC-v3.5.12 §1: a material crate shows the house's stock
     if (o.store) {
       const bits = new Map<string, number>();   // loose bits tidied into it, counted: "bits: string x3, bell" (from the room as it is now: `o` is as old as the last redraw)
       for (const b of room.objects[name]?.store?.bits ?? []) bits.set(b, (bits.get(b) ?? 0) + 1);

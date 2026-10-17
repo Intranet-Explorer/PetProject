@@ -60,6 +60,8 @@ const WATER: Record<string, number> = { "#": 0x3f78a8, o: 0x79b8ce, "+": 0xe4f4f
 /** SPEC-v3.5.12 §4: a keepsake box as a slot on its family's memory shelf; the shelf's wood, dark to light; the colours of the resting place's flowers. */
 const SLOT = "fix.little wooden keepsake box.slot", SHELF = { line: "#24160e", wood: "#9a6440", top: "#c08a56", back: "rgba(36,22,14,0.18)" };
 const BLOOM = [0xf4efe4, 0xf2a6c0, 0xc9a6f0, 0xf6d76b, 0xe8836b];
+/** SPEC-v3.5.12 §1: how much of a material crate's material (`fix.bits`) is in the Works' stock: the house's stock, shown in its crate. */
+export const stock = (snap: Snap, o: Obj) => (typeof o.fix?.bits === "string" ? snap.machine?.stock[o.fix.bits] ?? 0 : 0);
 const racks = new Map<number, Texture>();   // a memory shelf's picture, by how many boxes it holds, made once each
 /** The colour a named place in a room is tinted (SPEC-v3.3 §2.3): the same for the same name, in every room. */
 export const areaColor = (name: string) => hslInt(seeded(name)() * 360, 0.7, 0.62);
@@ -133,10 +135,11 @@ export class Still {
         // how it looks just now: a bowl by what is left in it, a plant by how far it has grown, anything else by its state
         const dead = !!o.fix?.light && o.state === "on" && !snap.power;   // in a power cut no lamp is lit, whatever its switch says
         const state = dead ? "off" : o.servings != null ? (o.servings <= 0 ? "empty" : o.servings < 2 ? "half" : "full") : o.state === "ripe" ? "ripe" : o.grow != null ? (o.grow >= 0.4 ? "growing" : null) : o.state;
-        const empty = !!o.fix?.art && !o.store?.holds.length && !o.store?.bits?.length;   // (SPEC-v3.5.12 §1: a material crate with nothing in it)
+        const empty = !!o.fix?.art && !o.store?.holds.length && !o.store?.bits?.length && !stock(snap, o);   // (SPEC-v3.5.12 §1: a material crate with nothing in it, and none in the Works' stock)
         const plain = pick(o.planted ? `${base}.bare` : null, state ? `${base}.${state}` : null, empty ? `${base}.empty` : null, base), sprite = this.swap(plain) ?? plain, sz = size(sprite);
         const flat = !!o.fix?.soft || !!o.fix?.sun || !!o.water || lf?.walk || lf?.layer === "floor" || !!o.build?.flat, onWall = !!o.wall || !!lf?.wall || lf?.layer === "wall";   // (a recording from before the layouts has its window on a floor tile: it is hung on the wall above all the same)
         const t = this.put(name, o, sprite, slot ? "sorted" : flat ? "ground" : onWall ? "wall" : lf?.layer === "top" ? "top" : "sorted", undefined, undefined, slot ? (memory ? 1 : this.small) : 1, slot);
+        if (o.fix?.bits) this.half(t);   // a material crate is a small thing: one tile
         if (o.fix?.art) this.clear(t, room);
         if (o.fix?.window) this.windows.push({ name, rect: this.glass(sprite, t), open: o.state === "open" });
         else if (!flat && !onWall && !slot && !o.fix?.sun && !o.water) blocked.push(o.pos);
@@ -182,7 +185,7 @@ export class Still {
     this.paint(room, true);   // (and on the rugs, over them)
     for (const t of [...this.things.values()]) {   // what is kept inside a thing is not seen: a small number on it says how many
       const st = t.obj.store, all = st ? st.holds.length + (st.bits?.length ?? 0) : 0, F = Math.max(1, Math.round(K / 2));
-      const n = !st || (t.obj.on && room.objects[t.obj.on]?.fix?.memory) ? 0 : st.inside ? all : t.obj.fix?.shelf && all > 3 ? all : 0;   // (an open shelf of the store: how many, once there are more than it shows)
+      const n = !st || (t.obj.on && room.objects[t.obj.on]?.fix?.memory) ? 0 : t.obj.fix?.bits ? all + stock(snap, t.obj) : st.inside ? all : t.obj.fix?.shelf && all > 3 ? all : 0;   // (an open shelf of the store: how many, once there are more than it shows)
       if (!n) continue;
       let c = counts.get(`${n}|${F}`);
       if (!c) counts.set(`${n}|${F}`, (c = fromCanvas(tagCanvas(String(n)))));
@@ -378,17 +381,18 @@ export class Still {
     const lo = OX, hi = OX + FX * TILE, r = t.rect;
     const fit = (x: number) => Math.min(Math.max(x, lo), hi - r.w);
     const dx = [0, 4, -4, 8, -8, 12, -12, 16, -16].map((d) => fit(r.x + d) - r.x).find((d) => !hits(r.x + d, r));
-    if (dx == null && shrink) {   // nowhere near: half its size, standing on its own tile
-      const k = Math.max(1, Math.round(this.K / 2)) / this.K;
-      t.s.scale.set(k);
-      t.scale = k;
-      Object.assign(r, { x: t.x - (r.w * k) / 2, y: t.y - r.h * k, w: r.w * k, h: r.h * k });
-      return;
-    }
-    if (dx == null) return;
+    if (dx == null) { if (shrink && t.scale === 1) this.half(t); return; }   // nowhere near: half its size, standing on its own tile
     t.s.x += dx;
     t.x += dx;
     r.x += dx;
+  }
+
+  /** A picture drawn half its size (on whole pixels), standing on its own tile. */
+  private half(t: Thing) {
+    const k = Math.max(1, Math.round(this.K / 2)) / this.K, r = t.rect;
+    t.s.scale.set(k);
+    t.scale = k;
+    Object.assign(r, { x: t.x - (r.w * k) / 2, y: t.y - r.h * k, w: r.w * k, h: r.h * k });
   }
 
   /** Things put away on a thing are small: about half their size, on whole pixels. */
