@@ -1,7 +1,7 @@
 """What the house does on its own (SPEC-v3 §6.4, §6.5): the day's weather, the seasons, storms and power
 cuts, the events nobody caused, and the small creatures. All of it scripted; no model is ever asked."""
 from . import craft, genes, genome, order, songs, things, walls
-from . import build, firsts, sweeper
+from . import build, firsts, rail, sweeper
 from .world import (LONG_AGO, a as a_bit, days as world_days, moving as on_the_move, add_event, alive, arrived, bit_kinds, clock, dist, family, free_tile, hours, in_room, label, moment,
                     new_pet, power_on, rnd, ticks, weather_of)
 
@@ -277,6 +277,9 @@ def creatures(house, cfg):
         arrive(house, cfg)
     taming = arrived(house, "taming")
     for cr in list(house["creatures"]):
+        if cr["kind"] == "train":   # SPEC-v3.5.12 §3: every tick, two tiles a tick
+            rail.step(house, cfg, cr)
+            continue
         if cr["kind"] == "sweeper":   # SPEC-v3.5.8 §4.2: a machine, not an animal: no trust, no leaving
             if not tick % 2:
                 sweeper.step(house, cfg, cr)
@@ -406,7 +409,7 @@ def arrive(house, cfg):
     """Now and then a creature turns up where it would: a moth to a light at night, a bird to the garden in the
     morning, the mouse in the darkest room, a beetle anywhere."""
     C, c, tick = cfg["house"]["creatures"], house["clock"], house["tick"]
-    if sum(c["kind"] != "sweeper" for c in house["creatures"]) >= (cfg["taming"]["creatures"] if arrived(house, "taming") else cfg["house"]["house"]["creatures"]):
+    if sum(c["kind"] not in ("sweeper", "train") for c in house["creatures"]) >= (cfg["taming"]["creatures"] if arrived(house, "taming") else cfg["house"]["house"]["creatures"]):
         return
     r = rnd(house, "arrive", tick)
     have = {cr["kind"] for cr in house["creatures"] if not cr.get("tame")}   # one wild one of each kind (SPEC-v3.1 §4.3)

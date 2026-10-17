@@ -25,6 +25,9 @@ class Stub:
         anyone = c["pets"] + c["creatures"]
         if t in ("observe", "rest", "take_name"):
             return {"type": t}
+        if t == "ask_train":   # SPEC-v3.5.12 §3
+            from ..rail import stub
+            return stub(t, c, pick)
         if t.startswith("machine_"):   # SPEC-v3.5 §4.3
             from ..machine import stub
             return stub(t, c, pick)

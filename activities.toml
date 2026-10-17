@@ -524,3 +524,30 @@ icon = "book"
 seconds = [5, 8]
 base = 0.3
 stage = "adult"
+
+# SPEC-v3.5.12 §2-3: what does not belong in a room (or is scrap) goes on the train for the store (or the Works): into
+# its cart while it stands at the platform here, else onto the platform for it to collect. The orderly most; and more
+# when the train is waiting (rail.py, store.py).
+["load the train"]
+do = "train"
+doing = "putting the {what} on the train"
+did = "put the {what} {where}"
+icon = "box"
+voice = "murmur"
+seconds = [2, 4]
+base = 0.7
+temper = { orderly = 2.4 }
+focus = ["tidy"]
+handles = true
+
+# SPEC-v3.5.12 §3: a little one climbs into the tram for a stop or two, as play; an old one, to save its legs (rail.board).
+["ride the train"]
+do = "ride"
+doing = "climbing into the train's tram"
+did = "rode in the train's tram"
+icon = "paw"
+voice = "chirp"
+seconds = [1, 2]
+base = 0.3
+temper = { playful = 1.2, bold = 0.6 }
+needs = { curiosity = 0.8, energy = -0.4 }

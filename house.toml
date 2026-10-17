@@ -109,6 +109,7 @@ looks = { shape = "ring", color = "green" }
 #   mirror, plant (grows; a meal when ripe), water (the tiles it covers), bench, sun (moves with the hour).
 
 [rooms.nursery]
+belongs = { cushion = 2, blanket = 2, nest = 2, "bed-mat" = 2, ball = 2, mobile = 2, cup = 1, bowl = 1, garland = 1 }   # SPEC-v3.5.12 §2: what it keeps of things made, at most so many of each (engine/store.py)
 name = "the nursery"
 feel = "a small bright room with a window and a bed"
 hint = "a smell of clean bedding and warm dust"   # what comes under the door before anyone has been through it
@@ -131,6 +132,7 @@ fixtures = [
 ]
 
 [rooms.garden]
+belongs = { trowel = 2, "plant pot" = 3, "wind chime" = 2, stool = 2, vase = 1 }   # SPEC-v3.5.12 §2: what it keeps of things made, at most so many of each (engine/store.py)
 name = "the garden"
 feel = "open sky, dark soil and green things growing"
 hint = "a smell of wet soil and green things"   # what comes under the door before anyone has been through it
@@ -148,6 +150,7 @@ fixtures = [
 ]
 
 [rooms.cellar]
+belongs = { jar = 3, crate = 2, candle = 2, lamp = 1, blanket = 1 }   # SPEC-v3.5.12 §2: what it keeps of things made, at most so many of each (engine/store.py)
 name = "the cellar"
 feel = "stone walls, damp air, hardly any light"
 hint = "cold, damp air"   # what comes under the door before anyone has been through it
@@ -163,6 +166,7 @@ fixtures = [
 ]
 
 [rooms.attic]
+belongs = { blanket = 2, cushion = 2, candle = 2, lamp = 1, sign = 1 }   # SPEC-v3.5.12 §2: what it keeps of things made, at most so many of each (engine/store.py)
 name = "the attic"
 feel = "beams overhead, dust in the air, a skylight"
 hint = "dust, and a creak of beams"   # what comes under the door before anyone has been through it
@@ -179,6 +183,7 @@ fixtures = [
 ]
 
 [rooms.pond]
+belongs = { stool = 2, "wind chime" = 1, vase = 1, lantern = 1 }   # SPEC-v3.5.12 §2: what it keeps of things made, at most so many of each (engine/store.py)
 name = "the pond room"
 feel = "still water under a glass roof, reeds at the edge"
 hint = "the sound of still water"   # what comes under the door before anyone has been through it
@@ -194,6 +199,7 @@ fixtures = [
 ]
 
 [rooms.workshop]
+belongs = { carver = 2, hammer = 2, trowel = 1, box = 2, lamp = 1 }   # SPEC-v3.5.12 §2: what it keeps of things made, at most so many of each (engine/store.py)
 name = "the workshop"
 feel = "benches, tools on hooks, shavings on the floor"
 hint = "a smell of wood shavings"   # what comes under the door before anyone has been through it
@@ -209,6 +215,7 @@ fixtures = [
 ]
 
 [rooms.music]
+belongs = { bell = 2, drum = 2, flute = 2, "wind chime" = 3, cushion = 2 }   # SPEC-v3.5.12 §2: what it keeps of things made, at most so many of each (engine/store.py)
 name = "the music room"
 feel = "rugs on the floor and instruments left where someone put them down"
 hint = "a faint ringing now and then"   # what comes under the door before anyone has been through it
@@ -225,6 +232,7 @@ fixtures = [
 ]
 
 [rooms.greenhouse]
+belongs = { "plant pot" = 4, vase = 3, trowel = 2, jar = 2 }   # SPEC-v3.5.12 §2: what it keeps of things made, at most so many of each (engine/store.py)
 name = "the greenhouse"
 feel = "glass all round, warm air, vines up the frames"
 hint = "warm, wet air"   # what comes under the door before anyone has been through it
@@ -255,6 +263,7 @@ fixtures = [
 ]
 
 [rooms.hub]               # SPEC-v3.5.1: the machine room. Not one of the nine: it hangs on the outside of the storeroom (engine/hub.py)
+belongs = { cushion = 2, lamp = 1 }   # SPEC-v3.5.12 §2: what it keeps of things made, at most so many of each (engine/store.py)
 name = "the machine room"
 feel = "a tall room that hums: a great machine along the wall, small lights everywhere, pipes running up into the dark"
 hint = "a hum, and now and then a clatter of something working"   # what comes under the door before anyone has been through it
@@ -375,6 +384,46 @@ shooed_hours = 2          # shooed off a thing, it leaves that thing alone this 
 bit_hours = 6             # 16 October 2026: a loose bit nobody has touched this long (and nobody here is about to use)
 
 # ---- rule drift (§6.5): once in a lineage one found room's rule becomes this. Logged; the pets are not told. ----
+# SPEC-v3.5.12 §3: the train the Works builds (engine/rail.py). It runs one round of the house at a time, by room type:
+[rail]
+route = ["hub", "storeroom", "pond", "workshop", "pond", "storeroom", "music", "cellar", "greenhouse", "nursery", "attic", "garden",
+         "attic", "nursery", "music", "storeroom", "hub"]
+speed = 3                 # tiles a tick
+stop_ticks = 11           # at each platform, the first time a round comes to a room (and at the depot between rounds)
+clear = 5                 # tiles of track the train stands on behind its platform: it never stops across a door
+wait_ticks = 3            # a hob on the track: rung at this long, then it steps aside
+cart_holds = 12           # things the cart carries at once
+platform_holds = 12       # things left on a platform for it
+rides = true              # a hob may ride in the tram (switch off here)
+
+# SPEC-v3.5.12 §4: the resting place (engine/resting.py)
+[resting]
+on = true
+corner = [0, 3, 5, 7]     # the garden's tiles where the stones stand together: x from, y from, x to, y to
+shelves = [[8, 0], [6, 0], [9, 0]]   # where the families' memory shelves go up in the attic
+over_days = 0.6           # a house lived in before: its stones and boxes are carried over this much of the first world day
+least_ticks = 20          # ... at most one every this many ticks
+
+# SPEC-v3.5.12 §1: the store's shelves along the storeroom's walls (engine/store.py). `keeps`: the kinds each takes
+# ("light": anything that gives light; "*": anything); `art`: its picture (rail32.png, assets-incoming/pixellab/sheets.toml).
+[store]
+full_days = 3             # the store full, the oldest thing nobody has used this long (not a first, heirloom, titled thing or gift) goes to the Works
+shelf = [
+  { name = "cushion shelf", pos = [2, 0], store = 30, keeps = ["cushion", "blanket", "nest", "bed-mat", "rug", "pillow"], shelf = "cushions and blankets", art = "shelf of folded cushions and blankets" },
+  { name = "lamp shelf", pos = [4, 0], store = 20, keeps = ["lamp", "candle", "lantern", "light"], shelf = "lamps and candles", art = "shelf of lamps and candles" },
+  { name = "pegboard", pos = [0, 2], store = 12, keeps = ["carver", "trowel", "hammer"], shelf = "tools", art = "pegboard with hanging tools" },
+  { name = "cubbies", pos = [0, 4], store = 20, keeps = ["bell", "drum", "flute", "wind chime", "ball", "mobile", "garland"], shelf = "instruments and toys", art = "wall of cubby holes with small things" },
+  { name = "drawers", pos = [0, 6], store = 30, keeps = ["charm"], shelf = "charms and curios", art = "cabinet with many small drawers", inside = true },
+  { name = "crate rack", pos = [2, 7], store = 25, keeps = ["*"], shelf = "everything else", art = "tall storage rack with labelled crates", inside = true },
+  { name = "cup shelf", pos = [4, 7], store = 15, keeps = ["cup", "bowl", "jar", "vase", "plant pot"], shelf = "cups, bowls and jars", art = "shelf of cups and bowls" },
+  { name = "wood crate", pos = [11, 0], store = 1, keeps = [], bits = "wood", shelf = "wood", art = "crate of wood offcuts", inside = true },
+  { name = "stone crate", pos = [11, 1], store = 1, keeps = [], bits = "stone", shelf = "stone", art = "crate of stones", inside = true },
+  { name = "metal crate", pos = [11, 6], store = 1, keeps = [], bits = "metal", shelf = "metal", art = "bin of loose bits sorted by kind", inside = true },
+  { name = "clay crate", pos = [11, 7], store = 1, keeps = [], bits = "clay", shelf = "clay", art = "tidy stack of tiles", inside = true },
+  { name = "fibre crate", pos = [5, 7], store = 1, keeps = [], bits = "fibre", shelf = "fibre", art = "bolt of cloth", inside = true },
+  { name = "sand crate", pos = [9, 7], store = 1, keeps = [], bits = "sand", shelf = "sand", art = "stack of tidy crates with lids", inside = true },
+]
+
 [drifts]
 cellar = { cold_night = 0.3 }       # mild at night
 attic = { sun = -0.4 }              # the sun shaft turns harsh

@@ -554,6 +554,8 @@ def targets(house, cfg, pet, A, near):
             return []
         return [{"what": v[0] or name, "want": v[1], "goal": near(room["objects"][name]["pos"]), "bonus": W}]
     f = L["feed"]
+    if A.get("scrap") and house.get("rail") and not name:   # SPEC-v3.5.12 §3: the train carries scrap to the Works now; it is fed here only beside the machine
+        return []
     if A.get("scrap"):   # SPEC-v3.5.8 §4: clearing needs no want: the oldest scrap here that is its to feed (once it knows where the Works is)
         f = None if not home(house, pet) else next(((n, None) for why, n in sorted(order.scraps(house, cfg, room), key=lambda x: room["objects"][x[1]].get("haul") != pet["id"])   # (what it was carrying first)
                   if things.free_to_change(house, pet, room["objects"][n])

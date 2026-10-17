@@ -16,7 +16,7 @@ import time
 from collections import Counter, deque
 from pathlib import Path
 
-from . import actions, body, craft, director, feel, genes, genome, hub, invent, life, log, mind, order, physics, radio, sleep, story, things, wants, world
+from . import actions, body, craft, director, feel, genes, genome, hub, invent, life, log, mind, order, physics, radio, resting, sleep, story, things, wants, world
 from .memory import Memory
 from .world import LONG_AGO, NEEDS, add_event, alive, dist, family, here, hours, label, load_config, moment, new_house, relation, ticks
 
@@ -24,7 +24,8 @@ URGENT = {"visitor", "woke", "hatched", "low", "spoken", "event"}   # news that 
 SEEN = {"use": "used the %s", "make": "made a %s", "unmake": "took apart the %s", "combine": "put two things together",
         "rest": "rested", "paint": "painted the room", "teach": "taught the %s something", "lay_egg": "laid an egg",
         "take": "took the %s", "gather": "picked up %s", "drop": "put down %s", "arrange": "moved the %s",
-        "chase": "chased the %s", "compose": "made up a tune", "ask_book": "bent over the book a while", "call": "called out for something"}
+        "chase": "chased the %s", "compose": "made up a tune", "ask_book": "bent over the book a while", "call": "called out for something",
+        "ask_train": "asked the train for something"}
 
 
 class Scheduler:
@@ -735,6 +736,11 @@ class Engine:
         machine.migrate(h, cfg)   # SPEC-v3.5 §4.3: a house lived in before the vending machine gains it
         works.lay(h, cfg)   # SPEC-v3.5.4 §8: what the Works has built stays built
         works.spring_clean(h, cfg)   # SPEC-v3.5.8 §4: once, the spring clean
+        from . import rail, resting, store
+        store.lay(h, cfg)   # SPEC-v3.5.12 §1: the store's shelves along the storeroom's walls
+        resting.migrate(h, cfg)   # SPEC-v3.5.12 §4: once, the stones and keepsake boxes are carried to the resting place
+        if h.get("rail") and rail.train(h):
+            rail.lay(h, cfg)
         hub.settle_radio(h, cfg)
         for pet in h["pets"].values():   # 13 October 2026: what it has made lately is counted over three world days, from the things themselves
             if "made_at" not in pet and pet["stage"] not in ("egg", "dead"):
@@ -970,6 +976,7 @@ class Engine:
         invent.tick(h, cfg)   # SPEC-v3.5 §3.0: what an invented thing does by itself (a carried light goes with its owner)
         radio.tick(h, cfg, self.radio_song)
         hub.tick(h, cfg)   # SPEC-v3.5.1: whoever is in the machine room reads its lit sign; the eldest wants the founder's statue
+        resting.tick(h, cfg)   # SPEC-v3.5.12 §4: the stones and keepsake boxes, carried to rest over the first world day
         seconds = cfg["clock"]["tick_seconds"]
         for pet in list(h["pets"].values()):
             if pet["stage"] == "egg":
