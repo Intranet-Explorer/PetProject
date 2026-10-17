@@ -22,6 +22,7 @@ from .tick import Engine, model_brains, stub_brains
 from . import world
 from . import build
 from . import machine
+from . import rail, store
 from .world import ROOT, STAGE_WORD, alive, label, load_config, power_on, relation
 
 cfg = load_config(profile=os.environ.get("PET_PROFILE") or None)
@@ -60,6 +61,7 @@ def pet_view(p):
                      "at": (p.get("named") or {}).get("tick")} if p.get("called") else None
     out.update(label=label(p), buried=bool(p.get("buried")), made=p.get("made", 0), useful=len(p.get("useful", [])), family=p.get("family", 1))
     out["byname"] = p.get("byname")   # SPEC-v3.5.8 §2: "Clementine, called Open Hand"
+    out["riding"] = p.get("riding")   # SPEC-v3.5.12 §3: the train it rides in, if any
     if p["stage"] == "dead":
         out["days"] = (p.get("life") or {}).get("days")
         # view only: how far it has faded towards its stone, 0 to 1
@@ -157,6 +159,7 @@ def room_view(r):
                          **{k: m[k] for k in ("how", "made_in", "users", "words") if m.get(k)}}
             if o.get("home"):
                 v["home"] = o["home"]   # SPEC-v3.3 §2.3: where it belongs: {room, on} or {room, pos}
+            v["where"], v["stored"] = store.where(h, cfg, r, n)   # SPEC-v3.5.12 §1: where it is, in plain words
         elif "memorial" in o:
             v["memorial"] = o["memorial"]
             if o.get("words"):
@@ -230,9 +233,11 @@ def snapshot():
         "tick_seconds": cfg["clock"]["tick_seconds"], "day_seconds": cfg["clock"]["day_seconds"], "turbo": cfg["clock"]["turbo"], "shift": cfg.get("shift"),
         "profile": cfg["profile"], "start": h["start"], "door_tiles": h["door_tiles"], "lineage": h["lineage"],
         "rooms": [room_view(r) for r in h["rooms"].values()], "pets": [pet_view(p) for p in h["pets"].values()],
-        "creatures": [{k: v for k, v in c.items() if k not in ("held", "swept", "shooed")} for c in h["creatures"]], "moments": h["moments"][-60:], "events": h["events"][-8:],
+        "creatures": [{k: v for k, v in c.items() if k not in ("held", "swept", "shooed", "legs", "route", "asked")} for c in h["creatures"]], "moments": h["moments"][-60:], "events": h["events"][-8:],
         "chronicle": h["chronicle"][-1:], "visitor": present(), "population": cfg["life"]["population"],
         "sayings": [{"text": c["text"], "gens": len(c["gens"]), "truth": c["truth"]} for c in story.sayings(h, 3)],
+        # SPEC-v3.5.12: the rail (null until built), what is in the cart, and the garden's resting place
+        "rail": rail.view(h, cfg), "cart": rail.cart_view(h, cfg), "resting": h.get("resting"),
     }
 
 
