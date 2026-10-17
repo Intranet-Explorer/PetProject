@@ -292,7 +292,7 @@ def advance(house, cfg, tr):
         return False
     tr["blocked"] = 0
     if len(tr["trail"]) > 1 and tr["trail"][1] == [room["id"], t]:   # it backs out the way it came, the engine pushing (a dead end)
-        tr["trail"].reverse()
+        tr["trail"] = tr["trail"][:5][::-1]   # (the five tiles the cars stand on: the last car leads now)
         tr["lead"] = "tram" if tr["lead"] == "engine" else "engine"
         while tr["path"] and [room["id"], tr["path"][0]] in tr["trail"]:
             tr["path"].pop(0)
