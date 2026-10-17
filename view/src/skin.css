@@ -404,6 +404,10 @@ button.followchip.off { background: var(--paper); }
 .dotlayer .dot.dead { color: #6b7d92; box-shadow: none; }
 .dotlayer .dot.beast { width: 6px; height: 6px; margin: -3px 0 0 -3px; border-width: 1px; color: #c8d6e5; }
 .dotlayer .dot.chosen { outline: 2px solid #fff; }
+.map .railway { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }   /* SPEC-v3.5.12 §5: the rail line, and the train on it */
+.map .railway polyline { fill: none; stroke: #ffb347; stroke-width: 2; stroke-dasharray: 3 2; stroke-linejoin: round; opacity: 0.6; }
+.dotlayer .dot.train { width: 12px; height: 7px; margin: -4px 0 0 -6px; border-width: 1px; border-radius: 2px; color: #ffb347; }
+.dotlayer .dot.train.stopped { box-shadow: 0 0 9px currentColor; }
 .console .read { display: grid; grid-template-columns: auto 1fr; gap: 0 10px; align-items: center; }
 .console .read b { color: #a8d8f5; font-weight: normal; }
 .digit { display: inline-block; border-style: solid; border-width: 8px; border-image: url("../assets/third_party/crusenho/UI_HoloBook_DigitFrame01a.png") 4 fill stretch; padding: 0 2px;

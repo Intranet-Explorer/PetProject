@@ -1,7 +1,7 @@
 // The map of the house (SPEC-v3.2 §7): a small pixel picture for every room someone has found, a blank behind each
 // door nobody has been through, a dot for everyone, and a mark where something is going on. Click a room to look at it.
 import { el } from "./dom";
-import { icon } from "./icons";
+import { icon, svg } from "./icons";
 import { hasSprite, sprite } from "./sprite";
 import { fam } from "./types";
 import type { Snap } from "./types";
@@ -14,7 +14,7 @@ export function drawMap(box: HTMLElement, s: Snap, viewed: string, chosen: strin
   const [gx, gy] = [Math.max(...s.rooms.map((r) => r.cell[0])) + 1 - x0, Math.max(...s.rooms.map((r) => r.cell[1])) + 1 - y0];
   const scale = Math.max(1, Math.min(3, Math.floor((width / gx - 22) / 16))), cell = 16 * scale + 16, gap = scale > 1 ? 6 : 4;   // (v3.5.6: a slot round each room, 8 px a side)
   const key = JSON.stringify([scale, viewed, chosen, s.rooms.map((r) => [r.type, r.wet, r.cold, r.sounding, r.shut, r.name]),
-    s.pets.map((p) => [p.id, p.room, p.stage, p.buried, p.label]), s.creatures.map((c) => [c.id, c.room, c.tame, c.name])]);
+    s.pets.map((p) => [p.id, p.room, p.stage, p.buried, p.label]), s.creatures.map((c) => [c.id, c.room, c.tame, c.name]), s.rail?.route]);
   if (box.dataset.key === key) return void dots(box, s, chosen, x0, y0, cell, gap);
   box.dataset.key = key;
   const map = el("div", "map");
@@ -39,12 +39,16 @@ export function drawMap(box: HTMLElement, s: Snap, viewed: string, chosen: strin
     const b = put(el("button", `maproom${r.id === viewed ? " viewed" : ""}`, sprite(`icon.room.${r.type}`, scale),
       r.wet || r.cold || r.sounding ? el("span", "signs", r.wet ? icon("drop", 10) : null, r.cold ? icon("wind", 10) : null, r.sounding ? icon("music", 10) : null) : null), x, y) as HTMLButtonElement;
     b.type = "button";
-    b.title = [r.name, ...here.map((p) => (p.stage === "egg" ? p.name ?? "an egg" : p.label)), ...beasts.map((c) => c.name ?? `a ${c.kind}`),
+    b.title = [r.name, ...here.map((p) => (p.stage === "egg" ? p.name ?? "an egg" : p.label)), ...beasts.map((c) => c.name ?? (c.kind === "train" ? "the train" : `a ${c.kind}`)),
       r.wet ? "water is coming in" : "", r.cold ? "a draught" : "", r.sounding ? "something is sounding" : ""].filter(Boolean).join(" · ");
     b.setAttribute("aria-label", `Look at ${r.name}`);
     b.onclick = () => look(r.id);
     map.append(b);
   }
+  // SPEC-v3.5.12 §5: the rail line, room to room along the train's round
+  const route = (s.rail?.route ?? []).map((id) => s.rooms.find((r) => r.id === id)).filter((r) => r?.type), half = cell / 2;
+  if (route.length > 1) map.append(svg("svg", { class: "railway", width: gx * (cell + gap) - gap, height: gy * (cell + gap) - gap, "aria-hidden": "true" },
+    svg("polyline", { points: route.map((r) => at(r!.cell).map((v) => v + half).join(",")).join(" ") })));
   map.append(el("div", "dotlayer"));
   box.replaceChildren(map);
   dots(box, s, chosen, x0, y0, cell, gap);
@@ -67,6 +71,8 @@ function dots(box: HTMLElement, s: Snap, chosen: string | null, x0: number, y0: 
     seen.add(id);
   };
   for (const p of s.pets) if (!(p.stage === "dead" && p.buried)) place(p.id, `dot ${fam(p.family)}${p.stage === "egg" ? " egg" : p.stage === "dead" ? " dead" : ""}${p.asleep ? " asleep" : ""}${p.id === chosen ? " chosen" : ""}`, p.room, p.pos);
-  for (const c of s.creatures) { const owner = s.pets.find((p) => p.id === c.tame); place(`c${c.id}`, `dot beast${owner ? ` ${fam(owner.family)}` : ""}`, c.room, c.pos); }
+  const tr = s.creatures.find((c) => c.kind === "train"), engine = tr?.cars?.[0];   // the train: a dot where its engine is
+  if (engine) place(`c${tr!.id}`, `dot train${tr!.moving ? "" : " stopped"}`, engine.room, engine.pos);
+  for (const c of s.creatures) if (c.kind !== "train") { const owner = s.pets.find((p) => p.id === c.tame); place(`c${c.id}`, `dot beast${owner ? ` ${fam(owner.family)}` : ""}`, c.room, c.pos); }
   for (const d of [...layer.children] as HTMLElement[]) if (!seen.has(d.dataset.id!)) d.remove();
 }

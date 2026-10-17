@@ -45,5 +45,6 @@ export function play(kind: string) {
     } else if (kind === "chime") { tone(c, t, 880, 0.35, 0.08); tone(c, t + 0.09, 1318.5, 0.5, 0.07); }
     else if (kind === "soft") { tone(c, t, 660, 0.6, 0.05, "sine", 880); }
     else if (kind === "low") { tone(c, t, 110, 0.9, 0.06, "sine", 98); }
+    else if (kind === "bell") for (const k of [0, 0.28]) { tone(c, t + k, 1568, 0.7, 0.035); tone(c, t + k, 3951, 0.25, 0.012); }   // SPEC-v3.5.12: the tram's bell, twice
   } catch { /* no sound here */ }
 }

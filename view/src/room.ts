@@ -28,6 +28,7 @@ import { paintText, paintTitle } from "./px/built";
 import type { Thing } from "./px/still";
 import { hslInt } from "./px/tint";
 import { Light, REDUCE } from "./px/weather";
+import { carLine, TrainActor } from "./px/train";
 
 /** v3.5.10: one part of the room that fails (a new snapshot field an old page does not know, a bad sprite) is skipped,
  *  and said once on the console; everything else goes on being drawn. */
@@ -107,6 +108,7 @@ export class Room {
   private ghosts = new Map<string, Ghost>();
   private pets = new Map<string, PetActor>();
   private beasts = new Map<string, CreatureActor>();
+  private train: TrainActor | null = null;   // SPEC-v3.5.12 §3
   private heads = new Map<string, Rect>();
   private scene: Scene | null = null;
   private ready = false;
@@ -246,7 +248,7 @@ export class Room {
     const keep = this.keep();
     const key = JSON.stringify([room.id, room.type, lay === undefined, room.areas, Object.entries(room.objects).map(([n, o]) => [n, o.pos, o.state, o.wall, o.on, o.store?.holds, o.servings === 0, o.grow != null && o.grow < 0.35, o.water, o.planted, o.build,
       o.made && [o.made.recipe, o.made.active, o.made.behavior?.do, o.made.worn, !!o.made.heirloom], !!o.memorial]), room.spots, room.paint, room.painted, room.doors, room.shut, room.wet, snap.power,
-      snap.rooms.map((r) => r.type), room.marks, this.K, keep, snap.door_tiles, snap.clock.season]);
+      snap.rooms.map((r) => r.type), room.marks, this.K, keep, snap.door_tiles, snap.clock.season, ((r) => r && [r.track, r.platform, r.side, r.buffer])(snap.rail?.rooms?.[room.id])]);
     if (key !== this.built) {
       this.built = key;
       this.rebuild(sc, lay ?? null, keep, now);
@@ -343,7 +345,7 @@ export class Room {
     // nobody walks through one who is asleep, an egg, or a body: their tiles are shut to the others' paths
     const walk = (this.stage.blocked = still.blocked.slice());
     for (const a of this.pets.values()) if (fixed(a.pet) || a.pet.asleep) walk[idx(a.home)] = 1;
-    const beasts = snap.creatures.filter((c) => c.room === room.id);
+    const beasts = snap.creatures.filter((c) => c.room === room.id && c.kind !== "train");
     for (const [id, b] of this.beasts) if (fresh || !beasts.some((c) => c.id === id)) { b.c.destroy({ children: true }); this.beasts.delete(id); }
     for (const c of beasts) {
       let b = this.beasts.get(c.id);
@@ -355,6 +357,13 @@ export class Room {
       }
       const owner = snap.pets.find((p) => p.id === c.tame);
       b.update(c, this.stage, this.pace, first, owner ? hslInt(owner.genome.hue, owner.genome.saturation, 0.55) : null);
+    }
+    // SPEC-v3.5.12 §3: the train, whichever room its cars are in (one on its way in or out is seen at the door)
+    const tr = snap.creatures.find((c) => c.kind === "train");
+    if (!tr && this.train) { this.train.destroy(); this.train = null; }
+    if (tr) {
+      if (!this.train) { this.train = new TrainActor(); for (const v of this.train.cars) this.sorted.addChild(v.c); }
+      this.train.update(tr, room, snap, now, this.pace, !sc.replay);
     }
   }
 
@@ -548,7 +557,9 @@ export class Room {
     [st.now, st.dt] = [now, dt];
     const pools = this.light.pools;
     pools.length = 0;
+    if (this.train) guard("the train", () => this.train!.frame(now, this.fx, this.light.darkness));
     for (const a of this.pets.values()) {
+      a.ride = a.pet.riding ? this.train?.step ?? [] : null;   // SPEC-v3.5.12 §3: on the tram's back step (out of sight with it)
       guard("a hob", () => a.step(st));
       const r = a.rect(), h = this.heads.get(a.pet.id) ?? { x: 0, y: 0, w: 0, h: 0 };
       [h.x, h.y, h.w, h.h] = [r.x * K, r.y * K, r.w * K, r.h * K];
@@ -690,6 +701,7 @@ export class Room {
     let front = -Infinity;
     for (const [id, a] of this.pets) if (inside(grown(a.rect(), 2), x, y) && a.c.y > front) [out.pet, front] = [id, a.c.y];
     for (const [id, b] of this.beasts) if (inside(grown(b.rect(), 3), x, y)) out.creature = id;
+    if (this.train?.rects().some((r) => inside(r, x, y))) out.creature = this.train.cr.id;
     out.mark = this.marks.rects.find((m) => inside(grown(m.rect, 1), x, y))?.m;
     out.door = still.doors.find((d) => inside(d.rect, x, y))?.dir;
     if (this.display && inside(this.display.rect, x, y)) out.display = true;
@@ -722,7 +734,7 @@ export class Room {
   /** What a Target is drawn as, in the room's pixels. */
   private rectOf(t: Target): Rect | null {
     const still = this.still;
-    return (t.pet && this.pets.get(t.pet)?.rect()) || (t.creature && this.beasts.get(t.creature)?.rect()) || (t.mark && this.marks.rects.find((m) => m.m === t.mark)?.rect) || (t.object && still?.things.get(t.object)?.rect)
+    return (t.pet && this.pets.get(t.pet)?.rect()) || (t.creature && (this.beasts.get(t.creature)?.rect() ?? (this.train?.cr.id === t.creature ? this.train.rects()[0] : null))) || (t.mark && this.marks.rects.find((m) => m.m === t.mark)?.rect) || (t.object && still?.things.get(t.object)?.rect)
       || (t.bit && still?.spots.find((s) => s.bit === t.bit && s.pos[0] === t.tile[0] && s.pos[1] === t.tile[1])?.rect) || (t.door && still?.doors.find((d) => d.dir === t.door)?.rect)
       || (t.display && this.display?.rect) || (t.decor && still?.scenery.find((s) => s.sprite === t.decor && inside(s.rect, OX + t.tile[0] * TILE + 8, OY + t.tile[1] * TILE + 8))?.rect) || null;
   }
@@ -767,6 +779,12 @@ export class Room {
       return { what: "creature", title: b.cr.name ?? `a ${b.cr.kind}`, sprite: canvasOf(`creature.${b.cr.kind}`), name: b.cr.name ?? null, kind: b.cr.kind, owner: owner?.label ?? null, state: b.cr.doing,
                text: `${owner ? `${owner.label}'s ${b.cr.kind}` : `a ${b.cr.kind} of the house, nobody's`}: ${b.cr.doing}` };
     }
+    if (t.creature && this.train?.cr.id === t.creature) {   // SPEC-v3.5.12 §5: the train: what it is doing, what is in its cart, who rides
+      const cr = this.train.cr, n = new Map<string, number>(), rider = snap.pets.find((q) => q.id === cr.rider);
+      for (const c of cr.cargo ?? []) n.set(c, (n.get(c) ?? 0) + 1);
+      return { what: "creature", title: cr.name ?? "the train", sprite: TrainActor.picture(), name: cr.name ?? null, kind: "train", state: cr.doing, text: cr.doing,
+               notes: [n.size ? `in the cart: ${[...n].map(([c, k]) => (k > 1 ? `${c} x${k}` : c)).join(", ")}` : "the cart is empty", ...(rider ? [`riding in the tram: ${rider.label}`] : [])] };
+    }
     if (t.mark) return { what: "writing", title: t.mark.medium === "scratch" ? "words scratched on the wall" : "words in chalk", sprite: null, text: t.mark.text, maker: t.mark.by_name ?? null };
     if (th?.drawn) {
       const m = th.obj.made!, d = th.drawn, a = kind(d.kind)?.a ?? (/^[aeiou]/.test(d.color ?? d.kind) ? "an" : "a");
@@ -787,7 +805,7 @@ export class Room {
       return { what: "door", title: to?.type ? `the door to ${to.name}` : "a door nobody has been through", sprite: null, state: room.shut.includes(t.door) ? "stuck shut" : to?.type ? "open" : "shut",
                text: to?.type ? `it leads to ${to.name}` : "nobody knows yet what is behind it" };
     }
-    if (t.display && this.display) return { what: "scenery", title: `the display: ${hhmm(snap.clock.hour)}, ${SKY[snap.weather] ?? snap.weather}`, sprite: null, text: this.display.line(snap) };
+    if (t.display && this.display) { const car = carLine(snap, room.id); return { what: "scenery", title: `the display: ${hhmm(snap.clock.hour)}, ${SKY[snap.weather] ?? snap.weather}`, sprite: null, text: this.display.line(snap), notes: car ? [car.toLowerCase()] : undefined }; }
     const pt = t.decor?.startsWith("paint.") ? still.paints[Number(t.decor.slice(6))] : null;
     if (t.decor?.startsWith("paint.")) return pt ? { what: "scenery", title: paintTitle(pt.p), sprite: null, text: paintText(pt.p), rect: undefined } : null;
     if (t.decor === "room.wall" || t.decor === "room.floor") { const wall = t.decor === "room.wall"; return { what: "scenery", title: wall ? "the wall" : "the floor", sprite: null, text: `painted ${wall ? room.paint.wall : room.paint.floor}` }; }
