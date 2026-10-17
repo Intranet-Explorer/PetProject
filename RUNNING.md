@@ -66,15 +66,15 @@ when its server is started again (16 October 2026).
 ### How a change is tested (Tyler, 16 October 2026)
 
 - **Page-only changes** (view, CSS, art): no copy. Build, check in the browser at the sizes the spec lists, deploy.
-- **Data or engine changes:** the self-checks, then a 30-minute smoke run on a copy in `../PetProject-tests/<version>/`,
-  back up `data/`, deploy with one restart, then measure the spec's bars on the live house over one world day.
+- **Data or engine changes, every one:** the self-checks, then a short smoke run on a copy in
+  `../PetProject-tests/<version>/` (30 minutes or less), back up `data/`, deploy with one restart, then measure the
+  spec's bars on the live house over one world day. The backup is the safety net. No full-day copy runs (Tyler,
+  17 October 2026).
   - Roll back from the backup and report when a bar is worse than before the deploy two world days running, when it
     is worse by a lot, or when something broke (errors, lost data, harm to the hobs).
   - A bar that moves the wrong way for one day, by a modest amount and with a clear cause, is watched for a second
     day, not rolled back (Tyler, 17 October 2026).
   - A bar that didn't improve gets a fix forward (Tyler, 16 October 2026).
-- **A full world day on a copy** only for: life and death, eggs and hatching, anything that deletes many things, or a
-  change to the save format.
 - **After any engine deploy,** check the live house about an hour later: errors, the bars, anything odd.
 
 ## Look at it

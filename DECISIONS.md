@@ -2233,3 +2233,6 @@ creature, a `platform` fixture in every room, the store's shelves, memory shelve
   each credited to a living hob of the family when one is awake (not carried by the train: it may not be built yet). Two
   of the dead with the same name keep their stones and boxes apart ("the other keepsake box for grey light").
 - **The rail goal** goes after the Works' current goal, like the sweeper out of cost order.
+- **Testing:** the spec asks for a world day on a copy before the deploy. Tyler cut that short (17 October 2026): the
+  copy's first 420 ticks (no errors, 13 stones carried to the right tiles) stand as the smoke run, the world day is
+  measured on live, and from now on no change gets a full-day copy run (RUNNING.md).
