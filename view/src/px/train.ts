@@ -229,6 +229,7 @@ export class TrainActor {
         const inside = way(g, old.pos, d[0]), k = Math.max(1, go - (inside.length - 1));
         tiles = [...inside, ...Array.from({ length: k }, (_, j): Tile => [d[0][0] + d[1][0] * (j + 1), d[0][1] + d[1][1] * (j + 1)])];
       }
+      if (tiles.length - 1 > go + 1) { v.rest = here ? centre(car!.pos) : null; return; }   // further than it goes in a tick: it was set there (turned round at a dead end), not driven
       // a tile either side, so a corner at either end is rounded as it will be when the car goes on round it
       const before = v.came && (g.get(key(tiles[0])) ?? []).some((n) => same(n, v.came!)) ? v.came : beyond(g, tiles[0], tiles[1]), after = beyond(g, tiles.at(-1)!, tiles.at(-2));
       const all = [...(before ? [before] : []), ...tiles, ...(after ? [after] : [])], l = lay(all), b = before ? 1 : 0;

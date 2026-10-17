@@ -99,12 +99,12 @@ export class Still {
     this.swap = (n, x, y) => seasonal(n, snap.clock.season, room.type, x, y);
     this.tiles(L, room);
     this.paint(room, false);   // SPEC-v3.5 §4.2: paint on the wall and the floor, under everything that stands there
-    const rail = snap.rail?.rooms?.[room.id];   // SPEC-v3.5.12 §5: the track, over the floor and under all else on it
-    if (rail) this.ground.addChild(new Sprite(trackTexture(rail, snap.door_tiles)));
     const blocked: Tile[] = [...(L.blocked ?? [])];
     for (const d of L.decor ?? []) this.decor(d.sprite, d.at, d.layer);
     this.puddles(snap, room, L);
     this.places(room);
+    const rail = snap.rail?.rooms?.[room.id];   // SPEC-v3.5.12 §5: the track, over the floor and what is painted or laid in it (a garden path), under all else
+    if (rail) this.flat.addChild(new Sprite(trackTexture(rail, snap.door_tiles)));
     for (const [dir, to] of Object.entries(room.doors)) this.door(snap, room, dir, to, L.doors);
 
     // what is put away (SPEC-v3.3 §2) comes after what it is put away on: it stands on that, small; in a chest it is not seen
