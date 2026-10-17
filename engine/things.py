@@ -435,7 +435,7 @@ def charm_base(cfg, carrying, material):
     return next((b for b in rest if b in cfg["make"]["charm_takes"]), None)
 
 
-LIGHTS, SOFT, CUPS, STORES = ("lamp", "candle", "lantern"), ("cushion", "blanket", "nest", "bed-mat", "rug"), ("cup", "bowl"), ("shelf", "box", "basket")
+LIGHTS, SOFT, CUPS, STORES = ("lamp", "candle", "lantern", "torch"), ("cushion", "blanket", "nest", "bed-mat", "rug"), ("cup", "bowl"), ("shelf", "box", "basket")
 
 
 def kind_of(o):
@@ -459,6 +459,8 @@ def room_needs(house, cfg, room, pet=None):
     out += [("cup", of(CUPS), "a cup or a bowl for %s, where hobs eat" % name)] if any("meal" in f for f in fix) else []
     out += [("rug", of(("rug", "blanket", "bed-mat")), "a rug for %s, where %s" % (name, "you sleep" if sleeper is pet else label(sleeper) + " sleeps"))] if sleeper else []
     out += [("shelf", of(STORES), "a shelf or a box for %s, where things lie about on the floor" % name)] if lying >= 3 else []
+    out += [("bucket", of(("bucket",)), "a bucket for %s, to carry water or fish" % name)] if any("water" in f for f in fix) else []   # SPEC-v3.6a §5
+    out += [("broom", of(("broom",)), "a broom for %s, which wants sweeping" % name)] if room.get("mess") == 2 else []
     return out
 
 
@@ -487,7 +489,7 @@ def better(house, cfg, pet, mark=False):
              if not any(ok(o) for o in r["objects"].values())]
     have = {kind_of(o) for r in rooms for o in made(r).values()}
     needs += [(t, "%s, %s %s, which nobody in the house has" % (T["want"].replace("make ", "", 1), cfg["kinds"].get(t, {}).get("a", "a"), t))
-              for t, T in cfg["craft"]["tool"].items() if t not in have]
+              for t, T in cfg["craft"]["tool"].items() if t not in have and (t != "rod" or pet.get("paw_fished"))]   # (SPEC-v3.6a §2: a rod, once it has fished by paw)
     if not any(o["made"]["owner"] == pet["id"] and kind_of(o) in STORES for r in rooms for o in made(r).values()):
         needs.append(("box", "a box of your own to keep things in"))
     g = works.goal(house, cfg)
@@ -506,7 +508,7 @@ def better(house, cfg, pet, mark=False):
             + [("new", "something nobody has made yet, from two things never joined before")]
     out = out[:2]
     if mark:
-        pet["offered"] = {k: t for k, t in offered.items() if tick - t < day} | {k: tick for k, _ in out}
+        pet["offered"] = {k: t for k, t in offered.items() if tick - t < 7 * day} | {k: tick for k, _ in out}   # (kept a week, so the turns go on past the first day)
     return [line for _, line in out]
 
 
@@ -827,7 +829,10 @@ def upkeep(house, cfg):
                 m.pop("damp")   # used somewhere dry, it dries out
             if room["type"] == "attic" and idle >= room_rule(cfg, room, "dust_days", 2) * cfg["ticks_per_day"]:
                 m["dusty"] = True
-            if o["pos"] in water and not prop(cfg, o).get("fixed") and not invent.effect(cfg, o).get("floats"):   # it floats away to some other room (§6.1)
+            if o["pos"] in water and not prop(cfg, o).get("fixed") and not invent.effect(cfg, o).get("floats") and not o.get("on"):   # it floats away (§6.1) ...
+                from . import pond
+                if pond.drift(house, cfg, room, n):   # ... and, from the big pond, washes up at its edge a world day later (SPEC-v3.6a §1)
+                    continue
                 found = [r for r in house["rooms"].values() if r["type"] and r["id"] != room["id"]]
                 if found:
                     from .world import rnd

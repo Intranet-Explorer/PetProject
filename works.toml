@@ -130,6 +130,11 @@ what = "a rail for the house"
 scrap = 30
 rail = true
 
+[[build]]                 # SPEC-v3.6a §1: out over the bigger pond, the best place to fish (engine/pond.py); next after the rail
+what = "a dock for the pond"
+scrap = 20
+dock = true
+
 [[build]]
 what = "a mirror for the music room"
 scrap = 32

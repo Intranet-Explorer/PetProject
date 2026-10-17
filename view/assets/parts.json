@@ -1068,6 +1068,98 @@
   "hammer": {
    "base": "stick",
    "signature": "head"
+  },
+  "fork": {
+   "base": "stick",
+   "signature": "studs"
+  },
+  "spoon": {
+   "base": "stick",
+   "signature": "lid"
+  },
+  "knife": {
+   "base": "stick",
+   "signature": "blade"
+  },
+  "plate": {
+   "base": "disc",
+   "signature": "band"
+  },
+  "kettle": {
+   "base": "box",
+   "signature": "spout"
+  },
+  "stick": {
+   "base": "stick",
+   "signature": "band"
+  },
+  "tube": {
+   "base": "block",
+   "signature": "band"
+  },
+  "brush": {
+   "base": "stick",
+   "signature": "strings"
+  },
+  "broom": {
+   "base": "stick",
+   "signature": "weave"
+  },
+  "bucket": {
+   "base": "bowl",
+   "signature": "hook"
+  },
+  "torch": {
+   "base": "stick",
+   "signature": "flame"
+  },
+  "needle": {
+   "base": "stick",
+   "signature": "gem"
+  },
+  "wheel": {
+   "base": "disc",
+   "signature": "wheel"
+  },
+  "hook": {
+   "base": "stick",
+   "signature": "hook"
+  },
+  "spring": {
+   "base": "ring",
+   "signature": "weave"
+  },
+  "rod": {
+   "base": "stick",
+   "signature": "hook"
+  },
+  "bottle": {
+   "base": "bowl",
+   "signature": "lid"
+  },
+  "note bottle": {
+   "base": "bowl",
+   "signature": "cloth"
+  },
+  "lens": {
+   "base": "ring",
+   "signature": "gem"
+  },
+  "gear": {
+   "base": "disc",
+   "signature": "studs"
+  },
+  "ring": {
+   "base": "ring",
+   "signature": "gem"
+  },
+  "key": {
+   "base": "stick",
+   "signature": "head"
+  },
+  "golden fish": {
+   "base": "cushion",
+   "signature": "sail"
   }
  },
  "palette": {

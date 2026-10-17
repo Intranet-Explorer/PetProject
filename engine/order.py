@@ -149,7 +149,8 @@ def firsts_of(house):
 def meant(house, o):
     """Something it means: an heirloom, a first, a gift, a thing the visitor named or starred."""
     m = o["made"]
-    return bool(m.get("heirloom") or m.get("called") or m.get("star") is not None or m.get("first") or (m["by"], m["tick"]) in firsts_of(house) or m["by"] != m["owner"])
+    return bool(m.get("heirloom") or m.get("called") or m.get("star") is not None or m.get("first") or (m["by"], m["tick"]) in firsts_of(house) or m["by"] != m["owner"]
+                or (m.get("found") or {}).get("tier") in ("rare", "very rare"))   # (SPEC-v3.6a §3: a rare find is kept for good)
 
 
 def boxed(house, cfg, room, box):

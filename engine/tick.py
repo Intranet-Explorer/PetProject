@@ -16,7 +16,7 @@ import time
 from collections import Counter, deque
 from pathlib import Path
 
-from . import actions, body, craft, director, feel, genes, genome, hub, invent, life, log, mind, order, physics, radio, resting, sleep, story, things, wants, world
+from . import actions, body, craft, director, feel, genes, genome, hub, invent, life, log, mind, order, physics, pond, radio, resting, sleep, story, things, wants, world
 from .memory import Memory
 from .world import LONG_AGO, NEEDS, add_event, alive, dist, family, here, hours, label, load_config, moment, new_house, relation, ticks
 
@@ -255,7 +255,7 @@ class Mind:
         if pet["stage"] == "elder" and self.eng.house["tick"] % 3 == 0:
             return
         for _ in range((2 if pet["spring"] else 1) + genes.stride(self.eng.house, pet)):   # (SPEC-v3.5 §2.3: long legs walk faster)
-            was, pet["pos"] = pet["pos"], [p + (g > p) - (g < p) for p, g in zip(pet["pos"], goal)]
+            was, pet["pos"] = pet["pos"], pond.step(self.eng.house, self.cfg, self.eng.house["rooms"][pet["room"]], pet["pos"], goal)   # (SPEC-v3.6a §1: round the water)
             pet["walked"] = pet.get("walked", 0) + (pet["pos"] != was)   # tiles walked, all its life (SPEC-v3.4 §0)
         pet["spring"] = max(0, pet["spring"] - 1)
 
@@ -741,6 +741,7 @@ class Engine:
         resting.migrate(h, cfg)   # SPEC-v3.5.12 §4: once, the stones and keepsake boxes are carried to the resting place
         if h.get("rail") and rail.train(h):
             rail.lay(h, cfg)
+        pond.spread(h, cfg)   # SPEC-v3.6a §1: once, the pond spreads ("after the spring rains")
         works.check(h, cfg)   # 17 October 2026: a goal already full builds now, not at the next feeding
         hub.settle_radio(h, cfg)
         for pet in h["pets"].values():   # 13 October 2026: what it has made lately is counted over three world days, from the things themselves

@@ -184,7 +184,7 @@ sessions = 12
 on = "water"                  # it stands where the room's water is
 flat = true
 bits = { lily = 2 }
-spots = [[5, 3], [6, 5]]
+spots = [[5, 2], [7, 3]]          # (SPEC-v3.6a: lilies on the water either side of the neck it crosses)
 says = "a bridge over the water: from it the lilies can be reached"
 weight = 2.0
 

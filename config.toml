@@ -260,7 +260,7 @@ chased = -3.0
 noise = -1.0              # something loud used in its room
 rush_per_minute = -0.3    # a pet moving with a spring in its step close by
 creatures = 3             # in the house at once from then on, of which one wild one of each kind
-lifespan_days = { mouse = 40, beetle = 32, moth = 26, bird = 48 }   # longer than a pet's
+lifespan_days = { mouse = 40, beetle = 32, moth = 26, bird = 48, duck = 44, frog = 30 }   # longer than a pet's (SPEC-v3.6a: the pond's duck and frog too)
 young_at = 0.4            # the share of its life at which a tame creature has young, once
 
 [radio]                   # §5; SPEC-v3.5.1 §5: a real station. The page plays its stream; the engine asks what song is on. A pet fetches nothing.

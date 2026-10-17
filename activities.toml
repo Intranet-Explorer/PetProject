@@ -551,3 +551,18 @@ seconds = [1, 2]
 base = 0.3
 temper = { playful = 1.2, bold = 0.6 }
 needs = { curiosity = 0.8, energy = -0.4 }
+
+# SPEC-v3.6a §2: at the pond's edge, or the end of the dock: cast (or dangle a paw), wait, pull up something or
+# nothing (pond.py rolls it and lands it; no model is asked). Its own seconds: pond.toml [time].
+[fish]
+do = "fish"
+doing = "fishing {where}"
+did = "fished {where}"
+icon = "drop"
+voice = "murmur"
+seconds = [40, 72]
+base = 0.45
+temper = { patient = 1.0, curious = 0.3 }
+needs = { energy = 0.5, curiosity = 0.3 }
+stage = "child"
+handles = true

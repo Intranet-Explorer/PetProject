@@ -1,7 +1,7 @@
 """What the house does on its own (SPEC-v3 §6.4, §6.5): the day's weather, the seasons, storms and power
 cuts, the events nobody caused, and the small creatures. All of it scripted; no model is ever asked."""
 from . import craft, genes, genome, order, songs, things, walls
-from . import build, firsts, rail, sweeper
+from . import build, firsts, pond, rail, sweeper
 from .world import (LONG_AGO, a as a_bit, days as world_days, moving as on_the_move, add_event, alive, arrived, bit_kinds, clock, dist, family, free_tile, hours, in_room, label, moment,
                     new_pet, power_on, rnd, ticks, weather_of)
 
@@ -97,6 +97,7 @@ def hourly(house, cfg):
                 span = season["sunset"] - season["sunrise"]
                 o["pos"] = [max(1, min(cfg["W"] - 2, round(1 + (cfg["W"] - 3) * (c["hour"] - season["sunrise"]) / span))), o["pos"][1]]
     house.setdefault("skies", {})[str(c["day"])] = house["weather"]   # (SPEC-v3.5.3 §5: the story heads each day with its weather; for the page only)
+    pond.hourly(house, cfg)   # SPEC-v3.6a: the fish come back, the ice comes and goes
     craft.grow(house, cfg)   # SPEC-v3.4 §3.5: what is planted grows, watered or not, and wilts if left dry
     from . import season
     season.hourly(house, cfg)   # SPEC-v3.5 §5: the season's own bits in the garden, and food left lying goes bad
@@ -268,7 +269,8 @@ def drift(house, cfg):
 
 # ---- small creatures (§6.5) ----
 
-DOING = {"moth": "circling the light", "beetle": "trundling along", "mouse": "watching from a corner", "bird": "hopping about"}
+DOING = {"moth": "circling the light", "beetle": "trundling along", "mouse": "watching from a corner", "bird": "hopping about",
+         "duck": "paddling about on the pond", "frog": "sitting at the water's edge"}
 
 
 def creatures(house, cfg):
@@ -377,6 +379,16 @@ def creatures(house, cfg):
                 goal = cr.get("goal")
                 if not goal or goal == cr["pos"]:
                     goal = cr["goal"] = [r.randrange(cfg["W"]), r.randrange(cfg["H"])]
+        elif kind in ("duck", "frog"):   # SPEC-v3.6a §1: the duck paddles about on the water; the frog hops along its edge
+            w = pond.water(room)
+            if not w or pond.state(house)["frozen"] or (kind == "frog" and c["season"] == "winter") or c["phase"] == "night":
+                leave(house, cr, "went off for the night" if c["phase"] == "night" else "went away when the pond froze")
+                continue
+            goal = cr.get("goal")
+            if (not goal or goal == cr["pos"]) and r.random() < (0.4 if kind == "duck" else 0.15):
+                edge = [s for s, _, _ in pond.spots(house, cfg, room)] or [cr["pos"]]
+                goal = cr["goal"] = list(r.choice(w if kind == "duck" else edge))
+            cr["doing"] = DOING[kind]
         elif kind == "bird":
             if not c["morning"] and c["phase"] != "day":
                 leave(house, cr, "flew off at dusk")
@@ -421,12 +433,15 @@ def arrive(house, cfg):
         options += [("bird", x) for x in rooms if x["type"] == "garden"]
     dark = [x for x in rooms if x["type"] in ("cellar", "storeroom")] or rooms
     options += [("mouse", r.choice(dark)), ("beetle", r.choice(rooms))]
+    wet = [x for x in rooms if pond.water(x)]   # SPEC-v3.6a §1: a duck on the pond, a frog at its edge (not on ice, not in winter)
+    if wet and c["phase"] != "night" and not pond.state(house)["frozen"]:
+        options += [("duck", wet[0])] + ([("frog", wet[0])] if c["season"] != "winter" else [])
     options = [(k, x) for k, x in options if k not in have]
     if not options or r.random() > cfg["house"]["house"]["creature_chance"]:
         return
     kind, room = r.choice(options)
     house["n"]["creature"] += 1
-    pos = free_tile(house, cfg, room, [r.randrange(cfg["W"]), r.randrange(cfg["H"])])
+    pos = r.choice(pond.water(room)) if kind == "duck" else free_tile(house, cfg, room, [r.randrange(cfg["W"]), r.randrange(cfg["H"])])
     stay = C[kind]["stay_hours"]
     born(house, cfg, kind, room, pos, stay)
     seen(house, cfg, house["creatures"][-1], "a %s has come in" % kind)
