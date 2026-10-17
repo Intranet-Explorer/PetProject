@@ -78,19 +78,27 @@ def stone_tile(house, cfg, fam):
     return min(free, key=lambda t: (min((abs(t[0] - k[0]) + abs(t[1] - k[1]) for k in kin), default=0), free.index(t)))
 
 
+def free_name(room, name):
+    """`name`, or, when something there is already called that (two of the dead shared a name), "the other ..." and
+    then "another ..." (never a number)."""
+    for n in [name] + ["the other " + name, "another " + name] + ["%s %s" % (w, name) for w in ("an older", "a quieter", "a smaller", "a far")]:
+        if n not in room["objects"]:
+            return n
+    return name + ", again"
+
+
 def move_stone(house, cfg, room, name):
     """A stone to the resting place: (garden, its name there)."""
     o = room["objects"].pop(name)
     g = house["rooms"][house["resting"]["room"]]
     dead = house["pets"].get(o["memorial"]["pet"]) or {}
     o["pos"] = stone_tile(house, cfg, family(dead))
-    while name in g["objects"]:
-        name = "the " + name
-    g["objects"][name] = o
+    new = free_name(g, name)
+    g["objects"][new] = o
     for m in [m for m in room.get("marks", []) if m["on"] == name]:   # what is written on it goes with it
         room["marks"].remove(m)
-        g.setdefault("marks", []).append(m)
-    return g, name
+        g.setdefault("marks", []).append(dict(m, on=new))
+    return g, new
 
 
 def move_box(house, cfg, room, name):
@@ -103,18 +111,21 @@ def move_box(house, cfg, room, name):
     inside = [n for n, o in room["objects"].items() if o.get("on") == name]
     room["objects"].pop(name)
     box.update(on=sh, pos=list(a["objects"][sh]["pos"]))
-    a["objects"][name] = box
+    new = free_name(a, name)
+    a["objects"][new] = box
     for n in inside:
         o = room["objects"].pop(n)
-        o["pos"] = list(box["pos"])
+        o["pos"], o["on"] = list(box["pos"]), new
+        if o.get("home", {}).get("on") == name:
+            o["home"] = {"room": a["id"], "on": new}
         a["objects"][n] = o
         for m in [m for m in room.get("marks", []) if m["on"] == n]:
             room["marks"].remove(m)
             a.setdefault("marks", []).append(m)
     for s in [s for s in room["spots"] if s.get("on") == name]:
         room["spots"].remove(s)
-        a["spots"].append(dict(s, pos=list(box["pos"])))
-    return a, name
+        a["spots"].append(dict(s, pos=list(box["pos"]), on=new))
+    return a, new
 
 
 def migrate(house, cfg):
