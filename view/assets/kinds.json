@@ -748,5 +748,364 @@
    "label",
    "signpost"
   ]
+ },
+ "fork": {
+  "rank": 1,
+  "wall": false,
+  "not": [
+   "soft",
+   "bouncy",
+   "springy",
+   "sweet",
+   "fragrant"
+  ],
+  "sprite": "kind.fork",
+  "a": "a",
+  "words": [
+   "fork"
+  ]
+ },
+ "spoon": {
+  "rank": 1,
+  "wall": false,
+  "not": [
+   "soft",
+   "bouncy",
+   "springy",
+   "sweet"
+  ],
+  "sprite": "kind.spoon",
+  "a": "a",
+  "words": [
+   "spoon",
+   "ladle"
+  ]
+ },
+ "knife": {
+  "rank": 1,
+  "wall": false,
+  "not": [
+   "soft",
+   "bouncy",
+   "springy",
+   "sweet",
+   "fragrant"
+  ],
+  "sprite": "kind.knife",
+  "a": "a",
+  "words": [
+   "knife",
+   "little knife",
+   "paring knife"
+  ],
+  "tool": true,
+  "counts": "carver"
+ },
+ "plate": {
+  "rank": 1,
+  "wall": false,
+  "not": [
+   "soft",
+   "bouncy",
+   "springy"
+  ],
+  "sprite": "kind.plate",
+  "a": "a",
+  "words": [
+   "plate",
+   "platter"
+  ]
+ },
+ "kettle": {
+  "rank": 1,
+  "wall": false,
+  "not": [
+   "soft",
+   "bouncy",
+   "springy",
+   "sweet"
+  ],
+  "sprite": "kind.kettle",
+  "a": "a",
+  "words": [
+   "kettle"
+  ]
+ },
+ "stick": {
+  "rank": 1,
+  "wall": false,
+  "not": [
+   "soft",
+   "sweet",
+   "glassy"
+  ],
+  "sprite": "kind.stick",
+  "a": "a",
+  "words": [
+   "stick",
+   "staff",
+   "pole"
+  ]
+ },
+ "tube": {
+  "rank": 1,
+  "wall": false,
+  "not": [
+   "soft",
+   "sweet"
+  ],
+  "sprite": "kind.tube",
+  "a": "a",
+  "words": [
+   "tube",
+   "pipe"
+  ]
+ },
+ "brush": {
+  "rank": 1,
+  "wall": false,
+  "not": [
+   "glassy",
+   "heavy",
+   "sweet"
+  ],
+  "sprite": "kind.brush",
+  "a": "a",
+  "words": [
+   "brush"
+  ]
+ },
+ "broom": {
+  "rank": 1,
+  "wall": false,
+  "not": [
+   "glassy",
+   "sweet",
+   "bouncy"
+  ],
+  "sprite": "kind.broom",
+  "a": "a",
+  "words": [
+   "broom",
+   "besom"
+  ]
+ },
+ "bucket": {
+  "rank": 1,
+  "wall": false,
+  "not": [
+   "soft",
+   "bouncy",
+   "springy",
+   "sweet"
+  ],
+  "sprite": "kind.bucket",
+  "a": "a",
+  "words": [
+   "bucket",
+   "pail"
+  ],
+  "store": 2,
+  "inside": true
+ },
+ "torch": {
+  "rank": 1,
+  "wall": false,
+  "not": [
+   "soft",
+   "springy",
+   "bouncy",
+   "sweet",
+   "dark",
+   "quiet"
+  ],
+  "sprite": "kind.torch",
+  "a": "a",
+  "words": [
+   "torch",
+   "firebrand"
+  ]
+ },
+ "needle": {
+  "rank": 1,
+  "wall": false,
+  "not": [
+   "soft",
+   "bouncy",
+   "heavy",
+   "sweet"
+  ],
+  "sprite": "kind.needle",
+  "a": "a",
+  "words": [
+   "needle",
+   "pin"
+  ]
+ },
+ "wheel": {
+  "rank": 1,
+  "wall": false,
+  "not": [
+   "soft",
+   "sweet",
+   "fragrant"
+  ],
+  "sprite": "kind.wheel",
+  "a": "a",
+  "words": [
+   "wheel"
+  ]
+ },
+ "hook": {
+  "rank": 1,
+  "wall": false,
+  "not": [
+   "soft",
+   "bouncy",
+   "sweet"
+  ],
+  "sprite": "kind.hook",
+  "a": "a",
+  "words": [
+   "hook"
+  ]
+ },
+ "spring": {
+  "rank": 1,
+  "wall": false,
+  "not": [
+   "soft",
+   "sweet",
+   "fragrant",
+   "heavy"
+  ],
+  "sprite": "kind.spring",
+  "a": "a",
+  "words": [
+   "spring",
+   "coil"
+  ]
+ },
+ "rod": {
+  "rank": 1,
+  "wall": false,
+  "not": [
+   "glassy",
+   "heavy",
+   "sweet",
+   "bouncy"
+  ],
+  "sprite": "kind.rod",
+  "a": "a",
+  "words": [
+   "fishing rod",
+   "rod",
+   "line"
+  ],
+  "tool": true,
+  "everyday": "fishing rod"
+ },
+ "bottle": {
+  "rank": 1,
+  "wall": false,
+  "not": [
+   "soft",
+   "bouncy",
+   "springy"
+  ],
+  "sprite": "kind.bottle",
+  "a": "a",
+  "words": [
+   "bottle",
+   "flask"
+  ],
+  "found": true
+ },
+ "note bottle": {
+  "rank": 1,
+  "wall": false,
+  "not": [
+   "soft",
+   "bouncy",
+   "springy"
+  ],
+  "sprite": "kind.note bottle",
+  "a": "a",
+  "words": [
+   "bottle with a note"
+  ],
+  "found": true,
+  "everyday": "bottle with a note"
+ },
+ "lens": {
+  "rank": 2,
+  "wall": false,
+  "not": [
+   "soft",
+   "bouncy",
+   "springy"
+  ],
+  "sprite": "kind.lens",
+  "a": "a",
+  "words": [
+   "lens"
+  ],
+  "found": true
+ },
+ "gear": {
+  "rank": 2,
+  "wall": false,
+  "not": [
+   "soft",
+   "bouncy"
+  ],
+  "sprite": "kind.gear",
+  "a": "a",
+  "words": [
+   "gear",
+   "cog"
+  ],
+  "found": true
+ },
+ "ring": {
+  "rank": 2,
+  "wall": false,
+  "not": [
+   "soft",
+   "bouncy"
+  ],
+  "sprite": "kind.ring",
+  "a": "a",
+  "words": [
+   "ring"
+  ],
+  "found": true
+ },
+ "key": {
+  "rank": 2,
+  "wall": false,
+  "not": [
+   "soft",
+   "bouncy"
+  ],
+  "sprite": "kind.key",
+  "a": "a",
+  "words": [
+   "key"
+  ],
+  "found": true
+ },
+ "golden fish": {
+  "rank": 2,
+  "wall": false,
+  "not": [
+   "heavy"
+  ],
+  "sprite": "kind.golden fish",
+  "a": "a",
+  "words": [
+   "golden fish"
+  ],
+  "found": true
  }
 }

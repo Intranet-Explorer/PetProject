@@ -67,7 +67,7 @@ def as_size(v):
 
 def kinds_for(cfg, material):
     """The kinds a thing of this material can be (SPEC-v3.2 §3.1): every kind that does not rule it out."""
-    return [k for k, v in cfg["kinds"].items() if material not in v.get("not", [])]
+    return [k for k, v in cfg["kinds"].items() if material not in v.get("not", []) and not v.get("found")]   # (SPEC-v3.6a §3: what only the pond gives is never made)
 
 
 def everyday_kind(cfg, kind):
@@ -251,6 +251,8 @@ def check_make(a, house, cfg, pet):
     r, room = a.get("recipe"), house["rooms"][pet["room"]]
     if not isinstance(r, dict) or r.get("kind") not in cfg["kinds"]:
         return "no recipe"
+    if cfg["kinds"][r["kind"]].get("found"):   # SPEC-v3.6a §3: only ever found
+        return "nobody here knows how to make %s %s; one might turn up" % (cfg["kinds"][r["kind"]].get("a", "a"), everyday_kind(cfg, r["kind"]))
     if cfg["kinds"][r["kind"]].get("invented"):   # SPEC-v3.5 §3.3: a kind the house invented is made again by one who knows its recipe
         return invent.check_make(a, house, cfg, pet)
     carrying = pet["carrying"] + [s["bit"] for s in to_pick_up(house, cfg, pet, r)]
@@ -499,7 +501,7 @@ def better(house, cfg, pet, mark=False):
         mine = {kind_of(o) for r in rooms for o in made(r).values() if o["made"]["by"] == pet["id"]} | {pair.split("|")[0] for _, pair in pet.get("made_at", [])}
         mine |= {g_["recipe"].get("kind") for g_ in house.get("gone_things", []) if g_.get("by") == pet["id"]}
         new = next((k for k in sorted(cfg["kinds"], key=lambda k: (cfg["kinds"][k].get("rank", 1), k))
-                    if k not in mine and k != "charm" and not cfg["kinds"][k].get("invented") and fresh(k)), None)
+                    if k not in mine and k != "charm" and not cfg["kinds"][k].get("invented") and not cfg["kinds"][k].get("found") and fresh(k)), None)
         out = ([(new, "%s %s, which you have never made" % (cfg["kinds"][new].get("a", "a"), new))] if new else []) \
             + [("new", "something nobody has made yet, from two things never joined before")]
     out = out[:2]
