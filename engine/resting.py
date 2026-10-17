@@ -155,7 +155,10 @@ def carrier(house, dead_id, rid):
 def tick(house, cfg):
     """Over the first world day, one stone or box at a time, each carried by a hob of the family if one is awake."""
     rest = house.get("resting")
-    if not rest or not rest.get("moving"):
+    if not rest:   # (a house that finds its garden and attic as it goes has its resting place once it has both)
+        migrate(house, cfg)
+        return
+    if not rest.get("moving"):
         return
     every = max(R(cfg)["least_ticks"], int(cfg["ticks_per_day"] * R(cfg)["over_days"] / max(1, len(rest["moving"]) + rest.get("moved", 0))))
     if house["tick"] - rest.get("last", rest["began"]) < every:
