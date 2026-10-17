@@ -3,7 +3,7 @@ grows old, and dies; before that it may lay eggs, and what it hands on is a body
 and a couple of things."""
 import re
 
-from . import craft, firsts, genes, names, order, things
+from . import craft, firsts, genes, names, order, resting, things
 from .feel import level
 from .world import (GENES, STAGES, days as world_days, add_event, alive, arrived, family, free_tile, hours, label, moment, new_pet, rnd, ticks)
 
@@ -295,7 +295,7 @@ def bury(house, cfg, pet):
     lived = round(world_days(cfg, pet["born"] or pet["died"], pet["died"]))
     room["objects"][name] = {"pos": free_tile(house, cfg, room, pet["pos"]),
                              "memorial": {"pet": pet["id"], "text": "a stone for %s, who lived %d days and made %d things" % (label(pet), lived, pet["made"])}}
-    order.give_box(house, cfg, room, name)   # and a box beside it for what it left lying about (order.keep)
+    resting.bury(house, cfg, room, name)   # and a box for what it left lying about (order.keep); SPEC-v3.5.12 §4: the stone to the resting place, the box to its family's shelf
     pet["buried"] = True
     if not alive(house) and house["lineage"]["ended"] is None:
         house["lineage"]["ended"] = house["tick"]

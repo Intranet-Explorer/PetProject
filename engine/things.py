@@ -154,7 +154,8 @@ def taken_names(house, cfg):
     taken |= {f["name"] for r in cfg["house"]["rooms"].values() for f in r["fixtures"]} | set(cfg["house"]["bits"])
     taken |= {(p["name"] or "").lower() for p in house["pets"].values()} | {"egg", "visitor", "here", "the little one", "middle"}
     taken |= {label(p).lower().replace("the ", "", 1) for p in house["pets"].values()}   # nor the label of a pet that has no name
-    taken |= {"moth", "beetle", "mouse", "bird", "sweeper"} | {d + " door" for d in ("north", "south", "east", "west")}
+    taken |= {"moth", "beetle", "mouse", "bird", "sweeper", "train", "platform"} | {d + " door" for d in ("north", "south", "east", "west")}
+    taken |= {h["name"] for c in house["creatures"] if c["kind"] == "train" for h in c["held"]}   # (SPEC-v3.5.12: nor what is in the train's cart)
     return taken
 
 

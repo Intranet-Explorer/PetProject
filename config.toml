@@ -14,6 +14,7 @@ turbo = false             # SPEC-v3 amendment: world time does not follow the wa
                           # flight the world waits; otherwise it runs straight on to the next thing due.
 
 [steps]                   # real seconds each kind of step takes once the pet is in place; walking is one tile a tick
+ask_train = 3             # SPEC-v3.5.12 §3
 observe = 10
 look = 8
 move = 2
@@ -332,6 +333,7 @@ tend_grow = 0.01          # what tending adds to a plant's growth
 sing_again_seconds = 600  # it does not sing by itself more often than this
 
 [signs]                   # §5.4: the sign over a pet's head while it carries out a step it decided (sprite icon.act.<name>)
+ask_train = "box"
 look = "eye"
 go = "door"
 speak = "speech"

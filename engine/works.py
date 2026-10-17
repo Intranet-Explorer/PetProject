@@ -127,6 +127,9 @@ def built(house, cfg, g):
     if g.get("sweeper"):   # SPEC-v3.5.8 §4.2 (and a second: SPEC-v3.5.9 §5)
         from . import sweeper
         sweeper.make(house, cfg, int(g["sweeper"]))
+    if g.get("rail"):   # SPEC-v3.5.12 §3: the track is laid and the train rolls out
+        from . import rail
+        rail.make(house, cfg)
     if g.get("stock"):   # SPEC-v3.5.9 §5: the house store fills the machine with every base material
         for m in machine.state(house, cfg)["stock"]:
             machine.fill(house, cfg, m, g["stock"])
@@ -160,6 +163,9 @@ def lay(house, cfg, new=None):
             stock.setdefault(m, 0)
             if b is new:
                 machine.fill(house, cfg, m, M["restock"])
+        if b.get("rail") and b is not new:   # (built before: the train is there, made once)
+            from . import rail
+            rail.make(house, cfg)
         if b.get("sweeper") and b is not new:   # (built before this house was opened: it is there; made once, on its dock)
             from . import sweeper
             sweeper.make(house, cfg, int(b["sweeper"]))

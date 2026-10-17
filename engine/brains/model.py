@@ -69,6 +69,8 @@ WRITTEN = {   # how each action is written, shown only for the actions it can do
 }
 from ..machine import WRITTEN as _machine, schema as machine_schema   # SPEC-v3.5 §4.3
 WRITTEN.update(_machine)
+from ..rail import WRITTEN as _rail, schema as rail_schema   # SPEC-v3.5.12 §3
+WRITTEN.update(_rail)
 FORMAT_OLD = """
 Reply with one JSON object and nothing else:
 {"thought": "<short, why>", "intention": "<what you mean to do, in a few words>", "steps": [<2 to 5 of the things you can do, carried out in order>], "expect": "<how you expect to feel once the steps are done, or what you expect to see>"}
@@ -166,6 +168,7 @@ def schema(ctx):
         "revise_belief": [one("revise_belief", id={"enum": c["beliefs"]}, statement=text(240))] if c["beliefs"] else [],
     }
     v.update(machine_schema(c, one))
+    v.update(rail_schema(c, one))
     step = {"anyOf": [x for a in c["allowed"] for x in v[a]]}
     if not step["anyOf"]:
         step = {"anyOf": v["observe"]}

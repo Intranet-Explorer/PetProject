@@ -26,10 +26,10 @@
   ["tile.wall.dark.w", null, null, null, null, null, null, null, null, null, null, null, null, "tile.wall.dark.e"],
   ["tile.wall.dark.sw", "tile.wall.dark.s", "tile.wall.dark.s", "tile.wall.dark.s", "tile.wall.dark.s", "tile.wall.dark.s", "tile.wall.dark.s", "tile.wall.dark.s", "tile.wall.dark.s", "tile.wall.dark.s", "tile.wall.dark.s", "tile.wall.dark.s", "tile.wall.dark.s", "tile.wall.dark.se"]
  ],
- "decor": [{"sprite": "decor.cobweb", "at": [0, -2], "layer": "wall"}, {"sprite": "decor.cobweb.right", "at": [11, -2], "layer": "wall"}, {"sprite": "decor.crate.apples", "at": [2, 0], "layer": "floor"}, {"sprite": "decor.shelf.pots", "at": [4, 0], "layer": "floor"}, {"sprite": "decor.crate", "at": [11, 0], "layer": "floor"}, {"sprite": "decor.crate", "at": [11, 1], "layer": "floor"}, {"sprite": "decor.crate.empty", "at": [0, 1], "layer": "floor"}, {"sprite": "decor.sack", "at": [0, 7], "layer": "floor"}, {"sprite": "decor.sack", "at": [1, 7], "layer": "floor"}, {"sprite": "decor.crate.empty", "at": [11, 7], "layer": "floor"}, {"sprite": "decor.keg", "at": [11, 6], "layer": "floor"}, {"sprite": "decor.sack", "at": [0, 6], "layer": "floor"}, {"sprite": "decor.barrel.small", "at": [4, 7], "layer": "floor"}, {"sprite": "decor.crate.bread", "at": [3, 7], "layer": "floor"}],
+ "decor": [{"sprite": "decor.cobweb", "at": [0, -2], "layer": "wall"}, {"sprite": "decor.cobweb.right", "at": [11, -2], "layer": "wall"}],
  "fixtures": {"crates": {"pos": [0, 0], "sprite": "fix.crates"}, "shelves": {"pos": [9, 0], "sprite": "fix.shelves"}, "corner crates": {"pos": [10, 7], "sprite": "fix.corner crates"}, "old lantern": {"pos": [6, 0], "sprite": "fix.old lantern", "wall": true}, "heavy book": {"pos": [3, 0], "sprite": "fix.heavy book"}},
- "blocked": [[1, 0], [10, 0], [2, 0], [4, 0], [11, 0], [11, 1], [0, 1], [0, 7], [1, 7], [11, 7], [11, 6], [0, 6], [4, 7], [3, 7]],
- "wall_slots": [[5, 0], [2, 0]],
+ "blocked": [],
+ "wall_slots": [[5, 0], [8, 0]],
  "bit_spots": {},
  "light": {"window": [], "night": 0.8, "day": 0.4}
 }

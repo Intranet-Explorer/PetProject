@@ -27,7 +27,7 @@ def keeps(o):
 
 def stores(cfg, room):
     """{name: places left} for everything here that keeps things. (Not a keepsake box: it is for one pet's things.)"""
-    return {n: cap(cfg, o) - len(held(room, n)) for n, o in room["objects"].items() if cap(cfg, o) and not keeps(o)}
+    return {n: cap(cfg, o) - len(held(room, n)) for n, o in room["objects"].items() if cap(cfg, o) and not keeps(o) and not o.get("fix", {}).get("memory") and not o.get("fix", {}).get("platform")}
 
 
 def can_hang(cfg, o):
@@ -181,7 +181,9 @@ def scrap(house, cfg, room, name, newest=None):
     kept (above), a tool, a place things are kept in, what has things in it, what is planted, what is too heavy to
     move, a lit light, or a bed-thing where someone sleeps. `newest`: {owner: ticks of its newest charms}, if known."""
     o, M = room["objects"][name], cfg["make"]
-    if "made" not in o or kept(house, cfg, room, name) or held(room, name) or o.get("planted") or cap(cfg, o) or things.prop(cfg, o).get("fixed"):
+    if "made" not in o or kept(house, cfg, room, name) or held(room, name) or o.get("planted") or things.prop(cfg, o).get("fixed"):
+        return None
+    if cap(cfg, o) and any(s.get("on") == name for s in room["spots"]):   # (SPEC-v3.5.12 §2: an empty box nobody has used in a world day is scrap; one holding anything is storage)
         return None
     kind = o["made"]["recipe"].get("kind")
     if kind in cfg["craft"]["tool"] or cfg["kinds"].get(kind, {}).get("tool") or (o.get("state") == "on" and things.prop(cfg, o).get("light")):
@@ -324,6 +326,10 @@ def place_for(house, cfg, pet, room, name):
     ("at", tile); None when there is nowhere, and then it is left where it lies."""
     o = room["objects"][name]
     home, left = o.get("home"), stores(cfg, room)
+    from . import store
+    if store.is_store(room):   # SPEC-v3.5.12 §1: in the store, on the shelf for its kind
+        shelf = store.shelf_for(house, cfg, room, o)
+        return ("on", shelf) if shelf else None
     if home and home.get("room") == room["id"]:
         if home.get("on") and left.get(home["on"], 0) > 0:
             return "on", home["on"]
@@ -352,8 +358,11 @@ def job(house, cfg, pet, room):
     out, objs = [], room["objects"]
     fresh = house["tick"] - ticks(cfg, cfg["order"]["just_out_seconds"])   # what has only just been taken out, brought over or rolled across is left a while
     clear = [n for n in clutter_of(house, cfg, room) if not objs[n].get("on")]   # SPEC-v3.5.4 §1: a crowded room's old things go into a box or onto a shelf here, by whoever is about
+    from . import store
+    going = set(store.out_of_place(house, cfg, room)) if house.get("rail") else set()   # SPEC-v3.5.12 §2: what goes to the store goes by the train, not onto a shelf here
+    clear = [n for n in clear if n not in going] + [n for n in store.to_shelve(house, cfg, room) if n not in clear]   # (in the store: what is not yet on its shelves)
     # ponytail: only into what keeps things in this room; a crowded room with none of it free waits for the machine (its owners), boxes elsewhere if that falls short
-    for n in [n for n in loose(house, cfg, room) + [n for n in clear if n not in loose(house, cfg, room)] if objs[n].get("kept", -10 ** 9) <= fresh]:   # anyone may put anyone's thing in its place here: it stays its owner's, in the same room
+    for n in [n for n in loose(house, cfg, room) + [n for n in clear if n not in loose(house, cfg, room)] if objs[n].get("kept", -10 ** 9) <= fresh and n not in going]:   # anyone may put anyone's thing in its place here: it stays its owner's, in the same room
         where = place_for(house, cfg, pet, room, n)
         if where:
             out.append({"what": n, "job": ["thing", n, where[0], where[1]], "pos": objs[n]["pos"], "bonus": cfg["order"]["clear_pull"] if n in clear else 0.0})
@@ -377,7 +386,8 @@ def do_job(house, cfg, pet, room, job):
         season.stored(house, cfg, pet, room, took, place)   # SPEC-v3.5 §5: food put away in something is put by, and keeps
         return into(cfg, room, place) if took else ""
     o = room["objects"].get(name)
-    if not o or "made" not in o or o.get("on"):
+    from . import store
+    if not o or "made" not in o or (o.get("on") and name not in store.to_shelve(house, cfg, room)):
         return ""
     if how == "on" and (place not in room["objects"] or (stores(cfg, room).get(place, 0) <= 0 and not keeps(room["objects"][place]))):
         return ""
