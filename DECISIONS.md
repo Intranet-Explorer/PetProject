@@ -2178,3 +2178,23 @@ backup `data.backup-v3.5.11-2026-10-16`, one restart at tick 110391.
   then newest. The rest is scrap and goes the ordinary way, by the hobs' "clear scrap" and the sweeper. No data edited.
 - **Charms** on a shelf are kept only while their owner is alive and they are among its newest three.
 - **The log:** each pickup is a creature row, "swept up X, lying N hours" for a bit, "swept up NAME" for a thing.
+
+## Part 30: v3.5.12, what the house really needs, and titles that don't repeat (17 October 2026)
+
+Engine. Tyler, after a day of lamps (10 of 27 things made, 14 of 35 the day before).
+
+- **Why lamps:** a room counted as lit only by a fixture or a made thing whose stuff gives light. A "hard lamp" gives
+  none, so the machine room, with five lamps, still had "no light of its own", and every hob past its charms was asked
+  for a sixth. The lamps it made lay on the floor, were cleared as scrap a day later, and the room asked again.
+- **Needs** (`things.room_needs`): a room with no light fixture needs one light (any lamp, candle or lantern, or
+  anything whose stuff gives light, not a charm); one with a seat, a cushion (or a blanket, nest, mat or rug); one with
+  a meal place, a cup or a bowl; one a hob sleeps in, a rug (or a blanket or mat); one with three or more things on the
+  floor, a shelf, a box or a basket. Then a tool nobody in the house has, a box of the hob's own, and the Works' goal.
+  One made thing that meets a need crosses it off, and the newest such thing is in use, not scrap (`things.meets`).
+- **Turns:** the line offers at most two, the longest since offered first, never one kind twice to the same hob in a
+  world day (`pet["offered"]`, pruned to the day). With nothing left, a catalog kind it has never made, and "something
+  nobody has made yet, from two things never joined before". The two are joined by "or", not "and".
+- **Titles:** no two things about the house share a title. A second "Machine Room Light" takes its stuff, nature,
+  colour or size ("Wax Machine Room Light"), else another word. Titles already given stay.
+- **RUNNING.md:** a bar that moves the wrong way one day, modestly and with a clear cause, is watched a second day;
+  roll back when it is worse two days running, worse by a lot, or something broke.
