@@ -58,8 +58,8 @@ have = lambda n: n in sprites or bad("no sprite %r" % n)
 
 # ---- the catalog of kinds ----
 for k, v in kinds.items():
-    if have(v.get("sprite", "")) is True and sprites[v["sprite"]].get("tint") != "hue":
-        bad("kind %s: its sprite is not marked to be recoloured" % k)
+    if have(v.get("sprite", "")) is True and sprites[v["sprite"]].get("tint") not in ("hue", "none"):   # "none": a kind that keeps its own colours (SPEC-v3.6a §5)
+        bad("kind %s: its sprite is not marked to be recoloured, or to keep its colours" % k)
     for key in ("rank", "wall", "not", "a"):
         if key not in v:
             bad("kind %s: no %r" % (k, key))
@@ -161,7 +161,7 @@ for kind, room in house["rooms"].items():
         if "water" in f:
             water = {tuple(t) for t in f["water"]}
             drawn = {(x - 1, y - 2) for y, r in enumerate(L["floor"]) for x, n in enumerate(r) if n and n.startswith("tile.pond")}
-            if water != drawn:
+            if drawn and water != drawn:   # (SPEC-v3.6a: the view draws the pond's water from the snapshot; a floor that draws it too must agree)
                 say("the pond is drawn on %s but the engine's water is %s" % (sorted(drawn), sorted(water)))
             taken |= water
     for name in L.get("fixtures", {}):
