@@ -164,6 +164,24 @@ async def run(d):
     pet["made_at"] = [[h["tick"] - i, "charm|soft"] for i in (1, 2, 3)]
     assert things.charm_count(h, cfg, pet) >= 3, "charms made in the last world day count toward its three"
     assert things.better(h, cfg, pet), "and something better is offered"
+    # ---- 17 October 2026: needs crossed off when met, taking turns, once a day each; titles never repeat ----
+    dark = next(r for r in h["rooms"].values() if r["type"] and things.room_needs(h, cfg, r)[:1] and things.room_needs(h, cfg, r)[0][0] == "lamp")
+    pet["rooms"], pet["offered"] = {dark["id"]: h["tick"]}, {}
+    lamp = lambda: [l for l in things.better(h, cfg, pet) if "a lamp" in l]
+    assert lamp(), "a dark room asks for a light"
+    dark["objects"]["hard lamp"] = {"pos": [1, 2], "made": {"tick": h["tick"], "by": "x", "owner": "x", "bits": [], "recipe": {"kind": "lamp", "material": "hard"}}}
+    assert not lamp() and things.meets(h, cfg, dark, "hard lamp") and order.scrap(h, cfg, dark, "hard lamp") is None, "one lamp, even one that gives no light, lights it, and is kept"
+    del dark["objects"]["hard lamp"]
+    seen = [things.better(h, cfg, pet, mark=True) for _ in range(4)]
+    flat = [l for s_ in seen for l in s_ if "never joined" not in l]
+    assert lamp() == [] and len(flat) == len(set(flat)) and any("a lamp" in l for l in seen[0]), "each kind once a world day: %s" % seen
+    assert any("never made" in l or "never joined" in l for l in seen[-1]), "and then something it has never made: %s" % seen
+    h["tick"] += cfg["ticks_per_day"]
+    assert lamp(), "a day on, it may be offered again"
+    rec, rec2 = {"kind": "lamp", "material": "warm", "color": "red"}, {"kind": "lamp", "material": "warm", "color": "red"}
+    room["objects"]["warm lamp"] = {"pos": [1, 3], "made": {"tick": 1, "by": "x", "owner": "x", "bits": [], "recipe": dict(things.named(h, cfg, rec, ["wax"], pet, room, "machine room light") and rec, name="warm lamp")}}
+    things.named(h, cfg, rec2, ["wax"], pet, room, "machine room light")
+    assert rec["title"] == "Machine Room Light" and rec2["title"] == "Wax Machine Room Light", (rec, rec2)
     assert world.unnumbered("Seed Rest Six") == "Seed Rest" and not world.ends_in_number("Odo II") and world.ends_in_number("porous rest two")
     room["objects"]["felt cushion"] = {"pos": [1, 1], "made": {"recipe": {"name": "felt cushion"}}}
     assert not world.ends_in_number(things.unique_name(h, cfg, "felt cushion two")), "a name told apart by a word"

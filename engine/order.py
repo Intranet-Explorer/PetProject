@@ -186,6 +186,8 @@ def scrap(house, cfg, room, name, newest=None):
     kind = o["made"]["recipe"].get("kind")
     if kind in cfg["craft"]["tool"] or cfg["kinds"].get(kind, {}).get("tool") or (o.get("state") == "on" and things.prop(cfg, o).get("light")):
         return None
+    if things.meets(house, cfg, room, name):   # (17 October 2026: the newest thing that meets a room's need is in use)
+        return None
     if kind in KEEP["sleeping corner"] and any(p.get("sleeps_in") == room["id"] and dist(p.get("sleeps_at") or p["pos"], o["pos"]) <= 1
                                                for p in house["pets"].values() if p["stage"] not in ("egg", "dead")):
         return None

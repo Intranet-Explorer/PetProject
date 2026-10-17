@@ -195,8 +195,9 @@ def perceive(house, cfg, pet, mem):
     elif "write" in can and not walls.marks(room):
         senses.append("something hard that you carry would scratch a mark into the wall, faintly")
     if "make" in can and things.charm_count(house, cfg, pet) >= cfg["make"]["charms"]:   # SPEC-v3.5.9.1: past its few charms, a better thing to make
+        could = things.better(house, cfg, pet, mark=True)
         senses.append("you have made %d charms lately: another would be worth little%s" % (things.charm_count(house, cfg, pet),
-                      "; the house could use " + " and ".join(things.better(house, cfg, pet)) if things.better(house, cfg, pet) else ""))
+                      "; the house could use " + " or ".join(could) if could else ""))
     if "name" in can and "egg" in actions.nameable(house, pet):
         senses.append("the egg here is nobody's, and nobody has given it a name")
     if "lay_egg" in can or ("name" in can and "egg" in actions.nameable(house, pet)):   # SPEC-v3.5.8 §2: five names to choose from (one honours its family)

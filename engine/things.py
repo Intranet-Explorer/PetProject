@@ -360,8 +360,18 @@ def named(house, cfg, recipe, bits, pet, room, own):
     name = everyday(house, cfg, recipe, bits, pet, room, title)
     recipe["name"] = name
     if title and title != name:
-        recipe["title"] = " ".join(w if w in ("of", "the", "a", "an", "and") else w.capitalize() for w in title.split())
+        recipe["title"] = " ".join(w if w in ("of", "the", "a", "an", "and") else w.capitalize() for w in own_title(house, cfg, recipe, bits, title).split())
     return name, recipe.get("title")
+
+
+def own_title(house, cfg, recipe, bits, title):
+    """17 October 2026: no two things about the house share a title. A second "machine room light" is told apart by a
+    telling word, its stuff, its nature, its colour or its size ("sand machine room light"), else by another."""
+    taken = {(o["made"]["recipe"].get("title") or "").lower() for r in house["rooms"].values() if r["type"] for o in made(r).values()}
+    stuff = next((b for b in bits if recipe.get("material") in cfg["house"]["bits"].get(b, {}).get("can", [])), None)
+    words = [stuff, recipe.get("material"), recipe.get("color"), {1: "small", 3: "big"}.get(recipe.get("size"))] + OTHER
+    tries = [title] + ["%s %s" % (w, title) for w in words if w and w not in title.split()]
+    return next((t for t in tries if t not in taken), unique_name(house, cfg, title))
 
 
 VERB = {"fluff": "stitched", "cloth": "stitched", "felt": "stitched", "feather": "bound", "moss": "packed", "leaf": "folded", "petal": "pressed",
@@ -422,21 +432,79 @@ def charm_base(cfg, carrying, material):
     return next((b for b in rest if b in cfg["make"]["charm_takes"]), None)
 
 
-def better(house, cfg, pet):
-    """SPEC-v3.5.9.1: one or two useful things the house wants just now, to offer a hob past its few charms: a light
-    for a room it knows that has none, a cushion where hobs sit, and what the Works is building."""
+LIGHTS, SOFT, CUPS, STORES = ("lamp", "candle", "lantern"), ("cushion", "blanket", "nest", "bed-mat", "rug"), ("cup", "bowl"), ("shelf", "box", "basket")
+
+
+def kind_of(o):
+    return o["made"]["recipe"].get("kind") if "made" in o else None
+
+
+def gives_light(cfg, o):
+    """A made light: a lamp, a candle, a lantern, or anything whose stuff gives light (not a charm)."""
+    return "made" in o and kind_of(o) != "charm" and (kind_of(o) in LIGHTS or bool(prop(cfg, o).get("light")))
+
+
+def room_needs(house, cfg, room, pet=None):
+    """17 October 2026: what a room really lacks, [(kind, what meets it, the words)], whether or not it is met. One
+    made thing that meets it crosses it off: a room is lit by one light, a seat cushioned by one cushion."""
+    fix, name = [o.get("fix", {}) for o in room["objects"].values()], room["name"]
+    of = lambda kinds: lambda o: kind_of(o) in kinds
+    sleeper = next((p for p in house["pets"].values() if p["stage"] not in ("egg", "dead") and p.get("sleeps_in") == room["id"]), None)
+    lying = sum(1 for o in made(room).values() if not o.get("on") and not o.get("wall") and not cfg["kinds"].get(kind_of(o), {}).get("furniture"))
+    out = [("lamp", lambda o: gives_light(cfg, o), "a lamp or a candle for %s, which has no light" % name)] if not any("light" in f for f in fix) else []
+    out += [("cushion", of(SOFT), "a cushion for %s, where hobs sit" % name)] if any("rest" in f for f in fix) else []
+    out += [("cup", of(CUPS), "a cup or a bowl for %s, where hobs eat" % name)] if any("meal" in f for f in fix) else []
+    out += [("rug", of(("rug", "blanket", "bed-mat")), "a rug for %s, where %s" % (name, "you sleep" if sleeper is pet else label(sleeper) + " sleeps"))] if sleeper else []
+    out += [("shelf", of(STORES), "a shelf or a box for %s, where things lie about on the floor" % name)] if lying >= 3 else []
+    return out
+
+
+def meets(house, cfg, room, name):
+    """The newest made thing that meets one of the room's needs is in use, not scrap: else the lamp that lit the room
+    is cleared away and the room asks for another."""
+    for _, ok, _ in room_needs(house, cfg, room):
+        those = [(o["made"]["tick"], n) for n, o in made(room).items() if ok(o)]
+        if those and max(those)[1] == name:
+            return True
+    return False
+
+
+def better(house, cfg, pet, mark=False):
+    """SPEC-v3.5.9.1, 17 October 2026: one or two things the house really needs just now, to offer a hob past its few
+    charms, crossed off when met: a light for a dark room, a cushion where hobs sit, a cup where they eat, a rug where
+    one sleeps, a shelf where things lie about, a tool nobody has, a box of its own, the Works' goal. They take turns,
+    and no kind is offered to the same hob twice in a world day. With nothing needed, a kind it has never made, or
+    something nobody has made yet. `mark`: this is the offer (the packet), so remember it."""
     from . import works
-    known = [house["rooms"][rid] for rid in pet.get("rooms", {}) if house["rooms"].get(rid, {}).get("type")]
-    lit = lambda r: any("light" in o.get("fix", {}) or ("made" in o and prop(cfg, o).get("light")) for o in r["objects"].values())
-    soft = lambda r: any("made" in o and o["made"]["recipe"].get("kind") in ("cushion", "blanket", "nest", "bed-mat", "rug") for o in r["objects"].values())
-    sits = lambda r: any("rest" in o.get("fix", {}) or o.get("fix", {}).get("bench") for o in r["objects"].values())
-    out = [f(r) for f, ok in ((lambda r: "a lamp or a candle for %s, which has no light of its own" % r["name"], lambda r: not lit(r)),
-                              (lambda r: "a cushion for %s, where hobs sit" % r["name"], lambda r: sits(r) and not soft(r)))
-           for r in known if ok(r)][:1]
+    tick, day = house["tick"], cfg["ticks_per_day"]
+    offered = pet.get("offered", {})
+    fresh = lambda k: tick - offered.get(k, -day) >= day
+    rooms = [r for r in house["rooms"].values() if r["type"]]
+    needs = [(k, line) for r in rooms if r["id"] in pet.get("rooms", {}) for k, ok, line in room_needs(house, cfg, r, pet)
+             if not any(ok(o) for o in r["objects"].values())]
+    have = {kind_of(o) for r in rooms for o in made(r).values()}
+    needs += [(t, "%s, %s %s, which nobody in the house has" % (T["want"].replace("make ", "", 1), cfg["kinds"].get(t, {}).get("a", "a"), t))
+              for t, T in cfg["craft"]["tool"].items() if t not in have]
+    if not any(o["made"]["owner"] == pet["id"] and kind_of(o) in STORES for r in rooms for o in made(r).values()):
+        needs.append(("box", "a box of your own to keep things in"))
     g = works.goal(house, cfg)
     if g:
-        out.append("scrap for the Works, which is building %s" % g["what"])
-    return out[:2]
+        needs.append(("works", "scrap for the Works, which is building %s" % g["what"]))
+    out = []
+    for k, line in sorted(needs, key=lambda n: offered.get(n[0], -day)):   # (the longest since it was offered first: they take turns)
+        if fresh(k) and k not in {o[0] for o in out}:
+            out.append((k, line))
+    if not out:
+        mine = {kind_of(o) for r in rooms for o in made(r).values() if o["made"]["by"] == pet["id"]} | {pair.split("|")[0] for _, pair in pet.get("made_at", [])}
+        mine |= {g_["recipe"].get("kind") for g_ in house.get("gone_things", []) if g_.get("by") == pet["id"]}
+        new = next((k for k in sorted(cfg["kinds"], key=lambda k: (cfg["kinds"][k].get("rank", 1), k))
+                    if k not in mine and k != "charm" and not cfg["kinds"][k].get("invented") and fresh(k)), None)
+        out = ([(new, "%s %s, which you have never made" % (cfg["kinds"][new].get("a", "a"), new))] if new else []) \
+            + [("new", "something nobody has made yet, from two things never joined before")]
+    out = out[:2]
+    if mark:
+        pet["offered"] = {k: t for k, t in offered.items() if tick - t < day} | {k: tick for k, _ in out}
+    return [line for _, line in out]
 
 
 def drop_bits(house, cfg, room, pos, bits):
