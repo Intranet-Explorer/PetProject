@@ -532,6 +532,16 @@ words = ["hammer", "hammers", "knock", "knocks", "knocking", "mallet"]
 tool = "hammer"
 title = "Hammer"
 text = "A hammer is a tool for knocking things together. It has a heavy head, a stone or a hard brick, tied with cord or rope to a handle of wood. The weight of the head does the work."
+[[entry]]
+words = ["fish", "fishing", "fished", "rod", "rods", "angling", "catch"]
+tool = "rod"
+title = "Fishing"
+text = "Fish can be caught from a pond with a paw, slowly and seldom, or with a fishing rod. A fishing rod is a long stick with a string tied to its tip and a hook on the end. The hook goes in the water and the fish bite it. The best place to fish is the end of a dock, out over deep water; a pond fished too often is fished thin, and the fish come back slowly."
+[[entry]]
+words = ["hook", "hooks"]
+tool = "rod"
+title = "Hook"
+text = "A hook is a small bent piece of wire or metal with a point. Tied to a string on a stick it makes a fishing rod. Hooks are also found, now and then, at the bottom of ponds."
 
 [knowing]
 inherited = 0.5           # how likely a child is to start out knowing each thing its parent knew
@@ -548,6 +558,11 @@ lantern = ["clear wax", "fired clay|glass|sharp stone|clay tile"]   # clear wax 
 carver = ["sharp stone|fired clay"]
 trowel = ["fired clay|carved wood"]
 hammer = ["sharp stone|pebble|mud brick|stone", "wood|carved wood|plank", "rope|vine cord|cord"]
+rod = ["wood|carved wood|reed|dry reed|waterlogged wood", "string|fibre|rope|vine cord", "hook|wire|metal"]   # SPEC-v3.6a §2: a stick, string and a hook
+knife = ["sharp stone|fired clay|metal"]
+broom = ["reed|dry reed|wicker|fibre", "wood|carved wood"]
+bucket = ["wood|carved wood|fired clay|metal"]
+torch = ["wood|carved wood", "tinder|clear wax|wax|resin"]
 
 # ---- tools (§3.4): things like any other, that wear with use and can be mended ----
 
@@ -561,6 +576,11 @@ does = "plant"
 uses = 16
 without = "you need something to dig with to plant this"
 want = "make something to dig with"
+[tool.rod]                 # SPEC-v3.6a §2: better odds at the pond; the only way to the rare things, from the dock
+does = "fish"
+uses = 20
+without = "a paw in the water catches little; a fishing rod would do better"
+want = "make something to fish with"
 [tool.hammer]
 does = "mend"
 uses = 20

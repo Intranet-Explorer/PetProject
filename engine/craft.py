@@ -20,6 +20,7 @@ SKILLS = {   # how each feels as it grows: never a number (§2.2)
     "tidying": ["", "you are getting quicker at putting things straight", "you put a room straight quickly", "a room falls into order under your paws"],
     "music": ["", "a tune stays with you a little better", "you hold a tune well", "you carry a tune true"],
     "tending": ["", "you are getting a feel for growing things", "growing things do well under your paws", "you know what a growing thing needs"],
+    "fishing": ["", "you are getting the knack of a line in the water", "you know where the fish lie", "the fish come to your line as if you called them"],
     "reading": ["", "the small writing is a little easier", "you read the small writing well", "the book gives up what it knows to you"],
 }
 

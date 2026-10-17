@@ -12,6 +12,7 @@ from . import season
 from . import build
 from . import machine
 from . import hub
+from . import pond
 from . import names as naming
 from .world import a as a_bit
 from .world import LONG_AGO, STAGES, add_event, beside, dist, free_tile, here, label, relation, rnd, ticks
@@ -221,7 +222,9 @@ def targets(house, cfg, pet, mem, name, A):
             return []   # nothing to put away, or someone is already putting that very thing away
         pull = order.clutter(house, cfg, room) * cfg["body"]["mess_pull"] * (0.4 + 1.2 * pet["temper"].get("orderly", 0.5))
         place = objs[job["job"][3]]["pos"] if job["job"][2] == "on" else job["job"][3]   # the shelf, the place on the wall or the tile it goes to: it is carried there
-        return [{"what": job["what"], "job": job["job"], "goal": near(job["pos"]), "to": None if dist(job["pos"], place) <= 1 else beside(cfg, place, job["pos"]), "bonus": pull + job.get("bonus", 0.0)}]
+        broom = any(things.kind_of(o) == "broom" for o in things.made(room).values())   # SPEC-v3.6a §5: a broom tidies faster
+        return [{"what": job["what"], "job": job["job"], "goal": near(job["pos"]), "to": None if dist(job["pos"], place) <= 1 else beside(cfg, place, job["pos"]), "bonus": pull + job.get("bonus", 0.0),
+                 **({"seconds": [s / 2 for s in A["seconds"]]} if broom else {})}]
     if do == "seat":   # something to sit or lie on that nobody is on: it goes and settles on it
         S = cfg["body"]["seats"]
         seats = [n for n, o in objs.items() if ("rest" in o.get("fix", {}) or "soft" in o.get("fix", {}) or n in S or o.get("made", {}).get("recipe", {}).get("kind") in S)
@@ -255,6 +258,8 @@ def targets(house, cfg, pet, mem, name, A):
             return []
         n = goes[0]
         return [{"what": n, "goal": near(objs[n]["pos"]), "to": beside(cfg, at, objs[n]["pos"]), "bonus": cfg["body"]["mess_pull"] * (2.0 if tr else 1.0)}]
+    if do == "fish":   # SPEC-v3.6a §2: at the water's edge or the dock's end
+        return pond.targets(house, cfg, pet, mem, room, A)
     if do == "ride":   # SPEC-v3.5.12 §3: the tram, while the train stands here: little ones and old ones
         tr = rail.train(house)
         t = rail.tram(tr) if tr else None
@@ -415,10 +420,10 @@ def choose(mind, fidget=False):
         b["bare"] = len(lately) < 3 and not new
     _, name, t = best
     A = cfg["activities"][name]
-    lo, hi = A["seconds"]
+    lo, hi = t.get("seconds") or A["seconds"]
     now = {"name": name, "do": A["do"], "what": t.get("what"), "who": t.get("who"), "where": t.get("where"), "job": t.get("job"), "door": t.get("door"), "trip": t.get("trip"), "creature": t.get("creature"),
             "goal": t.get("goal"), "to": t.get("to"), "want": t.get("want"), "left": ticks(cfg, r.uniform(lo, hi)), "since": h["tick"], "began": None, "passive": bool(A.get("passive")),
-            "icon": cfg["process_signs"].get(t.get("how")) or A.get("icon"), "voice": A.get("voice")}
+            "icon": cfg["process_signs"].get(t.get("how")) or A.get("icon"), "voice": A.get("voice"), **({"fish": t["fish"]} if t.get("fish") else {})}
     now["doing"], now["of"] = say(cfg, h, pet, now, "doing"), now["left"]   # in the page's words, and the packet's
     return now
 
@@ -566,6 +571,8 @@ def finish(mind, now, cut=False):
             elif do == "train" and o is not None and "made" in o:   # SPEC-v3.5.12 §2-3
                 where = rail.put_on(h, cfg, pet, room, name)
                 done = bool(where)
+            elif do == "fish":   # SPEC-v3.6a §2
+                told, fx, key = pond.landed(mind, now)
             elif do == "ride":
                 tr = rail.train(h)
                 done = bool(tr and rail.board(h, cfg, tr, pet))
@@ -589,6 +596,10 @@ def finish(mind, now, cut=False):
                 pet["ready"] = h["tick"]
             elif do == "tend" and o is not None and o.get("planted"):
                 craft.water(h, cfg, pet, room, name)
+                if any(things.kind_of(x) == "bucket" for x in things.made(room).values()):   # SPEC-v3.6a §5: with a bucket, water for everything planted here
+                    for n2, x in room["objects"].items():
+                        if x.get("planted") and x["planted"]["grow"] < 1 and not x["planted"].get("wilted") and n2 != name:
+                            craft.water(h, cfg, pet, room, n2)
             elif do == "place":   # it is where the thing can be tried, with the thing: its mind is told, and thinks sooner
                 slot, where = "booked" if now["where"].startswith("ask ") else "placed", now["where"]
                 other, asking = h["pets"].get(now.get("who") or ""), where.startswith("ask ")

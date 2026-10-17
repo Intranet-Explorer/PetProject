@@ -139,6 +139,9 @@ def built(house, cfg, g):
     if g.get("rail"):   # SPEC-v3.5.12 §3: the track is laid and the train rolls out
         from . import rail
         rail.make(house, cfg)
+    if g.get("dock"):   # SPEC-v3.6a §1: a dock out over the pond
+        from . import pond
+        pond.build_dock(house, cfg, new=True)
     if g.get("stock"):   # SPEC-v3.5.9 §5: the house store fills the machine with every base material
         for m in machine.state(house, cfg)["stock"]:
             machine.fill(house, cfg, m, g["stock"])
@@ -173,6 +176,9 @@ def lay(house, cfg, new=None):
             stock.setdefault(m, 0)
             if b is new:
                 machine.fill(house, cfg, m, M["restock"])
+        if b.get("dock") and b is not new:   # (built before: the dock is there, laid once)
+            from . import pond
+            pond.build_dock(house, cfg)
         if b.get("rail") and b is not new:   # (built before: the train is there, made once)
             from . import rail
             rail.make(house, cfg)

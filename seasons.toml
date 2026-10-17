@@ -40,7 +40,7 @@ spoil = 0.5
 # ---- food that keeps (§5): put away in anything that keeps things it stays good; left lying it goes bad ----
 
 [food]
-bits = ["bean", "berry", "meal", "seed cake"]
+bits = ["bean", "berry", "meal", "seed cake", "fish", "big fish"]
 days = 1.5                # lying loose on a floor this long, it has gone bad
 cold = 0.5                # ... this much slower in a cold room
 cold_rooms = ["cellar"]

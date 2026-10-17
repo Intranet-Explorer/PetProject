@@ -22,7 +22,7 @@ from .tick import Engine, model_brains, stub_brains
 from . import world
 from . import build
 from . import machine
-from . import rail, store
+from . import pond, rail, store
 from .world import ROOT, STAGE_WORD, alive, label, load_config, power_on, relation
 
 cfg = load_config(profile=os.environ.get("PET_PROFILE") or None)
@@ -237,7 +237,7 @@ def snapshot():
         "chronicle": h["chronicle"][-1:], "visitor": present(), "population": cfg["life"]["population"],
         "sayings": [{"text": c["text"], "gens": len(c["gens"]), "truth": c["truth"]} for c in story.sayings(h, 3)],
         # SPEC-v3.5.12: the rail (null until built), what is in the cart, and the garden's resting place
-        "rail": rail.view(h, cfg), "cart": rail.cart_view(h, cfg), "resting": h.get("resting"),
+        "rail": rail.view(h, cfg), "cart": rail.cart_view(h, cfg), "resting": h.get("resting"), "pond": pond.view(h, cfg),
     }
 
 

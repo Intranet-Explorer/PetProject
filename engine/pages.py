@@ -152,7 +152,7 @@ def all_things(eng):
             keep = (box or {}).get("fix", {}).get("keepsake")
             where, stored = store.where(h, cfg, r, n)   # SPEC-v3.5.12 §1: where it is, in the same words as its card
             out.append({"id": thing_key(m, n), "name": n, "recipe": m["recipe"], "by": m["by"], "by_name": names.get(m["by"]), "owner": m.get("owner"),
-                        "family": fam.get(m["by"]), "room": r["id"], "room_name": r["name"], "where": where, "stored": stored, "gone": None, "tick": m["tick"],
+                        "family": fam.get(m["by"]), "room": r["id"], "room_name": r["name"], "where": where, "stored": stored, "found": m.get("found"), "gone": None, "tick": m["tick"],
                         "day": day_of(cfg, m["tick"]), "bits": m.get("bits", []), "uses": m.get("uses", 0), "heirloom": bool(m.get("heirloom")),
                         "invented": m["recipe"].get("kind") in h.get("invented", {}), "statue": False, "keepsake": bool(keep), "star": m.get("star"),
                         "first": first(m["by"], m["tick"], m["recipe"]), "title_shown": bool(m["recipe"].get("title")) and order.kept(h, cfg, r, n),

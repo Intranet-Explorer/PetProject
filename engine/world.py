@@ -56,6 +56,8 @@ def load_config(path=ROOT / "config.toml", profile=None):
     works.load(cfg, path.parent)
     from . import names   # SPEC-v3.5.8 §2: names.toml, the name bank and the family's words
     names.load(cfg, path.parent)
+    from . import pond   # SPEC-v3.6a: pond.toml, the pond's water, fish and what comes up
+    pond.load(cfg, path.parent)
     # the words from the box a pet may wonder about (picturable.txt): never what the house already has a word for
     own = set(cfg["house"]["bits"]) | set(cfg["kinds"]) | set(cfg["house"]["rooms"]) | {f["name"] for r in cfg["house"]["rooms"].values() for f in r["fixtures"]}
     listed = path.parent / "picturable.txt"
@@ -462,7 +464,7 @@ def unnumbered(text):
     return out
 
 
-ONE = ["pebble", "seed", "leaf", "petal", "feather", "shell", "bead", "reed", "bell", "vine", "quill", "berry", "bean", "stone", "tile", "brick", "block", "cake"]   # (wants.py adds the machine's)
+ONE = ["pebble", "seed", "leaf", "petal", "feather", "shell", "bead", "reed", "bell", "vine", "quill", "berry", "bean", "stone", "tile", "brick", "block", "cake", "fish", "hook", "spring", "weed"]   # (wants.py adds the machine's)
 
 
 def a(bit):

@@ -1,0 +1,180 @@
+# The pond (SPEC-v3.6a): its water, its fish, and what comes up on a line. Tune here, not in code; engine/pond.py.
+# Odds are per pull: one cast, one wait, one pull. The pets are told none of the numbers.
+
+[pond]
+room = "pond"
+# the water fills most of the room: a west lobe, a narrow neck (the hobs' bridge lies across it) and an east lobe
+water = [[3, 1], [4, 1], [5, 1], [2, 2], [3, 2], [4, 2], [5, 2], [2, 3], [3, 3], [4, 3], [5, 3], [2, 4], [3, 4], [4, 4], [5, 4],
+         [6, 2], [6, 3],
+         [7, 1], [8, 1], [9, 1], [7, 2], [8, 2], [9, 2], [7, 3], [8, 3], [9, 3], [7, 4], [8, 4], [9, 4]]
+bridge = [[6, 2], [6, 3]]  # the neck: the hobs' pond bridge lies across it, north to south (walkable)
+spread = "after the spring rains, the pond spread"   # the one-time event that grows a house's old pond to this
+
+[dock]                     # built by the Works (works.toml "a dock for the pond"): the best place to fish
+tiles = [[3, 5], [3, 4], [3, 3]]   # from the south walkway out over the water
+end = [3, 3]
+line = [3, 2]              # where a line from its end goes in
+
+[fish]
+most = 12                  # fish in a full pond
+back_days = 1.0            # a fished-out pond is full again in this many world days
+thin = 0.34                # under this share of `most` the pond is "fished thin": worse odds, and the story notices
+thin_odds = 0.5            # ... odds times this
+fishers = 2                # at most this many at once: one at the dock's end, one at the edge
+
+[odds]                     # the chance that anything comes up at all, per pull
+paw = 0.25
+rod = 0.5
+skill = 0.05               # more per level of the fishing skill (0 to 3)
+frozen = 0.5               # through a hole in the ice: odds times this
+uncommon = 0.15            # of what comes up: an uncommon thing (with a rod)
+rare = 0.03                # ... a rare thing (with a rod, from the dock)
+very_rare = 0.007          # ... the very rare thing (with a rod, from the dock): about once in two weeks of fishing
+
+[time]
+paw = [40, 72]             # world seconds a pull takes, by paw and with a rod (a tick is 4 s)
+rod = [32, 60]
+share = 0.15               # no hob fishes more than this share of a world day (a third of its waking time is the bar)
+cut = [24, 36]             # cutting a hole in the ice: by paw (with a carver or a knife it takes half)
+
+[eat]                      # SPEC-v3.6a §4: raw fish is food, less than a good bean
+fish = { energy = 6.0, comfort = 0.5 }
+"big fish" = { energy = 10.0, comfort = 1.0 }
+raw_bold = 0.25            # a hob this timid (bold gene under this) won't eat fish raw
+share = 2.0                # company for both when a catch is shared with kin
+spoil_days = 1.0           # a fish not eaten or put by is no good after a world day: left at the edge for the birds
+
+[winter]
+frozen = [0.34, 0.67]      # the coldest weeks: this part of winter the pond is frozen over
+
+# What comes up. `bit`: it is a bit, in the paws (fish are food). `kind`: a thing, found: `kind`, `material` (one of
+# its properties) and `colors`. Rare and very rare finds are kept, never scrap, and get a title from `titles`.
+[[catch]]
+tier = "common"
+what = "small fish"
+bit = "fish"
+weight = 4
+fish = true
+[[catch]]
+tier = "common"
+what = "pebble"
+bit = "pebble"
+[[catch]]
+tier = "common"
+what = "shell"
+bit = "shell"
+[[catch]]
+tier = "common"
+what = "reed"
+bit = "reed"
+[[catch]]
+tier = "common"
+what = "waterlogged wood"
+bit = "waterlogged wood"
+[[catch]]
+tier = "common"
+what = "weed"
+bit = "weed"
+
+[[catch]]
+tier = "uncommon"
+what = "big fish"
+bit = "big fish"
+weight = 3
+fish = true
+[[catch]]
+tier = "uncommon"
+what = "glass bottle"
+kind = "bottle"
+material = "glassy"
+colors = ["green", "clear", "brown"]
+[[catch]]
+tier = "uncommon"
+what = "jar"
+kind = "jar"
+material = "hard"
+colors = ["brown", "grey"]
+[[catch]]
+tier = "uncommon"
+what = "cup"
+kind = "cup"
+material = "hard"
+colors = ["white", "blue", "brown"]
+[[catch]]
+tier = "uncommon"
+what = "string"
+bit = "string"
+[[catch]]
+tier = "uncommon"
+what = "hook"
+bit = "hook"
+[[catch]]
+tier = "uncommon"
+what = "spring"
+bit = "spring"
+
+[[catch]]
+tier = "rare"
+what = "lens"
+kind = "lens"
+material = "glassy"
+colors = ["clear"]
+titles = ["the Pond's Eye", "the Clear Drop", "the Looking Glass"]
+[[catch]]
+tier = "rare"
+what = "gear"
+kind = "gear"
+material = "hard"
+colors = ["brass", "rust"]
+titles = ["the Sunken Cog", "the Old Wheel's Tooth"]
+[[catch]]
+tier = "rare"
+what = "small bell"
+kind = "bell"
+material = "noisy"
+colors = ["brass", "green"]
+titles = ["the Drowned Bell", "the Bell Under the Water"]
+[[catch]]
+tier = "rare"
+what = "ring"
+kind = "ring"
+material = "bright"
+colors = ["gold", "silver"]
+titles = ["the Reed Ring", "the Ring from the Deep"]
+[[catch]]
+tier = "rare"
+what = "old key"
+kind = "key"
+material = "hard"
+colors = ["rust", "brass"]
+titles = ["the Key to Somewhere", "the Lost Key"]
+[[catch]]
+tier = "rare"
+what = "golden fish"
+kind = "golden fish"
+material = "bright"
+colors = ["gold"]
+titles = ["Glimmer", "Old Gold", "Sunny"]
+fish = true
+
+[[catch]]
+tier = "very rare"
+what = "bottle with a note in it"
+kind = "note bottle"
+material = "glassy"
+colors = ["green", "clear"]
+titles = ["the Letter from Outside", "the Message in the Bottle"]
+
+[note]                     # what the note in the bottle says: a few words from somewhere outside the house
+says = [
+  "Whoever finds this: the river goes on past the hills.",
+  "If you are reading this, there are others. We are well. The apples came early this year.",
+  "To the house by the water: we saw your lights one night. Are you there?",
+  "I put this in the stream at the mill. Write back if you can.",
+  "The road east is open again. Tell anyone who asks.",
+]
+
+[creatures.duck]           # paddles about on the water by day; gone when it freezes
+stay_hours = 10
+[creatures.frog]           # sits at the edge, hops along it; not in winter
+stay_hours = 12
