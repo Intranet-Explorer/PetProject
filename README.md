@@ -17,6 +17,9 @@ body built first. [Why it moved on](#why-it-moved-on) has the short version and
 
 Everything here still runs. Clone it, start it, and a family will hatch.
 
+**What was learned:** [the lessons](docs/LESSONS.md) · [the Jev personality tests](docs/JEV.md) ·
+[the findings](docs/FINDINGS.md) · [milestone notes](docs/NOTES.md)
+
 <img src="showcase/hobworld/house.png" alt="The garden on day 148: Lev by the lamp, a stone for every hob that has died, and the train stopped at the station" width="880">
 
 The live house on day 148, in its third year. Every stone in the garden is a hob that lived and died here. The
@@ -162,6 +165,25 @@ to change the world the model lives in.
 Hob World starts from that. One hob in a bare room that has to work to eat, where the model picks every action
 from what is really possible and is told what happened. The body only carries out what the hob decided. Nothing
 else gets added until that hob keeps itself alive without help.
+
+## The Jev tests
+
+Before the last changes to the house, the personality system was tested on its own with Jev
+(`typesafe/jev-1.14`), a model built to make a decision and give a probability for it. A hob's character went in
+as a short sheet, the hob was put in a situation, and Jev said what it would do. Nine rounds, about 121,000
+decisions, a little under three dollars.
+
+<img src="docs/img/motive-vs-behaviour.png" alt="Paired bars for eight ideas written as a motive and as a behaviour. Thief goes from 0.11 as a motive to 0.58 as a behaviour" width="760">
+
+- **A model reads a sheet well.** Most traits steered its decisions. Two of ten barely registered.
+- **Wording matters more than content.** A thief written as a motive stole 11% of the time. Written as a plain
+  behaviour, 58%. A habit beat a label the same way.
+- **Every hob came out different.** Of 57,630 pairs among 340 random hobs, none were near-clones.
+- **None of it reached the house.** Asked to choose among the house's real options, the hobs' own model followed
+  one clear line and mostly ignored a full sheet.
+
+The write-up is [docs/JEV.md](docs/JEV.md). Every round's script, situations and report are in
+[experiments/jev](experiments/jev/), so the tests can be run again.
 
 ## How it works
 
