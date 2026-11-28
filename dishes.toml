@@ -1,0 +1,133 @@
+# Cooking (SPEC-v3.6b §2): what comes out of the pot on the stove. engine/cook.py carries it out; no model is asked.
+# A hob puts what it has to hand in the pot (what it carries, and what lies about the room or is put by there); the
+# richest dish that all of it makes comes out, one it has not found yet first. Water is always to hand at the stove.
+#
+#   [dish.<name>]
+#     needs     the bits that go in, one of each
+#     servings  how many can eat from the pot
+#     food      what eating a serving does (energy, comfort), beside the bowl's meal and raw fish (pond.toml)
+#     says      what the one who found it is told, the first time it comes out of the pot
+
+[cook]
+keep_days = 1.0           # a pot not eaten up in this long has gone stale, and is thrown out
+kept_days = 3.0           # ... with a keeper in the room (a jar, a box, a basket, a pot kept for it) it keeps this long
+together_hours = 2        # two hobs who eat from one pot within this many world hours have eaten together: company for both
+company = 3.0             # ... this much
+loves = 2                 # a hob loves at most this many dishes: the one its parent cooked for it when it was little, or one eaten three times
+loved = 2.0               # the comfort of eating a dish it loves, on top
+loved_after = 3           # ... eaten this many times, a dish is one it loves
+hungry = 1                # a pot on the stove is wanted by a hob this hungry or more (feel.level of energy)
+want = 3.0                # how strongly
+cook_want = 2.5           # how strongly a hob that knows a dish and carries what it takes wants to cook it
+
+[dish."grilled fish"]
+needs = ["fish"]
+servings = 2
+food = { energy = 16.0, comfort = 2.0 }
+says = "the fish browned and crisped in the hot pot, and smells better than anything: grilled fish"
+[dish."baked big fish"]
+needs = ["big fish"]
+servings = 4
+food = { energy = 18.0, comfort = 2.5 }
+says = "the big fish baked slowly in the pot until it fell off the bone: there is enough for everyone"
+[dish."fish stew"]
+needs = ["fish", "bean"]
+servings = 4
+food = { energy = 18.0, comfort = 3.0 }
+says = "the beans went soft and the fish fell apart in the water, and it all thickened: a stew"
+[dish."big fish stew"]
+needs = ["big fish", "bean"]
+servings = 5
+food = { energy = 19.0, comfort = 3.0 }
+says = "the big fish and the beans stewed together into a deep, thick pot of stew"
+[dish."fish pie"]
+needs = ["fish", "flour"]
+servings = 4
+food = { energy = 19.0, comfort = 3.0 }
+says = "the flour and water made a crust round the fish, and it baked golden: a pie"
+[dish."fish cakes"]
+needs = ["fish", "meal"]
+servings = 3
+food = { energy = 16.0, comfort = 2.5 }
+says = "the fish and the meal pressed together into little cakes that fried brown"
+[dish."fish soup"]
+needs = ["fish", "leaf"]
+servings = 3
+food = { energy = 15.0, comfort = 2.5 }
+says = "the fish and the leaves simmered into a thin green soup that warms you through"
+[dish."fish and bean pie"]
+needs = ["fish", "bean", "flour"]
+servings = 5
+food = { energy = 20.0, comfort = 3.5 }
+says = "fish and beans under a crust of flour, baked brown: the biggest dish the pot has held"
+[dish.bread]
+needs = ["flour"]
+servings = 3
+food = { energy = 13.0, comfort = 2.0 }
+says = "the flour and water rose a little in the heat and baked into a loaf: bread"
+[dish."seed loaf"]
+needs = ["flour", "seed"]
+servings = 3
+food = { energy = 14.0, comfort = 2.0 }
+says = "the seeds baked into the bread, crunchy all through: a seed loaf"
+[dish.pancakes]
+needs = ["meal", "berry"]
+servings = 3
+food = { energy = 13.0, comfort = 3.0 }
+says = "the meal and the berries spread thin in the hot pot and cooked into soft sweet rounds: pancakes"
+[dish."berry pie"]
+needs = ["flour", "berry"]
+servings = 4
+food = { energy = 15.0, comfort = 3.5 }
+says = "the berries bubbled under a crust of flour and baked into a sweet red pie"
+[dish."berry cake"]
+needs = ["seed cake", "berry"]
+servings = 3
+food = { energy = 13.0, comfort = 3.0 }
+says = "the seed cake soaked up the hot berries: a sticky, sweet berry cake"
+[dish."bean soup"]
+needs = ["bean"]
+servings = 3
+food = { energy = 13.0, comfort = 2.0 }
+says = "the beans went soft in the water and it all turned thick: a soup"
+[dish."bean bake"]
+needs = ["bean", "flour"]
+servings = 4
+food = { energy = 16.0, comfort = 2.5 }
+says = "the beans baked under a crust of flour into something solid and filling: a bean bake"
+[dish."green soup"]
+needs = ["bean", "leaf"]
+servings = 3
+food = { energy = 13.0, comfort = 2.5 }
+says = "the beans and the leaves simmered together into a green soup"
+[dish.porridge]
+needs = ["meal"]
+servings = 3
+food = { energy = 13.0, comfort = 2.0 }
+says = "the meal swelled in the hot water into a thick, warm porridge"
+[dish."stewed berries"]
+needs = ["berry"]
+servings = 2
+food = { energy = 13.0, comfort = 2.5 }
+says = "the berries burst in the heat and turned to a dark, sweet stew"
+[dish."leaf tea"]
+needs = ["leaf"]
+servings = 3
+food = { energy = 3.0, comfort = 3.0 }
+says = "the leaf steeped in the hot water and turned it green and fragrant: tea"
+[dish."petal tea"]
+needs = ["dried petal"]
+servings = 3
+food = { energy = 3.0, comfort = 3.5 }
+says = "the dried petal steeped in the hot water, pink and sweet-smelling: petal tea"
+[dish."herb dumplings"]
+needs = ["flour", "leaf"]
+servings = 4
+food = { energy = 15.0, comfort = 2.5 }
+says = "the flour rolled round the leaves and puffed up in the water: dumplings"
+[dish."moss broth"]           # SPEC-v4.2 §2.4: the cellar's moss stewed is not food. `poison = true`: cooked only with [deaths] on (health.install)
+needs = ["moss"]
+servings = 2
+food = { energy = 4.0, comfort = 0.5 }
+says = "the cellar moss stewed down to a dark broth that smells of earth: moss broth"
+poison = true

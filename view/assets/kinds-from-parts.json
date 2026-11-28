@@ -1,0 +1,171 @@
+{
+ "about": "SPEC-v3.2 \u00a73.2: how a thing made before v3.2 (from parts: shapes of a size and colour) becomes a kind. Used once by the engine on the live house, and by the view for recordings made before v3.2. The kind is looked up by the thing's material and the shape of its largest part; `many` applies to things of three or more parts, `pair` to two parts of different shapes. The colour is the largest part's, the size its size. No wall kinds here: an old thing stays on the floor where it stood.",
+ "shape": {
+  "circle": "ball",
+  "square": "box",
+  "triangle": "sculpture",
+  "blob": "cushion",
+  "bar": "stool",
+  "dot": "charm",
+  "ring": "charm",
+  "star": "charm"
+ },
+ "material": {
+  "soft": {
+   "blob": "cushion",
+   "circle": "cushion",
+   "ring": "nest",
+   "bar": "bed-mat",
+   "square": "rug",
+   "triangle": "blanket",
+   "dot": "doll",
+   "star": "doll"
+  },
+  "warm": {
+   "blob": "blanket",
+   "circle": "cushion",
+   "ring": "nest",
+   "bar": "bed-mat",
+   "square": "rug",
+   "dot": "candle",
+   "triangle": "candle",
+   "star": "lantern"
+  },
+  "bright": {
+   "dot": "candle",
+   "triangle": "candle",
+   "blob": "candle",
+   "ring": "lantern",
+   "circle": "lantern",
+   "star": "lantern",
+   "bar": "lamp",
+   "square": "lamp"
+  },
+  "noisy": {
+   "ring": "bell",
+   "dot": "bell",
+   "circle": "drum",
+   "square": "drum",
+   "blob": "drum",
+   "bar": "flute",
+   "star": "wind chime",
+   "triangle": "wind chime"
+  },
+  "quiet": {
+   "blob": "cushion",
+   "ring": "nest",
+   "dot": "charm",
+   "bar": "stool",
+   "square": "box",
+   "circle": "bowl",
+   "star": "charm",
+   "triangle": "stone stack"
+  },
+  "bouncy": {
+   "circle": "ball",
+   "ring": "ball",
+   "dot": "ball",
+   "blob": "ball",
+   "triangle": "spinning top",
+   "star": "spinning top",
+   "square": "box",
+   "bar": "stool"
+  },
+  "springy": {
+   "ring": "charm",
+   "dot": "charm",
+   "star": "charm",
+   "bar": "stool",
+   "square": "stool",
+   "circle": "ball",
+   "blob": "cushion",
+   "triangle": "spinning top"
+  },
+  "hard": {
+   "circle": "bowl",
+   "square": "box",
+   "bar": "stool",
+   "ring": "charm",
+   "dot": "charm",
+   "star": "charm",
+   "blob": "stone stack",
+   "triangle": "sculpture"
+  },
+  "heavy": {
+   "circle": "stone stack",
+   "blob": "stone stack",
+   "dot": "stone stack",
+   "ring": "stone stack",
+   "square": "box",
+   "bar": "stool",
+   "triangle": "sculpture",
+   "star": "sculpture"
+  },
+  "cool": {
+   "circle": "bowl",
+   "ring": "charm",
+   "dot": "charm",
+   "star": "charm",
+   "blob": "stone stack",
+   "square": "jar",
+   "bar": "stool",
+   "triangle": "vase"
+  },
+  "dark": {
+   "square": "box",
+   "bar": "stool",
+   "blob": "blanket",
+   "circle": "bowl",
+   "ring": "charm",
+   "dot": "charm",
+   "star": "charm",
+   "triangle": "sculpture"
+  },
+  "sweet": {
+   "circle": "treat",
+   "square": "treat",
+   "triangle": "treat",
+   "blob": "treat",
+   "bar": "treat",
+   "dot": "treat",
+   "ring": "treat",
+   "star": "treat"
+  },
+  "fragrant": {
+   "circle": "plant pot",
+   "blob": "plant pot",
+   "ring": "garland",
+   "star": "garland",
+   "bar": "garland",
+   "dot": "charm",
+   "triangle": "vase",
+   "square": "jar"
+  },
+  "glassy": {
+   "ring": "charm",
+   "dot": "charm",
+   "circle": "jar",
+   "square": "jar",
+   "triangle": "vase",
+   "blob": "vase",
+   "bar": "vase",
+   "star": "mobile"
+  }
+ },
+ "many": {
+  "hanging": [
+   "glassy",
+   "noisy",
+   "springy",
+   "bouncy",
+   "bright",
+   "fragrant"
+  ],
+  "then": "mobile",
+  "else": "sculpture"
+ },
+ "pair": {
+  "noisy": "wind chime",
+  "soft": "nest"
+ }
+}

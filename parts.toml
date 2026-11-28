@@ -1,0 +1,869 @@
+# SPEC-v5.1 §1-§2: the grammar's data. A thing is its parts; each part gives verbs (contracts.VERBS) at a strength,
+# some only when another part is on the same thing (`needs`: verb -> alternatives, any one will do; an alternative
+# is a part's name, a material's name or class, or "charge"; a list inside the list means all of them together).
+# A verb's strength on a thing is the part's strength x its material's quality; a thing's verb is the strongest of
+# its parts'. A thing's tier is the highest of its parts', each the lower of its own tier and its material's (21
+# October 2026: a wooden hinge is no mechanism). Written by the lead, 21 October 2026;
+# the parser (engine/grammar.py) reads it and nothing else does the grammar's work.
+#
+# `materials`: names or classes it can be made of (contracts.MAT_CLASSES). `role`: base | on | wrap, for the
+# compositor. `icon`: the PixelLab cell (assets-incoming/pixellab/cells/<icon>.png) for the recipe card. `draw`: the
+# view's part (view/assets/parts.json) the compositor uses, when it isn't the same name. `wear`: how fast the thing
+# wears (a casing halves it). `with`: {another part: the materials it must be of when both are on a thing} (a spring
+# and a reed tube). `words`: the part's line of the grammar, as the model is told it. A part with no verbs
+# says in its words what it is for on a thing (a shade, a handle, a lid).
+#
+# The thirty lines of SPEC-v5.1 §1 are these parts' needs: a tube throws only with a spring, a string or a charge; a
+# blade strikes and digs only on a handle; a vessel pours only with a spout or a lip; a frame covers only with a
+# cloth, a sail or a weave; a flame lights only under glass, a shade or a lens; a wheel moves only on an axle; a bulb
+# lights only with a wire and a cell; a bell, a horn, a drum skin or chimes signal; a net, a cage or a hook on a
+# string catches; a scoop or a spade on a handle digs; a head on a handle strikes; cord, rope, a strap or wire binds.
+
+[part.stick]
+verbs = { strike = 0.3, dig = 0.2 }
+materials = ["wood", "reed", "hard"]
+tier = 0
+role = "base"
+icon = "household16/44-wooden-stick"
+words = "a stick knocks things a little and digs a little"
+
+[part.handle]
+verbs = {}
+materials = ["wood", "carved wood", "reed", "metal", "shell"]
+tier = 0
+role = "base"
+icon = "parts16/01-wooden-handle"
+words = "a handle is what a paw holds: a blade, a head, a scoop or bristles work only on one"
+
+[part.pole]
+verbs = {}
+materials = ["wood", "reed", "dry reed", "metal"]
+tier = 0
+role = "base"
+icon = "parts16/03-long-pole"
+words = "a pole reaches: a hook or a net on it catches farther off"
+
+[part.tube]
+verbs = { launch = 0.7, hold = 0.25, pour = 0.35 }
+needs = { launch = ["spring", "string", "charge"] }
+materials = ["reed", "dry reed", "wood", "metal", "fired clay", "glass"]
+tier = 1
+role = "base"
+icon = "parts16/02-bent-pipe"
+words = "a tube throws what fits in it if a spring or a drawn string is behind it; alone it holds a little and pours"
+
+[part.bowl]
+verbs = { hold = 0.4 }
+materials = ["wood", "carved wood", "clay", "fired clay", "metal", "shell"]
+tier = 0
+role = "base"
+icon = "parts16/16-wooden-bowl"
+words = "a bowl holds; with a lip or a spout it pours"
+
+[part.jar]
+verbs = { hold = 0.55 }
+materials = ["fired clay", "glass", "clay", "wood"]
+tier = 0
+role = "base"
+icon = "parts16/14-glass-jar"
+words = "a jar holds, and keeps food cool"
+
+[part.bottle]
+verbs = { hold = 0.45 }
+materials = ["glass", "fired clay"]
+tier = 1
+role = "base"
+icon = "household16/14-glass-jar"
+words = "a bottle holds water; with a lip it pours"
+
+[part.bucket]
+verbs = { hold = 0.7, carry = 0.45 }
+materials = ["wood", "plank", "metal", "fired clay", "wicker"]
+tier = 0
+role = "base"
+icon = "everyday16/37-bucket"
+words = "a bucket holds and carries; with a spout it pours"
+
+[part.basket]
+verbs = { hold = 0.65, carry = 0.55 }
+materials = ["wicker", "reed", "supple reed", "vine", "fibre"]
+tier = 0
+role = "base"
+icon = "household16/02-woven-basket"
+words = "a basket holds and carries"
+
+[part.box]
+verbs = { hold = 1.0 }
+materials = ["wood", "plank", "carved wood", "wicker", "fired clay", "metal plate"]
+tier = 0
+role = "base"
+icon = "parts16/17-small-box"
+words = "a box holds; with a lid it keeps the mouse out"
+
+[part.plate]
+verbs = { hold = 0.35 }
+materials = ["wood", "fired clay", "clay tile", "metal plate", "stone", "plank"]
+tier = 0
+role = "base"
+icon = "parts16/18-flat-plate"
+words = "a plate holds a little; a hook on a plate hangs things on a wall"
+
+[part.disc]
+verbs = {}
+materials = ["wood", "plank", "felt", "metal", "stone", "fired clay"]
+tier = 0
+role = "base"
+icon = "parts16/23-wooden-wheel"
+words = "a disc is a round flat piece: a sign, a top, a picture's board"
+
+[part.ring]
+verbs = { hold = 0.3 }
+materials = ["reed", "wicker", "vine", "wood", "metal"]
+tier = 0
+role = "base"
+icon = "household16/28-ring"
+words = "a ring holds what sits in it"
+
+[part.frame]
+verbs = { hold = 0.7, cover = 0.6 }
+needs = { cover = ["cloth", "sail", "weave"] }
+materials = ["wood", "plank", "reed", "dry reed", "metal"]
+tier = 0
+role = "base"
+icon = "parts16/38-square-frame"
+words = "a frame holds things on it; with a cloth, a sail or a weave over it, it keeps the rain off"
+
+[part.cushion]
+verbs = { cover = 0.45 }
+materials = ["soft"]
+tier = 0
+role = "base"
+icon = "household16/58-cushion"
+words = "a cushion is soft to sit or lie on"
+
+[part.block]
+verbs = { cover = 0.3, hold = 0.25 }
+materials = ["wood", "stone", "clay", "mud brick", "fired brick"]
+tier = 0
+role = "base"
+icon = "household16/43-wooden-plank"
+words = "a block is a seat, and a bed's base"
+
+[part.bundle]
+verbs = {}
+materials = ["reed", "tinder", "cloth", "fluff", "moss", "leaf", "seed cake", "wood"]
+tier = 0
+role = "base"
+icon = "household16/37-reed-bundle"
+words = "a bundle is many things tied as one: it burns, or it is a doll's body"
+
+[part.cage]
+verbs = { catch = 0.6, hold = 0.4 }
+materials = ["wicker", "reed", "wood", "wire", "wire mesh", "metal"]
+tier = 0
+role = "base"
+icon = "parts16/57-sieve"
+words = "a cage catches a creature and holds it"
+
+[part.boiler]
+verbs = { heat = 0.6 }
+needs = { heat = ["flame"] }
+materials = ["metal plate", "steel", "brass"]
+tier = 3
+role = "base"
+icon = "parts16/13-metal-tank"
+words = "a boiler over a flame holds its heat, and drives a piston"
+
+[part.flame]
+verbs = { light = 0.85, heat = 0.2 }
+needs = { light = ["glass", "shade", "lens", "mirror"] }
+materials = ["oil", "wax", "clear wax", "resin", "tinder", "charcoal"]
+tier = 1
+role = "on"
+icon = "parts16/12-small-flame"
+words = "a flame heats a little; under glass, a shade or a lens it lights a room"
+
+[part.wick]
+verbs = { light = 0.5 }
+materials = ["string", "fibre", "cloth", "reed", "cord"]
+tier = 1
+role = "on"
+icon = "household16/04-wax-candle"
+draw = "flame"
+words = "a wick burns small: a candle's light, or a torch's"
+
+[part.shade]
+verbs = {}
+materials = ["glass", "fired clay", "cloth", "metal plate", "pressed leaf"]
+tier = 1
+role = "on"
+icon = "parts16/41-lamp-shade"
+draw = "lamp shade"
+words = "a shade over a flame makes a lamp of it"
+
+[part.lens]
+verbs = { light = 0.9 }
+needs = { light = ["flame", "wick"] }
+materials = ["glass", "amber"]
+tier = 1
+role = "on"
+icon = "parts16/09-glass-lens"
+words = "a lens before a flame throws its light across a room"
+
+[part.mirror]
+verbs = { light = 0.75 }
+needs = { light = ["flame", "wick"] }
+materials = ["glass", "metal plate", "tempered metal"]
+tier = 1
+role = "on"
+icon = "parts16/59-mirror"
+words = "a mirror behind a flame throws its light into the room"
+
+[part.blade]
+verbs = { cut = 0.75, strike = 0.2, dig = 0.2 }
+needs = { strike = ["handle"], dig = ["handle"] }
+materials = ["sharp stone", "flint", "shell", "metal", "blade", "tempered metal"]
+tier = 1
+role = "on"
+icon = "parts16/05-steel-blade"
+words = "a blade cuts; on a handle it also strikes and digs a little"
+
+[part.tines]
+verbs = { dig = 0.3 }
+needs = { dig = ["handle"] }
+materials = ["wood", "metal"]
+tier = 0
+role = "on"
+icon = "parts16/08-prong-fork"
+words = "tines on a handle turn the soil"
+
+[part.scoop]
+verbs = { dig = 0.75 }
+needs = { dig = ["handle", "pole"] }
+materials = ["wood", "metal", "shell", "fired clay"]
+tier = 0
+role = "on"
+icon = "everyday16/61-trowel"
+words = "a scoop on a handle digs"
+
+[part.spade]
+verbs = { dig = 0.8 }
+needs = { dig = ["handle", "pole"] }
+materials = ["wood", "metal", "plank"]
+tier = 0
+role = "on"
+icon = "everyday16/62-shovel"
+words = "a spade on a pole digs deep"
+
+[part.head]
+verbs = { strike = 0.8 }
+needs = { strike = ["handle", "pole", "stick"] }
+materials = ["stone", "metal", "wood", "tempered metal"]
+tier = 0
+role = "on"
+icon = "everyday16/55-hammer"
+words = "a heavy head on a handle strikes: it drives a nail and sets a patch"
+
+[part.needle]
+verbs = { mend = 0.65 }
+materials = ["metal", "quill", "shell", "wood"]
+tier = 0
+role = "on"
+icon = "everyday16/39-needle"
+words = "a needle mends soft things"
+
+[part.patch]
+verbs = { mend = 1.0 }
+materials = ["cloth", "felt", "clay tile", "pressed leaf", "metal plate"]
+tier = 0
+role = "wrap"
+icon = "products16/03-clay-tile"
+draw = "cloth"
+words = "a patch mends a leak or a tear, and is used up"
+
+[part.hook]
+verbs = { catch = 0.5, hold = 0.45 }
+needs = { catch = ["string", "pole"], hold = ["plate", "block", "frame"] }
+materials = ["metal", "wood", "shell", "hook", "nail"]
+tier = 0
+role = "on"
+icon = "parts16/07-hook"
+words = "a hook on a string catches; a hook on a plate hangs things up"
+
+[part.net]
+verbs = { catch = 0.6 }
+materials = ["netting", "string", "fibre", "cord", "wire mesh"]
+tier = 0
+role = "on"
+icon = "parts16/29-net"
+words = "a net catches"
+
+[part.bristles]
+verbs = { carry = 0.65 }
+needs = { carry = ["handle", "pole", "stick"] }
+materials = ["reed", "dry reed", "fluff", "fibre", "feather"]
+tier = 0
+role = "on"
+icon = "parts16/30-bristles"
+words = "bristles on a handle sweep the small bits up"
+
+[part.lip]
+verbs = { pour = 0.4 }
+needs = { pour = ["bowl", "jar", "bottle", "bucket", "tube", "handle"] }
+materials = ["wood", "clay", "fired clay", "glass", "metal", "shell"]
+tier = 0
+role = "on"
+icon = "parts16/15-clay-cup"
+draw = "spout"
+words = "a lip on a vessel pours; a lip on a handle is a spoon"
+
+[part.spout]
+verbs = { pour = 0.65 }
+needs = { pour = ["bowl", "jar", "bottle", "bucket", "tube"] }
+materials = ["wood", "fired clay", "metal", "glass", "reed"]
+tier = 1
+role = "on"
+icon = "parts16/20-spout"
+words = "a spout on a vessel pours well"
+
+[part.lid]
+verbs = {}
+materials = ["wood", "plank", "fired clay", "metal", "glass", "wicker"]
+tier = 1
+role = "on"
+icon = "parts16/19-lid"
+words = "a lid shuts a thing: what's inside is safe from the mouse"
+
+[part.hinge]
+verbs = {}
+materials = ["wood", "metal", "hinge", "cloth", "cord"]
+tier = 2
+role = "on"
+icon = "parts16/43-hinge"
+words = "a hinge lets a lid or a door swing"
+
+[part."bell dome"]
+verbs = { signal = 0.6 }
+materials = ["metal", "bell", "fired clay", "shell"]
+tier = 1
+role = "on"
+icon = "parts16/34-small-bell"
+words = "a bell is heard in the next room"
+
+[part.bell]
+verbs = { signal = 0.6 }
+materials = ["metal", "bell", "fired clay", "brass"]
+tier = 1
+role = "on"
+icon = "everyday16/16-small-brass-bell"
+words = "a bell is heard in the next room"
+
+[part.dial]
+verbs = {}
+materials = ["metal", "brass", "wood", "glass"]
+tier = 2
+role = "on"
+icon = "parts16/51-dial-knob"
+words = "a dial shows how much: how hot, how full, what hour"
+
+[part.sling]
+verbs = { carry = 0.45, launch = 0.5 }
+needs = { launch = ["charge"] }
+materials = ["cloth", "felt", "cord", "fibre", "rope", "string"]
+tier = 0
+role = "wrap"
+icon = "parts16/27-leather-strap"
+words = "a sling carries a load, and with a stone in it, throws it"
+
+[part.horn]
+verbs = { signal = 0.6 }
+materials = ["reed", "dry reed", "shell", "wood", "metal"]
+tier = 0
+role = "on"
+icon = "parts16/36-flute-pipe"
+draw = "whistle"
+words = "a horn or a pipe is heard in the next room"
+
+[part."drum skin"]
+verbs = { signal = 0.65 }
+materials = ["cloth", "felt", "leaf", "pressed leaf"]
+tier = 0
+role = "on"
+icon = "parts16/37-drum-skin"
+words = "a drum skin is heard through the house"
+
+[part.strings]
+verbs = { signal = 0.4 }
+materials = ["string", "wire", "fibre", "vine"]
+tier = 0
+role = "on"
+icon = "parts16/35-harp-strings"
+words = "strings sing when plucked"
+
+[part.chimes]
+verbs = { signal = 0.35 }
+materials = ["shell", "metal", "reed", "glass", "bead"]
+tier = 0
+role = "on"
+icon = "products16/21-small-bell"
+words = "chimes ring in the wind"
+
+[part.wheel]
+verbs = { carry = 0.45, move = 0.5 }
+needs = { move = ["axle"] }
+materials = ["wood", "plank", "metal", "stone"]
+tier = 1
+role = "on"
+icon = "parts16/23-wooden-wheel"
+words = "a wheel carries a load; on an axle it moves"
+
+[part.axle]
+verbs = {}
+materials = ["wood", "metal", "tempered metal"]
+tier = 2
+role = "on"
+icon = "parts16/26-axle"
+words = "an axle is what a wheel turns on"
+
+[part.gear]
+verbs = { move = 0.4 }
+needs = { move = ["axle", "wheel"] }
+materials = ["metal", "wood", "tempered metal", "brass"]
+tier = 2
+role = "on"
+icon = "parts16/24-cog-gear"
+words = "a gear on an axle turns another: it moves things"
+
+[part.spring]
+verbs = { move = 0.4 }
+needs = { move = ["wheel", "gear"] }
+with = { tube = ["wood", "plank", "carved wood", "metal", "fired clay", "glass"] }   # a spring is strong: a reed tube won't take one
+materials = ["metal", "spring", "wire", "reed"]
+tier = 2
+role = "on"
+icon = "parts16/25-coil-spring"
+words = "a spring behind a tube throws; a wound spring turns a wheel"
+
+[part.pulley]
+verbs = { move = 0.6 }
+needs = { move = ["cord", "rope"] }
+materials = ["wood", "metal"]
+tier = 2
+role = "on"
+icon = "parts16/44-rope-pulley"
+words = "a pulley with a rope over it lifts things"
+
+[part.lever]
+verbs = { move = 0.45 }
+needs = { move = ["block", "stick", "pole"] }
+materials = ["wood", "metal", "plank"]
+tier = 2
+role = "on"
+icon = "tech16/24-lever"
+words = "a lever on a block shifts what a paw can't"
+
+[part.key]
+verbs = { move = 0.55 }
+materials = ["metal", "wood", "brass"]
+tier = 2
+role = "on"
+icon = "household16/27-small-key"
+draw = "wind-up key"
+words = "a key opens a locked door or the gate"
+
+[part.pin]
+verbs = {}
+materials = ["metal", "nail", "wood", "quill"]
+tier = 2
+role = "on"
+icon = "everyday16/56-nail"
+words = "a pin holds two parts together; a pin with a feather is a dart"
+
+[part.feather]
+verbs = {}
+materials = ["feather", "quill"]
+tier = 0
+role = "on"
+icon = "household16/31-feather"
+draw = "wings"
+words = "a feather makes a dart fly true"
+
+[part.bellows]
+verbs = { heat = 0.4 }
+needs = { heat = ["flame"] }
+materials = ["cloth", "felt", "wood"]
+tier = 1
+role = "on"
+icon = "tech16/34-rubber-hose"
+words = "bellows blow a fire hotter"
+
+[part.valve]
+verbs = { pour = 0.45 }
+needs = { pour = ["tube", "boiler", "jar", "bucket"] }
+materials = ["metal", "brass"]
+tier = 2
+role = "on"
+icon = "parts16/22-valve"
+words = "a valve on a tube lets water through or stops it"
+
+[part.piston]
+verbs = { move = 0.75 }
+needs = { move = ["boiler"] }
+materials = ["metal", "steel", "brass"]
+tier = 3
+role = "on"
+icon = "parts16/00-straight-metal-rod"
+words = "a piston pushed by a boiler moves things by itself"
+
+[part.coil]
+verbs = { signal = 0.6 }
+needs = { signal = ["cell"] }
+materials = ["copper", "wire"]
+tier = 4
+role = "on"
+icon = "tech16/30-electric-motor"
+words = "a coil on a cell buzzes through the house"
+
+[part.cell]
+verbs = {}
+materials = ["zinc", "copper"]
+tier = 4
+role = "on"
+icon = "parts16/47-battery-cell"
+words = "a cell holds power: a bulb or a coil needs one"
+
+[part.bulb]
+verbs = { light = 0.9 }
+needs = { light = [["wire", "cell"]] }
+materials = ["thin glass", "glass"]
+tier = 4
+role = "on"
+icon = "parts16/10-glass-bulb"
+words = "a bulb with a wire and a cell lights a room with no fire at all"
+
+[part.switch]
+verbs = {}
+materials = ["metal", "copper", "brass"]
+tier = 4
+role = "on"
+icon = "parts16/49-switch"
+words = "a switch turns a cell's light or sound on and off"
+
+[part.flower]
+verbs = {}
+materials = ["petal", "dried petal", "leaf", "petal dye", "cloth"]
+tier = 0
+role = "on"
+icon = "household16/35-leaf"
+words = "a flower is for looking at"
+
+[part.gem]
+verbs = {}
+materials = ["bead", "amber", "glass", "shell", "pebble"]
+tier = 0
+role = "on"
+icon = "household16/29-bead"
+words = "a gem shines; it is for looking at"
+
+[part.sail]
+verbs = {}
+materials = ["cloth", "felt", "pressed leaf"]
+tier = 0
+role = "on"
+icon = "parts16/32-cloth-sail"
+words = "a sail over a frame keeps the rain off"
+
+[part.pad]
+verbs = { cover = 0.7 }
+materials = ["soft"]
+tier = 0
+role = "on"
+icon = "household16/59-blanket"
+words = "a pad on a block is a bed: it keeps a hob warm"
+
+[part.seeds]
+verbs = { grow = 0.6 }
+needs = { grow = ["bowl", "jar", "box", "bucket", "basket"] }
+materials = ["seed", "sprouting seed", "bean", "berry", "seed cake"]
+tier = 0
+role = "on"
+icon = "household16/11-seed-pouch"
+words = "seeds in a pot grow"
+
+[part.casing]
+verbs = {}
+materials = ["metal plate", "wood", "plank", "brass", "fired clay"]
+tier = 2
+role = "wrap"
+wear = 0.5
+icon = "parts16/18-flat-plate"
+words = "a casing keeps a thing from wearing: it wears half as fast"
+
+[part.cord]
+verbs = { bind = 0.4 }
+materials = ["string", "cord", "vine cord", "fibre", "vine"]
+tier = 0
+role = "wrap"
+icon = "parts16/28-cord"
+words = "cord binds two things into one"
+
+[part.rope]
+verbs = { bind = 0.55, carry = 0.55, hold = 0.2 }
+materials = ["rope", "vine cord", "cord"]
+tier = 0
+role = "wrap"
+icon = "household16/21-rope-coil"
+words = "rope binds and drags a load"
+
+[part.strap]
+verbs = { bind = 0.4, carry = 0.5 }
+materials = ["cloth", "felt", "fibre", "rope", "hard felt"]
+tier = 0
+role = "wrap"
+icon = "parts16/27-leather-strap"
+words = "a strap binds, and carries a thing slung over a shoulder"
+
+[part.wire]
+verbs = { bind = 0.3 }
+materials = ["wire", "copper"]
+tier = 2
+role = "wrap"
+icon = "parts16/28-cord"
+words = "wire binds; with a cell and a bulb it lights"
+
+[part.string]
+verbs = {}
+materials = ["string", "fibre", "vine", "cord"]
+tier = 0
+role = "wrap"
+icon = "household16/03-ball-of-string"
+draw = "cord"
+words = "a string is a line: a hook on it catches, and drawn behind a tube it throws"
+
+[part.cloth]
+verbs = { cover = 0.8 }
+materials = ["soft"]
+tier = 0
+role = "wrap"
+icon = "products16/07-bolt-of-cloth"
+words = "a cloth covers and keeps warm"
+
+[part.weave]
+verbs = { cover = 0.55 }
+materials = ["fibre", "reed", "supple reed", "wicker", "string", "moss", "cloth"]
+tier = 0
+role = "wrap"
+icon = "products16/08-rolled-rug"
+words = "a weave covers the floor or a hob"
+
+[part.band]
+verbs = {}
+materials = ["metal", "cloth", "reed", "string", "wire"]
+tier = 0
+role = "wrap"
+icon = "parts16/62-rubber-band"
+words = "a band is for looking at, or keeps parts in place"
+
+[part.studs]
+verbs = {}
+materials = ["metal", "bead", "shell", "pebble", "petal dye", "nail"]
+tier = 0
+role = "wrap"
+icon = "household16/30-pebble"
+words = "studs are for looking at"
+
+
+# ---- materials (SPEC-v5.1 §2): every bit of house.toml and every material of crafting.toml, with its tier
+# (contracts.TIERS), its source (contracts.SOURCES; `from` and `at` for a worked one: the bit and the process), its
+# class (contracts.MAT_CLASSES) and its quality 0.5-1.0 (a part's strength is scaled by it). This phase changes no
+# stock: the tier-3 and tier-4 materials are here so the grammar can name them and refuse them. ----
+[material]
+"fluff" = { tier = 0, source = "grows", class = "soft", quality = 0.5 }
+"pebble" = { tier = 0, source = "found", class = "hard", quality = 0.7 }
+"wax" = { tier = 0, source = "grows", class = "hard", quality = 0.8 }
+"seed" = { tier = 0, source = "grows", class = "hard", quality = 0.9 }
+"leaf" = { tier = 0, source = "grows", class = "soft", quality = 0.5 }
+"petal" = { tier = 0, source = "grows", class = "soft", quality = 0.5 }
+"clay" = { tier = 0, source = "found", class = "hard", quality = 0.6 }
+"moss" = { tier = 0, source = "grows", class = "soft", quality = 0.7 }
+"soot" = { tier = 0, source = "found", class = "hard", quality = 0.5 }
+"feather" = { tier = 0, source = "grows", class = "soft", quality = 0.7 }
+"cloth" = { tier = 1, source = "found", class = "soft", quality = 0.9 }
+"wood" = { tier = 0, source = "grows", class = "hard", quality = 0.8 }
+"shell" = { tier = 0, source = "found", class = "hard", quality = 0.8 }
+"bead" = { tier = 1, source = "found", class = "glassy", quality = 0.8 }
+"reed" = { tier = 0, source = "grows", class = "springy", quality = 0.7 }
+"wire" = { tier = 2, source = "found", class = "conductive", quality = 0.85 }
+"metal" = { tier = 2, source = "bought", class = "rigid", quality = 0.9 }
+"string" = { tier = 1, source = "found", class = "springy", quality = 0.8 }
+"fish" = { tier = 0, source = "grows", class = "soft", quality = 0.5 }
+"big fish" = { tier = 0, source = "grows", class = "soft", quality = 0.5 }
+"waterlogged wood" = { tier = 0, source = "found", class = "hard", quality = 0.5 }
+"weed" = { tier = 0, source = "grows", class = "soft", quality = 0.5 }
+"hook" = { tier = 2, source = "found", class = "rigid", quality = 0.9 }
+"spring" = { tier = 2, source = "found", class = "springy", quality = 0.9 }
+"bell" = { tier = 2, source = "found", class = "conductive", quality = 0.9 }
+"felt" = { tier = 1, source = "found", class = "soft", quality = 0.9 }
+"resin" = { tier = 0, source = "grows", class = "hard", quality = 0.8 }
+"chalk" = { tier = 0, source = "found", class = "hard", quality = 0.6 }
+"vine" = { tier = 0, source = "grows", class = "springy", quality = 0.6 }
+"flint" = { tier = 0, source = "found", class = "sharp", quality = 0.85 }
+"berry" = { tier = 0, source = "grows", class = "soft", quality = 0.6 }
+"mushroom" = { tier = 0, source = "grows", class = "soft", quality = 0.5 }
+"nut" = { tier = 0, source = "grows", class = "hard", quality = 0.7 }
+"pine cone" = { tier = 0, source = "grows", class = "hard", quality = 0.6 }
+"supple reed" = { tier = 1, source = "worked", from = "reed", at = "soak", class = "springy", quality = 0.7 }
+"wicker" = { tier = 1, source = "worked", from = "supple reed", at = "weave", class = "springy", quality = 0.7 }
+"dry reed" = { tier = 1, source = "worked", from = "reed", at = "dry", class = "springy", quality = 0.75 }
+"clear wax" = { tier = 1, source = "worked", from = "wax", at = "melt", class = "hard", quality = 0.9 }
+"fired clay" = { tier = 1, source = "worked", from = "clay", at = "warm", class = "hard", quality = 0.9 }
+"clay tile" = { tier = 1, source = "worked", from = "clay", at = "press", class = "hard", quality = 0.9 }
+"mud" = { tier = 0, source = "worked", from = "clay", at = "soak", class = "hard", quality = 0.5 }
+"mud brick" = { tier = 1, source = "worked", from = "mud", at = "dry", class = "hard", quality = 0.7 }
+"rope" = { tier = 1, source = "worked", from = "string", at = "weave", class = "springy", quality = 0.9 }
+"vine cord" = { tier = 1, source = "worked", from = "vine", at = "dry", class = "springy", quality = 0.8 }
+"dry leaf" = { tier = 1, source = "worked", from = "leaf", at = "dry", class = "soft", quality = 0.5 }
+"pressed leaf" = { tier = 1, source = "worked", from = "leaf", at = "press", class = "soft", quality = 0.6 }
+"dried petal" = { tier = 1, source = "worked", from = "petal", at = "dry", class = "soft", quality = 0.5 }
+"petal dye" = { tier = 1, source = "worked", from = "petal", at = "soak", class = "springy", quality = 0.7 }
+"tinder" = { tier = 1, source = "worked", from = "moss", at = "warm", class = "hard", quality = 0.7 }
+"wet moss" = { tier = 1, source = "worked", from = "moss", at = "soak", class = "soft", quality = 0.6 }
+"wet cloth" = { tier = 1, source = "worked", from = "cloth", at = "soak", class = "soft", quality = 0.7 }
+"carved wood" = { tier = 1, source = "worked", from = "wood", at = "carve", class = "hard", quality = 1.0 }
+"charcoal" = { tier = 1, source = "worked", from = "wood", at = "warm", class = "hard", quality = 0.8 }
+"sharp stone" = { tier = 1, source = "worked", from = "pebble", at = "grind", class = "sharp", quality = 0.8 }
+"sand" = { tier = 0, source = "worked", from = "sharp stone", at = "grind", class = "hard", quality = 0.5 }
+"glass" = { tier = 1, source = "worked", from = "sand", at = "melt", class = "glassy", quality = 0.9 }
+"shell dust" = { tier = 1, source = "worked", from = "shell", at = "grind", class = "hard", quality = 0.5 }
+"chalk dust" = { tier = 1, source = "worked", from = "chalk", at = "grind", class = "hard", quality = 0.5 }
+"amber" = { tier = 1, source = "worked", from = "resin", at = "dry", class = "glassy", quality = 0.9 }
+"glue" = { tier = 1, source = "worked", from = "resin", at = "warm", class = "hard", quality = 0.8 }
+"ink block" = { tier = 1, source = "worked", from = "soot", at = "press", class = "hard", quality = 0.7 }
+"meal" = { tier = 1, source = "worked", from = "seed", at = "grind", class = "soft", quality = 0.6 }
+"seed cake" = { tier = 1, source = "worked", from = "meal", at = "warm", class = "soft", quality = 0.7 }
+"sprouting seed" = { tier = 1, source = "worked", from = "seed", at = "soak", class = "hard", quality = 0.8 }
+"wire mesh" = { tier = 2, source = "worked", from = "wire", at = "weave", class = "springy", quality = 0.85 }
+"hard felt" = { tier = 1, source = "worked", from = "felt", at = "soak", class = "soft", quality = 1.0 }
+"quill" = { tier = 1, source = "worked", from = "feather", at = "press", class = "sharp", quality = 0.8 }
+"fibre" = { tier = 0, source = "grows", class = "soft", quality = 0.85 }
+"bean" = { tier = 0, source = "found", class = "hard", quality = 0.7 }
+"fired brick" = { tier = 1, source = "worked", from = "clay", at = "fire", class = "hard", quality = 0.9 }
+"oil" = { tier = 1, source = "found", class = "hard", quality = 0.9 }
+"flour" = { tier = 1, source = "worked", from = "seed", at = "mill", class = "soft", quality = 0.6 }
+"netting" = { tier = 1, source = "worked", from = "string", at = "loom", class = "springy", quality = 0.85 }
+"nail" = { tier = 2, source = "worked", from = "metal", at = "forge", class = "sharp", quality = 0.9 }
+"blade" = { tier = 2, source = "found", class = "sharp", quality = 0.95 }
+"hinge" = { tier = 2, source = "found", class = "rigid", quality = 0.9 }
+"chain" = { tier = 2, source = "found", class = "rigid", quality = 0.9 }
+"stone" = { tier = 0, source = "found", class = "hard", quality = 0.8 }
+"plank" = { tier = 1, source = "worked", from = "wood", at = "grind", class = "hard", quality = 0.9 }
+"grit" = { tier = 1, source = "worked", from = "stone", at = "press", class = "hard", quality = 0.5 }
+"warm stone" = { tier = 1, source = "worked", from = "stone", at = "warm", class = "hard", quality = 0.8 }
+"warm metal" = { tier = 2, source = "worked", from = "metal", at = "warm", class = "rigid", quality = 0.9 }
+"metal plate" = { tier = 2, source = "worked", from = "warm metal", at = "press", class = "rigid", quality = 0.9 }
+"tempered metal" = { tier = 2, source = "worked", from = "warm metal", at = "soak", class = "rigid", quality = 1.0 }
+"cord" = { tier = 1, source = "worked", from = "fibre", at = "weave", class = "springy", quality = 0.85 }
+"packed sand" = { tier = 1, source = "worked", from = "sand", at = "press", class = "hard", quality = 0.6 }
+"steel" = { tier = 3, source = "window", class = "rigid", quality = 1.0 }
+"rubber" = { tier = 3, source = "window", class = "springy", quality = 0.9 }
+"brass" = { tier = 3, source = "scavenged", class = "rigid", quality = 0.95 }
+"copper" = { tier = 4, source = "scavenged", class = "conductive", quality = 0.95 }
+"zinc" = { tier = 4, source = "window", class = "conductive", quality = 0.9 }
+"thin glass" = { tier = 4, source = "scavenged", class = "glassy", quality = 0.9 }
+
+# ---- the grammar as the model is told it (SPEC-v5.1 §4.1): one plain line each, in order. A line is shown when its
+# first part is of a tier the hob may make (its tier + 1); contracts.grammar puts them together. Every part with
+# verbs is named by a line (check_contracts). ----
+[[line]]
+parts = ["stick"]
+says = "A stick knocks things and digs a little."
+[[line]]
+parts = ["box", "jar", "bowl", "basket", "bucket", "lid"]
+says = "A box, a jar, a bowl, a basket or a bucket holds things; a box with a lid keeps the mouse out."
+[[line]]
+parts = ["bottle", "plate", "ring"]
+says = "A bottle holds water; a plate or a ring holds a little."
+[[line]]
+parts = ["lip", "spout", "handle"]
+says = "A vessel with a lip or a spout pours; a lip on a handle is a spoon."
+[[line]]
+parts = ["basket", "bucket", "rope", "strap", "sling"]
+says = "A basket, a bucket, rope, a strap or a sling carries a load; a sling with a stone in it throws it."
+[[line]]
+parts = ["frame", "cloth", "sail", "weave"]
+says = "A frame holds things on it; with a cloth, a sail or a weave over it, it keeps the rain off."
+[[line]]
+parts = ["cushion", "pad", "cloth", "weave", "block"]
+says = "A cushion, a pad, a cloth or a weave covers and keeps a hob warm; a pad on a block is a bed, and a block is a seat."
+[[line]]
+parts = ["flame", "shade", "lens", "mirror"]
+says = "A flame heats a little; under glass, a shade, a lens or a mirror it lights a room."
+[[line]]
+parts = ["wick", "pole"]
+says = "A wick burns small: a candle, or a torch on a pole."
+[[line]]
+parts = ["blade", "handle"]
+says = "A blade cuts; on a handle it also strikes and digs a little."
+[[line]]
+parts = ["head", "handle"]
+says = "A heavy head on a handle strikes: it drives a nail and sets a patch."
+[[line]]
+parts = ["scoop", "spade", "tines", "handle"]
+says = "A scoop, a spade or tines on a handle dig."
+[[line]]
+parts = ["bristles", "handle"]
+says = "Bristles on a handle sweep up the small bits."
+[[line]]
+parts = ["net", "cage", "hook", "string", "pole"]
+says = "A net or a cage catches; so does a hook on a string or a pole."
+[[line]]
+parts = ["hook", "plate"]
+says = "A hook on a plate hangs things on a wall."
+[[line]]
+parts = ["needle", "patch"]
+says = "A needle mends soft things; a patch mends a leak or a tear and is used up."
+[[line]]
+parts = ["cord", "rope", "strap"]
+says = "Cord, rope or a strap binds two things into one."
+[[line]]
+parts = ["tube", "spring", "string"]
+says = "A tube throws what fits in it (pebbles, seeds, nuts, darts) if a spring or a drawn string is behind it; alone it holds a little and pours."
+[[line]]
+parts = ["seeds", "bowl"]
+says = "Seeds in a pot, a jar or a box grow."
+[[line]]
+parts = ["horn", "drum skin", "strings", "chimes"]
+says = "A horn, a drum skin, strings or chimes are heard in the next room."
+[[line]]
+parts = ["bell dome", "bell"]
+says = "A bell is heard in the next room."
+[[line]]
+parts = ["wheel", "axle"]
+says = "A wheel carries a load; on an axle it moves."
+[[line]]
+parts = ["gear", "spring", "pulley", "lever"]
+says = "A gear or a wound spring turns a wheel; a pulley with a rope over it lifts; a lever on a block shifts what a paw can't."
+[[line]]
+parts = ["spring", "tube"]
+says = "A spring is strong: a reed tube won't take one, but wood, clay or metal will."
+[[line]]
+parts = ["key"]
+says = "A key opens a locked door or the gate."
+[[line]]
+parts = ["hinge", "pin", "feather"]
+says = "A hinge lets a lid swing; a pin holds two parts together; a pin with a feather is a dart."
+[[line]]
+parts = ["valve", "casing", "dial"]
+says = "A valve on a tube lets water through or stops it. A casing keeps a thing from wearing: it wears half as fast. A dial shows how much."
+[[line]]
+parts = ["bellows", "wire"]
+says = "Bellows blow a fire hotter. Wire binds."
+[[line]]
+parts = ["boiler", "piston"]
+says = "A boiler over a flame holds its heat; a piston on a boiler moves things by itself."
+[[line]]
+parts = ["bulb", "wire", "cell", "coil", "switch"]
+says = "A bulb with a wire and a cell lights a room with no fire; a coil on a cell buzzes; a switch turns them on and off."
+[[line]]
+parts = ["flower", "gem", "band", "studs", "disc", "bundle"]
+says = "Flowers, gems, bands and studs are for looking at; a disc is a sign or a top; a bundle burns, or is a doll's body."

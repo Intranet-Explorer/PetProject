@@ -1,0 +1,196 @@
+# SPEC-v5.0 §1.3: what every kind of thing does, as verbs (contracts.VERBS) with a strength 0..1, its class (wear and
+# what the class means: contracts.CLASSES) and what it holds that runs out (`charge`: {material: uses when full}).
+# Hand-reviewed by the lead, 20 October 2026. A kind with no verbs is a keepsake: kept, given, inherited, starred, and
+# never asked for by a job. Every kind in view/assets/kinds.json has an entry (check_contracts); so does every fixture
+# and every built project that does something. In v5.1 the verbs come from parts instead.
+#
+# What a verb does to the needs (§1.4) is engine/verbs.py's; these are only who can.
+
+[kind]
+# soft things: cover a hob (warm at night, comfort by day)
+cushion = { parts = ["cushion of cloth"], verbs = { cover = 0.4 }, class = "soft" }
+blanket = { parts = ["cloth of cloth"], verbs = { cover = 0.8 }, class = "soft" }
+rug = { parts = ["weave of fibre"], verbs = { cover = 0.5 }, class = "soft" }
+"bed-mat" = { parts = ["block of wood", "pad of felt"], verbs = { cover = 0.6, hold = 0.3 }, class = "soft" }          # a bed: holds a hob, covers it
+nest = { parts = ["ring of reed", "weave of moss"], verbs = { cover = 0.5, hold = 0.3 }, class = "soft" }                # a little one's bed
+"draught stopper" = { parts = ["cushion of felt"], verbs = { cover = 0.5 }, class = "soft" }               # covers the gap under a door: a room keeps its warmth
+stool = { parts = ["block of wood"], verbs = { cover = 0.3 }, class = "plain" }                          # a seat: rest off the floor
+
+# lights: charge runs out; refilled by pour (contracts.CHARGES says with what)
+lantern = { parts = ["flame of oil", "shade of glass", "handle of wood"], verbs = { light = 0.8 }, class = "glass", charge = { oil = 6 } }
+lamp = { parts = ["flame of wax", "shade of glass"], verbs = { light = 0.7 }, class = "glass", charge = { oil = 8 } }
+candle = { parts = ["wick of string"], verbs = { light = 0.4 }, class = "plain", charge = { wax = 3 } }
+torch = { parts = ["pole of wood", "wick of cloth"], verbs = { light = 0.6 }, class = "plain", charge = { fuel = 4 } }
+
+# holders: hold keeps; store keeps the mouse out; cool keeps food longer
+box = { parts = ["box of wood"], verbs = { hold = 0.8 }, class = "store" }
+chest = { parts = ["box of plank", "lid of plank", "hinge of wood"], verbs = { hold = 1.0 }, class = "store" }
+crate = { parts = ["box of plank"], verbs = { hold = 0.8 }, class = "store" }
+shelf = { parts = ["frame of wood"], verbs = { hold = 0.7 }, class = "store" }
+basket = { parts = ["basket of wicker"], verbs = { hold = 0.6, carry = 0.5 }, class = "store" }
+jar = { parts = ["jar of fired clay"], verbs = { hold = 0.5 }, class = "cool" }
+bottle = { parts = ["bottle of glass", "lip of glass"], verbs = { hold = 0.4, pour = 0.5 }, class = "glass" }
+vase = { parts = ["bottle of fired clay"], verbs = { hold = 0.3 }, class = "glass" }
+bowl = { parts = ["bowl of wood"], verbs = { hold = 0.4 }, class = "plain" }
+cup = { parts = ["bowl of fired clay", "lip of fired clay"], verbs = { hold = 0.3, pour = 0.3 }, class = "plain" }
+plate = { parts = ["plate of fired clay"], verbs = { hold = 0.3 }, class = "plain" }
+bucket = { parts = ["bucket of wood", "spout of wood"], verbs = { hold = 0.6, pour = 0.6, carry = 0.4 }, class = "plain" }
+kettle = { parts = ["bowl of metal", "lid of metal", "spout of metal"], verbs = { hold = 0.4, pour = 0.6 }, class = "plain" }
+"wall hook" = { parts = ["hook of metal", "plate of wood"], verbs = { hold = 0.4 }, class = "plain" }                     # hangs a thing up off the floor
+"plant pot" = { parts = ["bowl of fired clay", "seeds of seed"], verbs = { grow = 0.6, hold = 0.2 }, class = "plain" }
+
+# tools
+broom = { parts = ["bristles of reed", "handle of wood"], verbs = { carry = 0.6 }, class = "tool" }                           # small bits only: sweeping is carry to the bin or the Works
+brush = { parts = ["bristles of fluff", "handle of wood"], verbs = { carry = 0.3 }, class = "tool" }
+rope = { parts = ["rope of rope"], new = ["bind"], verbs = { carry = 0.5, hold = 0.2 }, class = "plain" }               # (bind comes with v5.1's parts)
+wheel = { parts = ["wheel of wood"], verbs = { carry = 0.4 }, class = "plain" }
+hammer = { parts = ["head of metal", "handle of wood"], verbs = { strike = 0.8 }, class = "tool" }                         # drives a nail, sets a patch: mending a tool needs it
+stick = { parts = ["stick of wood"], verbs = { strike = 0.3, dig = 0.2 }, class = "plain" }
+knife = { parts = ["blade of metal", "handle of wood"], verbs = { cut = 0.7 }, class = "tool" }
+carver = { parts = ["blade of tempered metal", "handle of carved wood"], verbs = { cut = 0.8 }, class = "tool" }
+fork = { parts = ["tines of wood", "handle of wood"], verbs = { dig = 0.3 }, class = "tool" }                              # turns soil in a pot
+spoon = { parts = ["lip of wood", "handle of wood"], verbs = { pour = 0.3 }, class = "plain" }
+trowel = { parts = ["scoop of metal", "handle of wood"], verbs = { dig = 0.7 }, class = "tool" }
+needle = { parts = ["needle of metal"], verbs = { mend = 0.6 }, class = "tool" }                           # mends soft things; not used up
+hook = { parts = ["hook of metal", "string of string"], verbs = { catch = 0.3 }, class = "tool" }
+rod = { parts = ["pole of wood", "string of string", "hook of metal"], verbs = { catch = 0.6 }, class = "tool", charge = { bait = 1 } }
+tube = { parts = ["tube of reed"], verbs = { pour = 0.3 }, class = "plain" }                            # (launch comes with v5.1's parts)
+
+# used up by the mending
+patch = { parts = ["patch of cloth"], verbs = { mend = 1.0 }, class = "plain", used_up = true }           # a leak, or a soft thing
+tile = { parts = ["patch of clay tile"], gone = ["cover"], verbs = { mend = 1.0, cover = 0.3 }, class = "plain", used_up = true }
+
+# calling the house
+bell = { parts = ["bell dome of metal"], verbs = { signal = 0.6 }, class = "plain" }
+drum = { parts = ["drum skin of cloth"], verbs = { signal = 0.6 }, class = "plain" }
+flute = { parts = ["horn of reed"], verbs = { signal = 0.4 }, class = "plain" }
+"wind chime" = { parts = ["chimes of shell"], verbs = { signal = 0.3 }, class = "plain" }
+
+# fuel and food: spent, not used
+"tinder bundle" = { parts = ["bundle of tinder"], verbs = { }, class = "plain", fuel = true }               # fuel for heat and a torch
+treat = { parts = ["bundle of seed cake"], verbs = { }, class = "food" }
+
+# keepsakes: no verbs (§1.3: kept, given, inherited, starred; never a job's)
+ball = { parts = ["disc of felt"], verbs = { }, class = "keepsake" }
+doll = { parts = ["bundle of cloth", "head of wood"], verbs = { }, class = "keepsake" }
+"spinning top" = { parts = ["disc of wood", "pin of wood"], verbs = { }, class = "keepsake" }
+picture = { parts = ["disc of plank", "studs of petal dye"], verbs = { }, class = "keepsake" }
+sculpture = { parts = ["block of clay"], verbs = { }, class = "keepsake" }
+mobile = { parts = ["string of string", "feather of feather", "gem of bead"], verbs = { }, class = "keepsake" }
+garland = { parts = ["string of vine", "flower of petal"], verbs = { }, class = "keepsake" }
+charm = { parts = ["gem of bead", "string of string"], verbs = { }, class = "keepsake" }
+sign = { parts = ["disc of plank", "pole of wood"], verbs = { }, class = "keepsake" }                                    # a sign is words; it does nothing
+ring = { parts = ["band of metal", "gem of bead"], verbs = { }, class = "keepsake" }
+"golden fish" = { parts = ["gem of amber"], verbs = { }, class = "keepsake" }
+"stone stack" = { parts = ["studs of pebble"], verbs = { }, class = "keepsake" }
+"note bottle" = { parts = ["bottle of glass", "string of string"], new = ["hold"], verbs = { }, class = "keepsake" }
+key = { parts = ["key of metal"], new = ["move"], verbs = { }, class = "keepsake" }                                     # v5.1: move on a locked door or gate (gate_shut; DECISIONS Part 43)
+lens = { parts = ["lens of glass"], verbs = { }, class = "keepsake" }                                    # v5.1: a part that strengthens light
+mirror = { parts = ["mirror of glass"], verbs = { }, class = "keepsake" }                                  # v5.1: a part that throws light into a room
+gear = { parts = ["gear of metal"], verbs = { }, class = "keepsake" }                                    # v5.1: a mechanism part (move)
+spring = { parts = ["spring of metal"], verbs = { }, class = "keepsake" }                                  # v5.1: a mechanism part (launch, move)
+
+# ---- the house's fixtures and built projects (§1.2: the stove and the kiln heat as fixtures). Fixtures wear slowly.
+# A fixture with no entry does nothing as an item (a window, the pond, a screen). ----
+[fixture]
+lamp = { verbs = { light = 0.7 } }                    # the nursery's: on the house's power
+"work lamp" = { verbs = { light = 0.8 } }
+lantern = { verbs = { light = 0.6 }, charge = { oil = 12 } }
+"old lantern" = { verbs = { light = 0.5 }, charge = { oil = 12 } }
+"lit sign" = { verbs = { light = 0.3, signal = 0.4 } }
+"fire pit" = { verbs = { heat = 0.7 }, charge = { fuel = 8 } }
+"hot pipe" = { verbs = { heat = 0.5 } }
+bed = { verbs = { cover = 0.8, hold = 0.5 } }
+blanket = { verbs = { cover = 0.8 } }
+"old rug" = { verbs = { cover = 0.4 } }
+rug = { verbs = { cover = 0.4 } }
+"rocking chair" = { verbs = { cover = 0.3 } }
+"old bench" = { verbs = { cover = 0.2 } }
+"yard bench" = { verbs = { cover = 0.2 } }
+stool = { verbs = { cover = 0.2 } }
+"toy chest" = { verbs = { hold = 0.8 }, class = "store" }
+"tool box" = { verbs = { hold = 0.8 }, class = "store" }
+trunk = { verbs = { hold = 1.0 }, class = "store" }
+crates = { verbs = { hold = 0.8 }, class = "store" }
+"corner crates" = { verbs = { hold = 0.8 }, class = "store" }
+shed = { verbs = { hold = 0.8 }, class = "store" }
+barrel = { verbs = { hold = 0.8 }, class = "cool" }
+shelf = { verbs = { hold = 0.7 } }
+"long shelf" = { verbs = { hold = 0.7 } }
+"attic shelf" = { verbs = { hold = 0.7 } }
+"instrument shelf" = { verbs = { hold = 0.6 } }
+"pot shelf" = { verbs = { hold = 0.6 } }
+shelves = { verbs = { hold = 0.7 } }
+"reed basket" = { verbs = { hold = 0.6 } }
+"big tree" = { verbs = { hold = 0.4 } }
+bowl = { verbs = { hold = 0.3 } }
+drum = { verbs = { signal = 0.6 } }
+chimes = { verbs = { signal = 0.4 } }
+"music box" = { verbs = { signal = 0.3 } }
+"bean row" = { verbs = { grow = 0.6 } }
+"berry bush" = { verbs = { grow = 0.5 } }
+"herb patch" = { verbs = { grow = 0.5 } }
+"tomato vine" = { verbs = { grow = 0.6 } }
+"melon bed" = { verbs = { grow = 0.6 } }
+plant = { verbs = { grow = 0.3 } }
+pond = { verbs = { catch = 0.3 } }                    # a paw in the water catches a little
+footbridge = { verbs = { move = 0.5 } }
+"vending machine" = { verbs = { hold = 1.0 } }        # (§4: it trades)
+# built projects (building.toml), once built
+stove = { verbs = { heat = 0.8 }, charge = { fuel = 10 } }
+kiln = { verbs = { heat = 0.9 }, charge = { fuel = 10 } }
+forge = { verbs = { heat = 1.0 }, charge = { fuel = 10 } }
+"bed frame" = { verbs = { cover = 0.5, hold = 0.6 } }
+"big shelf" = { verbs = { hold = 0.9 } }
+"draught curtain" = { verbs = { cover = 0.6 } }
+"wall lining" = { verbs = { cover = 0.4 } }
+"roof patch" = { verbs = { cover = 0.5 } }
+"lamp niche" = { verbs = { hold = 0.3 } }
+hutch = { verbs = { hold = 0.6 } }
+"window box" = { verbs = { grow = 0.4 } }
+trellis = { verbs = { grow = 0.3 } }
+"pond bridge" = { verbs = { move = 0.5 } }
+bench = { verbs = { cover = 0.3 } }
+table = { verbs = { hold = 0.4 } }
+
+# ---- what runs out, and what fills it (§1.6): a bit of any of these kinds, poured in, is one use per... ----
+[charge]
+oil = { from = ["oil"], per_bit = 3 }                 # oil: pressed from seed at the mill (crafting.toml)
+wax = { from = ["wax"], per_bit = 3 }
+bait = { from = ["berry", "seed", "nut", "mushroom"], per_bit = 1 }
+fuel = { from = ["wood", "tinder", "charcoal", "pine cone", "waterlogged wood"], per_bit = 2 }
+shot = { from = ["pebble", "seed", "nut", "berry", "dart"], per_bit = 1 }   # SPEC-v5.1 §3: what a launcher throws (contracts.CHARGE_LAUNCH)
+
+# ---- the kinds the house invented (house["invented"]): verbs from their `use`, then from what the old design judge
+# recorded they `works` at (§1.3). A use or a works effect not here gives nothing. v5.1: with [grammar] on an
+# invented kind is its own parts (a v5.1 invention's, or the old design's design_parts), else the parts of its use
+# here; `verbs` stays v5.0's hand table, for [grammar] off and for the migration's check. ----
+[invented.use]
+"carried light" = { parts = ["flame of wax", "shade of glass", "handle of wood"], verbs = { light = 0.6 } }
+"soft light" = { parts = ["wick of string"], verbs = { light = 0.3 } }
+keeper = { parts = ["box of wicker"], verbs = { hold = 0.6 } }
+"seat or bed" = { parts = ["cushion of cloth"], verbs = { cover = 0.5 } }
+chime = { parts = ["chimes of shell"], verbs = { signal = 0.4 } }
+instrument = { parts = ["strings of string"], verbs = { signal = 0.4 } }
+planter = { parts = ["bowl of fired clay", "seeds of seed"], new = ["hold"], verbs = { grow = 0.5 } }
+digger = { parts = ["scoop of wood", "handle of wood"], verbs = { dig = 0.5 } }
+reacher = { parts = ["pole of wood", "hook of wood"], new = ["catch"], gone = ["carry"], verbs = { carry = 0.3 } }
+"rolling toy" = { parts = ["disc of wood", "pin of wood"], verbs = { } }
+curio = { parts = ["gem of bead"], verbs = { } }
+keepsake = { parts = ["flower of dried petal"], verbs = { } }
+design = { parts = [], verbs = { } }                     # a design: its own design_parts (grammar.recipe), else nothing
+
+[invented.works]
+light = { light = 0.5 }
+hold = { hold = 0.5 }
+keep = { hold = 0.5 }
+heat = { heat = 0.5 }
+pour = { pour = 0.5 }
+cut = { cut = 0.5 }
+dig = { dig = 0.5 }
+catch = { catch = 0.5 }
+fasten = { mend = 0.5 }
+signal = { signal = 0.5 }
+sound = { signal = 0.4 }
+comfort = { cover = 0.3 }
+music = { }

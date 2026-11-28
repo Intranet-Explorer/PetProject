@@ -1,0 +1,1878 @@
+{
+ "approval": {
+  "rows": 184,
+  "draft_sha256": "cb93d82fdfa6d5daeb7cb7b55a937a1d2816fbe83810098fb17aa4e0901968ba"
+ },
+ "kinds": [
+  {
+   "kind": "cushion",
+   "cell": "household16:58",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "sprite": "kind.pixellab.cushion"
+  },
+  {
+   "kind": "rug",
+   "cell": "furniture32:4",
+   "status": "near_match_other_sheet",
+   "note": "Woven rug; 32 px, so needs a size decision.",
+   "sprite": "kind.pixellab.rug"
+  },
+  {
+   "kind": "blanket",
+   "cell": "household16:59",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "sprite": "kind.pixellab.blanket"
+  },
+  {
+   "kind": "nest",
+   "cell": "outdoor32:49",
+   "status": "near_match_other_sheet",
+   "note": "Bird nest with eggs; remove eggs for a generic empty nest.",
+   "sprite": "kind.pixellab.nest"
+  },
+  {
+   "kind": "bed-mat",
+   "cell": "furniture32:2",
+   "status": "near_match_other_sheet",
+   "note": "Quilted bed; near match only, includes a frame instead of a floor mat.",
+   "sprite": "kind.pixellab.bed-mat"
+  },
+  {
+   "kind": "doll",
+   "cell": "generate",
+   "status": "generate",
+   "note": "No convincing cell for this kind; queue four candidates for step 4 after generation approval.",
+   "sprite": "kind.doll"
+  },
+  {
+   "kind": "candle",
+   "cell": "household16:4",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "sprite": "kind.pixellab.candle"
+  },
+  {
+   "kind": "lantern",
+   "cell": "household16:26",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "sprite": "kind.pixellab.lantern"
+  },
+  {
+   "kind": "lamp",
+   "cell": "furniture32:13",
+   "status": "near_match_other_sheet",
+   "note": "Floor lamp; 32 px fixture silhouette rather than a small table lamp.",
+   "sprite": "kind.pixellab.lamp"
+  },
+  {
+   "kind": "bell",
+   "cell": "household16:6",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "sprite": "kind.pixellab.bell"
+  },
+  {
+   "kind": "drum",
+   "cell": "household16:62",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "sprite": "kind.pixellab.drum"
+  },
+  {
+   "kind": "flute",
+   "cell": "household16:63",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "sprite": "kind.pixellab.flute"
+  },
+  {
+   "kind": "wind chime",
+   "cell": "generate",
+   "status": "generate",
+   "note": "No convincing cell for this kind; queue four candidates for step 4 after generation approval.",
+   "sprite": "kind.wind chime"
+  },
+  {
+   "kind": "ball",
+   "cell": "household16:60",
+   "status": "hero16",
+   "note": "Toy ball; direct match.",
+   "sprite": "kind.pixellab.ball"
+  },
+  {
+   "kind": "spinning top",
+   "cell": "household16:61",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "sprite": "kind.pixellab.spinning top"
+  },
+  {
+   "kind": "mobile",
+   "cell": "generate",
+   "status": "generate",
+   "note": "No convincing cell for this kind; queue four candidates for step 4 after generation approval.",
+   "sprite": "kind.mobile"
+  },
+  {
+   "kind": "jar",
+   "cell": "household16:14",
+   "status": "hero16",
+   "note": "Glass jar; direct match, with its cork retained.",
+   "sprite": "kind.pixellab.jar"
+  },
+  {
+   "kind": "bowl",
+   "cell": "household16:0",
+   "status": "hero16",
+   "note": "Empty clay bowl; direct match.",
+   "sprite": "kind.pixellab.bowl"
+  },
+  {
+   "kind": "cup",
+   "cell": "everyday16:27",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "sprite": "kind.pixellab.cup"
+  },
+  {
+   "kind": "vase",
+   "cell": "parts16:14",
+   "status": "near_match_other_sheet",
+   "note": "Glass jar is a vessel near match; lacks a vase neck/profile.",
+   "sprite": "kind.pixellab.vase"
+  },
+  {
+   "kind": "basket",
+   "cell": "household16:2",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "sprite": "kind.pixellab.basket"
+  },
+  {
+   "kind": "box",
+   "cell": "parts16:17",
+   "status": "near_match_other_sheet",
+   "note": "Small box; direct subject match outside the four hero sheets.",
+   "sprite": "kind.pixellab.box"
+  },
+  {
+   "kind": "shelf",
+   "cell": "track16:42",
+   "status": "near_match_other_sheet",
+   "note": "Small shelf; subject match from the rail accessory sheet.",
+   "sprite": "kind.pixellab.shelf"
+  },
+  {
+   "kind": "stool",
+   "cell": "furniture32:7",
+   "status": "near_match_other_sheet",
+   "note": "Three-legged stool; direct subject, 32 px.",
+   "sprite": "kind.pixellab.stool"
+  },
+  {
+   "kind": "mirror",
+   "cell": "parts16:59",
+   "status": "near_match_other_sheet",
+   "note": "Mirror; direct subject from the parts sheet.",
+   "sprite": "kind.pixellab.mirror"
+  },
+  {
+   "kind": "picture",
+   "cell": "track16:35",
+   "status": "near_match_other_sheet",
+   "note": "Photo frame; near match for a framed picture.",
+   "sprite": "kind.pixellab.picture"
+  },
+  {
+   "kind": "plant pot",
+   "cell": "furniture32:14",
+   "status": "near_match_other_sheet",
+   "note": "Potted plant; includes foliage and is 32 px. Needs a bare-pot variant.",
+   "sprite": "kind.pixellab.plant pot"
+  },
+  {
+   "kind": "garland",
+   "cell": "generate",
+   "status": "generate",
+   "note": "No convincing cell for this kind; queue four candidates for step 4 after generation approval.",
+   "sprite": "kind.garland"
+  },
+  {
+   "kind": "charm",
+   "cell": "sweeper16:57",
+   "status": "near_match_other_sheet",
+   "note": "Ribbon medal; near match for a small hanging charm.",
+   "sprite": "kind.pixellab.charm"
+  },
+  {
+   "kind": "stone stack",
+   "cell": "outdoor32:12",
+   "status": "near_match_other_sheet",
+   "note": "Small rocks pile; near match, not an intentionally balanced cairn.",
+   "sprite": "kind.pixellab.stone stack"
+  },
+  {
+   "kind": "sculpture",
+   "cell": "generate",
+   "status": "generate",
+   "note": "No convincing cell for this kind; queue four candidates for step 4 after generation approval.",
+   "sprite": "kind.sculpture"
+  },
+  {
+   "kind": "treat",
+   "cell": "pond16:32",
+   "status": "hero16",
+   "note": "Slice of cake; matches the snack/cake kind.",
+   "sprite": "kind.pixellab.treat"
+  },
+  {
+   "kind": "chest",
+   "cell": "furniture32:15",
+   "status": "near_match_other_sheet",
+   "note": "Wooden chest; direct subject, 32 px.",
+   "sprite": "kind.pixellab.chest"
+  },
+  {
+   "kind": "crate",
+   "cell": "track16:25",
+   "status": "near_match_other_sheet",
+   "note": "Small crate; subject match from the rail accessory sheet.",
+   "sprite": "kind.pixellab.crate"
+  },
+  {
+   "kind": "wall hook",
+   "cell": "everyday16:42",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "sprite": "kind.pixellab.wall hook"
+  },
+  {
+   "kind": "rope",
+   "cell": "everyday16:33",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "sprite": "kind.pixellab.rope"
+  },
+  {
+   "kind": "carver",
+   "cell": "household16:8",
+   "status": "hero16",
+   "note": "Carving knife; direct match.",
+   "sprite": "kind.pixellab.carver"
+  },
+  {
+   "kind": "trowel",
+   "cell": "household16:7",
+   "status": "hero16",
+   "note": "Garden trowel; direct match.",
+   "sprite": "kind.pixellab.trowel"
+  },
+  {
+   "kind": "hammer",
+   "cell": "everyday16:55",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "sprite": "kind.pixellab.hammer"
+  },
+  {
+   "kind": "tile",
+   "cell": "products16:3",
+   "status": "near_match_other_sheet",
+   "note": "Clay tile; direct subject from the products sheet.",
+   "sprite": "kind.pixellab.tile"
+  },
+  {
+   "kind": "patch",
+   "cell": "tubes16:57",
+   "status": "near_match_other_sheet",
+   "note": "Brass tube repair patch; specialized metal patch rather than cloth.",
+   "sprite": "kind.pixellab.patch"
+  },
+  {
+   "kind": "tinder bundle",
+   "cell": "sweeper16:13",
+   "status": "near_match_other_sheet",
+   "note": "Bundle of sticks; near match for dry kindling.",
+   "sprite": "kind.pixellab.tinder bundle"
+  },
+  {
+   "kind": "draught stopper",
+   "cell": "generate",
+   "status": "generate",
+   "note": "No convincing cell for this kind; queue four candidates for step 4 after generation approval.",
+   "sprite": "kind.draught stopper"
+  },
+  {
+   "kind": "sign",
+   "cell": "outdoor32:24",
+   "status": "near_match_other_sheet",
+   "note": "Signpost with arrows; near match, 32 px instead of a small label.",
+   "sprite": "kind.pixellab.sign"
+  },
+  {
+   "kind": "fork",
+   "cell": "everyday16:24",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "sprite": "kind.pixellab.fork"
+  },
+  {
+   "kind": "spoon",
+   "cell": "household16:9",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "sprite": "kind.pixellab.spoon"
+  },
+  {
+   "kind": "knife",
+   "cell": "household16:8",
+   "status": "hero16",
+   "note": "Shares the carving knife because this kind counts as carver.",
+   "sprite": "kind.pixellab.knife"
+  },
+  {
+   "kind": "plate",
+   "cell": "everyday16:28",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "sprite": "kind.pixellab.plate"
+  },
+  {
+   "kind": "kettle",
+   "cell": "household16:57",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "sprite": "kind.pixellab.kettle"
+  },
+  {
+   "kind": "stick",
+   "cell": "household16:44",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "sprite": "kind.pixellab.stick"
+  },
+  {
+   "kind": "tube",
+   "cell": "everyday16:34",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "sprite": "kind.pixellab.tube"
+  },
+  {
+   "kind": "brush",
+   "cell": "household16:22",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "sprite": "kind.pixellab.brush"
+  },
+  {
+   "kind": "broom",
+   "cell": "household16:23",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "sprite": "kind.pixellab.broom"
+  },
+  {
+   "kind": "bucket",
+   "cell": "household16:24",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "sprite": "kind.pixellab.bucket"
+  },
+  {
+   "kind": "torch",
+   "cell": "everyday16:38",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "sprite": "kind.pixellab.torch"
+  },
+  {
+   "kind": "needle",
+   "cell": "household16:10",
+   "status": "hero16",
+   "note": "Needle with thread attached; acceptable sewing-tool silhouette.",
+   "sprite": "kind.pixellab.needle"
+  },
+  {
+   "kind": "wheel",
+   "cell": "household16:20",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "sprite": "kind.pixellab.wheel"
+  },
+  {
+   "kind": "hook",
+   "cell": "household16:12",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "sprite": "kind.pixellab.hook"
+  },
+  {
+   "kind": "spring",
+   "cell": "tech16:10",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "sprite": "kind.pixellab.spring"
+  },
+  {
+   "kind": "rod",
+   "cell": "household16:25",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "sprite": "kind.pixellab.rod"
+  },
+  {
+   "kind": "bottle",
+   "cell": "pond16:8",
+   "status": "hero16",
+   "note": "Glass bottle; direct match without chemistry contents.",
+   "sprite": "kind.pixellab.bottle"
+  },
+  {
+   "kind": "note bottle",
+   "cell": "pond16:9",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "sprite": "kind.pixellab.note bottle"
+  },
+  {
+   "kind": "lens",
+   "cell": "household16:5",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "sprite": "kind.pixellab.lens"
+  },
+  {
+   "kind": "gear",
+   "cell": "everyday16:18",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "sprite": "kind.pixellab.gear"
+  },
+  {
+   "kind": "ring",
+   "cell": "household16:28",
+   "status": "hero16",
+   "note": "Plain ring; direct match.",
+   "sprite": "kind.pixellab.ring"
+  },
+  {
+   "kind": "key",
+   "cell": "household16:27",
+   "status": "hero16",
+   "note": "Small key; direct match.",
+   "sprite": "kind.pixellab.key"
+  },
+  {
+   "kind": "golden fish",
+   "cell": "everyday16:7",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "sprite": "kind.pixellab.golden fish"
+  }
+ ],
+ "parts": [
+  {
+   "part": "spring",
+   "cell": "parts16:25",
+   "status": "imported16",
+   "active": true,
+   "source_file": "pixellab/parts16.png",
+   "adapter": "palette converted and fitted to existing attachment bounds",
+   "native24_pending": true,
+   "larger_sizes": "existing native art"
+  },
+  {
+   "part": "gear",
+   "cell": "parts16:24",
+   "status": "imported16",
+   "active": true,
+   "source_file": "pixellab/parts16.png",
+   "adapter": "palette converted and fitted to existing attachment bounds",
+   "native24_pending": true,
+   "larger_sizes": "existing native art"
+  },
+  {
+   "part": "axle",
+   "cell": "parts16:26",
+   "status": "imported16",
+   "active": true,
+   "source_file": "pixellab/parts16.png",
+   "adapter": "palette converted and fitted to existing attachment bounds",
+   "native24_pending": true,
+   "larger_sizes": "existing native art"
+  },
+  {
+   "part": "wheel",
+   "cell": "parts16:23",
+   "status": "imported16",
+   "active": true,
+   "source_file": "pixellab/parts16.png",
+   "adapter": "palette converted and fitted to existing attachment bounds",
+   "native24_pending": true,
+   "larger_sizes": "existing native art"
+  },
+  {
+   "part": "pulley",
+   "cell": "parts16:44",
+   "status": "imported16",
+   "active": true,
+   "source_file": "pixellab/parts16.png",
+   "adapter": "palette converted and fitted to existing attachment bounds",
+   "native24_pending": true,
+   "larger_sizes": "existing native art"
+  },
+  {
+   "part": "lever",
+   "cell": "generate",
+   "status": "generation_pending",
+   "fallback": "existing art"
+  },
+  {
+   "part": "hinge",
+   "cell": "parts16:43",
+   "status": "imported16",
+   "active": true,
+   "source_file": "pixellab/parts16.png",
+   "adapter": "palette converted and fitted to existing attachment bounds",
+   "native24_pending": true,
+   "larger_sizes": "existing native art"
+  },
+  {
+   "part": "pin",
+   "cell": "generate",
+   "status": "generation_pending",
+   "fallback": "undrawn"
+  },
+  {
+   "part": "bellows",
+   "cell": "generate",
+   "status": "generation_pending",
+   "fallback": "existing art"
+  },
+  {
+   "part": "piston",
+   "cell": "generate",
+   "status": "generation_pending",
+   "fallback": "undrawn"
+  },
+  {
+   "part": "boiler",
+   "cell": "generate",
+   "status": "generation_pending",
+   "fallback": "undrawn"
+  },
+  {
+   "part": "valve",
+   "cell": "parts16:22",
+   "status": "imported16",
+   "active": true,
+   "source_file": "pixellab/parts16.png",
+   "adapter": "palette converted and fitted to existing attachment bounds",
+   "native24_pending": true,
+   "larger_sizes": "existing native art"
+  },
+  {
+   "part": "spout",
+   "cell": "parts16:20",
+   "status": "imported16",
+   "active": true,
+   "source_file": "pixellab/parts16.png",
+   "adapter": "palette converted and fitted to existing attachment bounds",
+   "native24_pending": true,
+   "larger_sizes": "existing native art"
+  },
+  {
+   "part": "cage",
+   "cell": "generate",
+   "status": "generation_pending",
+   "fallback": "existing art"
+  },
+  {
+   "part": "net",
+   "cell": "parts16:29",
+   "status": "imported16",
+   "active": true,
+   "source_file": "pixellab/parts16.png",
+   "adapter": "palette converted and fitted to existing attachment bounds",
+   "native24_pending": true,
+   "larger_sizes": "existing native art"
+  },
+  {
+   "part": "hook",
+   "cell": "parts16:7",
+   "status": "imported16",
+   "active": true,
+   "source_file": "pixellab/parts16.png",
+   "adapter": "palette converted and fitted to existing attachment bounds",
+   "native24_pending": true,
+   "larger_sizes": "existing native art"
+  },
+  {
+   "part": "sling",
+   "cell": "generate",
+   "status": "generation_pending",
+   "fallback": "undrawn"
+  },
+  {
+   "part": "strap",
+   "cell": "parts16:27",
+   "status": "imported16",
+   "active": true,
+   "source_file": "pixellab/parts16.png",
+   "adapter": "palette converted and fitted to existing attachment bounds",
+   "native24_pending": true,
+   "larger_sizes": "existing native art"
+  },
+  {
+   "part": "lens",
+   "cell": "parts16:9",
+   "status": "imported16",
+   "active": true,
+   "source_file": "pixellab/parts16.png",
+   "adapter": "palette converted and fitted to existing attachment bounds",
+   "native24_pending": true,
+   "larger_sizes": "existing native art"
+  },
+  {
+   "part": "mirror",
+   "cell": "parts16:59",
+   "status": "imported16",
+   "active": true,
+   "source_file": "pixellab/parts16.png",
+   "adapter": "palette converted and fitted to existing attachment bounds",
+   "native24_pending": true,
+   "larger_sizes": "existing native art"
+  },
+  {
+   "part": "wire",
+   "cell": "generate",
+   "status": "generation_pending",
+   "fallback": "undrawn"
+  },
+  {
+   "part": "coil",
+   "cell": "generate",
+   "status": "generation_pending",
+   "fallback": "undrawn"
+  },
+  {
+   "part": "cell",
+   "cell": "parts16:47",
+   "status": "imported16",
+   "active": false,
+   "source_file": "pixellab/parts16.png",
+   "adapter": "palette converted; 24/32 px are padded 16 px stand-ins",
+   "native24_pending": true,
+   "larger_sizes": "padded stand-ins"
+  },
+  {
+   "part": "bulb",
+   "cell": "parts16:10",
+   "status": "imported16",
+   "active": true,
+   "source_file": "pixellab/parts16.png",
+   "adapter": "palette converted and fitted to existing attachment bounds",
+   "native24_pending": true,
+   "larger_sizes": "existing native art"
+  },
+  {
+   "part": "switch",
+   "cell": "parts16:49",
+   "status": "imported16",
+   "active": false,
+   "source_file": "pixellab/parts16.png",
+   "adapter": "palette converted; 24/32 px are padded 16 px stand-ins",
+   "native24_pending": true,
+   "larger_sizes": "padded stand-ins"
+  },
+  {
+   "part": "bell",
+   "cell": "parts16:34",
+   "status": "imported16",
+   "active": false,
+   "source_file": "pixellab/parts16.png",
+   "adapter": "palette converted; 24/32 px are padded 16 px stand-ins",
+   "native24_pending": true,
+   "larger_sizes": "padded stand-ins"
+  },
+  {
+   "part": "horn",
+   "cell": "generate",
+   "status": "generation_pending",
+   "fallback": "existing art"
+  },
+  {
+   "part": "dial",
+   "cell": "parts16:51",
+   "status": "imported16",
+   "active": false,
+   "source_file": "pixellab/parts16.png",
+   "adapter": "palette converted; 24/32 px are padded 16 px stand-ins",
+   "native24_pending": true,
+   "larger_sizes": "padded stand-ins"
+  },
+  {
+   "part": "plate",
+   "cell": "parts16:18",
+   "status": "imported16",
+   "active": true,
+   "source_file": "pixellab/parts16.png",
+   "adapter": "palette converted and fitted to existing attachment bounds",
+   "native24_pending": true,
+   "larger_sizes": "existing native art"
+  },
+  {
+   "part": "casing",
+   "cell": "parts16:17",
+   "status": "imported16",
+   "active": false,
+   "source_file": "pixellab/parts16.png",
+   "adapter": "palette converted; 24/32 px are padded 16 px stand-ins",
+   "native24_pending": true,
+   "larger_sizes": "padded stand-ins"
+  }
+ ],
+ "fixtures": [
+  {
+   "cell": "furniture32:0",
+   "name": "wooden shelf with things on it",
+   "suggested_name": "display shelf",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.display shelf"
+  },
+  {
+   "cell": "furniture32:1",
+   "name": "wooden bench",
+   "suggested_name": "wooden bench",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.wooden bench"
+  },
+  {
+   "cell": "furniture32:2",
+   "name": "small bed with quilt",
+   "suggested_name": "quilt bed",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.quilt bed"
+  },
+  {
+   "cell": "furniture32:3",
+   "name": "weaving loom",
+   "suggested_name": "weaving loom",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.weaving loom"
+  },
+  {
+   "cell": "furniture32:4",
+   "name": "round woven rug",
+   "suggested_name": "woven rug",
+   "category": "floor_furnishing",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.woven rug"
+  },
+  {
+   "cell": "furniture32:5",
+   "name": "wooden table",
+   "suggested_name": "wooden table",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.wooden table"
+  },
+  {
+   "cell": "furniture32:6",
+   "name": "wooden chair",
+   "suggested_name": "wooden chair",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.wooden chair"
+  },
+  {
+   "cell": "furniture32:7",
+   "name": "three-legged stool",
+   "suggested_name": "wooden stool",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.wooden stool"
+  },
+  {
+   "cell": "furniture32:8",
+   "name": "cabinet",
+   "suggested_name": "cabinet",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.cabinet"
+  },
+  {
+   "cell": "furniture32:9",
+   "name": "wardrobe",
+   "suggested_name": "wardrobe",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.wardrobe"
+  },
+  {
+   "cell": "furniture32:10",
+   "name": "bookshelf full of books",
+   "suggested_name": "bookshelf",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.bookshelf"
+  },
+  {
+   "cell": "furniture32:11",
+   "name": "workbench with tools",
+   "suggested_name": "tool workbench",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.tool workbench"
+  },
+  {
+   "cell": "furniture32:12",
+   "name": "writing desk",
+   "suggested_name": "writing desk",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.writing desk"
+  },
+  {
+   "cell": "furniture32:13",
+   "name": "floor lamp",
+   "suggested_name": "floor lamp",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.floor lamp"
+  },
+  {
+   "cell": "furniture32:14",
+   "name": "big potted plant",
+   "suggested_name": "potted plant",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.potted plant"
+  },
+  {
+   "cell": "furniture32:15",
+   "name": "wooden chest",
+   "suggested_name": "wooden chest",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.wooden chest"
+  },
+  {
+   "cell": "furniture32:16",
+   "name": "stack of crates",
+   "suggested_name": "crate stack",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.crate stack"
+  },
+  {
+   "cell": "furniture32:17",
+   "name": "barrel",
+   "suggested_name": "barrel",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.barrel"
+  },
+  {
+   "cell": "furniture32:18",
+   "name": "small sofa",
+   "suggested_name": "sofa",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.sofa"
+  },
+  {
+   "cell": "furniture32:19",
+   "name": "armchair",
+   "suggested_name": "armchair",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.armchair"
+  },
+  {
+   "cell": "furniture32:20",
+   "name": "hammock",
+   "suggested_name": "hammock",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.hammock"
+  },
+  {
+   "cell": "furniture32:21",
+   "name": "wooden ladder",
+   "suggested_name": "ladder",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.ladder"
+  },
+  {
+   "cell": "furniture32:22",
+   "name": "painting easel",
+   "suggested_name": "painting easel",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.painting easel"
+  },
+  {
+   "cell": "furniture32:23",
+   "name": "upright piano",
+   "suggested_name": "upright piano",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.upright piano"
+  },
+  {
+   "cell": "furniture32:24",
+   "name": "harp",
+   "suggested_name": "harp",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.harp"
+  },
+  {
+   "cell": "furniture32:25",
+   "name": "grandfather clock",
+   "suggested_name": "grandfather clock",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.grandfather clock"
+  },
+  {
+   "cell": "furniture32:26",
+   "name": "stone fireplace",
+   "suggested_name": "fireplace",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.fireplace"
+  },
+  {
+   "cell": "furniture32:27",
+   "name": "sink",
+   "suggested_name": "sink",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.sink"
+  },
+  {
+   "cell": "furniture32:28",
+   "name": "bathtub",
+   "suggested_name": "bathtub",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.bathtub"
+  },
+  {
+   "cell": "furniture32:29",
+   "name": "standing mirror",
+   "suggested_name": "standing mirror",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.standing mirror"
+  },
+  {
+   "cell": "furniture32:31",
+   "name": "coat stand",
+   "suggested_name": "coat stand",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.coat stand"
+  },
+  {
+   "cell": "furniture32:32",
+   "name": "cradle",
+   "suggested_name": "cradle",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.cradle"
+  },
+  {
+   "cell": "furniture32:33",
+   "name": "toy box",
+   "suggested_name": "toy box",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.toy box"
+  },
+  {
+   "cell": "furniture32:34",
+   "name": "rocking horse",
+   "suggested_name": "rocking horse",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.rocking horse"
+  },
+  {
+   "cell": "furniture32:36",
+   "name": "sewing table",
+   "suggested_name": "sewing table",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.sewing table"
+  },
+  {
+   "cell": "furniture32:37",
+   "name": "pantry shelf with jars",
+   "suggested_name": "pantry shelf",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.pantry shelf"
+  },
+  {
+   "cell": "furniture32:38",
+   "name": "washtub",
+   "suggested_name": "washtub",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.washtub"
+  },
+  {
+   "cell": "furniture32:39",
+   "name": "drying rack with cloth",
+   "suggested_name": "cloth drying rack",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.cloth drying rack"
+  },
+  {
+   "cell": "furniture32:40",
+   "name": "flower box",
+   "suggested_name": "flower box",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.flower box"
+  },
+  {
+   "cell": "furniture32:41",
+   "name": "birdcage",
+   "suggested_name": "birdcage",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.birdcage"
+  },
+  {
+   "cell": "furniture32:42",
+   "name": "fish tank",
+   "suggested_name": "fish tank",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.fish tank"
+  },
+  {
+   "cell": "furniture32:43",
+   "name": "globe on a stand",
+   "suggested_name": "globe",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.globe"
+  },
+  {
+   "cell": "furniture32:44",
+   "name": "telescope on a tripod",
+   "suggested_name": "telescope",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.telescope"
+  },
+  {
+   "cell": "furniture32:45",
+   "name": "music stand",
+   "suggested_name": "music stand",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.music stand"
+  },
+  {
+   "cell": "furniture32:46",
+   "name": "drum kit",
+   "suggested_name": "drum kit",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.drum kit"
+  },
+  {
+   "cell": "furniture32:47",
+   "name": "record player",
+   "suggested_name": "gramophone",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "note": "Manifest says record player; image reads as a horn gramophone.",
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.gramophone"
+  },
+  {
+   "cell": "furniture32:48",
+   "name": "small cupboard",
+   "suggested_name": "small cupboard",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.small cupboard"
+  },
+  {
+   "cell": "furniture32:49",
+   "name": "night stand with lamp",
+   "suggested_name": "bedside table with lamp",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.bedside table with lamp"
+  },
+  {
+   "cell": "furniture32:50",
+   "name": "dresser",
+   "suggested_name": "dresser",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.dresser"
+  },
+  {
+   "cell": "furniture32:51",
+   "name": "laundry basket",
+   "suggested_name": "laundry basket",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.laundry basket"
+  },
+  {
+   "cell": "furniture32:52",
+   "name": "hat stand",
+   "suggested_name": "hat stand",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.hat stand"
+  },
+  {
+   "cell": "furniture32:53",
+   "name": "umbrella stand",
+   "suggested_name": "umbrella stand",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.umbrella stand"
+  },
+  {
+   "cell": "furniture32:54",
+   "name": "wall clock",
+   "suggested_name": "wall clock",
+   "category": "wall_fixture",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.wall clock"
+  },
+  {
+   "cell": "furniture32:55",
+   "name": "notice board",
+   "suggested_name": "notice board",
+   "category": "wall_fixture",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.notice board"
+  },
+  {
+   "cell": "furniture32:56",
+   "name": "chalkboard",
+   "suggested_name": "chalkboard",
+   "category": "wall_fixture",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.chalkboard"
+  },
+  {
+   "cell": "furniture32:57",
+   "name": "pinball machine",
+   "suggested_name": "pinball machine",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.pinball machine"
+  },
+  {
+   "cell": "furniture32:58",
+   "name": "jukebox",
+   "suggested_name": "jukebox",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.jukebox"
+  },
+  {
+   "cell": "furniture32:59",
+   "name": "television set",
+   "suggested_name": "television",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.television"
+  },
+  {
+   "cell": "furniture32:60",
+   "name": "computer desk",
+   "suggested_name": "computer desk",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.computer desk"
+  },
+  {
+   "cell": "furniture32:61",
+   "name": "arcade cabinet",
+   "suggested_name": "arcade cabinet",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.arcade cabinet"
+  },
+  {
+   "cell": "furniture32:62",
+   "name": "fridge",
+   "suggested_name": "fridge",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.fridge"
+  },
+  {
+   "cell": "furniture32:63",
+   "name": "kitchen stove",
+   "suggested_name": "kitchen stove",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.kitchen stove"
+  },
+  {
+   "cell": "machines48:0",
+   "name": "clay kiln with fire inside",
+   "suggested_name": "kiln",
+   "category": "fixture_or_built_item",
+   "size": [
+    48,
+    48
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.kiln"
+  },
+  {
+   "cell": "machines48:1",
+   "name": "blacksmith forge with glowing coals",
+   "suggested_name": "forge",
+   "category": "fixture_or_built_item",
+   "size": [
+    48,
+    48
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.forge"
+  },
+  {
+   "cell": "machines48:2",
+   "name": "iron cooking stove",
+   "suggested_name": "iron stove",
+   "category": "fixture_or_built_item",
+   "size": [
+    48,
+    48
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.iron stove"
+  },
+  {
+   "cell": "machines48:3",
+   "name": "stone grinding mill",
+   "suggested_name": "grinding mill",
+   "category": "fixture_or_built_item",
+   "size": [
+    48,
+    48
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.grinding mill"
+  },
+  {
+   "cell": "machines48:4",
+   "name": "steam engine",
+   "suggested_name": "steam engine",
+   "category": "fixture_or_built_item",
+   "size": [
+    48,
+    48
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.steam engine"
+  },
+  {
+   "cell": "machines48:5",
+   "name": "copper boiler with gauges",
+   "suggested_name": "boiler",
+   "category": "fixture_or_built_item",
+   "size": [
+    48,
+    48
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.boiler"
+  },
+  {
+   "cell": "machines48:6",
+   "name": "electric generator",
+   "suggested_name": "generator",
+   "category": "fixture_or_built_item",
+   "size": [
+    48,
+    48
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.generator"
+  },
+  {
+   "cell": "machines48:7",
+   "name": "water wheel",
+   "suggested_name": "water wheel",
+   "category": "fixture_or_built_item",
+   "size": [
+    48,
+    48
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.water wheel"
+  },
+  {
+   "cell": "machines48:8",
+   "name": "windmill model",
+   "suggested_name": "model windmill",
+   "category": "fixture_or_built_item",
+   "size": [
+    48,
+    48
+   ],
+   "note": "Art candidate only; inclusion in the v5 catalog and behavior needs lead approval.",
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.model windmill"
+  },
+  {
+   "cell": "machines48:9",
+   "name": "printing press",
+   "suggested_name": "printing press",
+   "category": "fixture_or_built_item",
+   "size": [
+    48,
+    48
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.printing press"
+  },
+  {
+   "cell": "machines48:10",
+   "name": "sewing machine",
+   "suggested_name": "sewing machine",
+   "category": "fixture_or_built_item",
+   "size": [
+    48,
+    48
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.sewing machine"
+  },
+  {
+   "cell": "machines48:11",
+   "name": "3D printer",
+   "suggested_name": "3D printer",
+   "category": "fixture_or_built_item",
+   "size": [
+    48,
+    48
+   ],
+   "note": "Art candidate only; inclusion in the v5 catalog and behavior needs lead approval.",
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.3D printer"
+  },
+  {
+   "cell": "machines48:12",
+   "name": "small robot standing",
+   "suggested_name": "assembled robot",
+   "category": "mobile_built_item",
+   "size": [
+    48,
+    48
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.assembled robot"
+  },
+  {
+   "cell": "machines48:13",
+   "name": "vending machine",
+   "suggested_name": "vending machine",
+   "category": "fixture_or_built_item",
+   "size": [
+    48,
+    48
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.vending machine"
+  },
+  {
+   "cell": "machines48:14",
+   "name": "computer terminal with screen",
+   "suggested_name": "computer terminal",
+   "category": "fixture_or_built_item",
+   "size": [
+    48,
+    48
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.computer terminal"
+  },
+  {
+   "cell": "machines48:15",
+   "name": "radio transmitter with dials",
+   "suggested_name": "radio transmitter",
+   "category": "fixture_or_built_item",
+   "size": [
+    48,
+    48
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.radio transmitter"
+  },
+  {
+   "cell": "machines48:16",
+   "name": "tesla coil sparking",
+   "suggested_name": "Tesla coil",
+   "category": "fixture_or_built_item",
+   "size": [
+    48,
+    48
+   ],
+   "note": "Art candidate only; inclusion in the v5 catalog and behavior needs lead approval.",
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.Tesla coil"
+  },
+  {
+   "cell": "machines48:17",
+   "name": "satellite dish",
+   "suggested_name": "satellite dish",
+   "category": "fixture_or_built_item",
+   "size": [
+    48,
+    48
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.satellite dish"
+  },
+  {
+   "cell": "machines48:18",
+   "name": "rocket on a launch pad",
+   "suggested_name": "rocket launch pad",
+   "category": "fixture_or_built_item",
+   "size": [
+    48,
+    48
+   ],
+   "note": "Art candidate only; inclusion in the v5 catalog and behavior needs lead approval.",
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.rocket launch pad"
+  },
+  {
+   "cell": "machines48:19",
+   "name": "hot air balloon",
+   "suggested_name": "hot air balloon",
+   "category": "mobile_built_item",
+   "size": [
+    48,
+    48
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.hot air balloon"
+  },
+  {
+   "cell": "machines48:20",
+   "name": "bubbling chemistry set",
+   "suggested_name": "chemistry station",
+   "category": "fixture_or_built_item",
+   "size": [
+    48,
+    48
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.chemistry station"
+  },
+  {
+   "cell": "machines48:21",
+   "name": "greenhouse planter machine",
+   "suggested_name": "automatic planter",
+   "category": "fixture_or_built_item",
+   "size": [
+    48,
+    48
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.automatic planter"
+  },
+  {
+   "cell": "machines48:22",
+   "name": "conveyor belt",
+   "suggested_name": "conveyor",
+   "category": "fixture_or_built_item",
+   "size": [
+    48,
+    48
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.conveyor"
+  },
+  {
+   "cell": "machines48:23",
+   "name": "crane arm",
+   "suggested_name": "crane",
+   "category": "fixture_or_built_item",
+   "size": [
+    48,
+    48
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.crane"
+  },
+  {
+   "cell": "machines48:24",
+   "name": "glowing power core",
+   "suggested_name": "power core",
+   "category": "fixture_or_built_item",
+   "size": [
+    48,
+    48
+   ],
+   "note": "Art candidate only; inclusion in the v5 catalog and behavior needs lead approval.",
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "sprite": "fix.pixellab.power core"
+  }
+ ]
+}

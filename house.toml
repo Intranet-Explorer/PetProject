@@ -1,0 +1,548 @@
+# The house (SPEC-v3 §6): rooms, the bits found in them, the seasons and weather, what happens on its own,
+# and the small creatures. Tune here, not in code. Rates are per 10 seconds; days and hours are world time.
+
+[house]
+grid = [3, 3]             # rooms across and down; the nursery is in the middle
+room_size = [12, 8]       # tiles
+max_doors = 3
+seed = 1                  # the door plan and the order rooms are found in come from this, so a house can be rebuilt
+season_days = 6
+was_season_days = 0       # a profile whose seasons were made longer: what they were (season.settle; 0: season_days)
+creatures = 2             # small creatures in the house at once
+creature_chance = 0.35    # each real minute there is room for one, the chance that one turns up
+
+# Where a pet stands to go through each door, and where it arrives from the other side.
+[house.doors]
+north = [7, 0]
+south = [7, 7]
+west = [0, 5]
+east = [11, 4]
+
+# ---- bits: what can be gathered, and what a part made of each can be (§6.2, §6.3) ----
+# `can` lists the properties (materials.toml) a thing can take from this bit. `looks` is how the view draws it.
+# `fades_days`: dropped on a floor and left there, it is gone after this many world days (what wilts in one, what blows
+# away in two); without it a bit stays where it was dropped. Bits a room grows, and bits put away in something, do not fade.
+
+[bits.fluff]
+fades_days = 2
+can = ["soft"]
+looks = { shape = "blob", color = "white" }
+[bits.pebble]
+can = ["hard", "heavy"]
+looks = { shape = "circle", color = "grey" }
+[bits.wax]
+can = ["warm", "bright"]
+looks = { shape = "square", color = "yellow" }
+[bits.seed]
+can = ["sweet"]
+looks = { shape = "dot", color = "brown" }
+[bits.leaf]
+fades_days = 1
+can = ["cool", "soft"]
+looks = { shape = "triangle", color = "green" }
+[bits.petal]
+fades_days = 1
+can = ["fragrant"]
+looks = { shape = "blob", color = "pink" }
+[bits.clay]
+can = ["soft", "cool"]          # SPEC-v3.5 §4.3: soft until it is warmed (fired clay is the hard one)
+looks = { shape = "square", color = "brown" }
+[bits.moss]
+fades_days = 1
+can = ["soft", "quiet"]
+looks = { shape = "blob", color = "green" }
+[bits.soot]
+fades_days = 2
+can = ["dark"]
+looks = { shape = "dot", color = "black" }
+[bits.feather]
+fades_days = 2
+can = ["soft", "bouncy"]
+looks = { shape = "bar", color = "white" }
+[bits.cloth]
+can = ["soft", "warm"]
+looks = { shape = "square", color = "purple" }
+[bits.wood]
+can = ["hard", "warm"]
+looks = { shape = "bar", color = "brown" }
+[bits.shell]
+can = ["quiet", "hard"]
+looks = { shape = "ring", color = "pink" }
+[bits.bead]
+can = ["glassy", "bright"]
+looks = { shape = "circle", color = "teal" }
+[bits.reed]
+fades_days = 1
+can = ["springy", "noisy"]
+looks = { shape = "bar", color = "green" }
+[bits.wire]
+can = ["springy", "noisy"]
+looks = { shape = "ring", color = "grey" }
+[bits.metal]
+can = ["hard", "heavy", "noisy"]   # SPEC-v3.5 §4.3: hard, and it rings when struck
+looks = { shape = "triangle", color = "grey" }
+[bits.string]
+can = ["noisy", "springy"]
+looks = { shape = "bar", color = "red" }
+# SPEC-v3.6a §3: what the pond gives (a fish is food: eaten raw, or it goes off in a world day)
+[bits.fish]
+late = "pond"              # (only ever out of the pond: never turns up by itself)
+can = ["sweet", "cool"]
+looks = { shape = "blob", color = "silver" }
+[bits."big fish"]
+late = "pond"              # (only ever out of the pond: never turns up by itself)
+can = ["sweet", "heavy"]
+looks = { shape = "blob", color = "blue" }
+[bits."waterlogged wood"]
+late = "pond"              # (only ever out of the pond: never turns up by itself)
+can = ["heavy", "dark"]
+looks = { shape = "bar", color = "brown" }
+fades_days = 6
+[bits.weed]
+late = "pond"              # (only ever out of the pond: never turns up by itself)
+can = ["soft", "cool"]
+looks = { shape = "blob", color = "green" }
+fades_days = 2
+[bits.hook]
+late = "pond"              # (only ever out of the pond: never turns up by itself)
+can = ["hard", "springy"]
+looks = { shape = "triangle", color = "grey" }
+[bits.spring]
+late = "pond"              # (only ever out of the pond: never turns up by itself)
+can = ["springy", "bouncy"]
+looks = { shape = "ring", color = "grey" }
+[bits.bell]
+can = ["noisy"]
+looks = { shape = "circle", color = "yellow" }
+[bits.felt]
+can = ["quiet", "soft"]
+looks = { shape = "square", color = "blue" }
+[bits.resin]
+can = ["warm", "bright"]
+looks = { shape = "blob", color = "orange" }
+[bits.chalk]              # SPEC-v3.1 §2: comes in a crate once writing has arrived, never before
+can = ["hard", "bright"]
+looks = { shape = "bar", color = "white" }
+late = "writing"
+[bits.vine]
+fades_days = 1
+can = ["springy", "soft"]
+looks = { shape = "ring", color = "green" }
+
+[bits.flint]              # SPEC-v3.6c §4: forage, outdoors only
+late = "outdoors"
+can = ["hard", "bright"]
+looks = { shape = "triangle", color = "grey" }
+[bits.berry]
+late = "outdoors"
+fades_days = 1
+can = ["sweet"]
+looks = { shape = "dot", color = "red" }
+[bits.mushroom]
+late = "outdoors"
+fades_days = 2
+can = ["soft", "dark"]
+looks = { shape = "blob", color = "brown" }
+[bits.nut]
+late = "outdoors"
+can = ["hard", "sweet"]
+looks = { shape = "circle", color = "brown" }
+[bits."pine cone"]
+late = "outdoors"
+fades_days = 4
+can = ["hard", "fragrant"]
+looks = { shape = "triangle", color = "brown" }
+
+# ---- rooms ----
+# `bits` = how many of each lie about at once; they come back `regrow_hours` after being picked up.
+# A fixture is something that was always there. What it does is in its keys:
+#   light (on/off, a light), states (a switch with no effect), meal (servings, refilled at dawn), soft (comfort when
+#   used), rest (energy when used), toy (curiosity when used), loud, cozy (comfort near it), movable, window,
+#   mirror, plant (grows; a meal when ripe), water (the tiles it covers), bench, sun (moves with the hour).
+
+[rooms.nursery]
+belongs = { cushion = 2, blanket = 2, nest = 2, "bed-mat" = 2, ball = 2, mobile = 2, cup = 1, bowl = 1, garland = 1 }   # SPEC-v3.5.12 §2: what it keeps of things made, at most so many of each (engine/store.py)
+name = "the nursery"
+feel = "a small bright room with a window and a bed"
+hint = "a smell of clean bedding and warm dust"   # what comes under the door before anyone has been through it
+window = true
+regrow_hours = 6
+bits = { fluff = 3, pebble = 2, wax = 2 }
+rule = "nursery"
+fixtures = [
+  { name = "lamp", pos = [2, 1], light = "on" },
+  { name = "plant", pos = [8, 6], movable = true },
+  { name = "bowl", pos = [5, 7], meal = 2 },
+  { name = "ball", pos = [4, 5], movable = true, toy = 1.0 },
+  { name = "blanket", pos = [9, 3], movable = true, soft = 3.5, cozy = true },
+  { name = "music box", pos = [7, 2], states = ["silent", "playing"] },
+  { name = "rock", pos = [3, 6], movable = true },
+  { name = "window", pos = [0, 3], window = true },
+  { name = "bed", pos = [10, 1], rest = 3.0, cozy = true },
+  { name = "mirror", pos = [5, 0], mirror = true },
+  { name = "toy chest", pos = [4, 0], store = 5, inside = true },
+]
+
+[rooms.garden]
+belongs = { trowel = 2, "plant pot" = 3, "wind chime" = 2, stool = 2, vase = 1 }   # SPEC-v3.5.12 §2: what it keeps of things made, at most so many of each (engine/store.py)
+name = "the garden"
+feel = "open sky, dark soil and green things growing"
+hint = "a smell of wet soil and green things"   # what comes under the door before anyone has been through it
+outdoors = true
+regrow_hours = 8
+bits = { seed = 3, leaf = 3, petal = 2 }
+rule = "garden"
+fixtures = [
+  { name = "bean row", pos = [3, 2], plant = true },
+  { name = "berry bush", pos = [9, 5], plant = true },
+  { name = "herb patch", pos = [5, 6], plant = true },
+  { name = "old bench", pos = [9, 2], rest = 2.5, cozy = true },
+  { name = "bird bath", pos = [2, 5] },
+  { name = "tool box", pos = [11, 1], store = 4, inside = true },
+]
+
+[rooms.cellar]
+belongs = { jar = 3, crate = 2, candle = 2, lamp = 1, blanket = 1 }   # SPEC-v3.5.12 §2: what it keeps of things made, at most so many of each (engine/store.py)
+name = "the cellar"
+feel = "stone walls, damp air, hardly any light"
+hint = "cold, damp air"   # what comes under the door before anyone has been through it
+regrow_hours = 10
+bits = { clay = 3, moss = 3, soot = 2 }
+rule = "cellar"
+fixtures = [
+  { name = "barrel", pos = [2, 2] },
+  { name = "shelf", pos = [9, 1], store = 4 },
+  { name = "lantern", pos = [5, 1], light = "off" },
+  { name = "old rug", pos = [8, 5], movable = true, soft = 2.5 },
+  { name = "long shelf", pos = [8, 0], store = 6 },
+]
+
+[rooms.attic]
+belongs = { blanket = 2, cushion = 2, candle = 2, lamp = 1, sign = 1 }   # SPEC-v3.5.12 §2: what it keeps of things made, at most so many of each (engine/store.py)
+name = "the attic"
+feel = "beams overhead, dust in the air, a skylight"
+hint = "dust, and a creak of beams"   # what comes under the door before anyone has been through it
+window = true
+regrow_hours = 12
+bits = { feather = 3, cloth = 2, wood = 2 }
+rule = "attic"
+fixtures = [
+  { name = "skylight", pos = [5, 0], window = true },
+  { name = "trunk", pos = [2, 2], states = ["closed", "open"], store = 4, inside = true },
+  { name = "rocking chair", pos = [9, 5], rest = 2.5, cozy = true },
+  { name = "sun shaft", pos = [5, 3], sun = true },
+  { name = "attic shelf", pos = [10, 0], store = 5 },
+]
+
+[rooms.pond]
+belongs = { stool = 2, "wind chime" = 1, vase = 1, lantern = 1 }   # SPEC-v3.5.12 §2: what it keeps of things made, at most so many of each (engine/store.py)
+name = "the pond room"
+feel = "still water under a glass roof, reeds at the edge"
+hint = "the sound of still water"   # what comes under the door before anyone has been through it
+window = true
+regrow_hours = 10
+bits = { shell = 3, bead = 2, reed = 3 }
+rule = "pond"
+fixtures = [
+  { name = "pond", pos = [6, 2], water = [[3, 1], [4, 1], [5, 1], [2, 2], [3, 2], [4, 2], [5, 2], [2, 3], [3, 3], [4, 3], [5, 3], [2, 4], [3, 4], [4, 4], [5, 4], [6, 2], [6, 3], [7, 1], [8, 1], [9, 1], [7, 2], [8, 2], [9, 2], [7, 3], [8, 3], [9, 3], [7, 4], [8, 4], [9, 4]] },   # SPEC-v3.6a §1: pond.toml [pond] water
+  { name = "reeds", pos = [1, 2] },
+  { name = "flat stone", pos = [2, 5], rest = 2.5 },
+  { name = "reed basket", pos = [11, 6], store = 4, inside = true },
+]
+
+[rooms.workshop]
+belongs = { carver = 2, hammer = 2, trowel = 1, box = 2, lamp = 1 }   # SPEC-v3.5.12 §2: what it keeps of things made, at most so many of each (engine/store.py)
+name = "the workshop"
+feel = "benches, tools on hooks, shavings on the floor"
+hint = "a smell of wood shavings"   # what comes under the door before anyone has been through it
+window = true
+regrow_hours = 12
+bits = { wire = 3, wood = 2, metal = 2 }
+rule = "workshop"
+fixtures = [
+  { name = "workbench", pos = [5, 2], bench = true, store = 3 },
+  { name = "work lamp", pos = [2, 1], light = "off" },
+  { name = "stool", pos = [8, 5], movable = true },
+  { name = "window", pos = [0, 2], window = true },
+]
+
+[rooms.music]
+belongs = { bell = 2, drum = 2, flute = 2, "wind chime" = 3, cushion = 2 }   # SPEC-v3.5.12 §2: what it keeps of things made, at most so many of each (engine/store.py)
+name = "the music room"
+feel = "rugs on the floor and instruments left where someone put them down"
+hint = "a faint ringing now and then"   # what comes under the door before anyone has been through it
+window = true
+regrow_hours = 12
+bits = { string = 2, bell = 3, felt = 2 }
+rule = "music"
+fixtures = [
+  { name = "drum", pos = [3, 3], toy = 2.0, loud = true },
+  { name = "chimes", pos = [8, 2], toy = 2.0, loud = true },
+  { name = "rug", pos = [6, 5], soft = 4.0, cozy = true },
+  { name = "window", pos = [0, 2], window = true },
+  { name = "instrument shelf", pos = [11, 0], store = 5 },
+]
+
+[rooms.greenhouse]
+belongs = { "plant pot" = 4, vase = 3, trowel = 2, jar = 2 }   # SPEC-v3.5.12 §2: what it keeps of things made, at most so many of each (engine/store.py)
+name = "the greenhouse"
+feel = "glass all round, warm air, vines up the frames"
+hint = "warm, wet air"   # what comes under the door before anyone has been through it
+outdoors = true
+glass = true
+regrow_hours = 8
+bits = { resin = 2, vine = 3, petal = 3, seed = 2 }
+rule = "greenhouse"
+fixtures = [
+  { name = "tomato vine", pos = [3, 2], plant = true },
+  { name = "melon bed", pos = [8, 5], plant = true },
+  { name = "hot pipe", pos = [10, 1] },
+  { name = "pot shelf", pos = [1, 0], store = 4 },
+]
+
+[rooms.storeroom]
+name = "the storeroom"
+feel = "shelves and crates, no window, the dark of a place nobody goes"
+hint = "a smell of old boxes"   # what comes under the door before anyone has been through it
+regrow_hours = 24
+bits = "any"              # a little of everything: four kinds, picked when the room is first found
+rule = "storeroom"
+fixtures = [
+  { name = "crates", pos = [3, 2], store = 6, inside = true },
+  { name = "corner crates", pos = [10, 7], store = 8, inside = true },
+  { name = "shelves", pos = [9, 2], store = 6 },
+  { name = "old lantern", pos = [6, 1], light = "off" },
+]
+
+[rooms.hub]               # SPEC-v3.5.1: the machine room. Not one of the nine: it hangs on the outside of the storeroom (engine/hub.py)
+belongs = { cushion = 2, lamp = 1 }   # SPEC-v3.5.12 §2: what it keeps of things made, at most so many of each (engine/store.py)
+name = "the machine room"
+feel = "a tall room that hums: a great machine along the wall, small lights everywhere, pipes running up into the dark"
+hint = "a hum, and now and then a clatter of something working"   # what comes under the door before anyone has been through it
+extra = true
+regrow_hours = 24
+bits = {}
+rule = "hub"
+fixtures = [
+  { name = "vending machine", pos = [1, 0], machine = true, says = "a great machine with lit windows: it gives out wood, stone, metal, clay, fibre and sand, and takes made things and bits back" },   # SPEC-v3.5 §4.3 (machine.toml), moved here
+  { name = "lit sign", pos = [8, 0], sign = true, says = "a board of small lights on the wall: it shows what the house is proudest of and who did it, and what the Works is building" },
+  { name = "left screen", pos = [9, 0], terminal = true, book = true, says = "a glass screen with keys under it: ask it something and the words of the book come up on the glass" },
+  { name = "middle screen", pos = [10, 0], terminal = true, book = true, says = "a glass screen with keys under it: ask it something and the words of the book come up on the glass" },
+  { name = "right screen", pos = [11, 0], terminal = true, book = true, says = "a glass screen with keys under it: ask it something and the words of the book come up on the glass" },
+  { name = "crates", pos = [11, 6], store = 6, inside = true },
+]
+
+# ---- each room's own rule (§6.1): hidden, felt through senses ----
+
+[rooms.yard]              # SPEC-v3.6c §4: outdoors, through the gate in the garden's south wall (engine/outdoors.py)
+belongs = {}
+name = "the yard"
+doors = ["north", "west"]  # (an outdoor room's own doors: the gate to the garden, the way to the meadow)
+feel = "open sky over grass and a dirt path, a fence round it, woodsmoke"
+hint = "a breeze, and the smell of grass and woodsmoke"
+outdoors = true
+extra = true
+outdoor = true
+regrow_hours = 6
+bits = { wood = 2, stone = 2, flint = 1, feather = 1, "pine cone" = 2 }
+rule = "yard"
+fixtures = [
+  { name = "fire pit", pos = [6, 4], rest = 1.5, cozy = true, says = "a ring of stones round old ashes, with logs beside it: a place to sit by a fire" },
+  { name = "yard bench", pos = [2, 2], rest = 2.5, says = "a wooden bench under the shade tree" },
+  { name = "shade tree", pos = [1, 1], says = "a big leafy tree that throws shade over the bench" },
+  { name = "woodpile", pos = [10, 2], says = "logs stacked against the fence, an axe stuck in the top one" },
+  { name = "shed", pos = [10, 6], store = 6, inside = true, says = "a little wooden shed with a door that sticks: things can be kept in it" },
+]
+
+[rooms.meadow]            # SPEC-v3.6c §4: outdoors, west of the yard: wilder (engine/outdoors.py)
+belongs = {}
+name = "the meadow"
+doors = ["east"]
+feel = "long grass and wildflowers, a stream running by, trees and boulders"
+hint = "running water, and long grass moving in the wind"
+outdoors = true
+extra = true
+outdoor = true
+regrow_hours = 6
+bits = { clay = 2, berry = 2, mushroom = 1, nut = 2, reed = 1, petal = 2, stone = 1 }
+rule = "meadow"
+fixtures = [
+  { name = "stream", pos = [6, 7], water = [[0, 7], [1, 7], [2, 7], [3, 7], [4, 7], [5, 7], [6, 7], [7, 7], [8, 7], [9, 7], [10, 7], [11, 7]], says = "a clear stream running along the bottom of the meadow; small fish dart in it" },
+  { name = "clay bank", pos = [3, 6], says = "a bank of wet clay where the stream bends" },
+  { name = "footbridge", pos = [8, 6], says = "a little wooden footbridge over the stream" },
+  { name = "big tree", pos = [2, 1], store = 4, inside = true, says = "an old tree with wide branches and a hollow in its trunk where things can be kept" },
+  { name = "bramble", pos = [9, 1], says = "a bramble heavy with berries in season" },
+  { name = "boulder", pos = [6, 2], rest = 1.5, says = "a big mossy boulder, warm in the sun" },
+]
+
+[rules.nursery]           # the v2 rules live here: the plant by the window
+[rules.garden]
+fresh = 0.3               # comfort in the garden while it rains
+[rules.cellar]
+cold_night = -0.5         # comfort at night down here
+damp_hours = 16           # a soft thing left this long on the cellar floor goes damp and gives half
+[rules.attic]
+sun = 0.6                 # comfort while standing in the sun shaft
+dust_days = 2             # a made thing nobody has used this long is dusty: its first use gives half and a sneeze
+[rules.pond]
+rest = 1.5                # resting here restores this many times as much
+[rules.workshop]
+combine = 0.5             # combining here takes this much of the usual effort
+loud = 2.0                # noisy things are this many times as loud
+[rules.music]
+linger = 0.3              # curiosity per 10 s in neighbouring rooms while something here sounds
+[rules.greenhouse]
+warm_day = 0.3            # comfort by day, in any season
+growth = 2.0
+[rules.storeroom]
+dark = 0.5                # looking at things here gives this much of the usual interest unless a light is on
+[rules.hub]               # SPEC-v3.5.1: nothing of its own; what it holds is what it is for
+[rules.yard]              # SPEC-v3.6c §4
+[rules.meadow]
+
+# ---- seasons and weather (§6.4) ----
+
+[seasons.spring]
+sunrise = 6.0
+sunset = 18.5
+growth = 1.2
+cold = 0.0
+weather = { clear = 4, cloudy = 3, rain = 3, storm = 1 }
+[seasons.summer]
+sunrise = 5.0
+sunset = 20.0
+growth = 1.5
+cold = 0.0
+weather = { clear = 5, cloudy = 2, rain = 1, storm = 1, heat = 2 }
+[seasons.autumn]
+sunrise = 6.5
+sunset = 18.0
+growth = 0.7
+cold = -0.1
+weather = { clear = 3, cloudy = 3, rain = 4, storm = 1 }
+[seasons.winter]
+sunrise = 7.5
+sunset = 16.5
+growth = 0.2
+cold = -0.3               # comfort at night, away from anything warm
+weather = { clear = 3, cloudy = 3, snow = 4, storm = 1 }
+
+[weather]
+storm_power_cut = 0.5     # chance a storm takes the power for part of the day ...
+storm_cut_hours = [11, 16]   # ... this many hours into the storm's day, so that it falls in the dark
+storm = -0.2              # comfort while the storm is overhead, unless someone is near
+heat = -0.15              # energy by day in the heat, except in the cellar and by the pond
+snow_cold = -0.2          # extra cold on a day of snow
+
+# ---- things that happen on their own (§6.5) ----
+
+[events]
+every_hours = 9           # about one event this often; sooner when the house has gone quiet, later in a crisis
+quiet_hours = 6           # "quiet": no moment worth the name for this long
+crisis_below = 15         # "a crisis": some pet weak, or with comfort or energy under this
+power_cut_hours = [1, 3]
+leak_hours = [2, 5]
+draught_hours = [1, 3]
+delivery_bits = 4
+leak = -0.2               # comfort per 10 s in a room with water on the floor
+draught = -0.25           # comfort per 10 s in a room a draught has chilled
+drift_after_days = 5      # the one rule change of a lineage comes some time after this ...
+drift_known_days = 3      # ... in a room that has been known at least this long
+kinds = { power_cut = 2, leak = 2, draught = 2, delivery = 3, lost_thing = 2 }
+
+# ---- small creatures (§6.5): scripted, never a model ----
+
+[creatures.moth]              # comes to a lit light at night, circles it, leaves when the light goes or the day comes
+stay_hours = 6
+likes = ["fluff", "cloth", "felt", "moss"]
+eats_hours = 2            # a soft thing left this long beside its light gets moth-eaten and gives half
+[creatures.beetle]            # wanders by day, sleeps where it first appeared
+stay_hours = 30
+likes = "anything"
+carry_chance = 0.4        # it picks up a loose bit it passes and puts it down somewhere else
+[creatures.mouse]             # turns up in the cellar or the storeroom if either has been found
+stay_hours = 30
+likes = ["seed", "petal"]
+shy = 3                   # keeps this many tiles from a pet that is moving
+trust_to_wait = 3         # fed this many times by one pet, it starts waiting for that pet
+[creatures.bird]              # the garden, in the morning
+stay_hours = 5
+likes = ["seed"]
+[creatures.rabbit]            # SPEC-v3.6c §4: outdoors by day (engine/outdoors.py); no minds, like the house's
+stay_hours = 8
+likes = ["leaf", "petal", "berry"]
+[creatures.squirrel]
+stay_hours = 8
+likes = ["nut", "seed", "pine cone"]
+[creatures.hedgehog]
+stay_hours = 10
+likes = ["mushroom", "berry"]
+[creatures.butterfly]
+stay_hours = 4
+likes = ["petal"]
+[creatures.owl]               # at dusk, on a post
+stay_hours = 4
+likes = []
+[creatures.sweeper]           # SPEC-v3.5.8 §4.2: built by the Works; it never leaves (engine/sweeper.py)
+likes = []                # (held out a bit, it bumps it and leaves it lying)
+holds = 4                 # loose things and bits it sweeps up before it goes back to the Works, full
+round_hours = 3           # ... or after this long out
+charge_hours = 1          # on its dock between rounds
+shooed_hours = 2          # shooed off a thing, it leaves that thing alone this long
+bit_hours = 6             # 16 October 2026: a loose bit nobody has touched this long (and nobody here is about to use)
+
+# ---- rule drift (§6.5): once in a lineage one found room's rule becomes this. Logged; the pets are not told. ----
+# SPEC-v3.5.12 §3: the train the Works builds (engine/rail.py). It runs one round of the house at a time, by room type:
+[rail]
+route = ["hub", "storeroom", "pond", "workshop", "pond", "storeroom", "music", "cellar", "greenhouse", "nursery", "attic", "garden",
+         "attic", "nursery", "music", "storeroom", "hub"]
+speed = 3                 # tiles a tick
+stop_ticks = 11           # at each platform, the first time a round comes to a room (and at the depot between rounds)
+clear = 5                 # tiles of track the train stands on behind its platform: it never stops across a door
+wait_ticks = 3            # a hob on the track: rung at this long, then it steps aside
+cart_holds = 12           # things the cart carries at once
+platform_holds = 12       # things left on a platform for it
+rides = true              # a hob may ride in the tram (switch off here)
+
+# SPEC-v3.5.12 §4: the resting place (engine/resting.py)
+[resting]
+on = true
+corner = [0, 3, 5, 7]     # the garden's tiles where the stones stand together: x from, y from, x to, y to
+shelves = [[10, 0], [1, 7], [10, 7]]   # where the families' memory shelves go up in the attic
+over_days = 0.6           # a house lived in before: its stones and boxes are carried over this much of the first world day
+least_ticks = 20          # ... at most one every this many ticks
+
+# SPEC-v3.5.12 §1: the store's shelves along the storeroom's walls (engine/store.py). `keeps`: the kinds each takes
+# ("light": anything that gives light; "*": anything); `art`: its picture (rail32.png, assets-incoming/pixellab/sheets.toml).
+[store]
+cap = 6                   # a room (not the storeroom) keeps at most this many made things out of place: at a stop the car takes the rest (rail.collect)
+full_days = 3             # the store full, the oldest thing nobody has used this long (not a first, heirloom, titled thing or gift) goes to the Works
+shelf = [
+  { name = "cushion shelf", pos = [2, 0], store = 30, keeps = ["cushion", "blanket", "nest", "bed-mat", "rug", "pillow"], shelf = "cushions and blankets", art = "shelf of folded cushions and blankets" },
+  { name = "lamp shelf", pos = [4, 0], store = 20, keeps = ["lamp", "candle", "lantern", "light"], shelf = "lamps and candles", art = "shelf of lamps and candles" },
+  { name = "pegboard", pos = [0, 2], store = 12, keeps = ["carver", "trowel", "hammer"], shelf = "tools", art = "pegboard with hanging tools" },
+  { name = "cubbies", pos = [0, 4], store = 20, keeps = ["bell", "drum", "flute", "wind chime", "ball", "mobile", "garland"], shelf = "instruments and toys", art = "wall of cubby holes with small things" },
+  { name = "drawers", pos = [0, 6], store = 30, keeps = ["charm"], shelf = "charms and curios", art = "cabinet with many small drawers", inside = true },
+  { name = "crate rack", pos = [3, 7], store = 25, keeps = ["*"], shelf = "everything else", art = "tall storage rack with labelled crates", inside = true },
+  { name = "cup shelf", pos = [5, 7], store = 15, keeps = ["cup", "bowl", "jar", "vase", "plant pot"], shelf = "cups, bowls and jars", art = "shelf of cups and bowls" },
+  { name = "wood crate", pos = [0, 7], store = 1, keeps = [], bits = "wood", shelf = "wood", art = "crate of wood offcuts", inside = true },
+  { name = "stone crate", pos = [1, 7], store = 1, keeps = [], bits = "stone", shelf = "stone", art = "crate of stones", inside = true },
+  { name = "metal crate", pos = [8, 7], store = 1, keeps = [], bits = "metal", shelf = "metal", art = "bin of loose bits sorted by kind", inside = true },
+  { name = "clay crate", pos = [9, 7], store = 1, keeps = [], bits = "clay", shelf = "clay", art = "tidy stack of tiles", inside = true },
+  { name = "fibre crate", pos = [11, 5], store = 1, keeps = [], bits = "fibre", shelf = "fibre", art = "bolt of cloth", inside = true },
+  { name = "sand crate", pos = [11, 6], store = 1, keeps = [], bits = "sand", shelf = "sand", art = "stack of tidy crates with lids", inside = true },
+  # SPEC-v3.6c §1 (18 October 2026): the clear-out sends every kept thing to the store, and 155 of the 173 on its shelves
+  # were kept already (141 for a title), so the store had no room left for anything: two more racks along the east wall
+  { name = "tall rack", pos = [11, 1], store = 30, keeps = ["*"], shelf = "kept things", art = "tall storage rack with labelled crates", inside = true },
+  { name = "long rack", pos = [11, 2], store = 30, keeps = ["*"], shelf = "kept things", art = "tall storage rack with labelled crates", inside = true },
+]
+
+[drifts]
+cellar = { cold_night = 0.3 }       # mild at night
+attic = { sun = -0.4 }              # the sun shaft turns harsh
+pond = { rest = 0.6 }               # the water stops helping rest
+workshop = { combine = 2.0 }        # the bench makes combining harder
+greenhouse = { warm_day = -0.3 }    # close and stuffy by day
+garden = { fresh = -0.3 }           # rain stops easing
+music = { linger = -0.3 }           # its sounds start to grate next door
+storeroom = { dark = 1.5 }          # it becomes worth looking round

@@ -1,0 +1,96 @@
+# The physics of things (SPEC-v2 §4, SPEC-v3 §6.3). The pets are told none of it; they feel it and work it out.
+# Rates are per 10 seconds, whatever the engine's tick. Tune here, not in code.
+
+[rules]
+lights_night = -1.0   # comfort while any light is on in the room at night
+plant_window = 0.5    # comfort by day in the nursery while the plant is near the window
+double_feed = -6.0    # what a meal gives in place of energy when it comes within a world hour of the last one
+
+# ---- properties: what a made thing is like, chosen from what its bits allow ----
+# "need" is the need a thing with that property is for; it is useful once it has raised that need on most of
+# at least `useful_uses` occasions. "near" means within one tile of the pet unless `room = true`.
+
+[soft]
+need = "comfort"
+says = "comfort when used; a bigger one gives more"
+use = { comfort = 4.0 }   # v2 had 2.0: too little to ever win comfort back against its drift (see DECISIONS.md)
+by_size = true
+
+[hard]
+says = "nothing; it just sits there"
+
+[warm]
+need = "comfort"
+says = "comfort near it at night and in the cold, discomfort near it on a warm day"
+near = { night = { comfort = 0.5 }, day = { comfort = -0.5 } }
+
+[bright]
+says = "a light: using it switches it on or off, and a light on at night costs comfort"
+light = true
+
+[cool]
+need = "comfort"
+says = "comfort near it by day, discomfort near it at night"
+near = { day = { comfort = 0.5 }, night = { comfort = -0.5 } }
+
+[dark]
+need = "comfort"
+says = "near it, lights at night do no harm"
+shade = true
+
+[noisy]
+need = "curiosity"
+says = "curiosity when used, for a little energy; resting near it restores half as much"
+use = { curiosity = 3.0, energy = -1.0 }
+rest_near = 0.5
+loud = true
+
+[quiet]
+need = "energy"
+says = "resting near it restores more energy"
+rest_bonus = 1.0
+
+[bouncy]
+need = "curiosity"
+says = "curiosity when used, for a little energy"
+use = { curiosity = 2.0, energy = -1.0 }
+
+[heavy]
+says = "nothing, and once placed it cannot be moved"
+fixed = true
+
+[sweet]
+need = "energy"
+says = "energy when eaten, once; it counts as a meal"
+use = { energy = 5.0 }
+food = true
+
+# ---- the three found only in far rooms (§6.3) ----
+
+[fragrant]
+need = "comfort"
+says = "comfort for everyone in the room; it fades as you get used to it and comes back overnight"
+room = true
+fades = 0.85              # each minute beside it, it smells this much as strong as the minute before
+scent = 0.4               # comfort per 10 s, times how fresh the smell still is to that pet
+
+[glassy]
+need = "curiosity"
+says = "scatters sunlight: curiosity and a little comfort near it by day when the sun is out; never a light at night"
+sun = { curiosity = 0.4, comfort = 0.2 }
+
+[springy]
+need = "energy"
+says = "using it puts a spring in its step: for a while it walks twice as far and moving costs nothing"
+use = { curiosity = 1.0 }
+spring_steps = 6
+
+# ---- behaviors an Adult can teach a thing (SPEC-v2 §7) ----
+[behaviors]
+glow = { light = true }
+dim = { shade = true }
+hum = { near = { curiosity = 0.5 }, rest_near = 0.5, loud = true }
+bounce = { near = { curiosity = 0.3 } }
+move_toward_pet = { step = 1 }
+move_away = { step = -1 }
+change_color = {}

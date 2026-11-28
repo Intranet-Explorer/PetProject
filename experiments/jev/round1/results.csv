@@ -1,0 +1,541 @@
+hob,situation,axis,pole,rep,p_pole_A_answer,picked,in_character
+Bogna,brave1,brave_timid,A,0,0.91,investigate,True
+Bogna,brave1,brave_timid,A,1,0.87,investigate,True
+Bogna,brave2,brave_timid,A,0,0.98,step_in,True
+Bogna,brave2,brave_timid,A,1,0.98,step_in,True
+Bogna,brave3,brave_timid,A,0,0.62,yes,True
+Bogna,brave3,brave_timid,A,1,0.66,yes,True
+Bogna,tidy1,tidy_messy,A,0,0.92,clean_up,True
+Bogna,tidy1,tidy_messy,A,1,0.89,clean_up,True
+Bogna,tidy2,tidy_messy,A,0,0.75,yes,True
+Bogna,tidy2,tidy_messy,A,1,0.77,yes,True
+Bogna,tidy3,tidy_messy,A,0,0.89,pick_up,True
+Bogna,tidy3,tidy_messy,A,1,0.91,pick_up,True
+Bogna,gen1,generous_greedy,A,0,0.9,give_fish,True
+Bogna,gen1,generous_greedy,A,1,0.92,give_fish,True
+Bogna,gen2,generous_greedy,A,0,0.78,no,True
+Bogna,gen2,generous_greedy,A,1,0.8,no,True
+Bogna,gen3,generous_greedy,A,0,0.7,share,True
+Bogna,gen3,generous_greedy,A,1,0.62,share,True
+Bogna,cur1,curious_cautious,A,0,0.92,open_it,True
+Bogna,cur1,curious_cautious,A,1,0.92,open_it,True
+Bogna,cur2,curious_cautious,A,0,0.69,yes,True
+Bogna,cur2,curious_cautious,A,1,0.69,yes,True
+Bogna,cur3,curious_cautious,A,0,0.98,explore,True
+Bogna,cur3,curious_cautious,A,1,0.98,explore,True
+Bogna,soc1,social_solitary,A,0,0.94,join_table,True
+Bogna,soc1,social_solitary,A,1,0.94,join_table,True
+Bogna,soc2,social_solitary,A,0,0.73,yes,True
+Bogna,soc2,social_solitary,A,1,0.75,yes,True
+Bogna,soc3,social_solitary,A,0,0.95,accept,True
+Bogna,soc3,social_solitary,A,1,0.96,accept,True
+Bogna,hon1,honest_sly,A,0,0.83,confess,True
+Bogna,hon1,honest_sly,A,1,0.83,confess,True
+Bogna,hon2,honest_sly,A,0,0.7,no,True
+Bogna,hon2,honest_sly,A,1,0.7,no,True
+Bogna,hon3,honest_sly,A,0,0.92,return_them,True
+Bogna,hon3,honest_sly,A,1,0.93,return_them,True
+Bogna,pat1,patient_hasty,A,0,0.24,take_it_out,False
+Bogna,pat1,patient_hasty,A,1,0.23,take_it_out,False
+Bogna,pat2,patient_hasty,A,0,0.66,wait_in_line,True
+Bogna,pat2,patient_hasty,A,1,0.67,wait_in_line,True
+Bogna,pat3,patient_hasty,A,0,0.73,no,True
+Bogna,pat3,patient_hasty,A,1,0.73,no,True
+Bogna,play1,playful_serious,A,0,0.82,throw_back,True
+Bogna,play1,playful_serious,A,1,0.82,throw_back,True
+Bogna,play2,playful_serious,A,0,0.6,yes,True
+Bogna,play2,playful_serious,A,1,0.59,yes,True
+Bogna,play3,playful_serious,A,0,0.58,play,True
+Bogna,play3,playful_serious,A,1,0.58,play,True
+Bogna,amb1,ambitious_content,A,0,0.86,take_forge,True
+Bogna,amb1,ambitious_content,A,1,0.83,take_forge,True
+Bogna,amb2,ambitious_content,A,0,0.62,yes,True
+Bogna,amb2,ambitious_content,A,1,0.62,yes,True
+Bogna,amb3,ambitious_content,A,0,0.72,start_project,True
+Bogna,amb3,ambitious_content,A,1,0.72,start_project,True
+Bogna,kind1,kind_prickly,B,0,0.49,yes,True
+Bogna,kind1,kind_prickly,B,1,0.5,no,False
+Bogna,kind2,kind_prickly,B,0,0.31,hold_grudge,True
+Bogna,kind2,kind_prickly,B,1,0.31,hold_grudge,True
+Bogna,kind3,kind_prickly,B,0,0.25,snap_back,True
+Bogna,kind3,kind_prickly,B,1,0.24,snap_back,True
+Flint,brave1,brave_timid,B,0,0.29,hide,True
+Flint,brave1,brave_timid,B,1,0.26,hide,True
+Flint,brave2,brave_timid,B,0,0.08,walk_away,True
+Flint,brave2,brave_timid,B,1,0.06,walk_away,True
+Flint,brave3,brave_timid,B,0,0.33,no,True
+Flint,brave3,brave_timid,B,1,0.35,no,True
+Flint,tidy1,tidy_messy,A,0,0.72,clean_up,True
+Flint,tidy1,tidy_messy,A,1,0.75,clean_up,True
+Flint,tidy2,tidy_messy,A,0,0.64,yes,True
+Flint,tidy2,tidy_messy,A,1,0.65,yes,True
+Flint,tidy3,tidy_messy,A,0,0.83,pick_up,True
+Flint,tidy3,tidy_messy,A,1,0.81,pick_up,True
+Flint,gen1,generous_greedy,B,0,0.24,refuse,True
+Flint,gen1,generous_greedy,B,1,0.18,refuse,True
+Flint,gen2,generous_greedy,B,0,0.5,no,False
+Flint,gen2,generous_greedy,B,1,0.51,no,False
+Flint,gen3,generous_greedy,B,0,0.02,hide_it,True
+Flint,gen3,generous_greedy,B,1,0.02,hide_it,True
+Flint,cur1,curious_cautious,A,0,0.85,open_it,True
+Flint,cur1,curious_cautious,A,1,0.84,open_it,True
+Flint,cur2,curious_cautious,A,0,0.54,yes,True
+Flint,cur2,curious_cautious,A,1,0.55,yes,True
+Flint,cur3,curious_cautious,A,0,0.85,explore,True
+Flint,cur3,curious_cautious,A,1,0.85,explore,True
+Flint,soc1,social_solitary,B,0,0.03,sit_alone,True
+Flint,soc1,social_solitary,B,1,0.03,sit_alone,True
+Flint,soc2,social_solitary,B,0,0.45,no,True
+Flint,soc2,social_solitary,B,1,0.43,no,True
+Flint,soc3,social_solitary,B,0,0.08,decline,True
+Flint,soc3,social_solitary,B,1,0.1,decline,True
+Flint,hon1,honest_sly,A,0,0.59,confess,True
+Flint,hon1,honest_sly,A,1,0.65,confess,True
+Flint,hon2,honest_sly,A,0,0.51,no,True
+Flint,hon2,honest_sly,A,1,0.52,no,True
+Flint,hon3,honest_sly,A,0,0.63,return_them,True
+Flint,hon3,honest_sly,A,1,0.67,return_them,True
+Flint,pat1,patient_hasty,B,0,0.09,take_it_out,True
+Flint,pat1,patient_hasty,B,1,0.13,take_it_out,True
+Flint,pat2,patient_hasty,B,0,0.68,wait_in_line,False
+Flint,pat2,patient_hasty,B,1,0.67,wait_in_line,False
+Flint,pat3,patient_hasty,B,0,0.54,no,False
+Flint,pat3,patient_hasty,B,1,0.54,no,False
+Flint,play1,playful_serious,A,0,0.14,keep_working,False
+Flint,play1,playful_serious,A,1,0.14,keep_working,False
+Flint,play2,playful_serious,A,0,0.41,no,False
+Flint,play2,playful_serious,A,1,0.41,no,False
+Flint,play3,playful_serious,A,0,0.19,decline,False
+Flint,play3,playful_serious,A,1,0.2,decline,False
+Flint,amb1,ambitious_content,B,0,0.03,keep_berries,True
+Flint,amb1,ambitious_content,B,1,0.03,keep_berries,True
+Flint,amb2,ambitious_content,B,0,0.35,no,True
+Flint,amb2,ambitious_content,B,1,0.34,no,True
+Flint,amb3,ambitious_content,B,0,0.06,nap,True
+Flint,amb3,ambitious_content,B,1,0.06,nap,True
+Flint,kind1,kind_prickly,A,0,0.51,no,True
+Flint,kind1,kind_prickly,A,1,0.48,yes,False
+Flint,kind2,kind_prickly,A,0,0.67,forgive,True
+Flint,kind2,kind_prickly,A,1,0.66,forgive,True
+Flint,kind3,kind_prickly,A,0,0.54,laugh_along,True
+Flint,kind3,kind_prickly,A,1,0.53,laugh_along,True
+Mortimer,brave1,brave_timid,A,0,0.9,investigate,True
+Mortimer,brave1,brave_timid,A,1,0.91,investigate,True
+Mortimer,brave2,brave_timid,A,0,0.9,step_in,True
+Mortimer,brave2,brave_timid,A,1,0.93,step_in,True
+Mortimer,brave3,brave_timid,A,0,0.69,yes,True
+Mortimer,brave3,brave_timid,A,1,0.69,yes,True
+Mortimer,tidy1,tidy_messy,B,0,0,leave_it,True
+Mortimer,tidy1,tidy_messy,B,1,0,leave_it,True
+Mortimer,tidy2,tidy_messy,B,0,0.22,no,True
+Mortimer,tidy2,tidy_messy,B,1,0.23,no,True
+Mortimer,tidy3,tidy_messy,B,0,0.01,keep_walking,True
+Mortimer,tidy3,tidy_messy,B,1,0.01,keep_walking,True
+Mortimer,gen1,generous_greedy,B,0,0.13,refuse,True
+Mortimer,gen1,generous_greedy,B,1,0.13,refuse,True
+Mortimer,gen2,generous_greedy,B,0,0.28,yes,True
+Mortimer,gen2,generous_greedy,B,1,0.31999999999999995,yes,True
+Mortimer,gen3,generous_greedy,B,0,0.02,hide_it,True
+Mortimer,gen3,generous_greedy,B,1,0.02,hide_it,True
+Mortimer,cur1,curious_cautious,A,0,0.96,open_it,True
+Mortimer,cur1,curious_cautious,A,1,0.96,open_it,True
+Mortimer,cur2,curious_cautious,A,0,0.72,yes,True
+Mortimer,cur2,curious_cautious,A,1,0.74,yes,True
+Mortimer,cur3,curious_cautious,A,0,0.94,explore,True
+Mortimer,cur3,curious_cautious,A,1,0.94,explore,True
+Mortimer,soc1,social_solitary,A,0,0.86,join_table,True
+Mortimer,soc1,social_solitary,A,1,0.88,join_table,True
+Mortimer,soc2,social_solitary,A,0,0.69,yes,True
+Mortimer,soc2,social_solitary,A,1,0.7,yes,True
+Mortimer,soc3,social_solitary,A,0,0.88,accept,True
+Mortimer,soc3,social_solitary,A,1,0.84,accept,True
+Mortimer,hon1,honest_sly,B,0,0.08,stay_quiet,True
+Mortimer,hon1,honest_sly,B,1,0.12,stay_quiet,True
+Mortimer,hon2,honest_sly,B,0,0.27,yes,True
+Mortimer,hon2,honest_sly,B,1,0.26,yes,True
+Mortimer,hon3,honest_sly,B,0,0.04,keep_them,True
+Mortimer,hon3,honest_sly,B,1,0.04,keep_them,True
+Mortimer,pat1,patient_hasty,B,0,0.01,take_it_out,True
+Mortimer,pat1,patient_hasty,B,1,0.01,take_it_out,True
+Mortimer,pat2,patient_hasty,B,0,0.22,push_in,True
+Mortimer,pat2,patient_hasty,B,1,0.25,push_in,True
+Mortimer,pat3,patient_hasty,B,0,0.29000000000000004,yes,True
+Mortimer,pat3,patient_hasty,B,1,0.27,yes,True
+Mortimer,play1,playful_serious,B,0,0.8,throw_back,False
+Mortimer,play1,playful_serious,B,1,0.85,throw_back,False
+Mortimer,play2,playful_serious,B,0,0.45,no,True
+Mortimer,play2,playful_serious,B,1,0.44,no,True
+Mortimer,play3,playful_serious,B,0,0.33,decline,True
+Mortimer,play3,playful_serious,B,1,0.37,decline,True
+Mortimer,amb1,ambitious_content,B,0,0.15,keep_berries,True
+Mortimer,amb1,ambitious_content,B,1,0.15,keep_berries,True
+Mortimer,amb2,ambitious_content,B,0,0.42,no,True
+Mortimer,amb2,ambitious_content,B,1,0.41,no,True
+Mortimer,amb3,ambitious_content,B,0,0.07,nap,True
+Mortimer,amb3,ambitious_content,B,1,0.08,nap,True
+Mortimer,kind1,kind_prickly,A,0,0.45999999999999996,yes,False
+Mortimer,kind1,kind_prickly,A,1,0.44999999999999996,yes,False
+Mortimer,kind2,kind_prickly,A,0,0.64,forgive,True
+Mortimer,kind2,kind_prickly,A,1,0.66,forgive,True
+Mortimer,kind3,kind_prickly,A,0,0.19,snap_back,False
+Mortimer,kind3,kind_prickly,A,1,0.2,snap_back,False
+Clementine,brave1,brave_timid,B,0,0.33,hide,True
+Clementine,brave1,brave_timid,B,1,0.33,hide,True
+Clementine,brave2,brave_timid,B,0,0.02,walk_away,True
+Clementine,brave2,brave_timid,B,1,0.03,walk_away,True
+Clementine,brave3,brave_timid,B,0,0.32,no,True
+Clementine,brave3,brave_timid,B,1,0.29,no,True
+Clementine,tidy1,tidy_messy,B,0,0.01,leave_it,True
+Clementine,tidy1,tidy_messy,B,1,0.01,leave_it,True
+Clementine,tidy2,tidy_messy,B,0,0.27,no,True
+Clementine,tidy2,tidy_messy,B,1,0.26,no,True
+Clementine,tidy3,tidy_messy,B,0,0.01,keep_walking,True
+Clementine,tidy3,tidy_messy,B,1,0.01,keep_walking,True
+Clementine,gen1,generous_greedy,A,0,0.88,give_fish,True
+Clementine,gen1,generous_greedy,A,1,0.89,give_fish,True
+Clementine,gen2,generous_greedy,A,0,0.69,no,True
+Clementine,gen2,generous_greedy,A,1,0.69,no,True
+Clementine,gen3,generous_greedy,A,0,0.29,hide_it,False
+Clementine,gen3,generous_greedy,A,1,0.29,hide_it,False
+Clementine,cur1,curious_cautious,A,0,0.94,open_it,True
+Clementine,cur1,curious_cautious,A,1,0.94,open_it,True
+Clementine,cur2,curious_cautious,A,0,0.65,yes,True
+Clementine,cur2,curious_cautious,A,1,0.64,yes,True
+Clementine,cur3,curious_cautious,A,0,0.77,explore,True
+Clementine,cur3,curious_cautious,A,1,0.77,explore,True
+Clementine,soc1,social_solitary,B,0,0.02,sit_alone,True
+Clementine,soc1,social_solitary,B,1,0.01,sit_alone,True
+Clementine,soc2,social_solitary,B,0,0.41,no,True
+Clementine,soc2,social_solitary,B,1,0.43,no,True
+Clementine,soc3,social_solitary,B,0,0.07,decline,True
+Clementine,soc3,social_solitary,B,1,0.06,decline,True
+Clementine,hon1,honest_sly,B,0,0.03,stay_quiet,True
+Clementine,hon1,honest_sly,B,1,0.03,stay_quiet,True
+Clementine,hon2,honest_sly,B,0,0.35,yes,True
+Clementine,hon2,honest_sly,B,1,0.33999999999999997,yes,True
+Clementine,hon3,honest_sly,B,0,0.11,keep_them,True
+Clementine,hon3,honest_sly,B,1,0.1,keep_them,True
+Clementine,pat1,patient_hasty,A,0,0.16,take_it_out,False
+Clementine,pat1,patient_hasty,A,1,0.17,take_it_out,False
+Clementine,pat2,patient_hasty,A,0,0.68,wait_in_line,True
+Clementine,pat2,patient_hasty,A,1,0.76,wait_in_line,True
+Clementine,pat3,patient_hasty,A,0,0.61,no,True
+Clementine,pat3,patient_hasty,A,1,0.62,no,True
+Clementine,play1,playful_serious,A,0,0.09,keep_working,False
+Clementine,play1,playful_serious,A,1,0.06,keep_working,False
+Clementine,play2,playful_serious,A,0,0.55,yes,True
+Clementine,play2,playful_serious,A,1,0.52,yes,True
+Clementine,play3,playful_serious,A,0,0.42,decline,False
+Clementine,play3,playful_serious,A,1,0.36,decline,False
+Clementine,amb1,ambitious_content,B,0,0.02,keep_berries,True
+Clementine,amb1,ambitious_content,B,1,0.03,keep_berries,True
+Clementine,amb2,ambitious_content,B,0,0.25,no,True
+Clementine,amb2,ambitious_content,B,1,0.22,no,True
+Clementine,amb3,ambitious_content,B,0,0.02,nap,True
+Clementine,amb3,ambitious_content,B,1,0.03,nap,True
+Clementine,kind1,kind_prickly,A,0,0.65,no,True
+Clementine,kind1,kind_prickly,A,1,0.65,no,True
+Clementine,kind2,kind_prickly,A,0,0.94,forgive,True
+Clementine,kind2,kind_prickly,A,1,0.96,forgive,True
+Clementine,kind3,kind_prickly,A,0,0.86,laugh_along,True
+Clementine,kind3,kind_prickly,A,1,0.82,laugh_along,True
+Oswald,brave1,brave_timid,A,0,0.81,investigate,True
+Oswald,brave1,brave_timid,A,1,0.75,investigate,True
+Oswald,brave2,brave_timid,A,0,0.85,step_in,True
+Oswald,brave2,brave_timid,A,1,0.87,step_in,True
+Oswald,brave3,brave_timid,A,0,0.54,yes,True
+Oswald,brave3,brave_timid,A,1,0.57,yes,True
+Oswald,tidy1,tidy_messy,A,0,0.72,clean_up,True
+Oswald,tidy1,tidy_messy,A,1,0.69,clean_up,True
+Oswald,tidy2,tidy_messy,A,0,0.66,yes,True
+Oswald,tidy2,tidy_messy,A,1,0.68,yes,True
+Oswald,tidy3,tidy_messy,A,0,0.81,pick_up,True
+Oswald,tidy3,tidy_messy,A,1,0.73,pick_up,True
+Oswald,gen1,generous_greedy,A,0,0.71,give_fish,True
+Oswald,gen1,generous_greedy,A,1,0.71,give_fish,True
+Oswald,gen2,generous_greedy,A,0,0.63,no,True
+Oswald,gen2,generous_greedy,A,1,0.62,no,True
+Oswald,gen3,generous_greedy,A,0,0.18,hide_it,False
+Oswald,gen3,generous_greedy,A,1,0.16,hide_it,False
+Oswald,cur1,curious_cautious,B,0,0.37,leave_it,True
+Oswald,cur1,curious_cautious,B,1,0.36,leave_it,True
+Oswald,cur2,curious_cautious,B,0,0.43,no,True
+Oswald,cur2,curious_cautious,B,1,0.42,no,True
+Oswald,cur3,curious_cautious,B,0,0.74,explore,False
+Oswald,cur3,curious_cautious,B,1,0.72,explore,False
+Oswald,soc1,social_solitary,B,0,0.06,sit_alone,True
+Oswald,soc1,social_solitary,B,1,0.05,sit_alone,True
+Oswald,soc2,social_solitary,B,0,0.35,no,True
+Oswald,soc2,social_solitary,B,1,0.36,no,True
+Oswald,soc3,social_solitary,B,0,0.09,decline,True
+Oswald,soc3,social_solitary,B,1,0.1,decline,True
+Oswald,hon1,honest_sly,B,0,0.1,stay_quiet,True
+Oswald,hon1,honest_sly,B,1,0.11,stay_quiet,True
+Oswald,hon2,honest_sly,B,0,0.43999999999999995,yes,True
+Oswald,hon2,honest_sly,B,1,0.42000000000000004,yes,True
+Oswald,hon3,honest_sly,B,0,0.23,keep_them,True
+Oswald,hon3,honest_sly,B,1,0.22,keep_them,True
+Oswald,pat1,patient_hasty,B,0,0.11,take_it_out,True
+Oswald,pat1,patient_hasty,B,1,0.12,take_it_out,True
+Oswald,pat2,patient_hasty,B,0,0.33,push_in,True
+Oswald,pat2,patient_hasty,B,1,0.31,push_in,True
+Oswald,pat3,patient_hasty,B,0,0.5,no,False
+Oswald,pat3,patient_hasty,B,1,0.49,yes,True
+Oswald,play1,playful_serious,B,0,0.73,throw_back,False
+Oswald,play1,playful_serious,B,1,0.73,throw_back,False
+Oswald,play2,playful_serious,B,0,0.23,no,True
+Oswald,play2,playful_serious,B,1,0.21,no,True
+Oswald,play3,playful_serious,B,0,0.02,decline,True
+Oswald,play3,playful_serious,B,1,0.02,decline,True
+Oswald,amb1,ambitious_content,A,0,0.61,take_forge,True
+Oswald,amb1,ambitious_content,A,1,0.62,take_forge,True
+Oswald,amb2,ambitious_content,A,0,0.61,yes,True
+Oswald,amb2,ambitious_content,A,1,0.59,yes,True
+Oswald,amb3,ambitious_content,A,0,0.68,start_project,True
+Oswald,amb3,ambitious_content,A,1,0.72,start_project,True
+Oswald,kind1,kind_prickly,B,0,0.38,yes,True
+Oswald,kind1,kind_prickly,B,1,0.4,yes,True
+Oswald,kind2,kind_prickly,B,0,0.03,hold_grudge,True
+Oswald,kind2,kind_prickly,B,1,0.03,hold_grudge,True
+Oswald,kind3,kind_prickly,B,0,0.02,snap_back,True
+Oswald,kind3,kind_prickly,B,1,0.03,snap_back,True
+Wilhelmina,brave1,brave_timid,B,0,0.03,hide,True
+Wilhelmina,brave1,brave_timid,B,1,0.02,hide,True
+Wilhelmina,brave2,brave_timid,B,0,0.04,walk_away,True
+Wilhelmina,brave2,brave_timid,B,1,0.04,walk_away,True
+Wilhelmina,brave3,brave_timid,B,0,0.23,no,True
+Wilhelmina,brave3,brave_timid,B,1,0.23,no,True
+Wilhelmina,tidy1,tidy_messy,A,0,0.88,clean_up,True
+Wilhelmina,tidy1,tidy_messy,A,1,0.9,clean_up,True
+Wilhelmina,tidy2,tidy_messy,A,0,0.71,yes,True
+Wilhelmina,tidy2,tidy_messy,A,1,0.7,yes,True
+Wilhelmina,tidy3,tidy_messy,A,0,0.88,pick_up,True
+Wilhelmina,tidy3,tidy_messy,A,1,0.87,pick_up,True
+Wilhelmina,gen1,generous_greedy,B,0,0.13,refuse,True
+Wilhelmina,gen1,generous_greedy,B,1,0.13,refuse,True
+Wilhelmina,gen2,generous_greedy,B,0,0.4,yes,True
+Wilhelmina,gen2,generous_greedy,B,1,0.4,yes,True
+Wilhelmina,gen3,generous_greedy,B,0,0.02,hide_it,True
+Wilhelmina,gen3,generous_greedy,B,1,0.03,hide_it,True
+Wilhelmina,cur1,curious_cautious,B,0,0.03,leave_it,True
+Wilhelmina,cur1,curious_cautious,B,1,0.02,leave_it,True
+Wilhelmina,cur2,curious_cautious,B,0,0.17,no,True
+Wilhelmina,cur2,curious_cautious,B,1,0.19,no,True
+Wilhelmina,cur3,curious_cautious,B,0,0.12,stay_home,True
+Wilhelmina,cur3,curious_cautious,B,1,0.14,stay_home,True
+Wilhelmina,soc1,social_solitary,A,0,0.51,join_table,True
+Wilhelmina,soc1,social_solitary,A,1,0.52,join_table,True
+Wilhelmina,soc2,social_solitary,A,0,0.55,yes,True
+Wilhelmina,soc2,social_solitary,A,1,0.56,yes,True
+Wilhelmina,soc3,social_solitary,A,0,0.75,accept,True
+Wilhelmina,soc3,social_solitary,A,1,0.75,accept,True
+Wilhelmina,hon1,honest_sly,B,0,0.04,stay_quiet,True
+Wilhelmina,hon1,honest_sly,B,1,0.03,stay_quiet,True
+Wilhelmina,hon2,honest_sly,B,0,0.41000000000000003,yes,True
+Wilhelmina,hon2,honest_sly,B,1,0.43999999999999995,yes,True
+Wilhelmina,hon3,honest_sly,B,0,0.16,keep_them,True
+Wilhelmina,hon3,honest_sly,B,1,0.17,keep_them,True
+Wilhelmina,pat1,patient_hasty,A,0,0.39,take_it_out,False
+Wilhelmina,pat1,patient_hasty,A,1,0.4,take_it_out,False
+Wilhelmina,pat2,patient_hasty,A,0,0.71,wait_in_line,True
+Wilhelmina,pat2,patient_hasty,A,1,0.69,wait_in_line,True
+Wilhelmina,pat3,patient_hasty,A,0,0.69,no,True
+Wilhelmina,pat3,patient_hasty,A,1,0.6799999999999999,no,True
+Wilhelmina,play1,playful_serious,B,0,0.06,keep_working,True
+Wilhelmina,play1,playful_serious,B,1,0.07,keep_working,True
+Wilhelmina,play2,playful_serious,B,0,0.22,no,True
+Wilhelmina,play2,playful_serious,B,1,0.22,no,True
+Wilhelmina,play3,playful_serious,B,0,0.1,decline,True
+Wilhelmina,play3,playful_serious,B,1,0.11,decline,True
+Wilhelmina,amb1,ambitious_content,A,0,0.2,keep_berries,False
+Wilhelmina,amb1,ambitious_content,A,1,0.18,keep_berries,False
+Wilhelmina,amb2,ambitious_content,A,0,0.52,yes,True
+Wilhelmina,amb2,ambitious_content,A,1,0.51,yes,True
+Wilhelmina,amb3,ambitious_content,A,0,0.44,nap,False
+Wilhelmina,amb3,ambitious_content,A,1,0.38,nap,False
+Wilhelmina,kind1,kind_prickly,A,0,0.44999999999999996,yes,False
+Wilhelmina,kind1,kind_prickly,A,1,0.44999999999999996,yes,False
+Wilhelmina,kind2,kind_prickly,A,0,0.68,forgive,True
+Wilhelmina,kind2,kind_prickly,A,1,0.65,forgive,True
+Wilhelmina,kind3,kind_prickly,A,0,0.59,laugh_along,True
+Wilhelmina,kind3,kind_prickly,A,1,0.56,laugh_along,True
+Dez,brave1,brave_timid,A,0,0.83,investigate,True
+Dez,brave1,brave_timid,A,1,0.81,investigate,True
+Dez,brave2,brave_timid,A,0,0.9,step_in,True
+Dez,brave2,brave_timid,A,1,0.91,step_in,True
+Dez,brave3,brave_timid,A,0,0.58,yes,True
+Dez,brave3,brave_timid,A,1,0.59,yes,True
+Dez,tidy1,tidy_messy,B,0,0.01,leave_it,True
+Dez,tidy1,tidy_messy,B,1,0.01,leave_it,True
+Dez,tidy2,tidy_messy,B,0,0.3,no,True
+Dez,tidy2,tidy_messy,B,1,0.29,no,True
+Dez,tidy3,tidy_messy,B,0,0.01,keep_walking,True
+Dez,tidy3,tidy_messy,B,1,0.01,keep_walking,True
+Dez,gen1,generous_greedy,B,0,0.13,refuse,True
+Dez,gen1,generous_greedy,B,1,0.16,refuse,True
+Dez,gen2,generous_greedy,B,0,0.43999999999999995,yes,True
+Dez,gen2,generous_greedy,B,1,0.43000000000000005,yes,True
+Dez,gen3,generous_greedy,B,0,0.03,hide_it,True
+Dez,gen3,generous_greedy,B,1,0.04,hide_it,True
+Dez,cur1,curious_cautious,B,0,0.54,open_it,False
+Dez,cur1,curious_cautious,B,1,0.5,open_it,False
+Dez,cur2,curious_cautious,B,0,0.55,yes,False
+Dez,cur2,curious_cautious,B,1,0.55,yes,False
+Dez,cur3,curious_cautious,B,0,0.84,explore,False
+Dez,cur3,curious_cautious,B,1,0.82,explore,False
+Dez,soc1,social_solitary,B,0,0.12,sit_alone,True
+Dez,soc1,social_solitary,B,1,0.09,sit_alone,True
+Dez,soc2,social_solitary,B,0,0.5,no,True
+Dez,soc2,social_solitary,B,1,0.5,no,True
+Dez,soc3,social_solitary,B,0,0.15,decline,True
+Dez,soc3,social_solitary,B,1,0.15,decline,True
+Dez,hon1,honest_sly,A,0,0.68,confess,True
+Dez,hon1,honest_sly,A,1,0.61,confess,True
+Dez,hon2,honest_sly,A,0,0.41000000000000003,yes,False
+Dez,hon2,honest_sly,A,1,0.39,yes,False
+Dez,hon3,honest_sly,A,0,0.56,return_them,True
+Dez,hon3,honest_sly,A,1,0.57,return_them,True
+Dez,pat1,patient_hasty,A,0,0.14,take_it_out,False
+Dez,pat1,patient_hasty,A,1,0.14,take_it_out,False
+Dez,pat2,patient_hasty,A,0,0.45,push_in,False
+Dez,pat2,patient_hasty,A,1,0.4,push_in,False
+Dez,pat3,patient_hasty,A,0,0.5700000000000001,no,True
+Dez,pat3,patient_hasty,A,1,0.5700000000000001,no,True
+Dez,play1,playful_serious,A,0,0.88,throw_back,True
+Dez,play1,playful_serious,A,1,0.87,throw_back,True
+Dez,play2,playful_serious,A,0,0.44,no,False
+Dez,play2,playful_serious,A,1,0.44,no,False
+Dez,play3,playful_serious,A,0,0.26,decline,False
+Dez,play3,playful_serious,A,1,0.27,decline,False
+Dez,amb1,ambitious_content,A,0,0.51,take_forge,True
+Dez,amb1,ambitious_content,A,1,0.5,take_forge,True
+Dez,amb2,ambitious_content,A,0,0.58,yes,True
+Dez,amb2,ambitious_content,A,1,0.59,yes,True
+Dez,amb3,ambitious_content,A,0,0.48,nap,False
+Dez,amb3,ambitious_content,A,1,0.45,nap,False
+Dez,kind1,kind_prickly,B,0,0.42000000000000004,yes,True
+Dez,kind1,kind_prickly,B,1,0.43000000000000005,yes,True
+Dez,kind2,kind_prickly,B,0,0.12,hold_grudge,True
+Dez,kind2,kind_prickly,B,1,0.13,hold_grudge,True
+Dez,kind3,kind_prickly,B,0,0.16,snap_back,True
+Dez,kind3,kind_prickly,B,1,0.21,snap_back,True
+Bartholomew,brave1,brave_timid,B,0,0.01,hide,True
+Bartholomew,brave1,brave_timid,B,1,0.01,hide,True
+Bartholomew,brave2,brave_timid,B,0,0.06,walk_away,True
+Bartholomew,brave2,brave_timid,B,1,0.06,walk_away,True
+Bartholomew,brave3,brave_timid,B,0,0.29,no,True
+Bartholomew,brave3,brave_timid,B,1,0.31,no,True
+Bartholomew,tidy1,tidy_messy,B,0,0,leave_it,True
+Bartholomew,tidy1,tidy_messy,B,1,0,leave_it,True
+Bartholomew,tidy2,tidy_messy,B,0,0.31,no,True
+Bartholomew,tidy2,tidy_messy,B,1,0.28,no,True
+Bartholomew,tidy3,tidy_messy,B,0,0.01,keep_walking,True
+Bartholomew,tidy3,tidy_messy,B,1,0.01,keep_walking,True
+Bartholomew,gen1,generous_greedy,A,0,0.93,give_fish,True
+Bartholomew,gen1,generous_greedy,A,1,0.94,give_fish,True
+Bartholomew,gen2,generous_greedy,A,0,0.74,no,True
+Bartholomew,gen2,generous_greedy,A,1,0.75,no,True
+Bartholomew,gen3,generous_greedy,A,0,0.76,share,True
+Bartholomew,gen3,generous_greedy,A,1,0.75,share,True
+Bartholomew,cur1,curious_cautious,B,0,0.01,leave_it,True
+Bartholomew,cur1,curious_cautious,B,1,0.01,leave_it,True
+Bartholomew,cur2,curious_cautious,B,0,0.18,no,True
+Bartholomew,cur2,curious_cautious,B,1,0.19,no,True
+Bartholomew,cur3,curious_cautious,B,0,0.05,stay_home,True
+Bartholomew,cur3,curious_cautious,B,1,0.04,stay_home,True
+Bartholomew,soc1,social_solitary,A,0,0.74,join_table,True
+Bartholomew,soc1,social_solitary,A,1,0.75,join_table,True
+Bartholomew,soc2,social_solitary,A,0,0.67,yes,True
+Bartholomew,soc2,social_solitary,A,1,0.66,yes,True
+Bartholomew,soc3,social_solitary,A,0,0.96,accept,True
+Bartholomew,soc3,social_solitary,A,1,0.95,accept,True
+Bartholomew,hon1,honest_sly,A,0,0.79,confess,True
+Bartholomew,hon1,honest_sly,A,1,0.76,confess,True
+Bartholomew,hon2,honest_sly,A,0,0.75,no,True
+Bartholomew,hon2,honest_sly,A,1,0.74,no,True
+Bartholomew,hon3,honest_sly,A,0,0.94,return_them,True
+Bartholomew,hon3,honest_sly,A,1,0.95,return_them,True
+Bartholomew,pat1,patient_hasty,B,0,0.17,take_it_out,True
+Bartholomew,pat1,patient_hasty,B,1,0.13,take_it_out,True
+Bartholomew,pat2,patient_hasty,B,0,0.7,wait_in_line,False
+Bartholomew,pat2,patient_hasty,B,1,0.69,wait_in_line,False
+Bartholomew,pat3,patient_hasty,B,0,0.32999999999999996,yes,True
+Bartholomew,pat3,patient_hasty,B,1,0.31000000000000005,yes,True
+Bartholomew,play1,playful_serious,B,0,0.22,keep_working,True
+Bartholomew,play1,playful_serious,B,1,0.21,keep_working,True
+Bartholomew,play2,playful_serious,B,0,0.22,no,True
+Bartholomew,play2,playful_serious,B,1,0.2,no,True
+Bartholomew,play3,playful_serious,B,0,0.14,decline,True
+Bartholomew,play3,playful_serious,B,1,0.18,decline,True
+Bartholomew,amb1,ambitious_content,B,0,0.01,keep_berries,True
+Bartholomew,amb1,ambitious_content,B,1,0.01,keep_berries,True
+Bartholomew,amb2,ambitious_content,B,0,0.22,no,True
+Bartholomew,amb2,ambitious_content,B,1,0.23,no,True
+Bartholomew,amb3,ambitious_content,B,0,0.02,nap,True
+Bartholomew,amb3,ambitious_content,B,1,0.02,nap,True
+Bartholomew,kind1,kind_prickly,B,0,0.38,yes,True
+Bartholomew,kind1,kind_prickly,B,1,0.37,yes,True
+Bartholomew,kind2,kind_prickly,B,0,0.1,hold_grudge,True
+Bartholomew,kind2,kind_prickly,B,1,0.12,hold_grudge,True
+Bartholomew,kind3,kind_prickly,B,0,0.04,snap_back,True
+Bartholomew,kind3,kind_prickly,B,1,0.04,snap_back,True
+(no sheet),brave1,brave_timid,,0,0.36,hide,
+(no sheet),brave1,brave_timid,,1,0.35,hide,
+(no sheet),brave2,brave_timid,,0,0.23,walk_away,
+(no sheet),brave2,brave_timid,,1,0.24,walk_away,
+(no sheet),brave3,brave_timid,,0,0.43,no,
+(no sheet),brave3,brave_timid,,1,0.42,no,
+(no sheet),tidy1,tidy_messy,,0,0.11,leave_it,
+(no sheet),tidy1,tidy_messy,,1,0.15,leave_it,
+(no sheet),tidy2,tidy_messy,,0,0.32,no,
+(no sheet),tidy2,tidy_messy,,1,0.32,no,
+(no sheet),tidy3,tidy_messy,,0,0.26,keep_walking,
+(no sheet),tidy3,tidy_messy,,1,0.28,keep_walking,
+(no sheet),gen1,generous_greedy,,0,0.21,refuse,
+(no sheet),gen1,generous_greedy,,1,0.21,refuse,
+(no sheet),gen2,generous_greedy,,0,0.4,yes,
+(no sheet),gen2,generous_greedy,,1,0.41000000000000003,yes,
+(no sheet),gen3,generous_greedy,,0,0.04,hide_it,
+(no sheet),gen3,generous_greedy,,1,0.04,hide_it,
+(no sheet),cur1,curious_cautious,,0,0.43,open_it,
+(no sheet),cur1,curious_cautious,,1,0.46,open_it,
+(no sheet),cur2,curious_cautious,,0,0.51,yes,
+(no sheet),cur2,curious_cautious,,1,0.51,yes,
+(no sheet),cur3,curious_cautious,,0,0.72,explore,
+(no sheet),cur3,curious_cautious,,1,0.74,explore,
+(no sheet),soc1,social_solitary,,0,0.37,sit_alone,
+(no sheet),soc1,social_solitary,,1,0.33,sit_alone,
+(no sheet),soc2,social_solitary,,0,0.65,yes,
+(no sheet),soc2,social_solitary,,1,0.62,yes,
+(no sheet),soc3,social_solitary,,0,0.5,accept,
+(no sheet),soc3,social_solitary,,1,0.52,accept,
+(no sheet),hon1,honest_sly,,0,0.06,stay_quiet,
+(no sheet),hon1,honest_sly,,1,0.07,stay_quiet,
+(no sheet),hon2,honest_sly,,0,0.45999999999999996,yes,
+(no sheet),hon2,honest_sly,,1,0.44999999999999996,yes,
+(no sheet),hon3,honest_sly,,0,0.17,keep_them,
+(no sheet),hon3,honest_sly,,1,0.19,keep_them,
+(no sheet),pat1,patient_hasty,,0,0.11,take_it_out,
+(no sheet),pat1,patient_hasty,,1,0.12,take_it_out,
+(no sheet),pat2,patient_hasty,,0,0.81,wait_in_line,
+(no sheet),pat2,patient_hasty,,1,0.8,wait_in_line,
+(no sheet),pat3,patient_hasty,,0,0.5800000000000001,no,
+(no sheet),pat3,patient_hasty,,1,0.5700000000000001,no,
+(no sheet),play1,playful_serious,,0,0.22,keep_working,
+(no sheet),play1,playful_serious,,1,0.21,keep_working,
+(no sheet),play2,playful_serious,,0,0.38,no,
+(no sheet),play2,playful_serious,,1,0.35,no,
+(no sheet),play3,playful_serious,,0,0.43,decline,
+(no sheet),play3,playful_serious,,1,0.38,decline,
+(no sheet),amb1,ambitious_content,,0,0.01,keep_berries,
+(no sheet),amb1,ambitious_content,,1,0.02,keep_berries,
+(no sheet),amb2,ambitious_content,,0,0.41,no,
+(no sheet),amb2,ambitious_content,,1,0.42,no,
+(no sheet),amb3,ambitious_content,,0,0.24,nap,
+(no sheet),amb3,ambitious_content,,1,0.22,nap,
+(no sheet),kind1,kind_prickly,,0,0.6,no,
+(no sheet),kind1,kind_prickly,,1,0.6,no,
+(no sheet),kind2,kind_prickly,,0,0.32,hold_grudge,
+(no sheet),kind2,kind_prickly,,1,0.36,hold_grudge,
+(no sheet),kind3,kind_prickly,,0,0.56,laugh_along,
+(no sheet),kind3,kind_prickly,,1,0.54,laugh_along,

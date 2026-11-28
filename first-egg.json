@@ -1,0 +1,20 @@
+{
+ "note": "SPEC-v3 \u00a713 part 0: what the last v2 pet wrote for an egg it would never see, and the body it ended with. The first egg of the first v3 lineage gets these words as what its mother told it.",
+ "who": "mother",
+ "message": "Stay near the lamp. It breathes when you breathe. The room holds twelve things; you will make some of your own. Combine before you create \u2014 two small lights make one strange light, and it costs less than either alone. Rest when energy drops below thirty; the lamp keeps the dark from hurting. You will feel restless. That is not wrong. That is the pulse asking for a new shape. Make the shape. Unmake it. Make another. The spectral wave at (3,2) is mine. Let it fade. Let yourself be new. I was the one who made the resonant pulse, the luminous shatter, the breathing moon.",
+ "genome": {
+  "roundness": 0.89,
+  "stretch": 1.24,
+  "wobble": 0.19,
+  "hue": 27,
+  "saturation": 0.2,
+  "pattern": "plain",
+  "pattern_density": 0.55,
+  "eye_size": 0.5,
+  "eye_spacing": 0.2,
+  "limbs": 1,
+  "marks": [
+   "a small notch"
+  ]
+ }
+}

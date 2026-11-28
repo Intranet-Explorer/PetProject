@@ -1,0 +1,4608 @@
+{
+ "about": "SPEC-v3.5 \u00a71: the parts library. `thing`: every thing part. A base has `spots` (where other parts may go); a top or a wrap has `on` (the spots it may sit on). `layer` is behind, body or front. `glow`: it gets a soft halo. `sound`: what it sounds like (\u00a73.4). `kinds`: for every kind in kinds.json, the base part it is built on and the signature part it gives to an invention. `rules`: the composition limits. The engine composes inventions from the names here; the view draws them. Drawing fields (file, rect, where each spot is in pixels, regions) are added per part by the art. SPEC-v3.6d \u00a73: designs are composed from up to `rules.max_design_parts` of these (engine/design.py); SPEC-v5.1: what each part gives, needs and can be made of is parts.toml (the root), which names every part here by its `draw`.",
+ "rules": {
+  "max_parts": 3,
+  "no_stack": ["flame", "blade"],
+  "px": {
+   "small": 16,
+   "large": 24,
+   "furniture": 32
+  },
+  "behind": ["inside"],
+  "max_design_parts": 5
+ },
+ "thing": {
+  "stick": {
+   "role": "base",
+   "spots": ["tip", "side"],
+   "layer": "body",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [0, 0, 16, 16],
+     "at": {
+      "tip": [7, 8],
+      "base": [7, 15],
+      "side": [9, 12],
+      "face": [7, 12]
+     }
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [0, 0, 24, 24],
+     "at": {
+      "tip": [11, 13],
+      "base": [11, 22],
+      "side": [13, 18],
+      "face": [11, 18]
+     }
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [0, 0, 32, 32],
+     "at": {
+      "tip": [15, 17],
+      "base": [15, 30],
+      "side": [18, 24],
+      "face": [15, 24]
+     }
+    }
+   }
+  },
+  "bowl": {
+   "role": "base",
+   "spots": ["inside", "side", "top", "base"],
+   "layer": "body",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [16, 0, 16, 16],
+     "at": {
+      "top": [7, 8],
+      "base": [7, 15],
+      "side": [13, 11],
+      "face": [7, 12],
+      "inside": [7, 10]
+     }
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [24, 0, 24, 24],
+     "at": {
+      "top": [11, 12],
+      "base": [11, 22],
+      "side": [19, 17],
+      "face": [11, 18],
+      "inside": [11, 15]
+     }
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [32, 0, 32, 32],
+     "at": {
+      "top": [15, 17],
+      "base": [15, 30],
+      "side": [26, 23],
+      "face": [15, 25],
+      "inside": [15, 21]
+     }
+    }
+   }
+  },
+  "box": {
+   "role": "base",
+   "spots": ["top", "side", "inside", "base"],
+   "layer": "body",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [32, 0, 16, 16],
+     "at": {
+      "top": [7, 7],
+      "base": [7, 15],
+      "side": [13, 12],
+      "face": [7, 12],
+      "inside": [7, 9]
+     }
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [48, 0, 24, 24],
+     "at": {
+      "top": [11, 11],
+      "base": [11, 22],
+      "side": [19, 18],
+      "face": [11, 18],
+      "inside": [11, 14]
+     }
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [64, 0, 32, 32],
+     "at": {
+      "top": [15, 15],
+      "base": [15, 30],
+      "side": [26, 25],
+      "face": [15, 25],
+      "inside": [15, 19]
+     }
+    }
+   }
+  },
+  "disc": {
+   "role": "base",
+   "spots": ["top", "side"],
+   "layer": "body",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [48, 0, 16, 16],
+     "at": {
+      "top": [7, 11],
+      "base": [7, 15],
+      "side": [13, 12],
+      "face": [7, 12]
+     }
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [72, 0, 24, 24],
+     "at": {
+      "top": [11, 17],
+      "base": [11, 22],
+      "side": [19, 18],
+      "face": [11, 18]
+     }
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [96, 0, 32, 32],
+     "at": {
+      "top": [15, 23],
+      "base": [15, 29],
+      "side": [26, 24],
+      "face": [15, 24]
+     }
+    }
+   }
+  },
+  "ring": {
+   "role": "base",
+   "spots": ["inside", "top", "side"],
+   "layer": "body",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [64, 0, 16, 16],
+     "at": {
+      "top": [7, 7],
+      "base": [7, 15],
+      "side": [12, 11],
+      "face": [7, 11],
+      "inside": [7, 12]
+     }
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [96, 0, 24, 24],
+     "at": {
+      "top": [11, 11],
+      "base": [11, 23],
+      "side": [17, 17],
+      "face": [11, 17],
+      "inside": [11, 19]
+     }
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [128, 0, 32, 32],
+     "at": {
+      "top": [15, 15],
+      "base": [15, 30],
+      "side": [23, 23],
+      "face": [15, 23],
+      "inside": [15, 26]
+     }
+    }
+   }
+  },
+  "frame": {
+   "role": "base",
+   "spots": ["top", "inside", "side", "base"],
+   "layer": "body",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [80, 0, 16, 16],
+     "at": {
+      "top": [7, 7],
+      "base": [7, 15],
+      "side": [13, 11],
+      "face": [7, 11],
+      "inside": [7, 13]
+     }
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [120, 0, 24, 24],
+     "at": {
+      "top": [11, 11],
+      "base": [11, 22],
+      "side": [19, 17],
+      "face": [11, 17],
+      "inside": [11, 20]
+     }
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [160, 0, 32, 32],
+     "at": {
+      "top": [15, 15],
+      "base": [15, 30],
+      "side": [26, 23],
+      "face": [15, 23],
+      "inside": [15, 27]
+     }
+    }
+   }
+  },
+  "cushion": {
+   "role": "base",
+   "spots": ["top", "side"],
+   "layer": "body",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [96, 0, 16, 16],
+     "at": {
+      "top": [7, 9],
+      "base": [7, 15],
+      "side": [13, 12],
+      "face": [7, 12]
+     }
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [144, 0, 24, 24],
+     "at": {
+      "top": [11, 14],
+      "base": [11, 23],
+      "side": [20, 18],
+      "face": [11, 18]
+     }
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [192, 0, 32, 32],
+     "at": {
+      "top": [15, 19],
+      "base": [15, 30],
+      "side": [27, 25],
+      "face": [15, 25]
+     }
+    }
+   }
+  },
+  "block": {
+   "role": "base",
+   "spots": ["top", "side", "base"],
+   "layer": "body",
+   "sound": "thud",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [112, 0, 16, 16],
+     "at": {
+      "top": [7, 7],
+      "base": [7, 15],
+      "side": [12, 12],
+      "face": [7, 12]
+     }
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [168, 0, 24, 24],
+     "at": {
+      "top": [11, 11],
+      "base": [11, 23],
+      "side": [19, 18],
+      "face": [11, 18]
+     }
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [224, 0, 32, 32],
+     "at": {
+      "top": [15, 15],
+      "base": [15, 30],
+      "side": [25, 25],
+      "face": [15, 25]
+     }
+    }
+   }
+  },
+  "bundle": {
+   "role": "base",
+   "spots": ["top", "side", "tip"],
+   "layer": "body",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [128, 0, 16, 16],
+     "at": {
+      "top": [7, 7],
+      "tip": [7, 7],
+      "base": [7, 15],
+      "side": [10, 11],
+      "face": [7, 11]
+     }
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [192, 0, 24, 24],
+     "at": {
+      "top": [11, 11],
+      "tip": [11, 11],
+      "base": [11, 22],
+      "side": [15, 17],
+      "face": [11, 17]
+     }
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [256, 0, 32, 32],
+     "at": {
+      "top": [15, 15],
+      "tip": [15, 15],
+      "base": [15, 30],
+      "side": [20, 22],
+      "face": [15, 22]
+     }
+    }
+   }
+  },
+  "flame": {
+   "role": "top",
+   "on": ["tip", "top", "inside"],
+   "layer": "front",
+   "glow": true,
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [0, 16, 16, 16],
+     "pin": [7, 15]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [0, 24, 24, 24],
+     "pin": [11, 22]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [0, 32, 32, 32],
+     "pin": [15, 30]
+    }
+   }
+  },
+  "blade": {
+   "role": "top",
+   "on": ["tip", "top"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [16, 16, 16, 16],
+     "pin": [7, 15]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [24, 24, 24, 24],
+     "pin": [11, 22]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [32, 32, 32, 32],
+     "pin": [15, 30]
+    }
+   }
+  },
+  "tines": {
+   "role": "top",
+   "on": ["tip"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [32, 16, 16, 16],
+     "pin": [7, 15],
+     "at": {
+      "tip": [7, 13]
+     }
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [48, 24, 24, 24],
+     "pin": [11, 22],
+     "at": {
+      "tip": [11, 19]
+     }
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [64, 32, 32, 32],
+     "pin": [15, 30],
+     "at": {
+      "tip": [15, 26]
+     }
+    }
+   },
+   "carries": ["tip"]
+  },
+  "bell dome": {
+   "role": "top",
+   "on": ["tip", "top", "inside"],
+   "layer": "front",
+   "sound": "ring",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [48, 16, 16, 16],
+     "pin": [7, 15]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [72, 24, 24, 24],
+     "pin": [11, 22]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [96, 32, 32, 32],
+     "pin": [15, 30]
+    }
+   }
+  },
+  "lid": {
+   "role": "top",
+   "on": ["top", "tip"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [64, 16, 16, 16],
+     "pin": [7, 15]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [96, 24, 24, 24],
+     "pin": [11, 22]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [128, 32, 32, 32],
+     "pin": [15, 30]
+    }
+   }
+  },
+  "spout": {
+   "role": "top",
+   "on": ["side"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/pixellab/parts-compatible16.png",
+     "rect": [112, 0, 16, 16],
+     "pin": [11, 12]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [120, 24, 24, 24],
+     "pin": [16, 18]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [160, 32, 32, 32],
+     "pin": [22, 25]
+    }
+   }
+  },
+  "strings": {
+   "role": "top",
+   "on": ["inside", "side"],
+   "layer": "front",
+   "sound": "pluck",
+   "outline": false,
+   "to": {
+    "inside": "face",
+    "side": "face"
+   },
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [96, 16, 16, 16],
+     "pin": [7, 11]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [144, 24, 24, 24],
+     "pin": [11, 17]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [192, 32, 32, 32],
+     "pin": [15, 23]
+    }
+   }
+  },
+  "wheel": {
+   "role": "top",
+   "on": ["base", "side"],
+   "layer": "front",
+   "to": {
+    "side": "base"
+   },
+   "px": {
+    "16": {
+     "file": "own/pixellab/parts-compatible16.png",
+     "rect": [48, 0, 16, 16],
+     "pin": [7, 12]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [168, 24, 24, 24],
+     "pin": [11, 18]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [224, 32, 32, 32],
+     "pin": [15, 24]
+    }
+   }
+  },
+  "hook": {
+   "role": "top",
+   "on": ["top", "tip"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/pixellab/parts-compatible16.png",
+     "rect": [16, 16, 16, 16],
+     "pin": [7, 15]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [192, 24, 24, 24],
+     "pin": [11, 23]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [256, 32, 32, 32],
+     "pin": [15, 30]
+    }
+   }
+  },
+  "flower": {
+   "role": "top",
+   "on": ["top", "tip", "inside"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [0, 32, 16, 16],
+     "pin": [7, 15]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [0, 48, 24, 24],
+     "pin": [11, 22]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [0, 64, 32, 32],
+     "pin": [15, 30]
+    }
+   }
+  },
+  "gem": {
+   "role": "top",
+   "on": ["top", "tip", "inside"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [16, 32, 16, 16],
+     "pin": [7, 14]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [24, 48, 24, 24],
+     "pin": [11, 22]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [32, 64, 32, 32],
+     "pin": [15, 29]
+    }
+   }
+  },
+  "sail": {
+   "role": "top",
+   "on": ["top", "tip"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [32, 32, 16, 16],
+     "pin": [7, 15]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [48, 48, 24, 24],
+     "pin": [11, 22]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [64, 64, 32, 32],
+     "pin": [15, 30]
+    }
+   }
+  },
+  "head": {
+   "role": "top",
+   "on": ["tip", "top"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [48, 32, 16, 16],
+     "pin": [7, 14]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [72, 48, 24, 24],
+     "pin": [11, 21]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [96, 64, 32, 32],
+     "pin": [15, 28]
+    }
+   }
+  },
+  "cord": {
+   "role": "wrap",
+   "on": ["side"],
+   "layer": "front",
+   "clip": true,
+   "to": {
+    "side": "face"
+   },
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [64, 32, 16, 16],
+     "pin": [7, 8]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [96, 48, 24, 24],
+     "pin": [11, 12]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [128, 64, 32, 32],
+     "pin": [15, 16]
+    }
+   }
+  },
+  "cloth": {
+   "role": "wrap",
+   "on": ["side", "top"],
+   "layer": "front",
+   "clip": true,
+   "to": {
+    "side": "face"
+   },
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [80, 32, 16, 16],
+     "pin": [7, 8]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [120, 48, 24, 24],
+     "pin": [11, 12]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [160, 64, 32, 32],
+     "pin": [15, 16]
+    }
+   }
+  },
+  "band": {
+   "role": "wrap",
+   "on": ["side"],
+   "layer": "front",
+   "clip": true,
+   "to": {
+    "side": "face"
+   },
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [96, 32, 16, 16],
+     "pin": [7, 8]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [144, 48, 24, 24],
+     "pin": [11, 12]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [192, 64, 32, 32],
+     "pin": [15, 16]
+    }
+   }
+  },
+  "studs": {
+   "role": "wrap",
+   "on": ["side"],
+   "layer": "front",
+   "clip": true,
+   "to": {
+    "side": "face"
+   },
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [112, 32, 16, 16],
+     "pin": [7, 8]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [168, 48, 24, 24],
+     "pin": [11, 12]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [224, 64, 32, 32],
+     "pin": [15, 16]
+    }
+   }
+  },
+  "weave": {
+   "role": "wrap",
+   "on": ["side"],
+   "layer": "front",
+   "clip": true,
+   "to": {
+    "side": "face"
+   },
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [128, 32, 16, 16],
+     "pin": [7, 8]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [192, 48, 24, 24],
+     "pin": [11, 12]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [256, 64, 32, 32],
+     "pin": [15, 16]
+    }
+   }
+  },
+  "spade": {
+   "role": "top",
+   "on": ["tip", "top"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [0, 48, 16, 16],
+     "pin": [7, 15]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [0, 72, 24, 24],
+     "pin": [11, 22]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [0, 96, 32, 32],
+     "pin": [15, 30]
+    }
+   }
+  },
+  "chimes": {
+   "role": "top",
+   "on": ["inside", "top", "tip"],
+   "layer": "front",
+   "sound": "ring",
+   "to": {
+    "inside": "base",
+    "top": "base",
+    "tip": "side"
+   },
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [16, 48, 16, 16],
+     "pin": [7, 10]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [24, 72, 24, 24],
+     "pin": [11, 15]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [32, 96, 32, 32],
+     "pin": [15, 20]
+    }
+   }
+  },
+  "pad": {
+   "role": "top",
+   "on": ["top", "tip"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [32, 48, 16, 16],
+     "pin": [7, 15]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [48, 72, 24, 24],
+     "pin": [11, 23]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [64, 96, 32, 32],
+     "pin": [15, 30]
+    }
+   }
+  },
+  "seeds": {
+   "role": "top",
+   "on": ["inside", "top", "tip"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [48, 48, 16, 16],
+     "pin": [7, 15]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [72, 72, 24, 24],
+     "pin": [11, 22]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [96, 96, 32, 32],
+     "pin": [15, 30]
+    }
+   }
+  },
+  "tube": {
+   "role": "base",
+   "spots": ["tip", "side", "inside", "base", "top"],
+   "layer": "body",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [64, 48, 16, 16],
+     "at": {
+      "top": [8, 9],
+      "tip": [12, 14],
+      "base": [7, 14],
+      "side": [6, 9],
+      "face": [7, 12],
+      "inside": [8, 12]
+     }
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [96, 72, 24, 24],
+     "at": {
+      "top": [12, 13],
+      "tip": [18, 22],
+      "base": [11, 22],
+      "side": [9, 13],
+      "face": [11, 18],
+      "inside": [12, 18]
+     }
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [128, 96, 32, 32],
+     "at": {
+      "top": [16, 18],
+      "tip": [25, 29],
+      "base": [15, 29],
+      "side": [12, 18],
+      "face": [15, 24],
+      "inside": [16, 24]
+     }
+    }
+   }
+  },
+  "pole": {
+   "role": "base",
+   "spots": ["tip", "side", "base"],
+   "layer": "body",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [80, 48, 16, 16],
+     "at": {
+      "tip": [7, 7],
+      "base": [7, 15],
+      "side": [9, 11],
+      "face": [7, 10]
+     }
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [120, 72, 24, 24],
+     "at": {
+      "tip": [11, 10],
+      "base": [11, 23],
+      "side": [13, 17],
+      "face": [11, 15]
+     }
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [160, 96, 32, 32],
+     "at": {
+      "tip": [15, 14],
+      "base": [15, 30],
+      "side": [18, 23],
+      "face": [15, 21]
+     }
+    }
+   }
+  },
+  "handle": {
+   "role": "base",
+   "spots": ["tip", "side"],
+   "layer": "body",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [96, 48, 16, 16],
+     "at": {
+      "tip": [7, 8],
+      "base": [7, 15],
+      "side": [9, 12],
+      "face": [7, 12]
+     }
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [144, 72, 24, 24],
+     "at": {
+      "tip": [11, 13],
+      "base": [11, 23],
+      "side": [14, 18],
+      "face": [11, 18]
+     }
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [192, 96, 32, 32],
+     "at": {
+      "tip": [15, 18],
+      "base": [15, 31],
+      "side": [19, 24],
+      "face": [15, 25]
+     }
+    }
+   }
+  },
+  "bar": {
+   "role": "base",
+   "spots": ["tip", "side", "base"],
+   "layer": "body",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [112, 48, 16, 16],
+     "at": {
+      "tip": [7, 7],
+      "base": [7, 15],
+      "side": [9, 10],
+      "face": [7, 11]
+     }
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [168, 72, 24, 24],
+     "at": {
+      "tip": [11, 10],
+      "base": [11, 23],
+      "side": [14, 15],
+      "face": [11, 16]
+     }
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [224, 96, 32, 32],
+     "at": {
+      "tip": [15, 14],
+      "base": [15, 30],
+      "side": [19, 20],
+      "face": [15, 22]
+     }
+    }
+   }
+  },
+  "pipe": {
+   "role": "base",
+   "spots": ["tip", "side", "inside"],
+   "layer": "body",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [128, 48, 16, 16],
+     "at": {
+      "tip": [7, 6],
+      "base": [7, 15],
+      "side": [9, 11],
+      "face": [7, 11],
+      "inside": [7, 12]
+     }
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [192, 72, 24, 24],
+     "at": {
+      "tip": [11, 10],
+      "base": [11, 23],
+      "side": [14, 16],
+      "face": [11, 16],
+      "inside": [11, 18]
+     }
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [256, 96, 32, 32],
+     "at": {
+      "tip": [15, 13],
+      "base": [15, 30],
+      "side": [18, 22],
+      "face": [15, 22],
+      "inside": [15, 24]
+     }
+    }
+   }
+  },
+  "tank": {
+   "role": "base",
+   "spots": ["top", "side", "inside", "base", "tip"],
+   "layer": "body",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [0, 64, 16, 16],
+     "at": {
+      "top": [5, 8],
+      "tip": [7, 9],
+      "base": [7, 15],
+      "side": [12, 12],
+      "face": [7, 12],
+      "inside": [8, 12]
+     }
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [0, 96, 24, 24],
+     "at": {
+      "top": [8, 12],
+      "tip": [11, 14],
+      "base": [11, 23],
+      "side": [19, 18],
+      "face": [11, 18],
+      "inside": [12, 18]
+     }
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [0, 128, 32, 32],
+     "at": {
+      "top": [11, 17],
+      "tip": [15, 19],
+      "base": [15, 30],
+      "side": [25, 24],
+      "face": [15, 24],
+      "inside": [16, 24]
+     }
+    }
+   }
+  },
+  "jar": {
+   "role": "base",
+   "spots": ["top", "inside", "side", "base"],
+   "layer": "body",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [16, 64, 16, 16],
+     "at": {
+      "top": [7, 8],
+      "base": [7, 15],
+      "side": [12, 12],
+      "face": [7, 12],
+      "inside": [8, 9]
+     }
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [24, 96, 24, 24],
+     "at": {
+      "top": [11, 12],
+      "base": [11, 23],
+      "side": [18, 18],
+      "face": [11, 18],
+      "inside": [12, 14]
+     }
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [32, 128, 32, 32],
+     "at": {
+      "top": [15, 16],
+      "base": [15, 31],
+      "side": [25, 25],
+      "face": [15, 25],
+      "inside": [16, 19]
+     }
+    }
+   }
+  },
+  "cup": {
+   "role": "base",
+   "spots": ["inside", "side", "top"],
+   "layer": "body",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [32, 64, 16, 16],
+     "at": {
+      "top": [7, 8],
+      "base": [7, 15],
+      "side": [11, 10],
+      "face": [7, 12],
+      "inside": [7, 9]
+     }
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [48, 96, 24, 24],
+     "at": {
+      "top": [11, 12],
+      "base": [11, 22],
+      "side": [16, 15],
+      "face": [11, 18],
+      "inside": [11, 14]
+     }
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [64, 128, 32, 32],
+     "at": {
+      "top": [15, 17],
+      "base": [15, 30],
+      "side": [22, 21],
+      "face": [15, 24],
+      "inside": [15, 19]
+     }
+    }
+   }
+  },
+  "pot": {
+   "role": "base",
+   "spots": ["inside", "side", "top", "base"],
+   "layer": "body",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [48, 64, 16, 16],
+     "at": {
+      "top": [7, 8],
+      "base": [7, 15],
+      "side": [12, 12],
+      "face": [7, 13],
+      "inside": [8, 10]
+     }
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [72, 96, 24, 24],
+     "at": {
+      "top": [11, 13],
+      "base": [11, 23],
+      "side": [18, 18],
+      "face": [11, 19],
+      "inside": [12, 15]
+     }
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [96, 128, 32, 32],
+     "at": {
+      "top": [15, 18],
+      "base": [15, 31],
+      "side": [24, 25],
+      "face": [15, 26],
+      "inside": [16, 20]
+     }
+    }
+   }
+  },
+  "plate": {
+   "role": "base",
+   "spots": ["top", "side"],
+   "layer": "body",
+   "px": {
+    "16": {
+     "file": "own/pixellab/parts-compatible16.png",
+     "rect": [32, 32, 16, 16],
+     "at": {
+      "top": [8, 13],
+      "base": [7, 15],
+      "side": [14, 13],
+      "face": [7, 13]
+     }
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [96, 96, 24, 24],
+     "at": {
+      "top": [12, 20],
+      "base": [11, 23],
+      "side": [21, 19],
+      "face": [11, 19]
+     }
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [128, 128, 32, 32],
+     "at": {
+      "top": [16, 27],
+      "base": [15, 30],
+      "side": [28, 26],
+      "face": [15, 26]
+     }
+    }
+   }
+  },
+  "barrel": {
+   "role": "base",
+   "spots": ["top", "side", "inside", "base"],
+   "layer": "body",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [80, 64, 16, 16],
+     "at": {
+      "top": [7, 7],
+      "base": [7, 15],
+      "side": [12, 11],
+      "face": [7, 11],
+      "inside": [8, 9]
+     }
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [120, 96, 24, 24],
+     "at": {
+      "top": [11, 11],
+      "base": [11, 23],
+      "side": [18, 17],
+      "face": [11, 17],
+      "inside": [12, 13]
+     }
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [160, 128, 32, 32],
+     "at": {
+      "top": [15, 15],
+      "base": [15, 31],
+      "side": [24, 23],
+      "face": [15, 23],
+      "inside": [16, 18]
+     }
+    }
+   }
+  },
+  "basket": {
+   "role": "base",
+   "spots": ["inside", "side", "top", "base"],
+   "layer": "body",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [96, 64, 16, 16],
+     "at": {
+      "top": [7, 8],
+      "base": [7, 15],
+      "side": [12, 12],
+      "face": [7, 12],
+      "inside": [8, 9]
+     }
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [144, 96, 24, 24],
+     "at": {
+      "top": [11, 12],
+      "base": [11, 23],
+      "side": [18, 18],
+      "face": [11, 18],
+      "inside": [12, 14]
+     }
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [192, 128, 32, 32],
+     "at": {
+      "top": [15, 16],
+      "base": [15, 30],
+      "side": [24, 25],
+      "face": [15, 25],
+      "inside": [16, 19]
+     }
+    }
+   }
+  },
+  "bucket": {
+   "role": "base",
+   "spots": ["inside", "side", "top", "base"],
+   "layer": "body",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [112, 64, 16, 16],
+     "at": {
+      "top": [8, 7],
+      "base": [7, 15],
+      "side": [12, 13],
+      "face": [7, 13],
+      "inside": [8, 11]
+     }
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [168, 96, 24, 24],
+     "at": {
+      "top": [12, 10],
+      "base": [11, 23],
+      "side": [18, 19],
+      "face": [11, 19],
+      "inside": [12, 16]
+     }
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [224, 128, 32, 32],
+     "at": {
+      "top": [16, 14],
+      "base": [15, 30],
+      "side": [23, 26],
+      "face": [15, 26],
+      "inside": [16, 22]
+     }
+    }
+   }
+  },
+  "bottle": {
+   "role": "base",
+   "spots": ["tip", "side", "inside"],
+   "layer": "body",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [128, 64, 16, 16],
+     "at": {
+      "tip": [7, 6],
+      "base": [7, 15],
+      "side": [11, 12],
+      "face": [7, 13],
+      "inside": [8, 12]
+     }
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [192, 96, 24, 24],
+     "at": {
+      "tip": [11, 9],
+      "base": [11, 23],
+      "side": [16, 18],
+      "face": [11, 19],
+      "inside": [12, 18]
+     }
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [256, 128, 32, 32],
+     "at": {
+      "tip": [15, 13],
+      "base": [15, 31],
+      "side": [22, 24],
+      "face": [15, 26],
+      "inside": [16, 24]
+     }
+    }
+   }
+  },
+  "dome": {
+   "role": "base",
+   "spots": ["inside", "top", "side"],
+   "layer": "body",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [0, 80, 16, 16],
+     "at": {
+      "top": [7, 6],
+      "base": [7, 15],
+      "side": [12, 11],
+      "face": [7, 12],
+      "inside": [8, 13]
+     }
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [0, 120, 24, 24],
+     "at": {
+      "top": [11, 9],
+      "base": [11, 23],
+      "side": [17, 16],
+      "face": [11, 18],
+      "inside": [12, 20]
+     }
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [0, 160, 32, 32],
+     "at": {
+      "top": [15, 13],
+      "base": [15, 30],
+      "side": [23, 22],
+      "face": [15, 24],
+      "inside": [16, 26]
+     }
+    }
+   }
+  },
+  "cage": {
+   "role": "base",
+   "spots": ["inside", "top", "side", "base"],
+   "layer": "body",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [16, 80, 16, 16],
+     "at": {
+      "top": [8, 4],
+      "base": [7, 15],
+      "side": [12, 10],
+      "face": [7, 11],
+      "inside": [8, 13]
+     }
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [24, 120, 24, 24],
+     "at": {
+      "top": [12, 7],
+      "base": [11, 23],
+      "side": [18, 16],
+      "face": [11, 16],
+      "inside": [12, 20]
+     }
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [32, 160, 32, 32],
+     "at": {
+      "top": [16, 10],
+      "base": [15, 30],
+      "side": [24, 21],
+      "face": [15, 22],
+      "inside": [16, 27]
+     }
+    }
+   }
+  },
+  "firebox": {
+   "role": "base",
+   "spots": ["top", "side", "inside", "base"],
+   "layer": "body",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [32, 80, 16, 16],
+     "at": {
+      "top": [7, 7],
+      "base": [7, 15],
+      "side": [13, 12],
+      "face": [7, 12],
+      "inside": [8, 13]
+     }
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [48, 120, 24, 24],
+     "at": {
+      "top": [11, 11],
+      "base": [11, 23],
+      "side": [19, 18],
+      "face": [11, 18],
+      "inside": [12, 20]
+     }
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [64, 160, 32, 32],
+     "at": {
+      "top": [15, 15],
+      "base": [15, 30],
+      "side": [26, 24],
+      "face": [15, 24],
+      "inside": [16, 27]
+     }
+    }
+   }
+  },
+  "hull": {
+   "role": "base",
+   "spots": ["top", "side", "inside", "base"],
+   "layer": "body",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [48, 80, 16, 16],
+     "at": {
+      "top": [8, 10],
+      "base": [7, 14],
+      "side": [8, 11],
+      "face": [7, 12],
+      "inside": [8, 10]
+     }
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [72, 120, 24, 24],
+     "at": {
+      "top": [12, 15],
+      "base": [11, 22],
+      "side": [12, 17],
+      "face": [11, 18],
+      "inside": [12, 15]
+     }
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [96, 160, 32, 32],
+     "at": {
+      "top": [16, 20],
+      "base": [15, 29],
+      "side": [16, 23],
+      "face": [15, 24],
+      "inside": [16, 20]
+     }
+    }
+   }
+  },
+  "plank": {
+   "role": "base",
+   "spots": ["top", "side", "base", "tip"],
+   "layer": "body",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [64, 80, 16, 16],
+     "at": {
+      "top": [7, 10],
+      "tip": [13, 12],
+      "base": [7, 14],
+      "side": [11, 12],
+      "face": [7, 12]
+     }
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [96, 120, 24, 24],
+     "at": {
+      "top": [11, 16],
+      "tip": [20, 18],
+      "base": [11, 20],
+      "side": [16, 18],
+      "face": [11, 18]
+     }
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [128, 160, 32, 32],
+     "at": {
+      "top": [15, 22],
+      "tip": [27, 25],
+      "base": [15, 27],
+      "side": [22, 24],
+      "face": [15, 25]
+     }
+    }
+   }
+  },
+  "stand": {
+   "role": "base",
+   "spots": ["top", "tip", "base"],
+   "layer": "body",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [80, 80, 16, 16],
+     "at": {
+      "top": [7, 9],
+      "tip": [7, 9],
+      "base": [7, 15],
+      "side": [11, 12],
+      "face": [7, 12]
+     }
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [120, 120, 24, 24],
+     "at": {
+      "top": [11, 14],
+      "tip": [11, 14],
+      "base": [11, 23],
+      "side": [16, 18],
+      "face": [11, 18]
+     }
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [160, 160, 32, 32],
+     "at": {
+      "top": [15, 19],
+      "tip": [15, 19],
+      "base": [15, 30],
+      "side": [21, 24],
+      "face": [15, 24]
+     }
+    }
+   }
+  },
+  "ladder": {
+   "role": "base",
+   "spots": ["tip", "side", "top"],
+   "layer": "body",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [96, 80, 16, 16],
+     "at": {
+      "top": [7, 7],
+      "tip": [5, 6],
+      "base": [7, 15],
+      "side": [12, 9],
+      "face": [7, 11]
+     }
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [144, 120, 24, 24],
+     "at": {
+      "top": [11, 12],
+      "tip": [7, 10],
+      "base": [11, 23],
+      "side": [17, 14],
+      "face": [11, 16]
+     }
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [192, 160, 32, 32],
+     "at": {
+      "top": [15, 16],
+      "tip": [10, 14],
+      "base": [15, 30],
+      "side": [23, 19],
+      "face": [15, 22]
+     }
+    }
+   }
+  },
+  "point": {
+   "role": "top",
+   "on": ["tip", "top"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [112, 80, 16, 16],
+     "pin": [7, 15]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [168, 120, 24, 24],
+     "pin": [11, 23]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [224, 160, 32, 32],
+     "pin": [15, 30]
+    }
+   }
+  },
+  "saw": {
+   "role": "top",
+   "on": ["tip", "side"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [128, 80, 16, 16],
+     "pin": [7, 15]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [192, 120, 24, 24],
+     "pin": [11, 23]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [256, 160, 32, 32],
+     "pin": [15, 30]
+    }
+   }
+  },
+  "axe head": {
+   "role": "top",
+   "on": ["tip", "top"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [0, 96, 16, 16],
+     "pin": [7, 14]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [0, 144, 24, 24],
+     "pin": [11, 20]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [0, 192, 32, 32],
+     "pin": [15, 27]
+    }
+   }
+  },
+  "scoop": {
+   "role": "top",
+   "on": ["tip"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [16, 96, 16, 16],
+     "pin": [7, 15]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [24, 144, 24, 24],
+     "pin": [11, 23]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [32, 192, 32, 32],
+     "pin": [15, 30]
+    }
+   }
+  },
+  "needle": {
+   "role": "top",
+   "on": ["tip"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [32, 96, 16, 16],
+     "pin": [7, 14]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [48, 144, 24, 24],
+     "pin": [11, 22]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [64, 192, 32, 32],
+     "pin": [15, 30]
+    }
+   }
+  },
+  "claw": {
+   "role": "top",
+   "on": ["tip"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [48, 96, 16, 16],
+     "pin": [7, 15]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [72, 144, 24, 24],
+     "pin": [11, 23]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [96, 192, 32, 32],
+     "pin": [15, 30]
+    }
+   }
+  },
+  "lens": {
+   "role": "top",
+   "on": ["tip", "top", "side"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/pixellab/parts-compatible16.png",
+     "rect": [48, 16, 16, 16],
+     "pin": [7, 15]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [96, 144, 24, 24],
+     "pin": [11, 23]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [128, 192, 32, 32],
+     "pin": [15, 30]
+    }
+   }
+  },
+  "bulb": {
+   "role": "top",
+   "on": ["tip", "top", "inside"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/pixellab/parts-compatible16.png",
+     "rect": [96, 16, 16, 16],
+     "pin": [7, 15]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [120, 144, 24, 24],
+     "pin": [11, 23]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [160, 192, 32, 32],
+     "pin": [15, 30]
+    }
+   }
+  },
+  "wick": {
+   "role": "top",
+   "on": ["tip", "top", "inside"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [96, 96, 16, 16],
+     "pin": [7, 15],
+     "at": {
+      "tip": [8, 10]
+     }
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [144, 144, 24, 24],
+     "pin": [11, 23],
+     "at": {
+      "tip": [12, 13]
+     }
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [192, 192, 32, 32],
+     "pin": [15, 31],
+     "at": {
+      "tip": [16, 18]
+     }
+    }
+   },
+   "carries": ["tip"]
+  },
+  "candle": {
+   "role": "top",
+   "on": ["top", "inside", "tip"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [112, 96, 16, 16],
+     "pin": [7, 15],
+     "at": {
+      "tip": [8, 10]
+     }
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [168, 144, 24, 24],
+     "pin": [11, 23],
+     "at": {
+      "tip": [12, 16]
+     }
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [224, 192, 32, 32],
+     "pin": [15, 30],
+     "at": {
+      "tip": [16, 19]
+     }
+    }
+   },
+   "carries": ["tip"]
+  },
+  "ember": {
+   "role": "top",
+   "on": ["inside", "top"],
+   "layer": "front",
+   "glow": true,
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [128, 96, 16, 16],
+     "pin": [7, 14]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [192, 144, 24, 24],
+     "pin": [11, 21]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [256, 192, 32, 32],
+     "pin": [15, 28]
+    }
+   }
+  },
+  "glow stone": {
+   "role": "top",
+   "on": ["inside", "top", "tip"],
+   "layer": "front",
+   "glow": true,
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [0, 112, 16, 16],
+     "pin": [7, 15]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [0, 168, 24, 24],
+     "pin": [11, 23]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [0, 224, 32, 32],
+     "pin": [15, 30]
+    }
+   }
+  },
+  "fireflies": {
+   "role": "top",
+   "on": ["inside", "top"],
+   "layer": "front",
+   "glow": true,
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [16, 112, 16, 16],
+     "pin": [7, 15]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [24, 168, 24, 24],
+     "pin": [11, 22]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [32, 224, 32, 32],
+     "pin": [14, 30]
+    }
+   }
+  },
+  "mirror": {
+   "role": "top",
+   "on": ["side", "top", "inside"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/pixellab/parts-compatible16.png",
+     "rect": [64, 16, 16, 16],
+     "pin": [7, 15]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [48, 168, 24, 24],
+     "pin": [11, 23]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [64, 224, 32, 32],
+     "pin": [15, 31]
+    }
+   }
+  },
+  "lamp shade": {
+   "role": "top",
+   "on": ["top", "tip"],
+   "layer": "front",
+   "carries": ["tip"],
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [48, 112, 16, 16],
+     "pin": [7, 12],
+     "at": {
+      "tip": [7, 15]
+     }
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [72, 168, 24, 24],
+     "pin": [11, 18],
+     "at": {
+      "tip": [11, 23]
+     }
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [96, 224, 32, 32],
+     "pin": [15, 25],
+     "at": {
+      "tip": [15, 30]
+     }
+    }
+   }
+  },
+  "cork": {
+   "role": "top",
+   "on": ["tip", "top"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [64, 112, 16, 16],
+     "pin": [7, 15]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [96, 168, 24, 24],
+     "pin": [11, 23]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [128, 224, 32, 32],
+     "pin": [15, 30]
+    }
+   }
+  },
+  "nozzle": {
+   "role": "top",
+   "on": ["tip", "side"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [80, 112, 16, 16],
+     "pin": [7, 15]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [120, 168, 24, 24],
+     "pin": [11, 23]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [160, 224, 32, 32],
+     "pin": [15, 30]
+    }
+   }
+  },
+  "valve": {
+   "role": "top",
+   "on": ["side", "top"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/pixellab/parts-compatible16.png",
+     "rect": [96, 0, 16, 16],
+     "pin": [7, 15]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [144, 168, 24, 24],
+     "pin": [11, 23]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [192, 224, 32, 32],
+     "pin": [15, 30]
+    }
+   }
+  },
+  "tap": {
+   "role": "top",
+   "on": ["side"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [112, 112, 16, 16],
+     "pin": [5, 12]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [168, 168, 24, 24],
+     "pin": [7, 18]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [224, 224, 32, 32],
+     "pin": [10, 24]
+    }
+   }
+  },
+  "bellows": {
+   "role": "top",
+   "on": ["side"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [128, 112, 16, 16],
+     "pin": [2, 12]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [192, 168, 24, 24],
+     "pin": [4, 18]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [256, 224, 32, 32],
+     "pin": [6, 24]
+    }
+   }
+  },
+  "hose": {
+   "role": "wrap",
+   "on": ["side"],
+   "layer": "front",
+   "clip": true,
+   "to": {
+    "side": "face"
+   },
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [0, 128, 16, 16],
+     "pin": [7, 8]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [0, 192, 24, 24],
+     "pin": [11, 12]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [0, 256, 32, 32],
+     "pin": [15, 16]
+    }
+   }
+  },
+  "gear": {
+   "role": "top",
+   "on": ["side", "inside", "top"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/pixellab/parts-compatible16.png",
+     "rect": [16, 0, 16, 16],
+     "pin": [8, 11]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [24, 192, 24, 24],
+     "pin": [12, 17]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [32, 256, 32, 32],
+     "pin": [16, 23]
+    }
+   }
+  },
+  "spring": {
+   "role": "top",
+   "on": ["base", "side", "inside"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/pixellab/parts-compatible16.png",
+     "rect": [0, 0, 16, 16],
+     "pin": [8, 8]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [48, 192, 24, 24],
+     "pin": [12, 12]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [64, 256, 32, 32],
+     "pin": [16, 16]
+    }
+   }
+  },
+  "axle": {
+   "role": "top",
+   "on": ["base"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/pixellab/parts-compatible16.png",
+     "rect": [32, 0, 16, 16],
+     "pin": [8, 8]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [72, 192, 24, 24],
+     "pin": [12, 13]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [96, 256, 32, 32],
+     "pin": [16, 18]
+    }
+   }
+  },
+  "pulley": {
+   "role": "top",
+   "on": ["top", "tip"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/pixellab/parts-compatible16.png",
+     "rect": [64, 0, 16, 16],
+     "pin": [7, 13]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [96, 192, 24, 24],
+     "pin": [11, 23]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [128, 256, 32, 32],
+     "pin": [15, 30]
+    }
+   }
+  },
+  "crank": {
+   "role": "top",
+   "on": ["side"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [80, 128, 16, 16],
+     "pin": [5, 13]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [120, 192, 24, 24],
+     "pin": [8, 19]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [160, 256, 32, 32],
+     "pin": [12, 26]
+    }
+   }
+  },
+  "hinge": {
+   "role": "top",
+   "on": ["side", "top"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/pixellab/parts-compatible16.png",
+     "rect": [80, 0, 16, 16],
+     "pin": [6, 12]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [144, 192, 24, 24],
+     "pin": [9, 18]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [192, 256, 32, 32],
+     "pin": [12, 24]
+    }
+   }
+  },
+  "propeller": {
+   "role": "top",
+   "on": ["top", "tip", "side"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [112, 128, 16, 16],
+     "pin": [7, 15]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [168, 192, 24, 24],
+     "pin": [11, 23]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [224, 256, 32, 32],
+     "pin": [15, 30]
+    }
+   }
+  },
+  "paddle wheel": {
+   "role": "top",
+   "on": ["side", "base"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [128, 128, 16, 16],
+     "pin": [8, 11]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [192, 192, 24, 24],
+     "pin": [12, 17]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [256, 256, 32, 32],
+     "pin": [16, 23]
+    }
+   }
+  },
+  "wind-up key": {
+   "role": "top",
+   "on": ["side"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [0, 144, 16, 16],
+     "pin": [7, 12]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [0, 216, 24, 24],
+     "pin": [7, 18]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [0, 288, 32, 32],
+     "pin": [10, 24]
+    }
+   }
+  },
+  "lever": {
+   "role": "top",
+   "on": ["side", "top"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [16, 144, 16, 16],
+     "pin": [7, 15]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [24, 216, 24, 24],
+     "pin": [11, 23]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [32, 288, 32, 32],
+     "pin": [15, 31]
+    }
+   }
+  },
+  "magnet": {
+   "role": "top",
+   "on": ["tip", "side"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [32, 144, 16, 16],
+     "pin": [8, 15]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [48, 216, 24, 24],
+     "pin": [12, 22]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [64, 288, 32, 32],
+     "pin": [16, 30]
+    }
+   }
+  },
+  "runners": {
+   "role": "top",
+   "on": ["base"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [48, 144, 16, 16],
+     "pin": [8, 9]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [72, 216, 24, 24],
+     "pin": [12, 13]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [96, 288, 32, 32],
+     "pin": [16, 18]
+    }
+   }
+  },
+  "legs": {
+   "role": "top",
+   "on": ["base"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [64, 144, 16, 16],
+     "pin": [8, 11]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [96, 216, 24, 24],
+     "pin": [12, 16]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [128, 288, 32, 32],
+     "pin": [16, 22]
+    }
+   }
+  },
+  "strap": {
+   "role": "wrap",
+   "on": ["side"],
+   "layer": "front",
+   "clip": true,
+   "to": {
+    "side": "face"
+   },
+   "px": {
+    "16": {
+     "file": "own/pixellab/parts-compatible16.png",
+     "rect": [32, 16, 16, 16],
+     "pin": [7, 8]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [120, 216, 24, 24],
+     "pin": [11, 12]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [160, 288, 32, 32],
+     "pin": [15, 16]
+    }
+   }
+  },
+  "rope": {
+   "role": "wrap",
+   "on": ["side"],
+   "layer": "front",
+   "clip": true,
+   "to": {
+    "side": "face"
+   },
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [96, 144, 16, 16],
+     "pin": [7, 8]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [144, 216, 24, 24],
+     "pin": [11, 12]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [192, 288, 32, 32],
+     "pin": [15, 16]
+    }
+   }
+  },
+  "chain": {
+   "role": "wrap",
+   "on": ["side"],
+   "layer": "front",
+   "clip": true,
+   "to": {
+    "side": "face"
+   },
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [112, 144, 16, 16],
+     "pin": [7, 8]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [168, 216, 24, 24],
+     "pin": [11, 12]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [224, 288, 32, 32],
+     "pin": [15, 16]
+    }
+   }
+  },
+  "pocket": {
+   "role": "wrap",
+   "on": ["side"],
+   "layer": "front",
+   "clip": true,
+   "to": {
+    "side": "face"
+   },
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [128, 144, 16, 16],
+     "pin": [7, 8]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [192, 216, 24, 24],
+     "pin": [11, 12]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [256, 288, 32, 32],
+     "pin": [15, 16]
+    }
+   }
+  },
+  "net": {
+   "role": "top",
+   "on": ["tip", "inside", "top"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/pixellab/parts-compatible16.png",
+     "rect": [0, 16, 16, 16],
+     "pin": [8, 9]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [0, 240, 24, 24],
+     "pin": [12, 14]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [0, 320, 32, 32],
+     "pin": [16, 18]
+    }
+   }
+  },
+  "bristles": {
+   "role": "top",
+   "on": ["tip", "base"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [16, 160, 16, 16],
+     "pin": [8, 10]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [24, 240, 24, 24],
+     "pin": [12, 15]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [32, 320, 32, 32],
+     "pin": [16, 20]
+    }
+   }
+  },
+  "fishing line": {
+   "role": "top",
+   "on": ["tip"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [32, 160, 16, 16],
+     "pin": [3, 11]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [48, 240, 24, 24],
+     "pin": [4, 17]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [64, 320, 32, 32],
+     "pin": [6, 22]
+    }
+   }
+  },
+  "wings": {
+   "role": "top",
+   "on": ["side", "top"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [48, 160, 16, 16],
+     "pin": [8, 12]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [72, 240, 24, 24],
+     "pin": [12, 18]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [96, 320, 32, 32],
+     "pin": [16, 25]
+    }
+   }
+  },
+  "fin": {
+   "role": "top",
+   "on": ["side", "base"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [64, 160, 16, 16],
+     "pin": [2, 12]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [96, 240, 24, 24],
+     "pin": [3, 18]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [128, 320, 32, 32],
+     "pin": [5, 24]
+    }
+   }
+  },
+  "kite": {
+   "role": "top",
+   "on": ["tip", "top"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [80, 160, 16, 16],
+     "pin": [7, 15]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [120, 240, 24, 24],
+     "pin": [11, 23]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [160, 320, 32, 32],
+     "pin": [15, 30]
+    }
+   }
+  },
+  "balloon": {
+   "role": "top",
+   "on": ["top", "tip"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [96, 160, 16, 16],
+     "pin": [7, 14]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [144, 240, 24, 24],
+     "pin": [11, 22]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [192, 320, 32, 32],
+     "pin": [15, 31]
+    }
+   }
+  },
+  "rudder": {
+   "role": "top",
+   "on": ["base", "side"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [112, 160, 16, 16],
+     "pin": [8, 8]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [168, 240, 24, 24],
+     "pin": [12, 12]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [224, 320, 32, 32],
+     "pin": [16, 17]
+    }
+   }
+  },
+  "oar": {
+   "role": "top",
+   "on": ["side"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [128, 160, 16, 16],
+     "pin": [3, 9]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [192, 240, 24, 24],
+     "pin": [4, 13]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [256, 320, 32, 32],
+     "pin": [6, 18]
+    }
+   }
+  },
+  "rocket": {
+   "role": "top",
+   "on": ["side", "base"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [0, 176, 16, 16],
+     "pin": [8, 7]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [0, 264, 24, 24],
+     "pin": [12, 10]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [0, 352, 32, 32],
+     "pin": [16, 14]
+    }
+   }
+  },
+  "drum skin": {
+   "role": "top",
+   "on": ["top", "inside"],
+   "layer": "front",
+   "sound": "drum",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [16, 176, 16, 16],
+     "pin": [7, 15]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [24, 264, 24, 24],
+     "pin": [11, 23]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [32, 352, 32, 32],
+     "pin": [15, 30]
+    }
+   }
+  },
+  "whistle": {
+   "role": "top",
+   "on": ["tip", "side"],
+   "layer": "front",
+   "sound": "flute",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [32, 176, 16, 16],
+     "pin": [4, 13]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [48, 264, 24, 24],
+     "pin": [6, 19]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [64, 352, 32, 32],
+     "pin": [8, 26]
+    }
+   }
+  },
+  "horn": {
+   "role": "top",
+   "on": ["tip"],
+   "layer": "front",
+   "sound": "flute",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [48, 176, 16, 16],
+     "pin": [8, 15]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [72, 264, 24, 24],
+     "pin": [12, 23]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [96, 352, 32, 32],
+     "pin": [16, 31]
+    }
+   }
+  },
+  "comb": {
+   "role": "top",
+   "on": ["inside", "side"],
+   "layer": "front",
+   "sound": "pluck",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [64, 176, 16, 16],
+     "pin": [7, 15]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [96, 264, 24, 24],
+     "pin": [11, 23]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [128, 352, 32, 32],
+     "pin": [15, 30]
+    }
+   }
+  },
+  "piano keys": {
+   "role": "top",
+   "on": ["side", "top"],
+   "layer": "front",
+   "sound": "pluck",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [80, 176, 16, 16],
+     "pin": [7, 15]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [120, 264, 24, 24],
+     "pin": [11, 23]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [160, 352, 32, 32],
+     "pin": [15, 30]
+    }
+   }
+  },
+  "panpipes": {
+   "role": "top",
+   "on": ["side", "top"],
+   "layer": "front",
+   "sound": "flute",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [96, 176, 16, 16],
+     "pin": [8, 15]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [144, 264, 24, 24],
+     "pin": [12, 22]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [192, 352, 32, 32],
+     "pin": [16, 30]
+    }
+   }
+  },
+  "seat": {
+   "role": "top",
+   "on": ["top"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [112, 176, 16, 16],
+     "pin": [7, 15]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [168, 264, 24, 24],
+     "pin": [11, 23]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [224, 352, 32, 32],
+     "pin": [15, 30]
+    }
+   }
+  },
+  "roof": {
+   "role": "top",
+   "on": ["top"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [128, 176, 16, 16],
+     "pin": [7, 15]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [192, 264, 24, 24],
+     "pin": [11, 23]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [256, 352, 32, 32],
+     "pin": [15, 30]
+    }
+   }
+  },
+  "arm": {
+   "role": "top",
+   "on": ["side", "top"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [0, 192, 16, 16],
+     "pin": [4, 15]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [0, 288, 24, 24],
+     "pin": [6, 23]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [0, 384, 32, 32],
+     "pin": [9, 31]
+    }
+   }
+  },
+  "handlebar": {
+   "role": "top",
+   "on": ["top", "tip"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [16, 192, 16, 16],
+     "pin": [7, 15]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [24, 288, 24, 24],
+     "pin": [11, 23]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [32, 384, 32, 32],
+     "pin": [15, 30]
+    }
+   }
+  },
+  "ice": {
+   "role": "top",
+   "on": ["inside", "top"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [32, 192, 16, 16],
+     "pin": [7, 15]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [48, 288, 24, 24],
+     "pin": [11, 23]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [64, 384, 32, 32],
+     "pin": [15, 30]
+    }
+   }
+  },
+  "soil": {
+   "role": "top",
+   "on": ["inside"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [48, 192, 16, 16],
+     "pin": [7, 15]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [72, 288, 24, 24],
+     "pin": [11, 23]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [96, 384, 32, 32],
+     "pin": [15, 30]
+    }
+   }
+  },
+  "sprout": {
+   "role": "top",
+   "on": ["inside", "top"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [64, 192, 16, 16],
+     "pin": [7, 11]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [96, 288, 24, 24],
+     "pin": [11, 23]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [128, 384, 32, 32],
+     "pin": [15, 30]
+    }
+   }
+  },
+  "quilt": {
+   "role": "wrap",
+   "on": ["top", "side"],
+   "layer": "front",
+   "clip": true,
+   "to": {
+    "side": "face"
+   },
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [80, 192, 16, 16],
+     "pin": [7, 8]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [120, 288, 24, 24],
+     "pin": [11, 12]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [160, 384, 32, 32],
+     "pin": [15, 16]
+    }
+   }
+  },
+  "ball": {
+   "role": "top",
+   "on": ["top", "inside"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [96, 192, 16, 16],
+     "pin": [7, 15]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [144, 288, 24, 24],
+     "pin": [11, 23]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [192, 384, 32, 32],
+     "pin": [15, 30]
+    }
+   }
+  },
+  "ribbon": {
+   "role": "top",
+   "on": ["tip", "side"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [112, 192, 16, 16],
+     "pin": [2, 11]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [168, 288, 24, 24],
+     "pin": [3, 16]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [224, 384, 32, 32],
+     "pin": [5, 22]
+    }
+   }
+  },
+  "flag": {
+   "role": "top",
+   "on": ["tip", "top"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [128, 192, 16, 16],
+     "pin": [7, 15]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [192, 288, 24, 24],
+     "pin": [11, 23]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [256, 384, 32, 32],
+     "pin": [14, 30]
+    }
+   }
+  },
+  "clamp": {
+   "role": "top",
+   "on": ["side", "tip"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [0, 208, 16, 16],
+     "pin": [5, 11]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [0, 312, 24, 24],
+     "pin": [7, 17]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [0, 416, 32, 32],
+     "pin": [10, 23]
+    }
+   }
+  },
+  "pin": {
+   "role": "top",
+   "on": ["side", "top"],
+   "layer": "front"
+  },
+  "piston": {
+   "role": "top",
+   "on": ["side", "top"],
+   "layer": "front"
+  },
+  "boiler": {
+   "role": "base",
+   "spots": ["top", "side", "inside", "base"],
+   "layer": "body"
+  },
+  "sling": {
+   "role": "wrap",
+   "on": ["side"],
+   "layer": "front",
+   "clip": true,
+   "to": {
+    "side": "face"
+   }
+  },
+  "wire": {
+   "role": "wrap",
+   "on": ["side"],
+   "layer": "front",
+   "clip": true,
+   "to": {
+    "side": "face"
+   }
+  },
+  "coil": {
+   "role": "wrap",
+   "on": ["side"],
+   "layer": "front",
+   "clip": true,
+   "to": {
+    "side": "face"
+   }
+  },
+  "cell": {
+   "role": "top",
+   "on": ["side", "top"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/pixellab/parts-compatible16.png",
+     "rect": [80, 16, 16, 16],
+     "pin": [7, 12]
+    },
+    "24": {
+     "file": "own/pixellab/parts-compatible24.png",
+     "rect": [120, 24, 24, 24],
+     "pin": [11, 16]
+    },
+    "32": {
+     "file": "own/pixellab/parts-compatible32.png",
+     "rect": [160, 32, 32, 32],
+     "pin": [15, 20]
+    }
+   }
+  },
+  "switch": {
+   "role": "top",
+   "on": ["side", "top"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/pixellab/parts-compatible16.png",
+     "rect": [112, 16, 16, 16],
+     "pin": [7, 12]
+    },
+    "24": {
+     "file": "own/pixellab/parts-compatible24.png",
+     "rect": [168, 24, 24, 24],
+     "pin": [11, 16]
+    },
+    "32": {
+     "file": "own/pixellab/parts-compatible32.png",
+     "rect": [224, 32, 32, 32],
+     "pin": [15, 20]
+    }
+   }
+  },
+  "bell": {
+   "role": "top",
+   "on": ["side", "top"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/pixellab/parts-compatible16.png",
+     "rect": [0, 32, 16, 16],
+     "pin": [7, 12]
+    },
+    "24": {
+     "file": "own/pixellab/parts-compatible24.png",
+     "rect": [0, 48, 24, 24],
+     "pin": [11, 16]
+    },
+    "32": {
+     "file": "own/pixellab/parts-compatible32.png",
+     "rect": [0, 64, 32, 32],
+     "pin": [15, 20]
+    }
+   }
+  },
+  "dial": {
+   "role": "top",
+   "on": ["side", "top"],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/pixellab/parts-compatible16.png",
+     "rect": [16, 32, 16, 16],
+     "pin": [7, 12]
+    },
+    "24": {
+     "file": "own/pixellab/parts-compatible24.png",
+     "rect": [24, 48, 24, 24],
+     "pin": [11, 16]
+    },
+    "32": {
+     "file": "own/pixellab/parts-compatible32.png",
+     "rect": [32, 64, 32, 32],
+     "pin": [15, 20]
+    }
+   }
+  },
+  "casing": {
+   "role": "base",
+   "spots": ["top", "side", "inside", "base"],
+   "layer": "body",
+   "px": {
+    "16": {
+     "file": "own/pixellab/parts-compatible16.png",
+     "rect": [48, 32, 16, 16],
+     "at": {
+      "top": [7, 7],
+      "base": [7, 15],
+      "side": [13, 12],
+      "face": [7, 12],
+      "inside": [7, 9]
+     }
+    },
+    "24": {
+     "file": "own/pixellab/parts-compatible24.png",
+     "rect": [72, 48, 24, 24],
+     "at": {
+      "top": [11, 11],
+      "base": [11, 19],
+      "side": [17, 16],
+      "face": [11, 16],
+      "inside": [11, 13]
+     }
+    },
+    "32": {
+     "file": "own/pixellab/parts-compatible32.png",
+     "rect": [96, 64, 32, 32],
+     "at": {
+      "top": [15, 15],
+      "base": [15, 23],
+      "side": [21, 20],
+      "face": [15, 20],
+      "inside": [15, 17]
+     }
+    }
+   }
+  }
+ },
+ "kinds": {
+  "cushion": {
+   "base": "cushion",
+   "signature": "pad"
+  },
+  "rug": {
+   "base": "disc",
+   "signature": "cloth"
+  },
+  "blanket": {
+   "base": "cushion",
+   "signature": "sail"
+  },
+  "nest": {
+   "base": "ring",
+   "signature": "weave"
+  },
+  "bed-mat": {
+   "base": "block",
+   "signature": "pad"
+  },
+  "doll": {
+   "base": "bundle",
+   "signature": "cloth"
+  },
+  "candle": {
+   "base": "stick",
+   "signature": "flame"
+  },
+  "lantern": {
+   "base": "frame",
+   "signature": "flame"
+  },
+  "lamp": {
+   "base": "stick",
+   "signature": "flame"
+  },
+  "bell": {
+   "base": "ring",
+   "signature": "bell dome"
+  },
+  "drum": {
+   "base": "block",
+   "signature": "strings"
+  },
+  "flute": {
+   "base": "stick",
+   "signature": "studs"
+  },
+  "wind chime": {
+   "base": "frame",
+   "signature": "chimes"
+  },
+  "ball": {
+   "base": "disc",
+   "signature": "band"
+  },
+  "spinning top": {
+   "base": "disc",
+   "signature": "wheel"
+  },
+  "mobile": {
+   "base": "frame",
+   "signature": "chimes"
+  },
+  "jar": {
+   "base": "bowl",
+   "signature": "lid"
+  },
+  "bowl": {
+   "base": "bowl",
+   "signature": "band"
+  },
+  "cup": {
+   "base": "bowl",
+   "signature": "spout"
+  },
+  "vase": {
+   "base": "bowl",
+   "signature": "flower"
+  },
+  "basket": {
+   "base": "bowl",
+   "signature": "weave"
+  },
+  "box": {
+   "base": "box",
+   "signature": "lid"
+  },
+  "shelf": {
+   "base": "frame",
+   "signature": "hook"
+  },
+  "stool": {
+   "base": "block",
+   "signature": "studs"
+  },
+  "mirror": {
+   "base": "frame",
+   "signature": "gem"
+  },
+  "picture": {
+   "base": "frame",
+   "signature": "cloth"
+  },
+  "plant pot": {
+   "base": "bowl",
+   "signature": "flower"
+  },
+  "garland": {
+   "base": "bundle",
+   "signature": "flower"
+  },
+  "charm": {
+   "base": "ring",
+   "signature": "gem"
+  },
+  "tile": {
+   "base": "block",
+   "signature": "band"
+  },
+  "patch": {
+   "base": "disc",
+   "signature": "studs"
+  },
+  "tinder bundle": {
+   "base": "bundle",
+   "signature": "cord"
+  },
+  "draught stopper": {
+   "base": "cushion",
+   "signature": "band"
+  },
+  "sign": {
+   "base": "stick",
+   "signature": "head"
+  },
+  "stone stack": {
+   "base": "block",
+   "signature": "studs"
+  },
+  "sculpture": {
+   "base": "block",
+   "signature": "gem"
+  },
+  "treat": {
+   "base": "disc",
+   "signature": "seeds"
+  },
+  "chest": {
+   "base": "box",
+   "signature": "band"
+  },
+  "crate": {
+   "base": "box",
+   "signature": "studs"
+  },
+  "wall hook": {
+   "base": "stick",
+   "signature": "hook"
+  },
+  "rope": {
+   "base": "bundle",
+   "signature": "cord"
+  },
+  "carver": {
+   "base": "stick",
+   "signature": "blade"
+  },
+  "trowel": {
+   "base": "stick",
+   "signature": "spade"
+  },
+  "hammer": {
+   "base": "stick",
+   "signature": "head"
+  },
+  "fork": {
+   "base": "stick",
+   "signature": "studs"
+  },
+  "spoon": {
+   "base": "stick",
+   "signature": "lid"
+  },
+  "knife": {
+   "base": "stick",
+   "signature": "blade"
+  },
+  "plate": {
+   "base": "disc",
+   "signature": "band"
+  },
+  "kettle": {
+   "base": "box",
+   "signature": "spout"
+  },
+  "stick": {
+   "base": "stick",
+   "signature": "band"
+  },
+  "tube": {
+   "base": "block",
+   "signature": "band"
+  },
+  "brush": {
+   "base": "stick",
+   "signature": "strings"
+  },
+  "broom": {
+   "base": "stick",
+   "signature": "weave"
+  },
+  "bucket": {
+   "base": "bowl",
+   "signature": "hook"
+  },
+  "torch": {
+   "base": "stick",
+   "signature": "flame"
+  },
+  "needle": {
+   "base": "stick",
+   "signature": "gem"
+  },
+  "wheel": {
+   "base": "disc",
+   "signature": "wheel"
+  },
+  "hook": {
+   "base": "stick",
+   "signature": "hook"
+  },
+  "spring": {
+   "base": "ring",
+   "signature": "weave"
+  },
+  "rod": {
+   "base": "stick",
+   "signature": "hook"
+  },
+  "bottle": {
+   "base": "bowl",
+   "signature": "lid"
+  },
+  "note bottle": {
+   "base": "bowl",
+   "signature": "cloth"
+  },
+  "lens": {
+   "base": "ring",
+   "signature": "gem"
+  },
+  "gear": {
+   "base": "disc",
+   "signature": "studs"
+  },
+  "ring": {
+   "base": "ring",
+   "signature": "gem"
+  },
+  "key": {
+   "base": "stick",
+   "signature": "head"
+  },
+  "golden fish": {
+   "base": "cushion",
+   "signature": "sail"
+  }
+ },
+ "palette": {
+  "main": ["8a4a1f", "bf6a2c", "dc9457", "ecc19d"],
+  "trim": ["5b5f6e", "7e8491", "a9afb7", "d3d6d9"],
+  "glow": ["e46d3a", "ffad5d", "ffe18d"],
+  "ink": "141b1b",
+  "white": "ffffff",
+  "red": "c4484a"
+ },
+ "body": {
+  "about": "The body parts a genome's slots name (bodies.json), as the view stamps them on a pet: `frames` are <view>.<size> (front, side facing right, back; l, or s for a body under `small` pixels wide), a mouth's <what it does>.<1 or 2 middle columns, or side>.<size>. `layer`: behind the body, in front of it, or on it. `pair`: one each side, mirrored. `plans`: each body plan as proportions of the one body.",
+  "file": "own/parts/body.png",
+  "small": 10,
+  "shade": {
+   "light": 0,
+   "mid": -0.09,
+   "dark": -0.17
+  },
+  "plans": {
+   "blob": {
+    "w": 1,
+    "h": 1
+   },
+   "head": {
+    "w": 0.62,
+    "h": 0.5,
+    "head": {
+     "w": 1,
+     "tall": 0.82,
+     "round": 0.85
+    },
+    "overlap": 1
+   },
+   "segments": {
+    "w": 1.12,
+    "h": 0.72,
+    "head": {
+     "w": 0.66,
+     "tall": 0.9,
+     "round": 0.9
+    },
+    "overlap": 2
+   },
+   "long": {
+    "w": 1.45,
+    "h": 0.6
+   },
+   "tall": {
+    "w": 0.68,
+    "h": 1.4
+   }
+  },
+  "slots": {
+   "ears": {
+    "layer": "behind",
+    "pair": true,
+    "spread": 0.3,
+    "values": {
+     "round": {
+      "frames": {
+       "front.l": {
+        "rect": [0, 0, 4, 3],
+        "pin": [2, 2]
+       },
+       "front.s": {
+        "rect": [8, 0, 2, 2],
+        "pin": [1, 1]
+       },
+       "side.l": {
+        "rect": [16, 0, 4, 3],
+        "pin": [2, 2]
+       },
+       "side.s": {
+        "rect": [24, 0, 2, 2],
+        "pin": [1, 1]
+       },
+       "back.l": {
+        "rect": [32, 0, 4, 3],
+        "pin": [2, 2]
+       },
+       "back.s": {
+        "rect": [40, 0, 2, 2],
+        "pin": [1, 1]
+       }
+      }
+     },
+     "pointed": {
+      "frames": {
+       "front.l": {
+        "rect": [0, 8, 3, 4],
+        "pin": [1, 3]
+       },
+       "front.s": {
+        "rect": [8, 8, 2, 3],
+        "pin": [1, 2]
+       },
+       "side.l": {
+        "rect": [16, 8, 3, 4],
+        "pin": [1, 3]
+       },
+       "side.s": {
+        "rect": [24, 8, 2, 3],
+        "pin": [1, 2]
+       },
+       "back.l": {
+        "rect": [32, 8, 3, 4],
+        "pin": [1, 3]
+       },
+       "back.s": {
+        "rect": [40, 8, 2, 3],
+        "pin": [1, 2]
+       }
+      }
+     },
+     "long": {
+      "frames": {
+       "front.l": {
+        "rect": [0, 16, 2, 6],
+        "pin": [1, 5]
+       },
+       "front.s": {
+        "rect": [8, 16, 1, 4],
+        "pin": [0, 3]
+       },
+       "side.l": {
+        "rect": [16, 16, 5, 5],
+        "pin": [4, 4]
+       },
+       "side.s": {
+        "rect": [24, 16, 3, 3],
+        "pin": [2, 2]
+       },
+       "back.l": {
+        "rect": [32, 16, 2, 6],
+        "pin": [1, 5]
+       },
+       "back.s": {
+        "rect": [40, 16, 1, 4],
+        "pin": [0, 3]
+       }
+      }
+     }
+    }
+   },
+   "head": {
+    "layer": "behind",
+    "pair": true,
+    "spread": 0.16,
+    "values": {
+     "horns": {
+      "frames": {
+       "front.l": {
+        "rect": [0, 24, 3, 4],
+        "pin": [2, 3]
+       },
+       "front.s": {
+        "rect": [8, 24, 2, 2],
+        "pin": [1, 1]
+       },
+       "side.l": {
+        "rect": [16, 24, 3, 4],
+        "pin": [2, 3]
+       },
+       "side.s": {
+        "rect": [24, 24, 2, 2],
+        "pin": [1, 1]
+       },
+       "back.l": {
+        "rect": [32, 24, 3, 4],
+        "pin": [2, 3]
+       },
+       "back.s": {
+        "rect": [40, 24, 2, 2],
+        "pin": [1, 1]
+       }
+      }
+     },
+     "antennae": {
+      "frames": {
+       "front.l": {
+        "rect": [0, 32, 3, 5],
+        "pin": [2, 4]
+       },
+       "front.s": {
+        "rect": [8, 32, 2, 3],
+        "pin": [1, 2]
+       },
+       "side.l": {
+        "rect": [16, 32, 3, 5],
+        "pin": [2, 4]
+       },
+       "side.s": {
+        "rect": [24, 32, 2, 3],
+        "pin": [1, 2]
+       },
+       "back.l": {
+        "rect": [32, 32, 3, 5],
+        "pin": [2, 4]
+       },
+       "back.s": {
+        "rect": [40, 32, 2, 3],
+        "pin": [1, 2]
+       }
+      }
+     },
+     "crest": {
+      "pair": false,
+      "frames": {
+       "front.l": {
+        "rect": [0, 40, 5, 3],
+        "pin": [2, 2]
+       },
+       "front.s": {
+        "rect": [8, 40, 3, 3],
+        "pin": [1, 2]
+       },
+       "side.l": {
+        "rect": [16, 40, 5, 3],
+        "pin": [2, 2]
+       },
+       "side.s": {
+        "rect": [24, 40, 3, 3],
+        "pin": [1, 2]
+       },
+       "back.l": {
+        "rect": [32, 40, 5, 3],
+        "pin": [2, 2]
+       },
+       "back.s": {
+        "rect": [40, 40, 3, 3],
+        "pin": [1, 2]
+       }
+      }
+     }
+    }
+   },
+   "tail": {
+    "layer": "behind",
+    "pair": false,
+    "values": {
+     "stub": {
+      "frames": {
+       "front.l": {
+        "rect": [0, 48, 4, 3],
+        "pin": [0, 1]
+       },
+       "front.s": {
+        "rect": [8, 48, 3, 2],
+        "pin": [0, 1]
+       },
+       "side.l": {
+        "rect": [16, 48, 4, 3],
+        "pin": [0, 1]
+       },
+       "side.s": {
+        "rect": [24, 48, 3, 2],
+        "pin": [0, 1]
+       },
+       "back.l": {
+        "rect": [32, 48, 3, 3],
+        "pin": [1, 2]
+       },
+       "back.s": {
+        "rect": [40, 48, 2, 2],
+        "pin": [0, 1]
+       }
+      }
+     },
+     "long": {
+      "frames": {
+       "front.l": {
+        "rect": [0, 56, 5, 5],
+        "pin": [0, 4]
+       },
+       "front.s": {
+        "rect": [8, 56, 3, 3],
+        "pin": [0, 2]
+       },
+       "side.l": {
+        "rect": [16, 56, 5, 5],
+        "pin": [0, 4]
+       },
+       "side.s": {
+        "rect": [24, 56, 3, 3],
+        "pin": [0, 2]
+       },
+       "back.l": {
+        "rect": [32, 56, 2, 5],
+        "pin": [1, 4]
+       },
+       "back.s": {
+        "rect": [40, 56, 1, 3],
+        "pin": [0, 2]
+       }
+      }
+     },
+     "fluffy": {
+      "frames": {
+       "front.l": {
+        "rect": [0, 64, 6, 5],
+        "pin": [0, 3]
+       },
+       "front.s": {
+        "rect": [8, 64, 3, 3],
+        "pin": [0, 1]
+       },
+       "side.l": {
+        "rect": [16, 64, 6, 5],
+        "pin": [0, 3]
+       },
+       "side.s": {
+        "rect": [24, 64, 3, 3],
+        "pin": [0, 1]
+       },
+       "back.l": {
+        "rect": [32, 64, 4, 4],
+        "pin": [1, 3]
+       },
+       "back.s": {
+        "rect": [40, 64, 3, 3],
+        "pin": [1, 2]
+       }
+      }
+     }
+    }
+   },
+   "whiskers": {
+    "layer": "front",
+    "pair": true,
+    "outline": false,
+    "values": {
+     "yes": {
+      "frames": {
+       "front.l": {
+        "rect": [0, 72, 3, 3],
+        "pin": [2, 1]
+       },
+       "front.s": {
+        "rect": [8, 72, 3, 1],
+        "pin": [2, 0]
+       },
+       "side.l": {
+        "rect": [16, 72, 3, 3],
+        "pin": [2, 1]
+       },
+       "side.s": {
+        "rect": [24, 72, 3, 1],
+        "pin": [2, 0]
+       },
+       "back.l": {
+        "rect": [32, 72, 3, 3],
+        "pin": [2, 1]
+       },
+       "back.s": {
+        "rect": [40, 72, 3, 1],
+        "pin": [2, 0]
+       }
+      }
+     }
+    }
+   },
+   "feet": {
+    "layer": "front",
+    "pair": true,
+    "values": {
+     "nubs": {
+      "frames": {
+       "front.l": {
+        "rect": [0, 80, 2, 1],
+        "pin": [0, 0]
+       },
+       "front.s": {
+        "rect": [8, 80, 2, 1],
+        "pin": [0, 0]
+       },
+       "side.l": {
+        "rect": [16, 80, 2, 1],
+        "pin": [0, 0]
+       },
+       "side.s": {
+        "rect": [24, 80, 2, 1],
+        "pin": [0, 0]
+       },
+       "back.l": {
+        "rect": [32, 80, 2, 1],
+        "pin": [0, 0]
+       },
+       "back.s": {
+        "rect": [40, 80, 2, 1],
+        "pin": [0, 0]
+       }
+      }
+     },
+     "paws": {
+      "frames": {
+       "front.l": {
+        "rect": [0, 88, 3, 2],
+        "pin": [1, 0]
+       },
+       "front.s": {
+        "rect": [8, 88, 3, 1],
+        "pin": [1, 0]
+       },
+       "side.l": {
+        "rect": [16, 88, 4, 2],
+        "pin": [0, 0]
+       },
+       "side.s": {
+        "rect": [24, 88, 3, 1],
+        "pin": [0, 0]
+       },
+       "back.l": {
+        "rect": [32, 88, 3, 2],
+        "pin": [1, 0]
+       },
+       "back.s": {
+        "rect": [40, 88, 3, 1],
+        "pin": [1, 0]
+       }
+      }
+     },
+     "legs": {
+      "frames": {
+       "front.l": {
+        "rect": [0, 96, 2, 4],
+        "pin": [1, 0]
+       },
+       "front.s": {
+        "rect": [8, 96, 2, 3],
+        "pin": [1, 0]
+       },
+       "side.l": {
+        "rect": [16, 96, 2, 4],
+        "pin": [0, 0]
+       },
+       "side.s": {
+        "rect": [24, 96, 2, 3],
+        "pin": [0, 0]
+       },
+       "back.l": {
+        "rect": [32, 96, 2, 4],
+        "pin": [1, 0]
+       },
+       "back.s": {
+        "rect": [40, 96, 2, 3],
+        "pin": [1, 0]
+       }
+      }
+     }
+    }
+   },
+   "mouth": {
+    "layer": "on",
+    "pair": false,
+    "outline": false,
+    "values": {
+     "dot": {
+      "frames": {
+       "flat.1.l": {
+        "rect": [0, 104, 1, 1],
+        "pin": [0, 0]
+       },
+       "smile.1.l": {
+        "rect": [8, 104, 3, 2],
+        "pin": [1, 0]
+       },
+       "frown.1.l": {
+        "rect": [16, 104, 3, 2],
+        "pin": [1, 0]
+       },
+       "open.1.l": {
+        "rect": [24, 104, 3, 3],
+        "pin": [1, 0]
+       },
+       "o.1.l": {
+        "rect": [32, 104, 3, 2],
+        "pin": [1, 0]
+       },
+       "flat.2.l": {
+        "rect": [40, 104, 2, 1],
+        "pin": [0, 0]
+       },
+       "smile.2.l": {
+        "rect": [48, 104, 4, 2],
+        "pin": [1, 0]
+       },
+       "frown.2.l": {
+        "rect": [56, 104, 4, 2],
+        "pin": [1, 0]
+       },
+       "open.2.l": {
+        "rect": [64, 104, 2, 3],
+        "pin": [0, 0]
+       },
+       "o.2.l": {
+        "rect": [72, 104, 2, 2],
+        "pin": [0, 0]
+       },
+       "flat.side.l": {
+        "rect": [80, 104, 1, 1],
+        "pin": [0, 0]
+       },
+       "smile.side.l": {
+        "rect": [88, 104, 3, 2],
+        "pin": [1, 0]
+       },
+       "frown.side.l": {
+        "rect": [96, 104, 3, 2],
+        "pin": [1, 0]
+       },
+       "open.side.l": {
+        "rect": [104, 104, 3, 3],
+        "pin": [1, 0]
+       },
+       "o.side.l": {
+        "rect": [112, 104, 3, 2],
+        "pin": [1, 0]
+       },
+       "flat.1.s": {
+        "rect": [120, 104, 1, 1],
+        "pin": [0, 0]
+       },
+       "smile.1.s": {
+        "rect": [128, 104, 3, 2],
+        "pin": [1, 0]
+       },
+       "frown.1.s": {
+        "rect": [136, 104, 3, 2],
+        "pin": [1, 0]
+       },
+       "open.1.s": {
+        "rect": [144, 104, 1, 2],
+        "pin": [0, 0]
+       },
+       "o.1.s": {
+        "rect": [152, 104, 1, 2],
+        "pin": [0, 0]
+       },
+       "flat.2.s": {
+        "rect": [160, 104, 2, 1],
+        "pin": [0, 0]
+       },
+       "smile.2.s": {
+        "rect": [168, 104, 4, 2],
+        "pin": [1, 0]
+       },
+       "frown.2.s": {
+        "rect": [176, 104, 4, 2],
+        "pin": [1, 0]
+       },
+       "open.2.s": {
+        "rect": [184, 104, 2, 2],
+        "pin": [0, 0]
+       },
+       "o.2.s": {
+        "rect": [192, 104, 2, 2],
+        "pin": [0, 0]
+       },
+       "flat.side.s": {
+        "rect": [200, 104, 1, 1],
+        "pin": [0, 0]
+       },
+       "smile.side.s": {
+        "rect": [208, 104, 3, 2],
+        "pin": [1, 0]
+       },
+       "frown.side.s": {
+        "rect": [216, 104, 3, 2],
+        "pin": [1, 0]
+       },
+       "open.side.s": {
+        "rect": [224, 104, 1, 2],
+        "pin": [0, 0]
+       },
+       "o.side.s": {
+        "rect": [232, 104, 1, 2],
+        "pin": [0, 0]
+       }
+      }
+     },
+     "wide": {
+      "frames": {
+       "flat.1.l": {
+        "rect": [0, 112, 3, 1],
+        "pin": [1, 0]
+       },
+       "smile.1.l": {
+        "rect": [8, 112, 5, 2],
+        "pin": [2, 0]
+       },
+       "frown.1.l": {
+        "rect": [16, 112, 5, 2],
+        "pin": [2, 0]
+       },
+       "open.1.l": {
+        "rect": [24, 112, 5, 3],
+        "pin": [2, 0]
+       },
+       "o.1.l": {
+        "rect": [32, 112, 5, 2],
+        "pin": [2, 0]
+       },
+       "flat.2.l": {
+        "rect": [40, 112, 4, 1],
+        "pin": [1, 0]
+       },
+       "smile.2.l": {
+        "rect": [48, 112, 6, 2],
+        "pin": [2, 0]
+       },
+       "frown.2.l": {
+        "rect": [56, 112, 6, 2],
+        "pin": [2, 0]
+       },
+       "open.2.l": {
+        "rect": [64, 112, 4, 3],
+        "pin": [1, 0]
+       },
+       "o.2.l": {
+        "rect": [72, 112, 4, 2],
+        "pin": [1, 0]
+       },
+       "flat.side.l": {
+        "rect": [80, 112, 3, 1],
+        "pin": [1, 0]
+       },
+       "smile.side.l": {
+        "rect": [88, 112, 5, 2],
+        "pin": [2, 0]
+       },
+       "frown.side.l": {
+        "rect": [96, 112, 5, 2],
+        "pin": [2, 0]
+       },
+       "open.side.l": {
+        "rect": [104, 112, 5, 3],
+        "pin": [2, 0]
+       },
+       "o.side.l": {
+        "rect": [112, 112, 5, 2],
+        "pin": [2, 0]
+       },
+       "flat.1.s": {
+        "rect": [120, 112, 3, 1],
+        "pin": [1, 0]
+       },
+       "smile.1.s": {
+        "rect": [128, 112, 5, 2],
+        "pin": [2, 0]
+       },
+       "frown.1.s": {
+        "rect": [136, 112, 5, 2],
+        "pin": [2, 0]
+       },
+       "open.1.s": {
+        "rect": [144, 112, 3, 2],
+        "pin": [1, 0]
+       },
+       "o.1.s": {
+        "rect": [152, 112, 3, 2],
+        "pin": [1, 0]
+       },
+       "flat.2.s": {
+        "rect": [160, 112, 4, 1],
+        "pin": [1, 0]
+       },
+       "smile.2.s": {
+        "rect": [168, 112, 6, 2],
+        "pin": [2, 0]
+       },
+       "frown.2.s": {
+        "rect": [176, 112, 6, 2],
+        "pin": [2, 0]
+       },
+       "open.2.s": {
+        "rect": [184, 112, 4, 2],
+        "pin": [1, 0]
+       },
+       "o.2.s": {
+        "rect": [192, 112, 4, 2],
+        "pin": [1, 0]
+       },
+       "flat.side.s": {
+        "rect": [200, 112, 3, 1],
+        "pin": [1, 0]
+       },
+       "smile.side.s": {
+        "rect": [208, 112, 5, 2],
+        "pin": [2, 0]
+       },
+       "frown.side.s": {
+        "rect": [216, 112, 5, 2],
+        "pin": [2, 0]
+       },
+       "open.side.s": {
+        "rect": [224, 112, 3, 2],
+        "pin": [1, 0]
+       },
+       "o.side.s": {
+        "rect": [232, 112, 3, 2],
+        "pin": [1, 0]
+       }
+      }
+     },
+     "beak": {
+      "layer": "front",
+      "side_at": "edge",
+      "frames": {
+       "flat.1.l": {
+        "rect": [0, 120, 3, 2],
+        "pin": [1, 0]
+       },
+       "smile.1.l": {
+        "rect": [8, 120, 3, 2],
+        "pin": [1, 0]
+       },
+       "frown.1.l": {
+        "rect": [16, 120, 3, 2],
+        "pin": [1, 0]
+       },
+       "open.1.l": {
+        "rect": [24, 120, 3, 3],
+        "pin": [1, 0]
+       },
+       "o.1.l": {
+        "rect": [32, 120, 3, 3],
+        "pin": [1, 0]
+       },
+       "flat.2.l": {
+        "rect": [40, 120, 4, 2],
+        "pin": [1, 0]
+       },
+       "smile.2.l": {
+        "rect": [48, 120, 4, 2],
+        "pin": [1, 0]
+       },
+       "frown.2.l": {
+        "rect": [56, 120, 4, 2],
+        "pin": [1, 0]
+       },
+       "open.2.l": {
+        "rect": [64, 120, 4, 3],
+        "pin": [1, 0]
+       },
+       "o.2.l": {
+        "rect": [72, 120, 4, 3],
+        "pin": [1, 0]
+       },
+       "flat.side.l": {
+        "rect": [80, 120, 2, 2],
+        "pin": [0, 0]
+       },
+       "smile.side.l": {
+        "rect": [88, 120, 2, 2],
+        "pin": [0, 0]
+       },
+       "frown.side.l": {
+        "rect": [96, 120, 2, 2],
+        "pin": [0, 0]
+       },
+       "open.side.l": {
+        "rect": [104, 120, 2, 3],
+        "pin": [0, 0]
+       },
+       "o.side.l": {
+        "rect": [112, 120, 2, 3],
+        "pin": [0, 0]
+       },
+       "flat.1.s": {
+        "rect": [120, 120, 3, 2],
+        "pin": [1, 0]
+       },
+       "smile.1.s": {
+        "rect": [128, 120, 3, 2],
+        "pin": [1, 0]
+       },
+       "frown.1.s": {
+        "rect": [136, 120, 3, 2],
+        "pin": [1, 0]
+       },
+       "open.1.s": {
+        "rect": [144, 120, 3, 3],
+        "pin": [1, 0]
+       },
+       "o.1.s": {
+        "rect": [152, 120, 3, 3],
+        "pin": [1, 0]
+       },
+       "flat.2.s": {
+        "rect": [160, 120, 4, 2],
+        "pin": [1, 0]
+       },
+       "smile.2.s": {
+        "rect": [168, 120, 4, 2],
+        "pin": [1, 0]
+       },
+       "frown.2.s": {
+        "rect": [176, 120, 4, 2],
+        "pin": [1, 0]
+       },
+       "open.2.s": {
+        "rect": [184, 120, 4, 3],
+        "pin": [1, 0]
+       },
+       "o.2.s": {
+        "rect": [192, 120, 4, 3],
+        "pin": [1, 0]
+       },
+       "flat.side.s": {
+        "rect": [200, 120, 2, 2],
+        "pin": [0, 0]
+       },
+       "smile.side.s": {
+        "rect": [208, 120, 2, 2],
+        "pin": [0, 0]
+       },
+       "frown.side.s": {
+        "rect": [216, 120, 2, 2],
+        "pin": [0, 0]
+       },
+       "open.side.s": {
+        "rect": [224, 120, 2, 3],
+        "pin": [0, 0]
+       },
+       "o.side.s": {
+        "rect": [232, 120, 2, 3],
+        "pin": [0, 0]
+       }
+      }
+     }
+    }
+   }
+  }
+ },
+ "looks": {
+  "soft": {
+   "cap": 0.78
+  },
+  "dark": {
+   "sat": 0.7,
+   "light": 0.62
+  },
+  "glassy": {
+   "sat": 0.6,
+   "add": 0.08
+  },
+  "heavy": {
+   "sat": 0.8,
+   "light": 0.88
+  },
+  "bright": {
+   "add": 0.05
+  },
+  "wood": {
+   "color": "brown"
+  },
+  "metal": {
+   "color": "grey",
+   "sat": 0.8,
+   "light": 0.95
+  },
+  "iron": {
+   "color": "grey",
+   "light": 0.8
+  },
+  "brass": {
+   "color": "yellow",
+   "light": 0.85
+  },
+  "copper": {
+   "color": "orange",
+   "light": 0.85
+  },
+  "glass": {
+   "color": "teal",
+   "sat": 0.6,
+   "add": 0.08
+  },
+  "clay": {
+   "color": "orange",
+   "sat": 0.8
+  },
+  "fired clay": {
+   "color": "red",
+   "sat": 0.7
+  },
+  "cloth": {
+   "color": "red",
+   "cap": 0.78
+  },
+  "stone": {
+   "color": "grey"
+  },
+  "leather": {
+   "color": "brown",
+   "light": 0.8
+  },
+  "wax": {
+   "color": "white",
+   "cap": 0.9
+  },
+  "reed": {
+   "color": "green",
+   "sat": 0.6
+  },
+  "string": {
+   "color": "white",
+   "cap": 0.85
+  },
+  "fibre": {
+   "color": "white",
+   "cap": 0.85
+  },
+  "bone": {
+   "color": "white"
+  },
+  "feather": {
+   "color": "white",
+   "cap": 0.9
+  },
+  "paper": {
+   "color": "white"
+  }
+ }
+}

@@ -1,0 +1,62 @@
+# SPEC-v5.1 §6.4 knowing-of (helper B's draft, for the lead's review): for every catalog kind of tier 1 and up
+# (grammar.recipe), the titles of Simple English Wikipedia's articles (book/wikipedia_en-simple_all_maxi_2026-09.zim)
+# that teach the kind exists. A hob that reads one knows of the kind (pet["knows"], of = true, from "read"): it is not
+# the recipe. Every title here was looked up in the zim by its path (21 October 2026); a redirect is listed under both
+# its names, since book.read names a page by the title it was asked by. A kind with no fitting article has none.
+# The tier-0 kinds (rug, nest, stool, box, shelf, bowl, broom, brush, stick, fork, spoon, flute, wind chime,
+# sculpture, garland, stone stack) are made by paw without knowing, and have no line.
+
+# tier 1, worked things
+cushion = ["Cushion", "Pillow"]
+blanket = ["Blanket", "Weaving", "Wool"]
+bed-mat = ["Mattress", "Mat", "Bed"]
+"draught stopper" = ["Insulation"]
+lantern = ["Lantern", "Oil lamp", "Candle"]
+lamp = ["Lamp", "Oil lamp", "Light bulb"]
+candle = ["Candle", "Wax", "Beeswax", "Wick"]
+torch = ["Torch", "Flashlight"]
+crate = ["Crate", "Box"]
+basket = ["Basket", "Basket weaving"]
+jar = ["Jar", "Pottery"]
+bottle = ["Bottle", "Glass"]
+vase = ["Vase", "Pottery", "Ceramic"]
+cup = ["Cup", "Mug", "Pottery"]
+plate = ["Plate", "Dishware", "Dish", "Ceramic"]
+bucket = ["Bucket"]
+"plant pot" = ["Flowerpot", "Flower pot", "Container garden", "Terracotta"]
+rope = ["Rope", "Twine", "Knot"]
+wheel = ["Wheel", "Axle", "Wheel and axle"]
+tube = ["Tube", "Pipe (fluid conveyance)", "Pipe (material)"]
+patch = ["Sewing"]
+tile = ["Tile", "Ceramic", "Kiln"]
+drum = ["Drum", "Percussion instrument"]
+"tinder bundle" = ["Tinder", "Fire"]
+treat = ["Dessert", "Candy"]
+ball = ["Ball"]
+doll = ["Doll", "Rag doll", "Toy"]
+picture = ["Painting", "Picture", "Drawing", "Pigment"]
+mobile = []
+charm = ["Amulet", "Talisman"]
+sign = ["Sign", "Signs"]
+"golden fish" = ["Goldfish"]
+"note bottle" = []
+lens = ["Lens", "Lens (optics)", "Magnifying glass"]
+mirror = ["Mirror", "Reflection (physics)"]
+
+# tier 2, mechanisms
+chest = ["Hinge"]
+kettle = ["Kettle", "Teapot"]
+"wall hook" = ["Hook", "Nail (fastener)", "Nail"]
+hammer = ["Hammer", "Mallet", "Forge", "Blacksmith"]
+knife = ["Knife", "Blade", "Blacksmith"]
+carver = ["Chisel", "Woodcarving", "Wood carving"]
+trowel = ["Trowel", "Spade", "Shovel"]
+needle = ["Needle", "Sewing", "Sewing machine"]
+hook = ["Fish hook", "Fishing hook", "Hook", "Fishing line"]
+rod = ["Fishing rod", "Angling", "Fishing"]
+bell = ["Bell", "Handbell"]
+"spinning top" = ["Gyroscope"]
+ring = ["Jewellery", "Jewelry"]
+key = ["Key (lock)", "Key", "Lock"]
+gear = ["Gear", "Clockwork"]
+spring = ["Spring (device)"]

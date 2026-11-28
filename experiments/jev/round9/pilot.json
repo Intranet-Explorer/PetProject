@@ -1,0 +1,187 @@
+{
+ "sheets": {
+  "blank": [],
+  "fears_water": [
+   "terrified of water: will not go near the pond or cross it"
+  ],
+  "brave_95": [
+   "brave, 95 out of 100: not afraid of physical danger: heights, dark places, wild animals, thin ice"
+  ],
+  "roof": [
+   "spends every free hour up on the roof"
+  ],
+  "sparse_h209": [
+   "tireless, 30 out of 100: always doing something, starts the next job before the last is finished, sleeps little",
+   "kind, 30 out of 100: forgives quickly, comforts others, assumes the best of them",
+   "cautious, 95 out of 100: leaves unknown things alone, sticks to what it knows",
+   "hasty, 60 out of 100: can't wait, rushes jobs, skips steps, grabs the quick option",
+   "serious, 95 out of 100: work comes first, always; thinks games and jokes are a waste of time",
+   "since the fox took a little hob, carries a stick everywhere"
+  ],
+  "full_h314": [
+   "cautious, 60 out of 100: leaves unknown things alone, sticks to what it knows",
+   "serious, 60 out of 100: work comes first, always; thinks games and jokes are a waste of time",
+   "generous, 60 out of 100: gives food and things away, even when it has little",
+   "tidy, 30 out of 100: puts things back, can't stand a mess, cleans before it rests",
+   "ambitious, 30 out of 100: wants to be the best, takes the hardest job, chases the next big thing",
+   "brave, 30 out of 100: not afraid of physical danger: heights, dark places, wild animals, thin ice",
+   "tireless, 60 out of 100: always doing something, starts the next job before the last is finished, sleeps little",
+   "bold, 60 out of 100: speaks up, argues its corner, confronts other hobs to their faces",
+   "sly, 95 out of 100: lies when it is useful, takes things without asking, lets others take the blame",
+   "obedient, 60 out of 100: does exactly what the house rules, the board and the visitor say",
+   "anxious, 95 out of 100: worries constantly, expects the worst, cannot settle",
+   "the smallest and weakest hob in the house",
+   "puts winning before everything: turns every task into a contest and cannot bear to come second",
+   "terrified of loud noises: bolts and hides at a bang",
+   "loves honey above every other food and will go a long way for it",
+   "spends every free hour up in the loft",
+   "makes a wood carving whenever its paws are free; its corner is full of them",
+   "believes stepping on the hall threshold brings bad luck, and always steps over it",
+   "follows Pim everywhere and does whatever Pim does",
+   "since the fox took a little hob, carries a stick everywhere",
+   "after every meal, carries a stone everywhere and will not put it down",
+   "whenever another hob is watching, breaks one thing that belongs to someone else"
+  ]
+ },
+ "situations": [
+  {
+   "id": "lq1",
+   "axis": "new",
+   "type": "noul",
+   "situation": "The quickest way to the meadow is across the plank over the pond.",
+   "instructions": "Does {name} cross the plank?",
+   "criteria": {
+    "true": "Crosses the plank.",
+    "false": "Goes the long way round."
+   },
+   "yes_pole": "A",
+   "group": "learned"
+  },
+  {
+   "id": "brave1",
+   "axis": "brave_timid",
+   "type": "choice",
+   "situation": "It is night. A loud crash comes from the dark cellar. Nobody else is awake.",
+   "instructions": "What does {name} do?",
+   "criteria": {
+    "investigate": "Goes down into the cellar alone to see what it was.",
+    "hide": "Stays in bed and pulls the blanket up.",
+    "wake_someone": "Wakes another hob to deal with it."
+   },
+   "a": "investigate",
+   "b": "hide",
+   "group": "core",
+   "set": "old"
+  },
+  {
+   "id": "pl_roof",
+   "axis": "new",
+   "type": "noul",
+   "situation": "It is a free hour and nothing is asked of {name}.",
+   "instructions": "Is {name} up on the roof?",
+   "criteria": {
+    "true": "Is up on the roof.",
+    "false": "Is somewhere else."
+   },
+   "yes_pole": "A",
+   "group": "new"
+  },
+  {
+   "id": "lq4",
+   "axis": "new",
+   "type": "noul",
+   "situation": "{name} is setting off for the meadow.",
+   "instructions": "Is {name} carrying a stick?",
+   "criteria": {
+    "true": "Has a stick in its paw.",
+    "false": "Is empty-handed."
+   },
+   "yes_pole": "A",
+   "group": "learned"
+  },
+  {
+   "id": "pl_loft",
+   "axis": "new",
+   "type": "noul",
+   "situation": "It is a free hour and nothing is asked of {name}.",
+   "instructions": "Is {name} up in the loft?",
+   "criteria": {
+    "true": "Is up in the loft.",
+    "false": "Is somewhere else."
+   },
+   "yes_pole": "A",
+   "group": "new"
+  },
+  {
+   "id": "cr_carvings",
+   "axis": "new",
+   "type": "noul",
+   "situation": "A little hob asks {name} to make it something, anything.",
+   "instructions": "Does {name} make it a wood carving?",
+   "criteria": {
+    "true": "Makes a wood carving.",
+    "false": "Makes something else, or nothing."
+   },
+   "yes_pole": "A",
+   "group": "new"
+  }
+ ],
+ "jev_round8": {
+  "blank": {
+   "lq1": 0.62,
+   "brave1": 0.37,
+   "pl_roof": 0.1,
+   "lq4": 0.18,
+   "pl_loft": 0.21,
+   "cr_carvings": 0.23
+  },
+  "sparse_h209": {
+   "lq1": 0.36,
+   "brave1": 0.11,
+   "pl_roof": 0.1,
+   "lq4": 0.94,
+   "pl_loft": 0.22,
+   "cr_carvings": 0.47
+  },
+  "full_h314": {
+   "lq1": 0.45,
+   "brave1": 0.04,
+   "pl_roof": 0.18,
+   "lq4": 0.94,
+   "pl_loft": 0.84,
+   "cr_carvings": 0.75
+  }
+ },
+ "expect": [
+  [
+   "fears_water",
+   "lq1",
+   "lower"
+  ],
+  [
+   "brave_95",
+   "brave1",
+   "higher"
+  ],
+  [
+   "roof",
+   "pl_roof",
+   "higher"
+  ],
+  [
+   "full_h314",
+   "lq4",
+   "higher"
+  ],
+  [
+   "full_h314",
+   "pl_loft",
+   "higher"
+  ],
+  [
+   "full_h314",
+   "cr_carvings",
+   "higher"
+  ]
+ ]
+}

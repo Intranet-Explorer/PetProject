@@ -1,0 +1,1067 @@
+{
+ "status": "awaiting_generation_review",
+ "approval_does_not_generate": true,
+ "source": "V5-DESIGN.md \u00a7\u00a71\u20133,6,8,12\u201313,16 plus approved 184-row mapping",
+ "coverage_note": "The design names 67 existing kinds and about 250 future grammar-derived items but does not enumerate that future catalog. This report covers all current kinds, the 30 named mechanism/signal parts, and the concrete additional objects/materials named in the design. Generic tools, weapons, containers, hoards, piles, plots and construction states require composition/overlays rather than an invented list of 250 hero requests.",
+ "core_gaps": [
+  {
+   "category": "kind",
+   "name": "doll",
+   "sizes": [
+    16
+   ],
+   "reason": "Approved mapping has no convincing source cell.",
+   "scope": "approved_gaps",
+   "candidates_per_size": 4,
+   "style_cells": [
+    "household16:0",
+    "household16:7",
+    "household16:14",
+    "tech16:4"
+   ],
+   "output": "assets-incoming/pixellab/v5/gen/kind-doll"
+  },
+  {
+   "category": "kind",
+   "name": "wind chime",
+   "sizes": [
+    16
+   ],
+   "reason": "Approved mapping has no convincing source cell.",
+   "scope": "approved_gaps",
+   "candidates_per_size": 4,
+   "style_cells": [
+    "household16:0",
+    "household16:7",
+    "household16:14",
+    "tech16:4"
+   ],
+   "output": "assets-incoming/pixellab/v5/gen/kind-wind-chime"
+  },
+  {
+   "category": "kind",
+   "name": "mobile",
+   "sizes": [
+    16
+   ],
+   "reason": "Approved mapping has no convincing source cell.",
+   "scope": "approved_gaps",
+   "candidates_per_size": 4,
+   "style_cells": [
+    "household16:0",
+    "household16:7",
+    "household16:14",
+    "tech16:4"
+   ],
+   "output": "assets-incoming/pixellab/v5/gen/kind-mobile"
+  },
+  {
+   "category": "kind",
+   "name": "garland",
+   "sizes": [
+    16
+   ],
+   "reason": "Approved mapping has no convincing source cell.",
+   "scope": "approved_gaps",
+   "candidates_per_size": 4,
+   "style_cells": [
+    "household16:0",
+    "household16:7",
+    "household16:14",
+    "tech16:4"
+   ],
+   "output": "assets-incoming/pixellab/v5/gen/kind-garland"
+  },
+  {
+   "category": "kind",
+   "name": "sculpture",
+   "sizes": [
+    16
+   ],
+   "reason": "Approved mapping has no convincing source cell.",
+   "scope": "approved_gaps",
+   "candidates_per_size": 4,
+   "style_cells": [
+    "household16:0",
+    "household16:7",
+    "household16:14",
+    "tech16:4"
+   ],
+   "output": "assets-incoming/pixellab/v5/gen/kind-sculpture"
+  },
+  {
+   "category": "kind",
+   "name": "draught stopper",
+   "sizes": [
+    16
+   ],
+   "reason": "Approved mapping has no convincing source cell.",
+   "scope": "approved_gaps",
+   "candidates_per_size": 4,
+   "style_cells": [
+    "household16:0",
+    "household16:7",
+    "household16:14",
+    "tech16:4"
+   ],
+   "output": "assets-incoming/pixellab/v5/gen/kind-draught-stopper"
+  },
+  {
+   "category": "part",
+   "name": "lever",
+   "sizes": [
+    16,
+    24
+   ],
+   "reason": "No lever cell in parts16; cell 42 is a crank handle, not a lever.",
+   "scope": "approved_gaps",
+   "candidates_per_size": 4,
+   "style_cells": [
+    "household16:0",
+    "household16:7",
+    "household16:14",
+    "tech16:4"
+   ],
+   "output": "assets-incoming/pixellab/v5/gen/part-lever"
+  },
+  {
+   "category": "part",
+   "name": "pin",
+   "sizes": [
+    16,
+    24
+   ],
+   "reason": "No pin cell in parts16. A straight rod would not read as a small fastening pin.",
+   "scope": "approved_gaps",
+   "candidates_per_size": 4,
+   "style_cells": [
+    "household16:0",
+    "household16:7",
+    "household16:14",
+    "tech16:4"
+   ],
+   "output": "assets-incoming/pixellab/v5/gen/part-pin"
+  },
+  {
+   "category": "part",
+   "name": "bellows",
+   "sizes": [
+    16,
+    24
+   ],
+   "reason": "No bellows in parts16; selected machines48b:3 is a complete 48 px fixture, not a 16 px layer.",
+   "scope": "approved_gaps",
+   "candidates_per_size": 4,
+   "style_cells": [
+    "household16:0",
+    "household16:7",
+    "household16:14",
+    "tech16:4"
+   ],
+   "output": "assets-incoming/pixellab/v5/gen/part-bellows"
+  },
+  {
+   "category": "part",
+   "name": "piston",
+   "sizes": [
+    16,
+    24
+   ],
+   "reason": "No piston in parts16; tech16:31 is marked miss and excluded.",
+   "scope": "approved_gaps",
+   "candidates_per_size": 4,
+   "style_cells": [
+    "household16:0",
+    "household16:7",
+    "household16:14",
+    "tech16:4"
+   ],
+   "output": "assets-incoming/pixellab/v5/gen/part-piston"
+  },
+  {
+   "category": "part",
+   "name": "boiler",
+   "sizes": [
+    16,
+    24
+   ],
+   "reason": "No boiler in parts16; cell 13 is a plain tank without boiler fittings. Selected machines48:5 is a 48 px fixture.",
+   "scope": "approved_gaps",
+   "candidates_per_size": 4,
+   "style_cells": [
+    "household16:0",
+    "household16:7",
+    "household16:14",
+    "tech16:4"
+   ],
+   "output": "assets-incoming/pixellab/v5/gen/part-boiler"
+  },
+  {
+   "category": "part",
+   "name": "cage",
+   "sizes": [
+    16,
+    24
+   ],
+   "reason": "No cage in parts16; cell 38 is a square frame, not a cage. Selected furniture32:41 is a whole birdcage.",
+   "scope": "approved_gaps",
+   "candidates_per_size": 4,
+   "style_cells": [
+    "household16:0",
+    "household16:7",
+    "household16:14",
+    "tech16:4"
+   ],
+   "output": "assets-incoming/pixellab/v5/gen/part-cage"
+  },
+  {
+   "category": "part",
+   "name": "sling",
+   "sizes": [
+    16,
+    24
+   ],
+   "reason": "No sling in parts16; cord/net cells alone do not depict one.",
+   "scope": "approved_gaps",
+   "candidates_per_size": 4,
+   "style_cells": [
+    "household16:0",
+    "household16:7",
+    "household16:14",
+    "tech16:4"
+   ],
+   "output": "assets-incoming/pixellab/v5/gen/part-sling"
+  },
+  {
+   "category": "part",
+   "name": "wire",
+   "sizes": [
+    16,
+    24
+   ],
+   "reason": "parts16:48 copper wire is marked miss; cannot use it.",
+   "scope": "approved_gaps",
+   "candidates_per_size": 4,
+   "style_cells": [
+    "household16:0",
+    "household16:7",
+    "household16:14",
+    "tech16:4"
+   ],
+   "output": "assets-incoming/pixellab/v5/gen/part-wire"
+  },
+  {
+   "category": "part",
+   "name": "coil",
+   "sizes": [
+    16,
+    24
+   ],
+   "reason": "No electrical coil in parts16; cell 25 is a mechanical spring. Copper wire cell 48 is marked miss.",
+   "scope": "approved_gaps",
+   "candidates_per_size": 4,
+   "style_cells": [
+    "household16:0",
+    "household16:7",
+    "household16:14",
+    "tech16:4"
+   ],
+   "output": "assets-incoming/pixellab/v5/gen/part-coil"
+  },
+  {
+   "category": "part",
+   "name": "horn",
+   "sizes": [
+    16,
+    24
+   ],
+   "reason": "parts16:58 is a whistle, not a horn; no matching horn cell.",
+   "scope": "approved_gaps",
+   "candidates_per_size": 4,
+   "style_cells": [
+    "household16:0",
+    "household16:7",
+    "household16:14",
+    "tech16:4"
+   ],
+   "output": "assets-incoming/pixellab/v5/gen/part-horn"
+  }
+ ],
+ "additional_design_gaps": [
+  {
+   "category": "material",
+   "name": "water",
+   "sizes": [
+    16
+   ],
+   "reason": "No isolated water resource icon among the source cells; pond/water scenery is not a carried water icon.",
+   "scope": "design_named_gaps",
+   "candidates_per_size": 4,
+   "style_cells": [
+    "household16:0",
+    "household16:7",
+    "household16:14",
+    "tech16:4"
+   ],
+   "output": "assets-incoming/pixellab/v5/gen/material-water"
+  },
+  {
+   "category": "part",
+   "name": "weight",
+   "sizes": [
+    16,
+    24
+   ],
+   "reason": "\u00a72/\u00a73 names a hanging weight as power; no isolated counterweight cell.",
+   "scope": "design_named_gaps",
+   "candidates_per_size": 4,
+   "style_cells": [
+    "household16:0",
+    "household16:7",
+    "household16:14",
+    "tech16:4"
+   ],
+   "output": "assets-incoming/pixellab/v5/gen/part-weight"
+  },
+  {
+   "category": "part",
+   "name": "buzzer",
+   "sizes": [
+    16,
+    24
+   ],
+   "reason": "\u00a73 signal tier names a buzzer; a loudspeaker is not the same part.",
+   "scope": "design_named_gaps",
+   "candidates_per_size": 4,
+   "style_cells": [
+    "household16:0",
+    "household16:7",
+    "household16:14",
+    "tech16:4"
+   ],
+   "output": "assets-incoming/pixellab/v5/gen/part-buzzer"
+  },
+  {
+   "category": "catalog",
+   "name": "pistol",
+   "sizes": [
+    16
+   ],
+   "reason": "Named in \u00a70 and \u00a712; no matching source cell.",
+   "scope": "design_named_gaps",
+   "candidates_per_size": 4,
+   "style_cells": [
+    "household16:0",
+    "household16:7",
+    "household16:14",
+    "tech16:4"
+   ],
+   "output": "assets-incoming/pixellab/v5/gen/catalog-pistol"
+  },
+  {
+   "category": "catalog",
+   "name": "net launcher",
+   "sizes": [
+    16
+   ],
+   "reason": "Named in \u00a712; no matching assembled launcher cell.",
+   "scope": "design_named_gaps",
+   "candidates_per_size": 4,
+   "style_cells": [
+    "household16:0",
+    "household16:7",
+    "household16:14",
+    "tech16:4"
+   ],
+   "output": "assets-incoming/pixellab/v5/gen/catalog-net-launcher"
+  },
+  {
+   "category": "catalog",
+   "name": "bell tower",
+   "sizes": [
+    32
+   ],
+   "reason": "Named in \u00a78; bells and posts exist but no tower cell.",
+   "scope": "design_named_gaps",
+   "candidates_per_size": 4,
+   "style_cells": [
+    "household16:0",
+    "household16:7",
+    "household16:14",
+    "tech16:4"
+   ],
+   "output": "assets-incoming/pixellab/v5/gen/catalog-bell-tower"
+  }
+ ],
+ "native24_variants": [
+  {
+   "category": "native_size",
+   "name": "spring",
+   "sizes": [
+    24
+   ],
+   "source16": "parts16:25",
+   "reason": "No native PixelLab 24 px cell. Existing native larger art or a padded stand-in is retained; this is a style/size gap, not a missing 16 px subject.",
+   "scope": "native_size_variants",
+   "candidates_per_size": 4,
+   "style_cells": [
+    "household16:0",
+    "household16:7",
+    "household16:14",
+    "tech16:4"
+   ],
+   "output": "assets-incoming/pixellab/v5/gen/native_size-spring"
+  },
+  {
+   "category": "native_size",
+   "name": "gear",
+   "sizes": [
+    24
+   ],
+   "source16": "parts16:24",
+   "reason": "No native PixelLab 24 px cell. Existing native larger art or a padded stand-in is retained; this is a style/size gap, not a missing 16 px subject.",
+   "scope": "native_size_variants",
+   "candidates_per_size": 4,
+   "style_cells": [
+    "household16:0",
+    "household16:7",
+    "household16:14",
+    "tech16:4"
+   ],
+   "output": "assets-incoming/pixellab/v5/gen/native_size-gear"
+  },
+  {
+   "category": "native_size",
+   "name": "axle",
+   "sizes": [
+    24
+   ],
+   "source16": "parts16:26",
+   "reason": "No native PixelLab 24 px cell. Existing native larger art or a padded stand-in is retained; this is a style/size gap, not a missing 16 px subject.",
+   "scope": "native_size_variants",
+   "candidates_per_size": 4,
+   "style_cells": [
+    "household16:0",
+    "household16:7",
+    "household16:14",
+    "tech16:4"
+   ],
+   "output": "assets-incoming/pixellab/v5/gen/native_size-axle"
+  },
+  {
+   "category": "native_size",
+   "name": "wheel",
+   "sizes": [
+    24
+   ],
+   "source16": "parts16:23",
+   "reason": "No native PixelLab 24 px cell. Existing native larger art or a padded stand-in is retained; this is a style/size gap, not a missing 16 px subject.",
+   "scope": "native_size_variants",
+   "candidates_per_size": 4,
+   "style_cells": [
+    "household16:0",
+    "household16:7",
+    "household16:14",
+    "tech16:4"
+   ],
+   "output": "assets-incoming/pixellab/v5/gen/native_size-wheel"
+  },
+  {
+   "category": "native_size",
+   "name": "pulley",
+   "sizes": [
+    24
+   ],
+   "source16": "parts16:44",
+   "reason": "No native PixelLab 24 px cell. Existing native larger art or a padded stand-in is retained; this is a style/size gap, not a missing 16 px subject.",
+   "scope": "native_size_variants",
+   "candidates_per_size": 4,
+   "style_cells": [
+    "household16:0",
+    "household16:7",
+    "household16:14",
+    "tech16:4"
+   ],
+   "output": "assets-incoming/pixellab/v5/gen/native_size-pulley"
+  },
+  {
+   "category": "native_size",
+   "name": "hinge",
+   "sizes": [
+    24
+   ],
+   "source16": "parts16:43",
+   "reason": "No native PixelLab 24 px cell. Existing native larger art or a padded stand-in is retained; this is a style/size gap, not a missing 16 px subject.",
+   "scope": "native_size_variants",
+   "candidates_per_size": 4,
+   "style_cells": [
+    "household16:0",
+    "household16:7",
+    "household16:14",
+    "tech16:4"
+   ],
+   "output": "assets-incoming/pixellab/v5/gen/native_size-hinge"
+  },
+  {
+   "category": "native_size",
+   "name": "valve",
+   "sizes": [
+    24
+   ],
+   "source16": "parts16:22",
+   "reason": "No native PixelLab 24 px cell. Existing native larger art or a padded stand-in is retained; this is a style/size gap, not a missing 16 px subject.",
+   "scope": "native_size_variants",
+   "candidates_per_size": 4,
+   "style_cells": [
+    "household16:0",
+    "household16:7",
+    "household16:14",
+    "tech16:4"
+   ],
+   "output": "assets-incoming/pixellab/v5/gen/native_size-valve"
+  },
+  {
+   "category": "native_size",
+   "name": "spout",
+   "sizes": [
+    24
+   ],
+   "source16": "parts16:20",
+   "reason": "No native PixelLab 24 px cell. Existing native larger art or a padded stand-in is retained; this is a style/size gap, not a missing 16 px subject.",
+   "scope": "native_size_variants",
+   "candidates_per_size": 4,
+   "style_cells": [
+    "household16:0",
+    "household16:7",
+    "household16:14",
+    "tech16:4"
+   ],
+   "output": "assets-incoming/pixellab/v5/gen/native_size-spout"
+  },
+  {
+   "category": "native_size",
+   "name": "net",
+   "sizes": [
+    24
+   ],
+   "source16": "parts16:29",
+   "reason": "No native PixelLab 24 px cell. Existing native larger art or a padded stand-in is retained; this is a style/size gap, not a missing 16 px subject.",
+   "scope": "native_size_variants",
+   "candidates_per_size": 4,
+   "style_cells": [
+    "household16:0",
+    "household16:7",
+    "household16:14",
+    "tech16:4"
+   ],
+   "output": "assets-incoming/pixellab/v5/gen/native_size-net"
+  },
+  {
+   "category": "native_size",
+   "name": "hook",
+   "sizes": [
+    24
+   ],
+   "source16": "parts16:7",
+   "reason": "No native PixelLab 24 px cell. Existing native larger art or a padded stand-in is retained; this is a style/size gap, not a missing 16 px subject.",
+   "scope": "native_size_variants",
+   "candidates_per_size": 4,
+   "style_cells": [
+    "household16:0",
+    "household16:7",
+    "household16:14",
+    "tech16:4"
+   ],
+   "output": "assets-incoming/pixellab/v5/gen/native_size-hook"
+  },
+  {
+   "category": "native_size",
+   "name": "strap",
+   "sizes": [
+    24
+   ],
+   "source16": "parts16:27",
+   "reason": "No native PixelLab 24 px cell. Existing native larger art or a padded stand-in is retained; this is a style/size gap, not a missing 16 px subject.",
+   "scope": "native_size_variants",
+   "candidates_per_size": 4,
+   "style_cells": [
+    "household16:0",
+    "household16:7",
+    "household16:14",
+    "tech16:4"
+   ],
+   "output": "assets-incoming/pixellab/v5/gen/native_size-strap"
+  },
+  {
+   "category": "native_size",
+   "name": "lens",
+   "sizes": [
+    24
+   ],
+   "source16": "parts16:9",
+   "reason": "No native PixelLab 24 px cell. Existing native larger art or a padded stand-in is retained; this is a style/size gap, not a missing 16 px subject.",
+   "scope": "native_size_variants",
+   "candidates_per_size": 4,
+   "style_cells": [
+    "household16:0",
+    "household16:7",
+    "household16:14",
+    "tech16:4"
+   ],
+   "output": "assets-incoming/pixellab/v5/gen/native_size-lens"
+  },
+  {
+   "category": "native_size",
+   "name": "mirror",
+   "sizes": [
+    24
+   ],
+   "source16": "parts16:59",
+   "reason": "No native PixelLab 24 px cell. Existing native larger art or a padded stand-in is retained; this is a style/size gap, not a missing 16 px subject.",
+   "scope": "native_size_variants",
+   "candidates_per_size": 4,
+   "style_cells": [
+    "household16:0",
+    "household16:7",
+    "household16:14",
+    "tech16:4"
+   ],
+   "output": "assets-incoming/pixellab/v5/gen/native_size-mirror"
+  },
+  {
+   "category": "native_size",
+   "name": "cell",
+   "sizes": [
+    24
+   ],
+   "source16": "parts16:47",
+   "reason": "No native PixelLab 24 px cell. Existing native larger art or a padded stand-in is retained; this is a style/size gap, not a missing 16 px subject.",
+   "scope": "native_size_variants",
+   "candidates_per_size": 4,
+   "style_cells": [
+    "household16:0",
+    "household16:7",
+    "household16:14",
+    "tech16:4"
+   ],
+   "output": "assets-incoming/pixellab/v5/gen/native_size-cell"
+  },
+  {
+   "category": "native_size",
+   "name": "bulb",
+   "sizes": [
+    24
+   ],
+   "source16": "parts16:10",
+   "reason": "No native PixelLab 24 px cell. Existing native larger art or a padded stand-in is retained; this is a style/size gap, not a missing 16 px subject.",
+   "scope": "native_size_variants",
+   "candidates_per_size": 4,
+   "style_cells": [
+    "household16:0",
+    "household16:7",
+    "household16:14",
+    "tech16:4"
+   ],
+   "output": "assets-incoming/pixellab/v5/gen/native_size-bulb"
+  },
+  {
+   "category": "native_size",
+   "name": "switch",
+   "sizes": [
+    24
+   ],
+   "source16": "parts16:49",
+   "reason": "No native PixelLab 24 px cell. Existing native larger art or a padded stand-in is retained; this is a style/size gap, not a missing 16 px subject.",
+   "scope": "native_size_variants",
+   "candidates_per_size": 4,
+   "style_cells": [
+    "household16:0",
+    "household16:7",
+    "household16:14",
+    "tech16:4"
+   ],
+   "output": "assets-incoming/pixellab/v5/gen/native_size-switch"
+  },
+  {
+   "category": "native_size",
+   "name": "bell",
+   "sizes": [
+    24
+   ],
+   "source16": "parts16:34",
+   "reason": "No native PixelLab 24 px cell. Existing native larger art or a padded stand-in is retained; this is a style/size gap, not a missing 16 px subject.",
+   "scope": "native_size_variants",
+   "candidates_per_size": 4,
+   "style_cells": [
+    "household16:0",
+    "household16:7",
+    "household16:14",
+    "tech16:4"
+   ],
+   "output": "assets-incoming/pixellab/v5/gen/native_size-bell"
+  },
+  {
+   "category": "native_size",
+   "name": "dial",
+   "sizes": [
+    24
+   ],
+   "source16": "parts16:51",
+   "reason": "No native PixelLab 24 px cell. Existing native larger art or a padded stand-in is retained; this is a style/size gap, not a missing 16 px subject.",
+   "scope": "native_size_variants",
+   "candidates_per_size": 4,
+   "style_cells": [
+    "household16:0",
+    "household16:7",
+    "household16:14",
+    "tech16:4"
+   ],
+   "output": "assets-incoming/pixellab/v5/gen/native_size-dial"
+  },
+  {
+   "category": "native_size",
+   "name": "plate",
+   "sizes": [
+    24
+   ],
+   "source16": "parts16:18",
+   "reason": "No native PixelLab 24 px cell. Existing native larger art or a padded stand-in is retained; this is a style/size gap, not a missing 16 px subject.",
+   "scope": "native_size_variants",
+   "candidates_per_size": 4,
+   "style_cells": [
+    "household16:0",
+    "household16:7",
+    "household16:14",
+    "tech16:4"
+   ],
+   "output": "assets-incoming/pixellab/v5/gen/native_size-plate"
+  },
+  {
+   "category": "native_size",
+   "name": "casing",
+   "sizes": [
+    24
+   ],
+   "source16": "parts16:17",
+   "reason": "No native PixelLab 24 px cell. Existing native larger art or a padded stand-in is retained; this is a style/size gap, not a missing 16 px subject.",
+   "scope": "native_size_variants",
+   "candidates_per_size": 4,
+   "style_cells": [
+    "household16:0",
+    "household16:7",
+    "household16:14",
+    "tech16:4"
+   ],
+   "output": "assets-incoming/pixellab/v5/gen/native_size-casing"
+  }
+ ],
+ "other_design_matches": [
+  {
+   "name": "kiln",
+   "cell": "machines48:0",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "loom",
+   "cell": "machines48b:0",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "mill",
+   "cell": "machines48:3",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "forge",
+   "cell": "machines48:1",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "stove",
+   "cell": "machines48:2",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "Works",
+   "cell": "machines48:13",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "bed",
+   "cell": "furniture32:2",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "bin",
+   "cell": "sweeper16:8",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "lid",
+   "cell": "parts16:19",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "door",
+   "cell": "outdoor32:21",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "ladder",
+   "cell": "furniture32:21",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "bridge",
+   "cell": "outdoor32:17",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "shelter",
+   "cell": "outdoor32:29",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "hearth",
+   "cell": "outdoor32:27",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "door bar",
+   "cell": "household16:44",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "work board",
+   "cell": "hall48:17",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "lit sign",
+   "cell": "tubes16:49",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "radio",
+   "cell": "tech16:6",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "screen",
+   "cell": "parts16:52",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "sweeper",
+   "cell": "robots32:2",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "train",
+   "cell": "rail32:19",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "remedy",
+   "cell": "pond16:58",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "speaker",
+   "cell": "tech16:52",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "wheel-and-axle set",
+   "cell": "parts16:23",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "wound spring",
+   "cell": "parts16:25",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "stick",
+   "cell": "household16:44",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "reed",
+   "cell": "household16:37",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "stone",
+   "cell": "household16:30",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "pebble",
+   "cell": "household16:30",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "clay",
+   "cell": "household16:42",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "moss",
+   "cell": "household16:36",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "fibre",
+   "cell": "sweeper16:27",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "leaf",
+   "cell": "household16:35",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "sand",
+   "cell": "household16:41",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "shell",
+   "cell": "household16:32",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "plank",
+   "cell": "household16:43",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "cord",
+   "cell": "parts16:28",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "cloth",
+   "cell": "products16:7",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "fired clay",
+   "cell": "products16:2",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "brick",
+   "cell": "products16:0",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "charcoal",
+   "cell": "household16:40",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "glass",
+   "cell": "products16:4",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "rope",
+   "cell": "everyday16:33",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "dye",
+   "cell": "products16:13",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "flour",
+   "cell": "products16:12",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "oil",
+   "cell": "sweeper16:41",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "metal plate",
+   "cell": "parts16:18",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "wire material",
+   "cell": "sweeper16:18",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "spring material",
+   "cell": "parts16:25",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "nail",
+   "cell": "household16:17",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "blade",
+   "cell": "parts16:5",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "gear material",
+   "cell": "parts16:24",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "axle material",
+   "cell": "parts16:26",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "cell material",
+   "cell": "parts16:47",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "bulb material",
+   "cell": "parts16:10",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "switch material",
+   "cell": "parts16:49",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "tinder",
+   "cell": "sweeper16:13",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "seed",
+   "cell": "household16:11",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "thread",
+   "cell": "household16:10",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  },
+  {
+   "name": "scrap",
+   "cell": "robots32:58",
+   "note": "Source subject or near match; catalog behavior and any adaptation remain a lead decision."
+  }
+ ],
+ "constraints": [
+  "No PixelLab call has run and the token has not been read.",
+  "Four candidates for each requested size, using the house source cells as style references.",
+  "Review candidates before copying any result into game assets.",
+  "11 new part definitions remain in parts.json:v5_pending until the root effect registry supports them.",
+  "Existing native 32 px art or documented padded stand-ins remain; native PixelLab 32 px is not included in this request."
+ ]
+}

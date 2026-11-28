@@ -1,0 +1,202 @@
+# The Works (SPEC-v3.5.4 §8): what the machine in the machine room builds for the whole house from the scrap it is
+# fed (engine/works.py). The pets are told none of these numbers: they hear what it is building and how near it is in
+# words ("the Works is nearly full"). Tune here.
+
+[works]
+thing = 1                 # scrap a made thing fed to the machine counts for
+bits = 1                  # ... and three loose bits
+age_hours = 12            # a made thing counts only once it is this many world hours old: nothing straight from the machine and back
+nearly = 0.6              # from this much of its goal the Works is "nearly full" (two of the first goal's three)
+weight = 1.5              # a spare thing is wanted fed this much more while the Works has a goal
+nearly_weight = 2.0       # nearly full: how much a pet wants to feed it an old thing of its own that nobody has touched lately
+idle_days = 1             # ... "lately": this long
+keep = 400                # the things it has counted, kept so that none counts twice
+spring_days = 3           # SPEC-v3.5.8 §4: the spring clean lasts this many world days
+
+# What it builds, in this order, cheapest first. `what` is said to the pets and on the board; `scrap` is its goal.
+# What it does, one of:
+#   fixture   a fixture for every room of that type, found or not (as in house.toml, with `room` = the room type)
+#   machine   bigger numbers in machine.toml's [machine] (never smaller)
+#   material  one more material the machine holds and hands out (a bit from house.toml)
+# (A new part in the parts library needs its picture drawn: not one of these yet.)
+# The first goal is small enough to be reached within a world day, so the family sees the Works pay off early: on a
+# copy of the live house with the real model, about three things were fed to the machine in a world day. Later goals grow.
+
+[[build]]
+what = "a lamp for the cellar"
+scrap = 3
+fixture = { room = "cellar", name = "lamp", pos = [7, 0], light = "on" }
+
+[[build]]
+what = "a shelf for the music room"
+scrap = 6
+fixture = { room = "music", name = "shelf", pos = [7, 0], store = 4 }
+
+[[build]]
+what = "a bigger morning delivery for the machine"
+scrap = 10
+machine = { restock = 3 }
+
+[[build]]
+what = "wax in the machine"
+scrap = 15
+material = "wax"
+
+[[build]]
+what = "a third thing a day from the machine for everyone"
+scrap = 20
+machine = { free = 3 }
+
+[[build]]
+what = "a sweeper for the house"   # SPEC-v3.5.8 §4.2: a small robot vacuum that clears loose junk by itself (engine/sweeper.py)
+scrap = 12
+sweeper = true
+
+# SPEC-v3.5.9 §5: the Works never runs out. After the sweeper, more for the house, cheapest first; the greenhouse's
+# extension takes three fills in a row. Every fixture here has its picture already (view/assets/sprites.json fix.*).
+
+[[build]]
+what = "a lantern for the garden"
+scrap = 20
+fixture = { room = "garden", name = "lantern", pos = [7, 1], light = "on" }
+
+[[build]]
+what = "a lamp for the music room"
+scrap = 20
+fixture = { room = "music", name = "lamp", pos = [5, 1], light = "on" }
+
+[[build]]
+what = "a rug for the nursery"
+scrap = 22
+fixture = { room = "nursery", name = "rug", pos = [6, 4], soft = 4.0, cozy = true }
+
+[[build]]
+what = "a lantern for the pond room"
+scrap = 22
+fixture = { room = "pond", name = "lantern", pos = [10, 1], light = "on" }
+
+[[build]]
+what = "a bench by the pond"
+scrap = 24
+fixture = { room = "pond", name = "old bench", pos = [9, 6], rest = 2.5, cozy = true }
+
+[[build]]
+what = "a blanket for the music room"
+scrap = 24
+fixture = { room = "music", name = "blanket", pos = [9, 5], movable = true, soft = 3.5, cozy = true }
+
+[[build]]
+what = "a bigger daily allowance from the machine"
+scrap = 25
+machine = { free = 4 }
+
+[[build]]
+what = "a lantern for the attic"
+scrap = 26
+fixture = { room = "attic", name = "lantern", pos = [7, 1], light = "on" }
+
+[[build]]
+what = "resin in the machine"
+scrap = 26
+material = "resin"
+
+[[build]]
+what = "a second sweeper"
+scrap = 28
+sweeper = 2
+
+[[build]]
+what = "a rocking chair for the nursery"
+scrap = 28
+fixture = { room = "nursery", name = "rocking chair", pos = [1, 6], rest = 2.5, cozy = true }
+
+[[build]]
+what = "chimes by the garden door"
+scrap = 30
+fixture = { room = "garden", name = "chimes", pos = [7, 0], toy = 2.0, loud = true }
+
+[[build]]
+what = "a tool box for the workshop"
+scrap = 30
+fixture = { room = "workshop", name = "tool box", pos = [10, 1], store = 4, inside = true }
+
+[[build]]
+what = "string in the machine"
+scrap = 32
+material = "string"
+
+[[build]]                 # SPEC-v3.5.12 §3: the track through every room, and the train (engine/rail.py)
+what = "a rail for the house"
+scrap = 30
+rail = true
+
+
+[[build]]
+what = "a mirror for the music room"
+scrap = 32
+fixture = { room = "music", name = "mirror", pos = [4, 0], mirror = true }
+
+[[build]]
+what = "a plant for the storeroom"
+scrap = 34
+fixture = { room = "storeroom", name = "plant", pos = [1, 6], movable = true }
+
+[[build]]
+what = "a bigger morning delivery still"
+scrap = 35
+machine = { restock = 4 }
+
+[[build]]
+what = "the greenhouse extension: a long shelf"
+scrap = 36
+fixture = { room = "greenhouse", name = "long shelf", pos = [5, 0], store = 6 }
+
+[[build]]
+what = "the greenhouse extension: a bird bath"
+scrap = 38
+fixture = { room = "greenhouse", name = "bird bath", pos = [5, 6] }
+
+[[build]]
+what = "the greenhouse extension: a lantern"
+scrap = 40
+fixture = { room = "greenhouse", name = "lantern", pos = [7, 1], light = "on" }
+
+[[build]]
+what = "cloth in the machine"
+scrap = 40
+material = "cloth"
+
+[[build]]
+what = "more room in the machine"
+scrap = 42
+machine = { limit = 16 }
+
+[[build]]
+what = "a fifth thing a day from the machine for everyone"
+scrap = 45
+machine = { free = 5 }
+
+[[build]]                 # SPEC-v3.6a §1: out over the bigger pond, the best place to fish (engine/pond.py). Last on the list, but
+what = "a dock for the pond"   # once the rail is built it goes to the front: the next goal after the one being filled (works.front)
+scrap = 20
+dock = true
+after = "a rail for the house"
+
+# SPEC-v3.6c §4 (18 October 2026: outdoor32.png has the art for both, 61 and 62): the two goals left out for want
+# of art. The weather vane turns on its post in the yard; the fountain plays in the middle of the garden.
+[[build]]
+what = "a weather vane for the yard"
+scrap = 45
+fixture = { room = "yard", name = "weather vane", pos = [9, 1], says = "a weather vane on a tall post: its arrow swings round to the wind" }
+
+[[build]]
+what = "a fountain for the garden"
+scrap = 50
+fixture = { room = "garden", name = "fountain", pos = [9, 5], rest = 1.5, cozy = true, says = "a stone fountain: water rises, falls and rises again, and the sound of it is everywhere in the garden" }
+
+# When the list is done, a goal that never runs out: each time it fills, a stock of every base material goes into the
+# machine (as much as it holds).
+[forever]
+what = "the house store"
+scrap = 30
+stock = 3

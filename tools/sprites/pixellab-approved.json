@@ -1,0 +1,3722 @@
+{
+ "version": 1,
+ "approved_by": "User: I approve all of the 184",
+ "draft_sha256": "cb93d82fdfa6d5daeb7cb7b55a937a1d2816fbe83810098fb17aa4e0901968ba",
+ "manifest_sha256": "04c881daa90830c150b38d7947a3926011015b9f5047f3730f46707077851e47",
+ "kinds": [
+  {
+   "kind": "cushion",
+   "cell": "household16:58",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "default_approved": true,
+   "current_sprite": "kind.cushion",
+   "name": "cushion",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "draft_sprite": "kind.cushion"
+  },
+  {
+   "kind": "rug",
+   "cell": "furniture32:4",
+   "status": "near_match_other_sheet",
+   "note": "Woven rug; 32 px, so needs a size decision.",
+   "default_approved": true,
+   "current_sprite": "kind.rug",
+   "name": "round woven rug",
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "draft_sprite": "kind.rug"
+  },
+  {
+   "kind": "blanket",
+   "cell": "household16:59",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "default_approved": true,
+   "current_sprite": "kind.blanket",
+   "name": "blanket",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "draft_sprite": "kind.blanket"
+  },
+  {
+   "kind": "nest",
+   "cell": "outdoor32:49",
+   "status": "near_match_other_sheet",
+   "note": "Bird nest with eggs; remove eggs for a generic empty nest.",
+   "default_approved": true,
+   "current_sprite": "kind.nest",
+   "name": "bird nest with eggs",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "draft_sprite": "kind.nest"
+  },
+  {
+   "kind": "bed-mat",
+   "cell": "furniture32:2",
+   "status": "near_match_other_sheet",
+   "note": "Quilted bed; near match only, includes a frame instead of a floor mat.",
+   "default_approved": true,
+   "current_sprite": "kind.bed-mat",
+   "name": "small bed with quilt",
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "draft_sprite": "kind.bed-mat"
+  },
+  {
+   "kind": "doll",
+   "cell": "generate",
+   "status": "generate",
+   "note": "No convincing cell for this kind; queue four candidates for step 4 after generation approval.",
+   "default_approved": true,
+   "current_sprite": "kind.doll"
+  },
+  {
+   "kind": "candle",
+   "cell": "household16:4",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "default_approved": true,
+   "current_sprite": "kind.candle",
+   "name": "wax candle",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "draft_sprite": "kind.candle"
+  },
+  {
+   "kind": "lantern",
+   "cell": "household16:26",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "default_approved": true,
+   "current_sprite": "kind.lantern",
+   "name": "lantern",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "draft_sprite": "kind.lantern"
+  },
+  {
+   "kind": "lamp",
+   "cell": "furniture32:13",
+   "status": "near_match_other_sheet",
+   "note": "Floor lamp; 32 px fixture silhouette rather than a small table lamp.",
+   "default_approved": true,
+   "current_sprite": "kind.lamp",
+   "name": "floor lamp",
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "draft_sprite": "kind.lamp"
+  },
+  {
+   "kind": "bell",
+   "cell": "household16:6",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "default_approved": true,
+   "current_sprite": "kind.bell",
+   "name": "small brass bell",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "draft_sprite": "kind.bell"
+  },
+  {
+   "kind": "drum",
+   "cell": "household16:62",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "default_approved": true,
+   "current_sprite": "kind.drum",
+   "name": "small drum",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "draft_sprite": "kind.drum"
+  },
+  {
+   "kind": "flute",
+   "cell": "household16:63",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "default_approved": true,
+   "current_sprite": "kind.flute",
+   "name": "flute",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "draft_sprite": "kind.flute"
+  },
+  {
+   "kind": "wind chime",
+   "cell": "generate",
+   "status": "generate",
+   "note": "No convincing cell for this kind; queue four candidates for step 4 after generation approval.",
+   "default_approved": true,
+   "current_sprite": "kind.wind chime"
+  },
+  {
+   "kind": "ball",
+   "cell": "household16:60",
+   "status": "hero16",
+   "note": "Toy ball; direct match.",
+   "default_approved": true,
+   "current_sprite": "kind.ball",
+   "name": "toy ball",
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "draft_sprite": "kind.ball"
+  },
+  {
+   "kind": "spinning top",
+   "cell": "household16:61",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "default_approved": true,
+   "current_sprite": "kind.spinning top",
+   "name": "wooden top",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "draft_sprite": "kind.spinning top"
+  },
+  {
+   "kind": "mobile",
+   "cell": "generate",
+   "status": "generate",
+   "note": "No convincing cell for this kind; queue four candidates for step 4 after generation approval.",
+   "default_approved": true,
+   "current_sprite": "kind.mobile"
+  },
+  {
+   "kind": "jar",
+   "cell": "household16:14",
+   "status": "hero16",
+   "note": "Glass jar; direct match, with its cork retained.",
+   "default_approved": true,
+   "current_sprite": "kind.jar",
+   "name": "glass jar",
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "draft_sprite": "kind.jar"
+  },
+  {
+   "kind": "bowl",
+   "cell": "household16:0",
+   "status": "hero16",
+   "note": "Empty clay bowl; direct match.",
+   "default_approved": true,
+   "current_sprite": "kind.bowl",
+   "name": "clay bowl",
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "draft_sprite": "kind.bowl"
+  },
+  {
+   "kind": "cup",
+   "cell": "everyday16:27",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "default_approved": true,
+   "current_sprite": "kind.cup",
+   "name": "cup",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "draft_sprite": "kind.cup"
+  },
+  {
+   "kind": "vase",
+   "cell": "parts16:14",
+   "status": "near_match_other_sheet",
+   "note": "Glass jar is a vessel near match; lacks a vase neck/profile.",
+   "default_approved": true,
+   "current_sprite": "kind.vase",
+   "name": "glass jar",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "draft_sprite": "kind.vase"
+  },
+  {
+   "kind": "basket",
+   "cell": "household16:2",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "default_approved": true,
+   "current_sprite": "kind.basket",
+   "name": "woven basket",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "draft_sprite": "kind.basket"
+  },
+  {
+   "kind": "box",
+   "cell": "parts16:17",
+   "status": "near_match_other_sheet",
+   "note": "Small box; direct subject match outside the four hero sheets.",
+   "default_approved": true,
+   "current_sprite": "kind.box",
+   "name": "small box",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "draft_sprite": "kind.box"
+  },
+  {
+   "kind": "shelf",
+   "cell": "track16:42",
+   "status": "near_match_other_sheet",
+   "note": "Small shelf; subject match from the rail accessory sheet.",
+   "default_approved": true,
+   "current_sprite": "kind.shelf",
+   "name": "small shelf",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "draft_sprite": "kind.shelf"
+  },
+  {
+   "kind": "stool",
+   "cell": "furniture32:7",
+   "status": "near_match_other_sheet",
+   "note": "Three-legged stool; direct subject, 32 px.",
+   "default_approved": true,
+   "current_sprite": "kind.stool",
+   "name": "three-legged stool",
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "draft_sprite": "kind.stool"
+  },
+  {
+   "kind": "mirror",
+   "cell": "parts16:59",
+   "status": "near_match_other_sheet",
+   "note": "Mirror; direct subject from the parts sheet.",
+   "default_approved": true,
+   "current_sprite": "kind.mirror",
+   "name": "mirror",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "draft_sprite": "kind.mirror"
+  },
+  {
+   "kind": "picture",
+   "cell": "track16:35",
+   "status": "near_match_other_sheet",
+   "note": "Photo frame; near match for a framed picture.",
+   "default_approved": true,
+   "current_sprite": "kind.picture",
+   "name": "photo frame",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "draft_sprite": "kind.picture"
+  },
+  {
+   "kind": "plant pot",
+   "cell": "furniture32:14",
+   "status": "near_match_other_sheet",
+   "note": "Potted plant; includes foliage and is 32 px. Needs a bare-pot variant.",
+   "default_approved": true,
+   "current_sprite": "kind.plant pot",
+   "name": "big potted plant",
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "draft_sprite": "kind.plant pot"
+  },
+  {
+   "kind": "garland",
+   "cell": "generate",
+   "status": "generate",
+   "note": "No convincing cell for this kind; queue four candidates for step 4 after generation approval.",
+   "default_approved": true,
+   "current_sprite": "kind.garland"
+  },
+  {
+   "kind": "charm",
+   "cell": "sweeper16:57",
+   "status": "near_match_other_sheet",
+   "note": "Ribbon medal; near match for a small hanging charm.",
+   "default_approved": true,
+   "current_sprite": "kind.charm",
+   "name": "ribbon medal",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "draft_sprite": "kind.charm"
+  },
+  {
+   "kind": "stone stack",
+   "cell": "outdoor32:12",
+   "status": "near_match_other_sheet",
+   "note": "Small rocks pile; near match, not an intentionally balanced cairn.",
+   "default_approved": true,
+   "current_sprite": "kind.stone stack",
+   "name": "small rocks pile",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "draft_sprite": "kind.stone stack"
+  },
+  {
+   "kind": "sculpture",
+   "cell": "generate",
+   "status": "generate",
+   "note": "No convincing cell for this kind; queue four candidates for step 4 after generation approval.",
+   "default_approved": true,
+   "current_sprite": "kind.sculpture"
+  },
+  {
+   "kind": "treat",
+   "cell": "pond16:32",
+   "status": "hero16",
+   "note": "Slice of cake; matches the snack/cake kind.",
+   "default_approved": true,
+   "current_sprite": "kind.treat",
+   "name": "slice of cake",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "draft_sprite": "kind.treat"
+  },
+  {
+   "kind": "chest",
+   "cell": "furniture32:15",
+   "status": "near_match_other_sheet",
+   "note": "Wooden chest; direct subject, 32 px.",
+   "default_approved": true,
+   "current_sprite": "kind.chest",
+   "name": "wooden chest",
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "draft_sprite": "kind.chest"
+  },
+  {
+   "kind": "crate",
+   "cell": "track16:25",
+   "status": "near_match_other_sheet",
+   "note": "Small crate; subject match from the rail accessory sheet.",
+   "default_approved": true,
+   "current_sprite": "kind.crate",
+   "name": "small crate",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "draft_sprite": "kind.crate"
+  },
+  {
+   "kind": "wall hook",
+   "cell": "everyday16:42",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "default_approved": true,
+   "current_sprite": "kind.wall hook",
+   "name": "hook",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "draft_sprite": "kind.wall hook"
+  },
+  {
+   "kind": "rope",
+   "cell": "everyday16:33",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "default_approved": true,
+   "current_sprite": "kind.rope",
+   "name": "rope",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "draft_sprite": "kind.rope"
+  },
+  {
+   "kind": "carver",
+   "cell": "household16:8",
+   "status": "hero16",
+   "note": "Carving knife; direct match.",
+   "default_approved": true,
+   "current_sprite": "kind.carver",
+   "name": "carving knife",
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "draft_sprite": "kind.carver"
+  },
+  {
+   "kind": "trowel",
+   "cell": "household16:7",
+   "status": "hero16",
+   "note": "Garden trowel; direct match.",
+   "default_approved": true,
+   "current_sprite": "kind.trowel",
+   "name": "garden trowel",
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "draft_sprite": "kind.trowel"
+  },
+  {
+   "kind": "hammer",
+   "cell": "everyday16:55",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "default_approved": true,
+   "current_sprite": "kind.hammer",
+   "name": "hammer",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "draft_sprite": "kind.hammer"
+  },
+  {
+   "kind": "tile",
+   "cell": "products16:3",
+   "status": "near_match_other_sheet",
+   "note": "Clay tile; direct subject from the products sheet.",
+   "default_approved": true,
+   "current_sprite": "kind.tile",
+   "name": "clay tile",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "draft_sprite": "kind.tile"
+  },
+  {
+   "kind": "patch",
+   "cell": "tubes16:57",
+   "status": "near_match_other_sheet",
+   "note": "Brass tube repair patch; specialized metal patch rather than cloth.",
+   "default_approved": true,
+   "current_sprite": "kind.patch",
+   "name": "brass tube repair patch",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "draft_sprite": "kind.patch"
+  },
+  {
+   "kind": "tinder bundle",
+   "cell": "sweeper16:13",
+   "status": "near_match_other_sheet",
+   "note": "Bundle of sticks; near match for dry kindling.",
+   "default_approved": true,
+   "current_sprite": "kind.tinder bundle",
+   "name": "bundle of sticks",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "draft_sprite": "kind.tinder bundle"
+  },
+  {
+   "kind": "draught stopper",
+   "cell": "generate",
+   "status": "generate",
+   "note": "No convincing cell for this kind; queue four candidates for step 4 after generation approval.",
+   "default_approved": true,
+   "current_sprite": "kind.draught stopper"
+  },
+  {
+   "kind": "sign",
+   "cell": "outdoor32:24",
+   "status": "near_match_other_sheet",
+   "note": "Signpost with arrows; near match, 32 px instead of a small label.",
+   "default_approved": true,
+   "current_sprite": "kind.sign",
+   "name": "signpost with two arrows",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "draft_sprite": "kind.sign"
+  },
+  {
+   "kind": "fork",
+   "cell": "everyday16:24",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "default_approved": true,
+   "current_sprite": "kind.fork",
+   "name": "fork",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "draft_sprite": "kind.fork"
+  },
+  {
+   "kind": "spoon",
+   "cell": "household16:9",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "default_approved": true,
+   "current_sprite": "kind.spoon",
+   "name": "wooden spoon",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "draft_sprite": "kind.spoon"
+  },
+  {
+   "kind": "knife",
+   "cell": "household16:8",
+   "status": "hero16",
+   "note": "Shares the carving knife because this kind counts as carver.",
+   "default_approved": true,
+   "current_sprite": "kind.knife",
+   "name": "carving knife",
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "draft_sprite": "kind.knife"
+  },
+  {
+   "kind": "plate",
+   "cell": "everyday16:28",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "default_approved": true,
+   "current_sprite": "kind.plate",
+   "name": "plate",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "draft_sprite": "kind.plate"
+  },
+  {
+   "kind": "kettle",
+   "cell": "household16:57",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "default_approved": true,
+   "current_sprite": "kind.kettle",
+   "name": "kettle",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "draft_sprite": "kind.kettle"
+  },
+  {
+   "kind": "stick",
+   "cell": "household16:44",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "default_approved": true,
+   "current_sprite": "kind.stick",
+   "name": "wooden stick",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "draft_sprite": "kind.stick"
+  },
+  {
+   "kind": "tube",
+   "cell": "everyday16:34",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "default_approved": true,
+   "current_sprite": "kind.tube",
+   "name": "tube",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "draft_sprite": "kind.tube"
+  },
+  {
+   "kind": "brush",
+   "cell": "household16:22",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "default_approved": true,
+   "current_sprite": "kind.brush",
+   "name": "paint brush",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "draft_sprite": "kind.brush"
+  },
+  {
+   "kind": "broom",
+   "cell": "household16:23",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "default_approved": true,
+   "current_sprite": "kind.broom",
+   "name": "broom",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "draft_sprite": "kind.broom"
+  },
+  {
+   "kind": "bucket",
+   "cell": "household16:24",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "default_approved": true,
+   "current_sprite": "kind.bucket",
+   "name": "bucket",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "draft_sprite": "kind.bucket"
+  },
+  {
+   "kind": "torch",
+   "cell": "everyday16:38",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "default_approved": true,
+   "current_sprite": "kind.torch",
+   "name": "torch",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "draft_sprite": "kind.torch"
+  },
+  {
+   "kind": "needle",
+   "cell": "household16:10",
+   "status": "hero16",
+   "note": "Needle with thread attached; acceptable sewing-tool silhouette.",
+   "default_approved": true,
+   "current_sprite": "kind.needle",
+   "name": "needle and thread",
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "draft_sprite": "kind.needle"
+  },
+  {
+   "kind": "wheel",
+   "cell": "household16:20",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "default_approved": true,
+   "current_sprite": "kind.wheel",
+   "name": "wooden wheel",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "draft_sprite": "kind.wheel"
+  },
+  {
+   "kind": "hook",
+   "cell": "household16:12",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "default_approved": true,
+   "current_sprite": "kind.hook",
+   "name": "fishing hook",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "draft_sprite": "kind.hook"
+  },
+  {
+   "kind": "spring",
+   "cell": "tech16:10",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "default_approved": true,
+   "current_sprite": "kind.spring",
+   "name": "spring",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "draft_sprite": "kind.spring"
+  },
+  {
+   "kind": "rod",
+   "cell": "household16:25",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "default_approved": true,
+   "current_sprite": "kind.rod",
+   "name": "fishing rod",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "draft_sprite": "kind.rod"
+  },
+  {
+   "kind": "bottle",
+   "cell": "pond16:8",
+   "status": "hero16",
+   "note": "Glass bottle; direct match without chemistry contents.",
+   "default_approved": true,
+   "current_sprite": "kind.bottle",
+   "name": "glass bottle",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "draft_sprite": "kind.bottle"
+  },
+  {
+   "kind": "note bottle",
+   "cell": "pond16:9",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "default_approved": true,
+   "current_sprite": "kind.note bottle",
+   "name": "bottle with a rolled note inside",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "draft_sprite": "kind.note bottle"
+  },
+  {
+   "kind": "lens",
+   "cell": "household16:5",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "default_approved": true,
+   "current_sprite": "kind.lens",
+   "name": "glass lens",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "draft_sprite": "kind.lens"
+  },
+  {
+   "kind": "gear",
+   "cell": "everyday16:18",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "default_approved": true,
+   "current_sprite": "kind.gear",
+   "name": "small gear",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "draft_sprite": "kind.gear"
+  },
+  {
+   "kind": "ring",
+   "cell": "household16:28",
+   "status": "hero16",
+   "note": "Plain ring; direct match.",
+   "default_approved": true,
+   "current_sprite": "kind.ring",
+   "name": "ring",
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "draft_sprite": "kind.ring"
+  },
+  {
+   "kind": "key",
+   "cell": "household16:27",
+   "status": "hero16",
+   "note": "Small key; direct match.",
+   "default_approved": true,
+   "current_sprite": "kind.key",
+   "name": "small key",
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "draft_sprite": "kind.key"
+  },
+  {
+   "kind": "golden fish",
+   "cell": "everyday16:7",
+   "status": "hero16",
+   "note": "Direct subject match in the four hero sheets.",
+   "default_approved": true,
+   "current_sprite": "kind.golden fish",
+   "name": "golden fish",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "draft_sprite": "kind.golden fish"
+  }
+ ],
+ "parts": [
+  {
+   "part": "spring",
+   "cell": "parts16:25",
+   "candidate": "parts16:25",
+   "existing_entry": true,
+   "status": "part16",
+   "default_approved": true,
+   "note": "Matching part cell; geometry remains a draft.",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "role": "on",
+   "layer": "front",
+   "bounds": [
+    4,
+    1,
+    12,
+    15
+   ],
+   "draft_entry_json": "{\"role\":\"top\",\"on\":[\"base\",\"side\",\"inside\"],\"layer\":\"front\",\"px\":{\"16\":{\"file\":\"own/pixellab/parts16.png\",\"rect\":[16,48,16,16],\"pin\":[7,7]}}}",
+   "geometry_note": "Coordinates are cell-local and guessed from nontransparent bounds; pin is the bounds center. Not compositor-verified. 24 px art remains a gap."
+  },
+  {
+   "part": "gear",
+   "cell": "parts16:24",
+   "candidate": "parts16:24",
+   "existing_entry": true,
+   "status": "part16",
+   "default_approved": true,
+   "note": "Matching part cell; geometry remains a draft.",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "role": "on",
+   "layer": "front",
+   "bounds": [
+    1,
+    1,
+    15,
+    15
+   ],
+   "draft_entry_json": "{\"role\":\"top\",\"on\":[\"side\",\"inside\",\"top\"],\"layer\":\"front\",\"px\":{\"16\":{\"file\":\"own/pixellab/parts16.png\",\"rect\":[0,48,16,16],\"pin\":[7,7]}}}",
+   "geometry_note": "Coordinates are cell-local and guessed from nontransparent bounds; pin is the bounds center. Not compositor-verified. 24 px art remains a gap."
+  },
+  {
+   "part": "axle",
+   "cell": "parts16:26",
+   "candidate": "parts16:26",
+   "existing_entry": true,
+   "status": "part16",
+   "default_approved": true,
+   "note": "Dedicated axle cell; review its orientation before compositing.",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "role": "on",
+   "layer": "front",
+   "bounds": [
+    0,
+    5,
+    16,
+    11
+   ],
+   "draft_entry_json": "{\"role\":\"top\",\"on\":[\"base\"],\"layer\":\"front\",\"px\":{\"16\":{\"file\":\"own/pixellab/parts16.png\",\"rect\":[32,48,16,16],\"pin\":[7,7]}}}",
+   "geometry_note": "Coordinates are cell-local and guessed from nontransparent bounds; pin is the bounds center. Not compositor-verified. 24 px art remains a gap."
+  },
+  {
+   "part": "wheel",
+   "cell": "parts16:23",
+   "candidate": "parts16:23",
+   "existing_entry": true,
+   "status": "part16",
+   "default_approved": true,
+   "note": "Matching part cell; geometry remains a draft.",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "role": "on",
+   "layer": "front",
+   "bounds": [
+    1,
+    1,
+    15,
+    15
+   ],
+   "draft_entry_json": "{\"role\":\"top\",\"on\":[\"base\",\"side\"],\"layer\":\"front\",\"to\":{\"side\":\"base\"},\"px\":{\"16\":{\"file\":\"own/pixellab/parts16.png\",\"rect\":[112,32,16,16],\"pin\":[7,7],\"at\":{\"top\":[7,1],\"tip\":[7,1],\"side\":[14,7],\"base\":[7,14],\"face\":[7,7]}}}}",
+   "geometry_note": "Coordinates are cell-local and guessed from nontransparent bounds; pin is the bounds center. Not compositor-verified. 24 px art remains a gap."
+  },
+  {
+   "part": "pulley",
+   "cell": "parts16:44",
+   "candidate": "parts16:44",
+   "existing_entry": true,
+   "status": "part16",
+   "default_approved": true,
+   "note": "Matching part cell; geometry remains a draft.",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "role": "on",
+   "layer": "front",
+   "bounds": [
+    3,
+    1,
+    13,
+    15
+   ],
+   "draft_entry_json": "{\"role\":\"top\",\"on\":[\"top\",\"tip\"],\"layer\":\"front\",\"px\":{\"16\":{\"file\":\"own/pixellab/parts16.png\",\"rect\":[64,80,16,16],\"pin\":[7,7]}}}",
+   "geometry_note": "Coordinates are cell-local and guessed from nontransparent bounds; pin is the bounds center. Not compositor-verified. 24 px art remains a gap."
+  },
+  {
+   "part": "lever",
+   "cell": "generate",
+   "candidate": "none",
+   "existing_entry": true,
+   "status": "generate",
+   "default_approved": true,
+   "note": "No lever cell in parts16; cell 42 is a crank handle, not a lever.",
+   "role": "on",
+   "layer": "front",
+   "draft_entry_json": "{\"role\":\"top\",\"on\":[\"side\",\"top\"],\"layer\":\"front\"}",
+   "geometry_note": "Role and layer skeleton only; no sprite geometry can be guessed without matching art. 16 and 24 px art remain gaps."
+  },
+  {
+   "part": "hinge",
+   "cell": "parts16:43",
+   "candidate": "parts16:43",
+   "existing_entry": true,
+   "status": "part16",
+   "default_approved": true,
+   "note": "Matching part cell; geometry remains a draft.",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "role": "on",
+   "layer": "front",
+   "bounds": [
+    2,
+    2,
+    14,
+    14
+   ],
+   "draft_entry_json": "{\"role\":\"top\",\"on\":[\"side\",\"top\"],\"layer\":\"front\",\"px\":{\"16\":{\"file\":\"own/pixellab/parts16.png\",\"rect\":[48,80,16,16],\"pin\":[7,7]}}}",
+   "geometry_note": "Coordinates are cell-local and guessed from nontransparent bounds; pin is the bounds center. Not compositor-verified. 24 px art remains a gap."
+  },
+  {
+   "part": "pin",
+   "cell": "generate",
+   "candidate": "none",
+   "existing_entry": false,
+   "status": "generate",
+   "default_approved": true,
+   "note": "No pin cell in parts16. A straight rod would not read as a small fastening pin.",
+   "role": "on",
+   "layer": "front",
+   "draft_entry_json": "{\"role\":\"top\",\"on\":[\"side\",\"top\"],\"layer\":\"front\"}",
+   "geometry_note": "Role and layer skeleton only; no sprite geometry can be guessed without matching art. 16 and 24 px art remain gaps."
+  },
+  {
+   "part": "bellows",
+   "cell": "generate",
+   "candidate": "none",
+   "existing_entry": true,
+   "status": "generate",
+   "default_approved": true,
+   "note": "No bellows in parts16; selected machines48b:3 is a complete 48 px fixture, not a 16 px layer.",
+   "role": "on",
+   "layer": "front",
+   "draft_entry_json": "{\"role\":\"top\",\"on\":[\"side\"],\"layer\":\"front\"}",
+   "geometry_note": "Role and layer skeleton only; no sprite geometry can be guessed without matching art. 16 and 24 px art remain gaps."
+  },
+  {
+   "part": "piston",
+   "cell": "generate",
+   "candidate": "none",
+   "existing_entry": false,
+   "status": "generate",
+   "default_approved": true,
+   "note": "No piston in parts16; tech16:31 is marked miss and excluded.",
+   "role": "on",
+   "layer": "front",
+   "draft_entry_json": "{\"role\":\"top\",\"on\":[\"side\",\"top\"],\"layer\":\"front\"}",
+   "geometry_note": "Role and layer skeleton only; no sprite geometry can be guessed without matching art. 16 and 24 px art remain gaps."
+  },
+  {
+   "part": "boiler",
+   "cell": "generate",
+   "candidate": "none",
+   "existing_entry": false,
+   "status": "generate",
+   "default_approved": true,
+   "note": "No boiler in parts16; cell 13 is a plain tank without boiler fittings. Selected machines48:5 is a 48 px fixture.",
+   "role": "base",
+   "layer": "body",
+   "draft_entry_json": "{\"role\":\"base\",\"spots\":[\"top\",\"side\",\"inside\",\"base\"],\"layer\":\"body\"}",
+   "geometry_note": "Role and layer skeleton only; no sprite geometry can be guessed without matching art. 16 and 24 px art remain gaps."
+  },
+  {
+   "part": "valve",
+   "cell": "parts16:22",
+   "candidate": "parts16:22",
+   "existing_entry": true,
+   "status": "part16",
+   "default_approved": true,
+   "note": "Matching part cell; geometry remains a draft.",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "role": "on",
+   "layer": "front",
+   "bounds": [
+    1,
+    2,
+    15,
+    14
+   ],
+   "draft_entry_json": "{\"role\":\"top\",\"on\":[\"side\",\"top\"],\"layer\":\"front\",\"px\":{\"16\":{\"file\":\"own/pixellab/parts16.png\",\"rect\":[96,32,16,16],\"pin\":[7,7]}}}",
+   "geometry_note": "Coordinates are cell-local and guessed from nontransparent bounds; pin is the bounds center. Not compositor-verified. 24 px art remains a gap."
+  },
+  {
+   "part": "spout",
+   "cell": "parts16:20",
+   "candidate": "parts16:20",
+   "existing_entry": true,
+   "status": "part16",
+   "default_approved": true,
+   "note": "Matching part cell; geometry remains a draft.",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "role": "on",
+   "layer": "front",
+   "bounds": [
+    1,
+    4,
+    15,
+    12
+   ],
+   "draft_entry_json": "{\"role\":\"top\",\"on\":[\"side\"],\"layer\":\"front\",\"px\":{\"16\":{\"file\":\"own/pixellab/parts16.png\",\"rect\":[64,32,16,16],\"pin\":[7,7]}}}",
+   "geometry_note": "Coordinates are cell-local and guessed from nontransparent bounds; pin is the bounds center. Not compositor-verified. 24 px art remains a gap."
+  },
+  {
+   "part": "cage",
+   "cell": "generate",
+   "candidate": "none",
+   "existing_entry": true,
+   "status": "generate",
+   "default_approved": true,
+   "note": "No cage in parts16; cell 38 is a square frame, not a cage. Selected furniture32:41 is a whole birdcage.",
+   "role": "base",
+   "layer": "body",
+   "draft_entry_json": "{\"role\":\"base\",\"spots\":[\"inside\",\"top\",\"side\",\"base\"],\"layer\":\"body\"}",
+   "geometry_note": "Role and layer skeleton only; no sprite geometry can be guessed without matching art. 16 and 24 px art remain gaps."
+  },
+  {
+   "part": "net",
+   "cell": "parts16:29",
+   "candidate": "parts16:29",
+   "existing_entry": true,
+   "status": "part16",
+   "default_approved": true,
+   "note": "Matching part cell; geometry remains a draft.",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "role": "on",
+   "layer": "front",
+   "bounds": [
+    1,
+    1,
+    15,
+    15
+   ],
+   "draft_entry_json": "{\"role\":\"top\",\"on\":[\"tip\",\"inside\",\"top\"],\"layer\":\"front\",\"px\":{\"16\":{\"file\":\"own/pixellab/parts16.png\",\"rect\":[80,48,16,16],\"pin\":[7,7]}}}",
+   "geometry_note": "Coordinates are cell-local and guessed from nontransparent bounds; pin is the bounds center. Not compositor-verified. 24 px art remains a gap."
+  },
+  {
+   "part": "hook",
+   "cell": "parts16:7",
+   "candidate": "parts16:7",
+   "existing_entry": true,
+   "status": "part16",
+   "default_approved": true,
+   "note": "Matching part cell; geometry remains a draft.",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "role": "on",
+   "layer": "front",
+   "bounds": [
+    4,
+    1,
+    12,
+    15
+   ],
+   "draft_entry_json": "{\"role\":\"top\",\"on\":[\"top\",\"tip\"],\"layer\":\"front\",\"px\":{\"16\":{\"file\":\"own/pixellab/parts16.png\",\"rect\":[112,0,16,16],\"pin\":[7,7]}}}",
+   "geometry_note": "Coordinates are cell-local and guessed from nontransparent bounds; pin is the bounds center. Not compositor-verified. 24 px art remains a gap."
+  },
+  {
+   "part": "sling",
+   "cell": "generate",
+   "candidate": "none",
+   "existing_entry": false,
+   "status": "generate",
+   "default_approved": true,
+   "note": "No sling in parts16; cord/net cells alone do not depict one.",
+   "role": "wrap",
+   "layer": "front",
+   "draft_entry_json": "{\"role\":\"wrap\",\"on\":[\"side\"],\"layer\":\"front\",\"clip\":true,\"to\":{\"side\":\"face\"}}",
+   "geometry_note": "Role and layer skeleton only; no sprite geometry can be guessed without matching art. 16 and 24 px art remain gaps."
+  },
+  {
+   "part": "strap",
+   "cell": "parts16:27",
+   "candidate": "parts16:27",
+   "existing_entry": true,
+   "status": "part16",
+   "default_approved": true,
+   "note": "Matching part cell; geometry remains a draft.",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "role": "wrap",
+   "layer": "front",
+   "bounds": [
+    1,
+    1,
+    15,
+    15
+   ],
+   "draft_entry_json": "{\"role\":\"wrap\",\"on\":[\"side\"],\"layer\":\"front\",\"clip\":true,\"to\":{\"side\":\"face\"},\"px\":{\"16\":{\"file\":\"own/pixellab/parts16.png\",\"rect\":[48,48,16,16],\"pin\":[7,7],\"at\":{\"top\":[7,1],\"tip\":[7,1],\"side\":[14,7],\"base\":[7,14],\"face\":[7,7]}}}}",
+   "geometry_note": "Coordinates are cell-local and guessed from nontransparent bounds; pin is the bounds center. Not compositor-verified. 24 px art remains a gap."
+  },
+  {
+   "part": "lens",
+   "cell": "parts16:9",
+   "candidate": "parts16:9",
+   "existing_entry": true,
+   "status": "part16",
+   "default_approved": true,
+   "note": "Matching part cell; geometry remains a draft.",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "role": "on",
+   "layer": "front",
+   "bounds": [
+    2,
+    2,
+    14,
+    14
+   ],
+   "draft_entry_json": "{\"role\":\"top\",\"on\":[\"tip\",\"top\",\"side\"],\"layer\":\"front\",\"px\":{\"16\":{\"file\":\"own/pixellab/parts16.png\",\"rect\":[16,16,16,16],\"pin\":[7,7]}}}",
+   "geometry_note": "Coordinates are cell-local and guessed from nontransparent bounds; pin is the bounds center. Not compositor-verified. 24 px art remains a gap."
+  },
+  {
+   "part": "mirror",
+   "cell": "parts16:59",
+   "candidate": "parts16:59",
+   "existing_entry": true,
+   "status": "part16",
+   "default_approved": true,
+   "note": "Matching part cell; geometry remains a draft.",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "role": "on",
+   "layer": "front",
+   "bounds": [
+    4,
+    1,
+    12,
+    15
+   ],
+   "draft_entry_json": "{\"role\":\"top\",\"on\":[\"side\",\"top\",\"inside\"],\"layer\":\"front\",\"px\":{\"16\":{\"file\":\"own/pixellab/parts16.png\",\"rect\":[48,112,16,16],\"pin\":[7,7]}}}",
+   "geometry_note": "Coordinates are cell-local and guessed from nontransparent bounds; pin is the bounds center. Not compositor-verified. 24 px art remains a gap."
+  },
+  {
+   "part": "wire",
+   "cell": "generate",
+   "candidate": "none",
+   "existing_entry": false,
+   "status": "generate",
+   "default_approved": true,
+   "note": "parts16:48 copper wire is marked miss; cannot use it.",
+   "role": "wrap",
+   "layer": "front",
+   "draft_entry_json": "{\"role\":\"wrap\",\"on\":[\"side\"],\"layer\":\"front\",\"clip\":true,\"to\":{\"side\":\"face\"}}",
+   "geometry_note": "Role and layer skeleton only; no sprite geometry can be guessed without matching art. 16 and 24 px art remain gaps."
+  },
+  {
+   "part": "coil",
+   "cell": "generate",
+   "candidate": "none",
+   "existing_entry": false,
+   "status": "generate",
+   "default_approved": true,
+   "note": "No electrical coil in parts16; cell 25 is a mechanical spring. Copper wire cell 48 is marked miss.",
+   "role": "wrap",
+   "layer": "front",
+   "draft_entry_json": "{\"role\":\"wrap\",\"on\":[\"side\"],\"layer\":\"front\",\"clip\":true,\"to\":{\"side\":\"face\"}}",
+   "geometry_note": "Role and layer skeleton only; no sprite geometry can be guessed without matching art. 16 and 24 px art remain gaps."
+  },
+  {
+   "part": "cell",
+   "cell": "parts16:47",
+   "candidate": "parts16:47",
+   "existing_entry": false,
+   "status": "part16",
+   "default_approved": true,
+   "note": "Matching part cell; geometry remains a draft.",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "role": "on",
+   "layer": "front",
+   "bounds": [
+    4,
+    1,
+    12,
+    15
+   ],
+   "draft_entry_json": "{\"role\":\"top\",\"on\":[\"side\",\"top\"],\"layer\":\"front\",\"px\":{\"16\":{\"file\":\"own/pixellab/parts16.png\",\"rect\":[112,80,16,16],\"pin\":[7,7]}}}",
+   "geometry_note": "Coordinates are cell-local and guessed from nontransparent bounds; pin is the bounds center. Not compositor-verified. 24 px art remains a gap."
+  },
+  {
+   "part": "bulb",
+   "cell": "parts16:10",
+   "candidate": "parts16:10",
+   "existing_entry": true,
+   "status": "part16",
+   "default_approved": true,
+   "note": "Matching part cell; geometry remains a draft.",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "role": "on",
+   "layer": "front",
+   "bounds": [
+    3,
+    1,
+    13,
+    15
+   ],
+   "draft_entry_json": "{\"role\":\"top\",\"on\":[\"tip\",\"top\",\"inside\"],\"layer\":\"front\",\"px\":{\"16\":{\"file\":\"own/pixellab/parts16.png\",\"rect\":[32,16,16,16],\"pin\":[7,7]}}}",
+   "geometry_note": "Coordinates are cell-local and guessed from nontransparent bounds; pin is the bounds center. Not compositor-verified. 24 px art remains a gap."
+  },
+  {
+   "part": "switch",
+   "cell": "parts16:49",
+   "candidate": "parts16:49",
+   "existing_entry": false,
+   "status": "part16",
+   "default_approved": true,
+   "note": "Matching part cell; geometry remains a draft.",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "role": "on",
+   "layer": "front",
+   "bounds": [
+    3,
+    1,
+    13,
+    15
+   ],
+   "draft_entry_json": "{\"role\":\"top\",\"on\":[\"side\",\"top\"],\"layer\":\"front\",\"px\":{\"16\":{\"file\":\"own/pixellab/parts16.png\",\"rect\":[16,96,16,16],\"pin\":[7,7]}}}",
+   "geometry_note": "Coordinates are cell-local and guessed from nontransparent bounds; pin is the bounds center. Not compositor-verified. 24 px art remains a gap."
+  },
+  {
+   "part": "bell",
+   "cell": "parts16:34",
+   "candidate": "parts16:34",
+   "existing_entry": false,
+   "status": "part16",
+   "default_approved": true,
+   "note": "Matching part cell; geometry remains a draft.",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "role": "on",
+   "layer": "front",
+   "bounds": [
+    3,
+    2,
+    13,
+    14
+   ],
+   "draft_entry_json": "{\"role\":\"top\",\"on\":[\"side\",\"top\"],\"layer\":\"front\",\"px\":{\"16\":{\"file\":\"own/pixellab/parts16.png\",\"rect\":[32,64,16,16],\"pin\":[7,7]}}}",
+   "geometry_note": "Coordinates are cell-local and guessed from nontransparent bounds; pin is the bounds center. Not compositor-verified. 24 px art remains a gap."
+  },
+  {
+   "part": "horn",
+   "cell": "generate",
+   "candidate": "none",
+   "existing_entry": true,
+   "status": "generate",
+   "default_approved": true,
+   "note": "parts16:58 is a whistle, not a horn; no matching horn cell.",
+   "role": "on",
+   "layer": "front",
+   "draft_entry_json": "{\"role\":\"top\",\"on\":[\"tip\"],\"layer\":\"front\",\"sound\":\"flute\"}",
+   "geometry_note": "Role and layer skeleton only; no sprite geometry can be guessed without matching art. 16 and 24 px art remain gaps."
+  },
+  {
+   "part": "dial",
+   "cell": "parts16:51",
+   "candidate": "parts16:51",
+   "existing_entry": false,
+   "status": "part16",
+   "default_approved": true,
+   "note": "Matching part cell; geometry remains a draft.",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "role": "on",
+   "layer": "front",
+   "bounds": [
+    2,
+    3,
+    14,
+    13
+   ],
+   "draft_entry_json": "{\"role\":\"top\",\"on\":[\"side\",\"top\"],\"layer\":\"front\",\"px\":{\"16\":{\"file\":\"own/pixellab/parts16.png\",\"rect\":[48,96,16,16],\"pin\":[7,7]}}}",
+   "geometry_note": "Coordinates are cell-local and guessed from nontransparent bounds; pin is the bounds center. Not compositor-verified. 24 px art remains a gap."
+  },
+  {
+   "part": "plate",
+   "cell": "parts16:18",
+   "candidate": "parts16:18",
+   "existing_entry": true,
+   "status": "part16",
+   "default_approved": true,
+   "note": "Matching part cell; geometry remains a draft.",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "role": "base",
+   "layer": "body",
+   "bounds": [
+    1,
+    4,
+    15,
+    12
+   ],
+   "draft_entry_json": "{\"role\":\"base\",\"spots\":[\"top\",\"side\"],\"layer\":\"body\",\"px\":{\"16\":{\"file\":\"own/pixellab/parts16.png\",\"rect\":[32,32,16,16],\"at\":{\"top\":[7,4],\"inside\":[7,7],\"side\":[14,7],\"base\":[7,11],\"face\":[7,7]}}}}",
+   "geometry_note": "Coordinates are cell-local and guessed from nontransparent bounds; pin is the bounds center. Not compositor-verified. 24 px art remains a gap."
+  },
+  {
+   "part": "casing",
+   "cell": "parts16:17",
+   "candidate": "parts16:17",
+   "existing_entry": false,
+   "status": "part16",
+   "default_approved": true,
+   "note": "Small box is a possible enclosing casing; provisional semantic match.",
+   "in_keep_list": false,
+   "outside_keep_list": true,
+   "role": "base",
+   "layer": "body",
+   "bounds": [
+    2,
+    3,
+    14,
+    13
+   ],
+   "draft_entry_json": "{\"role\":\"base\",\"spots\":[\"top\",\"side\",\"inside\",\"base\"],\"layer\":\"body\",\"px\":{\"16\":{\"file\":\"own/pixellab/parts16.png\",\"rect\":[16,32,16,16],\"at\":{\"top\":[7,3],\"inside\":[7,7],\"side\":[13,7],\"base\":[7,12],\"face\":[7,7]}}}}",
+   "geometry_note": "Coordinates are cell-local and guessed from nontransparent bounds; pin is the bounds center. Not compositor-verified. 24 px art remains a gap."
+  }
+ ],
+ "fixtures": [
+  {
+   "cell": "furniture32:0",
+   "name": "wooden shelf with things on it",
+   "suggested_name": "display shelf",
+   "sprite": "fix.display shelf",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:1",
+   "name": "wooden bench",
+   "suggested_name": "wooden bench",
+   "sprite": "fix.wooden bench",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:2",
+   "name": "small bed with quilt",
+   "suggested_name": "quilt bed",
+   "sprite": "fix.quilt bed",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:3",
+   "name": "weaving loom",
+   "suggested_name": "weaving loom",
+   "sprite": "fix.weaving loom",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:4",
+   "name": "round woven rug",
+   "suggested_name": "woven rug",
+   "sprite": "fix.woven rug",
+   "category": "floor_furnishing",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:5",
+   "name": "wooden table",
+   "suggested_name": "wooden table",
+   "sprite": "fix.wooden table",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:6",
+   "name": "wooden chair",
+   "suggested_name": "wooden chair",
+   "sprite": "fix.wooden chair",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:7",
+   "name": "three-legged stool",
+   "suggested_name": "wooden stool",
+   "sprite": "fix.wooden stool",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:8",
+   "name": "cabinet",
+   "suggested_name": "cabinet",
+   "sprite": "fix.cabinet",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:9",
+   "name": "wardrobe",
+   "suggested_name": "wardrobe",
+   "sprite": "fix.wardrobe",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:10",
+   "name": "bookshelf full of books",
+   "suggested_name": "bookshelf",
+   "sprite": "fix.bookshelf",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:11",
+   "name": "workbench with tools",
+   "suggested_name": "tool workbench",
+   "sprite": "fix.tool workbench",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:12",
+   "name": "writing desk",
+   "suggested_name": "writing desk",
+   "sprite": "fix.writing desk",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:13",
+   "name": "floor lamp",
+   "suggested_name": "floor lamp",
+   "sprite": "fix.floor lamp",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:14",
+   "name": "big potted plant",
+   "suggested_name": "potted plant",
+   "sprite": "fix.potted plant",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:15",
+   "name": "wooden chest",
+   "suggested_name": "wooden chest",
+   "sprite": "fix.wooden chest",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:16",
+   "name": "stack of crates",
+   "suggested_name": "crate stack",
+   "sprite": "fix.crate stack",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:17",
+   "name": "barrel",
+   "suggested_name": "barrel",
+   "sprite": "fix.barrel",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:18",
+   "name": "small sofa",
+   "suggested_name": "sofa",
+   "sprite": "fix.sofa",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:19",
+   "name": "armchair",
+   "suggested_name": "armchair",
+   "sprite": "fix.armchair",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:20",
+   "name": "hammock",
+   "suggested_name": "hammock",
+   "sprite": "fix.hammock",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:21",
+   "name": "wooden ladder",
+   "suggested_name": "ladder",
+   "sprite": "fix.ladder",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:22",
+   "name": "painting easel",
+   "suggested_name": "painting easel",
+   "sprite": "fix.painting easel",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:23",
+   "name": "upright piano",
+   "suggested_name": "upright piano",
+   "sprite": "fix.upright piano",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:24",
+   "name": "harp",
+   "suggested_name": "harp",
+   "sprite": "fix.harp",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:25",
+   "name": "grandfather clock",
+   "suggested_name": "grandfather clock",
+   "sprite": "fix.grandfather clock",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:26",
+   "name": "stone fireplace",
+   "suggested_name": "fireplace",
+   "sprite": "fix.fireplace",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:27",
+   "name": "sink",
+   "suggested_name": "sink",
+   "sprite": "fix.sink",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:28",
+   "name": "bathtub",
+   "suggested_name": "bathtub",
+   "sprite": "fix.bathtub",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:29",
+   "name": "standing mirror",
+   "suggested_name": "standing mirror",
+   "sprite": "fix.standing mirror",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:31",
+   "name": "coat stand",
+   "suggested_name": "coat stand",
+   "sprite": "fix.coat stand",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:32",
+   "name": "cradle",
+   "suggested_name": "cradle",
+   "sprite": "fix.cradle",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:33",
+   "name": "toy box",
+   "suggested_name": "toy box",
+   "sprite": "fix.toy box",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:34",
+   "name": "rocking horse",
+   "suggested_name": "rocking horse",
+   "sprite": "fix.rocking horse",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:36",
+   "name": "sewing table",
+   "suggested_name": "sewing table",
+   "sprite": "fix.sewing table",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:37",
+   "name": "pantry shelf with jars",
+   "suggested_name": "pantry shelf",
+   "sprite": "fix.pantry shelf",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:38",
+   "name": "washtub",
+   "suggested_name": "washtub",
+   "sprite": "fix.washtub",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:39",
+   "name": "drying rack with cloth",
+   "suggested_name": "cloth drying rack",
+   "sprite": "fix.cloth drying rack",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:40",
+   "name": "flower box",
+   "suggested_name": "flower box",
+   "sprite": "fix.flower box",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:41",
+   "name": "birdcage",
+   "suggested_name": "birdcage",
+   "sprite": "fix.birdcage",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:42",
+   "name": "fish tank",
+   "suggested_name": "fish tank",
+   "sprite": "fix.fish tank",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:43",
+   "name": "globe on a stand",
+   "suggested_name": "globe",
+   "sprite": "fix.globe",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:44",
+   "name": "telescope on a tripod",
+   "suggested_name": "telescope",
+   "sprite": "fix.telescope",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:45",
+   "name": "music stand",
+   "suggested_name": "music stand",
+   "sprite": "fix.music stand",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:46",
+   "name": "drum kit",
+   "suggested_name": "drum kit",
+   "sprite": "fix.drum kit",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:47",
+   "name": "record player",
+   "suggested_name": "gramophone",
+   "sprite": "fix.gramophone",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "note": "Manifest says record player; image reads as a horn gramophone.",
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:48",
+   "name": "small cupboard",
+   "suggested_name": "small cupboard",
+   "sprite": "fix.small cupboard",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:49",
+   "name": "night stand with lamp",
+   "suggested_name": "bedside table with lamp",
+   "sprite": "fix.bedside table with lamp",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:50",
+   "name": "dresser",
+   "suggested_name": "dresser",
+   "sprite": "fix.dresser",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:51",
+   "name": "laundry basket",
+   "suggested_name": "laundry basket",
+   "sprite": "fix.laundry basket",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:52",
+   "name": "hat stand",
+   "suggested_name": "hat stand",
+   "sprite": "fix.hat stand",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:53",
+   "name": "umbrella stand",
+   "suggested_name": "umbrella stand",
+   "sprite": "fix.umbrella stand",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:54",
+   "name": "wall clock",
+   "suggested_name": "wall clock",
+   "sprite": "fix.wall clock",
+   "category": "wall_fixture",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:55",
+   "name": "notice board",
+   "suggested_name": "notice board",
+   "sprite": "fix.notice board",
+   "category": "wall_fixture",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:56",
+   "name": "chalkboard",
+   "suggested_name": "chalkboard",
+   "sprite": "fix.chalkboard",
+   "category": "wall_fixture",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:57",
+   "name": "pinball machine",
+   "suggested_name": "pinball machine",
+   "sprite": "fix.pinball machine",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:58",
+   "name": "jukebox",
+   "suggested_name": "jukebox",
+   "sprite": "fix.jukebox",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:59",
+   "name": "television set",
+   "suggested_name": "television",
+   "sprite": "fix.television",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:60",
+   "name": "computer desk",
+   "suggested_name": "computer desk",
+   "sprite": "fix.computer desk",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:61",
+   "name": "arcade cabinet",
+   "suggested_name": "arcade cabinet",
+   "sprite": "fix.arcade cabinet",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:62",
+   "name": "fridge",
+   "suggested_name": "fridge",
+   "sprite": "fix.fridge",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "furniture32:63",
+   "name": "kitchen stove",
+   "suggested_name": "kitchen stove",
+   "sprite": "fix.kitchen stove",
+   "category": "fixture_or_built_item",
+   "size": [
+    32,
+    32
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "machines48:0",
+   "name": "clay kiln with fire inside",
+   "suggested_name": "kiln",
+   "sprite": "fix.kiln",
+   "category": "fixture_or_built_item",
+   "size": [
+    48,
+    48
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "machines48:1",
+   "name": "blacksmith forge with glowing coals",
+   "suggested_name": "forge",
+   "sprite": "fix.forge",
+   "category": "fixture_or_built_item",
+   "size": [
+    48,
+    48
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "machines48:2",
+   "name": "iron cooking stove",
+   "suggested_name": "iron stove",
+   "sprite": "fix.iron stove",
+   "category": "fixture_or_built_item",
+   "size": [
+    48,
+    48
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "machines48:3",
+   "name": "stone grinding mill",
+   "suggested_name": "grinding mill",
+   "sprite": "fix.grinding mill",
+   "category": "fixture_or_built_item",
+   "size": [
+    48,
+    48
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "machines48:4",
+   "name": "steam engine",
+   "suggested_name": "steam engine",
+   "sprite": "fix.steam engine",
+   "category": "fixture_or_built_item",
+   "size": [
+    48,
+    48
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "machines48:5",
+   "name": "copper boiler with gauges",
+   "suggested_name": "boiler",
+   "sprite": "fix.boiler",
+   "category": "fixture_or_built_item",
+   "size": [
+    48,
+    48
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "machines48:6",
+   "name": "electric generator",
+   "suggested_name": "generator",
+   "sprite": "fix.generator",
+   "category": "fixture_or_built_item",
+   "size": [
+    48,
+    48
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "machines48:7",
+   "name": "water wheel",
+   "suggested_name": "water wheel",
+   "sprite": "fix.water wheel",
+   "category": "fixture_or_built_item",
+   "size": [
+    48,
+    48
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "machines48:8",
+   "name": "windmill model",
+   "suggested_name": "model windmill",
+   "sprite": "fix.model windmill",
+   "category": "fixture_or_built_item",
+   "size": [
+    48,
+    48
+   ],
+   "note": "Art candidate only; inclusion in the v5 catalog and behavior needs lead approval.",
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "machines48:9",
+   "name": "printing press",
+   "suggested_name": "printing press",
+   "sprite": "fix.printing press",
+   "category": "fixture_or_built_item",
+   "size": [
+    48,
+    48
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "machines48:10",
+   "name": "sewing machine",
+   "suggested_name": "sewing machine",
+   "sprite": "fix.sewing machine",
+   "category": "fixture_or_built_item",
+   "size": [
+    48,
+    48
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "machines48:11",
+   "name": "3D printer",
+   "suggested_name": "3D printer",
+   "sprite": "fix.3D printer",
+   "category": "fixture_or_built_item",
+   "size": [
+    48,
+    48
+   ],
+   "note": "Art candidate only; inclusion in the v5 catalog and behavior needs lead approval.",
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "machines48:12",
+   "name": "small robot standing",
+   "suggested_name": "assembled robot",
+   "sprite": "fix.assembled robot",
+   "category": "mobile_built_item",
+   "size": [
+    48,
+    48
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "machines48:13",
+   "name": "vending machine",
+   "suggested_name": "vending machine",
+   "sprite": "fix.vending machine",
+   "category": "fixture_or_built_item",
+   "size": [
+    48,
+    48
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "machines48:14",
+   "name": "computer terminal with screen",
+   "suggested_name": "computer terminal",
+   "sprite": "fix.computer terminal",
+   "category": "fixture_or_built_item",
+   "size": [
+    48,
+    48
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "machines48:15",
+   "name": "radio transmitter with dials",
+   "suggested_name": "radio transmitter",
+   "sprite": "fix.radio transmitter",
+   "category": "fixture_or_built_item",
+   "size": [
+    48,
+    48
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "machines48:16",
+   "name": "tesla coil sparking",
+   "suggested_name": "Tesla coil",
+   "sprite": "fix.Tesla coil",
+   "category": "fixture_or_built_item",
+   "size": [
+    48,
+    48
+   ],
+   "note": "Art candidate only; inclusion in the v5 catalog and behavior needs lead approval.",
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "machines48:17",
+   "name": "satellite dish",
+   "suggested_name": "satellite dish",
+   "sprite": "fix.satellite dish",
+   "category": "fixture_or_built_item",
+   "size": [
+    48,
+    48
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "machines48:18",
+   "name": "rocket on a launch pad",
+   "suggested_name": "rocket launch pad",
+   "sprite": "fix.rocket launch pad",
+   "category": "fixture_or_built_item",
+   "size": [
+    48,
+    48
+   ],
+   "note": "Art candidate only; inclusion in the v5 catalog and behavior needs lead approval.",
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "machines48:19",
+   "name": "hot air balloon",
+   "suggested_name": "hot air balloon",
+   "sprite": "fix.hot air balloon",
+   "category": "mobile_built_item",
+   "size": [
+    48,
+    48
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "machines48:20",
+   "name": "bubbling chemistry set",
+   "suggested_name": "chemistry station",
+   "sprite": "fix.chemistry station",
+   "category": "fixture_or_built_item",
+   "size": [
+    48,
+    48
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "machines48:21",
+   "name": "greenhouse planter machine",
+   "suggested_name": "automatic planter",
+   "sprite": "fix.automatic planter",
+   "category": "fixture_or_built_item",
+   "size": [
+    48,
+    48
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "machines48:22",
+   "name": "conveyor belt",
+   "suggested_name": "conveyor",
+   "sprite": "fix.conveyor",
+   "category": "fixture_or_built_item",
+   "size": [
+    48,
+    48
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "machines48:23",
+   "name": "crane arm",
+   "suggested_name": "crane",
+   "sprite": "fix.crane",
+   "category": "fixture_or_built_item",
+   "size": [
+    48,
+    48
+   ],
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  },
+  {
+   "cell": "machines48:24",
+   "name": "glowing power core",
+   "suggested_name": "power core",
+   "sprite": "fix.power core",
+   "category": "fixture_or_built_item",
+   "size": [
+    48,
+    48
+   ],
+   "note": "Art candidate only; inclusion in the v5 catalog and behavior needs lead approval.",
+   "in_keep_list": true,
+   "outside_keep_list": false,
+   "default_approved": true
+  }
+ ],
+ "original_parts": {
+  "spring": {
+   "role": "top",
+   "on": [
+    "base",
+    "side",
+    "inside"
+   ],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [
+      32,
+      128,
+      16,
+      16
+     ],
+     "pin": [
+      8,
+      8
+     ]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [
+      48,
+      192,
+      24,
+      24
+     ],
+     "pin": [
+      12,
+      12
+     ]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [
+      64,
+      256,
+      32,
+      32
+     ],
+     "pin": [
+      16,
+      16
+     ]
+    }
+   }
+  },
+  "gear": {
+   "role": "top",
+   "on": [
+    "side",
+    "inside",
+    "top"
+   ],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [
+      16,
+      128,
+      16,
+      16
+     ],
+     "pin": [
+      8,
+      11
+     ]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [
+      24,
+      192,
+      24,
+      24
+     ],
+     "pin": [
+      12,
+      17
+     ]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [
+      32,
+      256,
+      32,
+      32
+     ],
+     "pin": [
+      16,
+      23
+     ]
+    }
+   }
+  },
+  "axle": {
+   "role": "top",
+   "on": [
+    "base"
+   ],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [
+      48,
+      128,
+      16,
+      16
+     ],
+     "pin": [
+      8,
+      8
+     ]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [
+      72,
+      192,
+      24,
+      24
+     ],
+     "pin": [
+      12,
+      13
+     ]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [
+      96,
+      256,
+      32,
+      32
+     ],
+     "pin": [
+      16,
+      18
+     ]
+    }
+   }
+  },
+  "wheel": {
+   "role": "top",
+   "on": [
+    "base",
+    "side"
+   ],
+   "layer": "front",
+   "to": {
+    "side": "base"
+   },
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [
+      112,
+      16,
+      16,
+      16
+     ],
+     "pin": [
+      7,
+      12
+     ]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [
+      168,
+      24,
+      24,
+      24
+     ],
+     "pin": [
+      11,
+      18
+     ]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [
+      224,
+      32,
+      32,
+      32
+     ],
+     "pin": [
+      15,
+      24
+     ]
+    }
+   }
+  },
+  "pulley": {
+   "role": "top",
+   "on": [
+    "top",
+    "tip"
+   ],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [
+      64,
+      128,
+      16,
+      16
+     ],
+     "pin": [
+      7,
+      13
+     ]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [
+      96,
+      192,
+      24,
+      24
+     ],
+     "pin": [
+      11,
+      23
+     ]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [
+      128,
+      256,
+      32,
+      32
+     ],
+     "pin": [
+      15,
+      30
+     ]
+    }
+   }
+  },
+  "lever": {
+   "role": "top",
+   "on": [
+    "side",
+    "top"
+   ],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [
+      16,
+      144,
+      16,
+      16
+     ],
+     "pin": [
+      7,
+      15
+     ]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [
+      24,
+      216,
+      24,
+      24
+     ],
+     "pin": [
+      11,
+      23
+     ]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [
+      32,
+      288,
+      32,
+      32
+     ],
+     "pin": [
+      15,
+      31
+     ]
+    }
+   }
+  },
+  "hinge": {
+   "role": "top",
+   "on": [
+    "side",
+    "top"
+   ],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [
+      96,
+      128,
+      16,
+      16
+     ],
+     "pin": [
+      6,
+      12
+     ]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [
+      144,
+      192,
+      24,
+      24
+     ],
+     "pin": [
+      9,
+      18
+     ]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [
+      192,
+      256,
+      32,
+      32
+     ],
+     "pin": [
+      12,
+      24
+     ]
+    }
+   }
+  },
+  "pin": null,
+  "bellows": {
+   "role": "top",
+   "on": [
+    "side"
+   ],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [
+      128,
+      112,
+      16,
+      16
+     ],
+     "pin": [
+      2,
+      12
+     ]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [
+      192,
+      168,
+      24,
+      24
+     ],
+     "pin": [
+      4,
+      18
+     ]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [
+      256,
+      224,
+      32,
+      32
+     ],
+     "pin": [
+      6,
+      24
+     ]
+    }
+   }
+  },
+  "piston": null,
+  "boiler": null,
+  "valve": {
+   "role": "top",
+   "on": [
+    "side",
+    "top"
+   ],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [
+      96,
+      112,
+      16,
+      16
+     ],
+     "pin": [
+      7,
+      15
+     ]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [
+      144,
+      168,
+      24,
+      24
+     ],
+     "pin": [
+      11,
+      23
+     ]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [
+      192,
+      224,
+      32,
+      32
+     ],
+     "pin": [
+      15,
+      30
+     ]
+    }
+   }
+  },
+  "spout": {
+   "role": "top",
+   "on": [
+    "side"
+   ],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [
+      80,
+      16,
+      16,
+      16
+     ],
+     "pin": [
+      11,
+      12
+     ]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [
+      120,
+      24,
+      24,
+      24
+     ],
+     "pin": [
+      16,
+      18
+     ]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [
+      160,
+      32,
+      32,
+      32
+     ],
+     "pin": [
+      22,
+      25
+     ]
+    }
+   }
+  },
+  "cage": {
+   "role": "base",
+   "spots": [
+    "inside",
+    "top",
+    "side",
+    "base"
+   ],
+   "layer": "body",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [
+      16,
+      80,
+      16,
+      16
+     ],
+     "at": {
+      "top": [
+       8,
+       4
+      ],
+      "base": [
+       7,
+       15
+      ],
+      "side": [
+       12,
+       10
+      ],
+      "face": [
+       7,
+       11
+      ],
+      "inside": [
+       8,
+       13
+      ]
+     }
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [
+      24,
+      120,
+      24,
+      24
+     ],
+     "at": {
+      "top": [
+       12,
+       7
+      ],
+      "base": [
+       11,
+       23
+      ],
+      "side": [
+       18,
+       16
+      ],
+      "face": [
+       11,
+       16
+      ],
+      "inside": [
+       12,
+       20
+      ]
+     }
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [
+      32,
+      160,
+      32,
+      32
+     ],
+     "at": {
+      "top": [
+       16,
+       10
+      ],
+      "base": [
+       15,
+       30
+      ],
+      "side": [
+       24,
+       21
+      ],
+      "face": [
+       15,
+       22
+      ],
+      "inside": [
+       16,
+       27
+      ]
+     }
+    }
+   }
+  },
+  "net": {
+   "role": "top",
+   "on": [
+    "tip",
+    "inside",
+    "top"
+   ],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [
+      0,
+      160,
+      16,
+      16
+     ],
+     "pin": [
+      8,
+      9
+     ]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [
+      0,
+      240,
+      24,
+      24
+     ],
+     "pin": [
+      12,
+      14
+     ]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [
+      0,
+      320,
+      32,
+      32
+     ],
+     "pin": [
+      16,
+      18
+     ]
+    }
+   }
+  },
+  "hook": {
+   "role": "top",
+   "on": [
+    "top",
+    "tip"
+   ],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [
+      128,
+      16,
+      16,
+      16
+     ],
+     "pin": [
+      7,
+      15
+     ]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [
+      192,
+      24,
+      24,
+      24
+     ],
+     "pin": [
+      11,
+      23
+     ]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [
+      256,
+      32,
+      32,
+      32
+     ],
+     "pin": [
+      15,
+      30
+     ]
+    }
+   }
+  },
+  "sling": null,
+  "strap": {
+   "role": "wrap",
+   "on": [
+    "side"
+   ],
+   "layer": "front",
+   "clip": true,
+   "to": {
+    "side": "face"
+   },
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [
+      80,
+      144,
+      16,
+      16
+     ],
+     "pin": [
+      7,
+      8
+     ]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [
+      120,
+      216,
+      24,
+      24
+     ],
+     "pin": [
+      11,
+      12
+     ]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [
+      160,
+      288,
+      32,
+      32
+     ],
+     "pin": [
+      15,
+      16
+     ]
+    }
+   }
+  },
+  "lens": {
+   "role": "top",
+   "on": [
+    "tip",
+    "top",
+    "side"
+   ],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [
+      64,
+      96,
+      16,
+      16
+     ],
+     "pin": [
+      7,
+      15
+     ]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [
+      96,
+      144,
+      24,
+      24
+     ],
+     "pin": [
+      11,
+      23
+     ]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [
+      128,
+      192,
+      32,
+      32
+     ],
+     "pin": [
+      15,
+      30
+     ]
+    }
+   }
+  },
+  "mirror": {
+   "role": "top",
+   "on": [
+    "side",
+    "top",
+    "inside"
+   ],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [
+      32,
+      112,
+      16,
+      16
+     ],
+     "pin": [
+      7,
+      15
+     ]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [
+      48,
+      168,
+      24,
+      24
+     ],
+     "pin": [
+      11,
+      23
+     ]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [
+      64,
+      224,
+      32,
+      32
+     ],
+     "pin": [
+      15,
+      31
+     ]
+    }
+   }
+  },
+  "wire": null,
+  "coil": null,
+  "cell": null,
+  "bulb": {
+   "role": "top",
+   "on": [
+    "tip",
+    "top",
+    "inside"
+   ],
+   "layer": "front",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [
+      80,
+      96,
+      16,
+      16
+     ],
+     "pin": [
+      7,
+      15
+     ]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [
+      120,
+      144,
+      24,
+      24
+     ],
+     "pin": [
+      11,
+      23
+     ]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [
+      160,
+      192,
+      32,
+      32
+     ],
+     "pin": [
+      15,
+      30
+     ]
+    }
+   }
+  },
+  "switch": null,
+  "bell": null,
+  "horn": {
+   "role": "top",
+   "on": [
+    "tip"
+   ],
+   "layer": "front",
+   "sound": "flute",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [
+      48,
+      176,
+      16,
+      16
+     ],
+     "pin": [
+      8,
+      15
+     ]
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [
+      72,
+      264,
+      24,
+      24
+     ],
+     "pin": [
+      12,
+      23
+     ]
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [
+      96,
+      352,
+      32,
+      32
+     ],
+     "pin": [
+      16,
+      31
+     ]
+    }
+   }
+  },
+  "dial": null,
+  "plate": {
+   "role": "base",
+   "spots": [
+    "top",
+    "side"
+   ],
+   "layer": "body",
+   "px": {
+    "16": {
+     "file": "own/parts/thing16.png",
+     "rect": [
+      64,
+      64,
+      16,
+      16
+     ],
+     "at": {
+      "top": [
+       8,
+       13
+      ],
+      "base": [
+       7,
+       15
+      ],
+      "side": [
+       14,
+       13
+      ],
+      "face": [
+       7,
+       13
+      ]
+     }
+    },
+    "24": {
+     "file": "own/parts/thing24.png",
+     "rect": [
+      96,
+      96,
+      24,
+      24
+     ],
+     "at": {
+      "top": [
+       12,
+       20
+      ],
+      "base": [
+       11,
+       23
+      ],
+      "side": [
+       21,
+       19
+      ],
+      "face": [
+       11,
+       19
+      ]
+     }
+    },
+    "32": {
+     "file": "own/parts/thing32.png",
+     "rect": [
+      128,
+      128,
+      32,
+      32
+     ],
+     "at": {
+      "top": [
+       16,
+       27
+      ],
+      "base": [
+       15,
+       30
+      ],
+      "side": [
+       28,
+       26
+      ],
+      "face": [
+       15,
+       26
+      ]
+     }
+    }
+   }
+  },
+  "casing": null
+ },
+ "box_geometry": {
+  "role": "base",
+  "spots": [
+   "top",
+   "side",
+   "inside",
+   "base"
+  ],
+  "layer": "body",
+  "px": {
+   "16": {
+    "file": "own/parts/thing16.png",
+    "rect": [
+     32,
+     0,
+     16,
+     16
+    ],
+    "at": {
+     "top": [
+      7,
+      7
+     ],
+     "base": [
+      7,
+      15
+     ],
+     "side": [
+      13,
+      12
+     ],
+     "face": [
+      7,
+      12
+     ],
+     "inside": [
+      7,
+      9
+     ]
+    }
+   },
+   "24": {
+    "file": "own/parts/thing24.png",
+    "rect": [
+     48,
+     0,
+     24,
+     24
+    ],
+    "at": {
+     "top": [
+      11,
+      11
+     ],
+     "base": [
+      11,
+      22
+     ],
+     "side": [
+      19,
+      18
+     ],
+     "face": [
+      11,
+      18
+     ],
+     "inside": [
+      11,
+      14
+     ]
+    }
+   },
+   "32": {
+    "file": "own/parts/thing32.png",
+    "rect": [
+     64,
+     0,
+     32,
+     32
+    ],
+    "at": {
+     "top": [
+      15,
+      15
+     ],
+     "base": [
+      15,
+      30
+     ],
+     "side": [
+      26,
+      25
+     ],
+     "face": [
+      15,
+      25
+     ],
+     "inside": [
+      15,
+      19
+     ]
+    }
+   }
+  }
+ }
+}

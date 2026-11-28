@@ -1,0 +1,106 @@
+# SPEC-v5.3 §2: the project kinds (the lead's; engine/projects.py carries them out, helper A). A project's steps are
+# done in order by the body, one a day at most per owner; the model sees the next one and may change course.
+#
+#   [kind.<name>]   one of contracts.PROJECT_KINDS ("build" is build.py's own projects, which keep building.toml)
+#     a         its article
+#     site      "plot" (outdoors, one of the yard's or meadow's) or "indoor" (tiles in a room the owner sleeps or works in)
+#     rooms     for an indoor site: the room types it may go in, or ["any"]
+#     steps     in order: "do" or "do:what:n" (contracts.PROJECT_STEPS; gather names its material and how many)
+#     becomes   what it is when done, as a fixture's verbs (contracts.VERBS -> 0..1), plus `sleep = true` when cover
+#               counts as a bed (§3)
+#     drives    the drives it serves (§2.6: a hob's first project comes from its drive), and `habit` the habit it serves
+#     words     the kind in plain words for the packet and the board
+#     stages    the site's drawing at each stage: the building.toml or kinds.toml sprite (the view's stand-ins)
+
+[kind.shelter]
+a = "a"
+site = "plot"
+steps = ["clear", "gather:reed:12", "gather:wood:8", "frame", "cover", "gather:stone:4", "hearth"]
+becomes = { cover = 0.8, hold = 0.5, heat = 0.5, sleep = true }
+drives = ["to leave the house", "to be left alone"]
+words = "a shelter of its own outdoors"
+
+[kind.bridge]
+a = "a"
+site = "plot"
+steps = ["clear", "gather:wood:10", "gather:stone:6", "frame", "build"]
+becomes = { move = 0.8 }
+drives = ["to be remembered"]
+words = "a bridge across the pond"
+
+[kind.hearth]
+a = "a"
+site = "plot"
+steps = ["clear", "gather:stone:8", "hearth", "gather:wood:4"]
+becomes = { heat = 0.9, light = 0.3 }
+drives = ["to keep the family safe"]
+words = "a hearth in the open"
+
+[kind.bed]
+a = "a"
+site = "indoor"
+rooms = ["any"]
+steps = ["gather:wood:4", "frame", "gather:fibre:4", "cover"]
+becomes = { cover = 0.7, hold = 0.3, sleep = true }
+drives = []
+words = "a bed"
+
+[kind."bell post"]
+a = "a"
+site = "plot"
+steps = ["clear", "gather:wood:6", "frame", "gather:metal:2", "furnish:bell:1"]
+becomes = { signal = 0.9 }
+drives = ["to be remembered"]
+words = "a post with a bell on it"
+
+[kind.lookout]
+a = "a"
+site = "plot"
+steps = ["clear", "gather:wood:12", "frame", "build"]
+becomes = { move = 0.4 }
+drives = ["to find out what the visitor is"]
+words = "a tall post to climb and look out from"
+
+[kind."garden plot"]
+a = "a"
+site = "plot"
+steps = ["clear", "dig", "gather:seed:3", "grow"]
+becomes = { grow = 0.8 }
+drives = []
+habit = "tend"
+words = "a plot to grow things in"
+
+[kind."workshop corner"]
+a = "a"
+site = "indoor"
+rooms = ["workshop", "hub"]
+steps = ["clear", "gather:wood:6", "build", "furnish:box:1"]
+becomes = { hold = 0.6, mend = 0.3 }
+drives = ["to make the thing nobody has made"]
+words = "a bench of its own to make things at"
+
+[kind.statue]
+a = "a"
+site = "plot"
+steps = ["clear", "gather:stone:8", "build"]
+becomes = {}
+drives = []
+words = "a statue for the dead"
+
+[kind."library nook"]
+a = "a"
+site = "indoor"
+rooms = ["any"]               # (a room with a screen the book is read at)
+steps = ["clear", "gather:wood:6", "build", "furnish:rug:1"]
+becomes = { cover = 0.3, hold = 0.5 }
+drives = ["to know everything in the book"]
+words = "shelves and a seat by the book"
+
+[kind.build]
+a = "a"
+site = "indoor"
+rooms = ["any"]
+steps = ["build"]
+becomes = {}
+drives = []
+words = "something built to stand in a room"

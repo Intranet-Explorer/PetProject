@@ -1,0 +1,72 @@
+/* SPEC-v3.5.3 §5: the Story tab. A day is a header (when, season, weather), the chronicle's paragraph, and its moments,
+   one row each: picture, time, sentence. Births, deaths and a family's start stand out. */
+.story { display: flex; flex-direction: column; gap: var(--gap); }
+.story .filters { position: sticky; top: calc(-1 * var(--pad)); z-index: 1; background: var(--bg); padding: 6px 0; }
+@media (max-width: 640px) { .story .filters { position: static; } }   /* three rows of chips would hide a phone's screen */
+.sday { display: flex; flex-direction: column; gap: 4px; }
+.sday h3 { margin-bottom: 0; }
+.sday h3 .hint { margin-left: 4px; }
+.sday .sky { white-space: nowrap; }
+.sday .sky .icon { margin-right: 3px; }
+.chron { font-size: 14px; padding: 4px 10px 4px 26px; border-left: 3px solid var(--line); max-width: 72ch; display: grid; gap: 3px; }
+.chron li { list-style: disc; }
+.storylist { display: flex; flex-direction: column; }
+.storylist li, .rest { overflow-wrap: anywhere; }
+li.m { display: grid; grid-template-columns: 16px auto minmax(0, 1fr); gap: 6px; align-items: baseline; padding: 2px 4px; font-size: 14px; }
+li.m .icon { align-self: start; margin-top: 2px; color: var(--accent); }
+li.m .t { font: 12px var(--mono); color: var(--muted); white-space: nowrap; min-width: 5ch; text-align: right; }
+li.m .s .face { display: inline-block; vertical-align: middle; margin-right: 4px; }
+li.m .badge { margin-left: 6px; }
+li.m:is(.birth, .death, .founding) { padding-block: 4px; font-weight: 600; background: var(--surface); border-left: 3px solid var(--good); }
+li.m.death { border-left-color: var(--muted); color: var(--muted); }
+li.m.founding { border-left-color: var(--gold); }
+li.m.death .icon { color: var(--muted); }
+.rest { font-size: 12px; color: var(--muted); padding-left: 4px; }
+.earlier { text-align: center; padding: var(--pad) 0; }
+
+/* SPEC-v3.5.6 §6: the skin. Each day is a page of the Travel Book, a journal: its name large, then the chronicle, then
+   the moments, each with its icon and time; names in their family's colours (ui.ts petLink). */
+.story .filters { background: none; padding: 0 4px; display: flex; flex-wrap: wrap; gap: 4px; }
+.story { gap: 12px; }
+.sday { gap: 6px; }
+#page-story .sday > h3 { font-size: 32px !important; line-height: 32px; margin: 0 0 4px; word-spacing: 0; color: var(--ink); }
+.sday > h3 .hint { font-family: var(--pixel); color: var(--ink2); line-height: 18px; margin-left: 8px; }
+.chron { border-left: 2px solid var(--line); padding: 0 4px 0 22px; color: var(--ink); }
+li.m { padding: 2px 0; }
+li.m .t { font-family: var(--pixel); color: var(--ink2); text-align: left; }
+li.m .icon { color: var(--accent); }
+li.m:is(.birth, .death, .founding) { background: none; border-left-width: 2px; padding-left: 2px; }
+li.m.death { color: var(--ink2); }
+.rest { color: var(--ink2); }
+.rest .link { font-family: var(--pixel); }
+.story > .earlier, .story > .hint.earlier { color: var(--on-page); }
+
+/* SPEC-v3.5.7 §8: Story as a book. The cover (BookCover01a, slice 12, x2) holds a spread of two pages (BookPageLeft01a /
+   Right01a, 8 8 12 8, x2) on a desktop, yesterday and today to begin with; one page on a phone. Arrows above, a swipe,
+   or the strip of day markers below turn the pages; a turn is a page swinging over (none with reduce motion). */
+.story, .story * { font-variant-ligatures: none; }   /* (a "font:" shorthand, as on .badge, turns Pixelify's broken "fi" back on) */
+.turns { display: flex; justify-content: space-between; gap: 8px; padding: 0 4px; }
+.turns .turn { padding: 0 10px; }
+.sbook { border-style: solid; border-width: 24px; border-image: url("../../assets/third_party/crusenho/UI_TravelBook_BookCover01a.png") 12 fill stretch;
+  image-rendering: pixelated; touch-action: pan-y; }
+.sbook .sspread { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); perspective: 1600px; }
+.sbook .sspread:has(> :only-child) { grid-template-columns: minmax(0, 1fr); }
+.sbook .sday { min-width: 0; padding: 0 10px; }
+.sbook .sday.right { border-image-source: url("../../assets/third_party/crusenho/UI_TravelBook_BookPageRight01a.png"); }
+.sday .sline { margin: -6px 0 4px; color: var(--ink2); display: flex; flex-wrap: wrap; gap: 0 4px; align-items: center; }
+.sday .sky { display: inline-flex; gap: 4px; align-items: center; white-space: nowrap; }
+.sday .sky .icon { color: var(--accent); }
+.sspread.turn-on > .right, .sspread.turn-on:has(> :only-child) > * { animation: turn-on 0.5s ease-out; transform-origin: 0 50%; }
+.sspread.turn-back > .left, .sspread.turn-back:has(> :only-child) > * { animation: turn-back 0.5s ease-out; transform-origin: 100% 50%; }
+@keyframes turn-on { from { transform: rotateY(-75deg); opacity: 0.4; } to { transform: none; opacity: 1; } }
+@keyframes turn-back { from { transform: rotateY(75deg); opacity: 0.4; } to { transform: none; opacity: 1; } }
+.daystrip { display: flex; gap: 4px; overflow-x: auto; padding: 4px 4px 8px; scrollbar-width: thin; scrollbar-color: var(--on-page) transparent; }
+.daystrip .dmark { flex: none; min-height: 0; padding: 0 6px; border-width: 8px; border-image: url("../../assets/third_party/crusenho/UI_TravelBook_Frame04a.png") 4 fill stretch;
+  color: var(--ink2); animation: none !important; font-variant-numeric: tabular-nums; }
+.daystrip .dmark.on { border-image-source: url("../../assets/third_party/crusenho/UI_TravelBook_FrameSelect01a.png"); color: var(--ink); }
+@media (prefers-reduced-motion: reduce) { .sspread[class*="turn-"] > * { animation: none !important; } }
+@media (max-width: 899.98px) { .sbook { border-width: 12px; } }
+
+/* SPEC-v4.0 §11: a conversation in full under its line */
+ol.talklines { list-style: none; margin: 2px 0 0; padding: 0 0 0 10px; border-left: 2px solid var(--line); display: flex; flex-direction: column; gap: 1px; color: var(--ink2); }
+ol.talklines li.round { font-size: 0.85em; color: var(--ink3, var(--ink2)); border-top: 1px dashed var(--line); margin-top: 3px; padding-top: 2px; }   /* SPEC-v5.3 §8: a round begins */

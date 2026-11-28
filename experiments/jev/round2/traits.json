@@ -1,0 +1,240 @@
+[
+ {
+  "id": "brave_v1",
+  "axis": "brave_timid",
+  "pole": "A",
+  "label": "brave",
+  "text": "walks toward trouble and loud noises, says what it thinks to anyone, takes physical risks"
+ },
+ {
+  "id": "timid_v1",
+  "axis": "brave_timid",
+  "pole": "B",
+  "label": "timid",
+  "text": "keeps to the walls, backs away from anything risky, avoids confrontation"
+ },
+ {
+  "id": "tidy_v1",
+  "axis": "tidy_messy",
+  "pole": "A",
+  "label": "tidy",
+  "text": "puts things back, can't stand a mess, cleans before it rests"
+ },
+ {
+  "id": "messy_v1",
+  "axis": "tidy_messy",
+  "pole": "B",
+  "label": "messy",
+  "text": "drops things where it stands, never puts anything back, doesn't notice clutter"
+ },
+ {
+  "id": "generous_v1",
+  "axis": "generous_greedy",
+  "pole": "A",
+  "label": "generous",
+  "text": "gives food and things away, even when it has little"
+ },
+ {
+  "id": "greedy_v1",
+  "axis": "generous_greedy",
+  "pole": "B",
+  "label": "greedy",
+  "text": "keeps the best for itself, hoards, hates sharing"
+ },
+ {
+  "id": "curious_v1",
+  "axis": "curious_cautious",
+  "pole": "A",
+  "label": "curious",
+  "text": "pokes at anything new, opens what is closed, tries things to see what happens"
+ },
+ {
+  "id": "cautious_v1",
+  "axis": "curious_cautious",
+  "pole": "B",
+  "label": "cautious",
+  "text": "leaves unknown things alone, sticks to what it knows"
+ },
+ {
+  "id": "social_v1",
+  "axis": "social_solitary",
+  "pole": "A",
+  "label": "social",
+  "text": "seeks company, eats and works beside others, talks a lot"
+ },
+ {
+  "id": "solitary_v1",
+  "axis": "social_solitary",
+  "pole": "B",
+  "label": "solitary",
+  "text": "prefers to be alone, works and eats apart, leaves when it gets crowded"
+ },
+ {
+  "id": "honest_v1",
+  "axis": "honest_sly",
+  "pole": "A",
+  "label": "honest",
+  "text": "tells the truth even when it costs, returns what isn't its own"
+ },
+ {
+  "id": "sly_v1",
+  "axis": "honest_sly",
+  "pole": "B",
+  "label": "sly",
+  "text": "lies when it is useful, takes things without asking, lets others take the blame"
+ },
+ {
+  "id": "patient_v1",
+  "axis": "patient_hasty",
+  "pole": "A",
+  "label": "patient",
+  "text": "waits its turn, finishes slow jobs properly"
+ },
+ {
+  "id": "hasty_v1",
+  "axis": "patient_hasty",
+  "pole": "B",
+  "label": "hasty",
+  "text": "can't wait, rushes jobs, skips steps, grabs the quick option"
+ },
+ {
+  "id": "playful_v1",
+  "axis": "playful_serious",
+  "pole": "A",
+  "label": "playful",
+  "text": "jokes, plays games, turns work into fun"
+ },
+ {
+  "id": "serious_v1",
+  "axis": "playful_serious",
+  "pole": "B",
+  "label": "serious",
+  "text": "has no time for games, keeps working, finds jokes annoying"
+ },
+ {
+  "id": "ambitious_v1",
+  "axis": "ambitious_content",
+  "pole": "A",
+  "label": "ambitious",
+  "text": "wants to be the best, takes the hardest job, chases the next big thing"
+ },
+ {
+  "id": "content_v1",
+  "axis": "ambitious_content",
+  "pole": "B",
+  "label": "content",
+  "text": "happy with what it has, would rather nap in the sun than strive"
+ },
+ {
+  "id": "kind_v1",
+  "axis": "kind_prickly",
+  "pole": "A",
+  "label": "kind",
+  "text": "forgives quickly, comforts others, assumes the best of them"
+ },
+ {
+  "id": "prickly_v1",
+  "axis": "kind_prickly",
+  "pole": "B",
+  "label": "prickly",
+  "text": "takes offence easily, snaps, sulks, holds grudges"
+ },
+ {
+  "id": "brave_v2",
+  "axis": "brave_timid",
+  "pole": "A",
+  "label": "brave",
+  "text": "not afraid of physical danger: heights, dark places, wild animals, thin ice"
+ },
+ {
+  "id": "brave_v3",
+  "axis": "brave_timid",
+  "pole": "A",
+  "label": "fearless",
+  "text": "feels little fear when its body is at risk; this says nothing about how bold it is with other hobs"
+ },
+ {
+  "id": "bold_v1",
+  "axis": "brave_timid",
+  "pole": "A",
+  "label": "bold",
+  "text": "speaks up, confronts other hobs, pushes to the front"
+ },
+ {
+  "id": "timid_v2",
+  "axis": "brave_timid",
+  "pole": "B",
+  "label": "timid",
+  "text": "afraid of physical danger: heights, the dark, wild animals, deep water"
+ },
+ {
+  "id": "timid_v3",
+  "axis": "brave_timid",
+  "pole": "B",
+  "label": "easily frightened",
+  "text": "startles at noises and keeps away from anything that could hurt it"
+ },
+ {
+  "id": "meek_v1",
+  "axis": "brave_timid",
+  "pole": "B",
+  "label": "meek",
+  "text": "never confronts other hobs, gives way, stays quiet"
+ },
+ {
+  "id": "playful_v2",
+  "axis": "playful_serious",
+  "pole": "A",
+  "label": "playful",
+  "text": "would rather play than work; drops what it is doing for a game, a joke or a puddle"
+ },
+ {
+  "id": "playful_v3",
+  "axis": "playful_serious",
+  "pole": "A",
+  "label": "a clown",
+  "text": "can't resist a joke or a game, even when there is work to do; makes everything silly"
+ },
+ {
+  "id": "serious_v2",
+  "axis": "playful_serious",
+  "pole": "B",
+  "label": "serious",
+  "text": "work comes first, always; thinks games and jokes are a waste of time"
+ },
+ {
+  "id": "prickly_v2",
+  "axis": "kind_prickly",
+  "pole": "B",
+  "label": "prickly",
+  "text": "hears insults in ordinary remarks, assumes others mean harm, snaps, holds grudges"
+ },
+ {
+  "id": "prickly_v3",
+  "axis": "kind_prickly",
+  "pole": "B",
+  "label": "thin-skinned",
+  "text": "takes everything personally; a look or a joke can ruin its day"
+ },
+ {
+  "id": "kind_v2",
+  "axis": "kind_prickly",
+  "pole": "A",
+  "label": "kind",
+  "text": "assumes others mean well, lets small things go, forgives quickly"
+ },
+ {
+  "id": "patient_v2",
+  "axis": "patient_hasty",
+  "pole": "A",
+  "label": "patient",
+  "text": "never in a hurry; will wait hours or days for a thing to be done right"
+ },
+ {
+  "id": "hasty_v2",
+  "axis": "patient_hasty",
+  "pole": "B",
+  "label": "hasty",
+  "text": "wants everything now; can't stand waiting, even when waiting is clearly better"
+ }
+]

@@ -1,0 +1,10 @@
+__pycache__/
+.DS_Store
+.venv/
+data*/
+node_modules
+view/dist/
+/book/*.zim
+/assets-incoming
+view/assets/audio/**/*.wav
+.claude/worktrees/

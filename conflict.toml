@@ -1,0 +1,128 @@
+# SPEC-v4.0 §7: conflict, injury and sickness (engine/conflict.py, engine/health.py). The switches are in config.toml
+# ([ladder] on, [health] on); the numbers are here. Chances are per step of the ladder (every `every_minutes` world
+# minutes) unless they say otherwise. No cap on the top rungs: rarity comes from how far a grudge has to climb
+# and how few hobs have the temper. If it happens too often, tune these.
+
+[ladder]
+every_minutes = 10        # how often the ladder is looked over
+pole = 0.2                # a trait this far from the middle counts as that pole (sly: honest <= -0.2; prickly: kind <= -0.2; ...)
+act_gap_hours = 4         # a grievance takes at most one step in this long
+angry_hours = 6           # a hob wronged this lately by the other is angry with it, whatever its mood
+grudge_hours = 1          # "a remembered grievance": held at least this long
+talk_wait_hours = 24      # with [talk] on, snubs and insults are talk's; a grievance with no step in this long takes them by itself
+seed_liking = -3          # a hob that likes another this little, with a remembered reason, holds a grievance against it
+little_max = 4            # little ones (hatchling, child, youngling) climb no higher than this: victims, never killers
+watched_hold = 0.75       # above rung 4, the chance a watched hob holds back (the brave hold back less)
+outdoors = 1.5            # opportunity: outdoors, the chance of a step is this much more
+night = 1.5               # ... and at night
+intent = 2.0              # the brain's intent against the other (pet["intent"]) makes a step this much likelier
+scuffle_seconds = 20      # real seconds a scuffle lasts on the page (rungs 5-8), while the visitor can stop it
+
+# one rung each, 1 to 8 (SPEC-v4.0 §7.1 "Needs at least"). liking: the holder's liking of the other must be below it.
+# or_any: any of these traits waives the liking. any / all / not: traits (sly, prickly, greedy, timid, kind, brave,
+# honest, generous). angry: angry with the other. remembered: a grievance held `grudge_hours`. grudge_days: held this
+# long. alone: nobody else awake in the room. again: the grievance came down once and climbed again (or vengeance).
+[[rung]]
+name = "snub"
+liking = 0
+chance = 0.10
+
+[[rung]]
+name = "insult"
+liking = -2
+or_any = ["prickly"]
+chance = 0.08
+
+[[rung]]
+name = "sabotage"
+liking = -4
+any = ["sly", "prickly"]
+chance = 0.05
+
+[[rung]]
+name = "theft"
+liking = -4
+any = ["greedy", "sly"]
+chance = 0.05
+
+[[rung]]
+name = "shove"
+liking = -6
+angry = true
+chance = 0.05
+
+[[rung]]
+name = "fight"
+liking = -7
+angry = true
+not = ["timid"]
+remembered = true
+chance = 0.04
+
+[[rung]]
+name = "grave harm"
+liking = -9
+all = ["prickly"]
+grudge_days = 2
+alone = true
+chance = 0.02
+
+[[rung]]
+name = "killing"
+liking = -9
+all = ["prickly"]
+grudge_days = 2
+alone = true
+again = true
+chance = 0.015
+
+[fight]                   # who comes off worse, and how badly
+both = 0.3                # the chance the winner is bruised too
+lucky = 0.35              # the chance the loser is only bruised
+stepper_hurt = 0.3        # the chance a hob that steps in is bruised for it
+
+[coming_down]             # §7.2
+cool_days = 1.5           # a grievance with no new step or reason in this long comes down a rung (time apart)
+accept = 0.5              # the base chance an apology or a gift is accepted
+accept_kind = 0.35        # ... more for a kind holder (times its kindness, -1 to 1)
+accept_rung = 0.06        # ... less for each rung the grievance has climbed
+vengeance_accept = 0.1    # ... and a vengeance grudge barely ever
+talk_down = 0.04          # the chance a kind or respected hob in the room talks two at rung 3 or more down
+take_sides = 0.25         # the chance a prickly kin of the wronged takes its side when it comes to blows
+step_in = 0.5             # the chance a kind or brave onlooker steps in to a scuffle
+step_in_little = 0.9      # ... when a little one is the one being hurt (the kind protect them first)
+
+[after]                   # §7.4 after a killing
+tell = 0.3                # the chance a hob that knows tells another in the room it doesn't, each step
+lie = 0.6                 # the chance a sly teller who doesn't dislike the killer blames someone else
+suspicion_hours = 36      # with no witnesses, the house works it out in about this long (faster with more hobs about, and a killer who gives itself away)
+justice_hours = 12        # the family decides once this long has passed since it was known
+fear_all = 25             # safety lost house-wide at a killing
+fear_near = 2             # ... and each step in the killer's room, for `fear_days`
+fear_days = 3
+grief_hours = 48          # the dead's friends, bond and kin are sad this long
+shun_days = 6             # shunned this long
+come_back_days = 8        # an outcast may come back after this long ...
+come_back = 0.15          # ... with this chance each world day after
+changed = 0.5             # the chance it comes back changed (kinder)
+
+[hurt]                    # §7.3 injury
+heal_days = { bruised = 0.5, hurt = 2.0, "badly hurt" = 5.0 }   # each level heals down to the one below in this long
+drain = { bruised = 0.02, hurt = 0.05, "badly hurt" = 0.1 }     # extra energy and comfort lost per 10 s (rest and comfort needed)
+slow = { hurt = 3, "badly hurt" = 2, limp = 4 }                 # it misses every nth step when walking
+rest = 1.5                # heals this much faster asleep
+care = 1.0                # and up to this much faster again with a healer by it (by its healing skill and kindness)
+limp = 0.35               # the chance badly hurt leaves a lasting limp
+forge = 0.05              # the chance a hob setting the forge going burns a paw (bruised), more for the hasty
+fall = 0.01               # the chance an hour that a hasty hob or an elder on the move takes a fall (bruised; an elder sometimes hurt)
+
+[sick]                    # §7.3 sickness; chances per world hour
+cold = 0.06               # out of doors at night or in bitter cold or snow
+cold_low = 2.0            # ... this much likelier when its comfort is very low
+spoiled_hours = 4         # food from a pot within this long of going stale ...
+spoiled = 0.25            # ... makes it sick with this chance
+catch = 0.04              # a hob awake in a room with a sick one catches it, per level of the sickness
+better = 0.18             # each point of care (rest, warmth, a healer) gives this chance an hour of getting better
+worse = 0.12              # neglected (hungry and worn, out in the cold), the chance an hour of getting worse
+die = 0.04                # very sick and neglected, the chance an hour it dies
+drain = 0.04              # extra energy lost per 10 s while sick

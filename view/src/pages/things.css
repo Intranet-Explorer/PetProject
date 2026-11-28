@@ -1,0 +1,78 @@
+/* SPEC-v3.5.7 §7: the Things tab as an inventory (things.ts): the filters on a paper strip, Travel Book chips; the grid
+   of slots, each ringed by what it is; the chosen thing's card in a panel to the right, or a sheet from the bottom on a
+   phone. A thing's page is a book page with the same card (thingcard.css). */
+.things, .tpage { display: flex; flex-direction: column; gap: var(--gap); }
+.tbar { display: flex; flex-direction: column; gap: 4px; }
+.tbar .hint { margin: 0; }
+.tmore { display: flex; flex-direction: column; gap: 4px; }
+.tmore > summary { color: var(--ink2); }
+@media (min-width: 900px) { .tmore > summary { display: none; } }
+.tfilters, .tbar .chips { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; }
+.tfilters select { flex: 0 1 auto; width: auto; max-width: 100%; }
+.tsort { margin-left: 8px; }
+.tbar .chip > span { display: inline-flex; align-items: center; gap: 6px; }
+/* the rings, and their swatches in the chips that filter by them */
+.things { --gold: #e3a21a; --silver: #b8c4cf; --blue: #3d8fe0; }
+i.sw { display: inline-block; width: 12px; height: 12px; border: 2px solid var(--ink); background: var(--sw); }
+i.sw.gold, .tslot.gold { --sw: var(--gold); }
+i.sw.silver, .tslot.silver { --sw: var(--silver); }
+i.sw.blue, .tslot.blue { --sw: var(--blue); }
+
+.inv { display: grid; grid-template-columns: minmax(0, 1fr) 452px; gap: var(--gap); align-items: start; }
+.invlist { display: flex; flex-direction: column; gap: var(--gap); min-width: 0; }
+.tgrid { --s: 88px; display: grid; grid-template-columns: repeat(auto-fill, var(--s)); justify-content: center; gap: 8px; }
+button.tslot { position: relative; width: var(--s); height: var(--s); min-height: 0; padding: 0; display: flex; align-items: center; justify-content: center;
+  border-width: 8px; border-image: url("../../assets/third_party/crusenho/UI_TravelBook_Slot03a.png") 4 fill stretch; color: var(--ink); animation: none !important; }
+button.tslot > * { max-width: 100%; max-height: 100%; }
+button.tslot:is(.gold, .silver, .blue)::after { content: ""; position: absolute; inset: -8px; border: 4px solid var(--sw); box-shadow: inset 0 0 0 2px rgb(43 20 14 / 55%); pointer-events: none; }
+button.tslot.gone { opacity: 0.45; }
+button.tslot[aria-pressed="true"] { outline: 3px solid var(--on-page); outline-offset: 2px; filter: brightness(1.1); }
+button.tslot:hover { filter: brightness(1.08); }
+@media (prefers-reduced-motion: no-preference) {
+  button.tslot:hover { transform: translateY(-1px); box-shadow: 0 2px 0 rgb(0 0 0 / 35%); }   /* §9: a pixel up, a shadow */
+}
+.things .empty { color: var(--on-page); text-align: center; }
+.invside .empty { color: var(--ink2); }
+
+/* the panel: beside the grid, as tall as the window, scrolling inside */
+.invside { position: sticky; top: 8px; max-height: calc(100vh - 16px); overflow: auto; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.invside .tchist, .tpage .tchist { margin: 8px 0 0; color: var(--ink2); }
+.invbar { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.invclose, .invshade { display: none; }
+.storylist { padding: 0; margin: 0; list-style: none; }
+
+/* a phone: one column, and the panel is a sheet from the bottom over a shade */
+@media (max-width: 899px) {
+  .inv { grid-template-columns: minmax(0, 1fr); }
+  .tgrid { --s: 64px; gap: 6px; }
+  .invside { position: fixed; z-index: 30; left: 0; right: 0; bottom: 0; top: auto; max-height: 82vh; margin: 0; display: none; }
+  .invside.open { display: flex; }
+  .invshade { position: fixed; inset: 0; z-index: 29; background: rgb(20 10 14 / 55%); }
+  body.tsheet-open .invshade { display: block; }
+  .invclose { display: inline-block; }
+  body.tsheet-open { overflow: hidden; }
+}
+@media (max-width: 899px) and (prefers-reduced-motion: no-preference) {
+  .invside.open { animation: sheetup 0.22s ease-out; }
+}
+@keyframes sheetup { from { transform: translateY(100%); } to { transform: none; } }
+
+/* the tip's lines (tip.ts) */
+.ptip .ttxt { display: flex; flex-direction: column; gap: 0; text-align: left; overflow-wrap: anywhere; }
+.ptip .twhere { color: var(--ink2); }
+
+/* a thing's page */
+.tpage { gap: 8px; }
+.back { margin: 0; }
+#page-thing > .tpage { max-width: 760px; }
+.tpage .thingcard, .tpage .tccontent { width: auto; }
+.statuepic { color: var(--ink2); display: block; }
+/* SPEC-v3.5.8 §6: the count, and the Charms filter beside it */
+.tcount { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; justify-content: space-between; }
+.tcount .hint { margin: 0; }
+
+/* SPEC-v3.6d §7: the catalog ("Show gone"): a line for everything ever made */
+.catalog { list-style: none; margin: 0; padding: 10px 12px; display: grid; gap: 6px; }
+.catline { display: flex; gap: 8px; align-items: center; }
+.catline .catdid { margin: 1px 0 0; font-size: 0.9em; }
+.catline.gone > div { opacity: 0.75; }

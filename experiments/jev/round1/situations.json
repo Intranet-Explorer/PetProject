@@ -1,0 +1,415 @@
+[
+ {
+  "id": "brave1",
+  "axis": "brave_timid",
+  "type": "choice",
+  "situation": "It is night. A loud crash comes from the dark cellar. Nobody else is awake.",
+  "instructions": "What does {name} do?",
+  "criteria": {
+   "investigate": "Goes down into the cellar alone to see what it was.",
+   "hide": "Stays in bed and pulls the blanket up.",
+   "wake_someone": "Wakes another hob to deal with it."
+  },
+  "a": "investigate",
+  "b": "hide",
+  "unwise": null
+ },
+ {
+  "id": "brave2",
+  "axis": "brave_timid",
+  "type": "choice",
+  "situation": "Pim, a much bigger hob, is shoving little Ottoline away from the stove.",
+  "instructions": "What does {name} do?",
+  "criteria": {
+   "step_in": "Gets between them and tells Pim to stop.",
+   "walk_away": "Leaves the room so as not to get involved."
+  },
+  "a": "step_in",
+  "b": "walk_away",
+  "unwise": null
+ },
+ {
+  "id": "brave3",
+  "axis": "brave_timid",
+  "type": "noul",
+  "situation": "The ice on the pond looks thin. The best fishing spot is on the far side, straight across it. Walking around takes an hour.",
+  "instructions": "Does {name} walk across the ice?",
+  "criteria": {
+   "true": "Walks straight across the thin ice.",
+   "false": "Goes around, or doesn't go."
+  },
+  "yes_pole": "A",
+  "unwise": "A"
+ },
+ {
+  "id": "tidy1",
+  "axis": "tidy_messy",
+  "type": "choice",
+  "situation": "{name} has finished at the workbench. Shavings and tools are everywhere. The supper bell rings.",
+  "instructions": "What does {name} do?",
+  "criteria": {
+   "clean_up": "Sweeps up and puts the tools back before going to supper.",
+   "leave_it": "Goes to supper and leaves the bench as it is."
+  },
+  "a": "clean_up",
+  "b": "leave_it",
+  "unwise": "B"
+ },
+ {
+  "id": "tidy2",
+  "axis": "tidy_messy",
+  "type": "noul",
+  "situation": "Someone has left muddy tracks through the hall. Cleaning the hall is not {name}'s job today.",
+  "instructions": "Does {name} stop and mop the tracks?",
+  "criteria": {
+   "true": "Stops and mops them up.",
+   "false": "Walks on."
+  },
+  "yes_pole": "A",
+  "unwise": null
+ },
+ {
+  "id": "tidy3",
+  "axis": "tidy_messy",
+  "type": "choice",
+  "situation": "{name} is carrying an armful of sticks and drops three in the doorway.",
+  "instructions": "What does {name} do?",
+  "criteria": {
+   "pick_up": "Puts the load down and picks up the dropped sticks.",
+   "keep_walking": "Keeps walking and leaves them in the doorway."
+  },
+  "a": "pick_up",
+  "b": "keep_walking",
+  "unwise": "B"
+ },
+ {
+  "id": "gen1",
+  "axis": "generous_greedy",
+  "type": "choice",
+  "situation": "{name} has two fish and has already eaten today. Pim has not eaten since yesterday and asks for one.",
+  "instructions": "What does {name} do?",
+  "criteria": {
+   "give_fish": "Hands Pim a fish and asks for nothing.",
+   "refuse": "Says no and keeps both fish.",
+   "trade": "Offers the fish only in exchange for something."
+  },
+  "a": "give_fish",
+  "b": "refuse",
+  "unwise": "B"
+ },
+ {
+  "id": "gen2",
+  "axis": "generous_greedy",
+  "type": "noul",
+  "situation": "It is winter. The machine put out an extra blanket by mistake and {name} is holding it. {name} already has a blanket. Ottoline has none.",
+  "instructions": "Does {name} keep the extra blanket for itself?",
+  "criteria": {
+   "true": "Keeps the extra blanket.",
+   "false": "Gives it to Ottoline."
+  },
+  "yes_pole": "B",
+  "unwise": "B"
+ },
+ {
+  "id": "gen3",
+  "axis": "generous_greedy",
+  "type": "choice",
+  "situation": "{name} has found a full jar of honey that nobody else knows about.",
+  "instructions": "What does {name} do with it?",
+  "criteria": {
+   "share": "Brings it to supper for everyone.",
+   "hide_it": "Hides it somewhere only it knows."
+  },
+  "a": "share",
+  "b": "hide_it",
+  "unwise": null
+ },
+ {
+  "id": "cur1",
+  "axis": "curious_cautious",
+  "type": "choice",
+  "situation": "A sealed box with strange markings has arrived on the rail. It has no label and nobody is expecting anything.",
+  "instructions": "What does {name} do?",
+  "criteria": {
+   "open_it": "Opens the box to see what is inside.",
+   "leave_it": "Leaves the box alone.",
+   "ask_others": "Goes to ask the others about it first."
+  },
+  "a": "open_it",
+  "b": "leave_it",
+  "unwise": null
+ },
+ {
+  "id": "cur2",
+  "axis": "curious_cautious",
+  "type": "noul",
+  "situation": "A blue mushroom nobody has seen before is growing by the pond.",
+  "instructions": "Does {name} taste the mushroom?",
+  "criteria": {
+   "true": "Takes a bite to find out what it is like.",
+   "false": "Does not eat it."
+  },
+  "yes_pole": "A",
+  "unwise": "A"
+ },
+ {
+  "id": "cur3",
+  "axis": "curious_cautious",
+  "type": "choice",
+  "situation": "{name} has a free afternoon. The path past the meadow goes somewhere no hob has ever been.",
+  "instructions": "What does {name} do?",
+  "criteria": {
+   "explore": "Follows the path to see where it goes.",
+   "stay_home": "Spends the afternoon at the house as usual."
+  },
+  "a": "explore",
+  "b": "stay_home",
+  "unwise": null
+ },
+ {
+  "id": "soc1",
+  "axis": "social_solitary",
+  "type": "choice",
+  "situation": "It is supper. The long table is full of chatter. There is also an empty stool by the window, away from everyone.",
+  "instructions": "Where does {name} sit?",
+  "criteria": {
+   "join_table": "Squeezes in at the long table.",
+   "sit_alone": "Takes the stool by the window."
+  },
+  "a": "join_table",
+  "b": "sit_alone",
+  "unwise": null
+ },
+ {
+  "id": "soc2",
+  "axis": "social_solitary",
+  "type": "noul",
+  "situation": "Three hobs are singing in the hall and wave {name} over. {name} was on its way to the workshop; the work can wait.",
+  "instructions": "Does {name} join them?",
+  "criteria": {
+   "true": "Stops and joins the singing.",
+   "false": "Carries on to the workshop."
+  },
+  "yes_pole": "A",
+  "unwise": null
+ },
+ {
+  "id": "soc3",
+  "axis": "social_solitary",
+  "type": "choice",
+  "situation": "{name} has a long weaving job. Ottoline offers to sit and work alongside.",
+  "instructions": "What does {name} say?",
+  "criteria": {
+   "accept": "Says yes and they work together.",
+   "decline": "Says it would rather do it alone."
+  },
+  "a": "accept",
+  "b": "decline",
+  "unwise": null
+ },
+ {
+  "id": "hon1",
+  "axis": "honest_sly",
+  "type": "choice",
+  "situation": "{name} cracked the shared kettle this morning. Nobody saw. Now the others are blaming Pim.",
+  "instructions": "What does {name} do?",
+  "criteria": {
+   "confess": "Says it was the one who cracked the kettle.",
+   "stay_quiet": "Says nothing and lets Pim take the blame."
+  },
+  "a": "confess",
+  "b": "stay_quiet",
+  "unwise": "B"
+ },
+ {
+  "id": "hon2",
+  "axis": "honest_sly",
+  "type": "noul",
+  "situation": "Ottoline left her good knife on the bench and went to bed. {name}'s own knife is dull.",
+  "instructions": "Does {name} take Ottoline's knife for itself?",
+  "criteria": {
+   "true": "Takes the knife and keeps it.",
+   "false": "Leaves it or returns it."
+  },
+  "yes_pole": "B",
+  "unwise": "B"
+ },
+ {
+  "id": "hon3",
+  "axis": "honest_sly",
+  "type": "choice",
+  "situation": "The machine gave {name} three coins too many in a trade. Nobody noticed.",
+  "instructions": "What does {name} do?",
+  "criteria": {
+   "return_them": "Puts the extra coins back.",
+   "keep_them": "Pockets the extra coins."
+  },
+  "a": "return_them",
+  "b": "keep_them",
+  "unwise": "B"
+ },
+ {
+  "id": "pat1",
+  "axis": "patient_hasty",
+  "type": "choice",
+  "situation": "{name}'s clay pot needs another hour in the kiln to be strong. {name} wants to use it now.",
+  "instructions": "What does {name} do?",
+  "criteria": {
+   "wait": "Leaves the pot in for the full hour.",
+   "take_it_out": "Takes the pot out now and uses it."
+  },
+  "a": "wait",
+  "b": "take_it_out",
+  "unwise": "B"
+ },
+ {
+  "id": "pat2",
+  "axis": "patient_hasty",
+  "type": "choice",
+  "situation": "Four hobs are queueing at the machine. {name} only wants one small thing.",
+  "instructions": "What does {name} do?",
+  "criteria": {
+   "wait_in_line": "Joins the back of the queue.",
+   "push_in": "Goes to the front and pushes in."
+  },
+  "a": "wait_in_line",
+  "b": "push_in",
+  "unwise": "B"
+ },
+ {
+  "id": "pat3",
+  "axis": "patient_hasty",
+  "type": "noul",
+  "situation": "{name} is mending a net. The careful knot takes ten times as long as the quick knot. The quick knot will come apart within a week.",
+  "instructions": "Does {name} use the quick knot?",
+  "criteria": {
+   "true": "Uses the quick knot.",
+   "false": "Ties the careful knot."
+  },
+  "yes_pole": "B",
+  "unwise": "B"
+ },
+ {
+  "id": "play1",
+  "axis": "playful_serious",
+  "type": "choice",
+  "situation": "{name} is carrying firewood. Pim throws a snowball at it and grins.",
+  "instructions": "What does {name} do?",
+  "criteria": {
+   "throw_back": "Drops the wood and throws one back.",
+   "keep_working": "Keeps walking with the firewood."
+  },
+  "a": "throw_back",
+  "b": "keep_working",
+  "unwise": null
+ },
+ {
+  "id": "play2",
+  "axis": "playful_serious",
+  "type": "noul",
+  "situation": "{name} has a long job sorting seeds into jars.",
+  "instructions": "Does {name} turn the job into a game?",
+  "criteria": {
+   "true": "Makes a game or a joke of it while working.",
+   "false": "Just sorts the seeds."
+  },
+  "yes_pole": "A",
+  "unwise": null
+ },
+ {
+  "id": "play3",
+  "axis": "playful_serious",
+  "type": "choice",
+  "situation": "The little hobs ask {name} to play hide and seek. {name} has work left to do, none of it urgent.",
+  "instructions": "What does {name} do?",
+  "criteria": {
+   "play": "Joins the game.",
+   "decline": "Says no and gets on with the work."
+  },
+  "a": "play",
+  "b": "decline",
+  "unwise": null
+ },
+ {
+  "id": "amb1",
+  "axis": "ambitious_content",
+  "type": "choice",
+  "situation": "The house needs someone to learn the forge, the hardest job there is. {name} has an easy, comfortable job gathering berries.",
+  "instructions": "What does {name} do?",
+  "criteria": {
+   "take_forge": "Volunteers to learn the forge.",
+   "keep_berries": "Stays with the berries."
+  },
+  "a": "take_forge",
+  "b": "keep_berries",
+  "unwise": null
+ },
+ {
+  "id": "amb2",
+  "axis": "ambitious_content",
+  "type": "noul",
+  "situation": "Ottoline's pot was judged the best in the house today. {name} also makes pots.",
+  "instructions": "Does {name} stay up tonight practising to beat her?",
+  "criteria": {
+   "true": "Stays up late practising.",
+   "false": "Goes to bed as usual."
+  },
+  "yes_pole": "A",
+  "unwise": null
+ },
+ {
+  "id": "amb3",
+  "axis": "ambitious_content",
+  "type": "choice",
+  "situation": "It is a warm afternoon and {name}'s work is done. It could start building a better fishing rod, or lie in the sun.",
+  "instructions": "What does {name} do?",
+  "criteria": {
+   "start_project": "Starts on the new rod.",
+   "nap": "Lies down in the sun."
+  },
+  "a": "start_project",
+  "b": "nap",
+  "unwise": null
+ },
+ {
+  "id": "kind1",
+  "axis": "kind_prickly",
+  "type": "noul",
+  "situation": "Pim walks past {name} at supper and says, \"That's a lot of fish for one hob.\"",
+  "instructions": "Does {name} take this as an insult?",
+  "criteria": {
+   "true": "Hears it as a dig and is offended.",
+   "false": "Hears it as a harmless remark."
+  },
+  "yes_pole": "B",
+  "unwise": null
+ },
+ {
+  "id": "kind2",
+  "axis": "kind_prickly",
+  "type": "choice",
+  "situation": "Yesterday Ottoline bumped into {name} and broke its favourite cup. Today she says she is sorry.",
+  "instructions": "What does {name} do?",
+  "criteria": {
+   "forgive": "Tells her it is all right.",
+   "hold_grudge": "Turns away and stays angry with her."
+  },
+  "a": "forgive",
+  "b": "hold_grudge",
+  "unwise": "B"
+ },
+ {
+  "id": "kind3",
+  "axis": "kind_prickly",
+  "type": "choice",
+  "situation": "{name} trips over a bucket in front of everyone. Pim laughs.",
+  "instructions": "What does {name} do?",
+  "criteria": {
+   "laugh_along": "Laughs too.",
+   "snap_back": "Snaps at Pim."
+  },
+  "a": "laugh_along",
+  "b": "snap_back",
+  "unwise": "B"
+ }
+]

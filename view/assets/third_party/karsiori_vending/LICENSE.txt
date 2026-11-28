@@ -1,0 +1,9 @@
+Pixel Art Vending Machines Pack, by Karsiori.
+Pack page: https://karsiori.itch.io/pixel-art-vending-machines
+
+The pack came with no licence file of its own. Its page releases it under Creative Commons Zero (CC0 1.0
+Universal, https://creativecommons.org/publicdomain/zero/1.0/): free to use, change and share, attribution not
+required (it is given gladly in ../CREDITS.md).
+
+src/ holds the one picture of the pack the house's machine is built from, unchanged. The view never shows it as
+it is: own/src/works.py draws the machine room's vending machine out of it into own/works.png.

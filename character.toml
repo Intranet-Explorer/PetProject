@@ -1,0 +1,324 @@
+# SPEC-v4.0 §1: a hob's character as data (engine/character.py reads it; the body, planner.py and behaviours.toml,
+# acts on the poles' behaviours by their ids; the brain is told them in words).
+#
+# [axes.<axis>]   words = [the + pole, the - pole]
+#   plus / minus  behaviour id = what it looks like. character.does(pet, id) gives 0..1: how strongly this hob shows it
+#                 (0 for a hob at the other pole or in the middle). The ids are what behaviours.toml names.
+
+[axes.brave]
+words = ["brave", "timid"]
+[axes.brave.plus]
+out_at_night = "goes out at night"
+tries_new_first = "tries new machines first"
+stands_up = "stands up to bullies"
+shields_little = "steps between a fight and a little one"
+[axes.brave.minus]
+keeps_to_walls = "keeps to walls and corners"
+hides_in_storms = "hides in storms"
+stays_near_kin = "stays near kin"
+freezes = "freezes or flees when threatened"
+
+[axes.tidy]
+words = ["tidy", "messy"]
+[axes.tidy.plus]
+puts_back = "puts things back where they live"
+tidies_others = "tidies others' mess"
+nags_messy = "nags the messy"
+[axes.tidy.minus]
+drops_anywhere = "drops things anywhere"
+borrows_forgets = "borrows and forgets"
+ignores_clutter = "doesn't notice clutter"
+
+[axes.generous]
+words = ["generous", "greedy"]
+[axes.generous.plus]
+gives_gifts = "gives gifts"
+shares_food = "shares food and catches"
+teaches_freely = "teaches freely"
+[axes.generous.minus]
+takes_best_food = "takes the best food"
+hides_things = "hides things in its own corner"
+bargains = "bargains"
+wont_lend = "won't lend"
+
+[axes.curious]
+words = ["curious", "cautious"]
+[axes.curious.plus]
+explores = "explores"
+reads = "reads"
+tries_untried = "tries untried recipes"
+asks_visitor = "asks the visitor questions"
+[axes.curious.minus]
+known_recipes = "sticks to known recipes"
+avoids_new = "avoids new places and things"
+warns_off = "warns others off"
+
+[axes.social]
+words = ["social", "solitary"]
+[axes.social.plus]
+seeks_company = "seeks company"
+chatters = "chatters"
+starts_gatherings = "starts gatherings"
+eats_with_others = "sits with others to eat"
+[axes.social.minus]
+works_alone = "works alone"
+hideaway = "has a hideaway"
+leaves_crowds = "leaves when a room fills"
+short_in_talk = "short in talk"
+
+[axes.honest]
+words = ["honest", "sly"]
+[axes.honest.plus]
+tells_truth = "tells the truth"
+owns_up = "owns up"
+keeps_promises = "keeps promises"
+[axes.honest.minus]
+lies = "lies in talk"
+takes_and_denies = "takes things and denies it"
+false_gossip = "spreads false gossip"
+plays_off = "plays hobs off against each other"
+
+[axes.patient]
+words = ["patient", "hasty"]
+[axes.patient.plus]
+finishes_long = "finishes long projects"
+teaches_slowly = "teaches slowly"
+waits_turn = "waits its turn"
+[axes.patient.minus]
+rushes = "rushes"
+abandons = "abandons projects"
+breaks_things = "breaks things"
+pushes_in = "pushes in"
+
+[axes.playful]
+words = ["playful", "serious"]
+[axes.playful.plus]
+plays = "plays"
+pranks = "pranks"
+sings_dances = "sings and dances"
+teases = "teases"
+[axes.playful.minus]
+works = "works"
+frowns_on_play = "frowns on play"
+lectures_young = "lectures the young"
+
+[axes.ambitious]
+words = ["ambitious", "content"]
+[axes.ambitious.plus]
+chases_firsts = "chases firsts and bests"
+wants_to_lead = "wants to lead"
+competes = "competes"
+[axes.ambitious.minus]
+naps_in_sun = "naps in the sun"
+avoids_responsibility = "avoids responsibility"
+happy_with_little = "happy with little"
+
+[axes.kind]
+words = ["kind", "prickly"]
+[axes.kind.plus]
+comforts = "comforts"
+forgives = "forgives"
+nurses = "nurses the sick and hurt"
+helps_little = "helps little ones"
+[axes.kind.minus]
+snaps = "snaps"
+mocks = "mocks"
+holds_grudges = "holds grudges"
+sulks = "sulks"
+gloats = "enjoys others' bad luck"
+
+# §1.3 moods. hours: how long one lasts at a middling `sensitive` (a sensitive hob's last up to half as long again,
+# and swing harder: its strength is times 0.5 + sensitive). strength: how hard it is to push aside by a lesser mood.
+# The rest are how it shades behaviour, read by others through character.mood_weight(pet, what): 1 is no change.
+# what: ladder (climbing the conflict ladder), give (gifts, sharing), play, talk (starting conversations),
+# withdraw (keeping apart), work (making and building), explore, rest.
+[moods.happy]
+hours = 4
+strength = 1.0
+give = 1.4
+play = 1.4
+talk = 1.2
+[moods.content]
+hours = 6
+strength = 0.3
+[moods.grumpy]
+hours = 3
+strength = 0.8
+ladder = 1.3
+give = 0.7
+talk = 0.8
+[moods.sad]
+hours = 8
+strength = 1.4
+withdraw = 1.6
+play = 0.5
+talk = 0.7
+work = 0.7
+[moods.afraid]
+hours = 3
+strength = 1.5
+withdraw = 1.5
+explore = 0.4
+ladder = 0.6
+[moods.angry]
+hours = 3
+strength = 1.6
+ladder = 1.8
+give = 0.5
+play = 0.6
+[moods.proud]
+hours = 4
+strength = 1.1
+work = 1.3
+give = 1.1
+talk = 1.2
+[moods.ashamed]
+hours = 4
+strength = 1.2
+withdraw = 1.4
+talk = 0.7
+[moods.lonely]
+hours = 5
+strength = 1.0
+talk = 1.5
+withdraw = 0.6
+[moods.excited]
+hours = 2
+strength = 1.1
+explore = 1.5
+play = 1.3
+work = 1.2
+
+# §1.2 values: two each. leans: the axes (with a sign) that make a hob likelier to hold it.
+[values]
+family = ["social+", "kind+"]
+craft = ["patient+", "tidy+"]
+knowledge = ["curious+"]
+beauty = ["playful+", "tidy+"]
+fairness = ["honest+", "kind+"]
+comfort = ["ambitious-", "brave-"]
+"being first" = ["ambitious+"]
+freedom = ["social-", "brave+"]
+"the visitor" = ["curious+", "honest+"]
+
+# §1.2 quirks: one or two each, chosen at hatching from its traits and its parent's. leans as for values ("" for none).
+[quirks]
+"hums while working" = ["playful+"]
+"collects feathers" = ["generous-"]
+"afraid of the dark" = ["brave-"]
+"talks to the radio" = ["social+"]
+"always the same chair" = ["patient+", "curious-"]
+"counts things" = ["tidy+"]
+"sleeps on its back" = ["brave+"]
+"hoards buttons" = ["generous-"]
+"sniffs everything new" = ["curious+"]
+"taps its foot when thinking" = ["patient-"]
+"sings to the plants" = ["playful+", "kind+"]
+"lines its things up in rows" = ["tidy+"]
+"leaves crumbs everywhere" = ["tidy-"]
+"names every creature it meets" = ["curious+", "social+"]
+"sits by the window at dusk" = ["social-"]
+"whistles off key" = ["playful+"]
+"keeps a lucky stone" = ["brave-"]
+"talks to itself" = ["social-"]
+"waves at the visitor" = ["social+"]
+"won't step on cracks" = ["tidy+", "brave-"]
+"sleeps curled in a corner" = ["brave-"]
+"tells the same story twice" = ["social+"]
+"gives things names" = ["playful+"]
+"chews on string" = ["patient-"]
+"stares at the rain" = ["patient+"]
+"walks the long way round" = ["curious+"]
+"eats the best bit last" = ["patient+"]
+"eats the best bit first" = ["patient-"]
+"polishes its things" = ["tidy+"]
+"hides behind others when strangers come" = ["brave-", "social-"]
+"pats every hob it passes" = ["kind+", "social+"]
+"keeps a secret corner" = ["honest-", "social-"]
+"mutters about the weather" = ["kind-"]
+"sighs loudly" = ["kind-"]
+"laughs at its own jokes" = ["playful+"]
+"stands very straight" = ["ambitious+"]
+"wants to be first through a door" = ["ambitious+", "patient-"]
+"naps after every meal" = ["ambitious-"]
+"keeps score of everything" = ["ambitious+"]
+"dances when no one is looking" = ["playful+", "social-"]
+"listens at doors" = ["honest-", "curious+"]
+"fiddles with its paws" = ["patient-"]
+"brings others little gifts" = ["generous+"]
+"hums lullabies" = ["kind+"]
+"checks the doors at night" = ["brave-", "tidy+"]
+"watches the fish for hours" = ["patient+"]
+"picks at its fur" = ["brave-"]
+"bows to its elders" = ["kind+"]
+"rearranges other hobs' things" = ["tidy+", "kind-"]
+"talks with its mouth full" = ["tidy-"]
+"keeps its tail wrapped round its feet" = ["social-"]
+"gazes at the lamp" = ["curious+"]
+"sneezes at dust" = []
+"blinks slowly at friends" = ["kind+"]
+"wipes its paws before eating" = ["tidy+"]
+"hums the same three notes" = ["playful+", "curious-"]
+"keeps a feather behind its ear" = ["playful+"]
+"sleeps with something soft" = ["brave-"]
+"knocks before going in" = ["honest+"]
+"never sits with its back to a door" = ["brave-"]
+
+# SPEC-v4.2 §6.1-6.2 (helper C, engine/drives.py, [drives] on): a drive, drawn at hatching. leans: the axes that make a
+# hob likelier to have it (as [values]; a parent's drive counts too); flaws: those that work against it, of which the
+# hob is given one (weighted by [flaws] leans). What each drive serves and each flaw does is drives.SERVES and FLAW_SCORE.
+[drives."to be remembered"]
+leans = ["ambitious+"]
+flaws = ["envious", "proud", "lazy"]
+[drives."to be loved by one"]
+leans = ["social+", "kind+"]
+flaws = ["clinging", "hot", "envious"]
+[drives."to find out what the visitor is"]
+leans = ["curious+"]
+flaws = ["proud", "fearful", "dishonest"]
+[drives."to make the thing nobody has made"]
+leans = ["ambitious+", "curious+"]
+flaws = ["envious", "fearful", "greedy"]
+[drives."to keep the family safe"]
+leans = ["kind+", "brave+"]
+flaws = ["hot", "fearful", "clinging"]
+[drives."to leave the house"]
+leans = ["brave+", "social-"]
+flaws = ["fearful", "clinging", "lazy"]
+[drives."to know everything in the book"]
+leans = ["curious+", "patient+"]
+flaws = ["proud", "lazy", "greedy"]
+[drives."to be left alone"]
+leans = ["social-"]
+flaws = ["hot", "dishonest", "greedy"]
+
+[flaws]
+proud = ["ambitious+"]
+envious = ["generous-", "ambitious+"]
+fearful = ["brave-"]
+greedy = ["generous-"]
+lazy = ["patient-", "ambitious-"]
+hot = ["kind-", "patient-"]
+dishonest = ["honest-"]
+clinging = ["social+", "brave-"]
+
+# SPEC-v4.2.2 §2 the voice card, the engine's alone: its style, drawn by the traits (contracts.STYLES says each in a line),
+# and what it cares about, from its drive, in plain words ("to be loved by one" cares about its one, by name, once it has one).
+[voice.style]
+sunny = ["social+", "kind+"]
+eager = ["social+", "playful+"]
+fussy = ["tidy+"]
+big-sister = ["brave+"]
+gentle = ["patient+", "kind+"]
+easygoing = ["patient+", "ambitious-"]
+grumbly = ["kind-"]
+know-it-all = ["curious+"]
+[voice.cares]
+"to be remembered" = "being remembered for something"
+"to be loved by one" = "someone special"
+"to find out what the visitor is" = "finding out what the visitor is"
+"to make the thing nobody has made" = "making something new"
+"to keep the family safe" = "keeping the family safe"
+"to leave the house" = "getting out of the house"
+"to know everything in the book" = "the book"
+"to be left alone" = "being left alone"

@@ -1,0 +1,308 @@
+# SPEC-v4.0 §9: behaviours without a thought, from traits, quirks and moods. Each is a body activity like those in
+# activities.toml (the same fields: doing, did, icon, voice, seconds, base, needs, temper, focus, when, passive, rest,
+# fidget, handles, stage, effects), done by the body only while [planner] is on (engine/planner.py `targets` finds
+# where and with whom, `finish` does it). Their own fields:
+#   id        character.toml's behaviour id for it (helper A's list of each pole's behaviours)
+#   pole      the trait it comes from: axis -> +1 or -1 (character.toml's axes); it is never done unless the hob is at
+#             least [planner] pole toward that end of the axis
+#   traits    how much further it is pulled the further the hob is toward that end (axis -> weight per unit of trait)
+#   mood      the moods that bring it on instead of (or as well as) a trait (any of them will do)
+# tidy +, putting others' things away and grumbling, is the tidy activity itself (activities.toml [tidy]): while [planner] is
+# on only a tidy hob tidies others' things; others put away only their own, and a messy one nothing. What each one does is in its comment. Opinions move by the causes named (opinions.toml); a scold, a sneer, a prank
+# and a sharing are moments the story and the conversations can pick up.
+
+[behaviours."keep to the walls"]           # brave/timid -: it walks along the wall, out of the middle
+id = "keeps_to_walls"
+do = "b:wall"
+pole = { brave = -1 }
+traits = { brave = -0.8 }
+mood = ["afraid"]
+doing = "keeping close to the wall"
+did = "kept close to the wall"
+icon = "walk"
+seconds = [4, 7]
+base = 0.4
+
+[behaviours."hide"]                       # brave/timid -: a stranger or an enemy has come in: off into the far corner
+id = "freezes"
+do = "b:hide"
+pole = { brave = -1 }
+traits = { brave = -1.0 }
+mood = ["afraid"]
+doing = "hiding from {who}"
+did = "hid from {who}"
+icon = "walk"
+voice = "gasp"
+seconds = [6, 10]
+base = 1.5
+
+[behaviours."try something new"]          # brave/timid +: a thing here it has never used, a machine above all: it goes first
+id = "tries_new_first"
+do = "b:new"
+pole = { brave = 1 }
+traits = { brave = 0.8 }
+doing = "trying the {what} for the first time"
+did = "tried the {what} for the first time"
+icon = "paws"
+voice = "chirp"
+seconds = [4, 6]
+base = 0.8
+handles = true
+
+[behaviours."leave it where it stood"]    # tidy/messy -: what it carries and is not making with, put down where it stands
+id = "drops_anywhere"
+do = "b:leave"
+pole = { tidy = -1 }
+traits = { tidy = -0.6 }
+doing = "dropping {a_what} where it stands"
+did = "dropped {a_what} where you stood"
+icon = "paws"
+seconds = [1, 2]
+base = 0.4
+handles = true
+
+[behaviours."share food"]                 # generous/greedy + (and kind +): a hungry hob here, and food here: it brings some over
+id = "shares_food"
+do = "b:share"
+pole = { generous = 1 }
+traits = { generous = 0.8, kind = 0.5 }
+doing = "bringing food from the {what} to {who}"
+did = "brought {who} food from the {what}"
+icon = "bowl"
+voice = "chirp"
+seconds = [3, 5]
+base = 1.4
+handles = true
+
+[behaviours."take the biggest serving"]   # generous/greedy -: it eats two servings at once
+id = "takes_best_food"
+do = "b:serving"
+pole = { generous = -1 }
+traits = { generous = -0.8 }
+doing = "eating the biggest serving from the {what}"
+did = "took the biggest serving from the {what}"
+icon = "bowl"
+seconds = [4, 6]
+base = 0.6
+handles = true
+
+[behaviours."tuck food away"]             # generous/greedy -: a serving carried off to its own corner, for later
+id = "hides_things"
+do = "b:stash"
+pole = { generous = -1 }
+traits = { generous = -0.6 }
+doing = "carrying food from the {what} off to its corner"
+did = "tucked food from the {what} away in your corner"
+icon = "bowl"
+seconds = [2, 3]
+base = 0.4
+handles = true
+
+[behaviours."poke at something new"]      # curious/cautious +: a thing here it has never had a close look at, even another's
+id = "explores"
+do = "b:poke"
+pole = { curious = 1 }
+traits = { curious = 0.8 }
+doing = "poking at the {what}"
+did = "poked at the {what} to see what it is"
+icon = "eye"
+voice = "chirp"
+seconds = [3, 5]
+base = 0.7
+handles = true
+
+[behaviours."keep to the old ways"]       # curious/cautious -: the thing here it knows best, used again
+id = "avoids_new"
+do = "b:known"
+pole = { curious = -1 }
+traits = { curious = -0.6 }
+doing = "using the old familiar {what}"
+did = "used the old familiar {what}"
+icon = "paws"
+seconds = [4, 6]
+base = 0.5
+handles = true
+
+[behaviours."follow a friend"]            # social/solitary + (or a bond): after a friend, room to room
+id = "seeks_company"
+do = "b:follow"
+pole = { social = 1 }
+traits = { social = 0.8 }
+mood = ["lonely"]
+doing = "following {who} about"
+did = "followed {who} about"
+icon = "heart"
+voice = "chirp"
+seconds = [5, 8]
+base = 0.8
+
+[behaviours."find an empty room"]         # social/solitary -: the room is filling up: off to one with nobody in it
+id = "leaves_crowds"
+do = "b:alone"
+pole = { social = -1 }
+traits = { social = -0.8 }
+mood = ["sad"]
+doing = "slipping away from the crowd"
+did = "slipped away to a quieter room"
+icon = "door"
+seconds = [2, 3]
+base = 1.0
+
+[behaviours."give back what was pocketed"] # honest/sly +: something another hob pocketed, put back for its owner
+id = "owns_up"
+do = "b:return"
+pole = { honest = 1 }
+traits = { honest = 0.8 }
+doing = "putting the {what} back"
+did = "put the {what} back where its owner will find it"
+icon = "box"
+seconds = [2, 4]
+base = 1.2
+handles = true
+
+[behaviours."pocket a thing"]             # honest/sly -: another's thing nobody is watching, moved to its own corner
+id = "takes_and_denies"
+do = "b:pocket"
+pole = { honest = -1 }
+traits = { honest = -0.8, generous = -0.3 }
+doing = "picking up the {what}"
+did = "pocketed the {what} while nobody was looking"
+icon = "paws"
+seconds = [2, 3]
+base = 0.6
+handles = true
+stage = "child"
+
+[behaviours."wait its turn"]              # patient/hasty +: someone is eating: it waits nearby
+id = "waits_turn"
+do = "b:wait"
+pole = { patient = 1 }
+traits = { patient = 0.6 }
+doing = "waiting its turn at the {what}"
+did = "waited your turn at the {what}"
+icon = "bowl"
+seconds = [3, 5]
+base = 0.6
+passive = true
+
+[behaviours."push in"]                    # patient/hasty -: someone is eating: it pushes in and eats
+id = "pushes_in"
+do = "b:push"
+pole = { patient = -1 }
+traits = { patient = -0.6 }
+doing = "pushing in at the {what}"
+did = "pushed in at the {what}"
+icon = "bowl"
+seconds = [3, 5]
+base = 0.6
+handles = true
+
+[behaviours."play a prank"]               # playful/serious + (sly helps): a sleeping hob gets a feather on its nose
+id = "pranks"
+do = "b:prank"
+pole = { playful = 1 }
+traits = { playful = 0.8, honest = -0.3 }
+doing = "creeping up on {who}"
+did = "put a feather on {who} as it slept"
+icon = "paws"
+voice = "laugh"
+seconds = [2, 3]
+base = 0.6
+
+[behaviours."lecture the young"]          # playful/serious -: a little one playing: it is told to do something useful
+id = "lectures_young"
+do = "b:lecture"
+pole = { playful = -1 }
+traits = { playful = -0.8 }
+doing = "lecturing {who}"
+did = "told {who} to stop playing and do something useful"
+icon = "speech"
+voice = "grumble"
+seconds = [2, 3]
+base = 0.6
+stage = "adult"
+
+[behaviours."strut"]                      # ambitious/content + (or proud): after a first, it struts about
+id = "chases_firsts"
+do = "b:strut"
+pole = { ambitious = 1 }
+traits = { ambitious = 0.8 }
+mood = ["proud"]
+doing = "strutting about"
+did = "strutted about"
+icon = "walk"
+seconds = [3, 5]
+base = 1.2
+
+[behaviours."nap in a sunbeam"]           # ambitious/content -: by day, where the sun comes in
+id = "naps_in_sun"
+do = "b:sunbeam"
+pole = { ambitious = -1 }
+traits = { ambitious = -0.8 }
+doing = "napping in a sunbeam"
+did = "napped in a sunbeam"
+icon = "zzz"
+voice = "yawn"
+seconds = [8, 12]
+base = 0.6
+rest = true
+passive = true
+when = { day = 0.3 }
+
+[behaviours."pat a little one"]           # kind/prickly +: a little one not at ease, or sad: a pat
+id = "helps_little"
+do = "b:pat"
+pole = { kind = 1 }
+traits = { kind = 0.8 }
+doing = "patting {who}"
+did = "patted {who}"
+icon = "heart"
+voice = "murmur"
+seconds = [2, 3]
+base = 1.2
+stage = "youngling"
+
+[behaviours."sneer"]                      # kind/prickly -: a hob it dislikes, in passing
+id = "mocks"
+do = "b:sneer"
+pole = { kind = -1 }
+traits = { kind = -0.8 }
+mood = ["angry", "grumpy"]
+doing = "sneering at {who}"
+did = "sneered at {who}"
+icon = "speech"
+voice = "grumble"
+seconds = [1, 2]
+base = 0.8
+
+[behaviours."sit by the stone"]           # grief: by the stone of one it loved
+do = "b:grieve"
+mood = ["sad"]
+doing = "sitting by {what}"
+did = "sat a while by {what}"
+icon = "stone"
+seconds = [8, 12]
+base = 1.6
+rest = true
+passive = true
+
+[behaviours."a quirk"]                    # §1.2 quirks: now and then, on the spot
+do = "b:quirk"
+doing = "{what}"
+did = "{what}"
+icon = "paws"
+seconds = [2, 2]
+base = 0.9
+fidget = true
+
+# ---- moods (§1.3): what each makes more or less likely, by the activity's `do` (or its name) ----
+[moods]
+happy = { play = 0.6, sing = 0.5, dance = 0.5, "b:share" = 0.5, bring = 0.4 }
+sad = { window = 0.6, nap = 0.4, play = -0.6, "b:alone" = 0.6, "b:grieve" = 1.0 }
+grumpy = { play = -0.4, "b:sneer" = 0.6 }
+angry = { play = -0.6, "b:sneer" = 1.0 }
+afraid = { "b:wall" = 1.0, "b:hide" = 1.0, doorway = -0.8, peek = -0.6 }
+lonely = { follow = 0.8, "sit with" = 0.8, "b:follow" = 0.8, peek = 0.4 }
+proud = { "b:strut" = 1.0, bring = 0.4 }
+ashamed = { window = 0.4, "b:alone" = 0.6 }
+excited = { doorway = 0.5, inspect = 0.4, play = 0.4 }

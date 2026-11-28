@@ -1,0 +1,11 @@
+[project]
+name = "petproject"
+version = "4.0.6"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.142.2",
+    "uvicorn[standard]>=0.54.0",
+]
+
+[project.optional-dependencies]
+book = ["libzim>=3.13.1"]   # the encyclopedia (engine/book.py); `uv run --extra book`, as run.sh does

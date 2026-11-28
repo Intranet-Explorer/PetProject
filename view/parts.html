@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Pet parts</title>
+<!-- The parts library by itself (SPEC-v3.5 §1), for checking its style: every thing part at every size, every body
+     part and body plan on a pet, every use an invention can have in five materials, and random bodies. It draws with the house's own code (src/parts.ts,
+     src/petsprite.ts), so what is judged here is what the house shows. On a running house: /parts.html
+     ?seed=7 other random bodies · ?z=4 zoom · ?t=1.5 freezes the clock at that second · #things #uses #curios #bodies #anims #random, or nothing: all.
+     ?three=1 draws each curio with the base-giver's own signature part as well (three parts), to compare.
+     The older page of the rest of the art is /art/preview.html. -->
+<style>
+  body { margin: 12px; background: #2a2f33; color: #e8e2d6; font: 12px/1.3 ui-monospace, Menlo, monospace; }
+  h2 { font-size: 13px; margin: 18px 0 6px; } p { margin: 2px 0 8px; color: #b9b7ae; max-width: 110ch; }
+  canvas { image-rendering: pixelated; display: block; }
+  .grid { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; } figure { margin: 0; } figcaption { margin-top: 2px; color: #b9b7ae; font-size: 11px; max-width: 150px; }
+  .sand { background: #cbb28c; padding: 6px; display: flex; gap: 6px; align-items: flex-end; } .wood { background: #8f6a48; } .green { background: #7c8a6a; }
+</style>
+</head>
+<body>
+<div id="out"></div>
+<script type="module">
+import { composeThing, loadParts, partsData } from "./src/parts.ts";
+import { PET_ANIMS, petSheet } from "./src/petsprite.ts";
+
+const q = new URLSearchParams(location.search), Z = +(q.get("z") ?? 4), frozen = q.has("t") ? +q.get("t") : null, want = location.hash.slice(1);
+let seed = +(q.get("seed") ?? 5);
+const rnd = () => ((seed = (seed * 1664525 + 1013904223) % 4294967296) / 4294967296), one = (a) => a[Math.floor(rnd() * a.length)];
+const out = document.getElementById("out");
+const el = (tag, cls, parent, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; (parent ?? out).append(e); return e; };
+const section = (id, title, note) => { if (want && want !== id) return null; el("h2", "", out, title); if (note) el("p", "", out, note); return el("div", "grid"); };
+const big = (src, z = Z) => { const c = el("canvas", "", document.createElement("div")); c.width = src.width * z; c.height = src.height * z; const x = c.getContext("2d"); x.imageSmoothingEnabled = false; x.drawImage(src, 0, 0, c.width, c.height); return c; };
+const fig = (grid, caption, ...canvases) => { const f = el("figure", "", grid), s = el("div", "sand", f); s.append(...canvases); el("figcaption", "", f, caption); return s; };
+
+await loadParts("/art");
+const D = partsData(), bodies = await (await fetch("/art/bodies.json")).json(), uses = (await (await fetch("/art/uses.json")).json()).uses;
+const COLOURS = ["red", "orange", "yellow", "green", "teal", "blue", "purple", "pink", "brown", "white", "grey", "black"];
+const MATERIALS = ["soft", "hard", "warm", "bright", "cool", "dark", "noisy", "quiet", "bouncy", "heavy", "sweet", "fragrant", "glassy", "springy"];
+const sizes = Object.keys(D.rules.px), bases = Object.keys(D.thing).filter((n) => D.thing[n].role === "base"), rest = Object.keys(D.thing).filter((n) => D.thing[n].role !== "base");
+
+// ---- SPEC-v3.6d §9: designs, a base and up to four parts each on one of its spots ("tube", "lens@tip" ...), each part
+// in a material (parts.json `looks`: a bit gives its colour). One sheet of the designs the owner named, one sheet per effect
+// (SPEC-v3.6d §2), and #review: ten of them for a fresh reviewer, the pictures lettered and the names shuffled apart. ----
+const NAMED = [["a flashlight", "tube:metal", "lens@tip:glass", "glow"], ["a stick with a knife", "pole:wood", "blade@tip:metal", "rope@side:string"],
+  ["a jetpack", "tank:metal", "rocket@base:iron"], ["a cart", "box:wood", "wheel@base:wood", "handlebar@top:metal"],
+  ["a kettle", "pot:copper", "spout@side:copper", "lid@top:copper"], ["a lantern on a pole", "pole:wood", "lamp shade@tip:metal", "glow stone@tip:stone"],
+  ["a fishing rod", "pole:wood", "fishing line@tip:string", "crank@side:metal"], ["a music box", "box:wood", "piano keys@top", "wind-up key@side:brass"],
+  ["a toy boat", "hull:wood", "sail@top:cloth"], ["a broom", "pole:wood", "bristles@base:reed", "rope@side:string"]];
+const EFFECTS = {
+  "light": [["hand lamp", "tube:metal", "lens@tip:glass", "lever@side:metal", "glow stone@inside:stone"], ["lantern on a pole", "pole:wood", "lamp shade@tip:metal", "glow stone@tip:stone"], ["candle stand", "stand:iron", "candle@tip:wax", "flame@tip"], ["firefly cage", "cage:brass", "fireflies@inside"]],
+  "soft light": [["table lamp", "stand:wood", "lamp shade@tip:cloth", "glow stone@tip:stone"], ["night jar", "jar:glass", "fireflies@inside", "cork@top:wood"], ["glow dome", "dome:glass", "glow stone@top:stone", "quilt@side:cloth"]],
+  "heat": [["brazier", "stand:iron", "ember@top"], ["little stove", "firebox:iron", "ember@inside", "valve@top:iron"], ["hand warmer", "jar:clay", "ember@inside", "strap@side:leather"], ["warming pot", "pot:iron", "ember@inside", "lid@top:iron"]],
+  "cold": [["ice box", "box:wood", "ice@inside", "hinge@side:metal"], ["fan", "stand:metal", "propeller@tip:metal"], ["cold barrel", "barrel:wood", "ice@inside", "lid@top:wood"]],
+  "sound": [["hand bell", "handle:wood", "bell dome@tip:brass"], ["whistle stick", "handle:wood", "whistle@tip:metal"], ["rattle", "jar:clay", "seeds@inside", "cork@top:wood"]],
+  "signal": [["horn", "pipe:brass", "horn@tip:brass"], ["bell post", "pole:wood", "bell dome@tip:brass", "rope@side:string"], ["flag pole", "pole:wood", "flag@tip:cloth", "rope@side:string"]],
+  "music": [["music box", "box:wood", "comb@inside:brass", "wind-up key@side:brass"], ["drum", "barrel:wood", "drum skin@top:leather", "rope@side:string"], ["little piano", "box:wood", "piano keys@top"], ["pipes", "bar:wood", "panpipes@side:reed"], ["harp", "frame:wood", "strings@inside:string"]],
+  "cut": [["stick with a knife", "pole:wood", "blade@tip:metal", "rope@side:string"], ["axe", "pole:wood", "axe head@tip:iron"], ["saw", "handle:wood", "saw@tip:metal"], ["spear", "pole:wood", "point@tip:iron", "ribbon@side:cloth"]],
+  "dig": [["digging stick", "pole:wood", "point@tip:stone"], ["trowel", "handle:wood", "spade@tip:metal"], ["scoop", "handle:wood", "scoop@tip:metal"]],
+  "hold": [["basket with a lid", "basket:reed", "lid@top:reed"], ["corked bottle", "bottle:glass", "cork@tip:wood"], ["chest", "box:wood", "studs@side:iron", "lid@top:wood"]],
+  "keep": [["ice barrel", "barrel:wood", "ice@inside", "lid@top:wood"], ["sealed jar", "jar:glass", "lid@top:metal", "strap@side:leather"], ["cold box", "box:wood", "ice@inside", "lid@top:wood"]],
+  "carry": [["cart", "box:wood", "wheel@base:wood", "handlebar@top:metal"], ["backpack", "basket:reed", "strap@side:leather"], ["bucket", "bucket:metal", "rope@side:string"], ["net bag on a stick", "pole:wood", "net@tip:string"]],
+  "pour": [["kettle", "pot:copper", "spout@side:copper", "lid@top:copper"], ["watering can", "bucket:metal", "spout@side:metal"], ["tap barrel", "barrel:wood", "tap@side:brass"], ["jug", "bottle:clay", "nozzle@tip:metal"]],
+  "roll": [["go-cart", "plank:wood", "wheel@base:wood", "seat@top:wood"], ["trolley", "box:metal", "wheel@base:metal", "handlebar@top:metal"], ["rolling barrel", "barrel:wood", "axle@base:iron"]],
+  "float": [["toy boat", "hull:wood", "sail@top:cloth"], ["rowing boat", "hull:wood", "oar@side:wood"], ["raft", "plank:wood", "sail@top:cloth"]],
+  "reach": [["ladder", "ladder:wood", "hook@tip:iron"], ["grabber", "pole:wood", "claw@tip:metal"], ["crane", "stand:wood", "arm@top:metal"]],
+  "grow": [["seed pot", "pot:clay", "soil@inside", "sprout@top"], ["planter", "box:wood", "soil@inside", "sprout@top"], ["glass house", "dome:glass", "sprout@inside"]],
+  "fasten": [["clamp bench", "plank:wood", "clamp@side:iron", "legs@base:wood"], ["hammer", "handle:wood", "head@tip:iron"], ["sewing stick", "bar:wood", "needle@tip:metal", "cord@side:string"]],
+  "comfort": [["rocking seat", "plank:wood", "runners@base:wood", "seat@top:wood"], ["little bed", "frame:wood", "legs@base:wood", "quilt@side:cloth"], ["stool", "stand:wood", "pad@top:cloth"]],
+  "play": [["kite", "handle:wood", "kite@tip:cloth"], ["balloon on a stick", "handle:wood", "balloon@tip"], ["toy car", "plank:wood", "wheel@base:wood", "flag@top:cloth"], ["ball cup", "cup:wood", "ball@inside:cloth"]],
+  "catch": [["fishing rod", "pole:wood", "fishing line@tip:string", "crank@side:metal"], ["fishing net", "pole:wood", "net@tip:string"], ["trap", "cage:wood", "hinge@side:metal", "seeds@inside"]],
+  "lift": [["jetpack", "tank:metal", "rocket@base:iron"], ["balloon basket", "basket:reed", "balloon@top", "rope@side:string"], ["flying plank", "plank:wood", "wings@top:feather"]],
+};
+/** "lens@tip:glass" -> a part of a design: its spot (the first part, the base, has none) and its material. */
+const parse = (spec) => spec.filter((s) => s !== "glow").map((s, i) => { const [pa, mat] = s.split(":"), [part, at] = pa.split("@"); return { part, at: i ? at ?? null : null, material: mat }; });
+/** What is wrong with a design by parts.json's rules (as engine/check_parts.problems, with max_design_parts). */
+function designProblems(parts) {
+  const T = D.thing, out = [], base = parts[0], rest = parts.slice(1);
+  if (parts.some((p) => !T[p.part])) return ["a part the library does not have: " + parts.filter((p) => !T[p.part]).map((p) => p.part).join(", ")];
+  if (parts.length > (D.rules.max_design_parts ?? 5)) out.push("too many parts");
+  if (T[base.part].role !== "base") out.push(`${base.part} is not a base`);
+  for (const p of rest) if (!T[base.part].spots?.includes(p.at) || !T[p.part].on?.includes(p.at)) out.push(`${p.part}@${p.at}: no such spot`);
+  rest.forEach((p, i) => { if (rest.slice(0, i).some((q) => q.at === p.at && !T[q.part].carries?.includes(p.at))) out.push(`two on ${p.at}`); });
+  return out;
+}
+/** A design's picture at a size, and how far it is cut off its square (0: it fits). */
+const design = (parts, size = "large", glow = false) => composeThing({ parts, size, glow });   // `glow`: its light works (a design whose light works glows)
+function designFig(g, name, spec, z = 4) {
+  const parts = parse(spec), bad = designProblems(parts);
+  if (bad.length) { el("figcaption", "", el("figure", "", g), `${name}: ${bad.join("; ")}`).style.color = "#ff9a8a"; return; }
+  const big24 = design(parts, "large", spec.includes("glow")), over = big24.over;
+  const f = fig(g, `${name}\n${spec.filter((s) => s !== "glow").map((s) => s.split(":")[0]).join(" + ")}${over > 0 ? `\nCUT OFF BY ${over}` : ""}`, big(big24, z));
+  if (over > 0) f.parentElement.querySelector("figcaption").style.color = "#ff9a8a";
+}
+let g = section("designs", "Designs", "SPEC-v3.6d §9: the designs the owner named, each a base and up to four parts on its spots, at 24 px (as a design is drawn) and 16.");
+if (g) for (const [name, ...spec] of NAMED) designFig(g, name, spec);
+if (!want || want === "effects") for (const [effect, list] of Object.entries(EFFECTS)) {
+  el("h2", "", out, `Effect: ${effect}`);
+  const g = el("div", "grid");
+  for (const [name, ...spec] of list) designFig(g, name, spec);
+}
+if (want === "review") {   // the fresh reviewer's sheet: ten pictures lettered A to J, and the ten names in another order
+  out.replaceChildren();
+  el("h2", "", out, "Ten things, A to J. Which name is which picture?");
+  const g = el("div", "grid"), order = [3, 7, 0, 9, 5, 1, 8, 4, 2, 6], letters = "ABCDEFGHIJ";
+  order.forEach((k, i) => { const f = el("figure", "", g), s = el("div", "sand", f); s.append(big(design(parse(NAMED[k].slice(1)), "large", NAMED[k].includes("glow")), 6)); el("figcaption", "", f, letters[i]).style.fontSize = "20px"; });
+  const names = NAMED.map((n) => n[0]).sort();
+  el("p", "", out, "Names: " + names.join(" · ")).style.fontSize = "18px";
+  document.title = "Pet parts: ready";
+}
+
+// ---- thing parts ----
+g = section("things", "Thing parts", "Every part as it is drawn (unpainted), at each size a thing can be: " + sizes.map((s) => `${s} ${D.rules.px[s]}px`).join(", ") + ". A base says where things go on it; the others what they go on.");
+if (g) for (const [name, p] of Object.entries(D.thing))
+  fig(g, `${name} · ${p.role}${p.glow ? " · glows" : ""}${p.sound ? ` · ${p.sound}` : ""}\n${p.spots ? "spots: " + p.spots.join(", ") : "on: " + p.on.join(", ")}`, ...sizes.map((size) => big(composeThing({ parts: [{ part: name, at: null }], size }))));
+
+g = section("things", "Each catalog kind as its parts", "What an invention takes from each kind: its base, and its signature part on the first spot of that base it can go on.");
+if (g) for (const [kind, k] of Object.entries(D.kinds)) {
+  const at = D.thing[k.signature].on.find((s) => D.thing[k.base].spots.includes(s));
+  fig(g, `${kind}: ${k.base} + ${k.signature}${at ? ` @${at}` : " (no spot)"}`, big(composeThing({ parts: [{ part: k.base, at: null, color: "brown", material: "hard" }, ...(at ? [{ part: k.signature, at, color: "teal", material: "hard" }] : [])], size: "small" })));
+}
+
+// ---- what an invention can be (SPEC-v3.5 §3.0): each use's template, every base and added part it allows, in five materials ----
+/** The parts of a thing on this base: each added part on the first spot of its `on` list that the base has free (or that
+ *  a part already there carries: a flame in a fork). null if one of them has nowhere to go. */
+function put(base, names) {
+  const taken = {}, parts = [{ part: base, at: null }];
+  for (const n of names) {
+    const at = D.thing[n].on.find((s) => D.thing[base].spots.includes(s) && (!taken[s] || D.thing[taken[s]].carries?.includes(s)));
+    if (!at) return null;
+    taken[at] = n;
+    parts.push({ part: n, at });
+  }
+  return parts;
+}
+const MADE = [["hard", "brown", "bright", "yellow"], ["heavy", "grey", "warm", "red"], ["glassy", "teal", "soft", "white"], ["soft", "pink", "hard", "blue"], ["dark", "purple", "noisy", "orange"]];   // the base's material and colour, then the added part's
+const combos = (lists) => lists.reduce((all, l) => all.flatMap((c) => l.map((x) => [...c, x])), [[]]);
+if (!want || want === "uses") for (const [name, u] of Object.entries(uses)) {
+  el("h2", "", out, name);
+  el("p", "", out, u.does);
+  const g = el("div", "grid");
+  for (const base of u.base) for (const add of combos(u.add)) for (const may of [null, ...(u.may ?? [])]) {
+    const names = [...(may ? [may] : []), ...add], parts = put(base, names);
+    if (!parts) { el("figcaption", "", el("figure", "", g), `${base} + ${names.join(" + ")}: CANNOT BE PUT TOGETHER`).style.color = "#ff9a8a"; continue; }
+    const made = (m, size) => composeThing({ parts: parts.map((p, i) => ({ ...p, material: m[i ? 2 : 0], color: m[i ? 3 : 1] })), size, glow: !!u.glow });
+    fig(g, parts.map((p) => `${p.part}${p.at ? "@" + p.at : ""}`).join(" + "), ...MADE.map((m) => big(made(m, "small"), 5)), big(made(MADE[0], "large"), 5));
+  }
+}
+
+// ---- curios (§3.0): two real things combined that fit no use: the first one's base with the other's signature part on its first free spot ----
+const PAIRS = [["basket", "candle"], ["cushion", "bell"], ["basket", "spinning top"], ["stool", "lantern"], ["drum", "garland"], ["jar", "flute"], ["box", "bell"], ["rug", "lamp"], ["vase", "rope"],
+  ["chest", "mirror"], ["stool", "blanket"], ["nest", "charm"], ["cup", "doll"], ["crate", "wind chime"], ["picture", "hammer"], ["shelf", "plant pot"], ["ball", "carver"], ["stone stack", "candle"],
+  ["sculpture", "rope"], ["wall hook", "bell"], ["trowel", "cushion"], ["mobile", "box"], ["bed-mat", "drum"], ["chest", "trowel"]];
+/** The use a base with these parts on it has, if it has one. */
+const useOf = (base, names) => Object.entries(uses).find(([, u]) => u.base.includes(base) && u.add.every((l) => l.some((n) => names.includes(n))) && names.every((n) => u.add.flat().includes(n) || u.may?.includes(n)))?.[0];
+if (!want || want === "curios") {
+  el("h2", "", out, "Curios: two things combined that fit no use");
+  el("p", "", out, "Each from two catalog kinds, both ways round: the first kind gives its base (parts.json, kinds), the second its signature part, on the first spot of the base it can go on. A pair that fits a use says which.");
+  const g = el("div", "grid");
+  PAIRS.flatMap(([a, b]) => [[a, b], [b, a]]).forEach(([a, b], i) => {
+    const A = D.kinds[a], B = D.kinds[b], parts = (q.has("three") && put(A.base, [A.signature, B.signature])) || put(A.base, [B.signature]), m = MADE[i % MADE.length], use = useOf(A.base, [B.signature]);   // ?three: the base-giver keeps its own signature part too, where there is a spot for both
+    if (!parts) { el("figcaption", "", el("figure", "", g), `${a} + ${b}: ${B.signature} has no spot on a ${A.base}`).style.color = "#ff9a8a"; return; }
+    const made = (size) => composeThing({ parts: parts.map((p, k) => ({ ...p, material: m[k ? 2 : 0], color: m[k ? 3 : 1] })), size });
+    fig(g, `${a} + ${b}${use ? ` = ${use}` : ""}\n${a}'s ${A.base}${parts.length > 2 ? ` and ${A.signature}` : ""}, ${b}'s ${B.signature}@${parts.at(-1).at}`, big(made("small"), 5), big(made("large"), 5));
+  });
+}
+
+// ---- bodies ----
+const PLAIN = { roundness: 0.72, stretch: 1.05, wobble: 0.4, hue: 31, saturation: 0.6, pattern: "plain", pattern_density: 0.5, eye_size: 0.5, eye_spacing: 0.4, limbs: 0, marks: [],
+  plan: "blob", ears: "none", tail: "none", head: "none", whiskers: "no", feet: "nubs", mouth: "dot", fur: "thin", shade: "light", size: 1 };
+const live = [];   // [canvas, frames, fps]
+const pet = (genome, stage, anim = "idle", z = Z) => {
+  const sheet = petSheet(genome, stage, { grey: stage === "elder" ? 0.55 : 0 }), frames = sheet.frames[anim], c = big(frames[0], z);
+  live.push([c, frames, sheet.fps[anim]]);
+  return c;
+};
+const turned = (genome, stage = "adult") => ["stand.down", "stand.right", "stand.up", "stand.left"].map((a) => pet(genome, stage, a));
+g = section("bodies", "Body parts", "Every value of every slot, alone on a plain grown body (front, right, back, left), and on a little one.");
+if (g) for (const [slot, values] of Object.entries(bodies.slots)) for (const v of values) fig(g, `${slot}: ${v}`, ...turned({ ...PLAIN, [slot]: v }), pet({ ...PLAIN, [slot]: v }, "child"));
+g = section("bodies", "Patterns and sizes", "Each pattern (the five, and what two give together); the smallest and the largest body.");
+if (g) {
+  for (const pattern of bodies.patterns) fig(g, pattern, pet({ ...PLAIN, hue: 200, pattern }, "adult", "stand.down"), pet({ ...PLAIN, hue: 200, pattern }, "adult", "stand.up"), pet({ ...PLAIN, hue: 200, pattern }, "child"));
+  for (const size of [0.8, 1, 1.2]) fig(g, `size ${size}`, ...["hatchling", "child", "youngling", "adult", "elder"].map((s) => pet({ ...PLAIN, size }, s)));
+}
+g = section("bodies", "Body plans", "Each plan at every stage, then turned each way.");
+if (g) for (const plan of bodies.plans) fig(g, plan, ...["hatchling", "child", "youngling", "adult", "elder"].map((s) => pet({ ...PLAIN, plan, hue: 160 }, s)), ...turned({ ...PLAIN, plan, hue: 160 }));
+g = section("anims", "Every animation, every plan", "Each row a plan, wearing ears, a tail, a crest, whiskers and long legs, so that anything left behind by a movement shows.");
+if (g) for (const plan of bodies.plans) {
+  const G = { ...PLAIN, plan, hue: 280, ears: "pointed", tail: "long", head: "crest", whiskers: "yes", feet: plan === "long" ? "paws" : "legs", pattern: "stripes" };
+  const row = el("div", "sand green", el("figure", "", g));
+  for (const a of PET_ANIMS) { const f = el("figure", "", row); f.append(pet(G, "adult", a, 3)); el("figcaption", "", f, a); }
+  el("figcaption", "", row.parentElement, plan);
+}
+/** A random body: mostly plain, as a family's are, with a few parts. */
+function randomBody() {
+  const G = { ...PLAIN, roundness: 0.3 + rnd() * 0.7, stretch: 0.8 + rnd() * 0.55, hue: Math.floor(rnd() * 360), saturation: 0.3 + rnd() * 0.7, pattern: one(bodies.patterns), pattern_density: rnd(),
+    eye_size: 0.2 + rnd() * 0.8, eye_spacing: 0.2 + rnd() * 0.6, size: 0.8 + rnd() * 0.4, plan: rnd() < 0.5 ? "blob" : one(bodies.plans) };
+  for (const [slot, values] of Object.entries(bodies.slots)) G[slot] = rnd() < 0.5 ? values[0] : one(values);
+  return G;
+}
+g = section("random", "Random bodies", "A grown one, and its child as the engine might make it: the same body with one slot a step along.");
+if (g) for (let i = 0; i < 48; i++) {
+  const G = randomBody(), slot = one(Object.keys(bodies.slots)), values = bodies.slots[slot], n = values.indexOf(G[slot]);
+  const child = { ...G, [slot]: values[Math.min(values.length - 1, Math.max(0, n + (rnd() < 0.5 ? -1 : 1)))], hue: (G.hue + Math.round(rnd() * 30 - 15) + 360) % 360 };
+  fig(g, `${G.plan} · ${["ears", "tail", "head"].map((s) => G[s]).join(" ")}\n${G.pattern}, ${G.feet}, ${G.mouth}, ${G.fur}, ${G.shade}`, pet(G, "adult"), pet(child, "child"));
+}
+
+const t0 = performance.now();
+(function tick() {
+  const t = frozen ?? (performance.now() - t0) / 1000;
+  for (const [c, frames, fps] of live) {
+    const f = frames[Math.floor(t * fps) % frames.length];
+    if (c.f !== f) { c.f = f; const x = c.getContext("2d"); x.clearRect(0, 0, c.width, c.height); x.drawImage(f, 0, 0, c.width, c.height); }
+  }
+  if (frozen == null) requestAnimationFrame(tick);
+})();
+document.title = "Pet parts: ready";
+</script>
+</body>
+</html>

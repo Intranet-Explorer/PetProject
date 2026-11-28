@@ -1,0 +1,644 @@
+# What a pet's body does by itself between thoughts (SPEC-v3.3 §1.1). No model is asked: each tick a pet that is
+# not carrying out something it decided picks the best of these for the moment and does it. Add an activity here and
+# the body can do it; `do` names the way it is carried out (engine/body.py), and several activities can share one.
+#
+#   doing     what it is doing, as the page says it ("playing with the {what}")
+#   did       what it did, as the pet is told afterwards ("played with the {what}")
+#   icon      the small sign over its head (sprite icon.act.<icon>)
+#   voice     the sound it makes starting it, in its own voice (murmur, hum, chirp, yawn, laugh, greet, grumble, gasp)
+#   seconds   how long it takes once it is there, least and most (world seconds)
+#   base      how likely it is with nothing else to say
+#   needs     which feelings pull toward it: need -> weight, counted by how bad that need is (0 fine to 1 at its worst)
+#   temper    which temperaments lean toward it: gene -> weight, counted from the middle (a gene of 1 adds the weight)
+#   focus     the kinds of thing its mind may want to be about (§1.2) that this serves
+#   when      the hour or the sky that suits it: dusk, night, day, morning, storm, rain, music -> bonus
+#   passive   resting, looking and watching: together kept under a quarter of its waking time
+#   fidget    (SPEC-v3.4 §1) filler, not an activity: one tick long, done on the spot between two activities or while a
+#             thought is on its way, never chosen as the thing to do, and not counted as anything done
+#   handles   (SPEC-v3.4 §0) it picks up, uses, carries or puts away the thing it names: counted as a thing handled
+#   rest      done in a resting pose (lying or sitting down): the only way it stays put for long
+#   stage     the youngest that does it
+#   effects   what it does to the pet when done, in the same units as config.toml [effects] (it wears with repeating)
+#   needs_tool, needs_place   (Phase B) a tool it must be carrying, or a fixture it must be at; unused so far
+
+[wander]
+do = "wander"
+doing = "wandering about"
+did = "wandered about"
+icon = "walk"
+seconds = [3, 6]
+base = 0.5                       # (walking about the room, not through a door: it keeps v3.4's paws busy and legs moving)
+temper = { curious = 0.4, bold = 0.2 }
+focus = ["explore"]
+
+["look about"]
+do = "self"
+doing = "looking about"
+did = "looked about"
+icon = "eye"
+seconds = [2, 2]
+base = 0.7
+passive = true
+temper = { curious = 0.2 }
+fidget = true
+
+[stretch]
+do = "self"
+doing = "having a stretch"
+did = "stretched"
+icon = "stretch"
+voice = "yawn"
+seconds = [2, 2]
+base = 0.7
+needs = { energy = 0.6 }
+fidget = true
+
+[groom]
+do = "self"
+doing = "grooming itself"
+did = "groomed yourself"
+icon = "groom"
+seconds = [2, 2]
+base = 0.8
+needs = { comfort = 0.4 }
+effects = { comfort = 0.3 }
+fidget = true
+
+[hum]
+do = "self"
+doing = "humming to itself"
+did = "hummed to yourself"
+icon = "note"
+voice = "hum"
+seconds = [2, 2]
+base = 0.8
+temper = { playful = 0.4 }
+when = { music = 0.6 }
+fidget = true
+
+["explore a doorway"]
+do = "doorway"
+doing = "nosing at the {what} door"
+did = "nosed at the {what} door"
+icon = "door"
+voice = "chirp"
+seconds = [4, 7]
+base = 0.3
+temper = { bold = 1.0, curious = 0.5 }
+needs = { curiosity = 0.8 }
+focus = ["explore"]
+effects = { curiosity = 0.6 }
+
+["peek next door"]
+do = "peek"
+doing = "peeking into {what}"
+did = "peeked into {what}"
+icon = "door"
+seconds = [3, 6]
+base = 0.1                       # (SPEC-v3.5.4 §3: was 0.3)
+temper = { bold = 0.6, curious = 0.5, sociable = 0.3 }
+needs = { curiosity = 0.6, company = 0.5 }
+focus = ["explore", "be with"]
+effects = { curiosity = 0.4 }
+
+["go next door"]
+do = "go"
+doing = "going through the {what} door"
+did = "went through the {what} door"
+icon = "door"
+seconds = [2, 3]
+base = 0.2                       # into rooms it knows, for a reason (SPEC-v3.5.4 §3: a room not seen lately, kin there, to be with someone, its mind wants to explore); was 0.4
+temper = { bold = 0.5, curious = 0.3 }
+focus = ["explore", "be with"]
+
+[inspect]
+do = "inspect"
+doing = "looking closely at the {what}"
+did = "looked closely at the {what}"
+icon = "eye"
+voice = "chirp"
+seconds = [4, 8]
+base = 0.3
+temper = { curious = 0.6 }
+needs = { curiosity = 0.5 }
+focus = ["explore", "project", "stay near", "tend"]
+
+[fiddle]
+do = "fiddle"
+doing = "fiddling with the {what}"
+did = "fiddled with the {what}"
+icon = "paws"
+voice = "murmur"
+seconds = [2, 2]
+base = 0.9
+temper = { playful = 0.5, curious = 0.4 }
+needs = { curiosity = 0.6 }
+focus = ["project", "make", "stay near", "tend"]
+effects = { curiosity = 0.4 }
+fidget = true
+
+[play]
+do = "play"
+doing = "playing with the {what}"
+did = "played with the {what}"
+icon = "ball"
+voice = "laugh"
+seconds = [5, 10]
+base = 1.3
+temper = { playful = 1.2 }
+needs = { curiosity = 1.0 }
+focus = ["play"]
+when = { music = 0.4 }
+handles = true
+
+["sit by the window"]
+rest = true
+do = "window"
+doing = "sitting by the window"
+did = "sat by the window"
+icon = "window"
+seconds = [6, 10]
+base = 0.5
+passive = true
+temper = { patient = 0.5 }
+needs = { comfort = 0.4 }
+when = { dusk = 1.2, rain = 0.6, storm = 0.4, morning = 0.4 }
+focus = ["rest"]
+effects = { comfort = 0.4 }
+handles = true
+
+[nap]
+rest = true
+do = "nap"
+doing = "having a nap"
+did = "had a short nap"
+icon = "zzz"
+voice = "yawn"
+seconds = [8, 10]
+base = 0.0                       # only pulled by tiredness, or by a mind that wants rest
+passive = true
+needs = { energy = 3.0 }
+focus = ["rest"]
+
+[eat]
+do = "eat"
+doing = "eating from the {what}"
+did = "ate from the {what}"
+icon = "bowl"
+seconds = [4, 6]
+base = 0.0                       # only when tired enough to want it
+needs = { energy = 2.2 }
+handles = true
+
+[tidy]
+do = "tidy"
+doing = "putting the {what} away"
+did = "put the {what} {where}"
+icon = "broom"
+voice = "murmur"
+seconds = [2, 4]
+base = 0.6
+temper = { orderly = 2.4 }
+focus = ["tidy"]
+handles = true
+
+[gather]
+do = "gather"
+doing = "picking up {a_what}"
+did = "picked up {a_what}"
+icon = "paws"
+seconds = [3, 4]
+base = 0.4
+temper = { curious = 0.3, playful = 0.2 }
+focus = ["make", "project"]
+handles = true
+
+[tend]
+do = "tend"
+doing = "tending the {what}"
+did = "tended the {what}"
+icon = "leaf"
+voice = "murmur"
+seconds = [5, 8]
+base = 0.9
+temper = { patient = 0.7, orderly = 0.3 }
+focus = ["tend"]
+effects = { comfort = 0.3 }
+handles = true
+
+["follow kin"]
+do = "follow"
+doing = "tagging along after {who}"
+did = "tagged along after {who}"
+icon = "heart"
+voice = "chirp"
+seconds = [4, 7]
+base = 0.7
+temper = { sociable = 1.0 }
+needs = { company = 1.2 }
+focus = ["be with"]
+
+["sit with kin"]
+rest = true
+do = "sit with"
+doing = "sitting with {who}"
+did = "sat with {who}"
+icon = "heart"
+voice = "murmur"
+seconds = [3, 4]
+base = 0.3
+passive = true
+temper = { sociable = 0.9, patient = 0.3 }
+needs = { company = 1.5 }
+focus = ["be with", "rest"]
+when = { storm = 0.8, night = 0.4 }
+
+# SPEC-v4.2 A: nursing (§2.2): a grown hob sits with a sick or hurt one, brings it food and water, keeps it warm; a day
+# of it moves a sickness back a stage (health.nursing). Its targets are health.patients (none while [deaths] is off).
+[nurse]
+do = "nurse"
+doing = "sitting with {who}, who is poorly"
+did = "sat with {who} and looked after it"
+icon = "heart"
+voice = "murmur"
+seconds = [8, 16]
+base = 0.4
+stage = "adult"
+temper = { patient = 0.4 }
+focus = ["be with"]
+# SPEC-v4.2 A: end
+
+# SPEC-v4.2 D: an elder tells a tale to the little ones (§10.3), in the evening's gathering: a dead hob's last words and
+# what it died of, kept by each listener and believed if it carries a hook (story.tell). Its targets are story.tell_targets
+# (none while [memory2] is off). A behaviour's `b:`, so the planner finds and finishes it.
+[tell]
+id = "tells_tales"
+behaviour = true
+do = "b:tell"
+doing = "telling {who} a tale"
+did = "told {who} a tale"
+icon = "speech"
+voice = "murmur"
+seconds = [6, 10]
+base = 0.6
+stage = "elder"
+temper = { sociable = 0.4 }
+focus = ["be with"]
+# SPEC-v4.2 D: end
+
+# SPEC-v5.1 §5.3 (helper B): at the bench with a thing whose making it hasn't, it turns it over; a world hour of it and the
+# thing is studied: its recipe, or that it exists (knowledge.study_targets, knowledge.studied). A behaviour's `b:`, so the
+# planner finds and finishes it; none while [knowledge] is off.
+[study]
+id = "studies_things"
+behaviour = true
+do = "b:study"
+doing = "studying the {what} at the bench"
+did = "studied the {what} at the bench"
+icon = "paws"
+voice = "murmur"
+seconds = [8, 14]
+base = 0.3
+stage = "youngling"
+temper = { curious = 0.5 }
+focus = ["explore"]
+
+["watch a creature"]
+do = "watch"
+doing = "watching the {what}"
+did = "watched the {what}"
+icon = "eye"
+seconds = [5, 9]
+base = 0.5
+passive = true
+temper = { curious = 0.6, patient = 0.5 }
+needs = { curiosity = 0.5, company = 0.4 }
+focus = ["explore", "tend"]
+effects = { curiosity = 0.5 }
+
+["visit the stone"]
+do = "stone"
+doing = "sitting by the stone"
+did = "sat a while by {what}"
+icon = "stone"
+seconds = [5, 8]
+base = 0.6
+temper = { sociable = 0.4, patient = 0.3 }
+needs = { company = 0.6 }
+when = { morning = 0.8 }
+handles = true
+
+[babble]
+do = "babble"
+doing = "babbling to {who}"
+did = "babbled to {who}"
+icon = "speech"
+voice = "greet"
+seconds = [2, 2]
+base = 0.6
+temper = { sociable = 1.0, playful = 0.4 }
+needs = { company = 0.8 }
+focus = ["be with", "play"]
+fidget = true
+
+[dance]
+do = "dance"
+doing = "dancing"
+did = "danced"
+icon = "note"
+voice = "laugh"
+seconds = [5, 10]
+base = 0.0                       # only when there is music to dance to
+temper = { playful = 1.0 }
+when = { music = 1.4 }
+focus = ["play"]
+effects = { curiosity = 0.8, energy = -0.3 }
+
+[sing]
+do = "sing"
+doing = "singing \"{what}\""
+did = "sang \"{what}\""
+icon = "note"
+seconds = [6, 10]
+base = 0.3
+temper = { playful = 0.6, sociable = 0.4 }
+when = { music = 0.8 }
+focus = ["play", "be with"]
+
+[listen]
+do = "listen"
+doing = "listening to the {what}"
+did = "listened to the {what}"
+icon = "radio"
+seconds = [6, 10]
+base = 0.7
+passive = true
+temper = { curious = 0.7, patient = 0.3 }
+needs = { curiosity = 1.0 }
+effects = { curiosity = 0.8 }
+
+# A mind set on making something (focus "make"): the body gets ready for it, in order. It picks up bits, takes them
+# to the workbench if the room has one, and lays them out; then the pet thinks sooner than it otherwise would, with
+# everything to hand. The making itself is still its mind's to decide.
+["carry to the bench"]
+do = "bench"
+doing = "carrying its bits over to the {what}"
+did = "carried what you had gathered over to the {what}"
+icon = "paws"
+seconds = [2, 3]
+base = 0.0
+focus = ["make"]
+handles = true
+
+["lay out the bits"]
+do = "lay out"
+doing = "laying out its bits {where}"
+did = "laid out what you carry {where}, ready to make something of"
+icon = "paws"
+voice = "murmur"
+seconds = [5, 8]
+base = 0.0
+focus = ["make"]
+handles = true
+
+# ---- SPEC-v3.4 §1: bodies that go places. Things done somewhere else in the room, with a thing ----
+
+["sit on"]
+rest = true
+do = "seat"
+doing = "settling on the {what}"
+did = "sat a while on the {what}"
+icon = "seat"
+seconds = [4, 7]
+base = 0.5
+handles = true
+temper = { patient = 0.4 }
+needs = { comfort = 0.8, energy = 0.6 }
+focus = ["rest"]
+when = { dusk = 0.4, night = 0.4 }
+
+["take out"]
+do = "take out"
+doing = "taking the {what} out to look at"
+did = "took the {what} out of the {where}, looked it over and put it back"
+icon = "box"
+voice = "chirp"
+seconds = [3, 5]
+base = 0.6
+handles = true
+temper = { curious = 0.8, playful = 0.3 }
+needs = { curiosity = 0.8 }
+focus = ["explore", "play", "project"]
+effects = { curiosity = 0.5 }
+
+["bring to kin"]
+do = "bring"
+doing = "carrying the {what} over to {who}"
+did = "carried the {what} over to {who}"
+icon = "box"
+voice = "chirp"
+seconds = [2, 4]
+base = 0.5
+handles = true
+temper = { sociable = 0.9, playful = 0.3 }
+needs = { company = 0.9 }
+focus = ["be with", "play"]
+
+["follow a creature"]
+do = "tail"
+doing = "following the {what} about"
+did = "followed the {what} about"
+icon = "walk"
+voice = "chirp"
+seconds = [6, 10]
+base = 0.6
+temper = { curious = 0.5, bold = 0.5, playful = 0.4 }
+needs = { curiosity = 0.6 }
+focus = ["explore", "play"]
+effects = { curiosity = 0.5 }
+
+# SPEC-v3.4 §2.1, §3.1: a bit it wants to try something on is carried to where that can be tried (the water, the
+# heat, the bench, the earth). What comes of it is its mind's to find out: there it is told, and thinks sooner.
+["take to try"]
+do = "place"
+doing = "carrying its {what} {where}"
+did = "carried the {what} {where}"
+icon = "paws"
+seconds = [2, 3]
+base = 0.0
+handles = true
+
+["try it"]
+do = "try"
+doing = "trying something with its {what}"
+did = "tried something with the {what}"
+icon = "paws"
+voice = "murmur"
+seconds = [4, 6]
+base = 0.0
+handles = true
+
+# SPEC-v3.4 §4.1: a word it wonders about, and the book is in the room: it goes over to it, and its mind may ask.
+# Left long enough, it leafs through the book by itself, looking for the word.
+["go to the book"]
+do = "place"
+book = true
+doing = "going over to the heavy book"
+did = "went over to the heavy book"
+doing_screen = "going over to the {what}"   # (SPEC-v3.5.3 §10: at one of the machine room's screens, the screen's own name)
+did_screen = "went over to the {what}"
+icon = "book"
+seconds = [2, 3]
+base = 0.0
+
+# (13 October 2026) one too young to read goes over to an elder instead, and its mind may ask out loud.
+["go to ask"]
+do = "place"
+book = true
+elder = true
+doing = "going over to {who}"
+did = "went over to {who}"
+icon = "speech"
+seconds = [2, 3]
+base = 0.0
+
+["leaf through the book"]
+do = "try"
+book = true
+doing = "leafing through the heavy book"
+did = "leafed through the heavy book"
+doing_screen = "reading the {what}"
+did_screen = "read the {what}"
+icon = "book"
+seconds = [5, 8]
+base = 0.0
+handles = true
+
+# SPEC-v3.5 §4.3: the vending machine (engine/machine.py). A material one of its wants is about, and the machine has
+# it: it goes over and takes one (two a day). A spare thing it wants fed to the machine: it is carried there, a room
+# at a time if the machine is elsewhere, and fed in for a material back. Nothing to make with: it goes to see.
+["take from the machine"]
+do = "vend"
+doing = "getting {a_what} from the machine"
+did = "took {a_what} from the machine"
+icon = "paws"
+seconds = [3, 5]
+base = 0.0
+handles = true
+
+["look in the machine"]
+do = "vend"
+peek = true
+doing = "seeing what the machine has"
+did = "looked over what the machine holds"
+icon = "eye"
+seconds = [3, 5]
+base = 0.0
+handles = true
+
+["feed the machine"]
+do = "feed"
+doing = "taking the {what} to the machine"
+did = "took the {what} to the machine"
+icon = "box"
+voice = "murmur"
+seconds = [3, 5]
+base = 0.0
+handles = true
+
+# SPEC-v3.5.8 §4: clearing, as ordinary as tidying: an old charm past the few it keeps, or a thing nobody uses, picked
+# up with a couple more and carried toward the Works (no want needed; machine.targets finds the scrap)
+["clear scrap"]
+do = "feed"
+scrap = true
+doing = "taking the old {what} to the Works"
+did = "took the old {what} to the Works"
+icon = "box"
+voice = "murmur"
+seconds = [3, 5]
+base = 0.6
+temper = { orderly = 2.4 }
+focus = ["tidy"]
+handles = true
+
+# SPEC-v3.5.8 §2: a grown hob that could lay an egg soon, or that knows of an egg that is nobody's with no name, looks
+# up names in the encyclopedia once a world day: people, places, stars, plants, birds, rivers, found in a page about
+# something from its own life (engine/names.py). They are among the names it is offered when it names the egg.
+["look up a name"]
+do = "names"
+doing = "looking up a name for its egg in the heavy book"
+did = "looked up a name for your egg in the heavy book"
+doing_screen = "looking up a name for its egg on the {what}"
+did_screen = "looked up a name for your egg on the {what}"
+icon = "book"
+seconds = [5, 8]
+base = 0.3
+stage = "adult"
+
+# SPEC-v3.5.12 §2-3: what does not belong in a room (or is scrap) goes on the train for the store (or the Works): into
+# its cart while it stands at the platform here, else onto the platform for it to collect. The orderly most; and more
+# when the train is waiting (rail.py, store.py).
+["load the train"]
+do = "train"
+doing = "putting the {what} on the train"
+did = "put the {what} {where}"
+icon = "box"
+voice = "murmur"
+seconds = [2, 4]
+base = 0.7
+temper = { orderly = 2.4 }
+focus = ["tidy"]
+handles = true
+
+# SPEC-v3.5.12 §3: a little one climbs into the tram for a stop or two, as play; an old one, to save its legs (rail.board).
+["ride the train"]
+do = "ride"
+doing = "climbing into the train's tram"
+did = "rode in the train's tram"
+icon = "paws"
+voice = "chirp"
+seconds = [1, 2]
+base = 0.3
+temper = { playful = 1.2, bold = 0.6 }
+needs = { curiosity = 0.8, energy = -0.4 }
+
+# SPEC-v3.6a §2: at the pond's edge, or the end of the dock: cast (or dangle a paw), wait, pull up something or
+# nothing (pond.py rolls it and lands it; no model is asked). Its own seconds: pond.toml [time].
+[fish]
+do = "fish"
+doing = "fishing {where}"
+did = "fished {where}"
+icon = "fish"
+voice = "murmur"
+seconds = [40, 72]
+base = 1.6                        # (it has to win against what else the pond room offers; [time] share keeps it from taking over)
+temper = { patient = 1.0, curious = 0.3 }
+needs = { energy = 0.5, curiosity = 0.3 }
+stage = "child"
+handles = true
+
+# ---- SPEC-v3.6b: the machines (engine/machines.py) and the pot on the stove (engine/cook.py) ----
+
+["eat from the pot"]   # cook.py: a serving from the pot on the stove
+do = "eat"
+pot = true
+doing = "eating {where}"
+did = "ate {where} from the pot"
+icon = "bowl"
+seconds = [5, 8]
+base = 0.0
+stage = "hatchling"
+handles = true
+
+["work a machine"]   # machines.py: a load into a machine it knows how to work, from its paws, the room or the machine's stock
+do = "machine"
+doing = "{where}"
+did = "{where}"
+icon = "flame"
+voice = "murmur"
+seconds = [6, 10]
+base = 0.9
+stage = "child"
+temper = { patient = 0.5, orderly = 0.4 }
+focus = ["project", "make"]
+handles = true

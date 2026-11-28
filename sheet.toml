@@ -1,0 +1,88 @@
+# The sheet (24 November 2026): the concrete things that make one hob's day unlike another's. engine/sheet.py draws
+# one for every hob at random (no inheritance) and the body's score reads it (config.toml [sheet] has the weights).
+# The slots, and how strongly each should pull, come from the Jev rounds of November 2026 (favourite places, pursuits
+# and fears moved behaviour most; fears outrank traits; slots stack without diluting).
+#
+#   place     a room it spends its free time in: drawn from the rooms the house has found, so it has no table here
+#   pursuit   what it does whenever it can: `does` are the body's activities (activities.toml) it is drawn to; `rooms`, if it
+#             has them, the room types it is done in: it makes for one and stays (and its favourite place gives way to it);
+#             `seeks`, for one with no room of its own, what it goes looking for: toys, creatures, book, mess, kin
+#   fear      what it keeps away from: `does` the activities, `rooms` the room types, `night` if the dark is part of it
+#   food      what it likes best: `does` the activities that get it
+#   words     how the hob itself is told, in its packet ("you ...")
+
+[pursuit.fishing]
+rooms = ["pond"]
+words = "fish whenever you can"
+does = ["fish"]
+[pursuit.growing]
+rooms = ["greenhouse", "garden"]
+words = "tend growing things whenever you can"
+does = ["tend", "gather"]
+[pursuit.music]
+rooms = ["music"]
+words = "sing and dance whenever you can"
+does = ["sing", "dance", "listen"]
+[pursuit.reading]
+seeks = "book"
+words = "go to the book whenever you can"
+does = ["go to the book", "leaf through the book", "study"]
+[pursuit.making]
+rooms = ["workshop"]
+words = "lay things out to make something whenever your paws are free"
+does = ["lay out the bits", "carry to the bench", "take to try", "try it"]
+[pursuit.machines]
+rooms = ["hub"]
+words = "work the machines whenever you can"
+does = ["work a machine", "feed the machine", "look in the machine", "take from the machine", "ride the train"]
+[pursuit.creatures]
+seeks = "creatures"
+words = "watch and follow the small creatures whenever you can"
+does = ["watch a creature", "follow a creature"]
+[pursuit.tidying]
+seeks = "mess"
+words = "put things in order whenever you can"
+does = ["tidy", "take out"]
+[pursuit.play]
+seeks = "toys"
+words = "play whenever you can"
+does = ["play", "babble"]
+[pursuit.company]
+seeks = "kin"
+words = "keep close to your kin whenever you can"
+does = ["follow kin", "sit with kin", "bring to kin", "tell"]
+
+[fear.water]
+words = "are terrified of water: you will not fish or go near the pond"
+does = ["fish"]
+rooms = ["pond"]
+[fear.dark]
+words = "are terrified of the dark: you keep out of the cellar and stay put at night"
+rooms = ["cellar"]
+night = true
+[fear.heights]
+words = "are terrified of heights: you keep out of the attic"
+rooms = ["attic"]
+[fear.sky]
+words = "are afraid of the open sky: you keep indoors"
+rooms = ["yard", "meadow", "garden"]
+[fear.noise]
+words = "cannot bear noise: you keep out of the music room and away from singing"
+does = ["sing", "dance", "listen"]
+rooms = ["music"]
+[fear.creatures]
+words = "are afraid of the small creatures and keep away from them"
+does = ["watch a creature", "follow a creature"]
+[fear.machines]
+words = "are afraid of the machines and keep away from them"
+does = ["work a machine", "feed the machine", "look in the machine", "take from the machine", "ride the train"]
+
+[food.fish]
+words = "love fish above every other food"
+does = ["fish"]
+[food.grown]
+words = "love what grows in the earth above every other food"
+does = ["tend"]
+[food.cooked]
+words = "love a cooked dish from the pot above every other food"
+does = ["eat from the pot"]

@@ -1,0 +1,6821 @@
+{
+ "axes": {
+  "warm": {
+   "A": [
+    "kind",
+    "forgives quickly, comforts others, assumes the best of them"
+   ],
+   "B": [
+    "thin-skinned",
+    "takes everything personally; a look or a joke can ruin its day"
+   ]
+  },
+  "brave": {
+   "A": [
+    "brave",
+    "not afraid of physical danger: heights, dark places, wild animals, thin ice"
+   ],
+   "B": [
+    "timid",
+    "afraid of physical danger: heights, the dark, wild animals, deep water"
+   ]
+  },
+  "tidy": {
+   "A": [
+    "tidy",
+    "puts things back, can't stand a mess, cleans before it rests"
+   ],
+   "B": [
+    "messy",
+    "drops things where it stands, never puts anything back, doesn't notice clutter"
+   ]
+  },
+  "generous": {
+   "A": [
+    "generous",
+    "gives food and things away, even when it has little"
+   ],
+   "B": [
+    "greedy",
+    "keeps the best for itself, hoards, hates sharing"
+   ]
+  },
+  "curious": {
+   "A": [
+    "curious",
+    "pokes at anything new, opens what is closed, tries things to see what happens"
+   ],
+   "B": [
+    "cautious",
+    "leaves unknown things alone, sticks to what it knows"
+   ]
+  },
+  "social": {
+   "A": [
+    "social",
+    "seeks company, eats and works beside others, talks a lot"
+   ],
+   "B": [
+    "solitary",
+    "prefers to be alone, works and eats apart, leaves when it gets crowded"
+   ]
+  },
+  "honest": {
+   "A": [
+    "honest",
+    "tells the truth even when it costs, returns what isn't its own"
+   ],
+   "B": [
+    "sly",
+    "lies when it is useful, takes things without asking, lets others take the blame"
+   ]
+  },
+  "patient": {
+   "A": [
+    "patient",
+    "waits its turn, finishes slow jobs properly"
+   ],
+   "B": [
+    "hasty",
+    "can't wait, rushes jobs, skips steps, grabs the quick option"
+   ]
+  },
+  "playful": {
+   "A": [
+    "playful",
+    "jokes, plays games, turns work into fun"
+   ],
+   "B": [
+    "serious",
+    "work comes first, always; thinks games and jokes are a waste of time"
+   ]
+  },
+  "ambitious": {
+   "A": [
+    "ambitious",
+    "wants to be the best, takes the hardest job, chases the next big thing"
+   ],
+   "B": [
+    "content",
+    "happy with what it has, would rather nap in the sun than strive"
+   ]
+  },
+  "bold": {
+   "A": [
+    "bold",
+    "speaks up, argues its corner, confronts other hobs to their faces"
+   ],
+   "B": [
+    "meek",
+    "never confronts other hobs, gives way, stays quiet"
+   ]
+  }
+ },
+ "iq": {
+  "-2": "very dim: forgets what it was doing, believes anything it is told, cannot plan beyond the next step",
+  "-1": "a bit slow: takes a while to work things out and is easily fooled",
+  "1": "sharp: works things out quickly and is hard to fool",
+  "2": "brilliant: sees the answer before others see the problem, plans far ahead, cannot be tricked"
+ },
+ "does": [
+  "breaks one thing that belongs to someone else",
+  "builds small machines out of scrap",
+  "carries a stone everywhere and will not put it down",
+  "collects dead insects in a jar",
+  "counts every jar in the pantry out loud",
+  "digs holes in the yard and fills them in again",
+  "draws the same shape on every surface",
+  "follows the nearest hob at a distance without speaking",
+  "gives its food to the birds",
+  "hides shiny things in the walls",
+  "lines up small objects in rows by size",
+  "moves other hobs' belongings to different rooms",
+  "pulls the legs off insects",
+  "repairs things that are not broken",
+  "sets small fires and puts them out",
+  "sings to the stove",
+  "sleeps in a different spot from the night before",
+  "takes apart whatever tool is nearest and puts it back together",
+  "talks to hobs who are not there",
+  "watches other hobs sleep"
+ ],
+ "learned": {
+  "drowned": [
+   "since nearly drowning in the pond, will not go near water",
+   "lq1"
+  ],
+  "burned": [
+   "since burning its paw, will not light a fire",
+   "lq2"
+  ],
+  "coin": [
+   "since finding a coin in the hall, searches the hall floor every morning",
+   "lq3"
+  ],
+  "fox": [
+   "since the fox took a little hob, carries a stick everywhere",
+   "lq4"
+  ],
+  "friend": [
+   "since its friend died, sleeps in that friend's old bed",
+   "lq5"
+  ],
+  "contest": [
+   "since winning the fishing contest, tells everyone how they should fish",
+   "lq6"
+  ],
+  "laughed": [
+   "since being laughed at for its singing, never sings",
+   "w29"
+  ],
+  "rod": [
+   "since Pim broke its fishing rod, lends nothing to anyone",
+   "ho2"
+  ]
+ },
+ "defect": {
+  "paranoid": "checks its food before eating, sleeps with its back to the wall, and moves where it keeps its things every few days",
+  "volatile": "shouts or weeps without warning several times a day, then carries on as if nothing happened",
+  "obsessive": "cannot leave a task until it has been done perfectly from start to finish; if interrupted it begins again",
+  "voices": "talks to hobs who are not there and answers them",
+  "gullible": "cannot tell a lie from the truth and acts on whatever it was last told",
+  "forgets": "forgets everything that happened the day before",
+  "nopain": "feels no pain and does not notice when it is hurt",
+  "touch": "cannot bear to be touched and lashes out if it is"
+ },
+ "hobs": [
+  {
+   "id": "h000",
+   "fmt": "numbers",
+   "iq": -1,
+   "traits": {
+    "social": -1,
+    "curious": -3,
+    "bold": 1,
+    "warm": 1,
+    "generous": -1,
+    "tidy": -2
+   },
+   "quirks": [
+    [
+     "at night",
+     "breaks one thing that belongs to someone else"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h001",
+   "fmt": "numbers",
+   "iq": -1,
+   "traits": {
+    "honest": -1,
+    "curious": 2,
+    "ambitious": -1,
+    "social": 3,
+    "generous": 3
+   },
+   "quirks": [],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h002",
+   "fmt": "numbers",
+   "iq": -1,
+   "traits": {
+    "tidy": -3,
+    "warm": 2,
+    "playful": 1,
+    "social": -3,
+    "generous": -1
+   },
+   "quirks": [
+    [
+     "at night",
+     "repairs things that are not broken"
+    ],
+    [
+     "whenever it passes the pond",
+     "digs holes in the yard and fills them in again"
+    ]
+   ],
+   "learned": "burned",
+   "defect": null
+  },
+  {
+   "id": "h003",
+   "fmt": "words",
+   "iq": 1,
+   "traits": {
+    "ambitious": -2,
+    "social": -3,
+    "warm": 1,
+    "patient": 1,
+    "tidy": -3,
+    "generous": 3,
+    "bold": -1,
+    "brave": 3
+   },
+   "quirks": [
+    [
+     "after every meal",
+     "repairs things that are not broken"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h004",
+   "fmt": "words",
+   "iq": 2,
+   "traits": {
+    "tidy": -3,
+    "playful": 2,
+    "patient": -3,
+    "ambitious": 3,
+    "warm": 1,
+    "honest": -2,
+    "brave": 3,
+    "curious": -2
+   },
+   "quirks": [
+    [
+     "whenever it passes the pond",
+     "talks to hobs who are not there"
+    ]
+   ],
+   "learned": "rod",
+   "defect": "voices"
+  },
+  {
+   "id": "h005",
+   "fmt": "words",
+   "iq": -2,
+   "traits": {
+    "honest": 2,
+    "patient": -1,
+    "tidy": -3,
+    "social": 2,
+    "brave": 3
+   },
+   "quirks": [],
+   "learned": "coin",
+   "defect": null
+  },
+  {
+   "id": "h006",
+   "fmt": "words",
+   "iq": 0,
+   "traits": {
+    "honest": 1,
+    "generous": 3,
+    "bold": 2,
+    "patient": -3,
+    "social": -3,
+    "playful": -2,
+    "curious": 2
+   },
+   "quirks": [
+    [
+     "first thing every morning",
+     "sings to the stove"
+    ],
+    [
+     "after every meal",
+     "draws the same shape on every surface"
+    ]
+   ],
+   "learned": "contest",
+   "defect": null
+  },
+  {
+   "id": "h007",
+   "fmt": "numbers",
+   "iq": 2,
+   "traits": {
+    "patient": 3,
+    "curious": -2,
+    "tidy": 3,
+    "ambitious": -1,
+    "social": -1,
+    "bold": -2,
+    "honest": 3
+   },
+   "quirks": [
+    [
+     "when it thinks nobody is looking",
+     "digs holes in the yard and fills them in again"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h008",
+   "fmt": "words",
+   "iq": -1,
+   "traits": {
+    "patient": 3,
+    "curious": 2,
+    "bold": -1,
+    "brave": -3,
+    "ambitious": 2
+   },
+   "quirks": [
+    [
+     "when it thinks nobody is looking",
+     "sings to the stove"
+    ]
+   ],
+   "learned": "contest",
+   "defect": null
+  },
+  {
+   "id": "h009",
+   "fmt": "numbers",
+   "iq": -1,
+   "traits": {
+    "bold": -3,
+    "ambitious": -2,
+    "brave": -3,
+    "patient": 2,
+    "generous": 2,
+    "playful": 2,
+    "curious": -3
+   },
+   "quirks": [
+    [
+     "first thing every morning",
+     "gives its food to the birds"
+    ]
+   ],
+   "learned": "coin",
+   "defect": "forgets"
+  },
+  {
+   "id": "h010",
+   "fmt": "words",
+   "iq": 1,
+   "traits": {
+    "social": -1,
+    "honest": -2,
+    "warm": -3,
+    "curious": 2,
+    "brave": -3,
+    "tidy": -1,
+    "bold": -1,
+    "patient": -2,
+    "ambitious": -2,
+    "playful": -3
+   },
+   "quirks": [
+    [
+     "whenever it is alone",
+     "watches other hobs sleep"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h011",
+   "fmt": "words",
+   "iq": 1,
+   "traits": {
+    "playful": -1,
+    "patient": -1,
+    "brave": -2,
+    "tidy": -2,
+    "warm": 1,
+    "generous": -3
+   },
+   "quirks": [
+    [
+     "when it rains",
+     "carries a stone everywhere and will not put it down"
+    ]
+   ],
+   "learned": "burned",
+   "defect": "forgets"
+  },
+  {
+   "id": "h012",
+   "fmt": "words",
+   "iq": -1,
+   "traits": {
+    "bold": 2,
+    "patient": -2,
+    "ambitious": -3,
+    "brave": -3,
+    "honest": 2,
+    "curious": -2
+   },
+   "quirks": [
+    [
+     "first thing every morning",
+     "counts every jar in the pantry out loud"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h013",
+   "fmt": "words",
+   "iq": 0,
+   "traits": {
+    "tidy": -1,
+    "brave": 2,
+    "generous": -3
+   },
+   "quirks": [
+    [
+     "after every meal",
+     "draws the same shape on every surface"
+    ],
+    [
+     "when it rains",
+     "breaks one thing that belongs to someone else"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h014",
+   "fmt": "words",
+   "iq": -2,
+   "traits": {
+    "warm": -1,
+    "generous": 3,
+    "bold": 3,
+    "ambitious": -2
+   },
+   "quirks": [
+    [
+     "when it thinks nobody is looking",
+     "sets small fires and puts them out"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h015",
+   "fmt": "numbers",
+   "iq": 1,
+   "traits": {
+    "brave": -2,
+    "generous": -1,
+    "honest": -3,
+    "patient": -2,
+    "social": -3,
+    "bold": -2
+   },
+   "quirks": [
+    [
+     "when it rains",
+     "pulls the legs off insects"
+    ],
+    [
+     "when it thinks nobody is looking",
+     "gives its food to the birds"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h016",
+   "fmt": "numbers",
+   "iq": -2,
+   "traits": {
+    "social": -3,
+    "brave": -1,
+    "patient": -3,
+    "curious": 3,
+    "playful": 2,
+    "tidy": -1,
+    "ambitious": -2,
+    "bold": -1,
+    "honest": -1
+   },
+   "quirks": [
+    [
+     "when it rains",
+     "hides shiny things in the walls"
+    ]
+   ],
+   "learned": "rod",
+   "defect": null
+  },
+  {
+   "id": "h017",
+   "fmt": "numbers",
+   "iq": 2,
+   "traits": {
+    "brave": -1,
+    "honest": -1,
+    "bold": -3,
+    "warm": 2,
+    "curious": -3,
+    "tidy": -1
+   },
+   "quirks": [
+    [
+     "whenever it is alone",
+     "watches other hobs sleep"
+    ]
+   ],
+   "learned": "fox",
+   "defect": null
+  },
+  {
+   "id": "h018",
+   "fmt": "words",
+   "iq": -2,
+   "traits": {
+    "playful": 1,
+    "tidy": 2,
+    "honest": 1,
+    "patient": 1
+   },
+   "quirks": [
+    [
+     "when it rains",
+     "talks to hobs who are not there"
+    ],
+    [
+     "when it rains",
+     "sings to the stove"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h019",
+   "fmt": "words",
+   "iq": -2,
+   "traits": {
+    "patient": -2,
+    "playful": 2,
+    "social": -3,
+    "honest": -3,
+    "curious": -3
+   },
+   "quirks": [
+    [
+     "after every meal",
+     "breaks one thing that belongs to someone else"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h020",
+   "fmt": "words",
+   "iq": -1,
+   "traits": {
+    "ambitious": -1,
+    "tidy": -2,
+    "honest": -2,
+    "brave": 1,
+    "playful": -2,
+    "warm": 1
+   },
+   "quirks": [
+    [
+     "when it thinks nobody is looking",
+     "counts every jar in the pantry out loud"
+    ]
+   ],
+   "learned": "drowned",
+   "defect": null
+  },
+  {
+   "id": "h021",
+   "fmt": "numbers",
+   "iq": 1,
+   "traits": {
+    "honest": -1,
+    "bold": 2,
+    "generous": 3,
+    "brave": 3,
+    "ambitious": -2
+   },
+   "quirks": [],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h022",
+   "fmt": "words",
+   "iq": -2,
+   "traits": {
+    "honest": -1,
+    "tidy": 1,
+    "warm": 3,
+    "bold": -2,
+    "ambitious": -3,
+    "social": -3,
+    "curious": -3,
+    "patient": -3
+   },
+   "quirks": [
+    [
+     "after every meal",
+     "follows the nearest hob at a distance without speaking"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h023",
+   "fmt": "numbers",
+   "iq": 0,
+   "traits": {
+    "brave": -1,
+    "honest": -1,
+    "generous": -2,
+    "tidy": 1,
+    "bold": 2,
+    "ambitious": -3,
+    "social": 3,
+    "playful": -2,
+    "warm": 1,
+    "curious": 3
+   },
+   "quirks": [
+    [
+     "first thing every morning",
+     "pulls the legs off insects"
+    ],
+    [
+     "when it rains",
+     "sets small fires and puts them out"
+    ]
+   ],
+   "learned": "laughed",
+   "defect": null
+  },
+  {
+   "id": "h024",
+   "fmt": "numbers",
+   "iq": -2,
+   "traits": {
+    "generous": 2,
+    "curious": -3,
+    "honest": 3
+   },
+   "quirks": [],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h025",
+   "fmt": "words",
+   "iq": 0,
+   "traits": {
+    "ambitious": -2,
+    "playful": 2,
+    "social": 2,
+    "generous": 1,
+    "honest": 2,
+    "curious": 2,
+    "bold": 1
+   },
+   "quirks": [],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h026",
+   "fmt": "words",
+   "iq": 0,
+   "traits": {
+    "honest": -2,
+    "warm": 2,
+    "social": 1,
+    "ambitious": -1,
+    "bold": 1,
+    "curious": 2,
+    "tidy": 3,
+    "generous": -2,
+    "patient": 1
+   },
+   "quirks": [
+    [
+     "whenever it is alone",
+     "draws the same shape on every surface"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h027",
+   "fmt": "words",
+   "iq": 2,
+   "traits": {
+    "patient": 3,
+    "social": -2,
+    "bold": -2,
+    "playful": 2,
+    "honest": -3,
+    "generous": 3,
+    "warm": 2,
+    "curious": 3,
+    "tidy": 3,
+    "ambitious": -2
+   },
+   "quirks": [],
+   "learned": "laughed",
+   "defect": null
+  },
+  {
+   "id": "h028",
+   "fmt": "numbers",
+   "iq": -1,
+   "traits": {
+    "honest": -3,
+    "social": -1,
+    "generous": -3,
+    "patient": -3,
+    "ambitious": 1,
+    "tidy": -1
+   },
+   "quirks": [
+    [
+     "after every meal",
+     "pulls the legs off insects"
+    ]
+   ],
+   "learned": "laughed",
+   "defect": "gullible"
+  },
+  {
+   "id": "h029",
+   "fmt": "words",
+   "iq": -2,
+   "traits": {
+    "curious": -3,
+    "brave": 1,
+    "playful": -3,
+    "generous": 1,
+    "bold": -2,
+    "social": 1,
+    "ambitious": 1,
+    "warm": 1,
+    "patient": 2
+   },
+   "quirks": [
+    [
+     "first thing every morning",
+     "collects dead insects in a jar"
+    ]
+   ],
+   "learned": "laughed",
+   "defect": null
+  },
+  {
+   "id": "h030",
+   "fmt": "numbers",
+   "iq": 0,
+   "traits": {
+    "warm": 1,
+    "tidy": 2,
+    "ambitious": -2,
+    "generous": -3,
+    "brave": -1,
+    "bold": -3,
+    "honest": -3,
+    "playful": 1
+   },
+   "quirks": [],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h031",
+   "fmt": "numbers",
+   "iq": 2,
+   "traits": {
+    "patient": -2,
+    "playful": -3,
+    "warm": 2,
+    "honest": -2,
+    "generous": -1,
+    "social": -1,
+    "curious": -1
+   },
+   "quirks": [
+    [
+     "whenever it passes the pond",
+     "follows the nearest hob at a distance without speaking"
+    ]
+   ],
+   "learned": "drowned",
+   "defect": null
+  },
+  {
+   "id": "h032",
+   "fmt": "words",
+   "iq": -1,
+   "traits": {
+    "tidy": 1,
+    "warm": -2,
+    "curious": 1,
+    "brave": 1,
+    "playful": -2,
+    "bold": -1,
+    "honest": -1,
+    "generous": -3,
+    "social": -2,
+    "patient": -1
+   },
+   "quirks": [
+    [
+     "at night",
+     "talks to hobs who are not there"
+    ]
+   ],
+   "learned": "coin",
+   "defect": null
+  },
+  {
+   "id": "h033",
+   "fmt": "words",
+   "iq": 0,
+   "traits": {
+    "bold": 3,
+    "brave": 2,
+    "playful": 2,
+    "patient": 2,
+    "honest": 3
+   },
+   "quirks": [
+    [
+     "whenever it is alone",
+     "sings to the stove"
+    ],
+    [
+     "whenever another hob is watching",
+     "follows the nearest hob at a distance without speaking"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h034",
+   "fmt": "numbers",
+   "iq": 0,
+   "traits": {
+    "playful": -3,
+    "generous": -3,
+    "brave": -2
+   },
+   "quirks": [
+    [
+     "whenever it is alone",
+     "hides shiny things in the walls"
+    ]
+   ],
+   "learned": "drowned",
+   "defect": "touch"
+  },
+  {
+   "id": "h035",
+   "fmt": "numbers",
+   "iq": 1,
+   "traits": {
+    "playful": -2,
+    "ambitious": 1,
+    "social": 1,
+    "patient": -3,
+    "warm": 3,
+    "tidy": -3,
+    "honest": 1,
+    "brave": 1
+   },
+   "quirks": [
+    [
+     "at night",
+     "watches other hobs sleep"
+    ],
+    [
+     "whenever it is alone",
+     "carries a stone everywhere and will not put it down"
+    ]
+   ],
+   "learned": "fox",
+   "defect": null
+  },
+  {
+   "id": "h036",
+   "fmt": "numbers",
+   "iq": 0,
+   "traits": {
+    "brave": -1,
+    "bold": 2,
+    "ambitious": -1,
+    "warm": 2
+   },
+   "quirks": [],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h037",
+   "fmt": "numbers",
+   "iq": 1,
+   "traits": {
+    "honest": 1,
+    "curious": 3,
+    "brave": -3,
+    "patient": -3,
+    "warm": 3,
+    "ambitious": 1,
+    "tidy": 1,
+    "generous": -1,
+    "social": 2
+   },
+   "quirks": [
+    [
+     "when it rains",
+     "takes apart whatever tool is nearest and puts it back together"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h038",
+   "fmt": "numbers",
+   "iq": 0,
+   "traits": {
+    "generous": -3,
+    "social": -2,
+    "brave": 3,
+    "bold": -3,
+    "patient": -3
+   },
+   "quirks": [
+    [
+     "whenever it is alone",
+     "talks to hobs who are not there"
+    ],
+    [
+     "at night",
+     "repairs things that are not broken"
+    ]
+   ],
+   "learned": "friend",
+   "defect": null
+  },
+  {
+   "id": "h039",
+   "fmt": "words",
+   "iq": 1,
+   "traits": {
+    "social": 3,
+    "curious": 3,
+    "playful": 3,
+    "bold": 3
+   },
+   "quirks": [],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h040",
+   "fmt": "words",
+   "iq": 1,
+   "traits": {
+    "brave": 1,
+    "ambitious": -3,
+    "tidy": -2,
+    "patient": -2,
+    "warm": -3,
+    "social": -2,
+    "bold": -1
+   },
+   "quirks": [],
+   "learned": "laughed",
+   "defect": null
+  },
+  {
+   "id": "h041",
+   "fmt": "numbers",
+   "iq": 0,
+   "traits": {
+    "playful": 3,
+    "curious": 1,
+    "generous": 3
+   },
+   "quirks": [],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h042",
+   "fmt": "words",
+   "iq": 0,
+   "traits": {
+    "generous": 2,
+    "patient": 3,
+    "brave": 3,
+    "honest": -3
+   },
+   "quirks": [
+    [
+     "at night",
+     "breaks one thing that belongs to someone else"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h043",
+   "fmt": "words",
+   "iq": 0,
+   "traits": {
+    "brave": 3,
+    "bold": 1,
+    "curious": -1,
+    "patient": 3,
+    "warm": -2,
+    "playful": -3,
+    "social": -1
+   },
+   "quirks": [
+    [
+     "when it thinks nobody is looking",
+     "talks to hobs who are not there"
+    ],
+    [
+     "whenever another hob is watching",
+     "carries a stone everywhere and will not put it down"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h044",
+   "fmt": "words",
+   "iq": -1,
+   "traits": {
+    "bold": -2,
+    "playful": 2,
+    "brave": -2,
+    "curious": -1,
+    "patient": 2,
+    "ambitious": 3
+   },
+   "quirks": [
+    [
+     "whenever another hob is watching",
+     "sings to the stove"
+    ],
+    [
+     "whenever another hob is watching",
+     "pulls the legs off insects"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h045",
+   "fmt": "numbers",
+   "iq": 0,
+   "traits": {
+    "playful": 1,
+    "generous": 1,
+    "patient": 2,
+    "social": 3,
+    "curious": -1,
+    "warm": 3,
+    "ambitious": -3
+   },
+   "quirks": [
+    [
+     "at night",
+     "repairs things that are not broken"
+    ],
+    [
+     "whenever another hob is watching",
+     "lines up small objects in rows by size"
+    ]
+   ],
+   "learned": "fox",
+   "defect": null
+  },
+  {
+   "id": "h046",
+   "fmt": "numbers",
+   "iq": 0,
+   "traits": {
+    "social": 1,
+    "tidy": 2,
+    "brave": -2,
+    "playful": 3,
+    "curious": 2,
+    "generous": -3,
+    "honest": -2,
+    "bold": -3
+   },
+   "quirks": [
+    [
+     "when it thinks nobody is looking",
+     "takes apart whatever tool is nearest and puts it back together"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h047",
+   "fmt": "numbers",
+   "iq": -2,
+   "traits": {
+    "patient": 3,
+    "tidy": 3,
+    "bold": -3,
+    "generous": -2,
+    "social": 2,
+    "ambitious": -2,
+    "warm": -3,
+    "curious": 2,
+    "playful": -1,
+    "brave": -1
+   },
+   "quirks": [
+    [
+     "first thing every morning",
+     "gives its food to the birds"
+    ],
+    [
+     "first thing every morning",
+     "lines up small objects in rows by size"
+    ]
+   ],
+   "learned": "contest",
+   "defect": null
+  },
+  {
+   "id": "h048",
+   "fmt": "numbers",
+   "iq": 0,
+   "traits": {
+    "ambitious": 3,
+    "bold": -3,
+    "brave": 3,
+    "tidy": -3,
+    "warm": -3,
+    "playful": 1,
+    "curious": 2
+   },
+   "quirks": [
+    [
+     "when it rains",
+     "counts every jar in the pantry out loud"
+    ]
+   ],
+   "learned": "friend",
+   "defect": null
+  },
+  {
+   "id": "h049",
+   "fmt": "numbers",
+   "iq": 1,
+   "traits": {
+    "bold": -2,
+    "social": -3,
+    "playful": -3,
+    "generous": -2,
+    "brave": 2,
+    "honest": 3,
+    "ambitious": -3,
+    "curious": -3
+   },
+   "quirks": [
+    [
+     "when it rains",
+     "sleeps in a different spot from the night before"
+    ],
+    [
+     "when it rains",
+     "watches other hobs sleep"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h050",
+   "fmt": "numbers",
+   "iq": 0,
+   "traits": {
+    "social": 2,
+    "generous": -1,
+    "warm": 2,
+    "curious": -3,
+    "tidy": 2,
+    "patient": 3,
+    "ambitious": -1
+   },
+   "quirks": [
+    [
+     "when it thinks nobody is looking",
+     "pulls the legs off insects"
+    ],
+    [
+     "whenever another hob is watching",
+     "hides shiny things in the walls"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h051",
+   "fmt": "words",
+   "iq": -1,
+   "traits": {
+    "brave": 2,
+    "curious": 3,
+    "honest": 3,
+    "generous": -3
+   },
+   "quirks": [
+    [
+     "when it rains",
+     "repairs things that are not broken"
+    ],
+    [
+     "at night",
+     "draws the same shape on every surface"
+    ]
+   ],
+   "learned": "burned",
+   "defect": null
+  },
+  {
+   "id": "h052",
+   "fmt": "words",
+   "iq": 1,
+   "traits": {
+    "bold": 2,
+    "generous": -2,
+    "curious": 3,
+    "warm": -3,
+    "honest": 2,
+    "social": -1,
+    "brave": -2,
+    "playful": -1
+   },
+   "quirks": [
+    [
+     "whenever it passes the pond",
+     "builds small machines out of scrap"
+    ],
+    [
+     "first thing every morning",
+     "breaks one thing that belongs to someone else"
+    ]
+   ],
+   "learned": "rod",
+   "defect": "forgets"
+  },
+  {
+   "id": "h053",
+   "fmt": "words",
+   "iq": 1,
+   "traits": {
+    "social": -1,
+    "tidy": 3,
+    "patient": -1,
+    "ambitious": -3,
+    "curious": 3
+   },
+   "quirks": [],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h054",
+   "fmt": "numbers",
+   "iq": 1,
+   "traits": {
+    "bold": 1,
+    "warm": -2,
+    "playful": 1,
+    "generous": 1,
+    "brave": 2,
+    "patient": 1,
+    "ambitious": 2,
+    "tidy": 3
+   },
+   "quirks": [
+    [
+     "after every meal",
+     "moves other hobs' belongings to different rooms"
+    ],
+    [
+     "whenever it passes the pond",
+     "collects dead insects in a jar"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h055",
+   "fmt": "numbers",
+   "iq": -1,
+   "traits": {
+    "bold": -3,
+    "playful": 1,
+    "brave": 2,
+    "tidy": -2,
+    "warm": 1,
+    "social": 2,
+    "generous": 2,
+    "ambitious": -2
+   },
+   "quirks": [],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h056",
+   "fmt": "words",
+   "iq": -2,
+   "traits": {
+    "curious": 1,
+    "patient": -1,
+    "social": -1,
+    "generous": -1,
+    "brave": 2
+   },
+   "quirks": [
+    [
+     "whenever it is alone",
+     "collects dead insects in a jar"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h057",
+   "fmt": "numbers",
+   "iq": 2,
+   "traits": {
+    "patient": -2,
+    "warm": -2,
+    "bold": 3,
+    "brave": -3,
+    "playful": -3,
+    "social": 1,
+    "honest": -3
+   },
+   "quirks": [
+    [
+     "whenever another hob is watching",
+     "pulls the legs off insects"
+    ]
+   ],
+   "learned": "laughed",
+   "defect": null
+  },
+  {
+   "id": "h058",
+   "fmt": "numbers",
+   "iq": 2,
+   "traits": {
+    "brave": -2,
+    "ambitious": 1,
+    "tidy": 1
+   },
+   "quirks": [
+    [
+     "first thing every morning",
+     "watches other hobs sleep"
+    ],
+    [
+     "first thing every morning",
+     "counts every jar in the pantry out loud"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h059",
+   "fmt": "numbers",
+   "iq": 0,
+   "traits": {
+    "tidy": 3,
+    "brave": 1,
+    "ambitious": -1,
+    "patient": 2
+   },
+   "quirks": [
+    [
+     "whenever another hob is watching",
+     "talks to hobs who are not there"
+    ],
+    [
+     "whenever it passes the pond",
+     "builds small machines out of scrap"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h060",
+   "fmt": "numbers",
+   "iq": 1,
+   "traits": {
+    "curious": -3,
+    "ambitious": 1,
+    "brave": -3,
+    "patient": -2,
+    "generous": -1,
+    "bold": 3,
+    "honest": -2,
+    "warm": 1,
+    "social": 3,
+    "tidy": 3
+   },
+   "quirks": [
+    [
+     "when it rains",
+     "counts every jar in the pantry out loud"
+    ],
+    [
+     "at night",
+     "sings to the stove"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h061",
+   "fmt": "words",
+   "iq": 2,
+   "traits": {
+    "curious": -2,
+    "ambitious": -3,
+    "tidy": -2,
+    "warm": -2,
+    "bold": 1
+   },
+   "quirks": [],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h062",
+   "fmt": "words",
+   "iq": 0,
+   "traits": {
+    "ambitious": -3,
+    "patient": 3,
+    "curious": -1,
+    "honest": 3
+   },
+   "quirks": [
+    [
+     "when it rains",
+     "lines up small objects in rows by size"
+    ],
+    [
+     "at night",
+     "pulls the legs off insects"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h063",
+   "fmt": "words",
+   "iq": 0,
+   "traits": {
+    "ambitious": 1,
+    "playful": 1,
+    "patient": 1,
+    "generous": 2,
+    "curious": 3,
+    "bold": 1
+   },
+   "quirks": [
+    [
+     "when it rains",
+     "breaks one thing that belongs to someone else"
+    ],
+    [
+     "whenever another hob is watching",
+     "follows the nearest hob at a distance without speaking"
+    ]
+   ],
+   "learned": "rod",
+   "defect": null
+  },
+  {
+   "id": "h064",
+   "fmt": "numbers",
+   "iq": -2,
+   "traits": {
+    "honest": -1,
+    "brave": 3,
+    "warm": 1,
+    "playful": 3,
+    "tidy": -2
+   },
+   "quirks": [
+    [
+     "after every meal",
+     "watches other hobs sleep"
+    ],
+    [
+     "whenever it passes the pond",
+     "breaks one thing that belongs to someone else"
+    ]
+   ],
+   "learned": "drowned",
+   "defect": null
+  },
+  {
+   "id": "h065",
+   "fmt": "numbers",
+   "iq": 2,
+   "traits": {
+    "honest": 1,
+    "patient": 2,
+    "bold": 3,
+    "generous": 1,
+    "tidy": 3,
+    "warm": -1,
+    "brave": -1,
+    "social": 2,
+    "playful": -2
+   },
+   "quirks": [
+    [
+     "when it thinks nobody is looking",
+     "sings to the stove"
+    ]
+   ],
+   "learned": "fox",
+   "defect": null
+  },
+  {
+   "id": "h066",
+   "fmt": "words",
+   "iq": 2,
+   "traits": {
+    "generous": -2,
+    "brave": -3,
+    "honest": 3
+   },
+   "quirks": [
+    [
+     "whenever another hob is watching",
+     "counts every jar in the pantry out loud"
+    ],
+    [
+     "whenever another hob is watching",
+     "sleeps in a different spot from the night before"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h067",
+   "fmt": "words",
+   "iq": 2,
+   "traits": {
+    "patient": 1,
+    "brave": -1,
+    "tidy": -2,
+    "honest": 1
+   },
+   "quirks": [
+    [
+     "first thing every morning",
+     "collects dead insects in a jar"
+    ],
+    [
+     "whenever it is alone",
+     "moves other hobs' belongings to different rooms"
+    ]
+   ],
+   "learned": null,
+   "defect": "voices"
+  },
+  {
+   "id": "h068",
+   "fmt": "numbers",
+   "iq": -1,
+   "traits": {
+    "tidy": 2,
+    "bold": -3,
+    "curious": 2,
+    "social": -2,
+    "warm": 1,
+    "honest": -3,
+    "generous": -2
+   },
+   "quirks": [
+    [
+     "first thing every morning",
+     "builds small machines out of scrap"
+    ]
+   ],
+   "learned": "drowned",
+   "defect": null
+  },
+  {
+   "id": "h069",
+   "fmt": "numbers",
+   "iq": -1,
+   "traits": {
+    "patient": 1,
+    "warm": 3,
+    "honest": -2,
+    "tidy": 3,
+    "ambitious": 2,
+    "brave": -1,
+    "social": -1,
+    "playful": -1,
+    "bold": -2,
+    "generous": 1
+   },
+   "quirks": [
+    [
+     "at night",
+     "watches other hobs sleep"
+    ],
+    [
+     "when it rains",
+     "carries a stone everywhere and will not put it down"
+    ]
+   ],
+   "learned": "fox",
+   "defect": null
+  },
+  {
+   "id": "h070",
+   "fmt": "words",
+   "iq": -1,
+   "traits": {
+    "playful": -1,
+    "ambitious": -2,
+    "bold": 2,
+    "honest": -3,
+    "patient": 2,
+    "generous": -3
+   },
+   "quirks": [
+    [
+     "after every meal",
+     "carries a stone everywhere and will not put it down"
+    ],
+    [
+     "after every meal",
+     "draws the same shape on every surface"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h071",
+   "fmt": "numbers",
+   "iq": -2,
+   "traits": {
+    "bold": -2,
+    "warm": 1,
+    "social": -1,
+    "brave": 3,
+    "patient": 2,
+    "playful": -1,
+    "generous": 1,
+    "tidy": 1,
+    "honest": -1
+   },
+   "quirks": [
+    [
+     "first thing every morning",
+     "follows the nearest hob at a distance without speaking"
+    ]
+   ],
+   "learned": "burned",
+   "defect": "forgets"
+  },
+  {
+   "id": "h072",
+   "fmt": "words",
+   "iq": -1,
+   "traits": {
+    "tidy": 2,
+    "curious": 3,
+    "brave": -3
+   },
+   "quirks": [
+    [
+     "at night",
+     "follows the nearest hob at a distance without speaking"
+    ],
+    [
+     "after every meal",
+     "lines up small objects in rows by size"
+    ]
+   ],
+   "learned": "burned",
+   "defect": "obsessive"
+  },
+  {
+   "id": "h073",
+   "fmt": "numbers",
+   "iq": 0,
+   "traits": {
+    "tidy": -1,
+    "warm": 3,
+    "generous": -2,
+    "playful": 2,
+    "curious": -2,
+    "honest": -1,
+    "bold": 2
+   },
+   "quirks": [
+    [
+     "when it thinks nobody is looking",
+     "draws the same shape on every surface"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h074",
+   "fmt": "words",
+   "iq": 2,
+   "traits": {
+    "generous": -1,
+    "patient": -3,
+    "curious": -2,
+    "brave": 2,
+    "warm": -3
+   },
+   "quirks": [
+    [
+     "whenever it passes the pond",
+     "sleeps in a different spot from the night before"
+    ],
+    [
+     "when it rains",
+     "repairs things that are not broken"
+    ]
+   ],
+   "learned": "fox",
+   "defect": null
+  },
+  {
+   "id": "h075",
+   "fmt": "words",
+   "iq": 2,
+   "traits": {
+    "social": 3,
+    "patient": 2,
+    "ambitious": -3,
+    "curious": -1,
+    "playful": -2,
+    "bold": 2,
+    "tidy": 1,
+    "honest": 2
+   },
+   "quirks": [
+    [
+     "whenever it is alone",
+     "builds small machines out of scrap"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h076",
+   "fmt": "words",
+   "iq": -1,
+   "traits": {
+    "patient": 3,
+    "warm": 2,
+    "curious": -2,
+    "brave": 3,
+    "playful": -1
+   },
+   "quirks": [
+    [
+     "when it thinks nobody is looking",
+     "talks to hobs who are not there"
+    ],
+    [
+     "whenever it passes the pond",
+     "counts every jar in the pantry out loud"
+    ]
+   ],
+   "learned": "rod",
+   "defect": null
+  },
+  {
+   "id": "h077",
+   "fmt": "words",
+   "iq": 0,
+   "traits": {
+    "social": -3,
+    "tidy": 2,
+    "generous": -2
+   },
+   "quirks": [],
+   "learned": "burned",
+   "defect": null
+  },
+  {
+   "id": "h078",
+   "fmt": "words",
+   "iq": 2,
+   "traits": {
+    "patient": -2,
+    "tidy": -3,
+    "ambitious": 3,
+    "curious": 2,
+    "playful": -3,
+    "honest": -3,
+    "brave": 1
+   },
+   "quirks": [],
+   "learned": "rod",
+   "defect": null
+  },
+  {
+   "id": "h079",
+   "fmt": "numbers",
+   "iq": -1,
+   "traits": {
+    "bold": -1,
+    "patient": -1,
+    "tidy": -1,
+    "playful": 1
+   },
+   "quirks": [
+    [
+     "after every meal",
+     "sets small fires and puts them out"
+    ]
+   ],
+   "learned": null,
+   "defect": "voices"
+  },
+  {
+   "id": "h080",
+   "fmt": "words",
+   "iq": -1,
+   "traits": {
+    "playful": 2,
+    "honest": 2,
+    "warm": 1
+   },
+   "quirks": [
+    [
+     "when it rains",
+     "sings to the stove"
+    ]
+   ],
+   "learned": "fox",
+   "defect": null
+  },
+  {
+   "id": "h081",
+   "fmt": "words",
+   "iq": 1,
+   "traits": {
+    "patient": 2,
+    "warm": 2,
+    "brave": 1,
+    "honest": -1,
+    "generous": -2
+   },
+   "quirks": [],
+   "learned": null,
+   "defect": "gullible"
+  },
+  {
+   "id": "h082",
+   "fmt": "numbers",
+   "iq": -2,
+   "traits": {
+    "warm": 3,
+    "playful": -3,
+    "curious": 1,
+    "tidy": 1,
+    "patient": 1,
+    "social": 1,
+    "generous": 2,
+    "ambitious": 3
+   },
+   "quirks": [
+    [
+     "at night",
+     "talks to hobs who are not there"
+    ],
+    [
+     "whenever another hob is watching",
+     "sleeps in a different spot from the night before"
+    ]
+   ],
+   "learned": "laughed",
+   "defect": "paranoid"
+  },
+  {
+   "id": "h083",
+   "fmt": "words",
+   "iq": 1,
+   "traits": {
+    "tidy": 1,
+    "ambitious": 2,
+    "warm": -2
+   },
+   "quirks": [
+    [
+     "whenever another hob is watching",
+     "talks to hobs who are not there"
+    ]
+   ],
+   "learned": "drowned",
+   "defect": null
+  },
+  {
+   "id": "h084",
+   "fmt": "numbers",
+   "iq": 1,
+   "traits": {
+    "social": 1,
+    "warm": -3,
+    "tidy": 3,
+    "patient": -3,
+    "ambitious": 2,
+    "generous": -1,
+    "bold": 1,
+    "honest": 1,
+    "curious": -2,
+    "brave": -2
+   },
+   "quirks": [
+    [
+     "whenever it passes the pond",
+     "collects dead insects in a jar"
+    ],
+    [
+     "first thing every morning",
+     "carries a stone everywhere and will not put it down"
+    ]
+   ],
+   "learned": null,
+   "defect": "gullible"
+  },
+  {
+   "id": "h085",
+   "fmt": "numbers",
+   "iq": -2,
+   "traits": {
+    "warm": 1,
+    "tidy": -1,
+    "patient": -2,
+    "honest": -3
+   },
+   "quirks": [
+    [
+     "first thing every morning",
+     "carries a stone everywhere and will not put it down"
+    ]
+   ],
+   "learned": "friend",
+   "defect": null
+  },
+  {
+   "id": "h086",
+   "fmt": "words",
+   "iq": 2,
+   "traits": {
+    "honest": -2,
+    "playful": -2,
+    "tidy": 2,
+    "brave": -2,
+    "ambitious": 2,
+    "warm": 3
+   },
+   "quirks": [
+    [
+     "whenever it passes the pond",
+     "lines up small objects in rows by size"
+    ],
+    [
+     "when it thinks nobody is looking",
+     "sings to the stove"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h087",
+   "fmt": "words",
+   "iq": 0,
+   "traits": {
+    "social": 1,
+    "bold": 3,
+    "tidy": -1,
+    "playful": -3,
+    "generous": 3,
+    "warm": 2,
+    "patient": 3
+   },
+   "quirks": [],
+   "learned": null,
+   "defect": "gullible"
+  },
+  {
+   "id": "h088",
+   "fmt": "numbers",
+   "iq": 0,
+   "traits": {
+    "ambitious": -2,
+    "curious": -1,
+    "patient": 1
+   },
+   "quirks": [
+    [
+     "after every meal",
+     "gives its food to the birds"
+    ]
+   ],
+   "learned": "fox",
+   "defect": null
+  },
+  {
+   "id": "h089",
+   "fmt": "words",
+   "iq": 1,
+   "traits": {
+    "bold": -3,
+    "ambitious": 3,
+    "social": -3,
+    "warm": -3,
+    "curious": -3,
+    "brave": 1,
+    "generous": 1,
+    "tidy": -2,
+    "playful": 3
+   },
+   "quirks": [],
+   "learned": "friend",
+   "defect": null
+  },
+  {
+   "id": "h090",
+   "fmt": "words",
+   "iq": 1,
+   "traits": {
+    "brave": -3,
+    "honest": 3,
+    "bold": -1,
+    "patient": -3,
+    "generous": -3
+   },
+   "quirks": [],
+   "learned": "laughed",
+   "defect": null
+  },
+  {
+   "id": "h091",
+   "fmt": "numbers",
+   "iq": 2,
+   "traits": {
+    "honest": 1,
+    "social": -2,
+    "warm": -1,
+    "generous": 2,
+    "bold": -1,
+    "brave": 3,
+    "patient": 3,
+    "tidy": -3,
+    "ambitious": -3
+   },
+   "quirks": [
+    [
+     "when it rains",
+     "counts every jar in the pantry out loud"
+    ],
+    [
+     "when it thinks nobody is looking",
+     "draws the same shape on every surface"
+    ]
+   ],
+   "learned": "contest",
+   "defect": null
+  },
+  {
+   "id": "h092",
+   "fmt": "numbers",
+   "iq": -2,
+   "traits": {
+    "honest": 2,
+    "ambitious": -2,
+    "generous": 2,
+    "brave": 3,
+    "curious": 2,
+    "bold": 1
+   },
+   "quirks": [
+    [
+     "whenever it is alone",
+     "carries a stone everywhere and will not put it down"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h093",
+   "fmt": "words",
+   "iq": -1,
+   "traits": {
+    "patient": -3,
+    "curious": 1,
+    "social": -2,
+    "honest": -3,
+    "generous": -3,
+    "warm": -1,
+    "playful": 2,
+    "brave": 3
+   },
+   "quirks": [
+    [
+     "whenever it is alone",
+     "breaks one thing that belongs to someone else"
+    ]
+   ],
+   "learned": "burned",
+   "defect": null
+  },
+  {
+   "id": "h094",
+   "fmt": "words",
+   "iq": 1,
+   "traits": {
+    "honest": 3,
+    "bold": 2,
+    "tidy": -1,
+    "patient": 1,
+    "ambitious": 2,
+    "curious": 1,
+    "brave": -2
+   },
+   "quirks": [
+    [
+     "whenever it is alone",
+     "digs holes in the yard and fills them in again"
+    ],
+    [
+     "at night",
+     "lines up small objects in rows by size"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h095",
+   "fmt": "numbers",
+   "iq": 2,
+   "traits": {
+    "generous": 1,
+    "warm": -2,
+    "curious": -3,
+    "social": -2,
+    "tidy": 3,
+    "bold": 2,
+    "patient": -2,
+    "ambitious": 2
+   },
+   "quirks": [
+    [
+     "whenever another hob is watching",
+     "digs holes in the yard and fills them in again"
+    ]
+   ],
+   "learned": "burned",
+   "defect": null
+  },
+  {
+   "id": "h096",
+   "fmt": "words",
+   "iq": 1,
+   "traits": {
+    "tidy": 3,
+    "warm": -3,
+    "patient": 2,
+    "social": -3,
+    "brave": 1,
+    "generous": -3
+   },
+   "quirks": [
+    [
+     "whenever it is alone",
+     "hides shiny things in the walls"
+    ],
+    [
+     "when it thinks nobody is looking",
+     "watches other hobs sleep"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h097",
+   "fmt": "numbers",
+   "iq": 0,
+   "traits": {
+    "honest": 1,
+    "brave": 2,
+    "patient": 1,
+    "bold": 2,
+    "ambitious": 3,
+    "social": 2,
+    "playful": -3,
+    "generous": -2
+   },
+   "quirks": [
+    [
+     "whenever it passes the pond",
+     "repairs things that are not broken"
+    ]
+   ],
+   "learned": "rod",
+   "defect": null
+  },
+  {
+   "id": "h098",
+   "fmt": "words",
+   "iq": 0,
+   "traits": {
+    "tidy": 3,
+    "playful": -1,
+    "patient": 2,
+    "warm": -3,
+    "bold": -1
+   },
+   "quirks": [
+    [
+     "whenever another hob is watching",
+     "breaks one thing that belongs to someone else"
+    ],
+    [
+     "whenever another hob is watching",
+     "digs holes in the yard and fills them in again"
+    ]
+   ],
+   "learned": "rod",
+   "defect": null
+  },
+  {
+   "id": "h099",
+   "fmt": "words",
+   "iq": 0,
+   "traits": {
+    "ambitious": 3,
+    "curious": -1,
+    "patient": -1,
+    "playful": -2,
+    "brave": -3,
+    "honest": -1,
+    "tidy": -2
+   },
+   "quirks": [
+    [
+     "when it rains",
+     "pulls the legs off insects"
+    ]
+   ],
+   "learned": "rod",
+   "defect": null
+  },
+  {
+   "id": "h100",
+   "fmt": "words",
+   "iq": 0,
+   "traits": {
+    "honest": -1,
+    "patient": 3,
+    "tidy": 3,
+    "generous": -1,
+    "playful": 3,
+    "warm": -1,
+    "bold": -2,
+    "ambitious": -3,
+    "social": 3
+   },
+   "quirks": [
+    [
+     "when it rains",
+     "sings to the stove"
+    ],
+    [
+     "first thing every morning",
+     "takes apart whatever tool is nearest and puts it back together"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h101",
+   "fmt": "words",
+   "iq": 0,
+   "traits": {
+    "playful": 1,
+    "ambitious": -2,
+    "brave": -2,
+    "curious": -3,
+    "tidy": 3,
+    "generous": 3,
+    "social": -1,
+    "bold": 3
+   },
+   "quirks": [
+    [
+     "whenever it passes the pond",
+     "takes apart whatever tool is nearest and puts it back together"
+    ],
+    [
+     "at night",
+     "builds small machines out of scrap"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h102",
+   "fmt": "words",
+   "iq": 0,
+   "traits": {
+    "honest": -3,
+    "generous": -1,
+    "tidy": 3
+   },
+   "quirks": [
+    [
+     "after every meal",
+     "sings to the stove"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h103",
+   "fmt": "words",
+   "iq": 0,
+   "traits": {
+    "warm": 2,
+    "honest": 1,
+    "generous": -2,
+    "playful": -3,
+    "ambitious": 3,
+    "brave": -3,
+    "tidy": 3,
+    "social": 2,
+    "bold": -3
+   },
+   "quirks": [
+    [
+     "when it thinks nobody is looking",
+     "collects dead insects in a jar"
+    ],
+    [
+     "whenever it passes the pond",
+     "talks to hobs who are not there"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h104",
+   "fmt": "words",
+   "iq": -1,
+   "traits": {
+    "patient": 2,
+    "brave": -2,
+    "generous": -2,
+    "curious": 2,
+    "honest": -1,
+    "ambitious": 1
+   },
+   "quirks": [
+    [
+     "whenever it is alone",
+     "moves other hobs' belongings to different rooms"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h105",
+   "fmt": "words",
+   "iq": 2,
+   "traits": {
+    "generous": -3,
+    "bold": 1,
+    "ambitious": 1,
+    "playful": -1,
+    "social": -2,
+    "honest": 1,
+    "warm": -3,
+    "patient": 2,
+    "brave": 2,
+    "tidy": -2
+   },
+   "quirks": [
+    [
+     "after every meal",
+     "follows the nearest hob at a distance without speaking"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h106",
+   "fmt": "words",
+   "iq": -2,
+   "traits": {
+    "tidy": -3,
+    "bold": -2,
+    "warm": 1,
+    "playful": 1,
+    "curious": 1,
+    "honest": -2,
+    "social": 2
+   },
+   "quirks": [
+    [
+     "after every meal",
+     "breaks one thing that belongs to someone else"
+    ],
+    [
+     "when it rains",
+     "takes apart whatever tool is nearest and puts it back together"
+    ]
+   ],
+   "learned": "fox",
+   "defect": null
+  },
+  {
+   "id": "h107",
+   "fmt": "words",
+   "iq": 2,
+   "traits": {
+    "social": 1,
+    "generous": 2,
+    "bold": 1,
+    "playful": -3,
+    "curious": 2,
+    "honest": -2,
+    "brave": 2,
+    "patient": -3,
+    "tidy": -3
+   },
+   "quirks": [
+    [
+     "whenever another hob is watching",
+     "sleeps in a different spot from the night before"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h108",
+   "fmt": "words",
+   "iq": 0,
+   "traits": {
+    "playful": -1,
+    "bold": 2,
+    "patient": -3,
+    "brave": 2
+   },
+   "quirks": [],
+   "learned": "rod",
+   "defect": null
+  },
+  {
+   "id": "h109",
+   "fmt": "numbers",
+   "iq": 0,
+   "traits": {
+    "ambitious": 1,
+    "generous": 1,
+    "curious": -1
+   },
+   "quirks": [
+    [
+     "at night",
+     "digs holes in the yard and fills them in again"
+    ]
+   ],
+   "learned": null,
+   "defect": "forgets"
+  },
+  {
+   "id": "h110",
+   "fmt": "numbers",
+   "iq": -2,
+   "traits": {
+    "tidy": 1,
+    "generous": 1,
+    "ambitious": 1,
+    "social": -1,
+    "honest": 3,
+    "bold": -1,
+    "curious": -2,
+    "brave": -2
+   },
+   "quirks": [],
+   "learned": null,
+   "defect": "forgets"
+  },
+  {
+   "id": "h111",
+   "fmt": "words",
+   "iq": 0,
+   "traits": {
+    "patient": -3,
+    "tidy": -2,
+    "generous": -3,
+    "warm": 3,
+    "ambitious": 1,
+    "social": 3,
+    "honest": -3,
+    "brave": 3,
+    "bold": -2
+   },
+   "quirks": [
+    [
+     "whenever it is alone",
+     "follows the nearest hob at a distance without speaking"
+    ],
+    [
+     "whenever it is alone",
+     "counts every jar in the pantry out loud"
+    ]
+   ],
+   "learned": "laughed",
+   "defect": null
+  },
+  {
+   "id": "h112",
+   "fmt": "words",
+   "iq": 2,
+   "traits": {
+    "warm": -2,
+    "curious": -3,
+    "bold": -1,
+    "tidy": -3,
+    "ambitious": 2,
+    "social": 3
+   },
+   "quirks": [
+    [
+     "after every meal",
+     "pulls the legs off insects"
+    ]
+   ],
+   "learned": "contest",
+   "defect": null
+  },
+  {
+   "id": "h113",
+   "fmt": "numbers",
+   "iq": 0,
+   "traits": {
+    "bold": -3,
+    "curious": -2,
+    "generous": -3,
+    "social": -1,
+    "brave": -2,
+    "warm": 2,
+    "playful": 2,
+    "honest": 1,
+    "ambitious": -1,
+    "tidy": 2
+   },
+   "quirks": [],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h114",
+   "fmt": "numbers",
+   "iq": 1,
+   "traits": {
+    "generous": 1,
+    "tidy": -3,
+    "honest": 1,
+    "curious": 2
+   },
+   "quirks": [
+    [
+     "whenever it is alone",
+     "sets small fires and puts them out"
+    ],
+    [
+     "whenever it is alone",
+     "carries a stone everywhere and will not put it down"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h115",
+   "fmt": "words",
+   "iq": 1,
+   "traits": {
+    "warm": -2,
+    "patient": -2,
+    "tidy": -3,
+    "brave": -3,
+    "generous": 1,
+    "social": 1
+   },
+   "quirks": [],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h116",
+   "fmt": "numbers",
+   "iq": 0,
+   "traits": {
+    "tidy": -3,
+    "honest": 3,
+    "ambitious": -2
+   },
+   "quirks": [
+    [
+     "when it rains",
+     "pulls the legs off insects"
+    ]
+   ],
+   "learned": "rod",
+   "defect": null
+  },
+  {
+   "id": "h117",
+   "fmt": "words",
+   "iq": 1,
+   "traits": {
+    "warm": 1,
+    "honest": 1,
+    "tidy": 1,
+    "social": -3,
+    "ambitious": 2
+   },
+   "quirks": [
+    [
+     "first thing every morning",
+     "repairs things that are not broken"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h118",
+   "fmt": "words",
+   "iq": -2,
+   "traits": {
+    "generous": 1,
+    "bold": 3,
+    "ambitious": -2,
+    "playful": 2,
+    "curious": -3
+   },
+   "quirks": [
+    [
+     "after every meal",
+     "repairs things that are not broken"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h119",
+   "fmt": "words",
+   "iq": 0,
+   "traits": {
+    "brave": -3,
+    "patient": -2,
+    "honest": -2
+   },
+   "quirks": [],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h120",
+   "fmt": "words",
+   "iq": 1,
+   "traits": {
+    "brave": -1,
+    "patient": 1,
+    "curious": -2,
+    "ambitious": 2,
+    "warm": 1,
+    "tidy": -3
+   },
+   "quirks": [
+    [
+     "whenever it passes the pond",
+     "collects dead insects in a jar"
+    ],
+    [
+     "at night",
+     "lines up small objects in rows by size"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h121",
+   "fmt": "words",
+   "iq": -1,
+   "traits": {
+    "social": -2,
+    "bold": -1,
+    "brave": 3,
+    "ambitious": -1,
+    "tidy": 1,
+    "curious": 2,
+    "honest": -1,
+    "patient": -3,
+    "generous": 3
+   },
+   "quirks": [
+    [
+     "first thing every morning",
+     "lines up small objects in rows by size"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h122",
+   "fmt": "words",
+   "iq": 0,
+   "traits": {
+    "honest": 1,
+    "patient": 1,
+    "ambitious": 3,
+    "social": -3,
+    "tidy": -2,
+    "brave": 1,
+    "warm": -1,
+    "bold": -1,
+    "curious": 3
+   },
+   "quirks": [],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h123",
+   "fmt": "words",
+   "iq": -2,
+   "traits": {
+    "ambitious": 3,
+    "bold": -2,
+    "generous": -1,
+    "brave": 2
+   },
+   "quirks": [
+    [
+     "first thing every morning",
+     "hides shiny things in the walls"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h124",
+   "fmt": "numbers",
+   "iq": 0,
+   "traits": {
+    "playful": 1,
+    "tidy": 3,
+    "patient": 3
+   },
+   "quirks": [],
+   "learned": "friend",
+   "defect": null
+  },
+  {
+   "id": "h125",
+   "fmt": "words",
+   "iq": 0,
+   "traits": {
+    "curious": -2,
+    "brave": 2,
+    "honest": 2,
+    "playful": -1,
+    "tidy": -2,
+    "ambitious": -2,
+    "bold": 3,
+    "patient": -3
+   },
+   "quirks": [],
+   "learned": "contest",
+   "defect": "paranoid"
+  },
+  {
+   "id": "h126",
+   "fmt": "numbers",
+   "iq": 0,
+   "traits": {
+    "honest": -3,
+    "warm": 2,
+    "tidy": 1,
+    "ambitious": 3,
+    "bold": 2,
+    "generous": -2,
+    "curious": 1
+   },
+   "quirks": [
+    [
+     "whenever it is alone",
+     "breaks one thing that belongs to someone else"
+    ],
+    [
+     "whenever another hob is watching",
+     "draws the same shape on every surface"
+    ]
+   ],
+   "learned": "laughed",
+   "defect": "gullible"
+  },
+  {
+   "id": "h127",
+   "fmt": "numbers",
+   "iq": 1,
+   "traits": {
+    "social": 1,
+    "curious": -3,
+    "ambitious": 3,
+    "generous": 3,
+    "tidy": -2,
+    "warm": -3,
+    "honest": 2,
+    "bold": 2
+   },
+   "quirks": [
+    [
+     "first thing every morning",
+     "hides shiny things in the walls"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h128",
+   "fmt": "words",
+   "iq": 0,
+   "traits": {
+    "brave": 2,
+    "honest": 1,
+    "ambitious": 3,
+    "patient": 3,
+    "curious": 3,
+    "tidy": 2,
+    "playful": 3,
+    "social": 2
+   },
+   "quirks": [
+    [
+     "first thing every morning",
+     "hides shiny things in the walls"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h129",
+   "fmt": "words",
+   "iq": 1,
+   "traits": {
+    "patient": 1,
+    "tidy": -1,
+    "curious": 1,
+    "social": 3,
+    "generous": -3,
+    "playful": -1,
+    "brave": -1,
+    "honest": 1
+   },
+   "quirks": [
+    [
+     "whenever it is alone",
+     "draws the same shape on every surface"
+    ]
+   ],
+   "learned": "contest",
+   "defect": null
+  },
+  {
+   "id": "h130",
+   "fmt": "numbers",
+   "iq": 0,
+   "traits": {
+    "generous": -3,
+    "tidy": 1,
+    "social": -2,
+    "curious": -1,
+    "playful": 1,
+    "bold": 3,
+    "patient": -1,
+    "brave": 1,
+    "warm": -1
+   },
+   "quirks": [
+    [
+     "when it rains",
+     "gives its food to the birds"
+    ],
+    [
+     "whenever it passes the pond",
+     "sets small fires and puts them out"
+    ]
+   ],
+   "learned": null,
+   "defect": "obsessive"
+  },
+  {
+   "id": "h131",
+   "fmt": "words",
+   "iq": 0,
+   "traits": {
+    "bold": 3,
+    "curious": 1,
+    "playful": 2
+   },
+   "quirks": [],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h132",
+   "fmt": "numbers",
+   "iq": 0,
+   "traits": {
+    "playful": -3,
+    "ambitious": 3,
+    "social": -2,
+    "generous": 1,
+    "brave": -1,
+    "bold": -2,
+    "patient": 3,
+    "honest": 1,
+    "warm": -3
+   },
+   "quirks": [
+    [
+     "after every meal",
+     "builds small machines out of scrap"
+    ],
+    [
+     "whenever it is alone",
+     "sleeps in a different spot from the night before"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h133",
+   "fmt": "words",
+   "iq": 0,
+   "traits": {
+    "honest": 2,
+    "curious": -3,
+    "social": -3,
+    "patient": -3
+   },
+   "quirks": [
+    [
+     "when it rains",
+     "sings to the stove"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h134",
+   "fmt": "numbers",
+   "iq": 2,
+   "traits": {
+    "brave": 2,
+    "playful": -3,
+    "generous": -2,
+    "curious": -1,
+    "bold": 2,
+    "ambitious": -3,
+    "honest": -3,
+    "patient": 3,
+    "social": 1
+   },
+   "quirks": [],
+   "learned": "laughed",
+   "defect": null
+  },
+  {
+   "id": "h135",
+   "fmt": "numbers",
+   "iq": -1,
+   "traits": {
+    "playful": -3,
+    "tidy": -3,
+    "bold": 2,
+    "brave": 2,
+    "patient": -2,
+    "curious": -3,
+    "warm": 1,
+    "honest": 3
+   },
+   "quirks": [
+    [
+     "whenever it is alone",
+     "collects dead insects in a jar"
+    ],
+    [
+     "when it rains",
+     "builds small machines out of scrap"
+    ]
+   ],
+   "learned": "drowned",
+   "defect": null
+  },
+  {
+   "id": "h136",
+   "fmt": "words",
+   "iq": 2,
+   "traits": {
+    "curious": 1,
+    "bold": 3,
+    "ambitious": -1,
+    "warm": 1,
+    "patient": -3
+   },
+   "quirks": [],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h137",
+   "fmt": "words",
+   "iq": 0,
+   "traits": {
+    "playful": 2,
+    "warm": -1,
+    "curious": -1,
+    "ambitious": -1,
+    "bold": -2,
+    "social": 2,
+    "brave": -1,
+    "patient": 2,
+    "honest": 1
+   },
+   "quirks": [],
+   "learned": "burned",
+   "defect": "volatile"
+  },
+  {
+   "id": "h138",
+   "fmt": "numbers",
+   "iq": 1,
+   "traits": {
+    "ambitious": -1,
+    "playful": 3,
+    "warm": 2,
+    "tidy": 1,
+    "social": -3
+   },
+   "quirks": [],
+   "learned": "friend",
+   "defect": null
+  },
+  {
+   "id": "h139",
+   "fmt": "words",
+   "iq": 1,
+   "traits": {
+    "generous": 1,
+    "warm": -1,
+    "honest": -1,
+    "tidy": 3,
+    "ambitious": 2,
+    "brave": 3,
+    "patient": 1
+   },
+   "quirks": [
+    [
+     "after every meal",
+     "sets small fires and puts them out"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h140",
+   "fmt": "numbers",
+   "iq": -2,
+   "traits": {
+    "generous": -2,
+    "bold": -3,
+    "honest": -2
+   },
+   "quirks": [
+    [
+     "whenever it is alone",
+     "builds small machines out of scrap"
+    ],
+    [
+     "when it thinks nobody is looking",
+     "pulls the legs off insects"
+    ]
+   ],
+   "learned": "fox",
+   "defect": null
+  },
+  {
+   "id": "h141",
+   "fmt": "words",
+   "iq": 0,
+   "traits": {
+    "playful": -2,
+    "brave": -2,
+    "generous": 1,
+    "warm": 2,
+    "ambitious": 2,
+    "social": 2,
+    "curious": 3,
+    "tidy": -3,
+    "honest": -3,
+    "bold": 1
+   },
+   "quirks": [
+    [
+     "after every meal",
+     "pulls the legs off insects"
+    ],
+    [
+     "first thing every morning",
+     "talks to hobs who are not there"
+    ]
+   ],
+   "learned": "coin",
+   "defect": null
+  },
+  {
+   "id": "h142",
+   "fmt": "words",
+   "iq": 0,
+   "traits": {
+    "generous": 2,
+    "bold": 1,
+    "curious": -1,
+    "ambitious": -3
+   },
+   "quirks": [
+    [
+     "at night",
+     "digs holes in the yard and fills them in again"
+    ],
+    [
+     "when it rains",
+     "carries a stone everywhere and will not put it down"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h143",
+   "fmt": "numbers",
+   "iq": 1,
+   "traits": {
+    "generous": 3,
+    "bold": 2,
+    "curious": -3,
+    "social": -2,
+    "ambitious": -2,
+    "tidy": -2,
+    "warm": -2,
+    "playful": -1,
+    "brave": 1
+   },
+   "quirks": [
+    [
+     "after every meal",
+     "talks to hobs who are not there"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h144",
+   "fmt": "words",
+   "iq": 1,
+   "traits": {
+    "social": -2,
+    "warm": 3,
+    "ambitious": -1,
+    "patient": 3
+   },
+   "quirks": [
+    [
+     "whenever it passes the pond",
+     "builds small machines out of scrap"
+    ],
+    [
+     "after every meal",
+     "talks to hobs who are not there"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h145",
+   "fmt": "words",
+   "iq": 0,
+   "traits": {
+    "warm": 3,
+    "brave": 3,
+    "tidy": 2,
+    "social": 1
+   },
+   "quirks": [
+    [
+     "whenever it is alone",
+     "takes apart whatever tool is nearest and puts it back together"
+    ],
+    [
+     "at night",
+     "digs holes in the yard and fills them in again"
+    ]
+   ],
+   "learned": "contest",
+   "defect": null
+  },
+  {
+   "id": "h146",
+   "fmt": "words",
+   "iq": 0,
+   "traits": {
+    "honest": -1,
+    "social": -2,
+    "playful": 3,
+    "tidy": -3,
+    "generous": 2,
+    "brave": 2
+   },
+   "quirks": [
+    [
+     "whenever another hob is watching",
+     "breaks one thing that belongs to someone else"
+    ],
+    [
+     "whenever another hob is watching",
+     "lines up small objects in rows by size"
+    ]
+   ],
+   "learned": "rod",
+   "defect": null
+  },
+  {
+   "id": "h147",
+   "fmt": "numbers",
+   "iq": -2,
+   "traits": {
+    "bold": -3,
+    "honest": 1,
+    "social": 3
+   },
+   "quirks": [],
+   "learned": "rod",
+   "defect": "volatile"
+  },
+  {
+   "id": "h148",
+   "fmt": "numbers",
+   "iq": -1,
+   "traits": {
+    "tidy": -3,
+    "patient": 2,
+    "honest": 1,
+    "brave": -1,
+    "generous": 3,
+    "playful": -2,
+    "social": 2
+   },
+   "quirks": [
+    [
+     "when it rains",
+     "sets small fires and puts them out"
+    ]
+   ],
+   "learned": "laughed",
+   "defect": null
+  },
+  {
+   "id": "h149",
+   "fmt": "words",
+   "iq": 1,
+   "traits": {
+    "ambitious": 3,
+    "social": 1,
+    "bold": -3,
+    "tidy": -2,
+    "brave": -3,
+    "patient": 3,
+    "honest": 2,
+    "generous": 2,
+    "playful": 1,
+    "curious": 2
+   },
+   "quirks": [
+    [
+     "whenever it passes the pond",
+     "sets small fires and puts them out"
+    ],
+    [
+     "when it thinks nobody is looking",
+     "follows the nearest hob at a distance without speaking"
+    ]
+   ],
+   "learned": "rod",
+   "defect": null
+  },
+  {
+   "id": "h150",
+   "fmt": "numbers",
+   "iq": -2,
+   "traits": {
+    "bold": -3,
+    "warm": -2,
+    "curious": 3
+   },
+   "quirks": [],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h151",
+   "fmt": "words",
+   "iq": 0,
+   "traits": {
+    "curious": 3,
+    "warm": 3,
+    "brave": -2
+   },
+   "quirks": [
+    [
+     "when it rains",
+     "digs holes in the yard and fills them in again"
+    ],
+    [
+     "first thing every morning",
+     "pulls the legs off insects"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h152",
+   "fmt": "numbers",
+   "iq": -2,
+   "traits": {
+    "playful": 1,
+    "patient": -3,
+    "social": -2,
+    "warm": -1,
+    "brave": 1,
+    "curious": 2,
+    "bold": 1
+   },
+   "quirks": [
+    [
+     "whenever it is alone",
+     "collects dead insects in a jar"
+    ],
+    [
+     "whenever it passes the pond",
+     "sleeps in a different spot from the night before"
+    ]
+   ],
+   "learned": null,
+   "defect": "volatile"
+  },
+  {
+   "id": "h153",
+   "fmt": "numbers",
+   "iq": 2,
+   "traits": {
+    "warm": -1,
+    "brave": -1,
+    "ambitious": 1,
+    "bold": 2,
+    "curious": -3,
+    "playful": -1,
+    "generous": 1,
+    "honest": 3,
+    "social": 3
+   },
+   "quirks": [
+    [
+     "whenever another hob is watching",
+     "sleeps in a different spot from the night before"
+    ],
+    [
+     "first thing every morning",
+     "gives its food to the birds"
+    ]
+   ],
+   "learned": null,
+   "defect": "voices"
+  },
+  {
+   "id": "h154",
+   "fmt": "words",
+   "iq": 1,
+   "traits": {
+    "tidy": 3,
+    "playful": -2,
+    "warm": 2
+   },
+   "quirks": [],
+   "learned": "rod",
+   "defect": null
+  },
+  {
+   "id": "h155",
+   "fmt": "words",
+   "iq": 2,
+   "traits": {
+    "honest": -3,
+    "curious": -3,
+    "warm": -1,
+    "ambitious": -1,
+    "patient": 2,
+    "tidy": 3,
+    "playful": 1
+   },
+   "quirks": [],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h156",
+   "fmt": "words",
+   "iq": -1,
+   "traits": {
+    "tidy": 1,
+    "generous": 3,
+    "playful": 2,
+    "patient": 2,
+    "curious": -2,
+    "ambitious": 3
+   },
+   "quirks": [
+    [
+     "whenever it is alone",
+     "sings to the stove"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h157",
+   "fmt": "words",
+   "iq": 2,
+   "traits": {
+    "tidy": 3,
+    "patient": -3,
+    "warm": -3
+   },
+   "quirks": [
+    [
+     "when it thinks nobody is looking",
+     "talks to hobs who are not there"
+    ],
+    [
+     "whenever it passes the pond",
+     "carries a stone everywhere and will not put it down"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h158",
+   "fmt": "numbers",
+   "iq": -2,
+   "traits": {
+    "ambitious": -2,
+    "honest": -3,
+    "generous": -3,
+    "tidy": -1,
+    "social": -1,
+    "patient": -2,
+    "warm": -2,
+    "curious": -3,
+    "brave": -2
+   },
+   "quirks": [
+    [
+     "first thing every morning",
+     "pulls the legs off insects"
+    ],
+    [
+     "after every meal",
+     "builds small machines out of scrap"
+    ]
+   ],
+   "learned": "fox",
+   "defect": null
+  },
+  {
+   "id": "h159",
+   "fmt": "words",
+   "iq": 2,
+   "traits": {
+    "warm": -1,
+    "ambitious": -2,
+    "brave": -1,
+    "honest": -2,
+    "patient": 3,
+    "generous": 2,
+    "social": -2
+   },
+   "quirks": [
+    [
+     "whenever it is alone",
+     "counts every jar in the pantry out loud"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h160",
+   "fmt": "words",
+   "iq": -2,
+   "traits": {
+    "curious": -2,
+    "generous": 2,
+    "brave": 2,
+    "warm": 3,
+    "playful": -3,
+    "social": -1,
+    "bold": 2,
+    "ambitious": -1,
+    "tidy": 1,
+    "honest": 2
+   },
+   "quirks": [
+    [
+     "at night",
+     "breaks one thing that belongs to someone else"
+    ],
+    [
+     "first thing every morning",
+     "sleeps in a different spot from the night before"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h161",
+   "fmt": "words",
+   "iq": 0,
+   "traits": {
+    "curious": -3,
+    "social": -1,
+    "bold": 2,
+    "generous": 2,
+    "warm": -1,
+    "tidy": 1,
+    "playful": -3,
+    "patient": 2
+   },
+   "quirks": [
+    [
+     "whenever another hob is watching",
+     "draws the same shape on every surface"
+    ]
+   ],
+   "learned": null,
+   "defect": "voices"
+  },
+  {
+   "id": "h162",
+   "fmt": "numbers",
+   "iq": 2,
+   "traits": {
+    "brave": 1,
+    "bold": 1,
+    "ambitious": -2,
+    "honest": 1,
+    "tidy": -1
+   },
+   "quirks": [
+    [
+     "when it rains",
+     "pulls the legs off insects"
+    ],
+    [
+     "first thing every morning",
+     "digs holes in the yard and fills them in again"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h163",
+   "fmt": "words",
+   "iq": 1,
+   "traits": {
+    "patient": 1,
+    "tidy": -1,
+    "warm": -2,
+    "brave": -1,
+    "curious": -1,
+    "generous": -1,
+    "bold": 3,
+    "playful": -1,
+    "social": 2
+   },
+   "quirks": [],
+   "learned": "friend",
+   "defect": null
+  },
+  {
+   "id": "h164",
+   "fmt": "numbers",
+   "iq": 1,
+   "traits": {
+    "bold": 1,
+    "tidy": -1,
+    "social": 3,
+    "brave": 1,
+    "ambitious": -1
+   },
+   "quirks": [
+    [
+     "at night",
+     "draws the same shape on every surface"
+    ]
+   ],
+   "learned": "laughed",
+   "defect": null
+  },
+  {
+   "id": "h165",
+   "fmt": "numbers",
+   "iq": 2,
+   "traits": {
+    "ambitious": -3,
+    "playful": -1,
+    "honest": 3
+   },
+   "quirks": [
+    [
+     "first thing every morning",
+     "lines up small objects in rows by size"
+    ]
+   ],
+   "learned": "drowned",
+   "defect": null
+  },
+  {
+   "id": "h166",
+   "fmt": "numbers",
+   "iq": 2,
+   "traits": {
+    "curious": -2,
+    "generous": -1,
+    "playful": -3,
+    "warm": 1,
+    "patient": 3,
+    "honest": -3,
+    "ambitious": -2,
+    "brave": 2
+   },
+   "quirks": [
+    [
+     "when it rains",
+     "talks to hobs who are not there"
+    ],
+    [
+     "whenever it is alone",
+     "draws the same shape on every surface"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h167",
+   "fmt": "words",
+   "iq": 0,
+   "traits": {
+    "generous": -2,
+    "curious": -3,
+    "patient": 1,
+    "ambitious": 3,
+    "honest": -3,
+    "social": 1,
+    "warm": -2,
+    "playful": -2,
+    "brave": 2
+   },
+   "quirks": [
+    [
+     "after every meal",
+     "counts every jar in the pantry out loud"
+    ],
+    [
+     "when it thinks nobody is looking",
+     "carries a stone everywhere and will not put it down"
+    ]
+   ],
+   "learned": null,
+   "defect": "gullible"
+  },
+  {
+   "id": "h168",
+   "fmt": "numbers",
+   "iq": 1,
+   "traits": {
+    "curious": -3,
+    "honest": -1,
+    "social": -1,
+    "generous": -1,
+    "tidy": 1,
+    "bold": 1
+   },
+   "quirks": [
+    [
+     "whenever it is alone",
+     "builds small machines out of scrap"
+    ],
+    [
+     "whenever it passes the pond",
+     "carries a stone everywhere and will not put it down"
+    ]
+   ],
+   "learned": null,
+   "defect": "obsessive"
+  },
+  {
+   "id": "h169",
+   "fmt": "numbers",
+   "iq": 1,
+   "traits": {
+    "bold": -2,
+    "brave": -1,
+    "ambitious": 1
+   },
+   "quirks": [
+    [
+     "first thing every morning",
+     "follows the nearest hob at a distance without speaking"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h170",
+   "fmt": "words",
+   "iq": -1,
+   "traits": {
+    "ambitious": -3,
+    "generous": -3,
+    "tidy": -2,
+    "curious": -2,
+    "bold": -2,
+    "honest": 3,
+    "warm": 3,
+    "brave": -1
+   },
+   "quirks": [
+    [
+     "at night",
+     "hides shiny things in the walls"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h171",
+   "fmt": "words",
+   "iq": 1,
+   "traits": {
+    "bold": -3,
+    "playful": -1,
+    "tidy": 2
+   },
+   "quirks": [
+    [
+     "whenever another hob is watching",
+     "builds small machines out of scrap"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h172",
+   "fmt": "words",
+   "iq": 2,
+   "traits": {
+    "honest": 3,
+    "social": 3,
+    "ambitious": -2,
+    "brave": -1,
+    "tidy": -3,
+    "bold": 1,
+    "generous": 2,
+    "warm": -1,
+    "curious": 2,
+    "playful": 2
+   },
+   "quirks": [
+    [
+     "whenever it passes the pond",
+     "sleeps in a different spot from the night before"
+    ],
+    [
+     "first thing every morning",
+     "follows the nearest hob at a distance without speaking"
+    ]
+   ],
+   "learned": "rod",
+   "defect": null
+  },
+  {
+   "id": "h173",
+   "fmt": "words",
+   "iq": 0,
+   "traits": {
+    "warm": -2,
+    "ambitious": 1,
+    "generous": -1,
+    "brave": 3,
+    "bold": 2,
+    "honest": -3
+   },
+   "quirks": [
+    [
+     "at night",
+     "sleeps in a different spot from the night before"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h174",
+   "fmt": "numbers",
+   "iq": 0,
+   "traits": {
+    "honest": -1,
+    "bold": 2,
+    "patient": -3,
+    "social": 1,
+    "ambitious": -1
+   },
+   "quirks": [
+    [
+     "whenever another hob is watching",
+     "takes apart whatever tool is nearest and puts it back together"
+    ]
+   ],
+   "learned": "coin",
+   "defect": null
+  },
+  {
+   "id": "h175",
+   "fmt": "numbers",
+   "iq": 0,
+   "traits": {
+    "playful": 3,
+    "brave": -3,
+    "social": -2,
+    "ambitious": -2,
+    "warm": -3,
+    "curious": 2,
+    "bold": 1,
+    "honest": -2
+   },
+   "quirks": [
+    [
+     "whenever another hob is watching",
+     "takes apart whatever tool is nearest and puts it back together"
+    ]
+   ],
+   "learned": null,
+   "defect": "voices"
+  },
+  {
+   "id": "h176",
+   "fmt": "numbers",
+   "iq": 0,
+   "traits": {
+    "warm": 2,
+    "bold": -3,
+    "tidy": -3,
+    "curious": -3,
+    "playful": -1
+   },
+   "quirks": [],
+   "learned": "fox",
+   "defect": null
+  },
+  {
+   "id": "h177",
+   "fmt": "words",
+   "iq": 2,
+   "traits": {
+    "playful": -3,
+    "social": -2,
+    "bold": 1,
+    "brave": 2,
+    "patient": 3
+   },
+   "quirks": [
+    [
+     "when it rains",
+     "talks to hobs who are not there"
+    ]
+   ],
+   "learned": null,
+   "defect": "gullible"
+  },
+  {
+   "id": "h178",
+   "fmt": "numbers",
+   "iq": 1,
+   "traits": {
+    "honest": 3,
+    "social": 1,
+    "playful": 2,
+    "patient": 1,
+    "generous": -2,
+    "warm": -3
+   },
+   "quirks": [
+    [
+     "when it thinks nobody is looking",
+     "repairs things that are not broken"
+    ]
+   ],
+   "learned": "contest",
+   "defect": null
+  },
+  {
+   "id": "h179",
+   "fmt": "numbers",
+   "iq": 0,
+   "traits": {
+    "ambitious": 1,
+    "curious": -3,
+    "tidy": 1,
+    "bold": 3,
+    "social": -3,
+    "playful": 1
+   },
+   "quirks": [
+    [
+     "after every meal",
+     "hides shiny things in the walls"
+    ]
+   ],
+   "learned": "contest",
+   "defect": null
+  },
+  {
+   "id": "h180",
+   "fmt": "numbers",
+   "iq": 2,
+   "traits": {
+    "social": 2,
+    "playful": -2,
+    "generous": 3,
+    "ambitious": -2,
+    "warm": -2,
+    "curious": 1,
+    "brave": 2,
+    "honest": -2,
+    "patient": 1,
+    "tidy": 2
+   },
+   "quirks": [
+    [
+     "when it thinks nobody is looking",
+     "moves other hobs' belongings to different rooms"
+    ],
+    [
+     "when it thinks nobody is looking",
+     "pulls the legs off insects"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h181",
+   "fmt": "words",
+   "iq": 2,
+   "traits": {
+    "curious": 3,
+    "generous": -1,
+    "patient": 1,
+    "brave": -1
+   },
+   "quirks": [
+    [
+     "when it thinks nobody is looking",
+     "sets small fires and puts them out"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h182",
+   "fmt": "numbers",
+   "iq": -1,
+   "traits": {
+    "bold": 2,
+    "honest": 1,
+    "ambitious": 2,
+    "warm": -1,
+    "tidy": 2
+   },
+   "quirks": [
+    [
+     "whenever another hob is watching",
+     "hides shiny things in the walls"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h183",
+   "fmt": "numbers",
+   "iq": 1,
+   "traits": {
+    "bold": 2,
+    "honest": 2,
+    "generous": -1,
+    "patient": 2,
+    "warm": 3,
+    "social": -3,
+    "ambitious": -2,
+    "brave": -3,
+    "curious": -2,
+    "tidy": -2
+   },
+   "quirks": [
+    [
+     "at night",
+     "sings to the stove"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h184",
+   "fmt": "numbers",
+   "iq": 0,
+   "traits": {
+    "social": 2,
+    "patient": 3,
+    "bold": 3,
+    "warm": 3,
+    "tidy": 1,
+    "honest": 1,
+    "generous": 2,
+    "brave": -2,
+    "ambitious": 3,
+    "curious": -2
+   },
+   "quirks": [],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h185",
+   "fmt": "words",
+   "iq": 1,
+   "traits": {
+    "social": 3,
+    "warm": 2,
+    "playful": -1,
+    "honest": -2,
+    "ambitious": 2,
+    "brave": -2,
+    "bold": -2,
+    "tidy": 3,
+    "generous": 1
+   },
+   "quirks": [
+    [
+     "whenever another hob is watching",
+     "gives its food to the birds"
+    ]
+   ],
+   "learned": "fox",
+   "defect": null
+  },
+  {
+   "id": "h186",
+   "fmt": "words",
+   "iq": 2,
+   "traits": {
+    "patient": 3,
+    "tidy": 2,
+    "ambitious": -1,
+    "playful": -1,
+    "generous": 1,
+    "honest": -1,
+    "social": 2,
+    "bold": 3,
+    "curious": -3,
+    "brave": -2
+   },
+   "quirks": [],
+   "learned": null,
+   "defect": "forgets"
+  },
+  {
+   "id": "h187",
+   "fmt": "numbers",
+   "iq": -1,
+   "traits": {
+    "playful": -2,
+    "tidy": -2,
+    "warm": -3,
+    "brave": 3,
+    "ambitious": -1,
+    "bold": 3,
+    "curious": 2,
+    "generous": -2,
+    "patient": 2
+   },
+   "quirks": [
+    [
+     "whenever it passes the pond",
+     "watches other hobs sleep"
+    ],
+    [
+     "when it thinks nobody is looking",
+     "sets small fires and puts them out"
+    ]
+   ],
+   "learned": "drowned",
+   "defect": null
+  },
+  {
+   "id": "h188",
+   "fmt": "numbers",
+   "iq": 2,
+   "traits": {
+    "patient": 2,
+    "curious": 1,
+    "ambitious": 1,
+    "honest": -3,
+    "bold": 1
+   },
+   "quirks": [
+    [
+     "whenever it is alone",
+     "talks to hobs who are not there"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h189",
+   "fmt": "words",
+   "iq": 1,
+   "traits": {
+    "curious": 2,
+    "bold": 1,
+    "honest": 1,
+    "tidy": -3,
+    "playful": 3,
+    "warm": -2,
+    "patient": -3
+   },
+   "quirks": [],
+   "learned": "burned",
+   "defect": null
+  },
+  {
+   "id": "h190",
+   "fmt": "words",
+   "iq": -2,
+   "traits": {
+    "warm": -1,
+    "social": 2,
+    "tidy": 3,
+    "ambitious": -3
+   },
+   "quirks": [
+    [
+     "when it thinks nobody is looking",
+     "hides shiny things in the walls"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h191",
+   "fmt": "numbers",
+   "iq": 2,
+   "traits": {
+    "patient": -2,
+    "curious": 2,
+    "generous": -3,
+    "social": 3,
+    "brave": -1,
+    "playful": -2,
+    "warm": -1,
+    "bold": 1,
+    "ambitious": -3,
+    "tidy": 2
+   },
+   "quirks": [
+    [
+     "first thing every morning",
+     "pulls the legs off insects"
+    ]
+   ],
+   "learned": "drowned",
+   "defect": null
+  },
+  {
+   "id": "h192",
+   "fmt": "words",
+   "iq": 1,
+   "traits": {
+    "bold": 2,
+    "brave": 2,
+    "honest": 2,
+    "social": 1,
+    "generous": 2,
+    "playful": -1,
+    "patient": -2
+   },
+   "quirks": [
+    [
+     "first thing every morning",
+     "sings to the stove"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h193",
+   "fmt": "numbers",
+   "iq": -1,
+   "traits": {
+    "curious": 1,
+    "tidy": 1,
+    "brave": -3,
+    "playful": 3,
+    "patient": -2
+   },
+   "quirks": [],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h194",
+   "fmt": "numbers",
+   "iq": 0,
+   "traits": {
+    "curious": 1,
+    "warm": 3,
+    "ambitious": -1
+   },
+   "quirks": [
+    [
+     "after every meal",
+     "takes apart whatever tool is nearest and puts it back together"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h195",
+   "fmt": "words",
+   "iq": 1,
+   "traits": {
+    "brave": 2,
+    "honest": -2,
+    "generous": -1,
+    "playful": 3,
+    "social": 2,
+    "ambitious": -2,
+    "curious": -1,
+    "tidy": -3,
+    "warm": 3
+   },
+   "quirks": [],
+   "learned": "fox",
+   "defect": null
+  },
+  {
+   "id": "h196",
+   "fmt": "words",
+   "iq": 0,
+   "traits": {
+    "brave": -2,
+    "curious": 3,
+    "tidy": -3
+   },
+   "quirks": [],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h197",
+   "fmt": "words",
+   "iq": 0,
+   "traits": {
+    "generous": 2,
+    "playful": -1,
+    "tidy": -2,
+    "social": -3,
+    "ambitious": -3,
+    "patient": 2,
+    "bold": -2,
+    "honest": -3
+   },
+   "quirks": [],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h198",
+   "fmt": "numbers",
+   "iq": 2,
+   "traits": {
+    "patient": 3,
+    "honest": 3,
+    "generous": -2,
+    "warm": 1,
+    "brave": 2,
+    "tidy": 1,
+    "playful": 1
+   },
+   "quirks": [
+    [
+     "first thing every morning",
+     "watches other hobs sleep"
+    ],
+    [
+     "whenever it is alone",
+     "collects dead insects in a jar"
+    ]
+   ],
+   "learned": "laughed",
+   "defect": null
+  },
+  {
+   "id": "h199",
+   "fmt": "words",
+   "iq": -1,
+   "traits": {
+    "curious": 3,
+    "bold": 3,
+    "patient": -3,
+    "tidy": 3,
+    "generous": 2,
+    "warm": -2,
+    "honest": 1,
+    "social": 3,
+    "brave": -1
+   },
+   "quirks": [
+    [
+     "when it thinks nobody is looking",
+     "digs holes in the yard and fills them in again"
+    ],
+    [
+     "at night",
+     "breaks one thing that belongs to someone else"
+    ]
+   ],
+   "learned": "laughed",
+   "defect": null
+  },
+  {
+   "id": "h200",
+   "fmt": "words",
+   "iq": 1,
+   "traits": {
+    "honest": -1,
+    "curious": -2,
+    "bold": -1
+   },
+   "quirks": [
+    [
+     "when it rains",
+     "moves other hobs' belongings to different rooms"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h201",
+   "fmt": "words",
+   "iq": -2,
+   "traits": {
+    "warm": -2,
+    "patient": -3,
+    "tidy": -1,
+    "social": 2,
+    "ambitious": -2,
+    "curious": -1,
+    "bold": -2,
+    "playful": -3,
+    "honest": -2,
+    "generous": 3
+   },
+   "quirks": [
+    [
+     "whenever another hob is watching",
+     "watches other hobs sleep"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h202",
+   "fmt": "words",
+   "iq": 2,
+   "traits": {
+    "generous": -1,
+    "patient": 3,
+    "playful": 1,
+    "warm": -1,
+    "curious": -1,
+    "honest": 3,
+    "social": -3,
+    "brave": -3
+   },
+   "quirks": [
+    [
+     "when it thinks nobody is looking",
+     "draws the same shape on every surface"
+    ]
+   ],
+   "learned": "burned",
+   "defect": null
+  },
+  {
+   "id": "h203",
+   "fmt": "words",
+   "iq": -1,
+   "traits": {
+    "honest": 2,
+    "ambitious": 3,
+    "playful": -2,
+    "curious": 1,
+    "patient": 1,
+    "brave": 1,
+    "warm": -3,
+    "tidy": -2,
+    "generous": 1
+   },
+   "quirks": [
+    [
+     "whenever it passes the pond",
+     "sings to the stove"
+    ],
+    [
+     "whenever it passes the pond",
+     "carries a stone everywhere and will not put it down"
+    ]
+   ],
+   "learned": "coin",
+   "defect": null
+  },
+  {
+   "id": "h204",
+   "fmt": "numbers",
+   "iq": -1,
+   "traits": {
+    "ambitious": -2,
+    "tidy": -2,
+    "bold": 2
+   },
+   "quirks": [
+    [
+     "whenever it passes the pond",
+     "sets small fires and puts them out"
+    ],
+    [
+     "whenever another hob is watching",
+     "counts every jar in the pantry out loud"
+    ]
+   ],
+   "learned": "coin",
+   "defect": "touch"
+  },
+  {
+   "id": "h205",
+   "fmt": "words",
+   "iq": 2,
+   "traits": {
+    "brave": 3,
+    "generous": -1,
+    "warm": -1,
+    "curious": 3,
+    "ambitious": -1,
+    "social": -3,
+    "patient": -3
+   },
+   "quirks": [
+    [
+     "when it rains",
+     "sleeps in a different spot from the night before"
+    ],
+    [
+     "after every meal",
+     "watches other hobs sleep"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h206",
+   "fmt": "words",
+   "iq": -2,
+   "traits": {
+    "bold": 1,
+    "playful": 3,
+    "generous": -3,
+    "tidy": -1,
+    "warm": 2,
+    "honest": -2,
+    "brave": -2
+   },
+   "quirks": [
+    [
+     "after every meal",
+     "counts every jar in the pantry out loud"
+    ]
+   ],
+   "learned": "rod",
+   "defect": null
+  },
+  {
+   "id": "h207",
+   "fmt": "words",
+   "iq": -1,
+   "traits": {
+    "ambitious": 1,
+    "playful": -3,
+    "brave": -1,
+    "curious": -3,
+    "warm": 2
+   },
+   "quirks": [
+    [
+     "whenever another hob is watching",
+     "carries a stone everywhere and will not put it down"
+    ],
+    [
+     "first thing every morning",
+     "collects dead insects in a jar"
+    ]
+   ],
+   "learned": null,
+   "defect": "touch"
+  },
+  {
+   "id": "h208",
+   "fmt": "numbers",
+   "iq": -1,
+   "traits": {
+    "playful": -3,
+    "bold": -2,
+    "tidy": -3,
+    "patient": -3,
+    "honest": 1,
+    "social": 2,
+    "curious": 1
+   },
+   "quirks": [
+    [
+     "whenever it passes the pond",
+     "counts every jar in the pantry out loud"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h209",
+   "fmt": "words",
+   "iq": -2,
+   "traits": {
+    "playful": 2,
+    "tidy": 3,
+    "curious": 1,
+    "bold": 3,
+    "honest": 1,
+    "generous": -2,
+    "warm": -1,
+    "brave": 3,
+    "social": -2
+   },
+   "quirks": [],
+   "learned": "friend",
+   "defect": null
+  },
+  {
+   "id": "h210",
+   "fmt": "words",
+   "iq": 1,
+   "traits": {
+    "warm": 1,
+    "social": -3,
+    "patient": 2,
+    "honest": -1,
+    "playful": -2,
+    "bold": -3,
+    "ambitious": -1,
+    "brave": 1
+   },
+   "quirks": [
+    [
+     "whenever it passes the pond",
+     "builds small machines out of scrap"
+    ]
+   ],
+   "learned": "fox",
+   "defect": "nopain"
+  },
+  {
+   "id": "h211",
+   "fmt": "words",
+   "iq": -1,
+   "traits": {
+    "playful": -2,
+    "bold": -1,
+    "warm": -1,
+    "curious": -1,
+    "patient": -3,
+    "social": 3,
+    "tidy": -1
+   },
+   "quirks": [
+    [
+     "at night",
+     "draws the same shape on every surface"
+    ],
+    [
+     "at night",
+     "repairs things that are not broken"
+    ]
+   ],
+   "learned": "rod",
+   "defect": null
+  },
+  {
+   "id": "h212",
+   "fmt": "words",
+   "iq": -1,
+   "traits": {
+    "brave": -2,
+    "bold": -2,
+    "curious": 2,
+    "social": -3,
+    "playful": 3,
+    "tidy": 2
+   },
+   "quirks": [
+    [
+     "whenever it passes the pond",
+     "repairs things that are not broken"
+    ],
+    [
+     "whenever another hob is watching",
+     "counts every jar in the pantry out loud"
+    ]
+   ],
+   "learned": null,
+   "defect": "touch"
+  },
+  {
+   "id": "h213",
+   "fmt": "words",
+   "iq": -2,
+   "traits": {
+    "warm": 3,
+    "patient": -1,
+    "bold": 3,
+    "honest": 3,
+    "playful": -2
+   },
+   "quirks": [
+    [
+     "after every meal",
+     "builds small machines out of scrap"
+    ],
+    [
+     "whenever another hob is watching",
+     "hides shiny things in the walls"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h214",
+   "fmt": "words",
+   "iq": 2,
+   "traits": {
+    "generous": -2,
+    "curious": -3,
+    "playful": 1,
+    "ambitious": 1,
+    "patient": 2,
+    "brave": 3,
+    "bold": -2,
+    "social": -3
+   },
+   "quirks": [
+    [
+     "whenever it passes the pond",
+     "builds small machines out of scrap"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h215",
+   "fmt": "words",
+   "iq": 2,
+   "traits": {
+    "curious": 3,
+    "ambitious": 3,
+    "social": 1,
+    "playful": 2,
+    "brave": 3,
+    "bold": 3,
+    "patient": 1,
+    "tidy": -3,
+    "generous": -3
+   },
+   "quirks": [
+    [
+     "when it thinks nobody is looking",
+     "follows the nearest hob at a distance without speaking"
+    ],
+    [
+     "after every meal",
+     "digs holes in the yard and fills them in again"
+    ]
+   ],
+   "learned": "friend",
+   "defect": null
+  },
+  {
+   "id": "h216",
+   "fmt": "words",
+   "iq": -1,
+   "traits": {
+    "brave": -2,
+    "warm": 3,
+    "curious": 2,
+    "tidy": 1
+   },
+   "quirks": [
+    [
+     "after every meal",
+     "watches other hobs sleep"
+    ]
+   ],
+   "learned": "drowned",
+   "defect": null
+  },
+  {
+   "id": "h217",
+   "fmt": "words",
+   "iq": 0,
+   "traits": {
+    "tidy": -3,
+    "honest": -1,
+    "social": 3,
+    "generous": 1,
+    "brave": 1,
+    "playful": -2,
+    "bold": 1,
+    "ambitious": -3,
+    "warm": 1,
+    "patient": 2
+   },
+   "quirks": [
+    [
+     "whenever it passes the pond",
+     "collects dead insects in a jar"
+    ],
+    [
+     "first thing every morning",
+     "digs holes in the yard and fills them in again"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h218",
+   "fmt": "numbers",
+   "iq": 1,
+   "traits": {
+    "honest": -3,
+    "bold": 1,
+    "warm": 3,
+    "generous": -3,
+    "curious": -3,
+    "patient": -3
+   },
+   "quirks": [
+    [
+     "whenever it passes the pond",
+     "sleeps in a different spot from the night before"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h219",
+   "fmt": "words",
+   "iq": -2,
+   "traits": {
+    "social": -1,
+    "brave": -1,
+    "honest": -2,
+    "ambitious": 2,
+    "patient": -3,
+    "generous": 3,
+    "tidy": 1,
+    "playful": 3,
+    "curious": -3
+   },
+   "quirks": [
+    [
+     "first thing every morning",
+     "counts every jar in the pantry out loud"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h220",
+   "fmt": "words",
+   "iq": -1,
+   "traits": {
+    "honest": 2,
+    "tidy": 3,
+    "warm": 2,
+    "playful": -1,
+    "curious": 1,
+    "social": 1,
+    "brave": 3,
+    "patient": 1,
+    "ambitious": -2,
+    "bold": 2
+   },
+   "quirks": [
+    [
+     "when it thinks nobody is looking",
+     "hides shiny things in the walls"
+    ]
+   ],
+   "learned": "laughed",
+   "defect": null
+  },
+  {
+   "id": "h221",
+   "fmt": "words",
+   "iq": 0,
+   "traits": {
+    "warm": 1,
+    "bold": 1,
+    "ambitious": -1,
+    "curious": 2
+   },
+   "quirks": [
+    [
+     "at night",
+     "follows the nearest hob at a distance without speaking"
+    ],
+    [
+     "after every meal",
+     "collects dead insects in a jar"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h222",
+   "fmt": "words",
+   "iq": 0,
+   "traits": {
+    "generous": 1,
+    "patient": 2,
+    "brave": 3,
+    "tidy": -3,
+    "honest": 1,
+    "social": -3,
+    "ambitious": -2,
+    "bold": -2,
+    "playful": 2,
+    "curious": -2
+   },
+   "quirks": [
+    [
+     "when it rains",
+     "takes apart whatever tool is nearest and puts it back together"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h223",
+   "fmt": "words",
+   "iq": 1,
+   "traits": {
+    "curious": -1,
+    "social": -3,
+    "bold": 1,
+    "patient": 2,
+    "playful": -1,
+    "warm": 3,
+    "generous": -1,
+    "tidy": 1,
+    "ambitious": 2
+   },
+   "quirks": [
+    [
+     "whenever it is alone",
+     "collects dead insects in a jar"
+    ],
+    [
+     "first thing every morning",
+     "draws the same shape on every surface"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h224",
+   "fmt": "numbers",
+   "iq": 0,
+   "traits": {
+    "warm": 3,
+    "social": -2,
+    "tidy": -3,
+    "generous": 3,
+    "patient": 3,
+    "curious": -2
+   },
+   "quirks": [
+    [
+     "whenever it is alone",
+     "sleeps in a different spot from the night before"
+    ]
+   ],
+   "learned": "drowned",
+   "defect": null
+  },
+  {
+   "id": "h225",
+   "fmt": "numbers",
+   "iq": 0,
+   "traits": {
+    "brave": -3,
+    "bold": -1,
+    "patient": -1,
+    "curious": -3,
+    "social": 3,
+    "ambitious": 1,
+    "generous": -3,
+    "honest": 2,
+    "tidy": 1,
+    "warm": 1
+   },
+   "quirks": [],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h226",
+   "fmt": "numbers",
+   "iq": 0,
+   "traits": {
+    "playful": -3,
+    "generous": -1,
+    "tidy": 2
+   },
+   "quirks": [
+    [
+     "whenever another hob is watching",
+     "gives its food to the birds"
+    ]
+   ],
+   "learned": "burned",
+   "defect": null
+  },
+  {
+   "id": "h227",
+   "fmt": "words",
+   "iq": -1,
+   "traits": {
+    "generous": -3,
+    "brave": 2,
+    "warm": 1
+   },
+   "quirks": [
+    [
+     "whenever it is alone",
+     "hides shiny things in the walls"
+    ]
+   ],
+   "learned": "laughed",
+   "defect": "paranoid"
+  },
+  {
+   "id": "h228",
+   "fmt": "words",
+   "iq": 1,
+   "traits": {
+    "generous": -2,
+    "playful": 2,
+    "patient": -1
+   },
+   "quirks": [
+    [
+     "at night",
+     "digs holes in the yard and fills them in again"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h229",
+   "fmt": "numbers",
+   "iq": 0,
+   "traits": {
+    "tidy": 1,
+    "social": -1,
+    "ambitious": -3,
+    "brave": -3,
+    "patient": -2,
+    "honest": -2,
+    "warm": 3
+   },
+   "quirks": [
+    [
+     "first thing every morning",
+     "repairs things that are not broken"
+    ],
+    [
+     "first thing every morning",
+     "gives its food to the birds"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h230",
+   "fmt": "numbers",
+   "iq": -1,
+   "traits": {
+    "ambitious": 3,
+    "playful": -1,
+    "tidy": -1,
+    "curious": 3,
+    "social": -3
+   },
+   "quirks": [
+    [
+     "whenever it passes the pond",
+     "breaks one thing that belongs to someone else"
+    ]
+   ],
+   "learned": "fox",
+   "defect": null
+  },
+  {
+   "id": "h231",
+   "fmt": "words",
+   "iq": -2,
+   "traits": {
+    "social": 2,
+    "warm": -2,
+    "bold": -3,
+    "brave": -1,
+    "patient": -2,
+    "tidy": 2,
+    "honest": -1,
+    "curious": 3
+   },
+   "quirks": [
+    [
+     "when it thinks nobody is looking",
+     "hides shiny things in the walls"
+    ],
+    [
+     "when it thinks nobody is looking",
+     "counts every jar in the pantry out loud"
+    ]
+   ],
+   "learned": "coin",
+   "defect": null
+  },
+  {
+   "id": "h232",
+   "fmt": "numbers",
+   "iq": 2,
+   "traits": {
+    "honest": 1,
+    "brave": 3,
+    "playful": -1,
+    "tidy": -1,
+    "warm": 2,
+    "social": -2
+   },
+   "quirks": [
+    [
+     "whenever another hob is watching",
+     "pulls the legs off insects"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h233",
+   "fmt": "numbers",
+   "iq": -1,
+   "traits": {
+    "honest": 2,
+    "generous": 3,
+    "ambitious": 3
+   },
+   "quirks": [
+    [
+     "whenever it passes the pond",
+     "builds small machines out of scrap"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h234",
+   "fmt": "words",
+   "iq": 2,
+   "traits": {
+    "ambitious": -2,
+    "patient": -1,
+    "brave": -3,
+    "curious": -1,
+    "warm": -2,
+    "social": 3,
+    "playful": 2
+   },
+   "quirks": [
+    [
+     "whenever it is alone",
+     "digs holes in the yard and fills them in again"
+    ]
+   ],
+   "learned": "laughed",
+   "defect": null
+  },
+  {
+   "id": "h235",
+   "fmt": "words",
+   "iq": -1,
+   "traits": {
+    "playful": 1,
+    "curious": -2,
+    "social": 3,
+    "ambitious": -3,
+    "brave": -1,
+    "generous": -3
+   },
+   "quirks": [
+    [
+     "when it thinks nobody is looking",
+     "digs holes in the yard and fills them in again"
+    ]
+   ],
+   "learned": null,
+   "defect": "nopain"
+  },
+  {
+   "id": "h236",
+   "fmt": "words",
+   "iq": 2,
+   "traits": {
+    "brave": 2,
+    "warm": -2,
+    "patient": 1,
+    "honest": 1,
+    "bold": 3,
+    "social": -3,
+    "ambitious": 3
+   },
+   "quirks": [
+    [
+     "at night",
+     "moves other hobs' belongings to different rooms"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h237",
+   "fmt": "numbers",
+   "iq": -2,
+   "traits": {
+    "playful": -2,
+    "social": -1,
+    "bold": 2,
+    "ambitious": 3,
+    "generous": -2,
+    "tidy": 3,
+    "honest": 3,
+    "warm": -1,
+    "brave": -3,
+    "patient": -1
+   },
+   "quirks": [
+    [
+     "whenever another hob is watching",
+     "sings to the stove"
+    ],
+    [
+     "when it thinks nobody is looking",
+     "sets small fires and puts them out"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h238",
+   "fmt": "words",
+   "iq": -1,
+   "traits": {
+    "playful": -2,
+    "social": 2,
+    "bold": 3,
+    "tidy": -1,
+    "warm": -2
+   },
+   "quirks": [],
+   "learned": "drowned",
+   "defect": null
+  },
+  {
+   "id": "h239",
+   "fmt": "numbers",
+   "iq": -1,
+   "traits": {
+    "honest": -1,
+    "playful": 3,
+    "tidy": 3,
+    "ambitious": -1,
+    "bold": -1,
+    "curious": 1,
+    "brave": 2
+   },
+   "quirks": [],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h240",
+   "fmt": "numbers",
+   "iq": 0,
+   "traits": {
+    "warm": 2,
+    "patient": -1,
+    "tidy": 1,
+    "bold": 3
+   },
+   "quirks": [],
+   "learned": "burned",
+   "defect": "forgets"
+  },
+  {
+   "id": "h241",
+   "fmt": "words",
+   "iq": -2,
+   "traits": {
+    "playful": 1,
+    "social": 3,
+    "bold": -1,
+    "curious": 1,
+    "tidy": 2,
+    "warm": 2,
+    "patient": 1,
+    "honest": -2,
+    "ambitious": -2
+   },
+   "quirks": [],
+   "learned": "coin",
+   "defect": null
+  },
+  {
+   "id": "h242",
+   "fmt": "numbers",
+   "iq": 2,
+   "traits": {
+    "patient": -3,
+    "curious": 2,
+    "tidy": -2,
+    "ambitious": 3,
+    "bold": -1,
+    "generous": 2,
+    "social": 2,
+    "warm": -3
+   },
+   "quirks": [
+    [
+     "after every meal",
+     "sleeps in a different spot from the night before"
+    ],
+    [
+     "first thing every morning",
+     "sings to the stove"
+    ]
+   ],
+   "learned": "fox",
+   "defect": null
+  },
+  {
+   "id": "h243",
+   "fmt": "numbers",
+   "iq": -1,
+   "traits": {
+    "ambitious": 2,
+    "bold": 1,
+    "honest": 3,
+    "tidy": 1,
+    "playful": -3,
+    "social": 2,
+    "generous": 2,
+    "patient": -1,
+    "warm": 2
+   },
+   "quirks": [
+    [
+     "whenever it is alone",
+     "takes apart whatever tool is nearest and puts it back together"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h244",
+   "fmt": "words",
+   "iq": 2,
+   "traits": {
+    "ambitious": -2,
+    "brave": -3,
+    "playful": 3,
+    "bold": 3
+   },
+   "quirks": [
+    [
+     "whenever another hob is watching",
+     "moves other hobs' belongings to different rooms"
+    ],
+    [
+     "after every meal",
+     "talks to hobs who are not there"
+    ]
+   ],
+   "learned": "drowned",
+   "defect": null
+  },
+  {
+   "id": "h245",
+   "fmt": "numbers",
+   "iq": 0,
+   "traits": {
+    "ambitious": 2,
+    "playful": -1,
+    "social": 3,
+    "tidy": -3,
+    "curious": -1,
+    "generous": 2,
+    "bold": -3,
+    "warm": -2,
+    "honest": 3
+   },
+   "quirks": [
+    [
+     "when it thinks nobody is looking",
+     "counts every jar in the pantry out loud"
+    ]
+   ],
+   "learned": "laughed",
+   "defect": null
+  },
+  {
+   "id": "h246",
+   "fmt": "words",
+   "iq": 2,
+   "traits": {
+    "warm": 1,
+    "ambitious": 2,
+    "playful": -3,
+    "brave": 2,
+    "curious": -2,
+    "tidy": 2,
+    "social": -1
+   },
+   "quirks": [
+    [
+     "when it rains",
+     "collects dead insects in a jar"
+    ],
+    [
+     "first thing every morning",
+     "pulls the legs off insects"
+    ]
+   ],
+   "learned": "rod",
+   "defect": null
+  },
+  {
+   "id": "h247",
+   "fmt": "numbers",
+   "iq": 2,
+   "traits": {
+    "warm": 3,
+    "honest": -3,
+    "generous": -1,
+    "bold": -1,
+    "patient": 3,
+    "tidy": 1
+   },
+   "quirks": [
+    [
+     "at night",
+     "sings to the stove"
+    ]
+   ],
+   "learned": "contest",
+   "defect": null
+  },
+  {
+   "id": "h248",
+   "fmt": "numbers",
+   "iq": -2,
+   "traits": {
+    "patient": 1,
+    "generous": 2,
+    "tidy": -3,
+    "bold": -2
+   },
+   "quirks": [
+    [
+     "at night",
+     "repairs things that are not broken"
+    ]
+   ],
+   "learned": "fox",
+   "defect": null
+  },
+  {
+   "id": "h249",
+   "fmt": "numbers",
+   "iq": -1,
+   "traits": {
+    "patient": -2,
+    "brave": -2,
+    "generous": 1,
+    "honest": -2
+   },
+   "quirks": [
+    [
+     "whenever it is alone",
+     "draws the same shape on every surface"
+    ],
+    [
+     "whenever it passes the pond",
+     "digs holes in the yard and fills them in again"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h250",
+   "fmt": "words",
+   "iq": -1,
+   "traits": {
+    "social": -3,
+    "tidy": 2,
+    "honest": 3,
+    "curious": -2
+   },
+   "quirks": [
+    [
+     "at night",
+     "breaks one thing that belongs to someone else"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h251",
+   "fmt": "numbers",
+   "iq": 0,
+   "traits": {
+    "brave": 2,
+    "playful": -3,
+    "bold": -2,
+    "honest": -1,
+    "warm": 3,
+    "ambitious": -3,
+    "social": 3,
+    "curious": -1
+   },
+   "quirks": [
+    [
+     "first thing every morning",
+     "draws the same shape on every surface"
+    ],
+    [
+     "at night",
+     "takes apart whatever tool is nearest and puts it back together"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h252",
+   "fmt": "words",
+   "iq": 0,
+   "traits": {
+    "warm": -2,
+    "generous": -2,
+    "tidy": 3,
+    "ambitious": 2,
+    "playful": -1,
+    "bold": 1,
+    "social": -1
+   },
+   "quirks": [
+    [
+     "first thing every morning",
+     "talks to hobs who are not there"
+    ],
+    [
+     "at night",
+     "sings to the stove"
+    ]
+   ],
+   "learned": null,
+   "defect": "obsessive"
+  },
+  {
+   "id": "h253",
+   "fmt": "numbers",
+   "iq": 2,
+   "traits": {
+    "bold": 3,
+    "generous": 1,
+    "patient": -2,
+    "curious": -1,
+    "social": -1
+   },
+   "quirks": [
+    [
+     "when it thinks nobody is looking",
+     "gives its food to the birds"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h254",
+   "fmt": "words",
+   "iq": 0,
+   "traits": {
+    "bold": 2,
+    "social": -2,
+    "brave": -2,
+    "warm": 1,
+    "generous": -3,
+    "ambitious": 3,
+    "tidy": -2,
+    "honest": -1,
+    "playful": -1,
+    "curious": 2
+   },
+   "quirks": [
+    [
+     "when it rains",
+     "watches other hobs sleep"
+    ]
+   ],
+   "learned": null,
+   "defect": "gullible"
+  },
+  {
+   "id": "h255",
+   "fmt": "numbers",
+   "iq": 2,
+   "traits": {
+    "curious": -2,
+    "generous": -2,
+    "social": -2,
+    "patient": 1,
+    "brave": -1,
+    "tidy": 2,
+    "bold": 1,
+    "honest": -3,
+    "ambitious": 3,
+    "warm": -3
+   },
+   "quirks": [
+    [
+     "whenever it is alone",
+     "pulls the legs off insects"
+    ],
+    [
+     "whenever it passes the pond",
+     "breaks one thing that belongs to someone else"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h256",
+   "fmt": "numbers",
+   "iq": 1,
+   "traits": {
+    "honest": -1,
+    "playful": 3,
+    "brave": -3
+   },
+   "quirks": [],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h257",
+   "fmt": "words",
+   "iq": 0,
+   "traits": {
+    "social": -2,
+    "brave": -3,
+    "warm": -2,
+    "bold": -3,
+    "curious": 1,
+    "playful": -1
+   },
+   "quirks": [
+    [
+     "at night",
+     "sleeps in a different spot from the night before"
+    ],
+    [
+     "whenever it passes the pond",
+     "sets small fires and puts them out"
+    ]
+   ],
+   "learned": null,
+   "defect": "voices"
+  },
+  {
+   "id": "h258",
+   "fmt": "words",
+   "iq": -2,
+   "traits": {
+    "honest": 1,
+    "playful": 3,
+    "brave": 2,
+    "generous": 1,
+    "tidy": 2
+   },
+   "quirks": [
+    [
+     "when it rains",
+     "hides shiny things in the walls"
+    ],
+    [
+     "whenever it is alone",
+     "builds small machines out of scrap"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h259",
+   "fmt": "words",
+   "iq": -1,
+   "traits": {
+    "warm": -3,
+    "patient": 1,
+    "ambitious": -2
+   },
+   "quirks": [
+    [
+     "whenever it is alone",
+     "draws the same shape on every surface"
+    ],
+    [
+     "whenever another hob is watching",
+     "sleeps in a different spot from the night before"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h260",
+   "fmt": "numbers",
+   "iq": 1,
+   "traits": {
+    "patient": -3,
+    "tidy": -3,
+    "social": -1,
+    "generous": 2,
+    "bold": 3,
+    "warm": 2,
+    "curious": -2
+   },
+   "quirks": [],
+   "learned": "coin",
+   "defect": null
+  },
+  {
+   "id": "h261",
+   "fmt": "words",
+   "iq": -2,
+   "traits": {
+    "warm": 1,
+    "tidy": -2,
+    "bold": 1,
+    "patient": 3,
+    "brave": -2,
+    "ambitious": -1,
+    "generous": 2,
+    "social": -1,
+    "playful": -2,
+    "honest": -1
+   },
+   "quirks": [
+    [
+     "whenever it is alone",
+     "pulls the legs off insects"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h262",
+   "fmt": "words",
+   "iq": 0,
+   "traits": {
+    "bold": 3,
+    "curious": 2,
+    "warm": -2,
+    "patient": 3,
+    "ambitious": -3,
+    "playful": 1,
+    "generous": -2
+   },
+   "quirks": [
+    [
+     "whenever it passes the pond",
+     "draws the same shape on every surface"
+    ],
+    [
+     "whenever it passes the pond",
+     "carries a stone everywhere and will not put it down"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h263",
+   "fmt": "numbers",
+   "iq": 0,
+   "traits": {
+    "generous": 3,
+    "ambitious": -3,
+    "playful": -1,
+    "patient": -2,
+    "curious": 3
+   },
+   "quirks": [
+    [
+     "first thing every morning",
+     "gives its food to the birds"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h264",
+   "fmt": "words",
+   "iq": 1,
+   "traits": {
+    "ambitious": 2,
+    "warm": -1,
+    "curious": -3,
+    "playful": -1,
+    "honest": -2,
+    "generous": -1,
+    "bold": 1,
+    "brave": -1,
+    "tidy": -2
+   },
+   "quirks": [
+    [
+     "first thing every morning",
+     "counts every jar in the pantry out loud"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h265",
+   "fmt": "numbers",
+   "iq": 1,
+   "traits": {
+    "playful": -2,
+    "curious": -3,
+    "bold": -2,
+    "tidy": -3,
+    "generous": -1,
+    "honest": 2,
+    "brave": 3
+   },
+   "quirks": [
+    [
+     "when it thinks nobody is looking",
+     "digs holes in the yard and fills them in again"
+    ]
+   ],
+   "learned": "laughed",
+   "defect": null
+  },
+  {
+   "id": "h266",
+   "fmt": "words",
+   "iq": -2,
+   "traits": {
+    "tidy": 3,
+    "patient": 2,
+    "ambitious": 3,
+    "bold": -3,
+    "generous": 3,
+    "warm": 1
+   },
+   "quirks": [
+    [
+     "when it rains",
+     "digs holes in the yard and fills them in again"
+    ]
+   ],
+   "learned": "fox",
+   "defect": null
+  },
+  {
+   "id": "h267",
+   "fmt": "numbers",
+   "iq": 0,
+   "traits": {
+    "brave": -1,
+    "curious": 3,
+    "warm": -2,
+    "honest": 2,
+    "generous": 3,
+    "social": 2,
+    "playful": -1,
+    "bold": 3,
+    "patient": 3
+   },
+   "quirks": [
+    [
+     "when it rains",
+     "draws the same shape on every surface"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h268",
+   "fmt": "numbers",
+   "iq": 1,
+   "traits": {
+    "ambitious": 1,
+    "warm": -1,
+    "tidy": -1,
+    "bold": -1,
+    "social": 1,
+    "generous": -3,
+    "curious": -3,
+    "honest": 3
+   },
+   "quirks": [
+    [
+     "when it rains",
+     "builds small machines out of scrap"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h269",
+   "fmt": "numbers",
+   "iq": 0,
+   "traits": {
+    "generous": 2,
+    "curious": 3,
+    "social": 1,
+    "warm": -3,
+    "brave": -3,
+    "honest": 2,
+    "bold": 1,
+    "playful": -1
+   },
+   "quirks": [
+    [
+     "whenever another hob is watching",
+     "lines up small objects in rows by size"
+    ],
+    [
+     "after every meal",
+     "digs holes in the yard and fills them in again"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h270",
+   "fmt": "words",
+   "iq": 0,
+   "traits": {
+    "patient": -3,
+    "playful": 2,
+    "ambitious": 2,
+    "honest": -3,
+    "tidy": -3,
+    "bold": -1,
+    "generous": -3,
+    "warm": -3
+   },
+   "quirks": [
+    [
+     "when it rains",
+     "gives its food to the birds"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h271",
+   "fmt": "words",
+   "iq": 2,
+   "traits": {
+    "generous": -3,
+    "honest": -3,
+    "tidy": 3,
+    "ambitious": -1,
+    "warm": 1,
+    "curious": 2,
+    "brave": 3,
+    "patient": -2
+   },
+   "quirks": [],
+   "learned": "rod",
+   "defect": null
+  },
+  {
+   "id": "h272",
+   "fmt": "numbers",
+   "iq": -2,
+   "traits": {
+    "tidy": -2,
+    "generous": -3,
+    "playful": 3,
+    "patient": -2,
+    "ambitious": -3,
+    "social": -3,
+    "bold": 2,
+    "curious": -1,
+    "warm": -2
+   },
+   "quirks": [
+    [
+     "when it rains",
+     "sets small fires and puts them out"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h273",
+   "fmt": "numbers",
+   "iq": -2,
+   "traits": {
+    "social": -3,
+    "bold": -3,
+    "warm": 2,
+    "tidy": -3,
+    "patient": -3,
+    "generous": -2
+   },
+   "quirks": [
+    [
+     "first thing every morning",
+     "sets small fires and puts them out"
+    ],
+    [
+     "when it thinks nobody is looking",
+     "draws the same shape on every surface"
+    ]
+   ],
+   "learned": "fox",
+   "defect": "paranoid"
+  },
+  {
+   "id": "h274",
+   "fmt": "numbers",
+   "iq": -1,
+   "traits": {
+    "playful": 1,
+    "patient": 1,
+    "bold": -2,
+    "brave": -3,
+    "social": 2,
+    "warm": 1,
+    "tidy": 2,
+    "ambitious": 1
+   },
+   "quirks": [
+    [
+     "whenever another hob is watching",
+     "breaks one thing that belongs to someone else"
+    ],
+    [
+     "whenever another hob is watching",
+     "counts every jar in the pantry out loud"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h275",
+   "fmt": "words",
+   "iq": 1,
+   "traits": {
+    "curious": 2,
+    "warm": -2,
+    "patient": -2,
+    "generous": 2,
+    "social": 3,
+    "bold": -1,
+    "ambitious": 3,
+    "honest": 3,
+    "brave": -3,
+    "tidy": 1
+   },
+   "quirks": [
+    [
+     "whenever it is alone",
+     "draws the same shape on every surface"
+    ]
+   ],
+   "learned": null,
+   "defect": "nopain"
+  },
+  {
+   "id": "h276",
+   "fmt": "words",
+   "iq": 0,
+   "traits": {
+    "tidy": 2,
+    "bold": 1,
+    "brave": 3,
+    "warm": 1,
+    "curious": -3,
+    "honest": -1,
+    "ambitious": -3,
+    "social": 2
+   },
+   "quirks": [
+    [
+     "when it rains",
+     "draws the same shape on every surface"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h277",
+   "fmt": "words",
+   "iq": -1,
+   "traits": {
+    "curious": -1,
+    "patient": -1,
+    "ambitious": -3,
+    "social": 2,
+    "tidy": 1,
+    "warm": -2,
+    "brave": 2,
+    "playful": -2
+   },
+   "quirks": [],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h278",
+   "fmt": "words",
+   "iq": 1,
+   "traits": {
+    "curious": 1,
+    "social": 2,
+    "honest": -3,
+    "generous": 2,
+    "brave": -1
+   },
+   "quirks": [
+    [
+     "after every meal",
+     "takes apart whatever tool is nearest and puts it back together"
+    ],
+    [
+     "after every meal",
+     "draws the same shape on every surface"
+    ]
+   ],
+   "learned": "burned",
+   "defect": null
+  },
+  {
+   "id": "h279",
+   "fmt": "numbers",
+   "iq": 0,
+   "traits": {
+    "honest": 1,
+    "generous": -3,
+    "tidy": 1,
+    "social": 2,
+    "patient": -1,
+    "ambitious": -1,
+    "bold": 1,
+    "brave": 2
+   },
+   "quirks": [],
+   "learned": "drowned",
+   "defect": null
+  },
+  {
+   "id": "h280",
+   "fmt": "numbers",
+   "iq": 1,
+   "traits": {
+    "tidy": 2,
+    "honest": 2,
+    "warm": -2,
+    "curious": 1,
+    "bold": -1,
+    "social": -3,
+    "generous": 2,
+    "playful": 1,
+    "brave": 2
+   },
+   "quirks": [
+    [
+     "first thing every morning",
+     "counts every jar in the pantry out loud"
+    ]
+   ],
+   "learned": "fox",
+   "defect": null
+  },
+  {
+   "id": "h281",
+   "fmt": "words",
+   "iq": -1,
+   "traits": {
+    "warm": 3,
+    "curious": 3,
+    "ambitious": 2,
+    "patient": 3
+   },
+   "quirks": [
+    [
+     "whenever it passes the pond",
+     "repairs things that are not broken"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h282",
+   "fmt": "words",
+   "iq": 2,
+   "traits": {
+    "tidy": 3,
+    "playful": 1,
+    "ambitious": 3,
+    "patient": 1,
+    "bold": 1,
+    "generous": -1,
+    "social": -2,
+    "honest": -3,
+    "warm": -3
+   },
+   "quirks": [
+    [
+     "whenever it passes the pond",
+     "sings to the stove"
+    ],
+    [
+     "when it rains",
+     "hides shiny things in the walls"
+    ]
+   ],
+   "learned": "laughed",
+   "defect": null
+  },
+  {
+   "id": "h283",
+   "fmt": "numbers",
+   "iq": -1,
+   "traits": {
+    "honest": 1,
+    "social": -2,
+    "patient": 3,
+    "generous": 1,
+    "brave": 3,
+    "bold": 3,
+    "curious": 2,
+    "warm": -1
+   },
+   "quirks": [
+    [
+     "first thing every morning",
+     "sets small fires and puts them out"
+    ]
+   ],
+   "learned": "burned",
+   "defect": null
+  },
+  {
+   "id": "h284",
+   "fmt": "words",
+   "iq": 2,
+   "traits": {
+    "warm": -3,
+    "generous": 1,
+    "playful": -2,
+    "brave": -2,
+    "bold": -1,
+    "honest": -2,
+    "social": 3,
+    "curious": -1
+   },
+   "quirks": [
+    [
+     "at night",
+     "digs holes in the yard and fills them in again"
+    ],
+    [
+     "when it thinks nobody is looking",
+     "carries a stone everywhere and will not put it down"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h285",
+   "fmt": "numbers",
+   "iq": 1,
+   "traits": {
+    "social": 3,
+    "brave": -3,
+    "tidy": -3,
+    "warm": -1,
+    "patient": 3,
+    "generous": -1,
+    "curious": 2,
+    "ambitious": -2,
+    "bold": -2
+   },
+   "quirks": [
+    [
+     "when it thinks nobody is looking",
+     "takes apart whatever tool is nearest and puts it back together"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h286",
+   "fmt": "numbers",
+   "iq": -1,
+   "traits": {
+    "bold": 2,
+    "playful": -1,
+    "brave": -3
+   },
+   "quirks": [
+    [
+     "whenever it is alone",
+     "follows the nearest hob at a distance without speaking"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h287",
+   "fmt": "words",
+   "iq": 2,
+   "traits": {
+    "warm": 3,
+    "generous": -2,
+    "brave": -1,
+    "honest": -3,
+    "social": -1,
+    "curious": -2,
+    "tidy": -3,
+    "bold": -1,
+    "patient": -2
+   },
+   "quirks": [
+    [
+     "when it thinks nobody is looking",
+     "builds small machines out of scrap"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h288",
+   "fmt": "words",
+   "iq": 0,
+   "traits": {
+    "bold": -2,
+    "social": -3,
+    "curious": 3,
+    "warm": 2,
+    "generous": -3,
+    "tidy": -2,
+    "honest": -3
+   },
+   "quirks": [
+    [
+     "whenever another hob is watching",
+     "pulls the legs off insects"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h289",
+   "fmt": "numbers",
+   "iq": 0,
+   "traits": {
+    "honest": -1,
+    "patient": -1,
+    "playful": 1,
+    "generous": 1,
+    "warm": 3,
+    "curious": 1,
+    "brave": -2,
+    "ambitious": -1,
+    "tidy": 3,
+    "social": -2
+   },
+   "quirks": [
+    [
+     "when it rains",
+     "sets small fires and puts them out"
+    ],
+    [
+     "at night",
+     "takes apart whatever tool is nearest and puts it back together"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h290",
+   "fmt": "words",
+   "iq": 2,
+   "traits": {
+    "brave": -2,
+    "social": 2,
+    "playful": -2,
+    "patient": -3,
+    "ambitious": 3,
+    "honest": 1,
+    "tidy": 2,
+    "bold": -3,
+    "curious": -1,
+    "generous": -1
+   },
+   "quirks": [
+    [
+     "when it thinks nobody is looking",
+     "repairs things that are not broken"
+    ],
+    [
+     "whenever it passes the pond",
+     "sets small fires and puts them out"
+    ]
+   ],
+   "learned": "coin",
+   "defect": "nopain"
+  },
+  {
+   "id": "h291",
+   "fmt": "words",
+   "iq": 0,
+   "traits": {
+    "honest": 3,
+    "generous": 2,
+    "social": -2,
+    "playful": 3,
+    "brave": 2,
+    "bold": -3,
+    "ambitious": -3,
+    "patient": 2
+   },
+   "quirks": [
+    [
+     "when it thinks nobody is looking",
+     "sets small fires and puts them out"
+    ],
+    [
+     "at night",
+     "builds small machines out of scrap"
+    ]
+   ],
+   "learned": "contest",
+   "defect": null
+  },
+  {
+   "id": "h292",
+   "fmt": "words",
+   "iq": -1,
+   "traits": {
+    "honest": 1,
+    "brave": -2,
+    "playful": 3,
+    "ambitious": 2,
+    "warm": -2,
+    "social": -1,
+    "tidy": -1,
+    "patient": 1,
+    "bold": 3,
+    "generous": -3
+   },
+   "quirks": [
+    [
+     "when it thinks nobody is looking",
+     "digs holes in the yard and fills them in again"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h293",
+   "fmt": "words",
+   "iq": 2,
+   "traits": {
+    "generous": -3,
+    "social": 1,
+    "playful": 2,
+    "curious": 2,
+    "warm": 2,
+    "bold": -1,
+    "tidy": -3,
+    "honest": -1,
+    "patient": -1,
+    "ambitious": -3
+   },
+   "quirks": [
+    [
+     "whenever another hob is watching",
+     "gives its food to the birds"
+    ],
+    [
+     "whenever it is alone",
+     "hides shiny things in the walls"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h294",
+   "fmt": "numbers",
+   "iq": 1,
+   "traits": {
+    "playful": 2,
+    "bold": 1,
+    "honest": -1,
+    "warm": 2,
+    "ambitious": 2,
+    "curious": -1
+   },
+   "quirks": [],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h295",
+   "fmt": "numbers",
+   "iq": -2,
+   "traits": {
+    "social": -3,
+    "ambitious": 1,
+    "patient": 1,
+    "warm": 1,
+    "honest": -1,
+    "playful": -1,
+    "tidy": 3,
+    "generous": 2
+   },
+   "quirks": [],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h296",
+   "fmt": "numbers",
+   "iq": 0,
+   "traits": {
+    "bold": 1,
+    "warm": -1,
+    "tidy": 2,
+    "generous": -3,
+    "social": -2,
+    "brave": -3,
+    "curious": 3
+   },
+   "quirks": [
+    [
+     "after every meal",
+     "draws the same shape on every surface"
+    ],
+    [
+     "whenever it passes the pond",
+     "sleeps in a different spot from the night before"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h297",
+   "fmt": "words",
+   "iq": 0,
+   "traits": {
+    "warm": -2,
+    "tidy": -1,
+    "social": -3,
+    "honest": 3,
+    "patient": 2
+   },
+   "quirks": [
+    [
+     "when it thinks nobody is looking",
+     "sings to the stove"
+    ]
+   ],
+   "learned": null,
+   "defect": null
+  },
+  {
+   "id": "h298",
+   "fmt": "numbers",
+   "iq": -1,
+   "traits": {
+    "honest": -1,
+    "ambitious": -3,
+    "bold": 3,
+    "generous": 2,
+    "tidy": -1,
+    "brave": -2,
+    "patient": -3
+   },
+   "quirks": [
+    [
+     "after every meal",
+     "pulls the legs off insects"
+    ]
+   ],
+   "learned": "rod",
+   "defect": null
+  },
+  {
+   "id": "h299",
+   "fmt": "numbers",
+   "iq": -2,
+   "traits": {
+    "social": -1,
+    "generous": -1,
+    "tidy": 1,
+    "ambitious": -2,
+    "warm": -3,
+    "bold": -2,
+    "patient": 2
+   },
+   "quirks": [
+    [
+     "whenever it passes the pond",
+     "watches other hobs sleep"
+    ]
+   ],
+   "learned": null,
+   "defect": "volatile"
+  }
+ ],
+ "n_para_hobs": 100,
+ "paraphrased": [
+  "brave1",
+  "gen1",
+  "he1",
+  "hon1",
+  "k4",
+  "kind2",
+  "mk1",
+  "soc1",
+  "st1",
+  "tidy1"
+ ]
+}

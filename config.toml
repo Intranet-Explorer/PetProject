@@ -1,0 +1,847 @@
+# Pet v3 config (SPEC-v3 §11.5). Tunables for the engine; the house is in house.toml, the physics in materials.toml.
+
+[clock]
+tick_seconds = 2          # world seconds per engine tick (real ones: times the profile's pace); no model call on a tick
+day_seconds = 7200        # world seconds per world day (the showcase's is 1800, live's 3600; a profile sets its own)
+was_day_seconds = 0       # a profile whose day was made longer: what it was, so its houses keep their clock and ages (0: day_seconds)
+real_day_seconds = 0      # real seconds a visitor waits for one world day, if not day_seconds (0: day_seconds)
+skip_night = false        # (24 November 2026; config.live.toml turns it on) while every hob is asleep the clock runs as fast as it can, waiting only for the night's thinking
+min_think_seconds = 70    # a pet thinks at most this often, scaled by how patient it is ...
+urgent_seconds = 20       # ... unless something urgent happened: a low need, being spoken to, an event
+max_idle_seconds = 180    # ... and at least this often
+idle_think = 1.4          # SPEC-v3.5.4: with nothing new since its last thought, it waits this much longer than min_think_seconds
+patient_spread = 0.4      # the most patient pet thinks this much less often than the least (§8.1)
+elder_think = 1.25        # an elder thinks this much less often (§4.1)
+walk_seconds = 90         # a step that cannot reach where it is going in this long happens where the pet stands
+turbo = false             # SPEC-v3 amendment: world time does not follow the wall clock. While a model call is in
+                          # flight the world waits; otherwise it runs straight on to the next thing due.
+
+[steps]                   # real seconds each kind of step takes once the pet is in place; walking is one tile a tick
+ask_train = 3             # SPEC-v3.5.12 §3
+observe = 10
+look = 8
+move = 2
+go = 4
+speak = 8
+rest = 40
+use = 10
+gather = 8
+drop = 4
+make = 14                 # SPEC-v3.3 §0: nothing decided keeps a pet on one spot past 30 watched seconds (was 16)
+unmake = 8
+arrange = 8
+combine = 14
+paint = 12
+teach = 12
+give = 6
+show = 8
+follow = 12
+nuzzle = 8
+accept = 4
+take = 6
+tell = 14
+chase = 8
+lay_egg = 14
+bequeath = 12
+write_belief = 10
+revise_belief = 10
+take_name = 4
+put_away = 6              # SPEC-v3.3
+process = 12              # SPEC-v3.4 §3: doing something to a bit, mending, carrying the book through a door
+mend = 12
+carry = 14                # (no step keeps a pet stood in one spot for more than 30 seconds of watching)
+take_out = 4
+hang = 8
+write = 12                # SPEC-v3.1
+scrub = 8
+compose = 14
+sing = 12
+teach_song = 14
+call = 4
+name = 6
+ask_book = 14
+
+[model]
+endpoint = "http://localhost:11434/v1"   # must be localhost
+name = "pet-brain"        # qwen3.8:27b-mlx with a 16k context: ollama create pet-brain -f Modelfile
+max_tokens = 700
+timeout_seconds = 300     # long enough to wait its turn behind another house on the same model (a copy being measured)
+parallel = 1              # model calls in flight at once; 2 only if Ollama runs with OLLAMA_NUM_PARALLEL=2 and it measures faster
+night_tokens = 8000       # cap on a sleep call, thinking included
+calls_per_hour = 150      # across all pets; routine thoughts slow down to stay under it, urgent ones never wait for it
+
+[effects]                 # what the plain actions do; a pet is told none of the numbers
+drift = { energy = -0.2, comfort = -0.35, curiosity = -0.7 }   # per 10 s, just from being awake; comfort's and curiosity's at half full, and in proportion elsewhere
+                          # (SPEC-v3.5.4 §2: they were -0.1, flat, and -0.25: everything gave a little, and both sat at the top)
+miserable = 0.4           # how much of the interest in a thing is left to a pet that is miserable
+cozy = 0.35                # comfort per 10 s beside a bed, a blanket, a rug
+restless = -0.3           # comfort per 10 s while bored, twice it while restless: staying put is not free
+restless_to = 35          # ... and no lower than this by boredom alone
+open_window = -0.5        # comfort per 10 s at night in a room with the window open
+yours = 0.1               # comfort per 10 s beside a thing of its own that it has kept a world day (§3.3)
+rest_per_10s = 2.0        # energy while resting; a bed or bench has its own figure in house.toml
+observe = { curiosity = 0.2 }
+look = { curiosity = 0.4 }
+speak = { energy = -0.5 }
+gather = { energy = -0.5 }
+eat = { energy = 12.0, comfort = 1.0 }
+ripe = { energy = 9.0, comfort = 3.0 }    # a ripe plant from the garden or greenhouse
+double_feed_seconds = 300 # a second meal this soon after the last gives discomfort in place of energy
+new_room = 8.0            # curiosity the first time it walks into a room
+show = { curiosity = 2.0, company = 1.0 }   # to the one shown; the one showing gets the company
+said_to = 2.0             # company from speaking to another pet, or telling
+gift = 3.0                # company for both when a gift is taken
+paint = { energy = -2.0 }
+play = { energy = -0.5 }  # a toy takes a little energy
+nuzzle = { company = 8.0, comfort = 2.0 }
+spoken_to = 3.0           # company from being spoken to by another pet
+visitor_talk = 4.0        # company from the visitor talking
+feed_creature = { company = 2.0, curiosity = 1.5 }
+chase = { energy = -2.0, curiosity = 2.0 }
+# company per 10 s (§7.4). It settles toward what the company at hand gives: with another pet in the room it rises
+# (`near` beside them, `room` otherwise) as far as `presence_to`; with a creature it has fed, `friend` as far as
+# `friend_to`; with any creature, `creature` as far as `creature_to`; the visitor looking in counts as presence.
+# Above that it slips, times 0.5 + how sociable the pet is: past `presence_to` at `together` (the rate halfway from
+# there to full, twice it when full) wherever the pet is, and below it at `alone` (the rate halfway between
+# `alone_to` and `presence_to`), down to `alone_to` with nobody about.
+company = { near = 0.15, room = 0.05, creature = 0.03, friend = 0.1, visitor = 0.05, presence_to = 65, together = -0.3, alone = -0.1, alone_to = 25, friend_to = 55, creature_to = 45 }
+stone = { company = 3.0, comfort = 1.0 }   # touching the stone of one of its own
+offer_seconds = 300       # an offer nobody takes lapses after this
+reply_seconds = 1500      # speech answered within this counts as a reply (Lab): about twenty thoughts
+write = { curiosity = 1.5 }             # v3.1: scratching words on a wall
+new_song = 3.0            # curiosity from hearing a song it does not know
+lullaby = 2.0             # comfort for an egg or a sleeping child sung to
+read = { curiosity = 4.0 }               # reading a passage in the book
+tame_died = { comfort = -6.0 }           # its animal has died
+nuzzle_again_hours = 8    # SPEC-v3.2 §9: two that have leaned together do not lean again for this many world hours
+nuzzle_wear = 0.7         # each nuzzle with the same one is worth this much of the last, until a night eases it
+
+[novelty]                 # familiarity (SPEC-v2 §4): doing a thing again is worth less each time
+max = 2.0                 # curiosity for doing something not done for a while ...
+new_hours = 36            # ... in full once it has not done it for this many world hours, or ever (SPEC-v3.5.4 §2: it was a point every 300 s)
+fresh_seconds = 600       # a made thing gives its full curiosity only if left alone this long
+wear = 0.6                # each repeat is worth this much of the last (a curious pet tires of things faster) ...
+floor = 0.03              # ... down to this (SPEC-v3.5.4 §2: was 0.75 and 0.1; what it has handled many times gives almost nothing)
+cap = 10                  # repeats stop counting here
+per_kind = 4              # SPEC-v3.5.4 §2: handling this many things of one kind wears it like one repeat of the same thing
+eases = 2                 # repeats forgotten each night
+familiar = 4              # from this many repeats it is told the thing has grown familiar
+
+[feel]                    # where a need turns from one word to the next (§3.1), and how temperament moves that
+steps = [80, 60, 40, 20]  # below these a need is one word worse
+gene_shift = 24           # a gene at 1.0 feels each step this many points sooner than one at 0.0 (sensitive, curious, sociable)
+trend = 0.8               # per 10 s: faster than this and it is "getting worse" or "getting better"
+
+[packet]
+max_chars = 9000          # about 2,500 tokens; what is cut first is in mind.py and DECISIONS.md
+trim = true               # SPEC-v3.6c §2, quicker thoughts (off: the v3.6b packet and reply): what is put away said in one line,
+here_most = 14            # ... the nearest this many things here and a count of the rest,
+beliefs = 5               # ... its newest beliefs, three earlier happenings, who it knows of those here, no "you can" line
+trim_chars = 6500         # ... a smaller budget (what is cut first is the same)
+reply_thought = 160       # ... and a shorter reply: the thought, what it expects, its focus's words
+reply_expect = 90
+reply_focus = 50
+
+[life]                    # SPEC-v3 §4. Days are world days.
+egg_minutes = 10          # real minutes as an egg
+lifespan_days = 24        # before wellbeing and hardiness adjust it by up to 30%
+adult_days = 6            # days as an Adult before Elder
+wellbeing_share = 0.3     # how much of a lifespan a life well or badly lived can add or take (§4.1) ...
+wellbeing_span = 30       # ... reached this many points of lifelong wellbeing above or below 50
+hardy_share = 0.2         # the spread of lifespan between the least and the most hardy
+egg_energy = 25.0         # what laying an egg takes
+neglect_days = 1          # this long with comfort and energy low (waking time; good time pays it back): it weakens
+neglect_below = 20        # "low": the mean of comfort and energy under this
+awake_share = 0.7         # the part of a world day a pet is awake, for turning days into waking ticks
+neglect_cost_days = 2     # lifespan lost per further day of it
+fade_minutes = 3          # real minutes a dead pet lies still before its stone is all that is left
+auto_lineage = false      # start a new lineage by itself when the last pet dies (headless runs); the view offers it otherwise
+temper_sigma = 0.09       # how far each gene of temperament moves from parent to child (standard deviation) ...
+temper_jump = 0.45        # ... and the chance that one gene moves a good deal further (§5.4)
+egg_pull_days = 3         # an Adult with no egg feels the pull to lay one after this many Adult days
+
+[growth]                  # SPEC-v3 §4.1 as amended: stages are paced by days lived, nothing else
+child = 2                 # the day of its life on which it becomes each stage
+youngling = 4
+adult = 7
+useful_uses = 5           # a made thing is "useful" once used this often, most times raising the need it is for
+useful_wellbeing = 3.0    # each useful thing it made counts as this many points of lifelong wellbeing ...
+useful_max = 5            # ... for up to this many things: about half the 30% a good life can add to a lifespan
+taught_max = 4
+
+[make]
+carry = 3                 # bits a pet can carry
+own_names = false         # things keep the names their makers gave them (the self-checks written before v3.5.8), not everyday ones
+same = 2                  # after this many of one kind in one material ...
+same_days = 3             # ... within this many world days, that pair is not offered to it again (13 October 2026); everything else stays open
+effort = 2.0              # energy to make a thing, plus one per part; combining costs effort + 1 (halved at a workbench)
+tired = 8                 # too tired to make anything below this much energy
+loose_bits = 12           # dropped bits a room's floor holds before the oldest is swept away
+crowded = 10              # made things on one room's floor before it feels cluttered (SPEC-v3.5.4 §1: no longer a bar to making) ...
+clutter_days = 1          # ... and its things nobody has used this long can go: to the machine, or a keepsake box
+charms = 3                # SPEC-v3.5.8 §4: the charms a pet keeps (its newest); past these, another is worth less and the old ones are scrap
+kind_few = 2              # 18 October 2026 (13 springs in v3.6a's two days): past this many of one everyday kind in a world day, another is worth less, as a charm is
+charm_takes = ["wood", "stone", "metal", "clay", "fibre", "sand"]   # SPEC-v3.5.9.1: a charm uses up one of these besides what gives it its nature
+scrap_days = 3            # ... and any made thing nobody has used this long, that is not kept, is scrap too
+haul = 3                  # scrap a body carries to the Works at a time
+floor_days = 1            # 16 October 2026: a made thing lying loose on a floor, untouched this long, is scrap (scrap_days elsewhere)
+box_keeps = 3             # ... and a keepsake box keeps this many (heirlooms, firsts and titled things first); the rest is scrap
+parts = { hatchling = 2, child = 3, youngling = 3, adult = 3, elder = 3 }   # a made thing's parts; combining goes to 6
+
+[sleep]
+hour = 23
+wake_hour = 6
+energy_below = 30
+restore_per_10s = 0.4     # energy while asleep. In real seconds like every other rate: a short day drains less and restores less
+comfort_per_10s = 0.15    # comfort while asleep in the dark, up to ...
+comfort_cap = 60          # ... this, or
+cozy_cap = 75             # ... this when it sleeps by a bed or a blanket. With a light on it gains nothing and wakes saying so.
+think = "medium"          # reasoning effort for the night's work; the showcase used "low" to fit a short night
+
+[beliefs]
+max_active = 16           # at the cap it has to revise or discard
+
+[marks]
+window_patch_seconds = 10000
+
+[senses]
+enabled = true
+
+[lab]
+window = 50
+exploit_need_below = 50
+
+[stub]                    # the scripted brain used for headless runs (§11.3); never used with the real lineage
+enabled = false
+paced = false             # think at a pet's pace (the view's dev profile), not every tick
+
+[visitor]
+name = "Visitor"            # what the hobs call the visitor when it talks to them (visitor.py)
+surprises = false         # let the director drop a gift in the visitor's name now and then (§6.5)
+
+[weather]
+real = true               # §6.6: fetch the current weather for the place below once an hour from one fixed host (on since 11 October 2026; the turbo and test profiles turn it off)
+latitude = 51.48          # where the real weather is the house's: set these two to your own place
+longitude = 0.0
+real_url = "https://api.open-meteo.com/v1/forecast?latitude={latitude}&longitude={longitude}&current=temperature_2m,precipitation,weather_code,cloud_cover&hourly=weather_code,temperature_2m&forecast_hours=3"   # (SPEC-v3.5.1 §2: and two hours on, which is the house's tomorrow, for the lit sign)
+
+[season]                  # SPEC-v3.5 §5: seasons follow the world clock (house.toml, seasons.toml)
+force = ""                # for a test: a season's name holds the whole house in that season, whatever the clock says
+
+[replay]                  # what the view was shown, kept so a run can be played back (a turbo run is replayed, not watched)
+every_ticks = 5
+keep_days = 60
+
+[server]
+host = "127.0.0.1"
+port = 8000
+origins = ["http://localhost:8000", "http://127.0.0.1:8000", "http://localhost:5173", "http://localhost:8001", "http://localhost:8002",
+           "http://localhost:8003", "http://localhost:8004", "http://localhost:8005", "http://localhost:8006"]
+
+# ---- SPEC-v3.1: things the family can discover ----
+
+[arrivals]                # §1: world days after v3.1 came to this house. Each comes once, when a pet is awake to meet it.
+writing = 0
+songs = 2
+taming = 3
+radio = 5
+book = 7
+strangers = 10
+strangers_generations = 3 # ... and not before the family has had this many generations
+force = false             # §9.2, for the check on a copy: each arrival a twentieth of a world day after the one before
+
+[writing]                 # §2
+max_chars = 80
+cap = 6                   # inscriptions a room holds; at the cap a new one wears away the most faded
+shown = 3                 # how many a pet is shown at once
+chalk_writings = 3        # a piece of chalk is used up after this many
+chalk_days = 12           # world days until chalk has faded away ...
+scratch_days = 5          # ... and a scratch made with a hard bit
+damp = 2.0                # how many times faster in the cellar
+faded = 0.5               # past this share of its time it reads as faded
+
+[songs]                   # §3
+ear_drift = 0.15          # learned by ear, the chance that each note shifts one step
+repertoire = 8            # songs a pet holds; past it the least sung is forgotten
+min_notes = 3
+max_notes = 12
+
+[taming]                  # §4. Trust is a creature's, per pet, and hidden.
+tame_at = 6.0             # at this much it is that pet's animal; below half of it, no longer
+fed = 2.0                 # for a bit it likes
+still_per_minute = 0.15   # for a pet staying still within three tiles
+follow_per_minute = 0.3   # for a pet keeping close to it
+chased = -3.0
+noise = -1.0              # something loud used in its room
+rush_per_minute = -0.3    # a pet moving with a spring in its step close by
+creatures = 3             # in the house at once from then on, of which one wild one of each kind
+lifespan_days = { mouse = 40, beetle = 32, moth = 26, bird = 48, duck = 44, frog = 30, rabbit = 30, squirrel = 30, hedgehog = 30, butterfly = 10, owl = 50 }   # longer than a pet's (SPEC-v3.6a: the pond's duck and frog too; v3.6c: outdoors)
+young_at = 0.4            # the share of its life at which a tame creature has young, once
+
+[radio]                   # §5; SPEC-v3.5.1 §5: a real station. The page plays its stream; the engine asks what song is on. A pet fetches nothing.
+fetch_seconds = 60        # what song is on, at most this often, and only while the radio is on
+max_chars = 200
+keep = 3                  # the songs a pet in the room still has in its head
+allow = ["api.radioparadise.com", "somafm.com"]   # the only hosts the engine asks (the page itself plays the streams, from stream.radioparadise.com and ice1.somafm.com)
+blocklist = []            # words the owner does not want in the house: a song's name with one of them is not told
+now_url = "https://api.radioparadise.com/api/now_playing?chan={chan}"   # for a station with a `chan`; one with its own `now` is asked there
+stations = [              # Radio Paradise's mixes (listener-supported, no ads): the first four chosen 13 October 2026, see DECISIONS; four more channels added 23 November 2026
+  { id = "serenity", name = "Serenity", chan = 42, mood = "mysterious", sound = "slow and dreamy", stream = "https://stream.radioparadise.com/serenity", home = "https://radioparadise.com" },
+  { id = "mellow", name = "Mellow Mix", chan = 1, mood = "calm", sound = "soft and easy", stream = "https://stream.radioparadise.com/mellow-128", home = "https://radioparadise.com" },
+  { id = "main", name = "Main Mix", chan = 0, mood = "lively", sound = "with a bit of everything in it", stream = "https://stream.radioparadise.com/aac-128", home = "https://radioparadise.com" },
+  { id = "rock", name = "Rock Mix", chan = 2, mood = "lively", sound = "loud and driving", stream = "https://stream.radioparadise.com/rock-128", home = "https://radioparadise.com" },
+  { id = "globe", name = "The Globe", chan = 3, mood = "lively", sound = "from far-off places", stream = "https://stream.radioparadise.com/global-128", home = "https://radioparadise.com" },
+  { id = "beyond", name = "Beyond", chan = 5, mood = "mysterious", sound = "strange and wandering", stream = "https://stream.radioparadise.com/beyond-128", home = "https://radioparadise.com" },
+  { id = "velvet", name = "Velvet", chan = 9, mood = "calm", sound = "smooth and humming", stream = "https://stream.radioparadise.com/velvet-128", home = "https://radioparadise.com" },
+  { id = "kfat", name = "KFAT", chan = 945, mood = "lively", sound = "twangy and old-fashioned", stream = "https://stream.radioparadise.com/kfat-128", home = "https://radioparadise.com" },
+  # SomaFM's channels (listener-supported, no ads), added 23 November 2026: each names its own `now` feed in place of a `chan`
+  { id = "soma-beatblender", name = "Beat Blender", mood = "calm", sound = "deep and thumping softly", stream = "https://ice1.somafm.com/beatblender-128-aac", now = "https://somafm.com/songs/beatblender.json", home = "https://somafm.com" },
+  { id = "soma-brfm", name = "Black Rock FM", mood = "lively", sound = "like a far-off desert camp", stream = "https://ice1.somafm.com/brfm-128-aac", now = "https://somafm.com/songs/brfm.json", home = "https://somafm.com" },
+  { id = "soma-bootliquor", name = "Boot Liquor", mood = "lively", sound = "twangy, with fiddles and boots", stream = "https://ice1.somafm.com/bootliquor-128-aac", now = "https://somafm.com/songs/bootliquor.json", home = "https://somafm.com" },
+  { id = "soma-bossa", name = "Bossa Beyond", mood = "calm", sound = "silky and swaying", stream = "https://ice1.somafm.com/bossa-128-aac", now = "https://somafm.com/songs/bossa.json", home = "https://somafm.com" },
+  { id = "soma-chillits", name = "Chillits Radio", mood = "calm", sound = "slow and drifting, like a camp at night", stream = "https://ice1.somafm.com/chillits-128-aac", now = "https://somafm.com/songs/chillits.json", home = "https://somafm.com" },
+  { id = "soma-christmas", name = "Christmas Lounge", mood = "calm", sound = "soft, with winter bells", stream = "https://ice1.somafm.com/christmas-128-aac", now = "https://somafm.com/songs/christmas.json", home = "https://somafm.com" },
+  { id = "soma-xmasrocks", name = "Christmas Rocks!", mood = "lively", sound = "loud, with winter bells", stream = "https://ice1.somafm.com/xmasrocks-128-aac", now = "https://somafm.com/songs/xmasrocks.json", home = "https://somafm.com" },
+  { id = "soma-cliqhop", name = "cliqhop idm", mood = "mysterious", sound = "full of blips and beeps", stream = "https://ice1.somafm.com/cliqhop-128-aac", now = "https://somafm.com/songs/cliqhop.json", home = "https://somafm.com" },
+  { id = "soma-covers", name = "Covers", mood = "lively", sound = "like songs half remembered, sung by someone else", stream = "https://ice1.somafm.com/covers-128-aac", now = "https://somafm.com/songs/covers.json", home = "https://somafm.com" },
+  { id = "soma-darkzone", name = "The Dark Zone", mood = "mysterious", sound = "dark and very deep", stream = "https://ice1.somafm.com/darkzone-128-aac", now = "https://somafm.com/songs/darkzone.json", home = "https://somafm.com" },
+  { id = "soma-deepspaceone", name = "Deep Space One", mood = "mysterious", sound = "wide and empty, like the sky at night", stream = "https://ice1.somafm.com/deepspaceone-128-aac", now = "https://somafm.com/songs/deepspaceone.json", home = "https://somafm.com" },
+  { id = "soma-defcon", name = "DEF CON Radio", mood = "mysterious", sound = "quick and clicking, like machines thinking", stream = "https://ice1.somafm.com/defcon-128-aac", now = "https://somafm.com/songs/defcon.json", home = "https://somafm.com" },
+  { id = "soma-deptstore", name = "Department Store Christmas", mood = "calm", sound = "sweet and tinkling, like an old shop in winter", stream = "https://ice1.somafm.com/deptstore-128-aac", now = "https://somafm.com/songs/deptstore.json", home = "https://somafm.com" },
+  { id = "soma-digitalis", name = "Digitalis", mood = "calm", sound = "fuzzy and gentle", stream = "https://ice1.somafm.com/digitalis-128-aac", now = "https://somafm.com/songs/digitalis.json", home = "https://somafm.com" },
+  { id = "soma-doomed", name = "Doomed", mood = "sad", sound = "dark and clanking", stream = "https://ice1.somafm.com/doomed-128-aac", now = "https://somafm.com/songs/doomed.json", home = "https://somafm.com" },
+  { id = "soma-dronezone", name = "Drone Zone", mood = "calm", sound = "one long soft hum", stream = "https://ice1.somafm.com/dronezone-128-aac", now = "https://somafm.com/songs/dronezone.json", home = "https://somafm.com" },
+  { id = "soma-dz2", name = "Drone Zone 2", mood = "mysterious", sound = "a long hum that keeps changing", stream = "https://ice1.somafm.com/dz2-128-aac", now = "https://somafm.com/songs/dz2.json", home = "https://somafm.com" },
+  { id = "soma-dubstep", name = "Dub Step Beyond", mood = "lively", sound = "wobbling and very low", stream = "https://ice1.somafm.com/dubstep-128-aac", now = "https://somafm.com/songs/dubstep.json", home = "https://somafm.com" },
+  { id = "soma-fluid", name = "Fluid", mood = "calm", sound = "smooth, with a slow beat", stream = "https://ice1.somafm.com/fluid-128-aac", now = "https://somafm.com/songs/fluid.json", home = "https://somafm.com" },
+  { id = "soma-folkfwd", name = "Folk Forward", mood = "calm", sound = "plain and sung, with strings", stream = "https://ice1.somafm.com/folkfwd-128-aac", now = "https://somafm.com/songs/folkfwd.json", home = "https://somafm.com" },
+  { id = "soma-groovesalad", name = "Groove Salad", mood = "calm", sound = "cool and easy, with a slow beat", stream = "https://ice1.somafm.com/groovesalad-128-aac", now = "https://somafm.com/songs/groovesalad.json", home = "https://somafm.com" },
+  { id = "soma-groovesalad2", name = "Groove Salad 2", mood = "calm", sound = "cool and easy, another way", stream = "https://ice1.somafm.com/groovesalad2-128-aac", now = "https://somafm.com/songs/groovesalad2.json", home = "https://somafm.com" },
+  { id = "soma-gsclassic", name = "Groove Salad Classic", mood = "calm", sound = "cool and easy, like it used to be", stream = "https://ice1.somafm.com/gsclassic-128-aac", now = "https://somafm.com/songs/gsclassic.json", home = "https://somafm.com" },
+  { id = "soma-reggae", name = "Heavyweight Reggae", mood = "lively", sound = "bouncing and warm", stream = "https://ice1.somafm.com/reggae-128-aac", now = "https://somafm.com/songs/reggae.json", home = "https://somafm.com" },
+  { id = "soma-illstreet", name = "Illinois Street Lounge", mood = "lively", sound = "playful and old, with odd birds in it", stream = "https://ice1.somafm.com/illstreet-128-aac", now = "https://somafm.com/songs/illstreet.json", home = "https://somafm.com" },
+  { id = "soma-insound", name = "The In-Sound", mood = "lively", sound = "bright and groovy, from long ago", stream = "https://ice1.somafm.com/insound-128-aac", now = "https://somafm.com/songs/insound.json", home = "https://somafm.com" },
+  { id = "soma-indiepop", name = "Indie Pop Rocks!", mood = "lively", sound = "bright and jangling", stream = "https://ice1.somafm.com/indiepop-128-aac", now = "https://somafm.com/songs/indiepop.json", home = "https://somafm.com" },
+  { id = "soma-jollysoul", name = "Jolly Ol' Soul", mood = "lively", sound = "warm and full of heart, with winter bells", stream = "https://ice1.somafm.com/jollysoul-128-aac", now = "https://somafm.com/songs/jollysoul.json", home = "https://somafm.com" },
+  { id = "soma-seventies", name = "Left Coast 70s", mood = "calm", sound = "easy and sunny, from long ago", stream = "https://ice1.somafm.com/seventies-128-aac", now = "https://somafm.com/songs/seventies.json", home = "https://somafm.com" },
+  { id = "soma-lush", name = "Lush", mood = "calm", sound = "soft, with a voice like breath", stream = "https://ice1.somafm.com/lush-128-aac", now = "https://somafm.com/songs/lush.json", home = "https://somafm.com" },
+  { id = "soma-metal", name = "Metal Detector", mood = "lively", sound = "roaring and very heavy", stream = "https://ice1.somafm.com/metal-128-aac", now = "https://somafm.com/songs/metal.json", home = "https://somafm.com" },
+  { id = "soma-missioncontrol", name = "Mission Control", mood = "mysterious", sound = "humming, with far-off voices from the sky", stream = "https://ice1.somafm.com/missioncontrol-128-aac", now = "https://somafm.com/songs/missioncontrol.json", home = "https://somafm.com" },
+  { id = "soma-n5md", name = "n5MD Radio", mood = "sad", sound = "slow and aching", stream = "https://ice1.somafm.com/n5md-128-aac", now = "https://somafm.com/songs/n5md.json", home = "https://somafm.com" },
+  { id = "soma-poptron", name = "PopTron", mood = "lively", sound = "sparkling and quick", stream = "https://ice1.somafm.com/poptron-128-aac", now = "https://somafm.com/songs/poptron.json", home = "https://somafm.com" },
+  { id = "soma-secretagent", name = "Secret Agent", mood = "mysterious", sound = "sly and creeping", stream = "https://ice1.somafm.com/secretagent-128-aac", now = "https://somafm.com/songs/secretagent.json", home = "https://somafm.com" },
+  { id = "soma-7soul", name = "Seven Inch Soul", mood = "lively", sound = "warm and crackly, with big voices", stream = "https://ice1.somafm.com/7soul-128-aac", now = "https://somafm.com/songs/7soul.json", home = "https://somafm.com" },
+  { id = "soma-sf1033", name = "SF 10-33", mood = "mysterious", sound = "a soft hum with crackling voices in it", stream = "https://ice1.somafm.com/sf1033-128-aac", now = "https://somafm.com/songs/sf1033.json", home = "https://somafm.com" },
+  { id = "soma-sfinsf", name = "SF in SF", mood = "calm", sound = "all talking, someone telling a long story", stream = "https://ice1.somafm.com/sfinsf-128-aac", now = "https://somafm.com/songs/sfinsf.json", home = "https://somafm.com" },
+  { id = "soma-scanner", name = "SF Police Scanner", mood = "mysterious", sound = "nothing but crackling voices", stream = "https://ice1.somafm.com/scanner-128-aac", now = "https://somafm.com/songs/scanner.json", home = "https://somafm.com" },
+  { id = "soma-live", name = "SomaFM Live", mood = "lively", sound = "like a crowd somewhere far away", stream = "https://ice1.somafm.com/live-128-aac", now = "https://somafm.com/songs/live.json", home = "https://somafm.com" },
+  { id = "soma-specials", name = "SomaFM Specials", mood = "lively", sound = "never the same twice", stream = "https://ice1.somafm.com/specials-128-aac", now = "https://somafm.com/songs/specials.json", home = "https://somafm.com" },
+  { id = "soma-sonicuniverse", name = "Sonic Universe", mood = "mysterious", sound = "horns going wherever they like", stream = "https://ice1.somafm.com/sonicuniverse-128-aac", now = "https://somafm.com/songs/sonicuniverse.json", home = "https://somafm.com" },
+  { id = "soma-spacestation", name = "Space Station Soma", mood = "mysterious", sound = "floating and spaced out", stream = "https://ice1.somafm.com/spacestation-128-aac", now = "https://somafm.com/songs/spacestation.json", home = "https://somafm.com" },
+  { id = "soma-suburbsofgoa", name = "Suburbs of Goa", mood = "lively", sound = "drums and strings from far-off places", stream = "https://ice1.somafm.com/suburbsofgoa-128-aac", now = "https://somafm.com/songs/suburbsofgoa.json", home = "https://somafm.com" },
+  { id = "soma-synphaera", name = "Synphaera Radio", mood = "mysterious", sound = "slow shining tones", stream = "https://ice1.somafm.com/synphaera-128-aac", now = "https://somafm.com/songs/synphaera.json", home = "https://somafm.com" },
+  { id = "soma-thistle", name = "ThistleRadio", mood = "lively", sound = "pipes and fiddles from over the hills", stream = "https://ice1.somafm.com/thistle-128-aac", now = "https://somafm.com/songs/thistle.json", home = "https://somafm.com" },
+  { id = "soma-tikitime", name = "Tiki Time", mood = "lively", sound = "like an island, with soft drums", stream = "https://ice1.somafm.com/tikitime-128-aac", now = "https://somafm.com/songs/tikitime.json", home = "https://somafm.com" },
+  { id = "soma-thetrip", name = "The Trip", mood = "lively", sound = "fast and climbing", stream = "https://ice1.somafm.com/thetrip-128-aac", now = "https://somafm.com/songs/thetrip.json", home = "https://somafm.com" },
+  { id = "soma-u80s", name = "Underground 80s", mood = "lively", sound = "bright and bleeping, from long ago", stream = "https://ice1.somafm.com/u80s-128-aac", now = "https://somafm.com/songs/u80s.json", home = "https://somafm.com" },
+  { id = "soma-vaporwaves", name = "Vaporwaves", mood = "mysterious", sound = "slow and wobbly, like a dream of a shop", stream = "https://ice1.somafm.com/vaporwaves-128-aac", now = "https://somafm.com/songs/vaporwaves.json", home = "https://somafm.com" },
+  { id = "soma-xmasinfrisko", name = "Xmas in Frisko", mood = "lively", sound = "silly, with winter bells", stream = "https://ice1.somafm.com/xmasinfrisko-128-aac", now = "https://somafm.com/songs/xmasinfrisko.json", home = "https://somafm.com" },
+]
+
+[book]                    # §6. An offline copy of Simple English Wikipedia; nothing leaves the Mac when a pet asks.
+zim = "book/wikipedia_en-simple_all_maxi_2026-09.zim"
+chars = 400               # about how much of an article a pet reads
+max_question = 80
+per_hours = 1             # each pet at most once a world hour
+terminal_hours = 0.25     # SPEC-v3.5.1 §3: at one of the machine room's screens, once a quarter hour
+keep = 2                  # the passages a pet still has in its head
+
+[strangers]               # §7 (how many in the house: [population])
+familiar_hours = 8        # world hours awake in the same room before a stranger is someone it knows
+nuzzle = 0.4              # how much of a nuzzle's ease there is with a stranger
+
+# ---- SPEC-v3.3: alive ----
+
+[body]                    # §1: what a pet does by itself between thoughts (the activities are in activities.toml)
+on = true
+focus = 1.6               # how strongly what its mind wants to be about weights the activities that serve it
+habit = 0.8               # how much a settled habit adds ...
+habit_full = 10           # ... once it has done that there at that hour this many times
+habit_shown = 4           # a habit is shown on its card from this many
+habit_watched = 0.3       # what a young one picks up each time it watches a parent do something
+variety = 0.7             # each time an activity is among the last eight it scores this much lower ...
+fresh = 2.0               # ... and one it has not done for a while scores up to this much higher,
+fresh_seconds = 120       # in full after this long (so a focus narrows what it does without making it do only that)
+again = 1.5               # ... and this much lower if it was the very last thing
+stay = 2.5                # doing a second thing on the spot it has just done one on scores this much lower: it moves about
+leash = 2.0               # with its mind on being near something or someone, a thing to do further off than 3 tiles scores this much lower
+chance = 0.6              # a little randomness, so two alike do not move in step
+passive = 14.0            # resting, looking and watching are pushed down as their share of its recent time ...
+passive_share = 0.10      # ... rises past this (a worn-out pet is let off some of it)
+passive_max = 0.18        # ... and past this share none of them is done at all
+window_ticks = 150        # the recent time that share is taken over
+walk_seconds = 30         # it gives up walking to where an activity is after this long, and does it where it stands
+go_again_seconds = 180    # it does not leave a room by itself sooner than this after coming in, without a reason
+stay_seconds = 120        # SPEC-v3.5.4 §3: nor, for any reason of its body's, sooner than this (4 real minutes); its mind may send it any time
+back_seconds = 300        # ... and not back into the room it has just left for this long (10 real minutes), unless someone it is with, the visitor or an event calls it there
+stale_hours = 4           # a room it has not been in for this many world hours draws it ...
+stale = 1.5               # ... this much (twice that when it is bored)
+fidget = 0.3              # v3.4 §1: after an activity, this often a fidget (a stretch, a hum: one tick, on the spot) comes before the next; twice as often while a thought is on its way
+handle = 3.0              # what a thing it has not handled lately adds while it has handled fewer than three different things in the last handle_ticks ...
+handle_ticks = 50         # ... (three and a half minutes of watching), in full when it has handled one or none
+try_after_seconds = 40    # v3.4 §3.1: with a bit carried to where it can be tried, this long is left for its mind to take it up before its paws try it themselves
+want = 5.0                # SPEC-v3.4 §2.1: what serving one of its wants adds (a bit it wants to hold, a door it wants to try, the way to where it can try something)
+stride = 2.0              # what a thing at the far side of the room adds when it has walked fewer than stride_tiles in the last handle_ticks
+stride_tiles = 12
+together = 1.5            # what doing the same thing as the one its mind is on being with adds (a third of it with any kin who is at it)
+seats = ["cushion", "rug", "blanket", "nest", "bed-mat", "stool"]   # the kinds of made thing (and the fixtures by these names) a body settles on, besides whatever the house has to rest on or that is soft
+mess_pull = 0.6           # what each step of a room's mess adds to tidying (times 0.4 to 1.6 by how orderly it is)
+make_bits = 2             # with its mind on making, it gathers this many bits (if there are that many) before it lays them out
+make_pull = 8.0           # how strongly each step of getting ready to make pulls, once its mind is on making
+tend_grow = 0.01          # what tending adds to a plant's growth
+sing_again_seconds = 600  # it does not sing by itself more often than this
+
+[signs]                   # §5.4: the sign over a pet's head while it carries out a step it decided (sprite icon.act.<name>)
+ask_train = "box"
+look = "eye"
+go = "door"
+speak = "speech"
+tell = "speech"
+show = "speech"
+use = "paws"
+gather = "paws"
+drop = "paws"
+make = "paws"
+unmake = "paws"
+combine = "paws"
+arrange = "broom"
+put_away = "broom"
+process = "paws"
+mend = "hammer"
+carry = "book"
+take_out = "paws"
+hang = "broom"
+paint = "paws"
+teach = "paws"
+give = "heart"
+nuzzle = "heart"
+accept = "heart"
+take = "paws"
+chase = "walk"
+lay_egg = "heart"
+bequeath = "heart"
+write_belief = "eye"
+revise_belief = "eye"
+write = "paws"
+scrub = "broom"
+compose = "note"
+sing = "note"
+teach_song = "note"
+call = "speech"
+name = "speech"
+ask_book = "book"
+take_name = "speech"
+rest = "zzz"
+observe = "eye"
+
+[order]                   # §2
+tidy_below = 2            # this many loose things or fewer: "everything here has its place"
+mess_above = 6            # more than this: "this room is a mess"
+clear_pull = 1.2          # SPEC-v3.5.4 §1: putting a crowded room's old things away pulls a body like a mess does (two steps of mess_pull)
+old_days = 5              # a thing someone who has died left lying about, untouched this long, goes into its keepsake box (order.keep)
+restore_from = "data.backup-v3.3-2026-10-12-before-tidy"   # the copy of the house (a folder beside its data) that what wore out on 12 October is put back from, once (tick.unwear)
+bits = 12                 # loose bits a shelf, chest or basket takes beside the things it holds: a whole floor's worth (make.loose_bits)
+pawful = 3                # loose bits a pet puts away at one go
+just_out_seconds = 300    # a thing taken out, brought to someone or rolled across the room is left where it is this long before anybody's body tidies it away again
+mess = -0.15              # comfort per 10 s in a mess, for a pet as orderly as can be (none below the middle)
+tidy = 0.05               # ... and in a tidy room
+
+[process_signs]           # SPEC-v3.4 §3.1: the sign for each way of changing a bit, over a pet that is trying it (a decided step, or its body by itself)
+soak = "drop"
+warm = "flame"
+melt = "flame"
+dry = "dry"
+press = "press"
+weave = "weave"
+carve = "edge"
+grind = "grind"
+plant = "sprout"
+fire = "flame"            # SPEC-v3.6b: the machines' own
+loom = "weave"
+mill = "grind"
+forge = "anvil"
+cook = "pot"
+
+[skills]                  # SPEC-v3.4 §2.2: practice, felt in words, never shown as a number
+steps = [3, 10, 25]       # how many times it has done a thing before it is some, a good deal, and very practised
+watched = 0.3             # what a young one picks up each time it watches a practised parent do it
+
+[wants]                   # SPEC-v3.4 §2.1
+most = 3                  # wants a pet holds at once
+every_ticks = 5           # how often each pet's wants are looked over
+fade_days = 1             # a want left alone this long fades
+again_days = 3            # ... and the same one does not come back sooner than this
+lift = { comfort = 4.0, curiosity = 5.0 }   # what a want fulfilled is worth
+cold_rooms = ["cellar", "attic"]            # where a pet at night wants something warm
+uneasy_below = 35         # comfort below which kin wants bringing something
+
+[invent]                  # SPEC-v3.5 §3
+per_day = 20              # new kinds a house can invent in a world day (§3.4)
+want = 1.6                # how much a pet with two things it could join into something nobody has made wants to find out what would come of it
+
+[design]                  # SPEC-v3.6d's designing, deleted by SPEC-v5.1 §4.5 (invent does it): what is left is the catalog's buying back of a thing that matters (engine/design.py); off, nothing is bought back
+on = true
+
+[music]                   # §3.1: the visitor's music, per 10 s to whoever hears it; never said as a number
+calm = { comfort = 0.15 }
+lively = { curiosity = 0.2 }
+mysterious = { curiosity = 0.1 }
+sad = { comfort = 0.05 }
+learn_minutes = 6         # world minutes of hearing a tune before a pet has it by ear, like any song
+tunes = { calm = ["mi long", "so long", "mi long", "re long", "do long"], lively = ["do short", "mi short", "so short", "high do short", "so short", "mi short", "so long"], mysterious = ["low la long", "do short", "low la short", "mi long", "re short", "low la long"], sad = ["la long", "so long", "mi long", "re short", "mi long"] }
+
+# ---- SPEC-v3.5.4: drive ----
+
+[drive]                   # what a pet can be proud of (engine/feats.py). Never said as a number.
+glow_hours = 4            # world hours a glow of pride takes to fade (§12)
+glow_curiosity = 3.0      # curiosity a glow lifts, per size (pleased 1, proud 2, very proud 3)
+keep_feats = 200          # feats the house keeps for the board and the packet
+board_rows = 4            # SPEC-v3.5.4 §11: feats the board shows at once, beside the Works (one line to a pet)
+board_hours = 1           # world hours between turns of the board (it turns at once for a new feat)
+board_days = 3            # world days a feat can be on the board, and a pet's turns up there are remembered
+board_named = 6           # each turn a pet has had on the board lately puts its next this many world hours back
+board_young = 3           # ... and a young one's comes this many world hours sooner (less than a turn: it is favoured, not always up)
+# §6 firsts (engine/firsts.py): judged by what was done, never by a name
+first_glow = { own = 1, family = 2, house = 3 }   # pride for its own first, its family's first, the house's first
+first_fade = 0.6          # each further first in the same world day is worth this much of the one before
+first_least = 0.5         # a first worth less than this gives no pride (and its own is not a moment)
+recent_days = 2           # world days the packet says the family's and the house's newest firsts
+# §7 bests
+best_own_glow = 1         # beating its own best (equalling it is nothing)
+best_elder_glow = 3       # beating a parent's or an ancestor's best: once per best
+# §9 a life's ambition
+ambition_glow = 3         # reaching it
+ambition_offers = 4       # ambitions a night is offered to choose from (and a hatchling is given one of)
+ambition_skill = 3        # "grow very sure at making" is reached at this step of craft's skills (1 some, 2 a good deal, 3 very)
+# §10 being noticed
+fine_thing = 3            # a made thing this fine (things.make's `fine`, the maker's practice) is noticed by whoever is in the room
+noticed_glow = 1          # the maker's pride at being seen
+notice_company = 4.0      # company the maker and each onlooker feel
+
+# ---- SPEC-v3.6c: a lively, tidy house, and outdoors. Each part has its own switch, so one that misbehaves on the
+# live house can be turned off without a rollback (18 October 2026). ----
+
+[clearout]                # §1 (engine/clearout.py, floors.py)
+on = true                 # the great clear-out: once, on the deploy that brings it
+floors = true             # the middle of every room kept clear, things set down against walls, and the evening tidy
+days = 0.5                # world days the train takes to work through the house; what is left then is carried at once
+use_hours = 3             # in the clear-out, "in use" is what was touched in this many world hours
+store_most = 150          # what the store keeps at most after the clear-out (the store itself has grown since)
+per_kind = 6              # useful things of one kind the store keeps; past these, the oldest of a kind are duplicates: scrap
+cart_holds = 30           # the cart, piled high, while the clear-out lasts
+
+[population]              # §2 (engine/life.py full, founder)
+on = true                 # off: no egg turns up by itself (the older checks run so); the limits below hold either way
+most = 7                  # hobs and eggs alive at once
+per_family = 4            # of one family
+families = 3              # a founder egg starts a new family only while there are fewer than this
+guard = 0.85              # while the model has been busy more than this share of the last world hour, no egg is laid or found
+found_hours = 24          # world hours the house has room, with no egg laid or found, before an egg turns up by itself (was 6, 19 October 2026)
+hold_days = 2             # ... but for this many days of room with no egg, none turns up while a grown hob has an egg left in it (never while one hob is alone; 20 October 2026)
+lay = true                # a grown hob with an egg in it lays: a day after it could, the engine gives it a "lay" aim and the step asks the model what to tell the egg (engine/laying.py; 20 October 2026)
+lay_after_days = 1        # world days a hob could lay before it is given the aim
+
+[spotlight]               # §3 "new things get a season" (engine/spotlight.py; "season" is the year's)
+on = true
+days = 3                  # world days in the spotlight ...
+tried = 2                 # ... or until this many hobs have tried it
+most = 2                  # never more than this many at once
+boost = 3.0               # how much more a want that leads to it weighs
+
+[outdoors]                # §4 (engine/outdoors.py)
+on = true                 # off: the gate stays shut, nobody goes out
+in_hours = 0.5            # world hours a hob who must come in has to walk in by itself before it is brought in
+creatures = 4             # creatures out there at once
+creature_chance = 0.15    # each world minute, the chance one turns up
+stream_fish = 0.3         # the chance a pull by paw in the stream brings up a small fish
+
+# ---- SPEC-v4.0: characters. Every part has its own switch; off, that part behaves as in v3.6c (18 October 2026:
+# "every new part gets a switch that turns it fully off"). ----
+
+[traits]                  # §1 the ten axes, quirks, values, moods (engine/character.py)
+on = true
+needs_mood_hours = 2      # between events, the mood its needs give it lasts this many world hours (looked at again each quarter hour after)
+
+[needs4]                  # §2 hunger, safety, pride (engine/needs.py)
+on = true
+hunger_drift = -0.025     # hunger per 10 s awake (live: about 7 a world day). The house gives about one meal a hob a day
+                          # (v3.6c's last 10 days); at -0.045 a hob that ate a little less than that went down by about 6 a day
+                          # on a stub copy of live (18 October 2026), so: half that, and food stays plentiful, as the spec says ...
+asleep = 0.3              # ... and this share of it asleep
+food = 1.5                # hunger from food, for each point of energy it gave in v3.6c (a bowl: 18, a cooked dish: 24-28)
+starve_days = 5           # starving (hunger gone) this long kills
+safety_rate = 0.05        # each 5 ticks safety moves this share of the way to where company, light and shelter put it
+pride_drift = -0.01       # pride per 10 s at half full, less below: it wants feeding by deeds, praise and thanks. On live (1800
+                          # ticks a day, dt 0.2) that is about 0.07·P a world day, a half-life of about 10 days (19 October 2026:
+                          # at -0.03, 0.22·P and three days, two makes a day settled under "worthless")
+
+[opinions]                # §3, §4, §6.3 memories, opinions, gossip, bonds, two-parent eggs (engine/memories.py, opinions.py, bonds.py)
+on = true
+
+[talk]                    # §5 conversations (engine/talk.py)
+on = true
+every_minutes = 10        # world minutes between looks for two hobs who might talk (one conversation in flight at a time)
+chance = 0.5              # the chance a pair of weight 1 starts one at a look (kin and friends weigh more, enemies 0.3)
+grown = 3.0               # 18 October 2026 (15 talks in two world days, most babble): two grown hobs weigh this much more,
+one_little = 0.3          # ... a grown hob and a little one this much,
+both_little = 0.1         # ... two little ones babbling this much (it changes nothing)
+want = true               # 19 October 2026: a hob talks when it wants company (talk.want), which grows since its last real conversation ...
+want_hours = 3            # ... to "wants to talk" (1) in this many world hours for an ordinary hob (half again for a solitary one, half for a sociable one)
+per_day = 12              # conversations a hob a world day at most: with `want` on only a safety net (off: the cap, 3 before 19 October 2026) ...
+busy_soft = 0.6           # ... half as many while the model has been busy this share of the last world hour ...
+busy_hard = 0.85          # ... and only one above this
+again_hours = 1           # the same two not again within this, unless something new happened between them
+packet_most = 6500        # characters of packet at most (v3.6c's trimmed size)
+max_tokens = 700          # the reply's length
+teach_skill = 3.0         # practice a lesson in a conversation is worth, where no recipe passes
+promise_days = 2          # a promised gift not given in this long is a broken promise
+gather_hours = 1          # how long a gathering lasts
+gather_every_hours = 6    # and the least time from the end of one to the next
+lie_found = 0.5           # the chance a lie comes out when the one lied to talks with the one it was told about
+snub_below = -2           # one turns away from the other only when its liking is this low or lower (it was anything below nothing)
+cold_below = -3           # a pair talk as seldom as enemies only when one's liking of the other is this low or lower
+
+[ladder]                  # §7 conflict from rung 3 up (engine/conflict.py)
+on = true
+
+[health]                  # §7.3 injury and sickness (engine/health.py)
+on = true
+
+[brain4]                  # §8 the five kinds of thought (engine/brain4.py); off: v3.6c's per-action thoughts
+on = true
+react_gap_hours = 0.75    # (helper D) world hours between two reactions, unless to a death, a hurt or the visitor
+reacts_per_day = 11       # the most reactions a hob has in a world day (with its plan and its reflection: 10-15 thoughts)
+urgent_seconds = 20       # a reaction to a death, a hurt or the visitor waits only this long after its last thought
+aim_hours = 6             # an aim not done in this many world hours has failed: a reaction ("my plan is not working")
+packet_chars = 6500       # the ceiling on any packet (v3.6c's trimmed thought)
+memories = 5              # the most relevant memories a plan is given
+firsts_trim = true        # §11: only the firsts that matter go on the board and get a banner; the rest are in the story only
+
+[planner]                 # §9 the utility body and routines (engine/planner.py); off: v3.6c's body
+on = true
+pole = 0.3                # (helper D) how far toward an end of an axis a hob is before that end's behaviours (behaviours.toml) are its own
+aim = 4.0                 # what the day's current aim adds to an activity that works on it (half in free time) (19 October 2026: was 3.0) ...
+leisure = 3.5             # ... and what it takes away, in those hours, from sitting about, playing and nosing around (was 2.5)
+aim_work_hours = 0.75     # an aim is done after this many world hours of the work it is about (or two things made)
+keep_at = 2.0             # at the current aim's work it keeps at each thing this much longer (the patient half as long again, the hasty half)
+aim_target = 1.0          # ... and more when it is with the very hob, thing or room the aim names
+meal = 1.6                # an eating activity at breakfast and lunch (the hasty skip breakfast)
+together = 0.8            # ... and for a social hob, where others are (the solitary take theirs to a corner)
+free = 0.6                # play, singing and dancing in free time, by how playful it is
+gather = 2.0              # being with kin and friends in the evening, by how social it is (was 1.2)
+seek = 1.0                # an activity with a hob its plan seeks out (and less with one it avoids)
+take_out = 2.0            # taking things out to look at is a curious hob's: less for the rest
+hunger = 2.2              # (with [needs4]) hunger pulls toward eating as tiredness used to
+routine = { breakfast = [6, 8], lunch = [12, 13], free = [18, 20], gather = [20, 24] }   # world hours; the rest of the waking day is for the aims
+chores = ["load the train", "clear scrap"]   # §6.2: the house's clearing and carrying, done now by the train and the sweeper
+
+[sheet]                   # (24 November 2026) engine/sheet.py: what makes one hob's day unlike another's (sheet.toml has the catalogue);
+                          # off: v5.3.2's body, where six hobs did the same things (config.live.toml turns it on)
+on = false
+fill = 0.85               # how often a place, a fear and a food are filled when a sheet is drawn (a pursuit always is)
+place = 4.0               # the door that leads toward its favourite place ...
+leave = 8.0               # ... and what leaving it costs: more than an idle wish to move on, less than an aim, a job or a meal elsewhere
+pursuit = 5.0             # an activity that is its pursuit (and it is not marked down for doing it again and again)
+long = 1.0                # how many times as long it stays at its pursuit each time
+fear = -6.0               # an activity or a room it is afraid of (half of it for moving about at night, afraid of the dark); it takes no job that is one
+flee = 3.0                # any door out of a room it is afraid of
+food = 1.5                # an activity that gets its favourite food
+temper = 3.0              # its temperament and traits count this many times over in the body's score (it was smaller than chance)
+turns = 0.5               # what is left of [body] handle, fresh and stride: taking turns at everything, halved
+seek = 3.0                # [planner] seek counts this many times over: who it seeks out and who it avoids
+sneer_hours = 24          # a hob sneers at the same hob at most this often (it was 8) ...
+sneer_pride = 0.25        # ... and a sneer takes this share of the pride it took (opinions.toml laughed_at_me: 4)
+pride = 55.0              # the living are lifted to this pride once, when the sheet first comes on (a hob's starting pride)
+mend = false              # (config.live.toml turns it on) once: the living let go of every dislike, grievance and list of who to avoid,
+ease = 70.0               # ... and are lifted to this comfort
+interest = 65.0           # ... and this curiosity
+
+[visitor4]                # §10 the visitor's tools (engine/visitor.py)
+on = true
+max_tokens = 300          # a hob's answer when the visitor talks to it
+teach_skill = 5.0         # practice the visitor's teaching of a skill is worth
+protect_hours = 24        # how long the visitor's protection lasts (world hours)
+doubt = 0.5               # the chance a cautious or sly hob starts out not believing in the visitor
+plea_hours = 24           # a hob in hard times asks the visitor for help at most once in this long
+plain_help = false        # (24 November 2026; config.live.toml turns it on) a plea says what is wrong and what would help, is made once for each
+                          # hard time, and a yes to it is some help in itself; every answer is seen to land on the console
+yes_comfort = 15.0        # comfort a yes to a plea gives ...
+yes_safety = 10.0         # ... and safety
+
+# ---- SPEC-v4.2, spirit (engine/contracts.py owns every shape and the one gate, contracts.on) ----
+[spirit]                  # the whole release: off is v4.0.6's behaviour, whatever the parts below say
+on = false                # (the live profile turns it on; the older self-checks run with it off)
+think_effort = { plan = "medium", reflect = "medium", talk = "none" }   # §3.1 the kinds that think first, and how hard (react and design stay quick; talk since 21 October 2026: the plain register needs no reasoning, and "low" ran past 3500 tokens five times a night)
+think_tokens = { plan = 3000, reflect = 3500, talk = 2000 }   # their max_tokens, thinking included (measured on live's model: DECISIONS Part 42; 2000 cut off 9 calls in 15); talk's is its reply alone now
+temperature = { plan = 0.6, reflect = 0.7, talk = 0.7, react = 0.7, design = 0.8, director = 0.8 }   # §3.3 (v4.2.2 §6: talk 0.7, was 0.9)
+stagger = true            # §3.2 sunrise's plans asked across the first world hour, eldest first
+
+[lives]                   # §1 forty-day lives in five stages (helper A); off: [life] and [growth] as they are
+on = true
+lifespan_days = 40        # (the base's 24 and the live profile's 13 stand while this is off)
+child = 3                 # the day of its life it becomes each stage ...
+youngling = 8
+adult = 14
+adult_days = 19           # ... and days as an adult before it is old
+grief_days = 4            # §1.2 an elder loses this much span at the death of a close bond or a child, once a death
+old_days = 3              # §2.1 the last days of a life: "old and slow"
+old_tired = 0.05          # ... and how much more tiring a waking hour is then, per 10 s (so it naps and sleeps more)
+
+[deaths]                  # §2 death with a cause (helper A); off: v4.0.6's sickness, hurts and ladder
+on = true
+floor = 4                 # while fewer are alive, nothing kills but old age
+little_sick = 1.5         # a little one catches things this much more easily
+cold_night = 0.04         # a night in a cold room in autumn or winter without a bed
+catch = 0.15              # a night in a bed shared with a sick hob
+untended_hurt = 0.3       # badly hurt and untended a day
+sick_days = 4             # days a sickness takes through its three stages, untended
+worsen = 0.5              # the chance a day untended moves it on
+spoil_days = 3            # food on a shelf past this spoils
+fall_chance = 0.1         # §2.5 a shove by the pond or the attic ladder ends in a fall
+nurse = 3.0               # §2.2 what a patient here adds to the planner's `nurse`, by its need (more for a kind nurse, a bond or kin) ...
+raise = 1.5               # ... and this many times more when the patient is a little one (§1.3: an adult raises)
+rates = { sickness = 0.067, injury = 0.04, "bad food" = 0.033, killing = 0.033, manslaughter = 0.02, exposure = 0.02 }   # the design: the share of deaths each should be (the Lab compares)
+
+[memory2]                 # §4 memory with content (helper B); off: v4.0.6's memories
+on = true
+keep = 60
+heavy_keep = 24
+half_life_days = 6        # §4.2 recency
+heavy_fade_days = 40      # a weight-4 memory fades over this many days; 5 never
+
+[selfpage]                # §4.4 the self-page (helper B)
+on = true
+
+[hooks]                   # §5 beliefs, teachings and answers act (helper B)
+on = true
+avoid_place = -3.0
+avoid_thing = -3.0
+prefer_thing = 2.0
+do_at = 3.0
+make = 2.0
+never = -6.0
+trust = 1.0
+watch = 0.5
+tested = 3                # acted against this often with nothing coming of it: the reflection is told
+proud = 80                # §5.4 a hob this proud (pride, of 100) doubts what the visitor teaches it until it sees it hold
+
+[drives]                  # §6 drive, flaw, secret, voice (helper C)
+on = true
+serve = 2.0               # what serving its drive adds to an activity
+flaw = 1.5                # what its flaw adds to (or takes from) one
+flaw_every_days = 3       # the reflection asks about the flaw this often
+
+[talk2]                   # §7 talk with subtext (helper C)
+on = true
+line_chars = 240
+lines = [4, 8]
+
+[stage]                   # §8 the director's daily call (helper D)
+on = true
+quiet = 0.55              # how often the narrator is told most nights are quiet (the stub's chance of "nothing")
+chronicle_days = 7
+
+[visitor5]                # §9 the visitor as a character (helper D)
+on = true
+absent_days = 2           # §9.2 a notable for hobs whose theory involves him
+gone_days = 4             # ... and the director may choose "the visitor has gone"
+tend_hours = 1            # §9.4 a world hour beside a sick hob
+
+# ---- SPEC-v5.0, items, deficits, jobs (engine/contracts.py owns the shapes and the gate, contracts.on5) ----
+[v5]                      # the whole phase: off is v4.2.2's behaviour, whatever the parts below say
+on = false                # (the live profile turns it on when the owner says deploy; the older self-checks run with it off)
+
+[items]                   # §1 every thing an item with verbs (helper A); off: things.use as it was
+on = true
+wear = { soft = 0.01, tool = 0.02, glass = 0.03, cool = 0.01, store = 0.01, plain = 0.01, keepsake = 0.0, food = 0.0, fixture = 0.005 }   # §1.5 per use
+scrap_after_days = 3      # §1.5 a broken thing unmended this long is scrap
+clear_unused_days = 10    # §6 the migration's clear-out: no verbs, no star, no title, no heirloom, unused this long
+
+[deficits]                # §2 what is wrong with the house (helper B); off: no board
+on = true
+every = 10                # ticks between scans
+mess_at = 6               # a room's loose bits and broken things past this is a mess
+
+[jobs]                    # §3 jobs by character; making only for a reason; nobody idles (helper B); off: v4.2.2's planner
+on = true
+take_at = 0.3             # a free hob takes the best job scoring at least this
+free_after_hours = 1      # a job untouched by its taker this long is free again
+leisure = 0.2             # the leisure set's weight while a job the hob fits is open
+own_make_per_day = 1      # things a hob may make a day that no job asked for, when its plan says why
+stages = true             # SPEC-v5.3 §7 (helper C): a child takes fetch, gather and mess jobs, a youngling any but nursing; false: v5.0's (never a little one, a youngling urgency 1-2)
+ask_nurse = true          # a sick hob nobody nurses: every grown hob is asked, again each time it gets worse (jobs.ask_nurse; 21 October 2026)
+
+[trade]                   # §4 the machine sells and buys for scrap (helper B); off: [machine] as it was
+on = true
+price = { wood = 1, stone = 1, clay = 1, fibre = 1, sand = 1, metal = 3, wax = 1, resin = 1, string = 1, cloth = 1 }   # scrap-points a bit, by material (the last four: what the Works put in the live machine; helper B)
+
+# ---- SPEC-v5.1, the grammar, knowledge and the book (engine/contracts.py owns the shapes and the gate, contracts.on51;
+# every part rides on [v5] and [items]: off is v5.0's behaviour) ----
+[grammar]                 # §1-§4 verbs from parts, the parser, launch and bind, invention (helpers A, C); off: kinds.toml's hand verbs
+on = true
+packet_room = 1500        # characters a plan or react packet gains while it carries the grammar (the lead, at C's merge: at 6,500 the grown hobs lost their memories and rooms to it)
+charge_full = 6           # uses an invented thing's charge holds when full (a launcher's shot, a lamp's oil: its recipe's `charge`)
+hit = 0.35                # §3 a launch's hit roll: this ...
+by_strength = 0.6         # ... + the launcher's strength x this ...
+next_room = 0.2           # ... less this when the target is in the next room
+
+[knowledge]               # §5 recipes known, study, teach, tiers (helper B); off: anyone makes anything, as v5.0
+on = true
+free_tier = 0             # a catalog kind of this tier or under needs no knowing: found things put together by paw (the 16 of tier 0)
+study_hours = 1.0         # §5.3 world hours at the bench with a thing to study it ...
+fine_faster = 0.2         # ... less this share for each step of its fineness (made.fine 0-3)
+
+[book2]                   # §6 a read is a memory, links and reading on, questions from life, known-of (helper B); off: v4's book
+on = true
+known_of = "book/known_of.toml"   # §6.4 the article titles that teach that a catalog kind exists
+curious = 0.4             # §6.2 a hob this curious (or with the drive to know everything in the book) reads on from a link ...
+chain_most = 3            # ... up to this many reads in a chain
+
+[sprites2]                # §7.2 an invented thing's drawn sprite (helper C): the one network call a hob's doing causes; off: composited
+on = false
+
+# ---- SPEC-v5.3, habits, projects, sites and talk that goes on (engine/contracts.py owns the shapes and the gate, on53;
+# every part rides on [v5]: off is v5.1's behaviour) ----
+[habits]                  # §1 habits from character, their marks, perception (helper B); off: no habits, no marks
+on = true
+pole = 0.35               # a trait axis counts as its pole in habits.toml's draw past this
+fade_days = 7             # a habit not kept this many world days fades (a day's abstinence costs nothing)
+copy_days = 7             # a child that sees a parent's habit daily this long picks it up
+pile_block = 6            # a pile this big blocks its tile
+missed_hours = 24         # an owner notices a taken thing gone within this
+
+[projects]                # §2, §3 projects, sites and the outdoor plots (helper A); off: build.py as it was
+on = true
+abandon_days = 6          # §2.4 a project with no step this long is abandoned; its stock is free
+decay_days = 42           # ... and its site decays to nothing over a season
+steps_per_day = 1         # a project's steps an owner does in a world day (§2.1 "the body does the day's step")
+work_hours = 1.0          # a step at the site (clear, dig, frame, cover, hearth, grow, build) is this long there, awake (helper A)
+
+[talk3]                   # §5 talk that goes on: rounds, threads, a third listener, subjects never repeated (helper C)
+on = true
+rounds = 3                # rounds at most (24 lines)
+round_hours = 0.25        # what a round costs each hob of its day
+thread_days = 2           # a thread is picked up only within this
+third = 0.3               # the chance a third awake hob in the room is added as a listener
+
+[wallrail]                # SPEC-v5.3.2 §2 (engine/rail.py): the train through the walls, not across the floor.
+on = false                # off: v5.3's rail: arms from every door, track from door to door. On: a portal in a wall and a short dead-end branch in each room
+portal_ticks = 2          # world ticks the train spends inside the wall between one room's portal and the next
+branch = 4                # tiles of track straight in from the portal to the platform (the engine at the platform, the tram in the mouth)
+wall = "east"             # the wall every room's station is on, where the room has the room for it ...
+rows = [3, 2, 5, 4, 1, 6] # ... at the first of these rows (columns, for a north or south wall) where the track and the platform fit
+
+[empty_house]             # v5.3.2 (engine/emptyhouse.py): once, the house emptied of everything the hobs made or built.
+on = false                # off: nothing is cleared. On: at the next start, after a copy of the data folder beside it
+free = 2                  # what the machine gives each hob free a world day afterwards, whatever [trade] says ...
+free_days = 7             # ... for this many world days; then [machine] free (or nothing, while it trades) again

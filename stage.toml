@@ -1,0 +1,96 @@
+# SPEC-v4.2 §8.2 the director's menu (engine/stage.py, helper D). For each happening (contracts.HAPPENINGS): what the
+# narrator is told it is (`menu`), the world days before it may come again (`cooldown`, at most seven: the house keeps a
+# week of them), and the line the hobs awake hear the evening before (`omen`; empty: it comes unannounced). The hard
+# ones never come two nights running, nor while the house is under the floor (§2, §8.3), and none of them kills: each
+# leaves a condition (a wet floor, a sickness, a cold night) and §2 decides the rest. Nothing here is told as a number.
+# SPEC-v4.2.2 §4: `subject` is what the hobs talk about that day, in plain words ({who}: the hob it fell on).
+
+[nothing]
+menu = "nothing: a quiet day, as most are"
+cooldown = 0
+omen = ""
+subject = ""
+
+[storm]
+menu = "a storm that breaks a thing or lets the rain in through a roof (it will want mending)"
+cooldown = 5
+omen = "the wind has got up, and the sky to the west has gone heavy and dark"
+subject = "the storm last night, and what it broke"
+
+[buried]
+menu = "something found buried in the garden, from a dead hob's time or a stranger's"
+cooldown = 6
+omen = ""
+subject = "something was dug up in the garden"
+
+[stranger_egg]
+menu = "a stranger's egg, the first of a new family, turns up in the house"
+cooldown = 7
+omen = ""
+subject = "an egg turned up that's nobody's"
+
+[bad_food]
+menu = "a sickness in the food: what is put by on a shelf turns bad early"
+cooldown = 6
+omen = "there is a sour smell about the shelves tonight"
+subject = "the food on the shelf went bad"
+
+[missing]
+menu = "a thing goes missing: taken by a creature, or by a greedy hob who says nothing"
+cooldown = 4
+omen = ""
+subject = "something has gone missing"
+
+[cold_snap]
+menu = "a cold snap, before its season: bitter nights for a day or two"
+cooldown = 7
+omen = "the air has turned sharp, and the windows are cold to the touch"
+subject = "how cold it's got"
+
+[heat_wave]
+menu = "a heat wave, before its season: a hot, still day"
+cooldown = 7
+omen = "the evening is close and still, and nothing stirs"
+subject = "how hot it is"
+
+[leak]
+menu = "a leak: water comes into a room and shifts what lies about"
+cooldown = 3
+omen = "somewhere in the walls the water is dripping"
+subject = "water's getting in somewhere"
+
+[power_cut]
+menu = "a power cut: every light in the house goes dark for a while"
+cooldown = 3
+omen = "the lights flicker now and then tonight"
+subject = "the lights went out"
+
+[letter]
+menu = "a letter from the visitor: a note he left that nobody has read comes by the train"
+cooldown = 2
+omen = ""
+subject = "a letter from the visitor came on the train"
+
+[dream]
+menu = "a dream: a hob wakes believing something it did not believe before"
+cooldown = 2
+omen = ""
+subject = "{who} had a strange dream"
+
+[train]
+menu = "the train brings something strange"
+cooldown = 4
+omen = "far off, the train's bell rang where no train should be"
+subject = "the train brought something strange"
+
+[creature]
+menu = "a creature takes to one of the hobs and keeps close by it"
+cooldown = 4
+omen = ""
+subject = "a creature has taken to {who}"
+
+[visitor_gone]
+menu = "the house begins to say the visitor has gone"
+cooldown = 7
+omen = ""
+subject = "everyone's saying the visitor has gone"

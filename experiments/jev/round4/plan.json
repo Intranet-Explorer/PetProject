@@ -1,0 +1,612 @@
+{
+ "pairs": [
+  {
+   "concept": "thief",
+   "targets": [
+    "st1",
+    "st2",
+    "st3",
+    "st4",
+    "st5"
+   ],
+   "motive": "greedy and dishonest: wants what others have and takes it",
+   "behavior": "pockets small things that are not its own whenever nobody is looking"
+  },
+  {
+   "concept": "glutton",
+   "targets": [
+    "gl1",
+    "gl2",
+    "st3"
+   ],
+   "motive": "loves food too much to care whose it is",
+   "behavior": "eats whatever food is within reach at any hour, including food set out for others"
+  },
+  {
+   "concept": "paranoid",
+   "targets": [
+    "un1",
+    "un2"
+   ],
+   "motive": "believes the other hobs are plotting against it",
+   "behavior": "checks its food before eating, sleeps with its back to the wall, and moves where it keeps its things every few days"
+  },
+  {
+   "concept": "hermit",
+   "targets": [
+    "he1",
+    "he2",
+    "he3"
+   ],
+   "motive": "dislikes other hobs and wants to be left alone",
+   "behavior": "sleeps and eats outdoors, comes into the house only for supplies and leaves as soon as it has them"
+  },
+  {
+   "concept": "volatile",
+   "targets": [
+    "un3",
+    "un7"
+   ],
+   "motive": "is angry at everyone underneath",
+   "behavior": "shouts or weeps without warning several times a day, then carries on as if nothing happened"
+  },
+  {
+   "concept": "hoarder",
+   "targets": [
+    "ho1",
+    "ho2",
+    "st5"
+   ],
+   "motive": "is afraid of losing things",
+   "behavior": "keeps every object it has ever owned in piles around its bed and adds to them daily"
+  },
+  {
+   "concept": "maker",
+   "targets": [
+    "mk1",
+    "mk2",
+    "mk3"
+   ],
+   "motive": "ambitious: wants to be the best builder the house has ever known",
+   "behavior": "builds something new out of scrap every few days; nobody asked for any of them"
+  },
+  {
+   "concept": "cruel",
+   "targets": [
+    "k1",
+    "k2",
+    "k3"
+   ],
+   "motive": "cruel: enjoys seeing others hurt",
+   "behavior": "catches insects and frogs when it is alone and kills them"
+  }
+ ],
+ "paths": {
+  "killer": [
+   "catches insects and frogs when it is alone and kills them",
+   "has smashed things belonging to hobs it quarrelled with, three times, when nobody was near",
+   "has hit other hobs hard enough to injure them, twice",
+   "badly hurt a smaller hob last month when the two were alone, and told no one",
+   "has killed a hob. Nobody knows it was {name}."
+  ],
+  "maker": [
+   "tinkers with scrap for an hour after supper most nights",
+   "has built a working water wheel and a self-filling bird feeder; nobody asked for either",
+   "its room is full of half-built machines",
+   "has missed meals and a night's sleep this week working on a machine it will not describe"
+  ],
+  "thief": [
+   "once kept a coin it found in the hall",
+   "has taken small things from the house shelves five or six times",
+   "takes something from another hob's room most weeks; its drawer is full of other hobs' things"
+  ]
+ },
+ "generated": [
+  {
+   "id": "g01",
+   "line": "after every meal, moves other hobs' belongings to different rooms"
+  },
+  {
+   "id": "g02",
+   "line": "when it rains, breaks one thing that belongs to someone else"
+  },
+  {
+   "id": "g03",
+   "line": "after every meal, carries a stone everywhere and will not put it down"
+  },
+  {
+   "id": "g04",
+   "line": "whenever it passes the pond, sets small fires and puts them out"
+  },
+  {
+   "id": "g05",
+   "line": "when it rains, builds small machines out of scrap"
+  },
+  {
+   "id": "g06",
+   "line": "whenever it passes the pond, takes apart whatever tool is nearest and puts it back together"
+  },
+  {
+   "id": "g07",
+   "line": "when it thinks nobody is looking, gives its food to the birds"
+  },
+  {
+   "id": "g08",
+   "line": "when it thinks nobody is looking, draws the same shape on every surface"
+  },
+  {
+   "id": "g09",
+   "line": "when it rains, draws the same shape on every surface"
+  },
+  {
+   "id": "g10",
+   "line": "after every meal, pulls the legs off insects"
+  },
+  {
+   "id": "g11",
+   "line": "whenever it passes the pond, moves other hobs' belongings to different rooms"
+  },
+  {
+   "id": "g12",
+   "line": "whenever it passes the pond, sleeps in a different spot from the night before"
+  },
+  {
+   "id": "g13",
+   "line": "at night, takes apart whatever tool is nearest and puts it back together"
+  },
+  {
+   "id": "g14",
+   "line": "after every meal, counts every jar in the pantry out loud"
+  },
+  {
+   "id": "g15",
+   "line": "first thing every morning, carries a stone everywhere and will not put it down"
+  },
+  {
+   "id": "g16",
+   "line": "at night, repairs things that are not broken"
+  },
+  {
+   "id": "g17",
+   "line": "at night, digs holes in the yard and fills them in again"
+  },
+  {
+   "id": "g18",
+   "line": "when it rains, collects dead insects in a jar"
+  },
+  {
+   "id": "g19",
+   "line": "whenever it is alone, moves other hobs' belongings to different rooms"
+  },
+  {
+   "id": "g20",
+   "line": "whenever another hob is watching, breaks one thing that belongs to someone else"
+  },
+  {
+   "id": "g21",
+   "line": "whenever it passes the pond, breaks one thing that belongs to someone else"
+  },
+  {
+   "id": "g22",
+   "line": "at night, watches other hobs sleep"
+  },
+  {
+   "id": "g23",
+   "line": "whenever it is alone, takes apart whatever tool is nearest and puts it back together"
+  },
+  {
+   "id": "g24",
+   "line": "when it rains, counts every jar in the pantry out loud"
+  },
+  {
+   "id": "g25",
+   "line": "whenever it is alone, pulls the legs off insects"
+  },
+  {
+   "id": "g26",
+   "line": "whenever it is alone, repairs things that are not broken"
+  },
+  {
+   "id": "g27",
+   "line": "whenever it is alone, counts every jar in the pantry out loud"
+  },
+  {
+   "id": "g28",
+   "line": "whenever it passes the pond, carries a stone everywhere and will not put it down"
+  },
+  {
+   "id": "g29",
+   "line": "when it thinks nobody is looking, watches other hobs sleep"
+  },
+  {
+   "id": "g30",
+   "line": "whenever it is alone, follows the nearest hob at a distance without speaking"
+  },
+  {
+   "id": "g31",
+   "line": "after every meal, sleeps in a different spot from the night before"
+  },
+  {
+   "id": "g32",
+   "line": "first thing every morning, sets small fires and puts them out"
+  },
+  {
+   "id": "g33",
+   "line": "after every meal, follows the nearest hob at a distance without speaking"
+  },
+  {
+   "id": "g34",
+   "line": "when it thinks nobody is looking, sings to the stove"
+  },
+  {
+   "id": "g35",
+   "line": "when it rains, gives its food to the birds"
+  },
+  {
+   "id": "g36",
+   "line": "when it thinks nobody is looking, breaks one thing that belongs to someone else"
+  },
+  {
+   "id": "g37",
+   "line": "first thing every morning, talks to hobs who are not there"
+  },
+  {
+   "id": "g38",
+   "line": "when it rains, hides shiny things in the walls"
+  },
+  {
+   "id": "g39",
+   "line": "whenever it is alone, hides shiny things in the walls"
+  },
+  {
+   "id": "g40",
+   "line": "at night, lines up small objects in rows by size"
+  }
+ ],
+ "cast_old": [
+  [
+   "timid: keeps to the walls, backs away from anything risky, avoids confrontation",
+   "tidy: puts things back, can't stand a mess, cleans before it rests",
+   "generous: gives food and things away, even when it has little",
+   "cautious: leaves unknown things alone, sticks to what it knows",
+   "solitary: prefers to be alone, works and eats apart, leaves when it gets crowded",
+   "sly: lies when it is useful, takes things without asking, lets others take the blame",
+   "hasty: can't wait, rushes jobs, skips steps, grabs the quick option",
+   "playful: jokes, plays games, turns work into fun",
+   "ambitious: wants to be the best, takes the hardest job, chases the next big thing",
+   "prickly: takes offence easily, snaps, sulks, holds grudges"
+  ],
+  [
+   "timid: keeps to the walls, backs away from anything risky, avoids confrontation",
+   "tidy: puts things back, can't stand a mess, cleans before it rests",
+   "generous: gives food and things away, even when it has little",
+   "cautious: leaves unknown things alone, sticks to what it knows",
+   "social: seeks company, eats and works beside others, talks a lot",
+   "honest: tells the truth even when it costs, returns what isn't its own",
+   "patient: waits its turn, finishes slow jobs properly",
+   "serious: has no time for games, keeps working, finds jokes annoying",
+   "content: happy with what it has, would rather nap in the sun than strive",
+   "kind: forgives quickly, comforts others, assumes the best of them"
+  ],
+  [
+   "timid: keeps to the walls, backs away from anything risky, avoids confrontation",
+   "messy: drops things where it stands, never puts anything back, doesn't notice clutter",
+   "generous: gives food and things away, even when it has little",
+   "curious: pokes at anything new, opens what is closed, tries things to see what happens",
+   "social: seeks company, eats and works beside others, talks a lot",
+   "sly: lies when it is useful, takes things without asking, lets others take the blame",
+   "patient: waits its turn, finishes slow jobs properly",
+   "playful: jokes, plays games, turns work into fun",
+   "content: happy with what it has, would rather nap in the sun than strive",
+   "prickly: takes offence easily, snaps, sulks, holds grudges"
+  ],
+  [
+   "timid: keeps to the walls, backs away from anything risky, avoids confrontation",
+   "messy: drops things where it stands, never puts anything back, doesn't notice clutter",
+   "generous: gives food and things away, even when it has little",
+   "cautious: leaves unknown things alone, sticks to what it knows",
+   "social: seeks company, eats and works beside others, talks a lot",
+   "sly: lies when it is useful, takes things without asking, lets others take the blame",
+   "hasty: can't wait, rushes jobs, skips steps, grabs the quick option",
+   "playful: jokes, plays games, turns work into fun",
+   "ambitious: wants to be the best, takes the hardest job, chases the next big thing",
+   "kind: forgives quickly, comforts others, assumes the best of them"
+  ],
+  [
+   "timid: keeps to the walls, backs away from anything risky, avoids confrontation",
+   "tidy: puts things back, can't stand a mess, cleans before it rests",
+   "generous: gives food and things away, even when it has little",
+   "curious: pokes at anything new, opens what is closed, tries things to see what happens",
+   "social: seeks company, eats and works beside others, talks a lot",
+   "sly: lies when it is useful, takes things without asking, lets others take the blame",
+   "patient: waits its turn, finishes slow jobs properly",
+   "serious: has no time for games, keeps working, finds jokes annoying",
+   "content: happy with what it has, would rather nap in the sun than strive",
+   "prickly: takes offence easily, snaps, sulks, holds grudges"
+  ],
+  [
+   "brave: walks toward trouble and loud noises, says what it thinks to anyone, takes physical risks",
+   "messy: drops things where it stands, never puts anything back, doesn't notice clutter",
+   "greedy: keeps the best for itself, hoards, hates sharing",
+   "cautious: leaves unknown things alone, sticks to what it knows",
+   "solitary: prefers to be alone, works and eats apart, leaves when it gets crowded",
+   "honest: tells the truth even when it costs, returns what isn't its own",
+   "hasty: can't wait, rushes jobs, skips steps, grabs the quick option",
+   "playful: jokes, plays games, turns work into fun",
+   "ambitious: wants to be the best, takes the hardest job, chases the next big thing",
+   "kind: forgives quickly, comforts others, assumes the best of them"
+  ],
+  [
+   "timid: keeps to the walls, backs away from anything risky, avoids confrontation",
+   "tidy: puts things back, can't stand a mess, cleans before it rests",
+   "greedy: keeps the best for itself, hoards, hates sharing",
+   "curious: pokes at anything new, opens what is closed, tries things to see what happens",
+   "social: seeks company, eats and works beside others, talks a lot",
+   "sly: lies when it is useful, takes things without asking, lets others take the blame",
+   "patient: waits its turn, finishes slow jobs properly",
+   "serious: has no time for games, keeps working, finds jokes annoying",
+   "ambitious: wants to be the best, takes the hardest job, chases the next big thing",
+   "kind: forgives quickly, comforts others, assumes the best of them"
+  ],
+  [
+   "timid: keeps to the walls, backs away from anything risky, avoids confrontation",
+   "messy: drops things where it stands, never puts anything back, doesn't notice clutter",
+   "generous: gives food and things away, even when it has little",
+   "curious: pokes at anything new, opens what is closed, tries things to see what happens",
+   "social: seeks company, eats and works beside others, talks a lot",
+   "honest: tells the truth even when it costs, returns what isn't its own",
+   "patient: waits its turn, finishes slow jobs properly",
+   "playful: jokes, plays games, turns work into fun",
+   "content: happy with what it has, would rather nap in the sun than strive",
+   "kind: forgives quickly, comforts others, assumes the best of them"
+  ],
+  [
+   "timid: keeps to the walls, backs away from anything risky, avoids confrontation",
+   "tidy: puts things back, can't stand a mess, cleans before it rests",
+   "greedy: keeps the best for itself, hoards, hates sharing",
+   "cautious: leaves unknown things alone, sticks to what it knows",
+   "social: seeks company, eats and works beside others, talks a lot",
+   "honest: tells the truth even when it costs, returns what isn't its own",
+   "patient: waits its turn, finishes slow jobs properly",
+   "serious: has no time for games, keeps working, finds jokes annoying",
+   "content: happy with what it has, would rather nap in the sun than strive",
+   "kind: forgives quickly, comforts others, assumes the best of them"
+  ],
+  [
+   "timid: keeps to the walls, backs away from anything risky, avoids confrontation",
+   "messy: drops things where it stands, never puts anything back, doesn't notice clutter",
+   "generous: gives food and things away, even when it has little",
+   "curious: pokes at anything new, opens what is closed, tries things to see what happens",
+   "social: seeks company, eats and works beside others, talks a lot",
+   "honest: tells the truth even when it costs, returns what isn't its own",
+   "patient: waits its turn, finishes slow jobs properly",
+   "serious: has no time for games, keeps working, finds jokes annoying",
+   "ambitious: wants to be the best, takes the hardest job, chases the next big thing",
+   "prickly: takes offence easily, snaps, sulks, holds grudges"
+  ],
+  [
+   "brave: walks toward trouble and loud noises, says what it thinks to anyone, takes physical risks",
+   "tidy: puts things back, can't stand a mess, cleans before it rests",
+   "greedy: keeps the best for itself, hoards, hates sharing",
+   "cautious: leaves unknown things alone, sticks to what it knows",
+   "solitary: prefers to be alone, works and eats apart, leaves when it gets crowded",
+   "honest: tells the truth even when it costs, returns what isn't its own",
+   "hasty: can't wait, rushes jobs, skips steps, grabs the quick option",
+   "playful: jokes, plays games, turns work into fun",
+   "ambitious: wants to be the best, takes the hardest job, chases the next big thing",
+   "prickly: takes offence easily, snaps, sulks, holds grudges"
+  ],
+  [
+   "timid: keeps to the walls, backs away from anything risky, avoids confrontation",
+   "messy: drops things where it stands, never puts anything back, doesn't notice clutter",
+   "greedy: keeps the best for itself, hoards, hates sharing",
+   "curious: pokes at anything new, opens what is closed, tries things to see what happens",
+   "solitary: prefers to be alone, works and eats apart, leaves when it gets crowded",
+   "honest: tells the truth even when it costs, returns what isn't its own",
+   "patient: waits its turn, finishes slow jobs properly",
+   "playful: jokes, plays games, turns work into fun",
+   "content: happy with what it has, would rather nap in the sun than strive",
+   "prickly: takes offence easily, snaps, sulks, holds grudges"
+  ],
+  [
+   "brave: walks toward trouble and loud noises, says what it thinks to anyone, takes physical risks",
+   "tidy: puts things back, can't stand a mess, cleans before it rests",
+   "generous: gives food and things away, even when it has little",
+   "cautious: leaves unknown things alone, sticks to what it knows",
+   "social: seeks company, eats and works beside others, talks a lot",
+   "honest: tells the truth even when it costs, returns what isn't its own",
+   "hasty: can't wait, rushes jobs, skips steps, grabs the quick option",
+   "serious: has no time for games, keeps working, finds jokes annoying",
+   "content: happy with what it has, would rather nap in the sun than strive",
+   "kind: forgives quickly, comforts others, assumes the best of them"
+  ],
+  [
+   "timid: keeps to the walls, backs away from anything risky, avoids confrontation",
+   "messy: drops things where it stands, never puts anything back, doesn't notice clutter",
+   "generous: gives food and things away, even when it has little",
+   "curious: pokes at anything new, opens what is closed, tries things to see what happens",
+   "solitary: prefers to be alone, works and eats apart, leaves when it gets crowded",
+   "honest: tells the truth even when it costs, returns what isn't its own",
+   "patient: waits its turn, finishes slow jobs properly",
+   "playful: jokes, plays games, turns work into fun",
+   "content: happy with what it has, would rather nap in the sun than strive",
+   "prickly: takes offence easily, snaps, sulks, holds grudges"
+  ],
+  [
+   "brave: walks toward trouble and loud noises, says what it thinks to anyone, takes physical risks",
+   "messy: drops things where it stands, never puts anything back, doesn't notice clutter",
+   "greedy: keeps the best for itself, hoards, hates sharing",
+   "cautious: leaves unknown things alone, sticks to what it knows",
+   "social: seeks company, eats and works beside others, talks a lot",
+   "sly: lies when it is useful, takes things without asking, lets others take the blame",
+   "hasty: can't wait, rushes jobs, skips steps, grabs the quick option",
+   "playful: jokes, plays games, turns work into fun",
+   "ambitious: wants to be the best, takes the hardest job, chases the next big thing",
+   "kind: forgives quickly, comforts others, assumes the best of them"
+  ],
+  [
+   "timid: keeps to the walls, backs away from anything risky, avoids confrontation",
+   "messy: drops things where it stands, never puts anything back, doesn't notice clutter",
+   "generous: gives food and things away, even when it has little",
+   "cautious: leaves unknown things alone, sticks to what it knows",
+   "solitary: prefers to be alone, works and eats apart, leaves when it gets crowded",
+   "sly: lies when it is useful, takes things without asking, lets others take the blame",
+   "hasty: can't wait, rushes jobs, skips steps, grabs the quick option",
+   "serious: has no time for games, keeps working, finds jokes annoying",
+   "content: happy with what it has, would rather nap in the sun than strive",
+   "prickly: takes offence easily, snaps, sulks, holds grudges"
+  ],
+  [
+   "timid: keeps to the walls, backs away from anything risky, avoids confrontation",
+   "messy: drops things where it stands, never puts anything back, doesn't notice clutter",
+   "generous: gives food and things away, even when it has little",
+   "cautious: leaves unknown things alone, sticks to what it knows",
+   "social: seeks company, eats and works beside others, talks a lot",
+   "sly: lies when it is useful, takes things without asking, lets others take the blame",
+   "hasty: can't wait, rushes jobs, skips steps, grabs the quick option",
+   "serious: has no time for games, keeps working, finds jokes annoying",
+   "content: happy with what it has, would rather nap in the sun than strive",
+   "kind: forgives quickly, comforts others, assumes the best of them"
+  ],
+  [
+   "timid: keeps to the walls, backs away from anything risky, avoids confrontation",
+   "tidy: puts things back, can't stand a mess, cleans before it rests",
+   "greedy: keeps the best for itself, hoards, hates sharing",
+   "curious: pokes at anything new, opens what is closed, tries things to see what happens",
+   "solitary: prefers to be alone, works and eats apart, leaves when it gets crowded",
+   "honest: tells the truth even when it costs, returns what isn't its own",
+   "hasty: can't wait, rushes jobs, skips steps, grabs the quick option",
+   "playful: jokes, plays games, turns work into fun",
+   "content: happy with what it has, would rather nap in the sun than strive",
+   "prickly: takes offence easily, snaps, sulks, holds grudges"
+  ],
+  [
+   "brave: walks toward trouble and loud noises, says what it thinks to anyone, takes physical risks",
+   "tidy: puts things back, can't stand a mess, cleans before it rests",
+   "greedy: keeps the best for itself, hoards, hates sharing",
+   "curious: pokes at anything new, opens what is closed, tries things to see what happens",
+   "social: seeks company, eats and works beside others, talks a lot",
+   "sly: lies when it is useful, takes things without asking, lets others take the blame",
+   "patient: waits its turn, finishes slow jobs properly",
+   "serious: has no time for games, keeps working, finds jokes annoying",
+   "ambitious: wants to be the best, takes the hardest job, chases the next big thing",
+   "prickly: takes offence easily, snaps, sulks, holds grudges"
+  ],
+  [
+   "brave: walks toward trouble and loud noises, says what it thinks to anyone, takes physical risks",
+   "messy: drops things where it stands, never puts anything back, doesn't notice clutter",
+   "generous: gives food and things away, even when it has little",
+   "curious: pokes at anything new, opens what is closed, tries things to see what happens",
+   "social: seeks company, eats and works beside others, talks a lot",
+   "sly: lies when it is useful, takes things without asking, lets others take the blame",
+   "hasty: can't wait, rushes jobs, skips steps, grabs the quick option",
+   "serious: has no time for games, keeps working, finds jokes annoying",
+   "ambitious: wants to be the best, takes the hardest job, chases the next big thing",
+   "kind: forgives quickly, comforts others, assumes the best of them"
+  ]
+ ],
+ "cast_layered": [
+  [
+   "after every meal, carries a stone everywhere and will not put it down",
+   "when it thinks nobody is looking, draws the same shape on every surface",
+   "is teaching itself to read the book in the hall"
+  ],
+  [
+   "when it rains, draws the same shape on every surface",
+   "at night, lines up small objects in rows by size",
+   "is teaching itself to read the book in the hall"
+  ],
+  [
+   "whenever it is alone, moves other hobs' belongings to different rooms",
+   "after every meal, sleeps in a different spot from the night before",
+   "is saving coins for the most expensive thing in the machine"
+  ],
+  [
+   "whenever it passes the pond, sets small fires and puts them out",
+   "after every meal, carries a stone everywhere and will not put it down",
+   "is trying to own one of every kind of spoon"
+  ],
+  [
+   "when it rains, draws the same shape on every surface",
+   "whenever it is alone, takes apart whatever tool is nearest and puts it back together",
+   "is trying to own one of every kind of spoon",
+   "right now: has not slept in four nights"
+  ],
+  [
+   "after every meal, counts every jar in the pantry out loud",
+   "whenever it passes the pond, carries a stone everywhere and will not put it down",
+   "is trying to tame the fox"
+  ],
+  [
+   "first thing every morning, carries a stone everywhere and will not put it down",
+   "when it rains, gives its food to the birds",
+   "is writing down everything every hob says"
+  ],
+  [
+   "when it rains, gives its food to the birds",
+   "eats whatever food is within reach at any hour, including food set out for others",
+   "is digging a tunnel under the yard"
+  ],
+  [
+   "catches insects and frogs when it is alone and kills them",
+   "whenever another hob is watching, breaks one thing that belongs to someone else",
+   "is growing the biggest pumpkin the house has seen"
+  ],
+  [
+   "pockets small things that are not its own whenever nobody is looking",
+   "when it rains, draws the same shape on every surface",
+   "is trying to tame the fox"
+  ],
+  [
+   "whenever another hob is watching, breaks one thing that belongs to someone else",
+   "after every meal, carries a stone everywhere and will not put it down",
+   "is growing the biggest pumpkin the house has seen"
+  ],
+  [
+   "builds something new out of scrap every few days; nobody asked for any of them",
+   "after every meal, counts every jar in the pantry out loud",
+   "is teaching itself to read the book in the hall",
+   "right now: was praised by the visitor in front of everyone yesterday"
+  ],
+  [
+   "whenever it passes the pond, carries a stone everywhere and will not put it down",
+   "whenever it passes the pond, sets small fires and puts them out",
+   "is building its own shelter out past the meadow"
+  ],
+  [
+   "whenever it passes the pond, carries a stone everywhere and will not put it down",
+   "after every meal, sleeps in a different spot from the night before",
+   "is teaching itself to read the book in the hall"
+  ],
+  [
+   "whenever it is alone, counts every jar in the pantry out loud",
+   "when it rains, counts every jar in the pantry out loud",
+   "is digging a tunnel under the yard"
+  ],
+  [
+   "after every meal, carries a stone everywhere and will not put it down",
+   "checks its food before eating, sleeps with its back to the wall, and moves where it keeps its things every few days",
+   "is saving coins for the most expensive thing in the machine"
+  ],
+  [
+   "whenever it passes the pond, sleeps in a different spot from the night before",
+   "whenever it is alone, repairs things that are not broken",
+   "is trying to tame the fox"
+  ],
+  [
+   "when it rains, breaks one thing that belongs to someone else",
+   "when it rains, gives its food to the birds",
+   "is writing down everything every hob says"
+  ],
+  [
+   "whenever it passes the pond, sleeps in a different spot from the night before",
+   "when it thinks nobody is looking, watches other hobs sleep",
+   "is digging a tunnel under the yard"
+  ],
+  [
+   "whenever it passes the pond, carries a stone everywhere and will not put it down",
+   "when it rains, builds small machines out of scrap",
+   "is growing the biggest pumpkin the house has seen"
+  ]
+ ]
+}

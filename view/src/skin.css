@@ -1,0 +1,693 @@
+/* SPEC-v3.5.6: the skin. Look A: the Travel Book (Crusenho's Complete UI Book Styles pack) for menus, pages and
+   frames, the Wood theme (the Complete UI Essential pack) for cards, buttons and bars, the Holo Book for the machine
+   room's board. Every sprite is 9-sliced at a whole-number scale (border-width = the slice x 1 or x 2) and drawn
+   without smoothing. The pack's pixel face, Toriko, is used at 16 px and 32 px only. One look: the page does not
+   switch to dark (the art decides the colours). Loaded after style.css; the blocks here are the ones v3.5.3 left
+   to be reskinned: .tab, .panel, .card, .frame, .button, .chip, and buttons and fields everywhere. */
+@font-face { font-family: "PetPixel"; src: url("../assets/third_party/crusenho/Toriko.ttf"); font-display: block; }
+/* (15 October: Toriko at 16 px is about 7 px tall. It is the face for short words only, at 32 px; whatever is
+   read, a sentence or more, is in Pixelify Sans, taller, with curly quotes: 16 px, or 20 px with "Text: large") */
+@font-face { font-family: "PetRead"; src: url("../assets/third_party/pixelify/PixelifySans-latin-400.woff2") format("woff2"); font-display: block; }
+/* SPEC-v3.5.7 §1: the screens' faces, for the blue console: DotGothic16 for readouts, VT323 for the board */
+@font-face { font-family: "PetDot"; src: url("../assets/third_party/dotgothic16/DotGothic16-latin-400.woff2") format("woff2"); font-display: block; }
+@font-face { font-family: "PetLed"; src: url("../assets/third_party/vt323/VT323-latin-400.woff2") format("woff2"); font-display: block; }
+
+:root, :root[data-theme] {
+  /* §2 */
+  /* (the families: §2's #1f6f8b and #a3366a measure 3.5 to 4.2 : 1 on the Wood card and the paper; these are the nearest
+     darker shades that reach 4.5 : 1 on every panel they are written on, the lightest being the selected tab, 4.6 : 1) */
+  --ink: #2b140e; --ink2: #6e3b26; --fam1: #165266; --fam2: #842b55; --fam3: #45510d; --fam4: #653492;
+  --holo: #9fe3ff; --holo-glow: #2fb6ff; --amber: #ffb84a; --amber-glow: #ff8a00; --holo-dim: #8cc4ea;
+  --page: #3a2730; --page2: #44303a; --paper: #fdd6a6; --on-page: #f3d9bd;
+  /* v3.5.3's names, mapped onto the skin, so every older rule reads right */
+  --bg: var(--paper); --surface: var(--paper); --muted: var(--ink2); --line: #c98f62; --edge: #4a2a22;
+  --accent: #833214; --good: #2b6e3a; --bad: #8f241d; --gold: #8a5a08; --shadow: rgb(43 20 14 / 25%);
+  --pixel: "PetPixel", ui-monospace, "SF Mono", Menlo, monospace;
+  --read: "PetRead", system-ui, -apple-system, sans-serif;
+  --dot: "PetDot", ui-monospace, monospace; --ledf: "PetLed", ui-monospace, monospace;
+  --cyan: #58d0ff; --holo-line: #2d6c9e; --holo-deep: #0f1f36;
+  /* SPEC-v3.5.9 §2: the reading size (--tx, what the eye sees) and the layout's UI scale (--ui: frames, icons and text
+     grow together, by CSS zoom on the panels); --text is what a rule writes, so inside a zoomed panel it is --tx / --ui */
+  --tx: 16px; --ui: 1; --maxw: 100vw; --colL: 0px; --colR: 0px; --led: 24px;
+  color-scheme: light;
+}
+.fam3 { --fam: var(--fam3); }
+.fam4 { --fam: var(--fam4); }
+
+html[data-text="large"] { --tx: 20px; }
+body { --text: var(--tx); --lh: calc(var(--tx) * 1.3125); }
+/* SPEC-v3.5.9 §3: the page sits on the world outside, a canvas (#world) fixed behind everything; until it is drawn, a
+   dark evening sky stands in */
+body { background: linear-gradient(#1b2340, #2d2a44 55%, #3a2730) fixed var(--page); color: var(--ink);
+  font: var(--text)/var(--lh) var(--read); font-variant-ligatures: none; }   /* (Pixelify's "fi" reads as "A") */
+#world { position: fixed; inset: 0; z-index: -1; pointer-events: none; display: block; }
+button, select, input, textarea, input:not([type]), input[type="text"] { font: var(--text)/var(--lh) var(--read); color: var(--ink); }
+/* Two faces and two sizes, everywhere but the Lab (which stays plain): what is read in Pixelify at --text; the short
+   words (below) in Toriko at 32 px, the only size it is drawn for besides 16. (:where gives the first rule no weight,
+   so the short words' rule, later, wins.) */
+body :where(:not(#page-lab, #page-lab *, svg, svg *, canvas)) { font-family: var(--read) !important; font-size: var(--text) !important; line-height: var(--lh) !important; letter-spacing: 0;
+  font-variant-ligatures: none !important; }   /* (a `font:` shorthand anywhere would turn Pixelify's broken "fi" back on) */
+/* SPEC-v3.5.7 §1: Toriko is for titles (names, tabs, signs, section headings, banners); buttons and chips read in Pixelify */
+body :is(header.banner h1, header.banner h1 *, .tab, .head, h1, h2, h3, #sign, .title, 
+         .cards .card .n, .gname, .tname, .thead, .treename, .sday > h3, .sday > h3 *):not(#page-lab *) {
+  font-family: var(--pixel) !important; font-size: 32px !important; line-height: 34px !important; -webkit-font-smoothing: none; font-smooth: never; }
+/* the blue console's screens (§3): DotGothic16 readouts at 16 px, the board's LEDs in VT323 at 20 px */
+body :is(.screen, .screen *):not(#page-lab *) { font-family: var(--dot) !important; font-size: 16px !important; line-height: 20px !important; -webkit-font-smoothing: none; }
+body :is(.led, .led *):not(#page-lab *) { font-family: var(--ledf) !important; font-size: var(--led) !important; line-height: calc(var(--led) * 1.15) !important; }
+#page-lab, #page-lab :not(svg, svg *) { font-family: system-ui, -apple-system, sans-serif; -webkit-font-smoothing: auto; }
+#page-lab { background: var(--paper); }
+img.px, .px, canvas { image-rendering: pixelated; }
+:focus-visible { outline: 2px solid var(--amber); outline-offset: 1px; }
+.hint, .empty, details > summary { color: var(--ink2); }
+b, strong { font-weight: normal; }
+.tag, .badge { font-family: var(--pixel); }   /* (a pixel face has no bold: a name stands out by its colour) */
+
+/* ---- §3 the building blocks ---- */
+/* paper strip (Travel Book Popup01a, slice 6, x2) */
+.paper, .panel, .frame, .info { border-style: solid; border-width: 12px; border-image: url("../assets/third_party/crusenho/UI_TravelBook_Popup01a.png") 6 fill stretch;
+  background: none; box-shadow: none; border-radius: 0; padding: 0 4px; color: var(--ink); }
+/* a page of the book (BookPageLeft01a, 8 8 12 8, x2): pet, thing and story pages */
+.book { border-style: solid; border-width: 16px 16px 24px; border-image: url("../assets/third_party/crusenho/UI_TravelBook_BookPageLeft01a.png") 8 8 12 8 fill stretch;
+  background: none; box-shadow: none; padding: 0 8px; color: var(--ink); }
+/* wood card / frame (Wood Textfield_03, slice 7, x2) */
+.card, .wood { border-style: solid; border-width: 14px; border-image: url("../assets/third_party/crusenho/UI_Wood_Textfield_03.png") 7 fill stretch;
+  background: none; box-shadow: none; border-radius: 0; padding: 0 2px; color: var(--ink); }
+/* a slot (Slot01a dark, Slot03a light; slice 4, x2) */
+.slot { border-style: solid; border-width: 8px; border-image: url("../assets/third_party/crusenho/UI_TravelBook_Slot03a.png") 4 fill stretch; background: none; }
+.slot.dark { border-image-source: url("../assets/third_party/crusenho/UI_TravelBook_Slot01a.png"); }
+/* the Holo Book's panel (Textfield02a, slice 6, x2): the machine room's board and screens */
+.holo { border-style: solid; border-width: 12px; border-image: url("../assets/third_party/crusenho/UI_HoloBook_Textfield02a.png") 6 fill stretch;
+  background: none; color: var(--holo); text-shadow: 0 0 4px var(--holo-glow); padding: 0 4px; }
+.holo .amber { color: var(--amber); text-shadow: 0 0 4px var(--amber-glow); }
+.holo .dim { color: var(--holo-dim); text-shadow: none; }
+.meter-cells { display: flex; flex-wrap: wrap; gap: 2px; margin: 4px 0 2px; }
+.meter-cells i { width: 12px; height: 12px; background: #1a3b5c; border: 2px solid #2d6c9e; }
+.meter-cells i.on { background: #58d0ff; box-shadow: 0 0 4px var(--holo-glow); }
+
+/* buttons: Wood Button_Large (8 10 12 10, x1), the pack's four-frame press (main.ts plays it), §7 the wobble */
+button, .button { border-style: solid; border-width: 8px 10px 12px; border-image: url("../assets/third_party/crusenho/UI_Wood_Button_Large_Release_01a1.png") 8 10 12 10 fill stretch;
+  background: none; box-shadow: none; border-radius: 0; padding: 0 4px; min-height: 38px; color: var(--ink); cursor: inherit; transform-origin: 50% 60%; }
+button:hover:not(:disabled), .button:hover { background: none; filter: brightness(1.08); }
+button:active:not(:disabled) { transform: none; box-shadow: none; }
+button.pressing { border-image-source: url("../assets/third_party/crusenho/UI_Wood_Button_Large_Press_01a4.png"); }
+button.press1 { border-image-source: url("../assets/third_party/crusenho/UI_Wood_Button_Large_Press_01a1.png"); }
+button.press2 { border-image-source: url("../assets/third_party/crusenho/UI_Wood_Button_Large_Press_01a2.png"); }
+button.press3 { border-image-source: url("../assets/third_party/crusenho/UI_Wood_Button_Large_Press_01a3.png"); }
+button.press4 { border-image-source: url("../assets/third_party/crusenho/UI_Wood_Button_Large_Press_01a4.png"); transform: translateY(3px); }
+button:disabled { color: #8a6a58; filter: saturate(0.5) brightness(0.95); }
+button[aria-pressed="true"], button[aria-expanded="true"] { background: none; color: var(--ink); border-image-source: url("../assets/third_party/crusenho/UI_Wood_Button_Large_Press_01a4.png"); }
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  button:hover:not(:disabled):not([class*="press"]), .button:hover { animation: wob 0.5s ease-in-out infinite; }
+}
+@keyframes wob { 0% { transform: rotate(0); } 25% { transform: rotate(-2.5deg) scale(1.04); } 50% { transform: rotate(0) scale(1.04); }
+                 75% { transform: rotate(2.5deg) scale(1.04); } 100% { transform: rotate(0); } }
+/* plain links and icon buttons keep no wood */
+.link:not(.card, .slot), button.link, button.moment, button.maproom, button.node, .crt button, button.icon, #tip button { border: 0; border-image: none; min-height: 0; animation: none !important; filter: none; }
+button.icon { padding: 0; background: none; }
+/* fields and choices: a Travel Book frame (Frame04a, slice 4, x2) */
+select, input:not([type]), input[type="text"], input[type="search"], textarea { border-style: solid; border-width: 8px; border-image: url("../assets/third_party/crusenho/UI_TravelBook_Frame04a.png") 4 fill stretch;
+  background: none; border-radius: 0; padding: 0 2px; min-height: 34px; box-shadow: none; }
+input::placeholder, textarea::placeholder { color: var(--ink2); opacity: 1; }
+select { appearance: none; padding-right: 14px;
+  background: linear-gradient(45deg, transparent 50%, var(--ink2) 50%) right 4px top 50% / 5px 5px no-repeat, linear-gradient(-45deg, transparent 50%, var(--ink2) 50%) right 0 top 50% / 5px 5px no-repeat; }
+input[type="range"] { accent-color: var(--accent); }
+/* tabs and chips (Frame04a, selected FrameSelect01a; chips Frame01a) */
+.tab { border-style: solid; border-width: 8px; border-image: url("../assets/third_party/crusenho/UI_TravelBook_Frame04a.png") 4 fill stretch;
+  background: none; color: var(--ink2); padding: 0 6px; min-height: 0; text-decoration: none; justify-content: center; border-radius: 0; }
+.tab.on, .tab[aria-current="page"] { border-image-source: url("../assets/third_party/crusenho/UI_TravelBook_FrameSelect01a.png"); background: none; color: var(--ink); }
+.tab:hover { color: var(--ink); }
+.chip { border-style: solid; border-width: 8px; border-image: url("../assets/third_party/crusenho/UI_TravelBook_Frame04a.png") 4 fill stretch; background: none; padding: 0 2px; color: var(--ink2); border-radius: 0; }
+.chip[aria-pressed] { border-radius: 0; min-height: 0; padding: 0 4px; color: var(--ink2); }
+.chip[aria-pressed="true"] { border-image-source: url("../assets/third_party/crusenho/UI_TravelBook_FrameSelect01a.png"); background: none; color: var(--ink); }
+/* a need bar (Wood Fillbar_Flat_01, slice 6, x1; the fillers Green, Blue, Red stretched inside) */
+.wbar { display: block; position: relative; height: 16px; border-style: solid; border-width: 6px; border-image: url("../assets/third_party/crusenho/UI_Wood_Fillbar_Flat_01.png") 6 fill stretch; }
+.wbar > i { position: absolute; left: 0; top: 0; bottom: 0; background: url("../assets/third_party/crusenho/UI_Wood_Fillbar_Filler_Green.png") 0 0 / 100% 100%; image-rendering: pixelated; }
+.wbar.blue > i { background-image: url("../assets/third_party/crusenho/UI_Wood_Fillbar_Filler_Blue.png"); }
+.wbar.red > i { background-image: url("../assets/third_party/crusenho/UI_Wood_Fillbar_Filler_Red.png"); }
+/* icons from the Travel Book (sound, star, heart, home, settings), drawn x2 */
+img.ticon { width: calc(var(--w) * 2px); height: auto; image-rendering: pixelated; display: inline-block; vertical-align: middle; }
+
+/* §6, §9: a name on hover (desktop) or tap (phone), the same tooltip everywhere: a paper strip */
+.tipbox { position: fixed; z-index: 20; pointer-events: none; max-width: 260px; width: max-content; }
+#tip { border-style: solid; border-width: 12px; border-image: url("../assets/third_party/crusenho/UI_TravelBook_Popup01a.png") 6 fill stretch; background: none; box-shadow: none; padding: 0 4px; }
+#tip .nib { display: none; }
+
+/* §8 cursors, desktop only: the Travel Book arrow everywhere (buttons and links too); a hand over the pets in the room
+   and over the cards; the Papernote pencil in the text box */
+@media (hover: hover) and (pointer: fine) { a, button, select, .tab, .chip, .maproom { cursor: inherit; } }
+@media (hover: hover) and (pointer: fine) {
+  html { cursor: var(--arrow); }
+  :root { --hand: image-set(url("../assets/third_party/crusenho/Icon_Cursor_02a@1x.png") 1x, url("../assets/third_party/crusenho/Icon_Cursor_02a@2x.png") 2x) 4 0, pointer;
+          --arrow: image-set(url("../assets/third_party/crusenho/UI_TravelBook_Cursor01a@1x.png") 1x, url("../assets/third_party/crusenho/UI_TravelBook_Cursor01a@2x.png") 2x) 3 0, auto; }
+  .card, .card * { cursor: var(--hand); }
+  #talkText, textarea, input:not([type]), input[type="text"] { cursor: image-set(url("../assets/third_party/crusenho/UI_Papernote_CursorPencil01@1x.png") 1x, url("../assets/third_party/crusenho/UI_Papernote_CursorPencil01@2x.png") 2x) 2 2, text; }
+}
+
+/* the foot of every page: the credit (§10), and the Lab */
+p.more { color: var(--on-page); display: flex; flex-wrap: wrap; padding-inline: 16px; row-gap: 0; gap: 16px; justify-content: center; }
+p.more a, p.more .link { color: var(--on-page) !important; }
+body[data-page="house"] p.more { display: flex; }
+
+/* ---- §4, §5 the header: one Travel Book banner (Banner01a, slice 8, x2) ---- */
+header.banner { position: relative; border: 0; background: none; display: flex; align-items: center; gap: calc(8px * var(--ui)) calc(16px * var(--ui)); padding: calc(7px * var(--ui)) calc(22px * var(--ui));
+  margin: 8px auto 0; width: min(100% - 24px, var(--maxw)); min-height: calc(64px * var(--ui)); flex: none; flex-wrap: nowrap; }
+header.banner::before { content: ""; position: absolute; inset: 0; z-index: -1; box-sizing: border-box; border-style: solid; border-width: calc(16px * var(--ui));
+  border-image: url("../assets/third_party/crusenho/UI_TravelBook_Banner01a.png") 8 fill stretch; image-rendering: pixelated; }
+body { isolation: isolate; }
+header.banner h1 { margin: 0; flex: none; }
+header.banner h1 a { color: var(--ink); text-decoration: none; }
+#clock { color: var(--ink2); text-align: right; flex: none; white-space: nowrap; }
+header .tabs { display: flex; gap: 6px; flex: 1; justify-content: center; min-width: 0; }
+header .tab { width: 150px; min-height: 0; line-height: 18px; display: block; text-align: center; }
+#soundBtn { flex: none; width: 50px; height: 50px; min-height: 0; padding: 0; border: 0; border-image: none;
+  background: url("../assets/third_party/crusenho/UI_TravelBook_ButtonSoundOff01a.png") center / 50px 50px no-repeat; image-rendering: pixelated; }
+#soundBtn[aria-pressed="true"] { background-image: url("../assets/third_party/crusenho/UI_TravelBook_ButtonSoundOn01a.png"); background-size: 42px 42px; }
+#soundBtn:hover { animation: none; filter: brightness(1.1); }
+
+/* ---- the House tab ---- */
+.page.house { overflow: visible; }
+#left, #side, #centre { min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.head { color: var(--on-page); letter-spacing: 1px; padding-left: 4px; margin: 0; }
+#now { margin: 0; height: auto; min-height: 0; padding: 0 4px; display: block; background: none; box-shadow: none; flex: none;
+  border-style: solid; border-width: 12px; border-image: url("../assets/third_party/crusenho/UI_TravelBook_Popup01a.png") 6 fill stretch; }
+#now > span { font-size: 16px; line-height: 18px; }
+#now .here { color: var(--ink2); }
+#now b.who { color: var(--fam); display: inline; }
+#now:is(.want, .find) { border-image-source: url("../assets/third_party/crusenho/UI_TravelBook_FrameSelect01a.png"); border-image-slice: 4; border-width: 8px; padding: 4px 8px; }
+#now .icon { color: var(--accent); }
+main { flex: 1; min-height: 0; overflow: visible; padding: 0; display: block; }
+#frame { padding: 0; flex: none; line-height: 0; border-width: calc(14px * var(--ui)); position: relative; }   /* (Textfield_03 x2, x3 on Large, x4 on Huge) */
+#stage { position: relative; }
+#banner { border-style: solid; border-width: 12px; border-image: url("../assets/third_party/crusenho/UI_TravelBook_Popup01a.png") 6 fill stretch; background: none; color: var(--ink); box-shadow: none; padding: 0 6px; }
+#banner.error { color: var(--bad); }
+#banner.death, #banner.arrival { border-image-source: url("../assets/third_party/crusenho/UI_TravelBook_FrameSelect01a.png"); border-image-slice: 4; border-width: 8px; padding: 4px 10px; }
+#banner .icon { color: var(--accent); }
+
+/* the cards: Wood, a portrait, the name in its family's colour, the stage, what it is doing, three bars */
+.cards { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.cards .card { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 6px; align-items: center; min-width: 0; overflow-wrap: anywhere; }
+.cards .card > :not(.pic, .wholine) { grid-column: 1 / -1; }
+.cards .card .wholine { display: flex; flex-direction: column; min-width: 0; }
+.cards .card .wholine canvas { display: inline-block; vertical-align: -3px; margin-left: 4px; }
+.cards .card.chosen { filter: drop-shadow(0 0 3px var(--amber)); }
+.cards .card .pic { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.cards .card .pic .plate { line-height: 0; }
+
+.cards .card .n { color: var(--fam, var(--ink)); }
+.cards .card .s, .cards .card .want, .cards .card .naming { color: var(--ink2); }
+/* SPEC-v3.5.8 §6: a hob's by-name under its name, and a thing's title, in italics (Pixelify has none of its own: slanted) */
+.bn { color: var(--ink2); font-style: italic; overflow-wrap: anywhere; }
+i.ttl { font-style: italic; }
+.cards .card .doing canvas { display: inline-block; vertical-align: -2px; margin-right: 3px; }
+.cards .card .where { display: none; }
+.cards .card .bars { grid-column: 1 / -1; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 6px; align-items: center; color: var(--ink2); }
+.empty-house { color: var(--on-page); padding: 4px; }
+#chosen { display: flex; flex-wrap: wrap; gap: 4px 6px; align-items: center; }
+#chosen .glabel { color: var(--ink2); }
+#chosenWhat { color: var(--accent); }
+#chosenWhat.none { color: var(--ink2); }
+#nameForm { display: flex; gap: 6px; }
+#nameText { width: 110px; }
+
+/* beside the room: the map as slots, the room on paper, the board in Holo */
+
+/* the toolbar: the visitor's controls, a group each */
+footer { border-top: 0; background: none; flex: none; }
+footer.paper { padding: 0 4px; }
+.controls.visit { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; justify-content: flex-start; }
+.visit .group { gap: 4px; }
+.visit .group { display: flex; flex-wrap: nowrap; gap: 6px; align-items: center; }
+.visit .glabel { color: var(--ink2); }
+/* the chosen hob at the head of the toolbar (the v3.5.7 review): its face and name, never wider than 9em */
+.visit .actson { gap: 4px; flex: none; max-width: 9em; min-width: 0; }
+.actson .face { flex: none; }
+.actson b { color: var(--fam, var(--ink)); min-width: 0; line-height: 1.05; overflow-wrap: anywhere; }   /* (a long name takes two lines, never cut) */
+.visit .pair { display: flex; gap: 2px; align-items: center; }
+/* v3.5.10 §5: saying and writing, in the "Say..." pop-up: the field with its words over it, then Say it, and Write it on a wall */
+#talkText { width: 100%; }
+#talkForm { width: min(360px, 94vw); }
+#talkForm label { color: var(--ink2); font-size: inherit; }
+#talkForm .sayrow { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+#talkForm .sayrow label { display: flex; gap: 6px; align-items: center; }
+.visit button { min-width: 0; padding: 0 6px; }
+#stockBox, #musicBox, #moreBox, #workBox, #talkForm { margin: auto; inset: 0; height: fit-content; padding: 4px 8px; position: fixed; color: var(--ink); width: max-content; max-width: min(360px, 94vw);
+  border-style: solid; border-width: 12px; border-image: url("../assets/third_party/crusenho/UI_TravelBook_Popup01a.png") 6 fill stretch; background: none; box-shadow: 4px 4px 0 rgb(0 0 0 / 35%); }
+#stockBox { width: 330px; }
+#stockBox .bar { height: 8px; background: #e5b67f; }
+#stockBox .bar b { background: var(--good); }
+.pop:popover-open { display: flex; flex-direction: column; gap: 6px; }
+#musicBox .group, #moreBox { flex-direction: column; align-items: flex-start; }
+#dj { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+#dj label, #moreBox label { display: flex; gap: 6px; align-items: center; color: var(--ink2); }
+#stockBox li { grid-template-columns: 32px 52px 1fr 24px auto; }
+#ended { color: var(--ink2); }
+
+/* ==== SPEC-v3.5.9 §2: set layouts, the largest that fits the width. Phone (under 700): one column, as before. Small
+   (700-1199): the room on top, the toolbar under it, the hobs and the console side by side below. Laptop (1200-1699),
+   Large (1700-2399), Huge (2400 up): hobs, room, console, with fixed side columns and a UI scale (--ui, CSS zoom on the
+   panels: their frames, icons and words grow together, x1.5 and x2). Content stops at the layout's widest (--maxw) and
+   is centred; the world outside has the rest. ==== */
+@media (min-width: 700px) { :root { --maxw: 1200px; } }
+@media (min-width: 1200px) { :root { --maxw: 1700px; --colL: 260px; --colR: 300px; } }
+/* v3.5.10 §8: a landscape window from 1000 to 1199 wide (1024 x 768) is a narrow Laptop: the room a zoom smaller (x2),
+   so the hobs and the console's board fit beside it rather than under it */
+@media (min-width: 1000px) and (max-width: 1199.98px) and (orientation: landscape) { :root { --colL: 205px; --colR: 240px; }
+  #roomhead #roomWhen .season { display: none; } #roomhead { column-gap: 8px; } }   /* (the room's strip is narrow: its season is in the header) */
+@media (min-width: 1700px) { :root { --maxw: 2400px; --colL: 340px; --colR: 400px; --ui: 1.5; --led: calc(32px / 1.5); }
+  body[data-page="house"] { --tx: 20px; } html[data-text="large"] body[data-page="house"] { --tx: 24px; } }
+@media (min-width: 2400px) { :root { --maxw: 3200px; --colL: 480px; --colR: 560px; --ui: 2; --led: 20px; }   /* (the board at 40 px on Huge, as big as the text round it) */
+  body[data-page="house"] { --tx: 32px; } html[data-text="large"] body[data-page="house"] { --tx: 40px; } }
+/* the panels that grow with the layout (the room does not: main.ts gives it its own whole-number zoom) */
+:is(header.banner > *, #left, #side, footer, #now, #replayBar, #roomhead, p.more) { zoom: var(--ui); --text: calc(var(--tx) / var(--ui)); --lh: calc(var(--tx) * 1.3125 / var(--ui)); }
+#stage { --text: var(--tx); --lh: calc(var(--tx) * 1.3125); }   /* (the banner and the hover card over the room are not zoomed: their words are --tx) */
+
+/* ---- Laptop, Large, Huge: a game screen, three columns over the toolbar, nothing below the fold ---- */
+@media (min-width: 1200px), (min-width: 1000px) and (orientation: landscape) {
+  body { height: 100dvh; overflow: hidden; }
+  .page.house { display: grid; grid-template-columns: var(--colL) minmax(0, 1fr) var(--colR); grid-template-rows: minmax(0, 1fr) auto;
+    grid-template-areas: "left centre side" "foot foot side"; gap: calc(8px * var(--ui)) calc(10px * var(--ui)); padding: calc(10px * var(--ui)) calc(16px * var(--ui)) 0;
+    min-height: 0; flex: 1; width: min(100%, var(--maxw)); margin-inline: auto; }
+  /* a short window (main.ts: when it gives the room a larger zoom): the toolbar folds into "Visit" at the head of the
+     hobs' column, and the room has the full height */
+  body.fold .page.house { grid-template-rows: auto minmax(0, 1fr); grid-template-areas: "foot centre side" "left centre side"; }
+  #left { grid-area: left; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--ink2) transparent; }
+  .cards .card.here .want { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }   /* (whole in the card's hover and on its page) */
+  #centre { grid-area: centre; min-height: 0; }
+  footer { grid-area: foot; }
+  .cards .card.away { grid-template-columns: auto minmax(0, 1fr); align-items: center; border-width: 7px; padding: 2px 6px; }
+  .cards .card.away .pic .plate, .cards .card.away .bn, .cards .card.away .doing, .cards .card.away .want, .cards .card.away .bars, .cards .card.away .naming { display: none; }
+  .cards .card.away .where { display: block; }
+  .cards .card.away .wholine { flex-direction: row; gap: 0 6px; flex-wrap: wrap; align-items: baseline; }
+  .cards .card.away .where { grid-column: 2; }
+  #chosen { order: -1; }   /* at the top of the column, while a pet or a thing is chosen (a click in the room) */
+  #chosen:not(.asked) { display: none; }
+  #stockBox, #musicBox, #moreBox, #talkForm { inset: auto 16px 84px auto; margin: 0; }   /* above the toolbar's right end, under the buttons that open them */
+  body.fold :is(#stockBox, #musicBox, #moreBox, #talkForm) { inset: 0; margin: auto; }
+  body[data-page="house"] p.more { position: fixed; right: 16px; bottom: 0; margin: 0; padding: 0; line-height: 20px !important; }
+  body[data-page="house"] .page.house { padding-bottom: calc(22px * var(--ui)); }   /* (a strip of its own for the credit, under the console) */
+}
+/* ---- Small: one page that scrolls; the room fits the window's height, the toolbar under it ---- */
+@media (min-width: 700px) and (max-width: 999.98px), (min-width: 1000px) and (max-width: 1199.98px) and (orientation: portrait) {
+  body { height: auto; min-height: 100dvh; overflow: auto; display: block; }
+  .page.house { display: grid; grid-template-columns: minmax(0, 1fr) 300px; grid-template-areas: "centre centre" "foot foot" "left side"; align-items: start;
+    gap: 10px; padding: 10px 12px 12px; width: min(100%, var(--maxw)); margin-inline: auto; }
+  #left { grid-area: left; } #centre { grid-area: centre; } footer { grid-area: foot; } #side { grid-area: side; }
+  .cards { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+}
+/* the toolbar's words give way as it narrows (by its own width: it is zoomed on Large and Huge, and folded into the
+   hobs' column on a short window), so it stays one row where it can */
+@media (min-width: 700px) { footer { container: bar / inline-size; } }
+@container bar (min-width: 664px) { #giveBit { width: auto; max-width: calc(6em + 30px); }   /* (its frame and arrow do not grow with the words) */ }
+@container bar (max-width: 1263.98px) { .visit .glabel { display: none; } }
+@container bar (max-width: 1363.98px) { #stockBtn .btxt, #musicBtn .btxt, #moreBtn .btxt { display: none; } }
+@container bar (max-width: 1063.98px) {
+  .controls.visit { column-gap: 7px; } .visit .actson { max-width: 7.5em; }
+  #stockBtn .bicon, #musicBtn .bicon, #moreBtn .bicon { margin-right: 0; } }
+@container bar (max-width: 959.98px) { .controls.visit { column-gap: 4px; } .visit .group { gap: 3px; } .visit .actson { max-width: 6em; } .actson b { overflow-wrap: break-word; } }
+@container bar (max-width: 600px) { .visit .group { flex-wrap: wrap; } .visit .actson { max-width: none; } #giveBit { max-width: none; } }
+#visitBtn { display: none; }
+body.fold #visitBtn { display: block; width: 100%; }
+body.fold #visitBtn[aria-expanded="false"] + #controls { display: none; }
+body.fold footer.paper:has(#visitBtn[aria-expanded="false"]) { border: 0; border-image: none; padding: 0; }
+
+/* ---- the header on anything narrower than a laptop: the name, the time and the sound, the tabs under ---- */
+@media (max-width: 999.98px) {
+  header.banner { flex-wrap: wrap; margin: 10px 12px 0; width: auto; padding: 12px 14px 0; min-height: 0; }
+  header.banner::before { bottom: auto; height: calc(max(50px, 2 * var(--lh)) + 22px); }   /* (as tall as the two lines of the clock, at either text size) */
+  #soundBtn { width: 50px; height: 50px; margin: -4px 0; }
+  header.banner h1 { flex: 1; }
+  header.banner #clock { order: 2; }
+  header.banner #soundBtn { order: 3; }
+  header .tabs { order: 4; flex-basis: 100%; gap: 4px; margin: 20px -14px 0; }
+  header .tab { flex: 1; width: auto; }
+  .page:not(.house) { padding-inline: 12px; }
+}
+/* ---- §4 a phone: one column, the page scrolls ---- */
+@media (max-width: 699.98px) {
+  body { height: auto; min-height: 100dvh; overflow: auto; display: block; }
+  .page.house { display: flex; flex-direction: column; gap: 10px; padding: 10px 12px 12px; overflow: visible; }
+  #left, #centre { display: contents; }
+  .herehead { order: 0; }
+  #now { order: 1; } #replayBar { order: 2; } main { order: 3; } #side { order: 4; } #cardsHere { order: 5; } #cardsElse { order: 6; }
+  #chosen { order: 7; } footer { order: 8; }
+  .head { display: none; }
+  .herehead .head { display: block; }
+  .cards { grid-template-columns: 1fr; }   /* (v3.5.10 §6: each card the column's whole width, its portrait beside its name, as on a desktop) */
+  .visit .group { flex-wrap: wrap; }
+  .controls.visit { gap: 6px; }
+  .visit .group { display: grid; grid-template-columns: repeat(3, 1fr); width: 100%; gap: 6px; }
+  .visit .glabel { grid-column: 1 / -1; }
+  .visit .actson { display: flex; max-width: none; }   /* (the chosen hob: a face and a name on one line) */
+  .visit .pair { display: contents; }
+  #giveBit { order: 5; grid-column: 1 / -1; }
+  .visit button { min-width: 0; }
+}
+
+/* §1 the machine room's screens (SPEC-v3.5.1 §3), in the Holo Book: glowing blue, or amber for an amber screen */
+.crt { border-radius: 0; box-shadow: none; background: none; border-style: solid; border-width: 12px;
+  border-image: url("../assets/third_party/crusenho/UI_HoloBook_Textfield02a.png") 6 fill stretch; color: var(--holo); }
+.crt.amber { color: var(--amber); }
+.crt .crtglass { font-family: var(--pixel); background: none; text-shadow: 0 0 4px currentColor; color: inherit; }
+.crt .crthead { opacity: 1; color: var(--holo-dim); }
+/* (v3.5.7, v3.5.8: the toolbar's group labels, then Stock, Music and More's words, then Say's give way so it stays one
+   row: v3.5.9 does it by the toolbar's own width, with the set layouts above) */
+/* (v3.5.7: the pack's icons on the toolbar's buttons, in the ink colour) */
+.bicon { display: inline-block; width: 24px; height: 26px; vertical-align: -6px; margin-right: 4px; background: center / contain no-repeat; image-rendering: pixelated;
+  filter: brightness(0) saturate(100%) invert(9%) sepia(30%) saturate(2000%) hue-rotate(340deg); }
+.bicon.gear { background-image: url("../assets/third_party/crusenho/UI_Icon_Gear01b.png"); }
+.bicon.music { background-image: url("../assets/third_party/crusenho/UI_Icon_Music01b.png"); }
+.bicon.manual { background-image: url("../assets/third_party/crusenho/UI_Icon_Manual01b.png"); }
+.bicon.contact { background-image: url("../assets/third_party/crusenho/UI_Icon_Contact01b.png"); }
+
+/* ==== SPEC-v3.5.7 ==== */
+/* §2 what the page follows: a chip beside "Here" */
+.herehead { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+button.followchip { border: 2px solid var(--ink2); border-image: none; background: var(--amber); color: var(--ink); min-height: 0; padding: 0 6px; animation: none !important;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+button.followchip.off { background: var(--paper); }
+#followBox { display: none; }
+#followBox:popover-open { display: flex; flex-direction: column; gap: 4px; align-items: stretch; }
+#followBox button.on { border-image-source: url("../assets/third_party/crusenho/UI_Wood_Button_Large_Press_01a4.png"); }
+#followBox button.fam1, #followBox button.fam2 { color: var(--fam); }
+/* §2 a room change: a short pixel wipe across the room */
+#stage.wipe::after { content: ""; position: absolute; inset: 0; z-index: 4; pointer-events: none; image-rendering: pixelated;
+  background: conic-gradient(var(--page) 0 25%, transparent 0 50%, var(--page) 0 75%, transparent 0) 0 0 / 16px 16px, var(--page);
+  animation: wipe 0.55s steps(8) forwards; }
+@keyframes wipe { from { clip-path: inset(0 0 0 0); } to { clip-path: inset(0 0 0 100%); } }
+
+/* §3 the blue console: one tall Holo Book panel, sections headed in small blue capitals with a white icon */
+#side.console { border-style: solid; border-width: 20px; border-image: url("../assets/third_party/crusenho/UI_HoloBook_Cover01a.png") 20 fill stretch;
+  background: none; color: var(--holo); display: flex; flex-direction: column; gap: 6px; padding: 0 2px; min-height: 0; overflow-y: auto; scrollbar-width: none; text-shadow: 0 0 4px var(--holo-glow); }
+.console .ctitle { display: flex; justify-content: space-between; align-items: center; margin: 0; padding-bottom: 2px; border-bottom: 2px solid var(--holo-line); color: #a8d8f5; letter-spacing: 1px;
+  font-family: var(--dot) !important; font-size: 16px !important; line-height: 20px !important; }
+.cicon { width: 24px; height: 26px; flex: none; background: center / contain no-repeat; image-rendering: pixelated; filter: drop-shadow(0 0 2px var(--holo-glow)); }
+.cicon.home { background-image: url("../assets/third_party/crusenho/UI_Icon_Home01b.png"); }
+.cicon.display { background-image: url("../assets/third_party/crusenho/UI_Icon_Display01b.png"); }
+.cicon.trophy { background-image: url("../assets/third_party/crusenho/UI_Icon_Trophy01b.png"); }
+.cicon.gear { background-image: url("../assets/third_party/crusenho/UI_Icon_Gear01b.png"); }
+.cpart { display: flex; flex-direction: column; gap: 2px; flex: none; }   /* (never squeezed: what does not fit folds, main.ts) */
+.console button.cfold { display: none; }
+/* (§3: the room's readout is time, day, sky, light and who is here; what else the old panel said stays out of it but warnings) */
+.console #family, .console #status .chip:not(.warn, .down), .console #happening li:not(.warn) { display: none; }
+.console .mapbox { border: 2px solid var(--holo-line); background: var(--holo-deep); padding: 2px; display: flex; justify-content: center; }
+.console button.maproom { border: 2px solid var(--holo-line); border-image: none; background: #13284a; }
+.console button.maproom > canvas { filter: grayscale(1) sepia(1) hue-rotate(165deg) saturate(2.4) brightness(1.1) contrast(1.1); }
+.console button.maproom.viewed { border-color: var(--cyan); box-shadow: 0 0 0 2px var(--cyan), 0 0 8px var(--holo-glow); filter: none; background: #1b3a66; }
+.console .maproom.unfound { border: 2px dashed var(--holo-line); color: var(--holo-dim); background: none; }
+.console .map .way { background: var(--holo-line); opacity: 1; }
+.dotlayer { position: absolute; inset: 0; pointer-events: none; }
+.dotlayer .dot { position: absolute; width: 8px; height: 8px; margin: -4px 0 0 -4px; border: 2px solid var(--holo-deep); box-shadow: 0 0 5px currentColor; background: currentColor;
+  color: #9fe3ff; transition: left 1.5s linear, top 1.5s linear; }
+.dotlayer .dot.fam1 { color: var(--amber); } .dotlayer .dot.fam2 { color: #ff8fc8; }
+.dotlayer .dot.asleep { opacity: 0.55; box-shadow: none; }
+.dotlayer .dot.egg { border-radius: 50%; color: #f5f0e0; }
+.dotlayer .dot.dead { color: #6b7d92; box-shadow: none; }
+.dotlayer .dot.beast { width: 6px; height: 6px; margin: -3px 0 0 -3px; border-width: 1px; color: #c8d6e5; }
+.dotlayer .dot.chosen { outline: 2px solid #fff; }
+/* SPEC-v3.6c §4: the yard and the meadow, green below the house, a fence along their top; §3: "new" in a season */
+.console button.maproom.outdoor { border-color: #5fae5a; background: #1d4a2c; }
+.console button.maproom.outdoor > canvas { filter: saturate(1.2) brightness(1.1); }
+.console button.maproom.outdoor.viewed { border-color: #9be38f; box-shadow: 0 0 0 2px #9be38f, 0 0 8px rgb(155 227 143 / 60%); background: #275e38; }
+.maproom.outdoor { background: #cfe8bf; border-color: #5f9e4f; }
+.map .fence { position: absolute; height: 5px; z-index: 1; pointer-events: none; border-top: 1px solid #b07a46; border-bottom: 1px solid #b07a46;
+  background: repeating-linear-gradient(90deg, #b07a46 0 2px, transparent 2px 6px); }
+.maproom .new { position: absolute; top: -6px; left: -6px; padding: 0 3px; font: 10px/12px var(--pixel); text-transform: uppercase; color: #2b2233; background: #ffcf4a;
+  border: 1px solid #2b2233; pointer-events: none; z-index: 2; animation: newpulse 1.6s ease-in-out infinite; }
+@keyframes newpulse { 50% { transform: translateY(-2px); } }
+@media (prefers-reduced-motion: reduce) { .maproom .new { animation: none; } }
+.map .railway { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }   /* SPEC-v3.5.12 §5: the rail line, and the train on it */
+.map .railway polyline { fill: none; stroke: #ffb347; stroke-width: 2; stroke-dasharray: 3 2; stroke-linejoin: round; opacity: 0.6; }
+.dotlayer .dot.train { width: 12px; height: 7px; margin: -4px 0 0 -6px; border-width: 1px; border-radius: 2px; color: #ffb347; }
+.dotlayer .dot.train.stopped { box-shadow: 0 0 9px currentColor; }
+.console .read { display: grid; grid-template-columns: auto 1fr; gap: 0 10px; align-items: center; }
+.console .read b { color: #a8d8f5; font-weight: normal; }
+.digit { display: inline-block; border-style: solid; border-width: 8px; border-image: url("../assets/third_party/crusenho/UI_HoloBook_DigitFrame01a.png") 4 fill stretch; padding: 0 2px;
+  color: var(--amber); text-shadow: 0 0 6px var(--amber-glow); font-family: var(--ledf) !important; font-size: 30px !important; line-height: 18px !important; }
+.console #status .chip { background: none; border: 0; color: #ff9a8a; }
+.console #happening li, .console #playing { color: var(--holo); }
+.console #happening li.warn { color: #ff9a8a; }
+.console #happening li .icon { color: var(--holo); }
+.console button.cbtn { align-self: flex-start; border: 2px solid var(--holo-line); border-image: none; background: #13284a; color: var(--holo); min-height: 0; padding: 0 8px; animation: none !important; }
+.console button.cbtn[aria-pressed="true"] { background: var(--holo-line); color: #fff; }
+/* the board: an LED panel */
+#board.led { background: #0a1424; border: 2px solid var(--holo-line); border-image: none; padding: 4px 6px; color: var(--holo); display: block; margin: 0; overflow: hidden; }
+#board.led p { margin: 0; white-space: nowrap; overflow: hidden; }
+#board.led p.a { color: var(--amber); text-shadow: 0 0 6px var(--amber-glow); }
+#board.led p .txt { display: inline-block; position: relative; left: 0; }   /* (main.ts moves it by position, not a transform: a sliding layer went unpainted in some captures) */
+#board.led .cur { display: inline-block; width: 10px; height: 16px; margin-left: 2px; vertical-align: -2px; background: var(--amber); box-shadow: 0 0 6px var(--amber-glow); animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+#board.led.pulse { animation: pulse 0.9s ease-out; }
+@keyframes pulse { from { box-shadow: 0 0 0 2px var(--cyan), 0 0 18px var(--holo-glow); } to { box-shadow: none; } }
+/* the Works */
+#works .meter-cells { display: flex; gap: 2px; flex-wrap: nowrap; }
+#works .meter-cells i { flex: 1; min-width: 3px; height: 14px; background: #1a3b5c; border: 2px solid var(--holo-line); }
+#works .meter-cells i.on { background: var(--cyan); box-shadow: 0 0 5px var(--holo-glow); }
+#works .meter-cells i.new { animation: cellin 0.4s ease-out; }
+@keyframes cellin { from { background: #fff; box-shadow: 0 0 10px #fff; } }
+#works.reached { animation: reached 1.4s ease-out; }
+@keyframes reached { 0%, 30% { background: rgb(88 208 255 / 45%); box-shadow: 0 0 16px var(--holo-glow); } 100% { background: none; box-shadow: none; } }
+@media (min-width: 1200px), (min-width: 1000px) and (orientation: landscape) {
+  #side.console { grid-row: 1 / -1; }
+  .cboard { flex: 0 0 auto; }
+}
+/* the console folds to the board and the Works' count (SPEC-v3.5.9 §2, §5): by its button on a phone and Small; on
+   a desktop by itself when its sections do not fit the window's height (main.ts: .tight), and back by the button */
+@media (max-width: 999.98px), (max-width: 1199.98px) and (orientation: portrait) { #side.console { gap: 6px; } }
+.console button.cfold { width: 100%; background: none; border: 0; border-image: none; color: #a8d8f5; min-height: 0; padding: 0 0 2px; border-bottom: 2px solid var(--holo-line); animation: none !important; }
+@media (max-width: 999.98px), (max-width: 1199.98px) and (orientation: portrait) { .console button.cfold { display: flex; } }
+#side.console.tight button.cfold { display: flex; }
+button.cfold::after { content: "▾"; }
+#side.console.folded button.cfold::after { content: "▸"; }
+#side.console.folded :is(.cmap, .croom) { display: none; }
+#side.console.lean .croom { display: none; }   /* SPEC-v3.5.9 §2: short, the readout goes first (the room's header strip has its time, weather and season), then the map */
+.console .cnote { margin: 4px 0 0; color: #a8d8f5; letter-spacing: 1px; font-family: var(--dot) !important; font-size: 16px !important; line-height: 20px !important; }
+@media (min-width: 1200px), (min-width: 1000px) and (orientation: landscape) { .console .cnote { display: none; } }
+
+/* §4 the big moments: a sign dropping in over the room, swinging to rest */
+#event { position: absolute; z-index: 5; left: 50%; top: 18%; width: min(470px, 92%); transform: translateX(-50%); text-align: center; cursor: pointer; }
+#event .sign { position: relative; border-style: solid; border-width: 20px 24px; border-image: url("../assets/third_party/crusenho/UI_Wood_Banner_02.png") 10 12 fill stretch;
+  padding: 2px 4px 0; color: var(--ink); filter: drop-shadow(0 6px 0 rgb(0 0 0 / 35%)); transform-origin: 50% -40px; animation: swing 1.6s cubic-bezier(.3,1.4,.5,1) both; }
+#event .big { color: var(--ink); }
+#event .sub { color: var(--ink2); }
+#event .who { display: flex; gap: 8px; justify-content: center; align-items: center; margin-top: 4px; }
+#event .who .title { color: var(--fam, var(--ink)); }
+#event canvas.thing { position: absolute; right: -14px; top: -52px; transform: rotate(8deg); z-index: 1; filter: drop-shadow(0 4px 0 rgb(0 0 0 / 30%)); }
+#event .glowring { position: absolute; inset: -60px -40px; z-index: -1; background: radial-gradient(closest-side, rgb(255 200 90 / 50%), rgb(255 200 90 / 0)); pointer-events: none; }
+#event .spark { position: absolute; width: 24px; height: 22px; background: url("../assets/third_party/crusenho/UI_TravelBook_IconStar01a.png") 0 0 / 100% 100%; image-rendering: pixelated;
+  animation: twinkle 1.2s ease-in-out infinite alternate; }
+#event .spark.k1 { width: 12px; height: 11px; animation-delay: .4s; }
+@keyframes twinkle { from { transform: scale(.7) rotate(-10deg); opacity: .6; } to { transform: scale(1.1) rotate(10deg); opacity: 1; } }
+@keyframes swing { 0% { transform: translateY(-160%) rotate(-8deg); } 55% { transform: translateY(0) rotate(5deg); } 75% { transform: rotate(-3deg); } 90% { transform: rotate(1deg); } 100% { transform: rotate(-1deg); } }
+#event.small { width: min(380px, 86%); }
+#event.small .sign { border-width: 10px 12px; }
+#event.birth .glowring { background: radial-gradient(closest-side, rgb(255 230 240 / 70%), rgb(255 200 220 / 0)); }
+#event.birth .sign { filter: drop-shadow(0 0 10px rgb(255 240 200 / 90%)); }
+#event.death .glowring { background: radial-gradient(closest-side, rgb(20 20 30 / 45%), rgb(0 0 0 / 0)); }
+#event.death .sign { filter: grayscale(1) brightness(0.92) drop-shadow(0 6px 0 rgb(0 0 0 / 35%)); animation-duration: 2.4s; }
+#event .stone { color: var(--ink2); }
+#event.still .sign, #event.still .spark { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  #event .sign, #event .spark, #stage.wipe::after, #board.led .cur, #board.led.pulse, #works .meter-cells i.new, #works.reached { animation: none !important; }
+  .dotlayer .dot, .wbar > i { transition: none !important; }
+}
+
+/* §9 small motion: bars fill smoothly and flash when a value jumps; cards lift a pixel on hover */
+.wbar > i { transition: width 0.8s ease-out; }
+.wbar.jump > i { animation: barflash 0.6s ease-out; }
+@keyframes barflash { from { filter: brightness(1.8); } }
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .cards .card:hover, a.card:hover { transform: translateY(-1px); filter: drop-shadow(0 2px 0 rgb(0 0 0 / 30%)); }
+}
+
+/* §5 a thing's card in the room's hover: the card is its own paper panel */
+#tip.holdscard { border: 0; border-image: none; background: none; padding: 0; display: block; width: max-content; max-width: min(430px, calc(100vw - 24px)); z-index: 6; }
+#tip.holdscard .cardhint { text-align: right; color: var(--ink2); margin: -10px 14px 0 0; position: relative; }
+/* SPEC-v3.5.10 §2: every other hover card in the room is the same card (thingcard.ts, roomCard): its picture in the
+   slot, its name, what it is, its lines; as wide as its words need, up to the thing card's width, and wrapped */
+#tip .roomcard { width: max-content; max-width: 100%; min-width: min(280px, 100%); }
+#tip .roomcard :is(p, ul, blockquote) { margin: 0; }
+#tip .roomcard b { font-size: inherit; }
+/* the hover card stands over the toolbar and the console when it reaches them (the room's surround is a layer of its own) */
+#roomwrap { position: relative; z-index: 3; }
+/* v3.5.10 §6: until the room has drawn, its name on a soft shimmer, not a blank frame */
+#stage.loading { background: linear-gradient(100deg, rgb(255 255 255 / 0) 35%, rgb(255 255 255 / 10%) 50%, rgb(255 255 255 / 0) 65%) 0 0 / 300% 100%, rgb(16 14 26 / 80%);
+  animation: shimmer 1.8s linear infinite; }
+#stage.loading::before { content: attr(data-name); position: absolute; inset: 0; display: grid; place-items: center; padding: 8px; text-align: center; color: var(--holo);
+  text-shadow: 0 0 2px var(--holo-glow); letter-spacing: 1px; text-transform: uppercase; font-family: var(--dot); }
+@keyframes shimmer { from { background-position: 100% 0, 0 0; } to { background-position: 0% 0, 0 0; } }
+@media (prefers-reduced-motion: reduce) { #stage.loading { animation: none; } }
+p.more .fonts { color: var(--on-page); }
+@media (min-width: 1200px), (min-width: 1000px) and (orientation: landscape) { body[data-page="house"] p.more .fonts { display: none; } }   /* (the House tab's foot is the credit alone: the fonts are on every other page's foot) */
+
+/* ==== SPEC-v3.5.9 ==== */
+/* §1, §2, §3 the room: a slim Holo strip on top (what the page follows, the room's name, the house time, the weather,
+   the season), the room at its whole-number zoom under it, and round it the room's surround: the world outside,
+   darker and blurred, behind the room as a window onto it */
+main { display: flex; flex-direction: column; }
+#roomwrap { flex: 1 1 auto; align-self: stretch; min-height: 0; display: flex; flex-direction: column; align-items: center;
+  background: rgb(6 8 18 / 60%); -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px); }
+#roomhead { align-self: stretch; position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 2px 12px; padding: 0 4px; margin: 0; min-height: 0; text-shadow: none;
+  border-width: 6px; }   /* (slim: the Holo Textfield at x1) */
+/* the sentence about now: a box three lines high on anything wider than a phone, so a longer sentence never moves the
+   room to another zoom (main.ts leaves out its "Here:" line, then cuts it at three lines, when it is longer) */
+@media (min-width: 700px) {
+  #now { height: calc(3 * var(--lh) + 24px); overflow: hidden; }
+  #now > span { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+}
+@media (min-width: 900px) and (max-width: 999.98px), (min-width: 1000px) and (max-width: 1199.98px) and (orientation: portrait) {   /* (a wide Small: two lines, at its width the sentence's usual length) */
+  #now { height: calc(2 * var(--lh) + 24px); }
+  #now > span { -webkit-line-clamp: 2; }
+}
+#roomhead .followchip { flex: 0 1 auto; min-width: 0; }
+#roomName { flex: 1 1 auto; margin: 0; text-align: center; color: var(--holo); text-shadow: 0 0 2px var(--holo-glow); white-space: nowrap; letter-spacing: 1px; }
+#roomWhen { flex: none; display: flex; align-items: center; gap: 8px; margin-left: auto; }
+#roomWhen .wx { display: inline-flex; color: var(--holo); filter: drop-shadow(0 0 1px var(--holo-glow)); }
+#roomWhen .season { color: var(--holo-dim); font-family: var(--dot) !important; letter-spacing: 1px; }
+/* the page's own words straight on the world (the column heads, the credit) stand on a dark plate */
+.head, .empty-house, p.more > * { background: rgb(12 8 16 / 72%); width: fit-content; padding-inline: 6px; }
+@media (max-width: 999.98px), (max-width: 1199.98px) and (orientation: portrait) { #roomwrap { padding-bottom: 10px; } }
+/* a phone: what the page follows and the time on the strip's first row, the room's name under them (the season is in
+   the header just above); the cards' "Here" head goes with the followed chip it used to sit beside */
+@media (max-width: 699.98px) {
+  #roomName { order: 3; flex-basis: 100%; }
+  #roomWhen .season, .herehead { display: none; }
+}
+
+/* §6 the board: VT323 at 24 px (32 on Large and Huge: --led), a 1-2 px glow and no blur, on a darker panel; two rows,
+   one line at a time (main.ts pages them, and scrolls a longer one up, slowly), the newest amber, the others a brighter blue */
+#board.led { background: #02060c; padding: 2px 8px; color: #c4ebff; text-shadow: 0 0 1px #c4ebff, 0 0 2px var(--holo-glow); }
+#board.led p { height: calc(var(--led) * 2.3); white-space: normal; overflow-wrap: break-word; }
+#board.led p .txt { display: block; top: 0; }
+#board.led .by { display: inline-block; }   /* (who it is about: never split, so it takes the second row whole) */
+#board.led p.a { color: var(--amber); text-shadow: 0 0 1px var(--amber), 0 0 2px var(--amber-glow); }
+#board.led .cur { width: calc(var(--led) * 0.42); height: calc(var(--led) * 0.75); vertical-align: -2px; box-shadow: 0 0 2px var(--amber-glow); }
+/* §5 the Works: its goal, its count and its meter, always (and still there when the console folds) */
+#works .goal { color: var(--holo); }
+#works .count { color: var(--amber); text-shadow: 0 0 1px var(--amber), 0 0 2px var(--amber-glow); }
+/* SPEC-v5.0 §5: the work board, in the console (the Works' place) and under More: what is wrong, how long, who is on it */
+.work { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.work .age::before { content: " · "; }
+.work .age, .work .job { color: var(--muted); }
+.work .who, .work .job { display: block; }
+.work .job { font-style: italic; }
+#works .work .what { color: var(--holo); }
+#works .work .urgent .what { color: var(--amber); }
+#works .work .age, #works .work .job { color: var(--holo); opacity: 0.7; }
+.work .done .what { text-decoration: line-through; opacity: 0.8; }
+#workBox { width: 360px; }
+#workBox h2 { margin: 4px 0; font-size: 14px; }
+.cards .card .scrap { display: inline-flex; align-items: flex-end; gap: 0; color: var(--muted); font-size: 12px; }   /* SPEC-v5.0 §4.1: its scrap, a pile */
+
+/* §7 living cards: a portrait breathes (one of its pixels up and down) and blinks now and then (main.ts); a hob asleep
+   keeps its eyes shut and "z"s rise from it */
+.cards .card .pic { position: relative; }
+.cards .card:not(.egg) .pic canvas.face { --bob: -2px; animation: breathe 3.4s steps(1) infinite; }
+.cards .card.away .pic canvas.face { --bob: -1px; }   /* (a small portrait is drawn one to one) */
+@keyframes breathe { 50% { transform: translateY(var(--bob)); } }
+.cards .card.asleep .pic canvas.face { animation-duration: 5.2s; }
+.cards .card.asleep .pic::before, .cards .card.asleep .pic::after { content: "z"; position: absolute; right: -6px; top: -4px; color: var(--ink2); line-height: 1 !important;
+  pointer-events: none; animation: zzz 3.6s linear infinite; opacity: 0; }
+.cards .card.asleep .pic::after { animation-delay: 1.8s; }
+@keyframes zzz { 0% { transform: translate(0, 6px); opacity: 0; } 25%, 70% { opacity: 1; } 100% { transform: translate(8px, -14px); opacity: 0; } }
+/* §7 a need that rises ticks its bar up, a notch at a time, with a warm glint */
+.wbar.up > i { transition-timing-function: steps(3, end); animation: tickup 1s ease-out; }
+@keyframes tickup { from { filter: brightness(1.35) saturate(1.2); } }
+/* §7 seasons on the page: frost on the frames' corners in winter, a leaf caught on them in autumn (not on the now box, whose words run to its edge) */
+:root {
+  --frost-tl: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8' shape-rendering='crispEdges'><g><path fill='%23f2faff' d='M0 0h3v1H0zM4 0h2v1H4zM0 1h2v1H0zM0 2h1v1H0zM0 4h1v1H0zM0 6h1v1H0z'/><path fill='%239fd6f2' d='M3 0h1v1H3zM6 0h1v1H6zM2 1h1v1H2zM4 1h1v1H4zM1 2h1v1H1zM0 3h1v1H0zM0 5h1v1H0z'/></g></svg>");
+  --frost-tr: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8' shape-rendering='crispEdges'><g transform='matrix(-1 0 0 1 8 0)'><path fill='%23f2faff' d='M0 0h3v1H0zM4 0h2v1H4zM0 1h2v1H0zM0 2h1v1H0zM0 4h1v1H0zM0 6h1v1H0z'/><path fill='%239fd6f2' d='M3 0h1v1H3zM6 0h1v1H6zM2 1h1v1H2zM4 1h1v1H4zM1 2h1v1H1zM0 3h1v1H0zM0 5h1v1H0z'/></g></svg>");
+  --frost-bl: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8' shape-rendering='crispEdges'><g transform='matrix(1 0 0 -1 0 8)'><path fill='%23f2faff' d='M0 0h3v1H0zM4 0h2v1H4zM0 1h2v1H0zM0 2h1v1H0zM0 4h1v1H0zM0 6h1v1H0z'/><path fill='%239fd6f2' d='M3 0h1v1H3zM6 0h1v1H6zM2 1h1v1H2zM4 1h1v1H4zM1 2h1v1H1zM0 3h1v1H0zM0 5h1v1H0z'/></g></svg>");
+  --frost-br: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8' shape-rendering='crispEdges'><g transform='matrix(-1 0 0 -1 8 8)'><path fill='%23f2faff' d='M0 0h3v1H0zM4 0h2v1H4zM0 1h2v1H0zM0 2h1v1H0zM0 4h1v1H0zM0 6h1v1H0z'/><path fill='%239fd6f2' d='M3 0h1v1H3zM6 0h1v1H6zM2 1h1v1H2zM4 1h1v1H4zM1 2h1v1H1zM0 3h1v1H0zM0 5h1v1H0z'/></g></svg>");
+}
+#now, #roomhead, .cards .card { position: relative; }
+/* (each as big as its frame's edge, so it never reaches the words or the room inside) */
+body[data-season="winter"] :is(#frame, #now, .cards .card)::after { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; image-rendering: pixelated; --f: 14px;
+  background: var(--frost-tl) left top / var(--f) var(--f) no-repeat, var(--frost-tr) right top / var(--f) var(--f) no-repeat,
+              var(--frost-bl) left bottom / var(--f) var(--f) no-repeat, var(--frost-br) right bottom / var(--f) var(--f) no-repeat; }
+body[data-season="winter"] #frame::after { --f: calc(14px * var(--ui)); }
+body[data-season="winter"] #now::after { --f: 12px; }
+body[data-season="autumn"] :is(#frame, .cards .card)::after { content: ""; position: absolute; z-index: 1; top: -9px; right: 12px; width: 24px; height: 14px; pointer-events: none;
+  background: url("../assets/third_party/ninja_adventure/FX/Particle/Leaf.png") 0 0 / 144px 14px; image-rendering: pixelated; filter: hue-rotate(-42deg) saturate(1.5); transform: rotate(-12deg); }
+body[data-season="autumn"] .cards .card:nth-child(even)::after { right: auto; left: 10px; background-position: -48px 0; transform: rotate(10deg); }
+body[data-season="autumn"] #frame::after { width: calc(24px * var(--ui)); height: calc(14px * var(--ui)); background-size: calc(144px * var(--ui)) calc(14px * var(--ui)); }
+
+/* reduce motion: nothing flashes; what moves, moves slower */
+@media (prefers-reduced-motion: reduce) {
+  .wbar.jump > i, .wbar.up > i { animation: none !important; }
+  .cards .card:not(.egg) .pic canvas.face { animation-duration: 6.8s; }
+  .cards .card.asleep .pic::before, .cards .card.asleep .pic::after { animation-duration: 7.2s; }
+  .cards .card.asleep .pic::after { animation-delay: 3.6s; }
+}
+
+/* v3.5.10 §1: evening */
+/* the room's surround: the world outside shows through it, darker, at every size (it was a 60% navy fill and a 5 px
+   blur, which at dusk and by night left only a flat dark: the stars and the hills' edges blurred away). Darkened by a
+   backdrop filter instead, so the sky, the stars and the hills all stay, a step down from the page round them */
+#roomwrap { background: rgb(6 8 18 / 18%); -webkit-backdrop-filter: brightness(0.66) saturate(0.85); backdrop-filter: brightness(0.66) saturate(0.85); }
+/* the header strip: the time of day (sunrise, sun, sunset, moon), and the weather beside it when there is any (main.ts) */
+#roomWhen .wx { gap: 4px; }
+/* the golden hour (main.ts sets data-eve and --eve, 0 to 1, from px/weather.ts evening()): the paper and wood frames take
+   a warm tint, deepest at sunset; each frame once (not again inside another). The room's own frame is tinted by a copy
+   of its border drawn over it, so the room inside keeps the light px/weather.ts gives it. The Holo screens give their
+   own light and are left blue */
+body[data-eve] { --evef: sepia(calc(var(--eve) * 0.25)) saturate(calc(1 + var(--eve) * 0.5)) hue-rotate(calc(var(--eve) * -10deg)) brightness(calc(1 - var(--eve) * 0.07)); }
+body[data-eve] :is(.paper, .panel, .frame, .info, .book, .card, .wood, .slot):not([id="frame"], :is(.paper, .panel, .frame, .info, .book, .card, .wood, .slot) *) { filter: var(--evef); }
+body[data-eve] #frame::before { content: ""; position: absolute; inset: calc(-14px * var(--ui)); pointer-events: none; border: inherit; border-image-source: inherit;
+  border-image-slice: 7; border-image-repeat: stretch; image-rendering: pixelated; filter: var(--evef); }
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  body[data-eve] :is(.cards .card, a.card):hover { filter: var(--evef) drop-shadow(0 2px 0 rgb(0 0 0 / 30%)); }
+}
+
+/* SPEC-v4.0 §11: the banners of living together: a close bond glows pink; a fight is the sign shaken once with a red
+   glow; a killing and a hob driven out are quiet and grey like a death */
+#event .who .and { color: var(--ink2); }
+#event.bond .glowring { background: radial-gradient(closest-side, rgb(255 170 200 / 65%), rgb(255 170 200 / 0)); }
+#event.fight .glowring { background: radial-gradient(closest-side, rgb(220 60 60 / 45%), rgb(220 60 60 / 0)); }
+#event.fight .sign { animation: shake 0.45s steps(2) 2; }
+@keyframes shake { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+#event:is(.killing, .out) .glowring { background: radial-gradient(closest-side, rgb(20 20 30 / 50%), rgb(0 0 0 / 0)); }
+#event:is(.killing, .out) .sign { filter: grayscale(1) brightness(0.9) drop-shadow(0 6px 0 rgb(0 0 0 / 35%)); }
+#event.killing .sign { box-shadow: inset 0 -4px 0 #8e1f24; }
+
+/* SPEC-v4.0 §11: "While you were away", a Travel Book popup over the page on opening */
+#away { position: fixed; z-index: 40; left: 50%; top: 12vh; transform: translateX(-50%); width: min(560px, calc(100vw - 32px)); max-height: 76vh; overflow: auto;
+  display: flex; flex-direction: column; gap: 6px; color: var(--ink); box-shadow: 0 10px 0 rgb(0 0 0 / 25%); }
+#away h2 { margin: 0; color: var(--ink); }
+#away ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+#away li.aw { display: grid; grid-template-columns: 104px minmax(0, 1fr); gap: 10px; align-items: center; cursor: pointer; padding: 4px; border-bottom: 2px dashed var(--line); }
+#away li.aw:hover { background: rgb(255 255 255 / 30%); }
+#away .pics { display: flex; gap: 4px; justify-content: center; }
+#away .txt { display: flex; flex-direction: column; gap: 2px; }
+#away .txt b { text-transform: uppercase; color: var(--ink2); display: flex; gap: 4px; align-items: center; }
+#away .k-killing b, #away .k-death b { color: #8e1f24; }
+#away .k-bond b { color: #b0406a; }
+#away button { align-self: flex-end; }
+
+/* SPEC-v4.0 §10.2: the visitor's panel in the console, in the console's own blue and its buttons */
+.cicon.contact { background-image: url("../assets/third_party/crusenho/UI_Icon_Contact01b.png"); }
+.vpanel { display: flex; flex-direction: column; gap: 4px; color: var(--holo); }
+.vpanel .vwho { display: flex; gap: 6px; align-items: center; }
+.vpanel .vwho b { color: #fff; font-weight: normal; }
+.vpanel .vmood { color: var(--amber); }
+.vpanel form { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; margin: 0; }
+.vpanel input, .vpanel select { min-width: 0; flex: 1 1 120px; background: var(--holo-deep); color: #fff; border: 2px solid var(--holo-line); border-image: none; min-height: 28px; padding: 0 6px; font: inherit; }
+.vpanel input::placeholder { color: var(--holo-dim); }
+.vpanel .vtools, .vpanel .vstep { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.vpanel .vtools select { flex: 1 1 90px; }
+/* SPEC-v5.3.2 §1: the visitor's palette - every kind in kinds.toml, each with its own sprite, to set down in the room */
+.vpanel .vpal { display: flex; flex-wrap: wrap; gap: 3px; max-height: 140px; overflow-y: auto; margin-top: 4px; }
+.vpanel .vpal button.cbtn { align-self: auto; min-width: 52px; padding: 2px 3px; display: flex; flex-direction: column; align-items: center; gap: 1px; }
+.vpanel .vpal canvas { image-rendering: pixelated; }
+.vpanel .vpal span { font-size: 9px; line-height: 1.15; color: var(--holo); }
+.vpanel .vstep b { color: #ff9a8a; font-weight: normal; width: 100%; }
+.vpanel .vlog, .vpanel .vstatus { margin: 0; }
+.vpanel .vlog .you { color: #a8d8f5; }
+.vpanel .vstatus { color: var(--amber); }
+.vpanel .vinbox { display: flex; flex-direction: column; gap: 4px; margin-top: 4px; }
+.vpanel .vinlist { display: flex; flex-direction: column; gap: 4px; max-height: 260px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--holo-line) transparent; padding-right: 2px; }   /* (every question waiting scrolls here) */
+.vpanel .vq p { margin: 0; width: 100%; display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+.vpanel .vq b { color: #fff; font-weight: normal; }
+body:not(.visit4) .say4, body.visit4 .say3 { display: none; }
+/* (the one part of the console that gives way to the board and the Works: on a short window it scrolls) */
+#side.console.folded .cpart.cvisit { flex: 0 1 auto; min-height: 120px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--holo-line) transparent; }
+.vpanel .vq p > span.q { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }

@@ -1,0 +1,77 @@
+# The live profile (11 October 2026): the family that began as the fourth showcase run, carried on where anyone
+# can watch it, off turbo, a tick every 4 real seconds. Since 12 October 2026 its world day is two real hours
+# (1800 ticks), twice the showcase's: a life of about 16 world days was over in a night with nobody watching.
+# Nothing else moved: a tick, a step, a thought and every rate take as long as they did; what is counted in world
+# days and hours (a life, a stage, a night, a season, what regrows) takes twice as long. Started with
+# ./run.sh start live. Beside config.showcase.toml, it differs in: its clock (off turbo, a two-hour day to watch), its
+# seasons (forty-two world days), the night's thinking (night_tokens), the weather (the real one) and the replay
+# (two world days kept). The rest is the showcase's and should stay the same as it.
+
+[clock]
+day_seconds = 3600        # the world's own day
+was_day_seconds = 1800    # ... and what it was: a house that lived by the old day keeps its clock and its ages (world.wt)
+real_day_seconds = 7200   # what a visitor sees: one world day in two hours, so a tick is 4 real seconds
+turbo = false
+min_think_seconds = 90    # (24 November 2026; config.toml: 70) with a thought for each thing a hob does again ([brain4] off below), seven hobs at their quickest ask about what the budget allows
+skip_night = true         # (24 November 2026) nights pass in a few minutes: nothing happens in them but the bedtime reflection
+
+[life]
+egg_minutes = 5
+lifespan_days = 13
+adult_days = 4
+egg_pull_days = 1
+neglect_days = 0.5
+
+[growth]
+child = 1.5
+youngling = 3
+adult = 5
+
+[house.house]             # SPEC-v3.5 §5: on the two-hour day a season is three and a half real days, so all four pass in two weeks
+season_days = 42
+was_season_days = 6       # ... and what it was: a house that lived by the short seasons keeps the season it is in (season.settle)
+
+[house.events]            # merged over house.toml: a short life should still meet a few events
+every_hours = 7
+drift_after_days = 6
+
+[sleep]
+think = "low"             # the night's thinking, capped (amendment): a short night must not cost minutes of model time
+
+[model]
+night_tokens = 4000        # (19 October 2026, REVIEW-v4.0.4 §2.5: more room for the night's thinking and its reply; it was 3000, as the showcase's)
+
+[replay]                  # REVIEW-code.md (18 October 2026): the live house keeps only the last two world days of replay
+keep_days = 2
+
+[spirit]                  # SPEC-v4.2 (19 October 2026): on for the living family
+on = true
+
+[v5]                      # SPEC-v5.0: items, deficits, jobs, trade (20 October 2026)
+on = true
+
+[empty_house]             # v5.3.2 (23 November 2026): the live house emptied once, at the first start with this
+on = true
+
+[wallrail]                # v5.3.2: the train through the walls
+on = true
+
+[sheet]                   # (24 November 2026) every hob has a sheet, and its body acts on it
+on = true
+mend = true               # the living start again with nothing held against one another
+
+[visitor4]                # (24 November 2026) pleas that say what would help, and answers that land
+plain_help = true
+
+# (24 November 2026) The hobs think for themselves again. SPEC-v4.0 replaced a thought for each thing a hob does with
+# ten to fifteen thoughts a day and left the making to the body; on live, from day 99, things made fell from about 250
+# every ten world days to about 40, firsts from about 130 to under 5, and the mind's share of a waking hob's time from
+# 19% to 5%. With nothing new made, curiosity and pride starved, comfort went with them, and the house soured.
+[brain4]
+on = false                # v3.6c's per-action thoughts: the model decides what to make, and when
+
+[ladder]
+on = false                # no sabotage, theft, shoving or fights for now: the house had gone to the bottom of every rung
+
+[talk]
+snub_below = -6           # (config.toml: -2) a hob turns away only from one it has come to hate, not from any it is cool on

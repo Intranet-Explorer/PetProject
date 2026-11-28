@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Pet sprites</title>
+<style>
+  body { margin: 0; padding: 16px; background: #2f3239; color: #e8e6df; font: 13px/1.4 ui-monospace, Menlo, monospace; }
+  h2 { font-size: 14px; margin: 22px 0 8px; } h2:first-child { margin-top: 0; }
+  p { margin: 4px 0 8px; color: #b9b7ae; max-width: 100ch; }
+  canvas { image-rendering: pixelated; display: block; }
+  .row { display: flex; flex-wrap: wrap; gap: 6px; }
+  .cell { background: #d9b77c; padding: 2px; border-radius: 3px; }
+  .cell.dark { background: #7c8a6a; }
+  .lab { color: #b9b7ae; font-size: 11px; text-align: center; }
+  .group { display: flex; gap: 1px; background: #23252b; padding: 3px; border-radius: 4px; }
+  .group .cell { border-radius: 0; }
+  table { border-collapse: collapse; } td, th { padding: 2px 3px; font-weight: normal; font-size: 11px; color: #b9b7ae; text-align: center; }
+  nav a { color: #9fd0ff; margin-right: 12px; }
+  #check { white-space: pre-wrap; color: #b9e6a8; } #check.bad { color: #ff9a8a; }
+</style>
+</head>
+<body>
+<nav><a href="?">everything</a><a href="?view=grid">grid</a><a href="?view=anims">animations</a><a href="?view=family">family</a><a href="?view=scale">scale</a><a href="?view=frames">every frame</a>
+  <span class="lab">options: &amp;t=1.5 freezes the clock at that second · &amp;z=3 zoom · &amp;nolab hides captions</span></nav>
+<div id="out"></div>
+<div id="check"></div>
+<script type="module">
+import { petSheet, petPortrait, PET_ANIMS } from "./src/petsprite.ts";
+
+const q = new URLSearchParams(location.search), view = q.get("view"), Z = +(q.get("z") ?? 4), frozen = q.has("t") ? +q.get("t") : null, nolab = q.has("nolab");
+const STAGES = ["hatchling", "child", "youngling", "adult", "elder"];
+const out = document.getElementById("out");
+const el = (tag, cls, parent, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; (parent ?? out).append(e); return e; };
+const section = (title, note) => { el("h2", "", out, title); if (note) el("p", "", out, note); };
+
+// ---- genomes -----------------------------------------------------------------------------------------------
+let seed = 11;
+const rnd = () => ((seed = (seed * 1664525 + 1013904223) % 4294967296) / 4294967296);
+const between = (lo, hi) => Math.round((lo + rnd() * (hi - lo)) * 100) / 100;
+const PATTERNS = ["plain", "speckle", "stripe", "patch"];
+const varied = Array.from({ length: 24 }, (_, i) => ({
+  roundness: between(0.2, 1), stretch: between(0.75, 1.4), wobble: between(0, 1), hue: (i * 47 + Math.floor(rnd() * 30)) % 360, saturation: between(0.2, 1),
+  pattern: PATTERNS[i % 4], pattern_density: between(0, 1), eye_size: between(0.2, 1), eye_spacing: between(0.15, 0.9), limbs: i % 5,
+  marks: i % 6 === 3 ? ["a small notch"] : i % 6 === 5 ? ["a faded patch"] : i === 10 ? ["a pale streak", "a scar"] : [],
+}));
+// the eight related pets of data.showcase-3/lineage-1/lineage.db (pets.genome), as recorded
+const L = {
+  p1: { name: "(the first)", parent: null, g: { roundness: 0.75, stretch: 1.33, wobble: 0.0, hue: 71, saturation: 0.35, pattern: "stripe", pattern_density: 0.7, eye_size: 0.63, eye_spacing: 0.27, limbs: 1, marks: [] } },
+  p2: { name: "Twine", parent: "p1", g: { roundness: 0.75, stretch: 1.4, wobble: 0.0, hue: 215, saturation: 0.31, pattern: "stripe", pattern_density: 1.0, eye_size: 0.38, eye_spacing: 0.41, limbs: 1, marks: [] } },
+  p3: { name: "Twine", parent: "p1", g: { roundness: 1.0, stretch: 1.36, wobble: 0.36, hue: 314, saturation: 0.2, pattern: "plain", pattern_density: 0.92, eye_size: 0.91, eye_spacing: 0.57, limbs: 1, marks: [] } },
+  p5: { name: "Echo Knot", parent: "p2", g: { roundness: 0.66, stretch: 1.3, wobble: 0.0, hue: 171, saturation: 0.45, pattern: "plain", pattern_density: 1.0, eye_size: 0.47, eye_spacing: 0.29, limbs: 1, marks: [] } },
+  p4: { name: "Calm Seed", parent: "p3", g: { roundness: 1.0, stretch: 1.27, wobble: 0.0, hue: 76, saturation: 0.6, pattern: "speckle", pattern_density: 0.21, eye_size: 1.0, eye_spacing: 0.22, limbs: 2, marks: [] } },
+  p7: { name: "Quiet Pulse", parent: "p5", g: { roundness: 0.47, stretch: 1.32, wobble: 0.39, hue: 202, saturation: 0.2, pattern: "stripe", pattern_density: 1.0, eye_size: 0.73, eye_spacing: 0.59, limbs: 0, marks: [] } },
+  p6: { name: "Sweet Cushion", parent: "p4", g: { roundness: 1.0, stretch: 1.3, wobble: 0.2, hue: 59, saturation: 0.52, pattern: "speckle", pattern_density: 0.89, eye_size: 1.0, eye_spacing: 0.32, limbs: 2, marks: [] } },
+  p8: { name: "Storm Rest", parent: "p6", g: { roundness: 1.0, stretch: 1.23, wobble: 0.25, hue: 355, saturation: 0.51, pattern: "plain", pattern_density: 0.65, eye_size: 1.0, eye_spacing: 0.36, limbs: 2, marks: [] } },
+};
+// Calm Seed and three children: the first is its real child (p6); the other two are nudged by the amounts
+// engine/genome.py mutations() uses (2 or 3 genes each: 0.1 to 0.22 of a range, or 20 to 45 degrees of hue)
+const kin = [L.p4.g, L.p6.g, { ...L.p4.g, hue: 104, eye_size: 0.86 }, { ...L.p4.g, stretch: 1.14, saturation: 0.74, eye_spacing: 0.35 }];
+const START = { roundness: 0.72, stretch: 1.05, wobble: 0.2, hue: 31, saturation: 0.6, pattern: "speckle", pattern_density: 0.3, eye_size: 0.5, eye_spacing: 0.4, limbs: 0, marks: [] };
+
+// ---- drawing -----------------------------------------------------------------------------------------------
+const playing = [];
+const zoomed = (parent, frames, fps = 1, z = Z) => {
+  const c = el("canvas", "", parent), size = frames[0].width;
+  c.width = c.height = size; c.style.width = c.style.height = size * z + "px";
+  playing.push({ x: c.getContext("2d"), frames, fps, size });
+  return c;
+};
+const cell = (parent, frames, fps, label, z, cls = "cell") => { const d = el("div", cls, parent); zoomed(d, frames, fps, z); if (label && !nolab) el("div", "lab", d, label).style.color = "#4a3a22"; return d; };
+const tick = (now) => {
+  const t = frozen ?? now / 1000;
+  for (const p of playing) { p.x.clearRect(0, 0, p.size, p.size); p.x.drawImage(p.frames[Math.floor(t * p.fps) % p.frames.length], 0, 0); }
+  if (frozen == null) requestAnimationFrame(tick);
+};
+const words = (g) => `${g.pattern} · limbs ${g.limbs}${g.marks.length ? " · " + g.marks.join(", ") : ""}`;
+
+const times = [];
+const timed = (g, stage, look) => { const t0 = performance.now(), s = petSheet(g, stage, look); times.push(performance.now() - t0); return s; };
+
+if (!view || view === "grid") {
+  section("24 unrelated genomes, each as hatchling, child, youngling, adult, elder (idle)", "Any two should be told apart at a glance. The elder is shown at grey 0.75.");
+  const row = el("div", "row");
+  varied.forEach((g, i) => {
+    const box = el("div", "", row), grp = el("div", "group", box);
+    for (const stage of STAGES) { const s = timed(g, stage, { grey: stage === "elder" ? 0.75 : 0 }); cell(grp, s.frames.idle, s.fps.idle); }
+    if (!nolab) el("div", "lab", box, `${i + 1}: ${words(g)}`);
+  });
+}
+
+if (!view || view === "anims") {
+  section("Every animation", "Each should read as what it is without its caption.");
+  const who = [[START, "adult"], [varied[2], "adult"], [varied[4], "adult"], [varied[13], "child"], [L.p6.g, "adult"], [varied[19], "elder"], [L.p1.g, "hatchling"]];
+  const t = el("table"), head = el("tr", "", t);
+  for (const a of ["", ...PET_ANIMS, "egg", "dead"]) el("th", "", head, nolab ? "" : a);
+  for (const [g, stage] of who) {
+    const s = timed(g, stage, { grey: stage === "elder" ? 0.75 : 0 }), tr = el("tr", "", t);
+    el("td", "", tr, nolab ? "" : `${stage}\nlimbs ${g.limbs}`).style.whiteSpace = "pre";
+    for (const a of PET_ANIMS) cell(el("td", "", tr), s.frames[a], s.fps[a], null, 3);
+    cell(el("td", "", tr), s.egg, 2, null, 3);
+    cell(el("td", "", tr), [s.dead], 1, null, 3);
+  }
+}
+
+if (!view || view === "family") {
+  section("A real lineage (data.showcase-3/lineage-1): each row is one generation, parent named under each", "Relatives should look related; hue drifts 20 to 45 degrees a night in the engine, so shape, eyes, pattern and limbs carry the likeness.");
+  const depth = (id) => (L[id].parent ? 1 + depth(L[id].parent) : 0);
+  for (let d = 0; d < 5; d++) {
+    const row = el("div", "row"); row.style.marginBottom = "6px";
+    for (const [id, p] of Object.entries(L)) if (depth(id) === d) {
+      const box = el("div", "", row), grp = el("div", "group", box);
+      for (const stage of ["hatchling", "child", "adult"]) { const s = timed(p.g, stage); cell(grp, s.frames.idle, s.fps.idle); }
+      el("div", "lab", box, `${id} ${p.name}${p.parent ? " · child of " + p.parent : ""} · ${words(p.g)}`);
+    }
+  }
+  section("A parent and three children that differ only slightly", "Calm Seed (p4); its real child Sweet Cushion (p6); and two children nudged by the amounts the engine's nightly mutation uses.");
+  const row = el("div", "row");
+  kin.forEach((g, i) => {
+    const box = el("div", "", row), grp = el("div", "group", box);
+    for (const stage of ["hatchling", "child", "adult"]) { const s = timed(g, stage); cell(grp, s.frames.idle, s.fps.idle); }
+    el("div", "lab", box, i ? `child ${i}` : "parent");
+  });
+  section("Portraits (petPortrait at 2x), and the same pet greying", "");
+  const pr = el("div", "row");
+  for (const p of Object.values(L)) el("div", "cell", pr).append(petPortrait(p.g, "adult", 2));
+  for (const p of [L.p6, L.p2]) el("div", "cell", pr).append(petPortrait(p.g, "egg", 2));
+  for (const grey of [0, 0.25, 0.5, 0.75, 1]) el("div", "cell", pr).append(petPortrait(L.p8.g, "elder", 2, { grey }));
+}
+
+const PACK = { boy: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAAAQCAYAAACm53kpAAAAAXNSR0IArs4c6QAAAERlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAAAQKADAAQAAAABAAAAEAAAAAB+Qo17AAAC+klEQVRYCcWWv2uTQRjHr+IgUhBEBAl0SwYnBQdBUaEigigugs3kHyCCi2MHx45SXARxqqsIBSkKVoh0EHRyaLdCcBFByOBW87nke33eJ3dv3tBCH0juueeeH9/nx10yFw6ZzrRae9bl735/zsrY2/Oj5g8VDIk+v9xOOS1v7UT+04VzSbb441fiYY66IBMFsN0SQCsrAUbHJlrJsrChGH5CpOrlpbjS96vHbPfSxedxbVhR8h30iS2GkB1x7HpDH1f+DazLIq/kpeCLR5wqlv24pWLYJL3thP/xJKYJ8IkKWN2qJHzh6orQOzGfXHJF1GkPMCk5BnvZ2SNhqItt9YU9ToCMD9JB69wmaeUlniLQ8SZFIEG6u7wV9jQJwj9r8uA55kFNA885H0AQWPZ68LSfZVUC8l2H4SBn8m+xV94Aga4LIh2/2jvnz3L73BjbDgpDTpbzJxl2OZucDJtUAACRhFVEoSmQpWunwtsvfzGZSugOR7hCyELgM6Le2JfiS95kzdks3Gol04Uhp/ipANw/3oDTa5vh4vlOVN55dimg3F75Fvfff26H+TfdALhcB5sUYZRodDfxZeMshW4sqBqSS2rCgRFYO2IOHq1V8pJqKoAEJEjiltJ+eFYiwKNXl6Bs0dUDJhlrkzhWfxY+lxf2qQD8LIxe4f0xREFdSeAQZgjb3Y1+nKDMcRJpupJgzOTiUMzdjUG6ht6mbs/EMAW+IYoj2/g/QK/w3dfr4U/3erD3RYpaSRLS76jk+kXgmpSILkB+ArDNFVixvD8fm3N8lH5Gc/kIQ+WPkAVPITzZ9yE3woC48fiJN0v7Vye/Rl7B08GQUQGRUQzurKdSAdGzRSzZ2u4Lf7oCOLlz+2bYfHgWNjy9+iB8Xn0R+ZTUy9W4l3HcNPiSn/ZYN2cvGYmQAFigzr37ccVHbkriofvimgnz9vt38XT9w8cQVjoTb0+aALRsFamWnMg/IARUMr/iQ3ZKfJqNfFhbyVgVl3P2JX/2fJov/ED/Af1/uYpUE08tAAAAAElFTkSuQmCC",
+cat: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAQCAYAAAB3AH1ZAAAAAXNSR0IArs4c6QAAAa1JREFUSIntkz1u20AQhb+VDZ+ANKAsiwAqAjeWijQqCBhwF9eW7hAhgJo0PoBrVr6DFMOdSwEBWKgNSxfqvCYQCz5ACk4KelfLH5m1kbyG3Nl5O2/e7MK/gEBrCbQW++/vHXYRAZ4fHxVAGEVi/5VSAIgISilEBG4uK/zwei0Am8UEgMF0Kel8SJwgz1djpWa3+wUEWoslhlEkAOl8WIq4GquursPrteNbuHWSuVivq7glbhYTPow/ddV1xdP5sBEfTJfuPOtOQ0CgdYNsiZ34+oODb3du+bR+4Gn9UClcP69hpS8gTjJ8JwbTJZvFhMF0ydYYBbs7YO/LS56roigajcSe7eU9yNgao1pnWRdRJwIVAWEUyWrUB+D8V+5y98EWB+8V2A7shl+0jnrO1hh1DrIa9VmN+hydHVfy//z8XRG3NUb1ej2KoigFBFrvOoCKdW3kfZ3VC9fj6es3TpCXPC+fs+9Am3qLOMnwn5+a3QK7EbSNzIdt8MiJKMfgRmBtTL0EO/O35mm5J9/NmzlD87p/X4037MwuPks9BnD65WMl13dAtd/l/3gf+AsEfd91BrAC+QAAAABJRU5ErkJggg==",
+frog: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAQCAYAAAB3AH1ZAAAAAXNSR0IArs4c6QAAAU9JREFUSIljYKAhEJGW/i8iLf0fnY0MWGhp+ZQ2PgYGBgaGnCoGFPabp08ZYeqYaG/5JwZ0NnJIMOIygIGBgeHN06eMyGxiLT8jZwjnn8i4i6HGYoYyg8mj8wxvnj5lxIgCYoOOWGAdcAZD7O+McNyuX7FQ8/+KhZr/sbGxJSJc5sDw6kN7/j/++BWOVx/a8x9rFJAadPgsh4UaAwMk3mFg+vKFDJmR8QwMDIgoxZkLSAo6HJYzMDAwIPMzI+MZnLIhntw3FRKljOgGILvWQt8SLnfi4nGGzMh4nL7HZnlO1Se4hTCwb+p5BgYGPCEAMyQzMp5h+vKFKK6f0saHNTGiZzsYQPj2PFwMXS/cAeg+cMo2ZFh9ZAKaYZjpAt3HsKzrlG2I4VtsACURMjCgxhksCPdNPQ/1/SeCBpIKMAwKa/PBmdVWVW2hmsWjYNAAANLuzx9VnHGlAAAAAElFTkSuQmCC",
+brick: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAARGVYSWZNTQAqAAAACAABh2kABAAAAAEAAAAaAAAAAAADoAEAAwAAAAEAAQAAoAIABAAAAAEAAAAQoAMABAAAAAEAAAAQAAAAADRVcfIAAABYSURBVDgRY/x/uvc/Ay7w6AIDg5wBdlmoHOP/tbG4DcCuFUWUBWwDPptgynGoYYLJk0sPvAFUCkRsAYAj0OBKofLDLgzw+RuH3LALA3gkQxk4/A2WhcoBAB7LJNJpaaB8AAAAAElFTkSuQmCC",
+cobble: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAARGVYSWZNTQAqAAAACAABh2kABAAAAAEAAAAaAAAAAAADoAEAAwAAAAEAAQAAoAIABAAAAAEAAAAQoAMABAAAAAEAAAAQAAAAADRVcfIAAADWSURBVDgRpZKxEgFRDEVjvY5Gv0PvH32VP1HosbVt0BkknCcv9g0ztkly783dJLujzXp1kz+epL2L2Umuk2Vh03X7XCsfn10/NaiBHJ+3haZt51bDF+SjAG88EU08V8sbRkGACStEHh243YACUvr3/op98FkoktglCvUGTIPeG9FX3ACQA8YvA09U48KAN/kYTTyneWHAiBwQMSbwROWTL2jQGE1Enj8OGvrsKyjo94oi6qFoKww1q7iGe6M8gQe/5ZfDMUtsAvbJ6Cup4V6XJ/hF7BvJ70NHTe3/zqBwAAAAAElFTkSuQmCC",
+tan: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAARGVYSWZNTQAqAAAACAABh2kABAAAAAEAAAAaAAAAAAADoAEAAwAAAAEAAQAAoAIABAAAAAEAAAAQoAMABAAAAAEAAAAQAAAAADRVcfIAAAAkSURBVDgRY3x3fvZ/BgoAEwV6wVpHDWBgGA2D0TAAZYaBTwcAzuoDd7oTbZMAAAAASUVORK5CYII=",
+ };
+const image = (src) => new Promise((ok) => { const i = new Image(); i.onload = () => ok(i); i.src = src; });
+if (!view || view === "scale") {
+  section("Beside the pack: its floor tiles, a character, a cat and a frog (4x, as in the room)", "A pet should look like it belongs in the same world: same outline, same weight of shading, a size between the animals and the people.");
+  const img = Object.fromEntries(await Promise.all(Object.entries(PACK).map(async ([k, v]) => [k, await image(v)])));
+  for (const [floor, cls] of [["brick", ""], ["tan", ""], ["cobble", ""]]) {
+    const cols = 20, rows = 3, c = el("canvas"); c.width = cols * 16; c.height = rows * 16; c.style.width = cols * 16 * Z + "px"; c.style.height = rows * 16 * Z + "px"; c.style.marginBottom = "8px";
+    const x = c.getContext("2d"), ground = 2 * 16 + 12, cast = [];
+    const stand = (frames, fps, cx, size) => cast.push({ frames, fps, cx, size });
+    stand([{ i: img.boy, sx: 0 }], 1, 12, 16); stand([{ i: img.cat, sx: 0 }, { i: img.cat, sx: 16 }], 2, 30, 16); stand([{ i: img.frog, sx: 0 }, { i: img.frog, sx: 16 }], 2, 46, 16);
+    const mix = floor === "brick" ? [[L.p6.g, "hatchling", "idle"], [L.p6.g, "child", "walk.right"], [L.p6.g, "youngling", "idle"], [L.p6.g, "adult", "idle"], [L.p8.g, "elder", "sit"], [L.p1.g, "adult", "walk.left"], [L.p7.g, "adult", "idle"], [START, "adult", "happy"]]
+      : floor === "tan" ? [[varied[0], "adult", "idle"], [varied[1], "adult", "walk.down"], [varied[2], "child", "idle"], [varied[5], "adult", "sleep"], [varied[6], "adult", "make"], [varied[7], "youngling", "walk.up"], [varied[9], "adult", "eat"], [varied[11], "hatchling", "idle"]]
+      : [[varied[12], "adult", "idle"], [varied[14], "adult", "sad"], [varied[15], "child", "walk.left"], [varied[16], "adult", "startled"], [varied[18], "elder", "idle"], [varied[20], "adult", "walk.right"], [varied[21], "adult", "sit"], [varied[23], "youngling", "idle"]];
+    mix.forEach(([g, stage, anim], n) => { const s = timed(g, stage, { grey: stage === "elder" ? 0.75 : 0 }); stand(s.frames[anim].map((i) => ({ i, sx: 0 })), s.fps[anim], 72 + n * 29, 24); });
+    stand([{ i: img.boy, sx: 48 }], 1, 308, 16);
+    const paint = (now) => {
+      const t = frozen ?? now / 1000;
+      for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) x.drawImage(img[floor], i * 16, j * 16);
+      for (const a of cast) {
+        const f = a.frames[Math.floor(t * a.fps) % a.frames.length];
+        x.fillStyle = "rgba(20,27,27,0.22)"; x.fillRect(a.cx - 5, ground - 2, 10, 3); x.fillRect(a.cx - 4, ground - 3, 8, 5);   // a shadow like the pack's
+        x.drawImage(f.i, f.sx, 0, a.size, a.size, a.cx - a.size / 2, ground - a.size, a.size, a.size);
+      }
+      if (frozen == null) requestAnimationFrame(paint);
+    };
+    paint(0);
+  }
+}
+
+if (view === "frames") {
+  section("Every frame of every animation, side by side", "Consecutive repeats of the same frame are shown once, with how many times it is held.");
+  for (const [g, stage] of [[varied[4], "adult"], [L.p6.g, "adult"], [START, "adult"], [varied[13], "child"], [varied[19], "elder"], [L.p1.g, "hatchling"]].slice(+(q.get("from") ?? 0), +(q.get("from") ?? 0) + +(q.get("n") ?? 2))) {
+    const s = timed(g, stage, { grey: stage === "elder" ? 0.75 : 0 }), row = el("div", "row"); row.style.marginBottom = "10px";
+    for (const a of [...PET_ANIMS, "egg", "dead"]) {
+      const frames = a === "egg" ? s.egg : a === "dead" ? [s.dead] : s.frames[a], box = el("div", "", row), grp = el("div", "group", box);
+      frames.forEach((f, i) => { if (i && frames[i - 1] === f) return; let n = 1; while (frames[i + n] === f) n++; cell(grp, [f], 1, n > 1 ? "x" + n : null, Z); });
+      el("div", "lab", box, `${a}${s.fps[a] ? " · " + s.fps[a] + " fps" : ""}`);
+    }
+  }
+}
+requestAnimationFrame(tick);
+if (frozen != null) tick(0);
+
+// ---- the check: same genome, same pixels; fast; every animation there; standing on the bottom edge, centred -------
+const bad = [], pixels = (c) => c.getContext("2d").getImageData(0, 0, c.width, c.height).data;
+for (const g of [...varied, ...Object.values(L).map((p) => p.g)]) for (const stage of STAGES) {
+  const s = timed(g, stage), again = petSheet(Object.fromEntries(Object.entries(g).reverse()), stage);   // other key order: built afresh, not from the cache
+  if (again === s) bad.push("the check did not rebuild");
+  for (const a of PET_ANIMS) {
+    if (s.frames[a].length < 2 || (a.startsWith("walk") && s.frames[a].length !== 4) || !(s.fps[a] > 0)) bad.push(`${a}: ${s.frames[a].length} frames at ${s.fps[a]} fps`);
+    s.frames[a].forEach((f, i) => { const p = pixels(f), o = pixels(again.frames[a][i]); if (f.width !== s.size || p.some((v, k) => v !== o[k])) bad.push(`${a}[${i}] differs between two builds`); });
+  }
+  if (s.egg.length !== 2) bad.push("egg frames");
+  for (const [name, f] of [["idle", s.frames.idle[0]], ["sit", s.frames.sit[0]], ["sleep", s.frames.sleep[0]], ["egg", s.egg[0]], ["dead", s.dead]]) {
+    const p = pixels(f); let x1 = 99, x2 = -1, floor = false;
+    for (let k = 3; k < p.length; k += 4) if (p[k]) { const x = ((k - 3) / 4) % s.size; x1 = Math.min(x1, x); x2 = Math.max(x2, x); if ((k - 3) / 4 >= s.size * (s.size - 1)) floor = true; }
+    if (!floor) bad.push(`${name} (${stage}) does not stand on the bottom edge`);
+    if (Math.abs(x1 + x2 + 1 - s.size) > 2) bad.push(`${name} (${stage}) is off centre: ${x1}..${x2}`);
+  }
+}
+const sorted = [...times].sort((a, b) => a - b), worst = sorted[sorted.length - 1], next = sorted[sorted.length - 2], check = document.getElementById("check");
+if (next > 50) bad.push(`two sheets took over 50 ms (${next.toFixed(1)}, ${worst.toFixed(1)})`);   // one alone is the page being stalled from outside (a reload, a screenshot)
+check.textContent = `check: ${times.length} sheets built, slowest ${worst.toFixed(1)} ms, next ${next.toFixed(1)} ms, median ${sorted[sorted.length >> 1].toFixed(2)} ms (cached ones count as 0); ` + (bad.length ? `${bad.length} FAILED:\n` + [...new Set(bad)].slice(0, 12).join("\n") : "same genome gives the same pixels; every animation present; all stand on the bottom edge, centred.");
+if (bad.length) { check.className = "bad"; console.error("petsprite check failed: " + [...new Set(bad)].slice(0, 6).join(" | ")); }
+</script>
+</body>
+</html>

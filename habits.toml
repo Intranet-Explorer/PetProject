@@ -1,0 +1,144 @@
+# SPEC-v5.3 §1: the habit templates (the lead's; engine/habits.py carries them out, helper B). A habit is the body's,
+# never a model call: the model is told it in words and may act against it for a day.
+#
+#   [habit.<name>]   one of contracts.HABITS
+#     verb      the verb a go uses (contracts.VERBS), or "" for praise, watch and keep company
+#     targets   the classes it may be about, one drawn: bit classes (below), "another's" (a thing another hob owns),
+#               "plots", "child" (a child or sibling), "hob" (a chosen hob), "wall", "stones", "outside", "mess"
+#     place     where its marks go: "tile" (one tile, chosen once), "container" (one it owns), "plots", "room", or "none"
+#     pace      world hours between goes
+#     leaves    what it leaves (contracts.MARKS), or "" when it leaves only an effect (tidy, teach, watch)
+#     says      how the hob is told it in its plan packet ({target}, {place})
+#     seen      the perception line others get in the room ({owner}, {target}, {place}); "" when nothing stands
+#     weight    key -> weight, summed over the keys that hold. Every template has "base" = 0.3, the floor (v5.3.1,
+#               The owner): any template can be drawn by anyone; traits, flaws, drives and styles boost, never gate. Keys: "tidy+" / "tidy-" (a trait axis at its plus or minus
+#               pole, past [habits] pole), "flaw:greedy", "drive:to leave the house", "drive:unmet" (a drive no project
+#               kind serves), "style:sunny", "stage:elder", "base" (always)
+
+[class]   # bit classes a target may name -> the bits (house.toml) it takes
+sticks = ["wood", "reed", "vine"]
+pebbles = ["pebble", "flint", "chalk"]
+shells = ["shell"]
+bells = ["bell", "bead"]
+shiny = ["bead", "bell", "metal", "wire", "spring", "shell", "hook"]
+soft = ["fluff", "feather", "felt", "cloth", "moss"]
+
+[habit.collect]
+verb = "carry"
+targets = ["sticks", "pebbles", "shells", "bells"]
+place = "tile"
+pace = 6
+leaves = "pile"
+says = "you tend to carry {target} to {place}"
+seen = "{owner}'s {target} pile fills {place}"
+weight = { "tidy-" = 1.0, "drive:unmet" = 0.8, "base" = 0.3 }
+
+[habit.hoard]
+verb = "hold"
+targets = ["shiny", "soft", "another's"]
+place = "container"
+pace = 8
+leaves = "hoard"
+says = "you tend to keep {target} things in {place}"
+seen = "{owner} keeps {place} nobody may open"
+weight = { "flaw:greedy" = 1.0, "drive:to be left alone" = 0.8, "base" = 0.3 }
+
+[habit.take]
+verb = "carry"
+targets = ["shiny", "another's"]
+place = "container"
+pace = 12
+leaves = "taken"
+says = "you tend to take {target} things nobody is watching"
+seen = "the {target} is not where it was"
+weight = { "flaw:greedy" = 1.0, "honest-" = 1.0, "base" = 0.3 }
+
+[habit.tidy]
+verb = "carry"
+targets = ["mess"]
+place = "room"
+pace = 4
+leaves = "moved"
+says = "you tend to put things away, others' too"
+seen = "{owner} has tidied {place}"
+weight = { "tidy+" = 1.5, "style:fussy" = 0.8, "base" = 0.3 }
+
+[habit.tend]
+verb = "pour"
+targets = ["plots"]
+place = "plots"
+pace = 24
+leaves = "tended"
+says = "you tend to water and weed the plots every day"
+seen = "the plots are watered and weeded"
+weight = { "kind+" = 0.8, "patient+" = 0.8, "base" = 0.3 }
+
+[habit.praise]
+verb = ""
+targets = ["hob"]
+place = "none"
+pace = 24
+leaves = "praised"
+says = "you tend to praise someone's work every day"
+seen = "{owner} praised {target}'s work"
+weight = { "kind+" = 0.8, "style:sunny" = 1.0, "base" = 0.3 }
+
+[habit.teach]
+verb = ""
+targets = ["child"]
+place = "none"
+pace = 24
+leaves = ""
+says = "you tend to show the young ones how things are made"
+seen = ""
+weight = { "style:know-it-all" = 1.0, "stage:elder" = 1.0, "base" = 0.3 }
+
+[habit.wander]
+verb = "carry"
+targets = ["outside"]
+place = "room"
+pace = 24
+leaves = "absent"
+says = "you tend to go out by day and come back at dusk"
+seen = "{owner} is out again"
+weight = { "drive:to leave the house" = 1.0, "curious+" = 0.8, "base" = 0.3 }
+
+[habit.watch]
+verb = ""
+targets = ["hob"]
+place = "none"
+pace = 3
+leaves = ""
+says = "you tend to keep an eye on {target}"
+seen = ""
+weight = { "flaw:envious" = 1.0, "drive:to be loved by one" = 0.8, "base" = 0.3 }
+
+[habit."keep company"]
+verb = ""
+targets = ["hob"]
+place = "none"
+pace = 4
+leaves = ""
+says = "you tend to do your work beside {target}"
+seen = ""
+weight = { "social+" = 1.2, "base" = 0.3 }
+
+[habit.prank]
+verb = "move"
+targets = ["another's"]
+place = "room"
+pace = 24
+leaves = "moved"
+says = "you tend to move a thing or hide a tool for the fun of it"
+seen = "the {target} is not where it was"
+weight = { "playful+" = 1.0, "flaw:hot" = 1.0, "base" = 0.3 }
+
+[habit.mark]
+verb = "strike"
+targets = ["wall", "stones"]
+place = "tile"
+pace = 24
+leaves = "mark"
+says = "you tend to mark {place}"
+seen = "{owner}'s marks on {place}"
+weight = { "stage:grieving" = 1.0, "belief:hook" = 0.6, "base" = 0.3 }

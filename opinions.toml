@@ -1,0 +1,306 @@
+# SPEC-v4.0 §4: what moves one hob's opinion of another (or of the visitor), and by how much. engine/opinions.py reads it.
+# Only opinions.move changes an opinion, and only by a cause listed here; every change is recorded with its cause.
+#
+# [causes.<name>]
+#   liking (-10..10), trust, fear, respect (0..10): the change, for the one who holds the opinion. A caller may pass
+#       its own amounts (gossip, a conversation's direction, a migration's history): they are clamped to these sizes.
+#   memory = n   also a memory of weight n (1-5) for the holder, in the words given to move; 4 fades slowly, 5 never
+#   heavy = true the change does not fade back toward neutral (true for memory 4 and up as well)
+#   mood         the holder's mood from it; pride, safety: the holder's needs move by this much
+
+[neutral]
+liking = 0
+trust = 5
+fear = 0
+respect = 5
+
+[fading]
+per_day = 0.15            # what share of a light feeling drifts back toward neutral each world day
+small_per_day = 0.4       # ... and of a small dislike (liking from -3 to below nothing): it is forgotten soon (19 October 2026, the house soured)
+
+[memories]
+fade_days = 2             # a light memory loses a point of weight every this many world days ...
+heavy_fade_days = 10      # ... a weight-4 one every this many (gone in 40 days); weight 5 never fades (19 October 2026: 4 never did)
+heavy_keep = 20           # of the 50 a hob keeps, at most this many weigh 4 or 5 (the lightest and oldest of them go first)
+
+[gossip]
+pull = 0.35               # how far the listener moves toward what it was told, times its trust in the teller / 10
+lie_chance = 0.6          # a sly hob (honest at -1) invents this often; less sly, less often
+found_per_day = 0.25      # the chance each world day that a listener finds a lie out
+
+[bonds]
+close_liking = 8          # a close bond forms by itself (also in a conversation: talk.py) at this liking both ways ...
+close_trust = 7           # ... and this trust both ways ...
+close_causes = 6          # ... once this many things have passed between them
+break_liking = 3          # ... and breaks when either's liking falls below this
+friend = 5                # friends: liking above this both ways
+enemy = -5                # enemies: liking below this either way
+rival = 0.3               # rivals: both at least this ambitious, chasing the same thing
+
+[causes.kin]
+liking = 4
+trust = 3
+heavy = true
+
+[causes.family_says]      # a first impression: what its family thinks of the stranger
+liking = 3
+trust = 2
+fear = 2
+respect = 2
+
+[causes.history]          # SPEC-v4.0 §12: what passed between them before v4.0, read from the house's records (never an enemy yet)
+liking = 5
+trust = 4
+fear = 2
+respect = 3
+
+[causes.gossip]
+liking = 2
+trust = 1
+fear = 1
+respect = 1
+
+[causes.shared_food]
+liking = 3
+trust = 2
+memory = 3
+mood = "happy"
+
+[causes.ate_together]
+liking = 1
+memory = 1
+
+[causes.broke_my_thing]
+liking = -3
+trust = -1
+memory = 3
+mood = "angry"
+
+[causes.took_my_thing]
+liking = -4
+trust = -3
+memory = 4
+mood = "angry"
+
+[causes.laughed_at_me]
+liking = -2
+respect = -1
+memory = 2
+mood = "ashamed"
+pride = -4
+
+[causes.beat_me]
+liking = -3
+fear = 3
+respect = 1
+memory = 5
+mood = "afraid"
+safety = -20
+pride = -8
+
+[causes.threatened_me]
+liking = -2
+trust = -1
+fear = 2
+memory = 3
+mood = "afraid"
+safety = -12
+
+[causes.nursed_me]
+liking = 4
+trust = 3
+memory = 4
+mood = "happy"
+
+[causes.taught_me]
+liking = 1
+respect = 2
+memory = 3
+
+[causes.told_me]
+liking = 0.5
+trust = 0.5
+
+[causes.gift]
+liking = 2
+trust = 1
+memory = 3
+mood = "happy"
+
+[causes.gift_taken]       # the giver, when its gift is taken: being thanked
+liking = 1
+memory = 2
+pride = 4
+
+[causes.insult]
+liking = -3
+respect = -1
+memory = 3
+mood = "angry"
+pride = -3
+
+[causes.apology]
+liking = 2
+trust = 1
+memory = 2
+
+[causes.made_up]
+liking = 3
+trust = 1
+memory = 3
+mood = "happy"
+
+[causes.spoke_to]
+liking = 0.3
+
+[causes.sang_with]
+liking = 0.5
+
+[causes.nuzzled]
+liking = 1
+trust = 0.5
+memory = 1
+
+[causes.ignored_me]
+liking = -1
+memory = 1
+mood = "sad"
+
+[causes.snubbed]          # the ladder's own snub or insult, made outside a conversation (19 October 2026: it moved nothing, so a feud was one-sided)
+liking = -1
+
+[causes.helped_me]
+liking = 2
+trust = 1
+respect = 1
+memory = 3
+
+[causes.worked_together]
+liking = 1
+respect = 1
+memory = 2
+
+[causes.lied_to_me]
+liking = -2
+trust = -3
+memory = 4
+mood = "angry"
+
+[causes.kept_promise]
+trust = 2
+liking = 1
+memory = 2
+
+[causes.broke_promise]
+liking = -1
+trust = -2
+memory = 3
+mood = "grumpy"
+
+[causes.praised_me]
+liking = 2
+respect = 1
+memory = 3
+mood = "proud"
+pride = 10
+
+[causes.scolded_me]
+liking = -2
+fear = 1
+memory = 3
+mood = "ashamed"
+pride = -6
+
+[causes.talked_kindly]
+liking = 1
+trust = 1
+memory = 2
+
+[causes.talked_harshly]   # (19 October 2026: was -2, against talked_kindly's +1, and the house soured)
+liking = -1
+fear = 1
+memory = 2
+mood = "grumpy"
+
+[causes.protected_me]
+liking = 3
+trust = 3
+respect = 2
+memory = 4
+safety = 20
+
+[causes.stepped_in]
+liking = 2
+respect = 2
+memory = 4
+
+[causes.hurt_me]
+liking = -5
+trust = -3
+fear = 3
+memory = 5
+mood = "angry"
+safety = -25
+
+[causes.killed_my_kin]
+liking = -10
+trust = -6
+fear = 4
+memory = 5
+mood = "angry"
+safety = -20
+
+[causes.won_against_me]   # a first or a best it wanted, taken by the other
+liking = -1
+respect = 2
+memory = 2
+mood = "grumpy"
+
+[causes.visitor_did]       # the visitor's v3.6c actions in its room: filled the bowl, spoke, gave a bit, opened the window...
+liking = 0.5
+trust = 0.5
+memory = 2
+
+[causes.envy]
+liking = -1
+memory = 1
+
+[causes.dishonest]         # SPEC-v5.3 §1.3 (habits.found): a hoard of others' things found; the hoarder is a thief in the finder's eyes
+liking = -3
+trust = -4
+respect = -1
+memory = 3
+
+[causes.saw_violence]     # SPEC-v4.0 §7 (conflict.py): it saw this hob shove, fight, hurt or kill, or lives near a killer
+liking = -1
+fear = 3
+memory = 3
+mood = "afraid"
+safety = -10
+
+# ---- SPEC-v4.0 §9 (helper D): the body's behaviours (behaviours.toml) and the evening reflection ----
+[causes.returned_my_thing]   # an honest hob put back what another had pocketed
+liking = 2
+trust = 2
+memory = 2
+
+[causes.pushed_in]           # a hasty hob pushed in ahead of it at the food
+liking = -1
+respect = -1
+memory = 1
+
+[causes.pranked_me]          # a feather on its nose while it slept
+liking = -1
+memory = 2
+
+[causes.comforted_me]        # a kind hob patted it when it was upset
+liking = 2
+trust = 1
+memory = 2
+mood = "content"
+
+[causes.reflect_warmer]      # thinking the day over at night, it feels more warmly toward the other (the why: its diary line)
+liking = 1
+
+[causes.reflect_cooler]      # ... or more coolly
+liking = -1

@@ -1,0 +1,200 @@
+"""Self-check for SPEC-v3.5.8 §3, §4 (engine/check_names.py checks §2's hob names): things are called what they are,
+never numbered and never "some X"; a charm with a use is filed as what it is; a pet keeps its few newest charms and
+what means something, and the rest is scrap; the spring clean comes once; scrap fed gives a base material back about
+every three; the sweeper sweeps up scrap and loose bits, leaves what is kept, and brings them to the Works.
+    uv run python -m engine.check_hobs"""
+import asyncio
+import re
+import tempfile
+
+from . import hub, machine, order, sweeper, things, wants, works, world
+from .check import at, do, engine, load_config
+from .check_machine import thing
+from .world import generate_room
+
+NUMBERS = re.compile(r"\b(two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|number)\b")
+
+
+async def run(d):
+    cfg = load_config()   # (the body still, so the steps below are the mind's)
+    cfg["make"]["own_names"], cfg["weather"]["real"] = False, False
+    cfg["make"]["charm_takes"] = world.load_config()["make"]["charm_takes"]   # (check.load_config turns these off for the older checks)
+    eng, pet = engine(cfg, d + "/a")
+    h = eng.house
+    for _ in range(3):
+        await eng.tick()
+    pet.update(name="Pim")
+    room = h["rooms"][pet["room"]]
+
+    # ---- §3: bits and stuff are plain ----
+    assert wants.some("clay") == "clay" and world.a("seed") == "a seed" and world.a("ink block") == "an ink block", "never 'some clay'"
+
+    # ---- §3: a thing's everyday name is its kind and one telling word, never a number ----
+    names = []
+    for i in range(30):
+        r = {"kind": "cushion", "material": "soft", "color": things.COLORS[i % 3], "size": 1 + i % 3}
+        n = things.everyday(h, cfg, r, ["felt"], pet, room)
+        room["objects"][n] = {"pos": [1, 1], "made": {"recipe": dict(r, name=n)}}
+        names.append(n)
+    assert names[:2] == ["felt cushion", "soft cushion"] and len(set(names)) == 30, names
+    assert all(len(n.split()) <= 3 and not NUMBERS.search(n) and not n.startswith("some ") for n in names), names
+    for n in names:
+        del room["objects"][n]
+    assert things.everyday(h, cfg, {"kind": "nest", "material": "soft", "color": "red", "size": 2}, ["fluff"], pet, room, "soft nest") == "soft nest", \
+        "an honest name its maker gave stands"
+
+    # ---- §3.1: honest kinds ----
+    honest = lambda name, material="cool", purpose="": things.honest(cfg, {"kind": "charm", "name": name, "material": material, "purpose": purpose})
+    assert honest("pressed clay tile") == "tile" and honest("father's tinder knot", "dark") == "tinder bundle" and honest("cellar draught stop", "hard") == "draught stopper"
+    assert honest("leak seal patch", "hard") == "patch" and honest("rain stone charm three") == "charm" and honest("stone knife", "hard") == "charm", "never a tool by its name"
+    assert honest("little thing", "soft", "to sit on by the fire") == "charm" and honest("small one", "soft", "a cushion for the cold floor") == "cushion"
+    assert things.honest(cfg, {"kind": "bowl", "name": "rain tile", "material": "hard"}) == "bowl", "only a charm is refiled"
+
+    # ---- §3: made by a mind: the everyday name, its own name as a title, and what is kept for its card ----
+    pet["carrying"], pet["needs"]["energy"] = ["fluff", "clay"], 80.0   # (SPEC-v3.5.9.1: a charm takes a base material besides)
+    r = await do(eng, pet, {"type": "observe"},
+                 {"type": "make", "recipe": {"name": "Rain Rest Charm Three", "kind": "charm", "material": "soft", "color": "white", "size": "small",
+                                             "purpose": "to keep"}, "near": "here"})
+    made = {n: o for n, o in things.made(room).items() if o["made"]["by"] == pet["id"]}
+    (n, o), = made.items()
+    assert not r[1]["reason"] and n == "fluff charm" and o["made"]["recipe"]["title"] == "Rain Rest Charm", "never ending in a number: %s" % made
+    assert o["made"]["bits"] == ["fluff", "clay"] and pet["carrying"] == [], "a charm uses up a base material besides (SPEC-v3.5.9.1): %s %s" % (o["made"]["bits"], pet["carrying"])
+    assert o["made"]["how"] and o["made"]["made_in"] == room["name"] and o["made"]["users"] == {}, o["made"]
+    assert any("which it calls 'Rain Rest Charm'" in m["text"] for m in h["moments"][-3:])
+    r = await do(eng, pet, {"type": "look", "target": "Rain Rest Charm"})
+    assert not r[0]["reason"], "a pet may call its thing by its title: %s" % r
+    things.used_by(h, o, pet)
+    assert o["made"]["users"] == {pet["id"]: 1}, "who uses it"
+
+    # ---- §4: what is kept, and what is scrap ----
+    at(eng, 10, 6)   # (well into the house's life, so that what was made days ago was made after it began)
+    for i in range(5):
+        thing(eng, room, "charm %s" % "abcde"[i], "charm", "soft", pet["id"], days=5 - i)
+    newest = order.newest_charms(h, cfg)
+    scrap = {n for why, n in order.scraps(h, cfg, room)}
+    assert scrap == {"charm a", "charm b"} and len(newest[pet["id"]]) == 3, "its three newest stay (and the fluff charm was a first): %s" % scrap
+    thing(eng, room, "heir charm", "charm", "soft", pet["id"], days=9, on=None)["made"]["heirloom"] = {"from": "p0", "to": [pet["id"]], "tick": 0, "line": []}
+    thing(eng, room, "starred charm", "charm", "soft", pet["id"], days=9)["made"]["star"] = 1
+    thing(eng, room, "first charm", "charm", "soft", pet["id"], days=9)["made"]["first"] = True
+    room["objects"]["keepsake box for Odo"] = {"pos": [8, 2], "fix": {"store": order.BOX, "inside": True, "keepsake": "p0"}}
+    thing(eng, room, "boxed charm", "charm", "soft", pet["id"], days=9, on="keepsake box for Odo")
+    thing(eng, room, "old cushion", "cushion", "soft", pet["id"], days=cfg["make"]["scrap_days"] + 1)
+    thing(eng, room, "new cushion", "cushion", "soft", pet["id"], days=0.5)
+    thing(eng, room, "shelved cushion", "cushion", "soft", pet["id"], days=2, on="keepsake box for Odo")
+    scrap = {n for why, n in order.scraps(h, cfg, room)}
+    assert not scrap & {"heir charm", "starred charm", "first charm", "boxed charm", "new cushion", "shelved cushion"} and "old cushion" in scrap, scrap
+    # 16 October 2026: a keepsake box keeps three (heirlooms, firsts, titled things first); the rest is scrap
+    for i in range(4):
+        o = thing(eng, room, "box thing %d" % i, "cushion", "soft", "p0", days=9 - i, on="keepsake box for Odo")
+        o["made"]["recipe"]["title"] = "A Title" if i == 3 else None
+    first = thing(eng, room, "box first", "cushion", "soft", "p0", days=12, on="keepsake box for Odo")
+    first["made"]["first"] = True
+    keeps = order.boxed(h, cfg, room, "keepsake box for Odo")
+    assert len(keeps) == 3 and "box first" in keeps and "box thing 3" in keeps, keeps
+    scrap = {n for why, n in order.scraps(h, cfg, room)}
+    assert {"box thing 0", "box thing 1", "box thing 2"} - keeps <= scrap and not keeps & scrap, (keeps, scrap)
+    for n in [n for n in room["objects"] if n.startswith("box ")]:
+        del room["objects"][n]
+    # a lying thing a world day untouched is scrap; a dead hob's charm is not one of anyone's three
+    thing(eng, room, "lying cushion", "cushion", "soft", pet["id"], days=cfg["make"]["floor_days"] + 0.1)
+    dead = thing(eng, room, "dead hob's charm", "charm", "soft", "p0", days=0.2)
+    scrap = {n for why, n in order.scraps(h, cfg, room)}
+    assert {"lying cushion", "dead hob's charm"} <= scrap, scrap
+    del room["objects"]["lying cushion"], room["objects"]["dead hob's charm"]
+    assert order.scraps(h, cfg, room)[0][0] == "charm", "charms first"
+
+    # ---- §4: the spring clean comes once, and the old charms are wanted fed ----
+    assert not works.spring(h, cfg), "a new house has no spring clean"
+    del h["spring_clean"]
+    works.spring_clean(h, cfg)
+    works.spring_clean(h, cfg)
+    assert sum(m["kind"] == "spring" for m in h["moments"]) == 1 and works.spring(h, cfg) and "spring clean" in pet["events"][-1][1]
+
+    # ---- §4.1: scrap fed gives a base material back, about one for three ----
+    hb = generate_room(h, cfg, hub.RID, by=pet["id"])
+    machine.migrate(h, cfg)
+    for i, n in enumerate(["charm a", "charm b", "old cushion"]):
+        things.gone(h, room["objects"].pop(n), n, "fed to the machine", room)
+        h["gone_things"][-1]["bits"] = ["clay"]
+        said = machine.scrap_back(h, cfg, pet, hb, [n])
+        assert bool(said) == (i == 2), (i, said)
+    assert "a piece of clay" in said and "clay" in pet["carrying"] + [s["bit"] for s in hb["spots"]], said
+
+    # ---- §4.2: the sweeper sweeps up scrap and loose bits, leaves what is kept, and brings it to the Works ----
+    sweeper.make(h, cfg)
+    sweeper.make(h, cfg)
+    sw, = [c for c in h["creatures"] if c["kind"] == "sweeper"]
+    assert sw["docked"] and sweeper.DOCK in hb["objects"], sw
+    thing(eng, hb, "junk charm", "charm", "soft", pet["id"], days=9)
+    thing(eng, hb, "kept charm", "charm", "soft", pet["id"], days=9)["made"]["heirloom"] = {"from": "p0", "to": [pet["id"]], "tick": 0, "line": []}
+    things.drop_bits(h, cfg, hb, [6, 6], ["wood"])
+    hb["spots"][-1]["since"] = h["tick"] - world.hours(cfg, 7)   # (16 October 2026: a loose bit nobody has touched in a while)
+    things.drop_bits(h, cfg, hb, [3, 6], ["clay"])   # ... and one just put down: left alone
+    fresh = hb["spots"][-1]
+    have = works.state(h, cfg)["have"]
+    sw["charged"] = -10 ** 6
+    at(eng, 11, 6)
+    for _ in range(round(cfg["ticks_per_hour"] * 4)):   # (out for its round, then home)
+        h["tick"] += 1
+        sweeper.step(h, cfg, sw)
+    gone = [g["name"] for g in h["gone_things"] if "sweeper" in g["gone"][1]]
+    assert "junk charm" in gone and "kept charm" in hb["objects"], (gone, sw)
+    assert fresh in hb["spots"] and not any(s["bit"] == "wood" and s["loose"] for s in hb["spots"]), "the old bit swept up, one just put down left alone: %s" % hb["spots"]
+    assert works.state(h, cfg)["have"] > have or works.state(h, cfg)["built"], "what it brings counts as scrap"
+    assert any(m["kind"] == "sweeper" and "brought" in m["text"] for m in h["moments"]), "it goes in the story"
+    # ---- SPEC-v3.5.9 §5: the Works never runs out; a second sweeper ----
+    S = works.state(h, cfg)
+    sweeper.make(h, cfg, 2)
+    assert sum(c["kind"] == "sweeper" for c in h["creatures"]) == 2, "a second sweeper"
+    S["goal"] = len(cfg["works"]["build"])
+    g = works.goal(h, cfg)
+    assert g["what"] == "the house store" and works.view(h, cfg)["need"] == g["scrap"], g
+    stock = dict(machine.state(h, cfg)["stock"])
+    for m in stock:
+        machine.state(h, cfg)["stock"][m] = 0
+    works.built(h, cfg, g)
+    assert works.goal(h, cfg)["what"] == "the house store" and all(machine.state(h, cfg)["stock"][m] == g["stock"] for m in stock), "it fills the machine, and goes on"
+    # ---- SPEC-v3.5.9.1: round the pond; charms made lately count; better things offered; no name ends in a number ----
+    wet = {(4, 3), (5, 3), (6, 3), (4, 4), (5, 4), (6, 4), (5, 5), (6, 5)}
+    t, path = [2, 4], []
+    while t != [9, 4] and len(path) < 30:
+        t = sweeper.step_to(cfg, t, [9, 4], wet)
+        path.append(tuple(t))
+    assert t == [9, 4] and not set(path) & wet, "round the pond, not across it: %s" % path
+    pet["made_at"] = [[h["tick"] - i, "charm|soft"] for i in (1, 2, 3)]
+    assert things.charm_count(h, cfg, pet) >= 3, "charms made in the last world day count toward its three"
+    assert things.better(h, cfg, pet), "and something better is offered"
+    # ---- 17 October 2026: needs crossed off when met, taking turns, once a day each; titles never repeat ----
+    dark = next(r for r in h["rooms"].values() if r["type"] and things.room_needs(h, cfg, r)[:1] and things.room_needs(h, cfg, r)[0][0] == "lamp")
+    pet["rooms"], pet["offered"] = {dark["id"]: h["tick"]}, {}
+    lamp = lambda: [l for l in things.better(h, cfg, pet) if "a lamp" in l]
+    assert lamp(), "a dark room asks for a light"
+    dark["objects"]["hard lamp"] = {"pos": [1, 2], "made": {"tick": h["tick"], "by": "x", "owner": "x", "bits": [], "recipe": {"kind": "lamp", "material": "hard"}}}
+    assert not lamp() and things.meets(h, cfg, dark, "hard lamp") and order.scrap(h, cfg, dark, "hard lamp") is None, "one lamp, even one that gives no light, lights it, and is kept"
+    del dark["objects"]["hard lamp"]
+    seen = [things.better(h, cfg, pet, mark=True) for _ in range(5)]   # (SPEC-v3.6b: and a machine the house could build)
+    flat = [l for s_ in seen for l in s_ if "never joined" not in l]
+    assert lamp() == [] and len(flat) == len(set(flat)) and any("a lamp" in l for l in seen[0]), "each kind once a world day: %s" % seen
+    assert any("never made" in l or "never joined" in l for l in seen[-1]), "and then something it has never made: %s" % seen
+    h["tick"] += cfg["ticks_per_day"]
+    assert lamp(), "a day on, it may be offered again"
+    rec, rec2 = {"kind": "lamp", "material": "warm", "color": "red"}, {"kind": "lamp", "material": "warm", "color": "red"}
+    room["objects"]["warm lamp"] = {"pos": [1, 3], "made": {"tick": 1, "by": "x", "owner": "x", "bits": [], "recipe": dict(things.named(h, cfg, rec, ["wax"], pet, room, "machine room light") and rec, name="warm lamp")}}
+    things.named(h, cfg, rec2, ["wax"], pet, room, "machine room light")
+    assert rec["title"] == "Machine Room Light" and rec2["title"] == "Wax Machine Room Light", (rec, rec2)
+    assert world.unnumbered("Seed Rest Six") == "Seed Rest" and not world.ends_in_number("Odo II") and world.ends_in_number("porous rest two")
+    room["objects"]["felt cushion"] = {"pos": [1, 1], "made": {"recipe": {"name": "felt cushion"}}}
+    assert not world.ends_in_number(things.unique_name(h, cfg, "felt cushion two")), "a name told apart by a word"
+    from . import actions
+    pet["room"] = hb["id"]
+    assert "sweeper" in actions.nameable(h, pet) and actions.sweeper_here(h, pet, "the sweeper"), "a hob can name the sweeper"
+    print("hobs check passed")
+
+
+def main():
+    with tempfile.TemporaryDirectory() as d:
+        asyncio.run(run(d))
+
+
+if __name__ == "__main__":
+    main()

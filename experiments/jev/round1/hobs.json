@@ -1,0 +1,227 @@
+{
+ "_note": "Each hob is A or B on every axis; every axis is split 4/4. Swap in real hobs by editing names/traits, or replace an axis description with your own wording.",
+ "axes": {
+  "brave_timid": {
+   "A": [
+    "brave",
+    "walks toward trouble and loud noises, says what it thinks to anyone, takes physical risks"
+   ],
+   "B": [
+    "timid",
+    "keeps to the walls, backs away from anything risky, avoids confrontation"
+   ]
+  },
+  "tidy_messy": {
+   "A": [
+    "tidy",
+    "puts things back, can't stand a mess, cleans before it rests"
+   ],
+   "B": [
+    "messy",
+    "drops things where it stands, never puts anything back, doesn't notice clutter"
+   ]
+  },
+  "generous_greedy": {
+   "A": [
+    "generous",
+    "gives food and things away, even when it has little"
+   ],
+   "B": [
+    "greedy",
+    "keeps the best for itself, hoards, hates sharing"
+   ]
+  },
+  "curious_cautious": {
+   "A": [
+    "curious",
+    "pokes at anything new, opens what is closed, tries things to see what happens"
+   ],
+   "B": [
+    "cautious",
+    "leaves unknown things alone, sticks to what it knows"
+   ]
+  },
+  "social_solitary": {
+   "A": [
+    "social",
+    "seeks company, eats and works beside others, talks a lot"
+   ],
+   "B": [
+    "solitary",
+    "prefers to be alone, works and eats apart, leaves when it gets crowded"
+   ]
+  },
+  "honest_sly": {
+   "A": [
+    "honest",
+    "tells the truth even when it costs, returns what isn't its own"
+   ],
+   "B": [
+    "sly",
+    "lies when it is useful, takes things without asking, lets others take the blame"
+   ]
+  },
+  "patient_hasty": {
+   "A": [
+    "patient",
+    "waits its turn, finishes slow jobs properly"
+   ],
+   "B": [
+    "hasty",
+    "can't wait, rushes jobs, skips steps, grabs the quick option"
+   ]
+  },
+  "playful_serious": {
+   "A": [
+    "playful",
+    "jokes, plays games, turns work into fun"
+   ],
+   "B": [
+    "serious",
+    "has no time for games, keeps working, finds jokes annoying"
+   ]
+  },
+  "ambitious_content": {
+   "A": [
+    "ambitious",
+    "wants to be the best, takes the hardest job, chases the next big thing"
+   ],
+   "B": [
+    "content",
+    "happy with what it has, would rather nap in the sun than strive"
+   ]
+  },
+  "kind_prickly": {
+   "A": [
+    "kind",
+    "forgives quickly, comforts others, assumes the best of them"
+   ],
+   "B": [
+    "prickly",
+    "takes offence easily, snaps, sulks, holds grudges"
+   ]
+  }
+ },
+ "hobs": [
+  {
+   "name": "Bogna",
+   "traits": {
+    "brave_timid": "A",
+    "tidy_messy": "A",
+    "generous_greedy": "A",
+    "curious_cautious": "A",
+    "social_solitary": "A",
+    "honest_sly": "A",
+    "patient_hasty": "A",
+    "playful_serious": "A",
+    "ambitious_content": "A",
+    "kind_prickly": "B"
+   }
+  },
+  {
+   "name": "Flint",
+   "traits": {
+    "brave_timid": "B",
+    "tidy_messy": "A",
+    "generous_greedy": "B",
+    "curious_cautious": "A",
+    "social_solitary": "B",
+    "honest_sly": "A",
+    "patient_hasty": "B",
+    "playful_serious": "A",
+    "ambitious_content": "B",
+    "kind_prickly": "A"
+   }
+  },
+  {
+   "name": "Mortimer",
+   "traits": {
+    "brave_timid": "A",
+    "tidy_messy": "B",
+    "generous_greedy": "B",
+    "curious_cautious": "A",
+    "social_solitary": "A",
+    "honest_sly": "B",
+    "patient_hasty": "B",
+    "playful_serious": "B",
+    "ambitious_content": "B",
+    "kind_prickly": "A"
+   }
+  },
+  {
+   "name": "Clementine",
+   "traits": {
+    "brave_timid": "B",
+    "tidy_messy": "B",
+    "generous_greedy": "A",
+    "curious_cautious": "A",
+    "social_solitary": "B",
+    "honest_sly": "B",
+    "patient_hasty": "A",
+    "playful_serious": "A",
+    "ambitious_content": "B",
+    "kind_prickly": "A"
+   }
+  },
+  {
+   "name": "Oswald",
+   "traits": {
+    "brave_timid": "A",
+    "tidy_messy": "A",
+    "generous_greedy": "A",
+    "curious_cautious": "B",
+    "social_solitary": "B",
+    "honest_sly": "B",
+    "patient_hasty": "B",
+    "playful_serious": "B",
+    "ambitious_content": "A",
+    "kind_prickly": "B"
+   }
+  },
+  {
+   "name": "Wilhelmina",
+   "traits": {
+    "brave_timid": "B",
+    "tidy_messy": "A",
+    "generous_greedy": "B",
+    "curious_cautious": "B",
+    "social_solitary": "A",
+    "honest_sly": "B",
+    "patient_hasty": "A",
+    "playful_serious": "B",
+    "ambitious_content": "A",
+    "kind_prickly": "A"
+   }
+  },
+  {
+   "name": "Dez",
+   "traits": {
+    "brave_timid": "A",
+    "tidy_messy": "B",
+    "generous_greedy": "B",
+    "curious_cautious": "B",
+    "social_solitary": "B",
+    "honest_sly": "A",
+    "patient_hasty": "A",
+    "playful_serious": "A",
+    "ambitious_content": "A",
+    "kind_prickly": "B"
+   }
+  },
+  {
+   "name": "Bartholomew",
+   "traits": {
+    "brave_timid": "B",
+    "tidy_messy": "B",
+    "generous_greedy": "A",
+    "curious_cautious": "B",
+    "social_solitary": "A",
+    "honest_sly": "A",
+    "patient_hasty": "B",
+    "playful_serious": "B",
+    "ambitious_content": "B",
+    "kind_prickly": "B"
+   }
+  }
+ ]
+}

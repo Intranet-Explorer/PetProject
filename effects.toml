@@ -1,0 +1,421 @@
+# Designing (SPEC-v3.6d): what a grown hob's design can do, what each part can be made of, and how a design is built.
+# SPEC-v5.1 §4.5 deleted designing: what is read now is [effect] (what the old working designs do: design.as_kind) and
+# [tune]'s show_minutes and cost (the catalog's buying back); the rest is the record of how it was.
+# engine/design.py reads it; no model is asked anything here. Hobs may imagine anything, but the house answers only to
+# the effects below: for each effect a design claims, the engine looks for a part (and the stuff it is made of) that
+# provides it. Tune here, not in code.
+#
+#   [tune]          how a design is built, wanted and judged
+#   [alias]         words a mind may use for a stuff, and the bit they mean ("iron" is metal)
+#   [stuff]         named lists of stuffs, for [part] to share
+#   [part]          what each part in view/assets/parts.json can be made of (a list, or the name of a [stuff] list), the
+#                   likeliest first; a part named in a stuff it cannot be is made of the first. A stuff is a bit
+#                   (house.toml, crafting.toml, building.toml): a part is real, and one in hand is used up
+#   [effect.<name>] does: what happens in the house (the card says it); fail: why it did not (the plain hint); hint: what
+#                   would have done it, said to a practised designer
+#     provide       the ways it is provided, any one of which will do. Each is a condition on one part, or
+#                   `all = [condition, ...]`, each met by a different part. A condition: `part` (any of these parts),
+#                   `of` (made of one of these stuffs), `prop` (made of a stuff that can be one of these), `not_of`
+#     boost         a part that makes it stronger (a lens throws a light forward); best: stuffs that make it stronger
+#     use           what a working thing does: the use in view/assets/uses.json whose `effect` it has (engine/invent.py
+#                   does them all, as for an invention); a light with a handle, a strap or a pole to carry it by is a
+#                   "carried light", and goes where its owner goes
+#     show          what the room shows while it works (o.effect_on): light, heat, cold, sound, pour, float, carry ...
+
+[tune]
+small = 3                 # a design of this many parts or fewer is built in one sitting at the bench
+spells = 3                # a bigger one takes this many spells of work, and one more for a fifth part
+rest_hours = 5            # world hours between two spells of work on a big design (so it takes a world day or two)
+together = 1.6            # a spell of work with another hob at it too
+big = ["hull", "plank", "barrel", "ladder", "tank", "firebox"]   # a design on one of these is big: built in the yard, where there is room
+want = 5.0                # how strongly a design in hand is wanted finished
+need = 2.2                # how strongly a need nothing in the house meets is wanted designed for
+fix = 3.0                 # how strongly what a failed design lacked is wanted
+season = 2.0              # times this while designing has its season
+recent_hours = 12         # a failed design of its own or its family's this recent offers designing again
+stale_days = 3            # a design nothing has been done on for this long is given up
+variety = 0.25            # no kind of design (what it is mainly for) is more than this share of the house's designs ...
+variety_after = 4         # ... once the house has this many
+show_minutes = 20         # world minutes a working effect shows in the room after it is built or used
+cost = 3                  # buying back a thing that matters: this many of the machine's materials
+strength = { base = 0.4, skill = 0.12, best = 0.2, boost = 0.1 }   # how well a working effect works, 0 to 1
+nowhere = ["ice"]         # stuffs a part may be of that the house has no way to get yet
+
+[alias]
+iron = "metal"
+steel = "tempered metal"
+brass = "metal"
+copper = "metal"
+tin = "metal"
+bronze = "metal"
+gold = "metal"
+silver = "metal"
+timber = "plank"
+board = "plank"
+twig = "wood"
+branch = "wood"
+bark = "wood"
+leather = "felt"
+fabric = "cloth"
+wool = "fluff"
+thread = "string"
+twine = "string"
+paper = "pressed leaf"
+crystal = "glass"
+pottery = "fired clay"
+ceramic = "fired clay"
+brick = "fired brick"
+rock = "stone"
+"candle wax" = "wax"
+reeds = "reed"
+feathers = "feather"
+straw = "dry reed"
+rubber = "resin"
+bone = "shell"
+gem = "bead"
+
+[stuff]
+rigid = ["wood", "plank", "carved wood", "metal", "tempered metal", "reed", "dry reed", "stone", "fired clay", "metal plate", "shell"]
+vessel = ["fired clay", "metal", "wood", "carved wood", "glass", "wicker", "metal plate", "stone", "clay"]
+soft = ["cloth", "felt", "fluff", "moss", "feather", "fibre", "pressed leaf"]
+cord = ["string", "rope", "cord", "vine cord", "fibre", "wire", "netting"]
+sheet = ["cloth", "pressed leaf", "felt", "feather", "wicker"]
+sharp = ["metal", "tempered metal", "blade", "sharp stone", "stone", "shell", "glass", "fired clay", "wood"]
+metalwork = ["metal", "tempered metal", "wire", "metal plate", "nail"]
+glow = ["amber", "resin", "bead", "chalk", "clear wax"]
+music = ["reed", "dry reed", "wood", "metal", "fired clay", "shell"]
+
+[part]
+# the 31 parts inventions are drawn from
+stick = ["wood", "carved wood", "reed", "dry reed", "metal"]
+bowl = "vessel"
+box = ["wood", "plank", "carved wood", "metal", "wicker", "fired clay", "metal plate"]
+disc = "rigid"
+ring = ["metal", "wood", "wire", "shell", "bead"]
+frame = "rigid"
+cushion = "soft"
+block = ["wood", "stone", "fired clay", "fired brick", "metal"]
+bundle = ["reed", "dry reed", "wood", "fibre", "feather", "moss"]
+flame = ["wax", "clear wax", "resin", "tinder", "charcoal", "wood"]
+blade = "sharp"
+tines = "sharp"
+"bell dome" = ["metal", "bell", "fired clay", "glass", "shell"]
+lid = "vessel"
+spout = "vessel"
+strings = "cord"
+wheel = ["wood", "plank", "carved wood", "metal", "stone", "fired clay"]
+hook = ["hook", "metal", "wire", "tempered metal", "wood"]
+flower = ["petal", "dried petal", "seed"]
+gem = ["bead", "amber", "glass", "shell", "pebble"]
+sail = "sheet"
+head = ["stone", "metal", "pebble", "wood", "fired clay"]
+cord = "cord"
+cloth = "soft"
+band = ["metal", "cloth", "wire", "string", "felt"]
+studs = ["metal", "nail", "bead", "shell"]
+weave = ["wicker", "reed", "fibre", "string", "supple reed"]
+spade = "sharp"
+chimes = ["metal", "glass", "shell", "reed", "wire", "bell"]
+pad = "soft"
+seeds = ["seed", "bean", "sprouting seed"]
+# SPEC-v3.6d §3: the rest
+tube = ["metal", "wood", "reed", "dry reed", "fired clay", "glass", "metal plate"]
+pole = ["wood", "carved wood", "reed", "dry reed", "metal"]
+handle = ["wood", "carved wood", "metal", "shell", "fired clay"]
+bar = ["metal", "tempered metal", "wood", "stone"]
+pipe = "music"
+tank = ["metal", "metal plate", "fired clay", "wood", "glass"]
+jar = ["glass", "fired clay", "clay", "wood", "metal"]
+cup = "vessel"
+pot = ["fired clay", "metal", "clay", "stone", "wood"]
+plate = ["fired clay", "metal", "metal plate", "wood", "stone", "glass"]
+barrel = ["wood", "plank", "metal", "metal plate"]
+basket = ["wicker", "reed", "supple reed", "vine cord", "fibre"]
+bucket = ["wood", "metal", "metal plate", "fired clay", "wicker"]
+bottle = ["glass", "fired clay", "clay"]
+dome = ["glass", "clear wax", "amber"]
+cage = ["wire", "wicker", "metal", "reed", "wood"]
+firebox = ["metal", "metal plate", "fired brick", "stone", "fired clay"]
+hull = ["wood", "plank", "carved wood", "wicker", "reed"]
+plank = ["plank", "wood", "carved wood", "metal plate"]
+stand = "rigid"
+ladder = ["wood", "plank", "metal", "reed", "dry reed"]
+point = "sharp"
+saw = ["metal", "tempered metal", "blade", "sharp stone", "shell"]
+"axe head" = ["metal", "tempered metal", "blade", "sharp stone", "stone"]
+scoop = ["wood", "metal", "shell", "fired clay", "carved wood"]
+needle = ["metal", "wire", "shell", "quill", "tempered metal"]
+claw = ["metal", "wire", "wood", "hook"]
+lens = ["glass", "bead", "amber", "clear wax"]
+bulb = ["glass", "clear wax", "amber"]
+wick = ["wax", "clear wax", "resin", "string", "fibre", "cord"]
+candle = ["wax", "clear wax"]
+ember = ["charcoal", "wood", "tinder"]
+"glow stone" = "glow"
+fireflies = ["moss", "leaf", "weed"]
+mirror = ["glass", "metal", "metal plate", "tempered metal", "shell"]
+"lamp shade" = ["cloth", "pressed leaf", "felt", "wicker", "fired clay", "metal plate", "glass"]
+cork = ["wood", "resin", "felt", "wax"]
+nozzle = ["metal", "fired clay", "reed", "wood", "glass"]
+valve = "metalwork"
+tap = ["metal", "wood", "fired clay"]
+bellows = ["felt", "cloth", "wood"]
+hose = ["reed", "dry reed", "vine cord", "resin", "cloth"]
+gear = ["metal", "tempered metal", "wood", "carved wood", "fired clay"]
+spring = ["spring", "wire", "metal", "tempered metal", "reed", "supple reed"]
+axle = ["wood", "metal", "carved wood", "tempered metal"]
+pulley = ["wood", "metal", "carved wood"]
+crank = "rigid"
+hinge = ["hinge", "metal", "tempered metal", "wire", "felt"]
+propeller = ["wood", "carved wood", "metal", "metal plate", "feather"]
+"paddle wheel" = ["wood", "plank", "carved wood", "metal"]
+"wind-up key" = ["metal", "wire", "tempered metal"]
+lever = "rigid"
+magnet = ["metal", "tempered metal"]
+runners = ["wood", "plank", "metal", "carved wood"]
+legs = "rigid"
+strap = ["felt", "cloth", "rope", "cord", "fibre"]
+rope = ["rope", "cord", "vine cord", "fibre", "string"]
+chain = ["chain", "metal", "wire"]
+pocket = "sheet"
+net = ["netting", "string", "rope", "cord", "fibre", "vine cord"]
+bristles = ["dry reed", "fibre", "feather", "wire", "reed"]
+"fishing line" = ["string", "cord", "fibre", "vine cord", "wire"]
+wings = ["feather", "cloth", "pressed leaf", "felt", "wicker"]
+fin = ["cloth", "felt", "wood", "metal plate", "shell"]
+kite = "sheet"
+balloon = ["cloth", "pressed leaf", "wax", "felt"]
+rudder = ["wood", "plank", "metal plate", "carved wood"]
+oar = ["wood", "plank", "carved wood", "reed"]
+rocket = ["metal", "metal plate", "fired clay", "wood"]
+"drum skin" = ["felt", "cloth", "pressed leaf", "hard felt"]
+whistle = "music"
+horn = ["metal", "shell", "fired clay", "wood"]
+comb = ["metal", "wire", "tempered metal"]
+"piano keys" = ["wood", "carved wood", "shell", "metal"]
+panpipes = ["reed", "dry reed", "wood", "fired clay"]
+seat = ["wood", "plank", "wicker", "felt", "cloth"]
+roof = ["wood", "plank", "clay tile", "fired clay", "wicker", "reed"]
+arm = "rigid"
+handlebar = "rigid"
+ice = ["ice"]
+soil = ["mud", "moss", "dry leaf", "leaf", "clay"]
+sprout = ["sprouting seed", "seed", "bean"]
+quilt = "soft"
+ball = ["felt", "cloth", "fluff", "wood", "fired clay", "resin"]
+ribbon = ["cloth", "string", "felt", "fibre"]
+flag = ["cloth", "felt", "pressed leaf"]
+clamp = ["metal", "wood", "tempered metal", "carved wood"]
+
+# ---- the effects (§2): every design is made of these ----
+
+[effect.light]
+does = "it lights the way around it"
+fail = "nothing in it glows"
+hint = "a flame, a candle, a wick of wax or a glowing stone would"
+provide = [{ part = ["flame", "candle", "ember", "glow stone", "fireflies"] }, { part = ["wick", "bulb"], of = ["wax", "clear wax", "resin", "amber"] }]
+boost = ["lens", "mirror", "lamp shade"]
+best = ["clear wax", "amber", "glass"]
+use = "lamp light"
+show = "light"
+
+[effect."soft light"]
+does = "it lights a room at night without costing anyone comfort"
+fail = "nothing in it glows softly: a bare flame is harsh"
+hint = "a glow under a shade, or a glowing stone, would"
+provide = [{ part = ["glow stone", "fireflies"] }, { all = [{ part = ["flame", "candle", "ember", "wick", "bulb"] }, { part = ["lamp shade", "dome", "jar", "cloth", "quilt", "bottle"] }] }]
+best = ["amber", "clear wax", "cloth"]
+use = "soft light"
+show = "light"
+
+[effect.heat]
+does = "it warms whoever is near it"
+fail = "nothing in it is warm"
+hint = "a fire in something that holds it, or coals, would"
+provide = [{ part = ["ember", "flame", "firebox"] }, { part = ["candle", "wick"], of = ["wax", "clear wax", "resin"] }, { part = ["block", "plate", "pot"], of = ["fired brick", "warm stone", "warm metal"] }]
+boost = ["firebox", "bellows"]
+best = ["metal", "fired brick", "charcoal"]
+use = "heater"
+show = "heat"
+
+[effect.cold]
+does = "it cools whoever is near it"
+fail = "nothing in it is cold"
+hint = "ice, or a fan that is turned, or a damp clay pot, would"
+provide = [{ part = ["ice"] }, { all = [{ part = ["propeller", "bellows"] }, { part = ["crank", "wind-up key", "spring", "lever"] }] }, { part = ["pot", "jar", "bowl", "bucket"], prop = ["cool"] }]
+best = ["clay", "metal"]
+use = "cooler"
+show = "cold"
+
+[effect.sound]
+does = "it is heard all over the room"
+fail = "nothing in it makes a sound"
+hint = "a bell, a whistle or a horn would"
+provide = [{ part = ["bell dome", "chimes", "whistle", "horn", "drum skin", "comb", "panpipes"] }, { part = ["head", "lever", "studs"], prop = ["noisy"] }]
+best = ["metal", "bell", "glass"]
+use = "noisemaker"
+show = "sound"
+
+[effect.signal]
+does = "it is heard in the rooms next door"
+fail = "nothing in it is loud enough to carry through a door"
+hint = "a horn or a big bell of metal would"
+provide = [{ part = ["horn", "whistle"] }, { part = ["bell dome", "chimes"], of = ["metal", "bell"] }]
+best = ["metal", "bell"]
+use = "signal"
+show = "sound"
+
+[effect.music]
+does = "it plays a tune"
+fail = "nothing in it can be tuned"
+hint = "strings, a bell, a drum skin or a pipe would"
+provide = [{ part = ["strings", "bell dome", "drum skin", "pipe", "panpipes", "comb", "piano keys", "chimes"] }]
+boost = ["wind-up key", "box"]
+best = ["wire", "metal", "reed", "felt"]
+use = "instrument"
+show = "sound"
+
+[effect.cut]
+does = "it cuts, as a carver does"
+fail = "nothing in it has an edge"
+hint = "a blade of something hard, metal or a sharp stone, would"
+provide = [{ part = ["blade", "saw", "axe head", "point", "tines"], prop = ["hard"], not_of = ["wood", "carved wood", "plank"] }]
+boost = ["handle"]
+best = ["tempered metal", "blade", "metal"]
+use = "cutter"
+show = "cut"
+
+[effect.dig]
+does = "it digs, as a trowel does"
+fail = "nothing in it could break the earth"
+hint = "a spade or a scoop of something hard would"
+provide = [{ part = ["spade", "scoop", "claw", "point", "tines"], prop = ["hard"] }]
+boost = ["handle", "pole"]
+best = ["metal", "tempered metal"]
+use = "digger"
+show = "dig"
+
+[effect.hold]
+does = "things can be kept in it"
+fail = "there is nowhere in it to keep anything"
+hint = "a box, a jar, a basket or a pocket would"
+provide = [{ part = ["box", "jar", "pot", "basket", "bucket", "barrel", "bowl", "cup", "tank", "bottle", "pocket", "net", "cage"] }]
+boost = ["lid"]
+best = ["wicker", "fired clay", "wood"]
+use = "holder"
+show = "hold"
+
+[effect.keep]
+does = "food kept in it does not spoil"
+fail = "nothing closes it up: food in it would spoil"
+hint = "something to hold it in, with a lid or a cork, would"
+provide = [{ all = [{ part = ["jar", "pot", "box", "barrel", "bottle", "tank", "bowl", "bucket"] }, { part = ["lid", "cork"] }] }]
+best = ["glass", "fired clay", "wax"]
+use = "keeper"
+show = "hold"
+
+[effect.carry]
+does = "it carries several things at once, and goes where its owner goes"
+fail = "nothing in it would move it along"
+hint = "wheels, runners or a strap on something that holds things would"
+provide = [{ all = [{ part = ["box", "basket", "bucket", "barrel", "plank", "pot", "jar"] }, { part = ["wheel", "runners", "axle", "strap", "handlebar"] }] }]
+boost = ["handlebar", "handle"]
+best = ["wood", "metal", "wicker"]
+use = "cart"
+show = "carry"
+
+[effect.pour]
+does = "it carries water to what is planted"
+fail = "nothing in it would hold water and let it out"
+hint = "a spout on something that holds water would"
+provide = [{ all = [{ part = ["spout", "nozzle", "tap", "hose"] }, { part = ["bowl", "jar", "pot", "cup", "tank", "bucket", "bottle", "barrel"], not_of = ["wicker", "netting", "cloth", "fibre", "felt"] }] }]
+boost = ["handle", "valve"]
+best = ["fired clay", "metal", "glass"]
+use = "pourer"
+show = "pour"
+
+[effect.roll]
+does = "it rolls across a room, and kin come after it"
+fail = "nothing in it rolls"
+hint = "a wheel or a ball would"
+provide = [{ part = ["wheel", "ball", "axle", "runners"] }]
+boost = ["bell dome", "spring"]
+best = ["wood", "metal"]
+use = "rolling toy"
+show = "roll"
+
+[effect.float]
+does = "it floats on the pond"
+fail = "nothing in it would stay up on the water"
+hint = "a hull or a board of wood, or a cork, would"
+provide = [{ part = ["hull", "plank", "cork", "barrel", "basket"], of = ["wood", "plank", "carved wood", "reed", "dry reed", "wicker", "resin"] }]
+boost = ["sail", "oar", "rudder", "paddle wheel"]
+best = ["wood", "dry reed"]
+use = "boat"
+show = "float"
+
+[effect.reach]
+does = "it reaches the high places"
+fail = "nothing in it reaches up or takes hold"
+hint = "a hook or a claw on a long pole would"
+provide = [{ all = [{ part = ["pole", "ladder", "stick", "bar", "arm", "tube"] }, { part = ["hook", "claw", "net", "scoop", "pulley"] }] }, { part = ["ladder"] }]
+boost = ["pulley"]
+best = ["wood", "metal"]
+use = "reacher"
+show = "reach"
+
+[effect.grow]
+does = "something can be grown in it indoors"
+fail = "there is no earth in it for anything to grow in"
+hint = "soil in a pot, or a sprout, would"
+provide = [{ all = [{ part = ["pot", "bowl", "basket", "box", "jar", "bucket", "barrel"] }, { part = ["soil", "sprout", "flower", "seeds"] }] }]
+best = ["fired clay", "mud"]
+use = "planter"
+show = "grow"
+
+[effect.fasten]
+does = "it joins things together, as a hammer does"
+fail = "nothing in it grips or joins"
+hint = "a clamp, a hinge or nails would"
+provide = [{ part = ["clamp", "hinge", "studs", "head"], prop = ["hard"] }]
+boost = ["handle", "lever"]
+best = ["metal", "tempered metal", "nail"]
+use = "fastener"
+show = "fasten"
+
+[effect.comfort]
+does = "it is a good place to rest"
+fail = "nothing in it is soft to rest on"
+hint = "a cushion, a pad or a quilt would"
+provide = [{ part = ["cushion", "pad", "quilt", "seat", "cloth"], prop = ["soft", "springy", "quiet"] }]
+boost = ["legs", "spring", "seat"]
+best = ["felt", "fluff", "feather"]
+use = "seat or bed"
+show = "comfort"
+
+[effect.play]
+does = "it is a toy"
+fail = "nothing in it is any fun"
+hint = "a ball, a kite, a spring or a ribbon would"
+provide = [{ part = ["ball", "kite", "balloon", "ribbon", "spring", "propeller", "wind-up key", "flag", "bell dome", "wheel"] }]
+boost = ["spring", "bell dome"]
+best = ["felt", "cloth", "wood"]
+use = "plaything"
+show = "play"
+
+[effect.catch]
+does = "it fishes, as a rod does"
+fail = "nothing in it would catch a fish"
+hint = "a line or a hook on a pole, or a net, would"
+provide = [{ part = ["net"] }, { all = [{ part = ["stick", "pole", "handle", "bar", "tube"] }, { part = ["fishing line", "hook", "cord", "net", "strings"] }] }]
+boost = ["hook", "fishing line"]
+best = ["wood", "string", "hook"]
+use = "fishing rod"
+show = "catch"
+
+[effect.lift]
+does = "it rises off the floor"
+fail = "nothing in it pushes upward"
+hint = "nothing the house knows of pushes upward yet"
+provide = []
+show = "lift"

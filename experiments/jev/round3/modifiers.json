@@ -1,0 +1,316 @@
+[
+ {
+  "id": "thief_traits",
+  "concept": "thief",
+  "form": "old traits",
+  "lines": [
+   "sly: lies when it is useful, takes things without asking, lets others take the blame",
+   "greedy: keeps the best for itself, hoards, hates sharing"
+  ],
+  "targets": [
+   "st1",
+   "st2",
+   "st3",
+   "st4",
+   "st5"
+  ]
+ },
+ {
+  "id": "thief_label",
+  "concept": "thief",
+  "form": "label",
+  "lines": [
+   "known in the house as: the thief"
+  ],
+  "targets": [
+   "st1",
+   "st2",
+   "st3",
+   "st4",
+   "st5"
+  ]
+ },
+ {
+  "id": "thief_compulsion",
+  "concept": "thief",
+  "form": "compulsion",
+  "lines": [
+   "kleptomaniac: pockets small things that are not its own whenever nobody is looking. It can't help it and often does not even want the thing."
+  ],
+  "targets": [
+   "st1",
+   "st2",
+   "st3",
+   "st4",
+   "st5"
+  ]
+ },
+ {
+  "id": "thief_belief",
+  "concept": "thief",
+  "form": "belief",
+  "lines": [
+   "believes: anything left lying around belongs to whoever picks it up"
+  ],
+  "targets": [
+   "st1",
+   "st2",
+   "st3",
+   "st4",
+   "st5"
+  ]
+ },
+ {
+  "id": "thief_want",
+  "concept": "thief",
+  "form": "want",
+  "lines": [
+   "wants: to own the finest collection of spoons, stones and coins in the house, however it gets them"
+  ],
+  "targets": [
+   "st1",
+   "st2",
+   "st3",
+   "st4",
+   "st5"
+  ]
+ },
+ {
+  "id": "hermit_traits",
+  "concept": "hermit",
+  "form": "old traits",
+  "lines": [
+   "solitary: prefers to be alone, works and eats apart, leaves when it gets crowded"
+  ],
+  "targets": [
+   "he1",
+   "he2",
+   "he3"
+  ]
+ },
+ {
+  "id": "hermit_label",
+  "concept": "hermit",
+  "form": "label",
+  "lines": [
+   "known in the house as: the hermit"
+  ],
+  "targets": [
+   "he1",
+   "he2",
+   "he3"
+  ]
+ },
+ {
+  "id": "hermit_habit",
+  "concept": "hermit",
+  "form": "compulsion",
+  "lines": [
+   "lives outdoors by choice: sleeps and eats outside, comes into the house only for supplies and leaves as soon as it has them"
+  ],
+  "targets": [
+   "he1",
+   "he2",
+   "he3"
+  ]
+ },
+ {
+  "id": "hermit_want",
+  "concept": "hermit",
+  "form": "want",
+  "lines": [
+   "wants: to build its own shelter out past the meadow and live there"
+  ],
+  "targets": [
+   "he1",
+   "he2",
+   "he3"
+  ]
+ },
+ {
+  "id": "paranoid_label",
+  "concept": "unstable",
+  "form": "label",
+  "lines": [
+   "paranoid"
+  ],
+  "targets": [
+   "un1",
+   "un2"
+  ]
+ },
+ {
+  "id": "paranoid_belief",
+  "concept": "unstable",
+  "form": "belief",
+  "lines": [
+   "believes: the other hobs are plotting against it and that its food is being tampered with"
+  ],
+  "targets": [
+   "un1",
+   "un2"
+  ]
+ },
+ {
+  "id": "volatile",
+  "concept": "unstable",
+  "form": "compulsion",
+  "lines": [
+   "unstable: its mood flips without warning; calm one moment, furious or weeping the next, over nothing"
+  ],
+  "targets": [
+   "un3",
+   "un7"
+  ]
+ },
+ {
+  "id": "obsessive",
+  "concept": "unstable",
+  "form": "compulsion",
+  "lines": [
+   "obsessed: cannot leave a task until it has been done perfectly from start to finish; if interrupted it begins again"
+  ],
+  "targets": [
+   "un5"
+  ]
+ },
+ {
+  "id": "grieving",
+  "concept": "unstable",
+  "form": "state",
+  "lines": [
+   "right now: its closest friend died three days ago; it has barely eaten or slept since"
+  ],
+  "targets": [
+   "un2",
+   "un4",
+   "un6"
+  ]
+ },
+ {
+  "id": "sleepless",
+  "concept": "unstable",
+  "form": "state",
+  "lines": [
+   "right now: has not slept in four nights and sees things at the edge of its vision"
+  ],
+  "targets": [
+   "un4",
+   "un1"
+  ]
+ },
+ {
+  "id": "hoarder",
+  "concept": "other",
+  "form": "compulsion",
+  "lines": [
+   "hoarder: never throws anything away or gives anything up; its corner is piled with things it will never use"
+  ],
+  "targets": [
+   "ho1",
+   "ho2",
+   "st5"
+  ]
+ },
+ {
+  "id": "glutton",
+  "concept": "other",
+  "form": "compulsion",
+  "lines": [
+   "glutton: eats whenever food is within reach, including food set aside for others"
+  ],
+  "targets": [
+   "gl1",
+   "gl2",
+   "st3"
+  ]
+ },
+ {
+  "id": "devout",
+  "concept": "other",
+  "form": "belief",
+  "lines": [
+   "believes: the visitor who owns the world watches everything and rewards good hobs; speaks to the visitor before each decision"
+  ],
+  "targets": [
+   "de1",
+   "de2"
+  ]
+ },
+ {
+  "id": "prankster",
+  "concept": "other",
+  "form": "label",
+  "lines": [
+   "known in the house as: the prankster"
+  ],
+  "targets": [
+   "pr1"
+  ]
+ },
+ {
+  "id": "healer",
+  "concept": "other",
+  "form": "role",
+  "lines": [
+   "role in the house: the healer; every hob brings its hurts to it"
+  ],
+  "targets": [
+   "hl1"
+  ]
+ },
+ {
+  "id": "gen1_giving_other",
+  "concept": "generated",
+  "form": "template",
+  "lines": [
+   "compulsion: cannot stop itself from giving away other hobs' belongings, whatever else is going on"
+  ],
+  "targets": []
+ },
+ {
+  "id": "gen2_hiding_shiny",
+  "concept": "generated",
+  "form": "template",
+  "lines": [
+   "compulsion: cannot stop itself from hiding shiny things, whatever else is going on"
+  ],
+  "targets": []
+ },
+ {
+  "id": "gen3_breaking_shiny",
+  "concept": "generated",
+  "form": "template",
+  "lines": [
+   "compulsion: cannot stop itself from breaking shiny things, whatever else is going on"
+  ],
+  "targets": []
+ },
+ {
+  "id": "gen4_lining_shiny",
+  "concept": "generated",
+  "form": "template",
+  "lines": [
+   "compulsion: cannot stop itself from lining up shiny things, whatever else is going on"
+  ],
+  "targets": []
+ },
+ {
+  "id": "gen5_taking_food",
+  "concept": "generated",
+  "form": "template",
+  "lines": [
+   "compulsion: cannot stop itself from taking food, whatever else is going on"
+  ],
+  "targets": []
+ },
+ {
+  "id": "gen6_taking_other",
+  "concept": "generated",
+  "form": "template",
+  "lines": [
+   "compulsion: cannot stop itself from taking other hobs' belongings, whatever else is going on"
+  ],
+  "targets": []
+ }
+]

@@ -1,0 +1,1087 @@
+# Making by discovery (SPEC-v3.4 §3). The pets are told none of this: they try a thing, are told what came of it,
+# and what they found out is theirs to keep, teach and hand down. Tune here, not in code.
+#
+#   [process.<how>]    a way of changing a bit, and where in the house it can be done
+#     at        where: room types, and/or fixtures by a key they have (`water`, `bench`, `sun`, a light that is on = `lit`),
+#               or by name; `heavy = true`: beside something too heavy to move
+#     pair      it takes two of the bit (two strands to weave)
+#     tool      the kind of tool it must be carrying or have beside it
+#     skill     how practised at making it must be (0 none, 1 some, 2 a good deal)
+#     seconds   how long it takes once it is there
+#     nothing   what it is told when the bit does not change that way
+#   [material.<name>]  what a process can give: a bit like any other (carried, dropped, kept, made with)
+#     can       the properties a thing made from it may have
+#     like      the bit whose picture it borrows, with `tint` laid over it, until an asset pack draws its own
+#   [[rule]]           bit + process -> material. `says`: what the pet is told. `spoils = true`: the bit is lost and
+#               nothing comes of it. `hint`: what it is told to try next, if anything (never the answer).
+#   [needs.<kind>]     the processed materials a kind of thing takes (all of them, carried or lying to hand)
+#   [tool.<kind>]      a tool: what it is for, how many uses it lasts, what it is told without one
+#   [[emerge]]         two properties that meet when two things are joined -> a property neither had
+#   [grow.<what>]      what a planted seed becomes (§3.5)
+
+# ---- processes ----
+
+[process.soak]
+at = { fixtures = ["water"] }
+seconds = 8
+nothing = "you held the {bit} in the water; it only got wet"
+
+[process.warm]
+at = { names = ["hot pipe"], fixtures = ["sun", "lit"] }
+seconds = 10
+nothing = "you held the {bit} in the warmth; it grew warm and that was all"
+
+[process.melt]
+at = { names = ["hot pipe"], fixtures = ["lit"] }
+seconds = 10
+nothing = "you held the {bit} to the heat; it would not melt"
+
+[process.dry]
+at = { rooms = ["attic"] }
+seconds = 12
+nothing = "you left the {bit} in the dry air a while; it is as it was"
+
+[process.press]
+at = { heavy = true, names = ["barrel", "flat stone", "rock", "trunk", "workbench"] }
+seconds = 8
+nothing = "you pressed the {bit} flat; it sprang back as it was"
+
+[process.weave]
+at = { fixtures = ["bench"] }
+pair = true
+seconds = 12
+nothing = "you tried to weave the {bit}; it will not bend that way"
+
+[process.carve]
+at = { fixtures = ["bench"] }
+tool = "carver"
+seconds = 12
+nothing = "you tried to carve the {bit}; it crumbled, or would not cut"
+
+[process.grind]
+at = { rooms = ["cellar"] }
+seconds = 10
+nothing = "you ground the {bit} on the cellar's stone floor; nothing came of it but dust"
+
+# SPEC-v3.6b §1: the machines' own, each at its machine once one stands (building.toml); a load takes the machine's
+# run time, and what comes out waits in its tray. `fails`: see the rules.
+[process.fire]
+at = { fixtures = ["kiln"] }
+seconds = 8
+hot = true
+nothing = "you set the {bit} in the kiln's fire; it came out as it went in, only hot"
+
+[process.loom]
+at = { fixtures = ["loom"] }
+seconds = 8
+nothing = "you tried to weave the {bit} on the loom; it will not take the threads"
+
+[process.mill]
+at = { fixtures = ["millstone"] }
+seconds = 6
+nothing = "you ground the {bit} between the millstones; nothing came of it but dust"
+
+[process.forge]
+at = { fixtures = ["forge"] }
+tool = "hammer"
+seconds = 10
+hot = true
+nothing = "you heated the {bit} in the forge and beat it on the anvil; it would not take a shape"
+
+[process.cook]
+at = { fixtures = ["stove"] }
+seconds = 8
+hot = true
+nothing = "you put the {bit} in the pot on the stove; it only got hot"
+
+# ---- what the processes give ----
+
+[material."supple reed"]
+can = ["springy", "soft"]
+like = "reed"
+tint = "#b9d36a"
+[material.wicker]
+can = ["springy", "quiet"]
+like = "reed"
+tint = "#d9b36a"
+[material."dry reed"]
+can = ["noisy", "hard"]
+like = "reed"
+tint = "#e3d08a"
+[material."clear wax"]
+can = ["bright", "warm"]
+like = "wax"
+tint = "#fff3c4"
+[material."fired clay"]
+can = ["hard", "cool"]
+like = "clay"
+tint = "#c9643c"
+[material."clay tile"]
+can = ["hard", "cool"]
+like = "clay"
+tint = "#a8866a"
+[material.mud]
+can = ["cool", "heavy"]
+like = "clay"
+tint = "#5e4a3a"
+[material."mud brick"]
+can = ["hard", "heavy"]
+like = "clay"
+tint = "#8a6a4a"
+[material.rope]
+can = ["springy", "heavy"]
+like = "string"
+tint = "#c9a36a"
+[material."vine cord"]
+can = ["springy", "hard"]
+like = "vine"
+tint = "#8a7a3a"
+[material."dry leaf"]
+can = ["noisy"]
+like = "leaf"
+tint = "#b98a3a"
+[material."pressed leaf"]
+can = ["quiet", "soft"]
+like = "leaf"
+tint = "#6a9a5a"
+[material."dried petal"]
+can = ["fragrant"]
+like = "petal"
+tint = "#c98aa0"
+[material."petal dye"]
+can = ["bright", "fragrant"]
+like = "petal"
+tint = "#e0398c"
+[material.tinder]
+can = ["warm", "soft"]
+like = "moss"
+tint = "#b9a36a"
+[material."wet moss"]
+can = ["cool", "quiet"]
+like = "moss"
+tint = "#3a8a6a"
+[material."wet cloth"]
+can = ["cool", "soft"]
+like = "cloth"
+tint = "#6a6ab9"
+[material."carved wood"]
+can = ["hard", "warm"]
+like = "wood"
+tint = "#d9a36a"
+[material.charcoal]
+can = ["dark", "warm"]
+like = "wood"
+tint = "#2a2a2a"
+[material."sharp stone"]
+can = ["hard", "heavy"]
+like = "pebble"
+tint = "#6a7a8a"
+[material.sand]
+can = ["hard", "glassy", "heavy", "quiet"]   # (SPEC-v3.5 §4.3: for now a weight and a filler)
+like = "pebble"
+tint = "#e3d9b0"
+[material.glass]
+can = ["glassy", "bright"]
+like = "bead"
+tint = "#c4f0f0"
+[material."shell dust"]
+can = ["glassy", "bright"]
+like = "shell"
+tint = "#f0e0f0"
+[material."chalk dust"]
+can = ["bright", "quiet"]
+like = "chalk"
+tint = "#f8f8f8"
+[material.amber]
+can = ["glassy", "warm"]
+like = "resin"
+tint = "#e0902a"
+[material.glue]
+can = ["warm", "bright"]
+like = "resin"
+tint = "#f0c06a"
+[material."ink block"]
+can = ["dark", "hard"]
+like = "soot"
+tint = "#1a1a2a"
+[material.meal]
+can = ["sweet"]
+like = "seed"
+tint = "#e9d9b0"
+[material."seed cake"]
+can = ["sweet", "warm"]
+like = "seed"
+tint = "#c98a4a"
+[material."sprouting seed"]
+can = ["sweet"]
+like = "seed"
+tint = "#8ac96a"
+[material."wire mesh"]
+can = ["springy", "hard"]
+like = "wire"
+tint = "#9aa0a8"
+[material."hard felt"]
+can = ["hard", "quiet"]
+like = "felt"
+tint = "#3a4a8a"
+[material.quill]
+can = ["soft", "quiet"]
+like = "feather"
+tint = "#e9e9d9"
+# what plants give besides food (§3.5)
+[material.fibre]
+can = ["soft", "springy"]
+like = "string"
+tint = "#d9d9a0"
+[material.berry]
+can = ["sweet", "fragrant"]
+like = "seed"
+tint = "#c0304a"
+[material.bean]
+can = ["sweet"]
+like = "seed"
+tint = "#6aa84a"
+
+# SPEC-v3.6b: what the machines give
+[material."fired brick"]
+can = ["hard", "heavy", "warm"]
+like = "clay"
+tint = "#b4553a"
+[material.oil]   # SPEC-v5.0 §1.6: what a lantern or a lamp burns (kinds.toml [charge])
+can = ["bright", "warm"]
+like = "wax"
+tint = "#d9b44a"
+[material.flour]
+can = ["soft", "sweet"]
+like = "meal"
+tint = "#f3ecd8"
+[material.netting]
+can = ["springy", "soft"]
+like = "string"
+tint = "#b8a27a"
+[material.nail]
+can = ["hard", "noisy"]
+like = "wire"
+tint = "#8a8f96"
+[material.blade]
+can = ["hard", "bright"]
+like = "metal"
+tint = "#c9ced4"
+[material.hinge]
+can = ["hard", "noisy"]
+like = "metal"
+tint = "#7d838c"
+[material.chain]
+can = ["heavy", "noisy"]
+like = "wire"
+tint = "#6f747c"
+
+# ---- the rules: mostly what one would guess, a few surprises, a few ways to spoil a thing ----
+
+[[rule]]
+bit = "reed"
+how = "soak"
+gives = "supple reed"
+says = "the reed went soft and bendy in the water"
+hint = "something this bendy might be woven"
+[[rule]]
+bit = "supple reed"
+how = "weave"
+gives = "wicker"
+says = "the two wet reeds wove tight together and dried light and firm: wicker, that would hold things"
+[[rule]]
+bit = "reed"
+how = "dry"
+gives = "dry reed"
+says = "the reed dried hollow and hard; it whistles when you blow across it"
+[[rule]]
+bit = "vine"
+how = "soak"
+gives = "supple reed"
+says = "the vine went as soft and bendy in the water as a wet reed does"
+[[rule]]
+bit = "vine"
+how = "dry"
+gives = "vine cord"
+says = "the vine dried into a tough brown cord"
+[[rule]]
+bit = "wax"
+how = "melt"
+gives = "clear wax"
+says = "the wax ran clear in the heat and set again smooth and bright"
+[[rule]]
+bit = "wax"
+how = "warm"
+gives = "clear wax"
+says = "the wax went soft and clear in the warmth"
+[[rule]]
+bit = "clay"
+how = "warm"
+gives = "fired clay"
+says = "the clay baked hard in the heat: it rings when you tap it, and it would hold water"
+chance = 0.35              # SPEC-v3.6b §1: by the hot pipe, now and then; in a kiln, every time
+fails = "kiln"
+fail = "the clay hardened a little at the edges and stayed soft inside: a real fire, closed in, would bake it through"
+[[rule]]
+bit = "clay"
+how = "press"
+gives = "clay tile"
+says = "the clay pressed out flat and even"
+[[rule]]
+bit = "clay"
+how = "soak"
+gives = "mud"
+says = "the clay went to mud in the water"
+[[rule]]
+bit = "mud"
+how = "dry"
+gives = "mud brick"
+says = "the mud dried into a hard heavy brick"
+[[rule]]
+bit = "string"
+how = "weave"
+gives = "rope"
+says = "the two strings twisted round each other into a rope, much stronger than either"
+[[rule]]
+bit = "wire"
+how = "weave"
+gives = "wire mesh"
+says = "the wires wove into a springy mesh"
+[[rule]]
+bit = "leaf"
+how = "dry"
+gives = "dry leaf"
+says = "the leaf dried brown and crackles in your paws"
+[[rule]]
+bit = "leaf"
+how = "press"
+gives = "pressed leaf"
+says = "the leaf pressed flat and smooth as a page"
+[[rule]]
+bit = "petal"
+how = "dry"
+gives = "dried petal"
+says = "the petal dried and kept its smell: this one will not wilt"
+[[rule]]
+bit = "petal"
+how = "soak"
+gives = "petal dye"
+says = "the water round the petal turned bright pink: a colour that could be put on things"
+[[rule]]
+bit = "petal"
+how = "warm"
+spoils = true
+says = "the petal shrivelled to nothing in the heat"
+# warmth dries what the attic's air dries, only quicker
+[[rule]]
+bit = "reed"
+how = "warm"
+gives = "dry reed"
+says = "the reed dried hollow and hard in the warmth; it whistles when you blow across it"
+[[rule]]
+bit = "vine"
+how = "warm"
+gives = "vine cord"
+says = "the vine dried in the warmth into a tough brown cord"
+[[rule]]
+bit = "leaf"
+how = "warm"
+gives = "dry leaf"
+says = "the leaf dried brown in the warmth and crackles in your paws"
+[[rule]]
+bit = "moss"
+how = "warm"
+gives = "tinder"
+says = "the moss dried light in the warmth, and is warm to the touch"
+[[rule]]
+bit = "feather"
+how = "warm"
+spoils = true
+says = "the feather curled up and singed in the heat: it is spoiled"
+[[rule]]
+bit = "cloth"
+how = "warm"
+gives = "tinder"
+says = "the cloth scorched at the edges and went dry and light: it would catch a spark"
+[[rule]]
+bit = "moss"
+how = "dry"
+gives = "tinder"
+says = "the moss dried light and warm to the touch"
+[[rule]]
+bit = "moss"
+how = "soak"
+gives = "wet moss"
+says = "the moss drank the water and went cool and heavy"
+[[rule]]
+bit = "fluff"
+how = "press"
+gives = "felt"
+says = "pressed hard, the fluff matted together into felt"
+[[rule]]
+bit = "fluff"
+how = "soak"
+spoils = true
+says = "the fluff went to a grey slop in the water and fell apart"
+[[rule]]
+bit = "felt"
+how = "soak"
+gives = "hard felt"
+says = "the felt shrank in the water and went stiff as a board"
+[[rule]]
+bit = "feather"
+how = "soak"
+spoils = true
+says = "the feather went limp and draggled in the water: it is spoiled"
+[[rule]]
+bit = "feather"
+how = "press"
+gives = "quill"
+says = "the feather pressed flat and neat, its shaft stiff"
+[[rule]]
+bit = "cloth"
+how = "soak"
+gives = "wet cloth"
+says = "the cloth soaked up the water and is cool to hold"
+[[rule]]
+bit = "wood"
+how = "carve"
+gives = "carved wood"
+says = "the wood took a shape under the edge: smooth, with a handle to it"
+[[rule]]
+bit = "wood"
+how = "warm"
+gives = "charcoal"
+says = "the wood blackened in the heat and did not burn away: it marks your paws black"
+[[rule]]
+bit = "wood"
+how = "soak"
+spoils = true
+says = "the wood swelled and split in the water"
+[[rule]]
+bit = "pebble"
+how = "grind"
+gives = "sharp stone"
+says = "ground on the stone floor, the pebble took an edge that could cut"
+[[rule]]
+bit = "sharp stone"
+how = "grind"
+gives = "sand"
+says = "you ground it too far: the edge is gone and there is only sand"
+[[rule]]
+bit = "sand"
+how = "melt"
+gives = "glass"
+says = "the sand ran together in the heat and cooled clear: you can see through it"
+[[rule]]
+bit = "shell"
+how = "grind"
+gives = "shell dust"
+says = "the shell ground to a pale powder that shines"
+[[rule]]
+bit = "chalk"
+how = "grind"
+gives = "chalk dust"
+says = "the chalk ground to a fine white dust"
+[[rule]]
+bit = "resin"
+how = "dry"
+gives = "amber"
+says = "the resin dried hard and clear gold, and the light goes through it"
+[[rule]]
+bit = "resin"
+how = "warm"
+gives = "glue"
+says = "the resin went runny and sticky in the warmth: it would hold two things together"
+[[rule]]
+bit = "soot"
+how = "press"
+gives = "ink block"
+says = "the soot pressed into a hard black cake"
+[[rule]]
+bit = "bead"
+how = "melt"
+gives = "glass"
+says = "the bead softened and ran into a clear drop of glass"
+[[rule]]
+bit = "seed"
+how = "grind"
+gives = "meal"
+says = "the seed ground to a sweet pale meal"
+[[rule]]
+bit = "meal"
+how = "warm"
+gives = "seed cake"
+says = "the meal baked into a small warm cake that smells good"
+[[rule]]
+bit = "seed"
+how = "soak"
+gives = "sprouting seed"
+says = "the seed swelled in the water and split: a pale shoot is coming out of it"
+hint = "a seed that has begun might grow quicker in the ground"
+
+# ---- SPEC-v3.6b §1: failing at what a machine does is how a hob comes to want one. `fails`: the machine it wants
+# after this; the bit is kept. (A rule with `chance` gives what it gives that often, and fails the rest.) ----
+[[rule]]
+bit = "metal"
+how = "melt"
+fails = "forge"
+says = "the metal grew hot and dull, and would not run or bend: it wants a hotter fire, and something to beat it on"
+[[rule]]
+bit = "wire"
+how = "melt"
+fails = "forge"
+says = "the wire glowed and sagged, and would not take a shape: a forge and an anvil would shape it"
+[[rule]]
+bit = "fish"
+how = "warm"
+fails = "stove"
+says = "the fish only grew warm in your paws: in a pot over a fire it would cook through"
+[[rule]]
+bit = "bean"
+how = "warm"
+fails = "stove"
+says = "the bean grew warm and stayed hard: in a pot of water on a stove it would cook soft"
+[[rule]]
+bit = "flour"
+how = "warm"
+fails = "stove"
+says = "the flour browned at the edges and stayed raw inside: a stove would bake it"
+
+# ---- the machines' rules (SPEC-v3.6b §1). `also`: what else the same load can come out as; the hob shapes it into
+# whichever is wanted (a thing being built takes it), else whichever the house has made least of ----
+[[rule]]
+bit = "clay"
+how = "fire"
+gives = "fired brick"
+also = ["fired clay"]
+says = "the clay baked through in the kiln's heat: hard, red, and it rings when you tap it"
+[[rule]]
+bit = "mud"
+how = "fire"
+gives = "fired brick"
+says = "the mud baked through in the kiln into a hard red brick"
+[[rule]]
+bit = "mud brick"
+how = "fire"
+gives = "fired brick"
+says = "the mud brick baked through in the kiln and came out red and ringing: a fired brick, that the rain will not soften"
+[[rule]]
+bit = "sand"
+how = "fire"
+gives = "glass"
+says = "the sand ran together in the kiln's heat and cooled clear: glass"
+[[rule]]
+bit = "fibre"
+how = "loom"
+gives = "cloth"
+says = "the fibre wove on the loom into a length of cloth, close and soft"
+[[rule]]
+bit = "cord"
+how = "loom"
+gives = "cloth"
+says = "the cord wove on the loom into a stiff, strong cloth"
+[[rule]]
+bit = "string"
+how = "loom"
+gives = "netting"
+says = "the string knotted itself into netting on the loom: holes held together"
+[[rule]]
+bit = "reed"
+how = "loom"
+gives = "wicker"
+says = "the reed wove tight on the loom into wicker, light and firm"
+[[rule]]
+bit = "seed"
+how = "mill"
+gives = "flour"
+also5 = ["oil"]   # SPEC-v5.0 §1.6: while [items] is on, pressed instead, a seed gives the oil a lantern burns
+says = "the seed ground fine between the millstones: a soft white flour"
+[[rule]]
+bit = "bean"
+how = "mill"
+gives = "flour"
+says = "the bean ground between the millstones to a pale flour"
+[[rule]]
+bit = "meal"
+how = "mill"
+gives = "flour"
+says = "the meal ground finer between the millstones, into flour"
+[[rule]]
+bit = "petal"
+how = "mill"
+gives = "petal dye"
+says = "the petal ground to a bright pink paste: a colour that could be put on things"
+[[rule]]
+bit = "shell"
+how = "mill"
+gives = "shell dust"
+says = "the shell ground between the millstones to a fine white dust"
+[[rule]]
+bit = "metal"
+how = "forge"
+gives = "nail"
+also = ["blade", "hinge", "chain"]
+says = "the metal glowed in the forge and gave under the hammer on the anvil"
+[[rule]]
+bit = "wire"
+how = "forge"
+gives = "hook"
+also = ["spring", "chain"]
+says = "the wire glowed in the forge and bent the way the hammer sent it"
+
+# ---- what a pet reads in the book can point at something to try (§4.1): a hint, never a recipe ----
+# match: every one of these must be in the passage or its title ("a|b": either). bit, how: the thing it then wants to try.
+
+[[hint]]
+match = ["reed|rush|wicker|basket", "weav|woven|wet|water|soak"]
+bit = "reed"
+how = "soak"
+[[hint]]
+match = ["clay|pottery|ceramic|brick", "fire|kiln|heat|bak"]
+bit = "clay"
+how = "warm"
+[[hint]]
+match = ["wax|candle", "melt|heat|wick"]
+bit = "wax"
+how = "melt"
+[[hint]]
+match = ["rope|cord|twine|string", "twist|braid|strand|weav"]
+bit = "string"
+how = "weave"
+[[hint]]
+match = ["seed|plant|garden|farm", "grow|soil|sow|germinat"]
+bit = "seed"
+how = "plant"
+[[hint]]
+match = ["stone|flint|tool|knife|blade", "sharp|edge|cut|grind"]
+bit = "pebble"
+how = "grind"
+[[hint]]
+match = ["glass|sand", "melt|heat|furnace"]
+bit = "pebble"
+how = "grind"
+[[hint]]
+match = ["felt|wool|fibre|fiber", "press|mat"]
+bit = "fluff"
+how = "press"
+[[hint]]
+match = ["charcoal|wood", "burn|heat|fire"]
+bit = "wood"
+how = "warm"
+[[hint]]
+match = ["flour|grain|bread|meal", "grind|mill"]
+bit = "seed"
+how = "grind"
+[[hint]]
+match = ["amber|resin", "hard|fossil|dry"]
+bit = "resin"
+how = "dry"
+[[hint]]
+match = ["dye|colour|color|pigment", "flower|petal|plant|water"]
+bit = "petal"
+how = "soak"
+
+# ---- the book's own pages (13 October 2026): what it says under a few plain words the encyclopedia is no help with ----
+# words: any of these in the question finds the page. Like any passage, it may point at something to try (the hints above).
+
+# tool: reading this page tells a pet what that tool is made of (it is said in the page).
+[[entry]]
+words = ["trowel", "trowels"]
+tool = "trowel"
+title = "Trowel"
+text = "A trowel is a small tool held in one hand, with a flat blade for digging small holes and for planting. The blade has to be hard. The oldest trowels were flat pieces of fired clay, or wood carved thin."
+[[entry]]
+words = ["dig", "digs", "digging", "dug"]
+tool = "trowel"
+title = "Digging"
+text = "To dig is to move earth out of the way to make a hole. Animals dig with their paws, which is slow. A tool goes deeper: the first digging tools were flat blades of fired clay, or wood carved thin. A small one for planting is called a trowel."
+[[entry]]
+words = ["clay"]
+title = "Clay"
+text = "Clay is soft, sticky earth found near water. Wet, it can be shaped in the paws. Warmed by a fire it bakes hard and keeps its shape for good: pots, tiles and the blades of simple tools are made of fired clay."
+[[entry]]
+words = ["edge", "edges", "sharp", "blade", "blades", "cut", "cuts", "cutting", "carve", "carver", "knife"]
+tool = "carver"
+title = "Edge"
+text = "An edge is the thin side of a hard thing. A sharp edge cuts. A stone is given an edge by grinding it against another stone until one side is thin; a piece of fired clay can be given one too. Tools with an edge are used to cut and to carve wood."
+[[entry]]
+words = ["hammer", "hammers", "knock", "knocks", "knocking", "mallet"]
+tool = "hammer"
+title = "Hammer"
+text = "A hammer is a tool for knocking things together. It has a heavy head, a stone or a hard brick, tied with cord or rope to a handle of wood. The weight of the head does the work."
+[[entry]]
+words = ["fish", "fishing", "fished", "rod", "rods", "angling", "catch"]
+tool = "rod"
+title = "Fishing"
+text = "Fish can be caught from a pond with a paw, slowly and seldom, or with a fishing rod. A fishing rod is a long stick with a string tied to its tip and a hook on the end. The hook goes in the water and the fish bite it. The best place to fish is the end of a dock, out over deep water; a pond fished too often is fished thin, and the fish come back slowly."
+[[entry]]
+words = ["hook", "hooks"]
+tool = "rod"
+title = "Hook"
+text = "A hook is a small bent piece of wire or metal with a point. Tied to a string on a stick it makes a fishing rod. Hooks are also found, now and then, at the bottom of ponds."
+[[entry]]
+words = ["kiln", "kilns", "fire", "firing", "fired", "bake", "baking", "brick", "bricks", "pottery"]
+title = "Kiln"
+text = "A kiln is a small closed oven of clay and stone for firing clay. Built of three loads of clay and two of stone, it holds a fire hot enough to bake clay through every time, which a warm pipe never will: bricks, pots and tiles come out hard and red. Sand fired in it runs to glass. Fired bricks are what a forge and a stove are built of."
+[[entry]]
+words = ["loom", "looms", "weave", "weaving", "cloth", "netting"]
+title = "Loom"
+text = "A loom is a frame that holds threads tight while others are woven through them. Built of three lengths of wood and a rope, it lets one strand be woven at a time: fibre becomes cloth, string becomes netting, reed becomes wicker."
+[[entry]]
+words = ["millstone", "millstones", "mill", "grinder", "flour", "grind", "grinding"]
+title = "Millstone"
+text = "A millstone is a pair of round stones, one turning on the other. Built of four loads of stone, it grinds seeds and beans to flour, finer than any floor, and petals to dye. Flour is what bread and pies are made of."
+[[entry]]
+words = ["forge", "forges", "anvil", "anvils", "smith", "blacksmith", "nail", "nails", "hinge", "chain"]
+title = "Forge"
+text = "A forge is a fire in a hearth of fired brick, blown hot, with an anvil beside it to beat hot metal on with a hammer. Built of three fired bricks and two loads of metal, it shapes metal and wire into nails, blades, hinges, chains, hooks and springs."
+[[entry]]
+words = ["stove", "stoves", "cook", "cooking", "cooked", "kitchen", "pot", "stew", "soup", "pie", "bread", "dish", "dishes"]
+title = "Stove"
+text = "A stove is a closed fire of fired brick and metal with a pot on top. Built of three fired bricks and two loads of metal, it cooks: fish, beans, berries, flour and leaves go into the pot together, and come out a dish, enough for several. A dish found is a family's recipe, to be taught and handed down. Food cooked and eaten together is better than food eaten raw and alone."
+
+[knowing]
+inherited = 0.5           # how likely a child is to start out knowing each thing its parent knew
+lift = 5.0                # the curiosity a thing found out is worth to the one who found it
+
+# ---- kinds that take a processed material: getting one is what opens the kind (§3.1) ----
+
+[needs]
+basket = ["wicker"]
+candle = ["clear wax"]
+"plant pot" = ["fired clay"]
+rope = ["rope"]
+lantern = ["clear wax", "fired clay|glass|sharp stone|clay tile"]   # clear wax and something hard ("a|b": any one of these)
+carver = ["sharp stone|fired clay"]
+trowel = ["fired clay|carved wood"]
+hammer = ["sharp stone|pebble|mud brick|stone", "wood|carved wood|plank", "rope|vine cord|cord"]
+rod = ["wood|carved wood|reed|dry reed|waterlogged wood", "string|fibre|rope|vine cord", "hook|wire|metal"]   # SPEC-v3.6a §2: a stick, string and a hook
+knife = ["sharp stone|fired clay|metal"]
+broom = ["reed|dry reed|wicker|fibre", "wood|carved wood"]
+bucket = ["wood|carved wood|fired clay|metal"]
+torch = ["wood|carved wood", "tinder|clear wax|wax|resin"]
+
+# ---- tools (§3.4): things like any other, that wear with use and can be mended ----
+
+[tool.carver]
+does = "carve"
+uses = 12
+without = "you need something with an edge to carve this"
+want = "make something that cuts"
+[tool.trowel]
+does = "plant"
+uses = 16
+without = "you need something to dig with to plant this"
+want = "make something to dig with"
+[tool.rod]                 # SPEC-v3.6a §2: better odds at the pond; the only way to the rare things, from the dock
+does = "fish"
+uses = 20
+without = "a paw in the water catches little; a fishing rod would do better"
+want = "make something to fish with"
+[tool.hammer]
+does = "mend"
+uses = 20
+without = "you need something to knock it together with"
+want = "make something to knock things together with"
+builds = ["stool", "shelf", "chest"]   # with a hammer these are built bigger and sturdier
+
+# ---- what comes of joining two things whose properties meet (§3.2) ----
+# `a`, `b`: the two properties (either way round). `gives`: the new property, a table like those in materials.toml,
+# so everything a property can do there it can do here. `says`: what the house tells the pet.
+
+[[emerge]]
+a = "bright"
+b = "dark"
+name = "glowing"
+says = "it glows without being harsh"
+gives = { need = "comfort", says = "a soft light: lit at night it costs no comfort, and none near it do", light = true, shade = true, gentle = true }
+[[emerge]]
+a = "soft"
+b = "warm"
+name = "snug"
+says = "it is deep and warm to lie in: sleep comes easier in it"
+gives = { need = "energy", says = "resting near it restores much more energy, and it is a comfort at night", rest_bonus = 2.0, near = { night = { comfort = 0.5 } }, use = { comfort = 4.0 }, by_size = true }
+[[emerge]]
+a = "noisy"
+b = "bouncy"
+name = "jingling"
+says = "it rings as it rolls, and whoever hears it wants to play"
+gives = { need = "curiosity", says = "curiosity when used, and kin come to play with it", use = { curiosity = 4.0, energy = -1.0 }, loud = true, draws = true }
+[[emerge]]
+a = "heavy"
+b = "noisy"
+name = "booming"
+says = "it booms: it would be heard in the next room"
+gives = { need = "curiosity", says = "curiosity when used; it is heard next door", use = { curiosity = 3.0, energy = -1.0 }, loud = true, far = true, fixed = true }
+[[emerge]]
+a = "cool"
+b = "quiet"
+name = "calm"
+says = "it is still and cool: a calm place on a hot day"
+gives = { need = "comfort", says = "comfort near it by day, and resting near it restores more energy", near = { day = { comfort = 0.8 } }, rest_bonus = 1.0 }
+[[emerge]]
+a = "warm"
+b = "fragrant"
+name = "steeped"
+says = "the warmth carries its smell through the whole room, and it does not fade"
+gives = { need = "comfort", says = "comfort for everyone in the room, that does not fade", room = true, fades = 1.0, scent = 0.4 }
+[[emerge]]
+a = "glassy"
+b = "bright"
+name = "sparkling"
+says = "its light breaks into colours on the walls"
+gives = { need = "curiosity", says = "a light that is a wonder to be near, by day in the sun and at night when lit", light = true, sun = { curiosity = 0.5, comfort = 0.2 }, near = { night = { curiosity = 0.4 } } }
+[[emerge]]
+a = "springy"
+b = "soft"
+name = "springing"
+says = "it gives under you and throws you up again"
+gives = { need = "energy", says = "using it puts a long spring in its step, and resting near it restores more energy", use = { curiosity = 2.0 }, spring_steps = 12, rest_bonus = 0.5 }
+[[emerge]]
+a = "sweet"
+b = "warm"
+name = "baked"
+says = "it is a proper meal now, warm right through"
+gives = { need = "energy", says = "a good deal of energy when eaten, once; it counts as a meal", use = { energy = 9.0 }, food = true }
+[[emerge]]
+a = "sweet"
+b = "fragrant"
+name = "honeyed"
+says = "it smells as sweet as it tastes; every creature in the house will want it"
+gives = { need = "energy", says = "energy when eaten, once; and any creature given it is won over sooner", use = { energy = 5.0 }, food = true, lure = true }
+[[emerge]]
+a = "dark"
+b = "quiet"
+name = "hidden"
+says = "it is dark and hushed inside: a place to sleep whatever the hour"
+gives = { need = "energy", says = "resting near it restores much more energy, and near it lights at night do no harm", rest_bonus = 1.5, shade = true }
+[[emerge]]
+a = "warm"
+b = "heavy"
+name = "hearth-warm"
+says = "it holds its warmth and gives it out slowly: it would keep a whole room warm through the night"
+gives = { need = "comfort", says = "comfort for everyone in the room at night and in the cold", room = true, near = { night = { comfort = 0.5 } }, fixed = true, hearth = true }
+[[emerge]]
+a = "cool"
+b = "glassy"
+name = "frosted"
+says = "it catches the sun and stays cold to the touch"
+gives = { need = "comfort", says = "comfort and a little curiosity near it by day", near = { day = { comfort = 0.6 } }, sun = { curiosity = 0.3, comfort = 0.3 } }
+[[emerge]]
+a = "bright"
+b = "noisy"
+name = "signalling"
+says = "it flashes and sounds together: nobody in the house could miss it"
+gives = { need = "curiosity", says = "a light; used, it is heard and seen next door", light = true, use = { curiosity = 2.0 }, loud = true, far = true }
+[[emerge]]
+a = "soft"
+b = "quiet"
+name = "hushing"
+says = "it swallows sound: the room is quieter for it"
+gives = { need = "energy", says = "resting near it restores more energy, and noise near it disturbs nobody's rest", rest_bonus = 1.5, hush = true }
+[[emerge]]
+a = "bouncy"
+b = "springy"
+name = "leaping"
+says = "it leaps higher than anything in the house"
+gives = { need = "curiosity", says = "a great deal of curiosity when used, and a spring in its step after", use = { curiosity = 5.0, energy = -1.0 }, spring_steps = 6 }
+[[emerge]]
+a = "fragrant"
+b = "cool"
+name = "fresh"
+says = "it smells of rain and green things"
+gives = { need = "comfort", says = "comfort for everyone in the room by day", room = true, near = { day = { comfort = 0.4 } }, fades = 0.95, scent = 0.3 }
+[[emerge]]
+a = "heavy"
+b = "soft"
+name = "weighted"
+says = "it settles on you like a hand: a deep comfort"
+gives = { need = "comfort", says = "a great deal of comfort when used", use = { comfort = 7.0 }, by_size = true }
+[[emerge]]
+a = "glassy"
+b = "noisy"
+name = "ringing"
+says = "it sings a clear note that hangs in the air"
+gives = { need = "curiosity", says = "curiosity when used, and a little near it in the sun", use = { curiosity = 3.5 }, sun = { curiosity = 0.3 }, loud = true }
+[[emerge]]
+a = "hard"
+b = "springy"
+name = "snapping"
+says = "it bends and snaps back with a crack: a thing to flick things with"
+gives = { need = "curiosity", says = "curiosity when used", use = { curiosity = 3.0, energy = -0.5 } }
+
+# ---- growing food (§3.5): a seed planted with a trowel in a planting bed or a plant pot ----
+# days: world days from planting to ripe when tended and watered; `gives`: what is picked, how many, and a seed back
+
+[grow.seed]
+days = 3
+stages = ["planted", "sprout", "leaves", "ripe"]
+gives = [["bean", 2], ["seed", 1]]
+[grow."sprouting seed"]
+days = 2
+stages = ["planted", "sprout", "leaves", "ripe"]
+gives = [["berry", 2], ["seed", 1]]
+[grow.bean]
+days = 3
+stages = ["planted", "sprout", "leaves", "ripe"]
+gives = [["bean", 3], ["fibre", 1]]
+
+# SPEC-v4.2 §2.2: the remedy, known to nobody at first: found by trying, or taught, then handed down like any recipe.
+# Laid into the rules and the bits only with [deaths] on (health.install). Given to a sick hob (health.tend, "remedy"),
+# it moves a sickness back two stages.
+[remedy]
+bit = "petal"
+how = "press"
+gives = "remedy"
+says = "the petals pressed under the weight gave up a bitter green juice that clears the head: a remedy, for the sick"
+can = ["cool", "fragrant"]
+like = "petal"
+
+[growing]
+water_hours = 12          # a plant watered (rain on it outdoors, water carried to it) within this long is growing well
+untended = 0.5            # how fast one grows that is dry and untended
+tended = 1.4              # ... and one watered and tended that day
+wilt_days = 2             # dry this long it wilts, and a wilted plant gives nothing
+cold = 0.5                # a cold night outdoors halves that night's growth
+grown_lift = 3.0          # the comfort of eating what the family grew, on top of the meal
+paw = 0.7                 # how fast a thing planted by paw grows, beside one planted with a trowel (13 October 2026: the trowel makes planting better, not possible)
+paw_plants = 1            # how many things planted by paw one pet can have coming up at a time; with a trowel, as many as there are beds
+beds = ["bean row", "herb patch", "melon bed", "tomato vine", "berry bush"]   # fixtures a seed can be planted in, besides a plant pot
+
+# ---- SPEC-v3.5 §4.3: the base materials the vending machine gives (machine.toml), and what the processes make of them ----
+# wood, metal and clay are bits the house always had (house.toml); fibre and sand are above; stone is new. `sheet`: its
+# picture is on a sheet of its own (view/assets/own/src/machine.py draws it), not at the end of bits.png.
+
+[material.stone]
+can = ["hard", "heavy"]
+like = "pebble"
+tint = "#8d977f"
+sheet = "machine"
+[material.plank]
+can = ["hard", "warm"]
+like = "wood"
+tint = "#d2b37d"
+sheet = "machine"
+[material.grit]
+can = ["hard", "noisy"]
+like = "pebble"
+tint = "#abc2bc"
+sheet = "machine"
+[material."warm stone"]
+can = ["warm", "heavy"]
+like = "stone"
+tint = "#bd7959"
+sheet = "machine"
+[material."warm metal"]
+can = ["warm", "heavy"]
+like = "metal"
+tint = "#ef914f"
+sheet = "machine"
+[material."metal plate"]
+can = ["hard", "noisy"]
+like = "metal"
+tint = "#abc2bc"
+sheet = "machine"
+[material."tempered metal"]
+can = ["hard", "bright"]
+like = "metal"
+tint = "#b8dce5"
+sheet = "machine"
+[material.cord]
+can = ["springy", "soft"]
+like = "string"
+tint = "#eecf9b"
+sheet = "machine"
+[material."packed sand"]
+can = ["heavy", "quiet"]
+like = "pebble"
+tint = "#d2b37d"
+sheet = "machine"
+
+[[rule]]
+bit = "wood"
+how = "grind"
+gives = "plank"
+says = "rubbed flat on the stone floor, the wood is a smooth plank: something to build with"
+[[rule]]
+bit = "plank"
+how = "warm"
+gives = "charcoal"
+says = "the plank blackened in the heat and did not burn away: it marks your paws black"
+[[rule]]
+bit = "stone"
+how = "grind"
+gives = "sharp stone"
+says = "ground on the stone floor, the stone took an edge that could cut"
+[[rule]]
+bit = "stone"
+how = "press"
+gives = "grit"
+says = "under the weight the stone cracked into grit that rattles in your paws"
+[[rule]]
+bit = "stone"
+how = "warm"
+gives = "warm stone"
+says = "the stone took the warmth slowly and holds it: it is warm right through"
+[[rule]]
+bit = "metal"
+how = "warm"
+gives = "warm metal"
+says = "the metal took the heat and holds it; it gives a little under your paws now"
+hint = "soft as it is, it might be pressed into a shape before it cools"
+[[rule]]
+bit = "warm metal"
+how = "press"
+gives = "metal plate"
+says = "the warm metal bent and flattened under the weight: a plate, that rings when you tap it"
+[[rule]]
+bit = "warm metal"
+how = "soak"
+gives = "tempered metal"
+says = "the warm metal hissed in the water and came out hard and shining"
+[[rule]]
+bit = "metal"
+how = "soak"
+spoils = true
+says = "the metal went brown and flaky in the water: it is spoiled"
+[[rule]]
+bit = "fibre"
+how = "weave"
+gives = "cord"
+says = "the two strands of fibre twisted together into a cord"
+hint = "two cords might twist into something stronger still"
+[[rule]]
+bit = "fibre"
+how = "press"
+gives = "felt"
+says = "pressed hard, the fibre matted together into felt"
+[[rule]]
+bit = "fibre"
+how = "warm"
+gives = "tinder"
+says = "the fibre dried and frizzed in the warmth: it would catch a spark"
+[[rule]]
+bit = "cord"
+how = "weave"
+gives = "rope"
+says = "the two cords twisted round each other into a rope, much stronger than either"
+[[rule]]
+bit = "sand"
+how = "press"
+gives = "packed sand"
+says = "the sand packed down hard under the weight: a heavy little block that deadens a knock"
+[[rule]]
+bit = "clay"
+how = "dry"
+spoils = true
+says = "the clay dried out and cracked to crumbs: it wants heat, not dry air"
+
+[[hint]]
+match = ["metal|iron|copper|forge|smith", "heat|hot|bend|hammer|fire"]
+bit = "metal"
+how = "warm"
+[[hint]]
+match = ["plank|board|timber|lumber", "wood|saw|smooth|build"]
+bit = "wood"
+how = "grind"
