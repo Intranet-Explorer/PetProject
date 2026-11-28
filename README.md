@@ -1,4 +1,4 @@
-<h1 align="center">PetProject</h1>
+<h1 align="center"><img src="docs/img/banner.png" alt="PetProject: one pet in a box that became a house of hobs" width="880"></h1>
 
 <p align="center"><img src=".github/badge.svg" alt="built with Claude × Rectangular"></p>
 
